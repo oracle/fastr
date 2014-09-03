@@ -245,7 +245,7 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
             map.put(elementName, tests);
         }
 
-        tests.add(new CallAndArg(testCall, testArg.replace("\"", "\\\"").replace("\n", "\\n"), element.getAnnotation(org.junit.Ignore.class) != null));
+        tests.add(new CallAndArg(testCall, testArg.replace("\n", "\\n").replace("\\", "\\\\").replace("\"", "\\\""), element.getAnnotation(org.junit.Ignore.class) != null));
     }
 
     private class TestAnalyzerTreeVisitor extends TreePathScanner<Object, Trees> {

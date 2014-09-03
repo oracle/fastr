@@ -5509,8 +5509,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCat_89b0c1cef332aaa820121d111686716a() {
-        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\n\") }");
+    public void TestSimpleBuiltins_testCat_605cce36686bb0b231fa1fd9e485b6c3() {
+        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
     }
 
     @Test
@@ -5684,13 +5684,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_ad3549732fce5b2ee1cd8a4b9996d797() {
-        assertEval("{ cbind(2,3, c(1,1,1))");
+    public void TestSimpleBuiltins_testCbindIgnore_f5b3db04fe961d7c6d80476d53ae45be() {
+        assertEval("{ cbind(2,3, c(1,1,1)) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_eac42e3620663dabb16389ef366ddb5e() {
-        assertEval("{ cbind(2.1:10,32.2)");
+    public void TestSimpleBuiltins_testCbindIgnore_e8d1f5dd1ffd1a1a5ccb947fcc02b43f() {
+        assertEval("{ cbind(2.1:10,32.2) }");
     }
 
     @Test
@@ -8214,8 +8214,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_c0649b33488ef441844f88cbeb22d470() {
-        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
+    public void TestSimpleBuiltins_testInvocationIgnore_6c569ee5c59b68db9452d75369b05478() {
+        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
     }
 
     @Test
@@ -9439,13 +9439,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testLsRegExp_fd737bf8646330dd096a1481e626813b() {
-        assertEval("{ .abc <- 1; ls(pattern=\"\\.a.*\")}");
+    public void TestSimpleBuiltins_testLsRegExp_bd83c230c6694eaca0a5f2ec59a37f01() {
+        assertEval("{ .abc <- 1; ls(pattern=\"\\\\.a.*\")}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testLsRegExp_46cfbee16d1469bcf94e8f6c445587e1() {
-        assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\.a.*\")}");
+    public void TestSimpleBuiltins_testLsRegExp_de069454f973c232710c2184078d0cf4() {
+        assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\\\.a.*\")}");
     }
 
     @Test
@@ -11274,13 +11274,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testRegExprComplex_86a31eb43c44df7c7453e0bfe0140ded() {
-        assertEval("gregexpr(\"(a)[^a]\\1\", c(\"andrea apart\", \"amadeus\", NA))");
+    public void TestSimpleBuiltins_testRegExprComplex_2fca97d9886cab7c0e522032fbfaa9c4() {
+        assertEval("gregexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRegExprComplex_97c86df70bdfc0c7ad6b46db6019ca17() {
-        assertEval("regexpr(\"(a)[^a]\\1\", c(\"andrea apart\", \"amadeus\", NA))");
+    public void TestSimpleBuiltins_testRegExprComplex_57c9bddc6da7a895a2d9c30bdf47b906() {
+        assertEval("regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))");
     }
 
     @Test
@@ -12729,8 +12729,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSubIgnore_7332b217f11d38a5978915cf31eff6f4() {
-        assertEval("{ gsub(\"([a-e])\",\"\\1\\1\", \"prague alley\") }");
+    public void TestSimpleBuiltins_testSubIgnore_fec73fb8a79be7e6b705d46bbc16a617() {
+        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
     }
 
     @Test
@@ -15804,13 +15804,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleErrorHandling_testError_6ba10a2b4fe6fccb944e927a3dfecda8() {
-        assertEval("{ options(error=quote(cat(23,'\n'))) ; v }");
+    public void TestSimpleErrorHandling_testError_abc272087d29377db6fb27d931f3c662() {
+        assertEval("{ options(error=quote(cat(23,'\\n'))) ; v }");
     }
 
     @Test
-    public void TestSimpleErrorHandling_testError_7a495cffee7687695179e2ea1b236f89() {
-        assertEval("{ x <- 2 ; options(error=quote(cat(x,'\n'))) ; v }");
+    public void TestSimpleErrorHandling_testError_23f373ba907401cfba5351a25b6f3eb9() {
+        assertEval("{ x <- 2 ; options(error=quote(cat(x,'\\n'))) ; v }");
     }
 
     @Test
@@ -16159,8 +16159,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testDots_c15f47834acf072533f7d272d4fbd725() {
-        assertEval("{ f <- function(...) cat(..., \"\n\") ; f(\"Hello\", \"world\") }");
+    public void TestSimpleFunctions_testDots_019b3e19030e9bdefe37fc9a5e3b2aca() {
+        assertEval("{ f <- function(...) cat(..., \"\\n\") ; f(\"Hello\", \"world\") }");
     }
 
     @Test
@@ -26379,8 +26379,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinEncoding_testEncoding2_b202a92e0f6a25d911a92148be580405() {
-        assertEval("argv <- list(c('\n', '\n', '## These cannot be run by examples() but should be OK when pasted\n', '## into an interactive R session with the tcltk package loaded\n', '\n', 'tt <- tktoplevel()\n', 'tkpack(txt.w <- tktext(tt))\n', 'tkinsert(txt.w, \'0.0\', \'plot(1:10)\')\n', '\n', '# callback function\n', 'eval.txt <- function()\n', '   eval(parse(text = tclvalue(tkget(txt.w, \'0.0\', \'end\'))))\n', 'tkpack(but.w <- tkbutton(tt, text = \'Submit\', command = eval.txt))\n', '\n', '## Try pressing the button, edit the text and when finished:\n', '\n', 'tkdestroy(tt)\n', '\n', '\n')); .Internal(Encoding(argv[[1]]))");
+    public void TestrGenBuiltinEncoding_testEncoding2_4e78ef1b1b4588f13ca257df54d0dca6() {
+        assertEval("argv <- list(c('\\n', '\\n', '## These cannot be run by examples() but should be OK when pasted\\n', '## into an interactive R session with the tcltk package loaded\\n', '\\n', 'tt <- tktoplevel()\\n', 'tkpack(txt.w <- tktext(tt))\\n', 'tkinsert(txt.w, \\'0.0\\', \\'plot(1:10)\\')\\n', '\\n', '# callback function\\n', 'eval.txt <- function()\\n', '   eval(parse(text = tclvalue(tkget(txt.w, \\'0.0\\', \\'end\\'))))\\n', 'tkpack(but.w <- tkbutton(tt, text = \\'Submit\\', command = eval.txt))\\n', '\\n', '## Try pressing the button, edit the text and when finished:\\n', '\\n', 'tkdestroy(tt)\\n', '\\n', '\\n')); .Internal(Encoding(argv[[1]]))");
     }
 
     @Test
@@ -26399,13 +26399,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinEncoding_testEncoding6_e5dcd42337a57d66d553abd63d50b757() {
-        assertEval("argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\n'); .Internal(Encoding(argv[[1]]))");
+    public void TestrGenBuiltinEncoding_testEncoding6_7449fff508d037d2046c2d4efb7fa810() {
+        assertEval("argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\\n'); .Internal(Encoding(argv[[1]]))");
     }
 
     @Test
-    public void TestrGenBuiltinEncoding_testEncoding7_2c0eb43860392c9283fd6cf2df630bdf() {
-        assertEval("argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \'Writing R Extensions\' for more information.')); .Internal(Encoding(argv[[1]]))");
+    public void TestrGenBuiltinEncoding_testEncoding7_4d932eb25388709f0291f720f54a9c70() {
+        assertEval("argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\'Writing R Extensions\\' for more information.')); .Internal(Encoding(argv[[1]]))");
     }
 
     @Test
@@ -27144,8 +27144,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinanyDuplicated_testanyDuplicated6_b626365d229581a047908d500948906f() {
-        assertEval("argv <- list(structure(c('5.1\r3.5\r1.4\r0.2', '4.9\r3\r1.4\r0.2', '4.7\r3.2\r1.3\r0.2', '4.6\r3.1\r1.5\r0.2', '5\r3.6\r1.4\r0.2', '5.4\r3.9\r1.7\r0.4', '4.6\r3.4\r1.4\r0.3', '5\r3.4\r1.5\r0.2', '4.4\r2.9\r1.4\r0.2', '4.9\r3.1\r1.5\r0.1', '5.4\r3.7\r1.5\r0.2', '4.8\r3.4\r1.6\r0.2', '4.8\r3\r1.4\r0.1', '4.3\r3\r1.1\r0.1', '5.8\r4\r1.2\r0.2', '5.7\r4.4\r1.5\r0.4', '5.4\r3.9\r1.3\r0.4', '5.1\r3.5\r1.4\r0.3', '5.7\r3.8\r1.7\r0.3', '5.1\r3.8\r1.5\r0.3', '5.4\r3.4\r1.7\r0.2', '5.1\r3.7\r1.5\r0.4', '4.6\r3.6\r1\r0.2', '5.1\r3.3\r1.7\r0.5', '4.8\r3.4\r1.9\r0.2', '5\r3\r1.6\r0.2', '5\r3.4\r1.6\r0.4', '5.2\r3.5\r1.5\r0.2', '5.2\r3.4\r1.4\r0.2', '4.7\r3.2\r1.6\r0.2', '4.8\r3.1\r1.6\r0.2', '5.4\r3.4\r1.5\r0.4', '5.2\r4.1\r1.5\r0.1', '5.5\r4.2\r1.4\r0.2', '4.9\r3.1\r1.5\r0.2', '5\r3.2\r1.2\r0.2', '5.5\r3.5\r1.3\r0.2', '4.9\r3.6\r1.4\r0.1', '4.4\r3\r1.3\r0.2', '5.1\r3.4\r1.5\r0.2', '5\r3.5\r1.3\r0.3', '4.5\r2.3\r1.3\r0.3', '4.4\r3.2\r1.3\r0.2', '5\r3.5\r1.6\r0.6', '5.1\r3.8\r1.9\r0.4', '4.8\r3\r1.4\r0.3', '5.1\r3.8\r1.6\r0.2', '4.6\r3.2\r1.4\r0.2', '5.3\r3.7\r1.5\r0.2', '5\r3.3\r1.4\r0.2', '7\r3.2\r4.7\r1.4', '6.4\r3.2\r4.5\r1.5', '6.9\r3.1\r4.9\r1.5', '5.5\r2.3\r4\r1.3', '6.5\r2.8\r4.6\r1.5', '5.7\r2.8\r4.5\r1.3', '6.3\r3.3\r4.7\r1.6', '4.9\r2.4\r3.3\r1', '6.6\r2.9\r4.6\r1.3', '5.2\r2.7\r3.9\r1.4', '5\r2\r3.5\r1', '5.9\r3\r4.2\r1.5', '6\r2.2\r4\r1', '6.1\r2.9\r4.7\r1.4', '5.6\r2.9\r3.6\r1.3', '6.7\r3.1\r4.4\r1.4', '5.6\r3\r4.5\r1.5', '5.8\r2.7\r4.1\r1', '6.2\r2.2\r4.5\r1.5', '5.6\r2.5\r3.9\r1.1', '5.9\r3.2\r4.8\r1.8', '6.1\r2.8\r4\r1.3', '6.3\r2.5\r4.9\r1.5', '6.1\r2.8\r4.7\r1.2', '6.4\r2.9\r4.3\r1.3', '6.6\r3\r4.4\r1.4', '6.8\r2.8\r4.8\r1.4', '6.7\r3\r5\r1.7', '6\r2.9\r4.5\r1.5', '5.7\r2.6\r3.5\r1', '5.5\r2.4\r3.8\r1.1', '5.5\r2.4\r3.7\r1', '5.8\r2.7\r3.9\r1.2', '6\r2.7\r5.1\r1.6', '5.4\r3\r4.5\r1.5', '6\r3.4\r4.5\r1.6', '6.7\r3.1\r4.7\r1.5', '6.3\r2.3\r4.4\r1.3', '5.6\r3\r4.1\r1.3', '5.5\r2.5\r4\r1.3', '5.5\r2.6\r4.4\r1.2', '6.1\r3\r4.6\r1.4', '5.8\r2.6\r4\r1.2', '5\r2.3\r3.3\r1', '5.6\r2.7\r4.2\r1.3', '5.7\r3\r4.2\r1.2', '5.7\r2.9\r4.2\r1.3', '6.2\r2.9\r4.3\r1.3', '5.1\r2.5\r3\r1.1', '5.7\r2.8\r4.1\r1.3', '6.3\r3.3\r6\r2.5', '5.8\r2.7\r5.1\r1.9', '7.1\r3\r5.9\r2.1', '6.3\r2.9\r5.6\r1.8', '6.5\r3\r5.8\r2.2', '7.6\r3\r6.6\r2.1', '4.9\r2.5\r4.5\r1.7', '7.3\r2.9\r6.3\r1.8', '6.7\r2.5\r5.8\r1.8', '7.2\r3.6\r6.1\r2.5', '6.5\r3.2\r5.1\r2', '6.4\r2.7\r5.3\r1.9', '6.8\r3\r5.5\r2.1', '5.7\r2.5\r5\r2', '5.8\r2.8\r5.1\r2.4', '6.4\r3.2\r5.3\r2.3', '6.5\r3\r5.5\r1.8', '7.7\r3.8\r6.7\r2.2', '7.7\r2.6\r6.9\r2.3', '6\r2.2\r5\r1.5', '6.9\r3.2\r5.7\r2.3', '5.6\r2.8\r4.9\r2', '7.7\r2.8\r6.7\r2', '6.3\r2.7\r4.9\r1.8', '6.7\r3.3\r5.7\r2.1', '7.2\r3.2\r6\r1.8', '6.2\r2.8\r4.8\r1.8', '6.1\r3\r4.9\r1.8', '6.4\r2.8\r5.6\r2.1', '7.2\r3\r5.8\r1.6', '7.4\r2.8\r6.1\r1.9', '7.9\r3.8\r6.4\r2', '6.4\r2.8\r5.6\r2.2', '6.3\r2.8\r5.1\r1.5', '6.1\r2.6\r5.6\r1.4', '7.7\r3\r6.1\r2.3', '6.3\r3.4\r5.6\r2.4', '6.4\r3.1\r5.5\r1.8', '6\r3\r4.8\r1.8', '6.9\r3.1\r5.4\r2.1', '6.7\r3.1\r5.6\r2.4', '6.9\r3.1\r5.1\r2.3', '5.8\r2.7\r5.1\r1.9', '6.8\r3.2\r5.9\r2.3', '6.7\r3.3\r5.7\r2.5', '6.7\r3\r5.2\r2.3', '6.3\r2.5\r5\r1.9', '6.5\r3\r5.2\r2', '6.2\r3.4\r5.4\r2.3', '5.9\r3\r5.1\r1.8'), .Dim = c(50L, 3L), .Dimnames = list(NULL, c('Setosa', 'Versicolor', 'Virginica'))), FALSE, FALSE); .Internal(anyDuplicated(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinanyDuplicated_testanyDuplicated6_f06782ec4eec57cc0f858324c59d824d() {
+        assertEval("argv <- list(structure(c('5.1\\r3.5\\r1.4\\r0.2', '4.9\\r3\\r1.4\\r0.2', '4.7\\r3.2\\r1.3\\r0.2', '4.6\\r3.1\\r1.5\\r0.2', '5\\r3.6\\r1.4\\r0.2', '5.4\\r3.9\\r1.7\\r0.4', '4.6\\r3.4\\r1.4\\r0.3', '5\\r3.4\\r1.5\\r0.2', '4.4\\r2.9\\r1.4\\r0.2', '4.9\\r3.1\\r1.5\\r0.1', '5.4\\r3.7\\r1.5\\r0.2', '4.8\\r3.4\\r1.6\\r0.2', '4.8\\r3\\r1.4\\r0.1', '4.3\\r3\\r1.1\\r0.1', '5.8\\r4\\r1.2\\r0.2', '5.7\\r4.4\\r1.5\\r0.4', '5.4\\r3.9\\r1.3\\r0.4', '5.1\\r3.5\\r1.4\\r0.3', '5.7\\r3.8\\r1.7\\r0.3', '5.1\\r3.8\\r1.5\\r0.3', '5.4\\r3.4\\r1.7\\r0.2', '5.1\\r3.7\\r1.5\\r0.4', '4.6\\r3.6\\r1\\r0.2', '5.1\\r3.3\\r1.7\\r0.5', '4.8\\r3.4\\r1.9\\r0.2', '5\\r3\\r1.6\\r0.2', '5\\r3.4\\r1.6\\r0.4', '5.2\\r3.5\\r1.5\\r0.2', '5.2\\r3.4\\r1.4\\r0.2', '4.7\\r3.2\\r1.6\\r0.2', '4.8\\r3.1\\r1.6\\r0.2', '5.4\\r3.4\\r1.5\\r0.4', '5.2\\r4.1\\r1.5\\r0.1', '5.5\\r4.2\\r1.4\\r0.2', '4.9\\r3.1\\r1.5\\r0.2', '5\\r3.2\\r1.2\\r0.2', '5.5\\r3.5\\r1.3\\r0.2', '4.9\\r3.6\\r1.4\\r0.1', '4.4\\r3\\r1.3\\r0.2', '5.1\\r3.4\\r1.5\\r0.2', '5\\r3.5\\r1.3\\r0.3', '4.5\\r2.3\\r1.3\\r0.3', '4.4\\r3.2\\r1.3\\r0.2', '5\\r3.5\\r1.6\\r0.6', '5.1\\r3.8\\r1.9\\r0.4', '4.8\\r3\\r1.4\\r0.3', '5.1\\r3.8\\r1.6\\r0.2', '4.6\\r3.2\\r1.4\\r0.2', '5.3\\r3.7\\r1.5\\r0.2', '5\\r3.3\\r1.4\\r0.2', '7\\r3.2\\r4.7\\r1.4', '6.4\\r3.2\\r4.5\\r1.5', '6.9\\r3.1\\r4.9\\r1.5', '5.5\\r2.3\\r4\\r1.3', '6.5\\r2.8\\r4.6\\r1.5', '5.7\\r2.8\\r4.5\\r1.3', '6.3\\r3.3\\r4.7\\r1.6', '4.9\\r2.4\\r3.3\\r1', '6.6\\r2.9\\r4.6\\r1.3', '5.2\\r2.7\\r3.9\\r1.4', '5\\r2\\r3.5\\r1', '5.9\\r3\\r4.2\\r1.5', '6\\r2.2\\r4\\r1', '6.1\\r2.9\\r4.7\\r1.4', '5.6\\r2.9\\r3.6\\r1.3', '6.7\\r3.1\\r4.4\\r1.4', '5.6\\r3\\r4.5\\r1.5', '5.8\\r2.7\\r4.1\\r1', '6.2\\r2.2\\r4.5\\r1.5', '5.6\\r2.5\\r3.9\\r1.1', '5.9\\r3.2\\r4.8\\r1.8', '6.1\\r2.8\\r4\\r1.3', '6.3\\r2.5\\r4.9\\r1.5', '6.1\\r2.8\\r4.7\\r1.2', '6.4\\r2.9\\r4.3\\r1.3', '6.6\\r3\\r4.4\\r1.4', '6.8\\r2.8\\r4.8\\r1.4', '6.7\\r3\\r5\\r1.7', '6\\r2.9\\r4.5\\r1.5', '5.7\\r2.6\\r3.5\\r1', '5.5\\r2.4\\r3.8\\r1.1', '5.5\\r2.4\\r3.7\\r1', '5.8\\r2.7\\r3.9\\r1.2', '6\\r2.7\\r5.1\\r1.6', '5.4\\r3\\r4.5\\r1.5', '6\\r3.4\\r4.5\\r1.6', '6.7\\r3.1\\r4.7\\r1.5', '6.3\\r2.3\\r4.4\\r1.3', '5.6\\r3\\r4.1\\r1.3', '5.5\\r2.5\\r4\\r1.3', '5.5\\r2.6\\r4.4\\r1.2', '6.1\\r3\\r4.6\\r1.4', '5.8\\r2.6\\r4\\r1.2', '5\\r2.3\\r3.3\\r1', '5.6\\r2.7\\r4.2\\r1.3', '5.7\\r3\\r4.2\\r1.2', '5.7\\r2.9\\r4.2\\r1.3', '6.2\\r2.9\\r4.3\\r1.3', '5.1\\r2.5\\r3\\r1.1', '5.7\\r2.8\\r4.1\\r1.3', '6.3\\r3.3\\r6\\r2.5', '5.8\\r2.7\\r5.1\\r1.9', '7.1\\r3\\r5.9\\r2.1', '6.3\\r2.9\\r5.6\\r1.8', '6.5\\r3\\r5.8\\r2.2', '7.6\\r3\\r6.6\\r2.1', '4.9\\r2.5\\r4.5\\r1.7', '7.3\\r2.9\\r6.3\\r1.8', '6.7\\r2.5\\r5.8\\r1.8', '7.2\\r3.6\\r6.1\\r2.5', '6.5\\r3.2\\r5.1\\r2', '6.4\\r2.7\\r5.3\\r1.9', '6.8\\r3\\r5.5\\r2.1', '5.7\\r2.5\\r5\\r2', '5.8\\r2.8\\r5.1\\r2.4', '6.4\\r3.2\\r5.3\\r2.3', '6.5\\r3\\r5.5\\r1.8', '7.7\\r3.8\\r6.7\\r2.2', '7.7\\r2.6\\r6.9\\r2.3', '6\\r2.2\\r5\\r1.5', '6.9\\r3.2\\r5.7\\r2.3', '5.6\\r2.8\\r4.9\\r2', '7.7\\r2.8\\r6.7\\r2', '6.3\\r2.7\\r4.9\\r1.8', '6.7\\r3.3\\r5.7\\r2.1', '7.2\\r3.2\\r6\\r1.8', '6.2\\r2.8\\r4.8\\r1.8', '6.1\\r3\\r4.9\\r1.8', '6.4\\r2.8\\r5.6\\r2.1', '7.2\\r3\\r5.8\\r1.6', '7.4\\r2.8\\r6.1\\r1.9', '7.9\\r3.8\\r6.4\\r2', '6.4\\r2.8\\r5.6\\r2.2', '6.3\\r2.8\\r5.1\\r1.5', '6.1\\r2.6\\r5.6\\r1.4', '7.7\\r3\\r6.1\\r2.3', '6.3\\r3.4\\r5.6\\r2.4', '6.4\\r3.1\\r5.5\\r1.8', '6\\r3\\r4.8\\r1.8', '6.9\\r3.1\\r5.4\\r2.1', '6.7\\r3.1\\r5.6\\r2.4', '6.9\\r3.1\\r5.1\\r2.3', '5.8\\r2.7\\r5.1\\r1.9', '6.8\\r3.2\\r5.9\\r2.3', '6.7\\r3.3\\r5.7\\r2.5', '6.7\\r3\\r5.2\\r2.3', '6.3\\r2.5\\r5\\r1.9', '6.5\\r3\\r5.2\\r2', '6.2\\r3.4\\r5.4\\r2.3', '5.9\\r3\\r5.1\\r1.8'), .Dim = c(50L, 3L), .Dimnames = list(NULL, c('Setosa', 'Versicolor', 'Virginica'))), FALSE, FALSE); .Internal(anyDuplicated(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -27164,8 +27164,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinaperm_testaperm1_8da4b8d9cb3771d63c9ea2e0aa5b4673() {
-        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(5L, 14L), .Dimnames = list(c('#ifdef', '\\Sexpr', 'build', 'install', 'render'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinaperm_testaperm1_96b2cdeb00518e3fe3eaa70cb032ccd8() {
+        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(5L, 14L), .Dimnames = list(c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -27184,8 +27184,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinaperm_testaperm13_140c526c0f2d66f1a82fc644df943648() {
-        assertEval("argv <- list(structure(c('    Null deviance:', 'Residual deviance:', '3.118557', '0.012672', ' on', ' on', '8', '7', ' degrees of freedom\n', ' degrees of freedom\n'), .Dim = c(2L, 5L), .Dimnames = list(c('null.deviance', 'deviance'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinaperm_testaperm13_e391bcfbff0caf4cbdeb67dd49b34c1e() {
+        assertEval("argv <- list(structure(c('    Null deviance:', 'Residual deviance:', '3.118557', '0.012672', ' on', ' on', '8', '7', ' degrees of freedom\\n', ' degrees of freedom\\n'), .Dim = c(2L, 5L), .Dimnames = list(c('null.deviance', 'deviance'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -27194,8 +27194,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinaperm_testaperm15_eb1bd69290feb0fdb45126450f7cd867() {
-        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(5L, 20L), .Dimnames = list(c('#ifdef', '\\Sexpr', 'build', 'install', 'render'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinaperm_testaperm15_cef9555938417a65760cac0c3cb61fe6() {
+        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(5L, 20L), .Dimnames = list(c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -27234,8 +27234,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinaperm_testaperm22_f50d556640063dcbd0714a4bce8ce8f4() {
-        assertEval("argv <- list(structure(c('    Null deviance:', 'Residual deviance:', '67.5316', ' 4.5512', ' on', ' on', '9', '7', ' degrees of freedom\n', ' degrees of freedom\n'), .Dim = c(2L, 5L), .Dimnames = list(c('null.deviance', 'deviance'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinaperm_testaperm22_64d5bebb43aff8cefa15f42e5f425cb4() {
+        assertEval("argv <- list(structure(c('    Null deviance:', 'Residual deviance:', '67.5316', ' 4.5512', ' on', ' on', '9', '7', ' degrees of freedom\\n', ' degrees of freedom\\n'), .Dim = c(2L, 5L), .Dimnames = list(c('null.deviance', 'deviance'), NULL)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -27329,8 +27329,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinarray_testarray10_6ddc0343d8079a19524667b09a3959d4() {
-        assertEval("argv <- list(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), c(5L, 16L), list(c('#ifdef', '\\Sexpr', 'build', 'install', 'render'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinarray_testarray10_4c587381aa04d4159bcaf425098f91df() {
+        assertEval("argv <- list(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), c(5L, 16L), list(c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -27634,8 +27634,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascharacter_testascharacter14_5d7cae1481640b8b52a874449b58979f() {
-        assertEval("argv <- list(structure('Estimates a probability density function,  \n', Rd_tag = 'TEXT'));as.character(argv[[1]]);");
+    public void TestrGenBuiltinascharacter_testascharacter14_b618dc1d6e4030d027f9e589707f3220() {
+        assertEval("argv <- list(structure('Estimates a probability density function,  \\n', Rd_tag = 'TEXT'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -27649,8 +27649,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascharacter_testascharacter17_b8d4817acc339389b67e95ef294856ed() {
-        assertEval("argv <- list(structure(list(list(structure('x', Rd_tag = 'TEXT')), list(structure('an R object representing a hierarchical clustering.\n', Rd_tag = 'TEXT'), structure('    For the default method, an object of class ', Rd_tag = 'TEXT'), structure(list(structure('\'', Rd_tag = 'RCODE'), structure(list(structure('hclust', Rd_tag = 'TEXT')), Rd_tag = '\\link'), structure('\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' or\n', Rd_tag = 'TEXT'), structure('    with a method for ', Rd_tag = 'TEXT'), structure(list(    structure(list(structure('as.hclust', Rd_tag = 'TEXT')), Rd_tag = '\\link'), structure('()', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' such as\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(structure('\'', Rd_tag = 'RCODE'), structure(list(structure('agnes', Rd_tag = 'TEXT')), Rd_tag = '\\link', Rd_option = structure('cluster', Rd_tag = 'TEXT')), structure('\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' in package ', Rd_tag = 'TEXT'), structure(c('\\href{http://CRAN.R-project.org/package=#1}{\\pkg{#1}}', 'cluster'), Rd_tag = 'USERMACRO'), structure(list(list(structure('http://CRAN.R-project.org/package=cluster', Rd_tag = 'VERB')), list(structure(list(structure('cluster', Rd_tag = 'TEXT')), Rd_tag = '\\pkg'))), Rd_tag = '\\href'), structure('.', Rd_tag = 'TEXT'))), Rd_tag = '\\item'));as.character(argv[[1]]);");
+    public void TestrGenBuiltinascharacter_testascharacter17_5e4050134c816b4b48d5edcd7a65f1e3() {
+        assertEval("argv <- list(structure(list(list(structure('x', Rd_tag = 'TEXT')), list(structure('an R object representing a hierarchical clustering.\\n', Rd_tag = 'TEXT'), structure('    For the default method, an object of class ', Rd_tag = 'TEXT'), structure(list(structure('\\'', Rd_tag = 'RCODE'), structure(list(structure('hclust', Rd_tag = 'TEXT')), Rd_tag = '\\\\link'), structure('\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' or\\n', Rd_tag = 'TEXT'), structure('    with a method for ', Rd_tag = 'TEXT'), structure(list(    structure(list(structure('as.hclust', Rd_tag = 'TEXT')), Rd_tag = '\\\\link'), structure('()', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' such as\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(structure('\\'', Rd_tag = 'RCODE'), structure(list(structure('agnes', Rd_tag = 'TEXT')), Rd_tag = '\\\\link', Rd_option = structure('cluster', Rd_tag = 'TEXT')), structure('\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' in package ', Rd_tag = 'TEXT'), structure(c('\\\\href{http://CRAN.R-project.org/package=#1}{\\\\pkg{#1}}', 'cluster'), Rd_tag = 'USERMACRO'), structure(list(list(structure('http://CRAN.R-project.org/package=cluster', Rd_tag = 'VERB')), list(structure(list(structure('cluster', Rd_tag = 'TEXT')), Rd_tag = '\\\\pkg'))), Rd_tag = '\\\\href'), structure('.', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -27669,8 +27669,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascharacter_testascharacter20_a9bdbf0f8c7344444944aa83181144cd() {
-        assertEval("argv <- list(structure(list(structure('\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure('coerce', Rd_tag = 'TEXT')), list(structure(list(structure('signature(from = \'dgCMatrix\', to =\n', Rd_tag = 'RCODE'), structure('\t\'ngCMatrix\')', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(', and many similar ones; typically you should\n', Rd_tag = 'TEXT'), structure('      coerce to ', Rd_tag = 'TEXT'), structure(list(structure('\'nsparseMatrix\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'),     structure(' (or ', Rd_tag = 'TEXT'), structure(list(structure('\'nMatrix\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(').  Note that\n', Rd_tag = 'TEXT'), structure('      coercion to a sparse pattern matrix records all the potential\n', Rd_tag = 'TEXT'), structure('      non-zero entries, i.e., explicit (', Rd_tag = 'TEXT'), structure(list(structure('non-structural', Rd_tag = 'TEXT')), Rd_tag = '\\dQuote'), structure(') zeroes\n', Rd_tag = 'TEXT'), structure('      are coerced to ', Rd_tag = 'TEXT'),     structure(list(structure('TRUE', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(', not ', Rd_tag = 'TEXT'), structure(list(structure('FALSE', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(', see the example.\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure('t', Rd_tag = 'TEXT')), list(structure(list(structure('signature(x = \'ngCMatrix\')', Rd_tag = 'RCODE')), Rd_tag = '\\code'),     structure(': returns the transpose\n', Rd_tag = 'TEXT'), structure('      of ', Rd_tag = 'TEXT'), structure(list(structure('x', Rd_tag = 'RCODE')), Rd_tag = '\\code'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure('which', Rd_tag = 'TEXT')), list(structure(list(structure('signature(x = \'lsparseMatrix\')', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(', semantically\n', Rd_tag = 'TEXT'),     structure('      equivalent to ', Rd_tag = 'TEXT'), structure(list(structure('base', Rd_tag = 'TEXT')), Rd_tag = '\\pkg'), structure(' function ', Rd_tag = 'TEXT'), structure(list(structure(list(structure('which', Rd_tag = 'TEXT')), Rd_tag = '\\link'), structure('(x, arr.ind)', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(';\n', Rd_tag = 'TEXT'), structure('      for details, see the ', Rd_tag = 'TEXT'), structure(list(structure(list(structure('lMatrix', Rd_tag = 'TEXT')), Rd_tag = '\\linkS4class')), Rd_tag = '\\code'),     structure(' class documentation.', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT')), Rd_tag = '\\describe'));as.character(argv[[1]]);");
+    public void TestrGenBuiltinascharacter_testascharacter20_d79960a6ddad66b405918a3fdffda8de() {
+        assertEval("argv <- list(structure(list(structure('\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure('coerce', Rd_tag = 'TEXT')), list(structure(list(structure('signature(from = \\'dgCMatrix\\', to =\\n', Rd_tag = 'RCODE'), structure('\\t\\'ngCMatrix\\')', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(', and many similar ones; typically you should\\n', Rd_tag = 'TEXT'), structure('      coerce to ', Rd_tag = 'TEXT'), structure(list(structure('\\'nsparseMatrix\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'),     structure(' (or ', Rd_tag = 'TEXT'), structure(list(structure('\\'nMatrix\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(').  Note that\\n', Rd_tag = 'TEXT'), structure('      coercion to a sparse pattern matrix records all the potential\\n', Rd_tag = 'TEXT'), structure('      non-zero entries, i.e., explicit (', Rd_tag = 'TEXT'), structure(list(structure('non-structural', Rd_tag = 'TEXT')), Rd_tag = '\\\\dQuote'), structure(') zeroes\\n', Rd_tag = 'TEXT'), structure('      are coerced to ', Rd_tag = 'TEXT'),     structure(list(structure('TRUE', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(', not ', Rd_tag = 'TEXT'), structure(list(structure('FALSE', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(', see the example.\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure('t', Rd_tag = 'TEXT')), list(structure(list(structure('signature(x = \\'ngCMatrix\\')', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'),     structure(': returns the transpose\\n', Rd_tag = 'TEXT'), structure('      of ', Rd_tag = 'TEXT'), structure(list(structure('x', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure('which', Rd_tag = 'TEXT')), list(structure(list(structure('signature(x = \\'lsparseMatrix\\')', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(', semantically\\n', Rd_tag = 'TEXT'),     structure('      equivalent to ', Rd_tag = 'TEXT'), structure(list(structure('base', Rd_tag = 'TEXT')), Rd_tag = '\\\\pkg'), structure(' function ', Rd_tag = 'TEXT'), structure(list(structure(list(structure('which', Rd_tag = 'TEXT')), Rd_tag = '\\\\link'), structure('(x, arr.ind)', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(';\\n', Rd_tag = 'TEXT'), structure('      for details, see the ', Rd_tag = 'TEXT'), structure(list(structure(list(structure('lMatrix', Rd_tag = 'TEXT')), Rd_tag = '\\\\linkS4class')), Rd_tag = '\\\\code'),     structure(' class documentation.', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT')), Rd_tag = '\\\\describe'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -27679,8 +27679,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascharacter_testascharacter22_fae2b02cf6067c39f3cf522eed4b0381() {
-        assertEval("argv <- list(structure(list(structure('\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure(list(structure('languageEl', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(':', Rd_tag = 'TEXT')), list(structure('\n', Rd_tag = 'TEXT'), structure('      extract an element of a language object, consistently for\n', Rd_tag = 'TEXT'), structure('      different kinds of objects.\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('      The 1st., etc. elements of a function are the corresponding formal\n', Rd_tag = 'TEXT'),     structure('      arguments, with the default expression if any as value.\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('      The first element of a call is the name or the function object\n', Rd_tag = 'TEXT'), structure('      being called.\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('      The 2nd, 3rd, etc. elements are the 1st, 2nd, etc. arguments\n', Rd_tag = 'TEXT'), structure('      expressions.  Note that the form of the extracted name is\n', Rd_tag = 'TEXT'),     structure('      different for R and S-Plus.  When the name (the first element) of\n', Rd_tag = 'TEXT'), structure('      a call is replaced, the languageEl replacement function coerces a\n', Rd_tag = 'TEXT'), structure('      character string to the internal form for each system.\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('      The 1st, 2nd, 3rd elements of an ', Rd_tag = 'TEXT'), structure(list(structure('if', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' expression are the\n', Rd_tag = 'TEXT'),     structure('      test, first, and second branch.\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('      The 1st element of a ', Rd_tag = 'TEXT'), structure(list(structure('for', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' object is the name (symbol) being\n', Rd_tag = 'TEXT'), structure('      used in the loop, the second is the expression for the range of\n', Rd_tag = 'TEXT'), structure('      the loop, the third is the body of the loop.\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'),     structure('      The first element of a ', Rd_tag = 'TEXT'), structure(list(structure('while', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' object is the loop test, and\n', Rd_tag = 'TEXT'), structure('      the second the body of the loop.\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure('\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure(list(structure('isGrammarSymbol', Rd_tag = 'RCODE')), Rd_tag = '\\code'),     structure(':', Rd_tag = 'TEXT')), list(structure('\n', Rd_tag = 'TEXT'), structure('      Checks whether the symbol is part of the grammar.\n', Rd_tag = 'TEXT'), structure('      Don't use this function directly.\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT')), Rd_tag = '\\describe'));as.character(argv[[1]]);");
+    public void TestrGenBuiltinascharacter_testascharacter22_57067e2c0d6c38282b57535adb101e14() {
+        assertEval("argv <- list(structure(list(structure('\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure(list(structure('languageEl', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(':', Rd_tag = 'TEXT')), list(structure('\\n', Rd_tag = 'TEXT'), structure('      extract an element of a language object, consistently for\\n', Rd_tag = 'TEXT'), structure('      different kinds of objects.\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('      The 1st., etc. elements of a function are the corresponding formal\\n', Rd_tag = 'TEXT'),     structure('      arguments, with the default expression if any as value.\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('      The first element of a call is the name or the function object\\n', Rd_tag = 'TEXT'), structure('      being called.\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('      The 2nd, 3rd, etc. elements are the 1st, 2nd, etc. arguments\\n', Rd_tag = 'TEXT'), structure('      expressions.  Note that the form of the extracted name is\\n', Rd_tag = 'TEXT'),     structure('      different for R and S-Plus.  When the name (the first element) of\\n', Rd_tag = 'TEXT'), structure('      a call is replaced, the languageEl replacement function coerces a\\n', Rd_tag = 'TEXT'), structure('      character string to the internal form for each system.\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('      The 1st, 2nd, 3rd elements of an ', Rd_tag = 'TEXT'), structure(list(structure('if', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' expression are the\\n', Rd_tag = 'TEXT'),     structure('      test, first, and second branch.\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('      The 1st element of a ', Rd_tag = 'TEXT'), structure(list(structure('for', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' object is the name (symbol) being\\n', Rd_tag = 'TEXT'), structure('      used in the loop, the second is the expression for the range of\\n', Rd_tag = 'TEXT'), structure('      the loop, the third is the body of the loop.\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'),     structure('      The first element of a ', Rd_tag = 'TEXT'), structure(list(structure('while', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' object is the loop test, and\\n', Rd_tag = 'TEXT'), structure('      the second the body of the loop.\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure('\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'), structure(list(list(structure(list(structure('isGrammarSymbol', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'),     structure(':', Rd_tag = 'TEXT')), list(structure('\\n', Rd_tag = 'TEXT'), structure('      Checks whether the symbol is part of the grammar.\\n', Rd_tag = 'TEXT'), structure('      Don't use this function directly.\\n', Rd_tag = 'TEXT'), structure('    ', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT')), Rd_tag = '\\\\describe'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -27774,8 +27774,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascharacter_testascharacter4_11f4ff562a49542ee4949e9c4078e4a8() {
-        assertEval("argv <- list(c('### Encoding: UTF-8', '', '### Name: text', '### Title: Add Text to a Plot', '### Aliases: text text.default', '### Keywords: aplot', '', '### ** Examples', '', 'plot(-1:1, -1:1, type = \'n\', xlab = \'Re\', ylab = \'Im\')', 'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)', '', '## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \'text(...) examples\\n~~~~~~~~~~~~~~\',', '     sub = \'R is GNU ©, but not ® ...\')', 'mtext(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\', side = 3)', 'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \'red\')', 'text(6, 2, \'the text is CENTERED around (x,y) = (6,2) by default\',', '     cex = .8)', 'text(2, 1, \'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\',', '     adj = c(0,0))', 'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))', 'text(4, 8.4, \'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\',', '     cex = .75)', 'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))', '', '## Two more latin1 examples', 'text(5, 10.2,', '     \'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\')', 'text(5, 9.8,', '     \'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\')', '', '', ''));as.character(argv[[1]]);");
+    public void TestrGenBuiltinascharacter_testascharacter4_b0efabdea893c5e3c24e0d077282fc6b() {
+        assertEval("argv <- list(c('### Encoding: UTF-8', '', '### Name: text', '### Title: Add Text to a Plot', '### Aliases: text text.default', '### Keywords: aplot', '', '### ** Examples', '', 'plot(-1:1, -1:1, type = \\'n\\', xlab = \\'Re\\', ylab = \\'Im\\')', 'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)', '', '## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \\'text(...) examples\\\\n~~~~~~~~~~~~~~\\',', '     sub = \\'R is GNU ©, but not ® ...\\')', 'mtext(\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\', side = 3)', 'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \\'red\\')', 'text(6, 2, \\'the text is CENTERED around (x,y) = (6,2) by default\\',', '     cex = .8)', 'text(2, 1, \\'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\\',', '     adj = c(0,0))', 'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))', 'text(4, 8.4, \\'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\\',', '     cex = .75)', 'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))', '', '## Two more latin1 examples', 'text(5, 10.2,', '     \\'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\\')', 'text(5, 9.8,', '     \\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\')', '', '', ''));as.character(argv[[1]]);");
     }
 
     @Test
@@ -28284,8 +28284,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinasvector_testasvector10_0fc92c428aac97c21e89922b5ab5fc2a() {
-        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\Sexpr', 'build', 'install', 'render')), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinasvector_testasvector10_f8e3e47b82d7e67d88c162d66d6c5ed2() {
+        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render', '#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -28369,8 +28369,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinasvector_testasvector26_d932b18bb745eb7bb3be830cd113dee8() {
-        assertEval("argv <- list(quote(list(V1 = c('a', 'd e', 'h'), V2 = c('b'', 'f', 'i'), V3 = c('c', 'g', 'j\nk l m'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinasvector_testasvector26_fc2120753af46a7f80df4f69719e978b() {
+        assertEval("argv <- list(quote(list(V1 = c('a', 'd e', 'h'), V2 = c('b'', 'f', 'i'), V3 = c('c', 'g', 'j\\nk l m'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -28414,8 +28414,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinasvector_testasvector34_1287610a4c12b378637c199615a813ea() {
-        assertEval("argv <- list(quote(list(a = I('abc'), b = I('def\'gh'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinasvector_testasvector34_39b5fdb7e9ed8b85f87931734024b0f0() {
+        assertEval("argv <- list(quote(list(a = I('abc'), b = I('def\\'gh'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -28554,8 +28554,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinasvector_testasvector61_5ecc3f9ed1b85fcffdd2b0eaf9ab523f() {
-        assertEval("argv <- list(c('The C and R code has been reformatted for legibility.', 'The old compatibility function rpconvert() has been removed.', 'The cross-validation functions allow for user interrupt at the end\nof evaluating each split.', 'Variable Reliability in data set car90 is corrected to be an\nordered factor, as documented.', 'Surrogate splits are now considered only if they send two or more\ncases _with non-zero weight_ each way.  For numeric/ordinal\nvariables the restriction to non-zero weights is new: for\ncategorical variables this is a new restriction.', 'Surrogate splits which improve only by rounding error over the\ndefault split are no longer returned.  Where weights and missing\nvalues are present, the splits component for some of these was not\nreturned correctly.', 'A fit of class \'rpart\' now contains a component for variable\n‘importance’, which is reported by the summary() method.', 'The text() method gains a minlength argument, like the labels()\nmethod.  This adds finer control: the default remains pretty =\nNULL, minlength = 1L.', 'The handling of fits with zero and fractional weights has been\ncorrected: the results may be slightly different (or even\nsubstantially different when the proportion of zero weights is\nlarge).', 'Some memory leaks have been plugged.', 'There is a second vignette, longintro.Rnw, a version of the\noriginal Mayo Tecnical Report on rpart.', 'Added dataset car90, a corrected version of the S-PLUS dataset\ncar.all (used with permission).', 'This version does not use paste0{} and so works with R 2.14.x.', 'Merged in a set of Splus code changes that had accumulated at Mayo\nover the course of a decade. The primary one is a change in how\nindexing is done in the underlying C code, which leads to a major\nspeed increase for large data sets.  Essentially, for the lower\nleaves all our time used to be eaten up by bookkeeping, and this\nwas replaced by a different approach.  The primary routine also\nuses .Call{} so as to be more memory efficient.', 'The other major change was an error for asymmetric loss matrices,\nprompted by a user query.  With L=loss asymmetric, the altered\npriors were computed incorrectly - they were using L' instead of L.\nUpshot - the tree would not not necessarily choose optimal splits\nfor the given loss matrix.  Once chosen, splits were evaluated\ncorrectly.  The printed “improvement” values are of course the\nwrong ones as well.  It is interesting that for my little test\ncase, with L quite asymmetric, the early splits in the tree are\nunchanged - a good split still looks good.', 'Add the return.all argument to xpred.rpart().', 'Added a set of formal tests, i.e., cases with known answers to\nwhich we can compare.', 'Add a usercode vignette, explaining how to add user defined\nsplitting functions.', 'The class method now also returns the node probability.', 'Add the stagec data set, used in some tests.', 'The plot.rpart routine needs to store a value that will be visible\nto the rpartco routine at a later time.  This is now done in an\nenvironment in the namespace.', 'Force use of registered symbols in R >= 2.16.0', 'Update Polish translations.', 'Work on message formats.', 'Add Polish translations', 'rpart, rpart.matrix: allow backticks in formulae.', 'tests/backtick.R: regession test', 'src/xval.c: ensure unused code is not compiled in.', 'Change description of margin in ?plot.rpart as suggested by Bill\nVenables.'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinasvector_testasvector61_f2fcfcf4db960a5ba9838cbb61e8e2f7() {
+        assertEval("argv <- list(c('The C and R code has been reformatted for legibility.', 'The old compatibility function rpconvert() has been removed.', 'The cross-validation functions allow for user interrupt at the end\\nof evaluating each split.', 'Variable Reliability in data set car90 is corrected to be an\\nordered factor, as documented.', 'Surrogate splits are now considered only if they send two or more\\ncases _with non-zero weight_ each way.  For numeric/ordinal\\nvariables the restriction to non-zero weights is new: for\\ncategorical variables this is a new restriction.', 'Surrogate splits which improve only by rounding error over the\\ndefault split are no longer returned.  Where weights and missing\\nvalues are present, the splits component for some of these was not\\nreturned correctly.', 'A fit of class \\'rpart\\' now contains a component for variable\\n‘importance’, which is reported by the summary() method.', 'The text() method gains a minlength argument, like the labels()\\nmethod.  This adds finer control: the default remains pretty =\\nNULL, minlength = 1L.', 'The handling of fits with zero and fractional weights has been\\ncorrected: the results may be slightly different (or even\\nsubstantially different when the proportion of zero weights is\\nlarge).', 'Some memory leaks have been plugged.', 'There is a second vignette, longintro.Rnw, a version of the\\noriginal Mayo Tecnical Report on rpart.', 'Added dataset car90, a corrected version of the S-PLUS dataset\\ncar.all (used with permission).', 'This version does not use paste0{} and so works with R 2.14.x.', 'Merged in a set of Splus code changes that had accumulated at Mayo\\nover the course of a decade. The primary one is a change in how\\nindexing is done in the underlying C code, which leads to a major\\nspeed increase for large data sets.  Essentially, for the lower\\nleaves all our time used to be eaten up by bookkeeping, and this\\nwas replaced by a different approach.  The primary routine also\\nuses .Call{} so as to be more memory efficient.', 'The other major change was an error for asymmetric loss matrices,\\nprompted by a user query.  With L=loss asymmetric, the altered\\npriors were computed incorrectly - they were using L' instead of L.\\nUpshot - the tree would not not necessarily choose optimal splits\\nfor the given loss matrix.  Once chosen, splits were evaluated\\ncorrectly.  The printed “improvement” values are of course the\\nwrong ones as well.  It is interesting that for my little test\\ncase, with L quite asymmetric, the early splits in the tree are\\nunchanged - a good split still looks good.', 'Add the return.all argument to xpred.rpart().', 'Added a set of formal tests, i.e., cases with known answers to\\nwhich we can compare.', 'Add a usercode vignette, explaining how to add user defined\\nsplitting functions.', 'The class method now also returns the node probability.', 'Add the stagec data set, used in some tests.', 'The plot.rpart routine needs to store a value that will be visible\\nto the rpartco routine at a later time.  This is now done in an\\nenvironment in the namespace.', 'Force use of registered symbols in R >= 2.16.0', 'Update Polish translations.', 'Work on message formats.', 'Add Polish translations', 'rpart, rpart.matrix: allow backticks in formulae.', 'tests/backtick.R: regession test', 'src/xval.c: ensure unused code is not compiled in.', 'Change description of margin in ?plot.rpart as suggested by Bill\\nVenables.'), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -28764,8 +28764,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinattr_testattr15_b9e5742774bdc377e7ee40f40748e252() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 1), Deviance = c(5.65604443125997, 8.44399377410362), AIC = c(71.3540021461976, 72.1419514890413)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user:Temp'), class = c('anova', 'data.frame'), heading = c('Single term deletions', '\nModel:', 'cbind(X, M) ~ M.user + Temp + M.user:Temp')), 'row.names');attr(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinattr_testattr15_82470dd8b292872e1b00a1b9a37b732b() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 1), Deviance = c(5.65604443125997, 8.44399377410362), AIC = c(71.3540021461976, 72.1419514890413)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user:Temp'), class = c('anova', 'data.frame'), heading = c('Single term deletions', '\\nModel:', 'cbind(X, M) ~ M.user + Temp + M.user:Temp')), 'row.names');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -28824,13 +28824,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinattr_testattr26_f6948f118b0dc25226e634552ed0024c() {
-        assertEval("argv <- list(structure(list(structure(list(structure('Update varFunc Object', Rd_tag = 'TEXT')), Rd_tag = '\\title'), structure(list(structure('update.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\name'), structure(list(structure('update.varExp', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('update.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('update.varComb', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('update.varConstPower', Rd_tag = 'VERB')), Rd_tag = '\\alias'),     structure(list(structure('update.varExpon', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('update.varPower', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('models', Rd_tag = 'TEXT')), Rd_tag = '\\keyword'), structure(list(structure('\n', Rd_tag = 'TEXT'), structure('  If the ', Rd_tag = 'TEXT'), structure(list(structure('formula(object)', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' includes a ', Rd_tag = 'TEXT'), structure(list(structure('\'.\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'),         structure(' term, representing\n', Rd_tag = 'TEXT'), structure('  a fitted object, the variance covariate needs to be updated upon\n', Rd_tag = 'TEXT'), structure('  completion of an optimization cycle (in which the variance function\n', Rd_tag = 'TEXT'), structure('  weights are kept fixed). This method function allows a reevaluation of\n', Rd_tag = 'TEXT'), structure('  the variance covariate using the current fitted object and,\n', Rd_tag = 'TEXT'), structure('  optionally, other variables in the original data.\n', Rd_tag = 'TEXT')), Rd_tag = '\\description'),     structure(list(structure('\n', Rd_tag = 'RCODE'), structure(list(list(structure('update', Rd_tag = 'TEXT')), list(structure('varFunc', Rd_tag = 'TEXT'))), Rd_tag = '\\method'), structure('(object, data, ', Rd_tag = 'RCODE'), structure(list(), Rd_tag = '\\dots'), structure(')\n', Rd_tag = 'RCODE')), Rd_tag = '\\usage'), structure(list(structure('\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'), structure(list(list(structure('object', Rd_tag = 'TEXT')), list(structure('an object inheriting from class ', Rd_tag = 'TEXT'),         structure(list(structure('varFunc', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(',\n', Rd_tag = 'TEXT'), structure('    representing a variance function structure.', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure(' \n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'), structure(list(list(structure('data', Rd_tag = 'TEXT')), list(structure('a list with a component named ', Rd_tag = 'TEXT'), structure(list(structure('\'.\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' with the current\n', Rd_tag = 'TEXT'),         structure('    version of the fitted object (from which fitted values, coefficients,\n', Rd_tag = 'TEXT'), structure('    and residuals can be extracted) and, if necessary, other variables\n', Rd_tag = 'TEXT'), structure('    used to evaluate the variance covariate(s).', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure(' ', Rd_tag = 'TEXT'), structure(list(list(structure(list(), Rd_tag = '\\dots')), list(structure('some methods for this generic require additional\n', Rd_tag = 'TEXT'),         structure('    arguments.  None are used in this method.', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure(' \n', Rd_tag = 'TEXT')), Rd_tag = '\\arguments'), structure(list(structure('\n', Rd_tag = 'TEXT'), structure('  if ', Rd_tag = 'TEXT'), structure(list(structure('formula(object)', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' includes a ', Rd_tag = 'TEXT'), structure(list(structure('\'.\'', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' term, an\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'),         structure(list(structure('varFunc', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' object similar to ', Rd_tag = 'TEXT'), structure(list(structure('object', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(', but with the \n', Rd_tag = 'TEXT'), structure('  variance covariate reevaluated at the current fitted object value;\n', Rd_tag = 'TEXT'), structure('  else ', Rd_tag = 'TEXT'), structure(list(structure('object', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' is returned unchanged.\n', Rd_tag = 'TEXT')), Rd_tag = '\\value'),     structure(list(structure('José Pinheiro and Douglas Bates ', Rd_tag = 'TEXT'), structure(list(structure('bates@stat.wisc.edu', Rd_tag = 'TEXT')), Rd_tag = '\\email')), Rd_tag = '\\author'), structure(list(structure(list(structure(list(structure('needUpdate', Rd_tag = 'TEXT')), Rd_tag = '\\link')), Rd_tag = '\\code'), structure(',\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'), structure(list(structure(list(structure('covariate<-.varFunc', Rd_tag = 'TEXT')), Rd_tag = '\\link')), Rd_tag = '\\code'),         structure('\n', Rd_tag = 'TEXT')), Rd_tag = '\\seealso')), Rdfile = '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/man/update.varFunc.Rd', class = 'Rd', meta = structure(list(docType = character(0)), .Names = 'docType'), prepared = 3L), 'prepared');attr(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinattr_testattr26_e37faddf4364d19525c0ff77d3b56d9a() {
+        assertEval("argv <- list(structure(list(structure(list(structure('Update varFunc Object', Rd_tag = 'TEXT')), Rd_tag = '\\\\title'), structure(list(structure('update.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\\\name'), structure(list(structure('update.varExp', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('update.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('update.varComb', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('update.varConstPower', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('update.varExpon', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('update.varPower', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('models', Rd_tag = 'TEXT')), Rd_tag = '\\\\keyword'), structure(list(structure('\\n', Rd_tag = 'TEXT'), structure('  If the ', Rd_tag = 'TEXT'), structure(list(structure('formula(object)', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' includes a ', Rd_tag = 'TEXT'), structure(list(structure('\\'.\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'),         structure(' term, representing\\n', Rd_tag = 'TEXT'), structure('  a fitted object, the variance covariate needs to be updated upon\\n', Rd_tag = 'TEXT'), structure('  completion of an optimization cycle (in which the variance function\\n', Rd_tag = 'TEXT'), structure('  weights are kept fixed). This method function allows a reevaluation of\\n', Rd_tag = 'TEXT'), structure('  the variance covariate using the current fitted object and,\\n', Rd_tag = 'TEXT'), structure('  optionally, other variables in the original data.\\n', Rd_tag = 'TEXT')), Rd_tag = '\\\\description'),     structure(list(structure('\\n', Rd_tag = 'RCODE'), structure(list(list(structure('update', Rd_tag = 'TEXT')), list(structure('varFunc', Rd_tag = 'TEXT'))), Rd_tag = '\\\\method'), structure('(object, data, ', Rd_tag = 'RCODE'), structure(list(), Rd_tag = '\\\\dots'), structure(')\\n', Rd_tag = 'RCODE')), Rd_tag = '\\\\usage'), structure(list(structure('\\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'), structure(list(list(structure('object', Rd_tag = 'TEXT')), list(structure('an object inheriting from class ', Rd_tag = 'TEXT'),         structure(list(structure('varFunc', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(',\\n', Rd_tag = 'TEXT'), structure('    representing a variance function structure.', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure(' \\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'), structure(list(list(structure('data', Rd_tag = 'TEXT')), list(structure('a list with a component named ', Rd_tag = 'TEXT'), structure(list(structure('\\'.\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' with the current\\n', Rd_tag = 'TEXT'),         structure('    version of the fitted object (from which fitted values, coefficients,\\n', Rd_tag = 'TEXT'), structure('    and residuals can be extracted) and, if necessary, other variables\\n', Rd_tag = 'TEXT'), structure('    used to evaluate the variance covariate(s).', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure(' ', Rd_tag = 'TEXT'), structure(list(list(structure(list(), Rd_tag = '\\\\dots')), list(structure('some methods for this generic require additional\\n', Rd_tag = 'TEXT'),         structure('    arguments.  None are used in this method.', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure(' \\n', Rd_tag = 'TEXT')), Rd_tag = '\\\\arguments'), structure(list(structure('\\n', Rd_tag = 'TEXT'), structure('  if ', Rd_tag = 'TEXT'), structure(list(structure('formula(object)', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' includes a ', Rd_tag = 'TEXT'), structure(list(structure('\\'.\\'', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' term, an\\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'),         structure(list(structure('varFunc', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' object similar to ', Rd_tag = 'TEXT'), structure(list(structure('object', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(', but with the \\n', Rd_tag = 'TEXT'), structure('  variance covariate reevaluated at the current fitted object value;\\n', Rd_tag = 'TEXT'), structure('  else ', Rd_tag = 'TEXT'), structure(list(structure('object', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' is returned unchanged.\\n', Rd_tag = 'TEXT')), Rd_tag = '\\\\value'),     structure(list(structure('José Pinheiro and Douglas Bates ', Rd_tag = 'TEXT'), structure(list(structure('bates@stat.wisc.edu', Rd_tag = 'TEXT')), Rd_tag = '\\\\email')), Rd_tag = '\\\\author'), structure(list(structure(list(structure(list(structure('needUpdate', Rd_tag = 'TEXT')), Rd_tag = '\\\\link')), Rd_tag = '\\\\code'), structure(',\\n', Rd_tag = 'TEXT'), structure('  ', Rd_tag = 'TEXT'), structure(list(structure(list(structure('covariate<-.varFunc', Rd_tag = 'TEXT')), Rd_tag = '\\\\link')), Rd_tag = '\\\\code'),         structure('\\n', Rd_tag = 'TEXT')), Rd_tag = '\\\\seealso')), Rdfile = '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/man/update.varFunc.Rd', class = 'Rd', meta = structure(list(docType = character(0)), .Names = 'docType'), prepared = 3L), 'prepared');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    public void TestrGenBuiltinattr_testattr27_8047d42ac10204661af2ed864b81fb39() {
-        assertEval("argv <- list(structure(list(structure(list(structure('Print a varFunc Object', Rd_tag = 'TEXT')), Rd_tag = '\\title'), structure(list(structure('print.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\name'), structure(list(structure('print.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('print.varComb', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('models', Rd_tag = 'TEXT')), Rd_tag = '\\keyword'), structure(list(structure('\n', Rd_tag = 'TEXT'), structure('  The class and the coefficients associated with ', Rd_tag = 'TEXT'),     structure(list(structure('x', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(' are printed.\n', Rd_tag = 'TEXT')), Rd_tag = '\\description'), structure(list(structure('\n', Rd_tag = 'RCODE'), structure(list(list(structure('print', Rd_tag = 'TEXT')), list(structure('varFunc', Rd_tag = 'TEXT'))), Rd_tag = '\\method'), structure('(x, ', Rd_tag = 'RCODE'), structure(list(), Rd_tag = '\\dots'), structure(')\n', Rd_tag = 'RCODE')), Rd_tag = '\\usage'), structure(list(structure('\n', Rd_tag = 'TEXT'),     structure(' ', Rd_tag = 'TEXT'), structure(list(list(structure('x', Rd_tag = 'TEXT')), list(structure('an object inheriting from class ', Rd_tag = 'TEXT'), structure(list(structure('varFunc', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure(', representing a\n', Rd_tag = 'TEXT'), structure(' variance function structure.', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT'), structure(' ', Rd_tag = 'TEXT'), structure(list(list(structure(list(), Rd_tag = '\\dots')), list(structure('optional arguments passed to ', Rd_tag = 'TEXT'),         structure(list(structure('print.default', Rd_tag = 'RCODE')), Rd_tag = '\\code'), structure('; see\n', Rd_tag = 'TEXT'), structure('   the documentation on that method function.', Rd_tag = 'TEXT'))), Rd_tag = '\\item'), structure('\n', Rd_tag = 'TEXT')), Rd_tag = '\\arguments'), structure(list(structure('Jos<U+00E9> Pinheiro and Douglas Bates ', Rd_tag = 'TEXT'), structure(list(structure('bates@stat.wisc.edu', Rd_tag = 'TEXT')), Rd_tag = '\\email')), Rd_tag = '\\author'), structure(list(structure(list(    structure(list(structure('summary.varFunc', Rd_tag = 'TEXT')), Rd_tag = '\\link')), Rd_tag = '\\code')), Rd_tag = '\\seealso'), structure(list(structure('\n', Rd_tag = 'RCODE'), structure('vf1 <- varPower(0.3, form = ~age)\n', Rd_tag = 'RCODE'), structure('vf1 <- Initialize(vf1, Orthodont)\n', Rd_tag = 'RCODE'), structure('print(vf1)\n', Rd_tag = 'RCODE')), Rd_tag = '\\examples')), Rdfile = '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/man/print.varFunc.Rd', class = 'Rd', meta = structure(list(    docType = character(0)), .Names = 'docType'), prepared = 3L), 'meta');attr(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinattr_testattr27_f6a3b4b2fd3c913f1b96d56b284fa748() {
+        assertEval("argv <- list(structure(list(structure(list(structure('Print a varFunc Object', Rd_tag = 'TEXT')), Rd_tag = '\\\\title'), structure(list(structure('print.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\\\name'), structure(list(structure('print.varFunc', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.varComb', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('models', Rd_tag = 'TEXT')), Rd_tag = '\\\\keyword'), structure(list(structure('\\n', Rd_tag = 'TEXT'), structure('  The class and the coefficients associated with ', Rd_tag = 'TEXT'),     structure(list(structure('x', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(' are printed.\\n', Rd_tag = 'TEXT')), Rd_tag = '\\\\description'), structure(list(structure('\\n', Rd_tag = 'RCODE'), structure(list(list(structure('print', Rd_tag = 'TEXT')), list(structure('varFunc', Rd_tag = 'TEXT'))), Rd_tag = '\\\\method'), structure('(x, ', Rd_tag = 'RCODE'), structure(list(), Rd_tag = '\\\\dots'), structure(')\\n', Rd_tag = 'RCODE')), Rd_tag = '\\\\usage'), structure(list(structure('\\n', Rd_tag = 'TEXT'),     structure(' ', Rd_tag = 'TEXT'), structure(list(list(structure('x', Rd_tag = 'TEXT')), list(structure('an object inheriting from class ', Rd_tag = 'TEXT'), structure(list(structure('varFunc', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure(', representing a\\n', Rd_tag = 'TEXT'), structure(' variance function structure.', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT'), structure(' ', Rd_tag = 'TEXT'), structure(list(list(structure(list(), Rd_tag = '\\\\dots')), list(structure('optional arguments passed to ', Rd_tag = 'TEXT'),         structure(list(structure('print.default', Rd_tag = 'RCODE')), Rd_tag = '\\\\code'), structure('; see\\n', Rd_tag = 'TEXT'), structure('   the documentation on that method function.', Rd_tag = 'TEXT'))), Rd_tag = '\\\\item'), structure('\\n', Rd_tag = 'TEXT')), Rd_tag = '\\\\arguments'), structure(list(structure('Jos<U+00E9> Pinheiro and Douglas Bates ', Rd_tag = 'TEXT'), structure(list(structure('bates@stat.wisc.edu', Rd_tag = 'TEXT')), Rd_tag = '\\\\email')), Rd_tag = '\\\\author'), structure(list(structure(list(    structure(list(structure('summary.varFunc', Rd_tag = 'TEXT')), Rd_tag = '\\\\link')), Rd_tag = '\\\\code')), Rd_tag = '\\\\seealso'), structure(list(structure('\\n', Rd_tag = 'RCODE'), structure('vf1 <- varPower(0.3, form = ~age)\\n', Rd_tag = 'RCODE'), structure('vf1 <- Initialize(vf1, Orthodont)\\n', Rd_tag = 'RCODE'), structure('print(vf1)\\n', Rd_tag = 'RCODE')), Rd_tag = '\\\\examples')), Rdfile = '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/man/print.varFunc.Rd', class = 'Rd', meta = structure(list(    docType = character(0)), .Names = 'docType'), prepared = 3L), 'meta');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -28939,8 +28939,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinattr_testattr7_221f132d3449bb7f96ea8f28b223521a() {
-        assertEval("argv <- list(structure('mtext(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\', side = 3)\n', Rd_tag = 'RCODE'), 'Rd_tag');attr(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinattr_testattr7_908827ef1f376e647013bfb898c9f66c() {
+        assertEval("argv <- list(structure('mtext(\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\', side = 3)\\n', Rd_tag = 'RCODE'), 'Rd_tag');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -29074,8 +29074,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinattributes_testattributes17_2b12f8bdfb0c14648d94300866f8f130() {
-        assertEval("argv <- list(structure(list(L = structure(c('Min.   :14.00  ', '1st Qu.:26.00  ', 'Median :29.50  ', 'Mean   :36.39  ', '3rd Qu.:49.25  ', 'Max.   :70.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), M = structure(c('Min.   :12.00  ', '1st Qu.:18.25  ', 'Median :27.00  ', 'Mean   :26.39  ', '3rd Qu.:33.75  ', 'Max.   :42.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), H = structure(c('Min.   :10.00  ', '1st Qu.:15.25  ', 'Median :20.50  ', 'Mean   :21.67  ', '3rd Qu.:25.50  ', 'Max.   :43.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table')), .Dim = 3L, .Dimnames = structure(list(`warpbreaks[, 'tension']` = c('L', 'M', 'H')), .Names = 'warpbreaks[, \'tension\']')));attributes(argv[[1]]);");
+    public void TestrGenBuiltinattributes_testattributes17_970081fe154ebc5ac8f25f250898a0bc() {
+        assertEval("argv <- list(structure(list(L = structure(c('Min.   :14.00  ', '1st Qu.:26.00  ', 'Median :29.50  ', 'Mean   :36.39  ', '3rd Qu.:49.25  ', 'Max.   :70.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), M = structure(c('Min.   :12.00  ', '1st Qu.:18.25  ', 'Median :27.00  ', 'Mean   :26.39  ', '3rd Qu.:33.75  ', 'Max.   :42.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table'), H = structure(c('Min.   :10.00  ', '1st Qu.:15.25  ', 'Median :20.50  ', 'Mean   :21.67  ', '3rd Qu.:25.50  ', 'Max.   :43.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool')), class = 'table')), .Dim = 3L, .Dimnames = structure(list(`warpbreaks[, 'tension']` = c('L', 'M', 'H')), .Names = 'warpbreaks[, \\'tension\\']')));attributes(argv[[1]]);");
     }
 
     @Test
@@ -29169,8 +29169,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinattributes_testattributes8_7cb7e9f921b881423f60e2ff91021949() {
-        assertEval("argv <- list('Error in setClass(\'class3\', representation(\'class1\', \'class2\')) : \n  error in contained classes (\'class2\') for class “class3”; class definition removed from ‘.GlobalEnv’\n');attributes(argv[[1]]);");
+    public void TestrGenBuiltinattributes_testattributes8_0e1e15d3653f9f90a9220581adc5dc77() {
+        assertEval("argv <- list('Error in setClass(\\'class3\\', representation(\\'class1\\', \\'class2\\')) : \\n  error in contained classes (\\'class2\\') for class “class3”; class definition removed from ‘.GlobalEnv’\\n');attributes(argv[[1]]);");
     }
 
     @Test
@@ -29484,8 +29484,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinc_testc18_742b442e1270728d9ab7ee9693a04ab6() {
-        assertEval("argv <- list(structure(list(V1 = c(1L, 1L, 2L, 3L), V2 = structure(c(1L, 1L, 2L, 3L), .Label = c('A', 'D', 'E'), class = 'factor'), V3 = c(6, 6, 9, 10)), .Names = c('V1', 'V2', 'V3'), row.names = c(NA, 4L), class = 'data.frame'), sep = '\r');c(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinc_testc18_19851a01de6938ae0a9873f9fa8a09ee() {
+        assertEval("argv <- list(structure(list(V1 = c(1L, 1L, 2L, 3L), V2 = structure(c(1L, 1L, 2L, 3L), .Label = c('A', 'D', 'E'), class = 'factor'), V3 = c(6, 6, 9, 10)), .Names = c('V1', 'V2', 'V3'), row.names = c(NA, 4L), class = 'data.frame'), sep = '\\r');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -29569,8 +29569,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinc_testc33_3d5335bcbee7bbed01d8ae0c1031e531() {
-        assertEval("argv <- list(list('*', ' ', 'skipping installation test', '\n'), sep = '');c(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinc_testc33_a6db28e5d98589dc140cdbda8dcd24d2() {
+        assertEval("argv <- list(list('*', ' ', 'skipping installation test', '\\n'), sep = '');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -29669,8 +29669,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinc_testc51_c130eabcfe62b8976961284376eb9d07() {
-        assertEval("argv <- list(list('1: In matrix(1:7, 3, 4) :\n  data length [7] is not a sub-multiple or multiple of the number of rows [3]'), list(), fill = TRUE);c(argv[[1]],argv[[2]],argv[[3]]);");
+    public void TestrGenBuiltinc_testc51_fb4a174c4ea6283b35ecc00d37667108() {
+        assertEval("argv <- list(list('1: In matrix(1:7, 3, 4) :\\n  data length [7] is not a sub-multiple or multiple of the number of rows [3]'), list(), fill = TRUE);c(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -29774,8 +29774,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinc_testc70_b3c7975bed1723f6697dfe8ad4ae08f2() {
-        assertEval("argv <- list(structure(list(Topic = character(0), File = character(0)), .Names = c('Topic', 'File'), class = 'data.frame', row.names = integer(0)), sep = '\r');c(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinc_testc70_bf9e648e6ae102f91db275af3e6de5a1() {
+        assertEval("argv <- list(structure(list(Topic = character(0), File = character(0)), .Names = c('Topic', 'File'), class = 'data.frame', row.names = integer(0)), sep = '\\r');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -29819,28 +29819,28 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltincat_testcat1_642d53489a80f12335c584966d097d2a() {
-        assertEval("argv <- list('head\n', 1:2, '\n', 3:4, file = 'foo4');cat(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
+    public void TestrGenBuiltincat_testcat1_306cc2734e72e9455bfa21cbebcac406() {
+        assertEval("argv <- list('head\\n', 1:2, '\\n', 3:4, file = 'foo4');cat(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
     }
 
     @Test
-    public void TestrGenBuiltincat_testcat2_7f687b22a78090d3d549bb8b426eeaae() {
-        assertEval("argv <- list(list('Loading required package: splines\n'), structure(2L, class = c('terminal', 'connection')), '', FALSE, NULL, FALSE); .Internal(cat(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltincat_testcat2_d47e73fbfd0eaf8d20a64590d67e2d4f() {
+        assertEval("argv <- list(list('Loading required package: splines\\n'), structure(2L, class = c('terminal', 'connection')), '', FALSE, NULL, FALSE); .Internal(cat(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
-    public void TestrGenBuiltincat_testcat3_f9d68c51a73934423be654b766621d46() {
-        assertEval("argv <- list('%comment\n\n%another\n%\n%\n', 'C1\tC2\tC3\n\'Panel\'\t\'Area Examined\'\t\'% Blemishes\'\n', '\'1\'\t\'0.8\'\t\'3\'\n', '\'2\'\t\'0.6\'\t\'2\'\n', '\'3\'\t\'0.8\'\t\'3\'\n', file = 'test.dat', sep = '');cat(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
+    public void TestrGenBuiltincat_testcat3_2daf24cd1768f9b283a7379fbcfdde22() {
+        assertEval("argv <- list('%comment\\n\\n%another\\n%\\n%\\n', 'C1\\tC2\\tC3\\n\\'Panel\\'\\t\\'Area Examined\\'\\t\\'% Blemishes\\'\\n', '\\'1\\'\\t\\'0.8\\'\\t\\'3\\'\\n', '\\'2\\'\\t\\'0.6\\'\\t\\'2\\'\\n', '\\'3\\'\\t\\'0.8\\'\\t\\'3\\'\\n', file = 'test.dat', sep = '');cat(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
     }
 
     @Test
-    public void TestrGenBuiltincat_testcat4_38534c795888ef5c7ec99c588ba963d4() {
-        assertEval("argv <- list('#comment\n\n#another\n#\n#\n', 'C1\tC2\tC3\n\'Panel\'\t\'Area Examined\'\t\'# Blemishes\'\n', '\'1\'\t\'0.8\'\t\'3\'\n', '\'2\'\t\'0.6\'\t\'2\'\n', '\'3\'\t\'0.8\'\t\'3\'\n', file = 'test.dat', sep = '');cat(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
+    public void TestrGenBuiltincat_testcat4_51a87530100951af31c86d0dac89a405() {
+        assertEval("argv <- list('#comment\\n\\n#another\\n#\\n#\\n', 'C1\\tC2\\tC3\\n\\'Panel\\'\\t\\'Area Examined\\'\\t\\'# Blemishes\\'\\n', '\\'1\\'\\t\\'0.8\\'\\t\\'3\\'\\n', '\\'2\\'\\t\\'0.6\\'\\t\\'2\\'\\n', '\\'3\\'\\t\\'0.8\\'\\t\\'3\\'\\n', file = 'test.dat', sep = '');cat(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
     }
 
     @Test
-    public void TestrGenBuiltincat_testcat5_d2734f82b0260e758a74d5215c24db7d() {
-        assertEval("argv <- list('head\n', file = 'foo2');cat(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltincat_testcat5_c70d82512f0f47ba2578a265d455089e() {
+        assertEval("argv <- list('head\\n', file = 'foo2');cat(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -30464,8 +30464,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltincopyDFattr_testcopyDFattr6_a684c9c05d0cb48c619c8461a3818d4d() {
-        assertEval("argv <- list(structure(list(`Surv(stop, status * as.numeric(event), type = 'mstate')` = structure(c(760, 2160, 5441, 277, 1815, 2587, 547, 1125, 2010, 2422, 6155, 1767, 61, 60, 7807, 7732, 6126, 7921, 3590, 5231, 5384, 5934, 6415, 6789, 6778, 3561, 4505, 3987, 4726, 5550, 5216, 5757, 2345, 6931, 6760, 5796, 4810, 5143, 3091, 3316, 700, 1706, 5088, 944, 2466, 1706, 7364, 1857, 9510, 9603, 31, 7479, 2006, 2588, 2983, 8761, 3932, 4201, 5293, 273, 2223, 4249, 5308, 8327, 499, 5789, 7417, 3242, 3275, 10359, 10852, 362, 9993, 1795, 3562, 4139, 4840, 4959, 547, 4119, 8308, 1674, 2953, 3776, 1369, 7911, 7519, 9318, 4370, 7301, 1642, 4169, 7417, 6117, 4536, 7235, 6723, 7397, 7428, 2084, 4066, 1673, 2860, 0, 3773, 4810, 4206, 2314, 4065, 8961, 6143, 517, 3837, 7498, 2815, 8806, 7668, 12457, 8600, 7003, 2435, 1826, 2403, 3805, 4901, 365, 6642, 3318, 3012, 1431, 2223, 4962, 5982, 638, 3346, 4996, 6800, 7454, 8887, 5024, 2833, 4232, 5238, 3186, 3380, 3382, 8100, 1766, 7184, 8059, 6008, 5047, 2236, 8165, 4224, 2844, 6256, 7370, 3560, 4939, 4941, 2230, 3068, 152, 10122, 3226, 3943, 518, 8569, 845, 2099, 8006, 8052, 9560, 0, 7965, 7470, 8133, 809, 153, 1851, 3010, 2121, 7085, 5068, 7093, 5930, 6878, 8080, 791, 6626, 3962, 1116, 1249, 9257, 1077, 566, 174, 4627, 5022, 2070, 3012, 1625, 6607, 8381, 8389, 1005, 3895, 4236, 6970, 8497, 2861, 8487, 3227, 8030, 8023, 31, 2435, 518, 4758, 7958, 7884, 4453, 6349, 7862, 1392, 3167, 6025, 4656, 1767, 7736, 2678, 2191, 3658, 7758, 8009, 2556, 3511, 7954, 822, 4321, 5151, 7545, 7576, 32, 7875, 5236, 7106, 2802, 7898, 3014, 7867, 5354, 2989, 7555, 6089, 8697, 6479, 1826, 5917, 792, 1431, 1434, 4763, 2910, 6209, 5824, 2400, 1400, 3027, 7198, 7247, 2557, 3855, 61, 7410, 1492, 7160, 7899, 5181, 7280, 3448, 7381, 2434, 6763, 7065, 1218, 1554, 7533, 7288, 2922, 5988, 2495, 5234, 9598, 2953, 2961, 4539, 3775, 6524, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1, 2, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 0, 2, 1, 2, 2, 0, 2, 1, 2, 0, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 2, 1, 2, 2, 0, 1, 2, 1, 2, 2, 2, 2, 0, 2, 1, 2, 2, 0, 1, 2, 2, 0, 1, 2, 0, 2, 1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2, 0, 2, 2, 1, 0, 2, 2, 0, 0, 2, 0, 2, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 1, 2, 1, 0, 0, 2, 2, 1, 2, 2, 1, 2, 0, 2, 1, 2, 2, 2, 2, 0, 2, 2, 2, 0, 2, 1, 2, 1, 2, 2, 0, 2, 2, 2, 0, 2, 2, 1, 2, 0, 2, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2, 2, 2, 1, 2, 0, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 0, 2, 1, 2, 1, 0, 1, 0, 2, 0, 0, 2, 2, 2, 2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 1, 2, 0, 0, 1, 2, 0, 2, 1, 2, 1, 2, 2, 0, 1, 2, 1, 0, 2, 0, 2, 2, 0, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 0, 0, 1, 2, 2, 0, 2, 0, 2, 2, 0, 2, 0, 2, 2, 0, 1, 2, 0, 0, 1, 2, 1, 2, 0, 1, 2, 2, 1, 2), .Dim = c(300L, 2L), .Dimnames = list(NULL, c('time', 'status')), type = 'mright', states = c('1', '2'), class = 'Surv')), .Names = 'Surv(stop, status * as.numeric(event), type = \'mstate\')', class = 'data.frame', row.names = c(NA, 300L)), structure(list(`Surv(stop, status * as.numeric(event), type = 'mstate')` = NULL), .Names = 'Surv(stop, status * as.numeric(event), type = \'mstate\')', class = 'data.frame', row.names = c(NA, 300L))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltincopyDFattr_testcopyDFattr6_fccb37a8a88d55fe4891481dbdf37b3d() {
+        assertEval("argv <- list(structure(list(`Surv(stop, status * as.numeric(event), type = 'mstate')` = structure(c(760, 2160, 5441, 277, 1815, 2587, 547, 1125, 2010, 2422, 6155, 1767, 61, 60, 7807, 7732, 6126, 7921, 3590, 5231, 5384, 5934, 6415, 6789, 6778, 3561, 4505, 3987, 4726, 5550, 5216, 5757, 2345, 6931, 6760, 5796, 4810, 5143, 3091, 3316, 700, 1706, 5088, 944, 2466, 1706, 7364, 1857, 9510, 9603, 31, 7479, 2006, 2588, 2983, 8761, 3932, 4201, 5293, 273, 2223, 4249, 5308, 8327, 499, 5789, 7417, 3242, 3275, 10359, 10852, 362, 9993, 1795, 3562, 4139, 4840, 4959, 547, 4119, 8308, 1674, 2953, 3776, 1369, 7911, 7519, 9318, 4370, 7301, 1642, 4169, 7417, 6117, 4536, 7235, 6723, 7397, 7428, 2084, 4066, 1673, 2860, 0, 3773, 4810, 4206, 2314, 4065, 8961, 6143, 517, 3837, 7498, 2815, 8806, 7668, 12457, 8600, 7003, 2435, 1826, 2403, 3805, 4901, 365, 6642, 3318, 3012, 1431, 2223, 4962, 5982, 638, 3346, 4996, 6800, 7454, 8887, 5024, 2833, 4232, 5238, 3186, 3380, 3382, 8100, 1766, 7184, 8059, 6008, 5047, 2236, 8165, 4224, 2844, 6256, 7370, 3560, 4939, 4941, 2230, 3068, 152, 10122, 3226, 3943, 518, 8569, 845, 2099, 8006, 8052, 9560, 0, 7965, 7470, 8133, 809, 153, 1851, 3010, 2121, 7085, 5068, 7093, 5930, 6878, 8080, 791, 6626, 3962, 1116, 1249, 9257, 1077, 566, 174, 4627, 5022, 2070, 3012, 1625, 6607, 8381, 8389, 1005, 3895, 4236, 6970, 8497, 2861, 8487, 3227, 8030, 8023, 31, 2435, 518, 4758, 7958, 7884, 4453, 6349, 7862, 1392, 3167, 6025, 4656, 1767, 7736, 2678, 2191, 3658, 7758, 8009, 2556, 3511, 7954, 822, 4321, 5151, 7545, 7576, 32, 7875, 5236, 7106, 2802, 7898, 3014, 7867, 5354, 2989, 7555, 6089, 8697, 6479, 1826, 5917, 792, 1431, 1434, 4763, 2910, 6209, 5824, 2400, 1400, 3027, 7198, 7247, 2557, 3855, 61, 7410, 1492, 7160, 7899, 5181, 7280, 3448, 7381, 2434, 6763, 7065, 1218, 1554, 7533, 7288, 2922, 5988, 2495, 5234, 9598, 2953, 2961, 4539, 3775, 6524, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1, 2, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 0, 2, 1, 2, 2, 0, 2, 1, 2, 0, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 2, 1, 2, 2, 0, 1, 2, 1, 2, 2, 2, 2, 0, 2, 1, 2, 2, 0, 1, 2, 2, 0, 1, 2, 0, 2, 1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2, 0, 2, 2, 1, 0, 2, 2, 0, 0, 2, 0, 2, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 1, 2, 1, 0, 0, 2, 2, 1, 2, 2, 1, 2, 0, 2, 1, 2, 2, 2, 2, 0, 2, 2, 2, 0, 2, 1, 2, 1, 2, 2, 0, 2, 2, 2, 0, 2, 2, 1, 2, 0, 2, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2, 2, 2, 1, 2, 0, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 0, 2, 1, 2, 1, 0, 1, 0, 2, 0, 0, 2, 2, 2, 2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 1, 2, 0, 0, 1, 2, 0, 2, 1, 2, 1, 2, 2, 0, 1, 2, 1, 0, 2, 0, 2, 2, 0, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 0, 0, 1, 2, 2, 0, 2, 0, 2, 2, 0, 2, 0, 2, 2, 0, 1, 2, 0, 0, 1, 2, 1, 2, 0, 1, 2, 2, 1, 2), .Dim = c(300L, 2L), .Dimnames = list(NULL, c('time', 'status')), type = 'mright', states = c('1', '2'), class = 'Surv')), .Names = 'Surv(stop, status * as.numeric(event), type = \\'mstate\\')', class = 'data.frame', row.names = c(NA, 300L)), structure(list(`Surv(stop, status * as.numeric(event), type = 'mstate')` = NULL), .Names = 'Surv(stop, status * as.numeric(event), type = \\'mstate\\')', class = 'data.frame', row.names = c(NA, 300L))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -30479,8 +30479,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltincopyDFattr_testcopyDFattr9_25caa53459ad07e64061edced34162a1() {
-        assertEval("argv <- list(structure(list(Version = c('2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0'), Date = c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), Category = c('BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES'), Text = c('Using with(), eval() etc with a list with some unnamed elements now\n works.  (PR#14035)', 'cor(A, B) where A is n x 1 and B a 1-dimensional array segfaulted or\n gave an internal error.  (The case cor(B, A) was PR#7116.)', 'cut.POSIXt() applied to a start value after the DST transition on a\n DST-change day could give the wrong time for argument breaks in\n units of days or longer.  (PR#14208)', 'do_par() UNPROTECTed too early (PR#14214)', 'Subassignment x[[....]] <- y didn't check for a zero-length right\n hand side, and inserted a rubbish value.  (PR#14217)', 'Extreme tail behavior of, pbeta() {and hence pf()}, e.g., pbeta(x,\n 3, 2200, lower.tail=FALSE, log.p=TRUE) now returns finite values\n instead of jumping to -Inf too early.  (PR#14230).', 'read.fwf() misread multi-line records when n was specified.\n (PR#14241)', 'gzcon( <textConnection> ), an error, no longer damages the\n connection (in a way to have it segfault).  (PR#14237)', 'If xy[z].coords (used internally by many graphics functions) are\n given a list as x, they now check that the list has suitable names\n and give a more informative error message.  (PR#13936)')), .Names = c('Version', 'Date', 'Category', 'Text'), bad = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), package = 'R', row.names = c(1473L, 1483L, 1484L, 1485L, 1486L, 1493L, 1499L, 1503L, 1505L), class = c('news_db_from_Rd', 'news_db', 'data.frame')), structure(list(Version = NULL, Date = NULL, Category = NULL, Text = NULL), .Names = c('Version', 'Date', 'Category', 'Text'), bad = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), package = 'R', row.names = c(1473L, 1483L, 1484L, 1485L, 1486L, 1493L, 1499L, 1503L, 1505L), class = c('news_db_from_Rd', 'news_db', 'data.frame'))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltincopyDFattr_testcopyDFattr9_7ba67d8fea5f18da8b43b712312b01b5() {
+        assertEval("argv <- list(structure(list(Version = c('2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0'), Date = c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), Category = c('BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES'), Text = c('Using with(), eval() etc with a list with some unnamed elements now\\n works.  (PR#14035)', 'cor(A, B) where A is n x 1 and B a 1-dimensional array segfaulted or\\n gave an internal error.  (The case cor(B, A) was PR#7116.)', 'cut.POSIXt() applied to a start value after the DST transition on a\\n DST-change day could give the wrong time for argument breaks in\\n units of days or longer.  (PR#14208)', 'do_par() UNPROTECTed too early (PR#14214)', 'Subassignment x[[....]] <- y didn't check for a zero-length right\\n hand side, and inserted a rubbish value.  (PR#14217)', 'Extreme tail behavior of, pbeta() {and hence pf()}, e.g., pbeta(x,\\n 3, 2200, lower.tail=FALSE, log.p=TRUE) now returns finite values\\n instead of jumping to -Inf too early.  (PR#14230).', 'read.fwf() misread multi-line records when n was specified.\\n (PR#14241)', 'gzcon( <textConnection> ), an error, no longer damages the\\n connection (in a way to have it segfault).  (PR#14237)', 'If xy[z].coords (used internally by many graphics functions) are\\n given a list as x, they now check that the list has suitable names\\n and give a more informative error message.  (PR#13936)')), .Names = c('Version', 'Date', 'Category', 'Text'), bad = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), package = 'R', row.names = c(1473L, 1483L, 1484L, 1485L, 1486L, 1493L, 1499L, 1503L, 1505L), class = c('news_db_from_Rd', 'news_db', 'data.frame')), structure(list(Version = NULL, Date = NULL, Category = NULL, Text = NULL), .Names = c('Version', 'Date', 'Category', 'Text'), bad = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), package = 'R', row.names = c(1473L, 1483L, 1484L, 1485L, 1486L, 1493L, 1499L, 1503L, 1505L), class = c('news_db_from_Rd', 'news_db', 'data.frame'))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -30819,8 +30819,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindeparse_testdeparse17_1722d32a004dc5dbd0e8352f8ee8df87() {
-        assertEval("argv <- list('Version of 'graph' is too old --- no tests done here!\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltindeparse_testdeparse17_75fe9d57f9b240c0000903c5a1d4617d() {
+        assertEval("argv <- list('Version of 'graph' is too old --- no tests done here!\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -30874,18 +30874,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindeparse_testdeparse27_3ab13d32e7f008df59e46256ab396e9f() {
-        assertEval("argv <- list('\t *ERROR* !!\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltindeparse_testdeparse27_b48753672f4d4a49a099f4e47444a113() {
+        assertEval("argv <- list('\\t *ERROR* !!\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltindeparse_testdeparse28_32e9ed41cd9dafb761d9a9893953a7ed() {
-        assertEval("argv <- list('\n\f\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltindeparse_testdeparse28_48e26f281df241471bea409e949990bc() {
+        assertEval("argv <- list('\\n\\f\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltindeparse_testdeparse29_9361ca808d4a44a691ca5a3856932751() {
-        assertEval("argv <- list(' +\\.', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltindeparse_testdeparse29_a2aadf67ecca2bab00d0b5c251d4afbc() {
+        assertEval("argv <- list(' +\\\\.', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -31029,8 +31029,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindfltWarn_testdfltWarn1_920f2a48e04481397a39d20a18ba824f() {
-        assertEval("argv <- list(''f' is deprecated.\nUse 'convertY' instead.\nSee help(\'Deprecated\')', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltindfltWarn_testdfltWarn1_f1697fb2af517deb029200b5c9d556ae() {
+        assertEval("argv <- list(''f' is deprecated.\\nUse 'convertY' instead.\\nSee help(\\'Deprecated\\')', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -31039,8 +31039,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindfltWarn_testdfltWarn11_5ea27bcd41e393b94d089c33a8e1918c() {
-        assertEval("argv <- list('Invalid file name(s) for R code in ./myTst/R:\n  'file55711ba85492'\n are now renamed to 'z<name>.R'', quote(package.skeleton('myTst', code_files = tmp))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltindfltWarn_testdfltWarn11_d9723c64de09d287610ec58014e8b2b8() {
+        assertEval("argv <- list('Invalid file name(s) for R code in ./myTst/R:\\n  'file55711ba85492'\\n are now renamed to 'z<name>.R'', quote(package.skeleton('myTst', code_files = tmp))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -31064,8 +31064,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindfltWarn_testdfltWarn5_0eb756c16e0d906d9985c702671abaca() {
-        assertEval("argv <- list('‘graphics’ namespace cannot be unloaded:\n  namespace ‘graphics’ is imported by ‘stats’ so cannot be unloaded', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltindfltWarn_testdfltWarn5_7650df3f6fd1bca4622fc4f01a7de0b6() {
+        assertEval("argv <- list('‘graphics’ namespace cannot be unloaded:\\n  namespace ‘graphics’ is imported by ‘stats’ so cannot be unloaded', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -31224,8 +31224,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindim_testdim17_af5c16907423bf16bb3b302933855944() {
-        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(5L, 21L), .Dimnames = list(c('#ifdef', '\\Sexpr', 'build', 'install', 'render'), NULL)));dim(argv[[1]]);");
+    public void TestrGenBuiltindim_testdim17_66a7e6b72979d9c5ccb503d9d4a5da2e() {
+        assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(5L, 21L), .Dimnames = list(c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'), NULL)));dim(argv[[1]]);");
     }
 
     @Test
@@ -31414,8 +31414,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltindimnames_testdimnames16_4066274e36828142845cd4a81fcd34a2() {
-        assertEval("argv <- list(structure(c('4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-2', '4.0-2', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '3.1-55', '3.1-55', '3.1-55', '3.1-54', '3.1-53', '3.1-53', '3.1-52', '3.1-51', NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 'The C and R code has been reformatted for legibility.', 'The old compatibility function rpconvert() has been removed.', 'The cross-validation functions allow for user interrupt at the end\nof evaluating each split.', 'Variable Reliability in data set car90 is corrected to be an\nordered factor, as documented.', 'Surrogate splits are now considered only if they send two or more\ncases _with non-zero weight_ each way.  For numeric/ordinal\nvariables the restriction to non-zero weights is new: for\ncategorical variables this is a new restriction.', 'Surrogate splits which improve only by rounding error over the\ndefault split are no longer returned.  Where weights and missing\nvalues are present, the splits component for some of these was not\nreturned correctly.', 'A fit of class \'rpart\' now contains a component for variable\n‘importance’, which is reported by the summary() method.', 'The text() method gains a minlength argument, like the labels()\nmethod.  This adds finer control: the default remains pretty =\nNULL, minlength = 1L.', 'The handling of fits with zero and fractional weights has been\ncorrected: the results may be slightly different (or even\nsubstantially different when the proportion of zero weights is\nlarge).', 'Some memory leaks have been plugged.', 'There is a second vignette, longintro.Rnw, a version of the\noriginal Mayo Tecnical Report on rpart.', 'Added dataset car90, a corrected version of the S-PLUS dataset\ncar.all (used with permission).', 'This version does not use paste0{} and so works with R 2.14.x.', 'Merged in a set of Splus code changes that had accumulated at Mayo\nover the course of a decade. The primary one is a change in how\nindexing is done in the underlying C code, which leads to a major\nspeed increase for large data sets.  Essentially, for the lower\nleaves all our time used to be eaten up by bookkeeping, and this\nwas replaced by a different approach.  The primary routine also\nuses .Call{} so as to be more memory efficient.', 'The other major change was an error for asymmetric loss matrices,\nprompted by a user query.  With L=loss asymmetric, the altered\npriors were computed incorrectly - they were using L' instead of L.\nUpshot - the tree would not not necessarily choose optimal splits\nfor the given loss matrix.  Once chosen, splits were evaluated\ncorrectly.  The printed “improvement” values are of course the\nwrong ones as well.  It is interesting that for my little test\ncase, with L quite asymmetric, the early splits in the tree are\nunchanged - a good split still looks good.', 'Add the return.all argument to xpred.rpart().', 'Added a set of formal tests, i.e., cases with known answers to\nwhich we can compare.', 'Add a usercode vignette, explaining how to add user defined\nsplitting functions.', 'The class method now also returns the node probability.', 'Add the stagec data set, used in some tests.', 'The plot.rpart routine needs to store a value that will be visible\nto the rpartco routine at a later time.  This is now done in an\nenvironment in the namespace.', 'Force use of registered symbols in R >= 2.16.0', 'Update Polish translations.', 'Work on message formats.', 'Add Polish translations', 'rpart, rpart.matrix: allow backticks in formulae.', 'tests/backtick.R: regession test', 'src/xval.c: ensure unused code is not compiled in.', 'Change description of margin in ?plot.rpart as suggested by Bill\nVenables.'), .Dim = c(29L, 4L)));dimnames(argv[[1]]);");
+    public void TestrGenBuiltindimnames_testdimnames16_d637972cb33388cff355751ef752ceac() {
+        assertEval("argv <- list(structure(c('4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-2', '4.0-2', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '3.1-55', '3.1-55', '3.1-55', '3.1-54', '3.1-53', '3.1-53', '3.1-52', '3.1-51', NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 'The C and R code has been reformatted for legibility.', 'The old compatibility function rpconvert() has been removed.', 'The cross-validation functions allow for user interrupt at the end\\nof evaluating each split.', 'Variable Reliability in data set car90 is corrected to be an\\nordered factor, as documented.', 'Surrogate splits are now considered only if they send two or more\\ncases _with non-zero weight_ each way.  For numeric/ordinal\\nvariables the restriction to non-zero weights is new: for\\ncategorical variables this is a new restriction.', 'Surrogate splits which improve only by rounding error over the\\ndefault split are no longer returned.  Where weights and missing\\nvalues are present, the splits component for some of these was not\\nreturned correctly.', 'A fit of class \\'rpart\\' now contains a component for variable\\n‘importance’, which is reported by the summary() method.', 'The text() method gains a minlength argument, like the labels()\\nmethod.  This adds finer control: the default remains pretty =\\nNULL, minlength = 1L.', 'The handling of fits with zero and fractional weights has been\\ncorrected: the results may be slightly different (or even\\nsubstantially different when the proportion of zero weights is\\nlarge).', 'Some memory leaks have been plugged.', 'There is a second vignette, longintro.Rnw, a version of the\\noriginal Mayo Tecnical Report on rpart.', 'Added dataset car90, a corrected version of the S-PLUS dataset\\ncar.all (used with permission).', 'This version does not use paste0{} and so works with R 2.14.x.', 'Merged in a set of Splus code changes that had accumulated at Mayo\\nover the course of a decade. The primary one is a change in how\\nindexing is done in the underlying C code, which leads to a major\\nspeed increase for large data sets.  Essentially, for the lower\\nleaves all our time used to be eaten up by bookkeeping, and this\\nwas replaced by a different approach.  The primary routine also\\nuses .Call{} so as to be more memory efficient.', 'The other major change was an error for asymmetric loss matrices,\\nprompted by a user query.  With L=loss asymmetric, the altered\\npriors were computed incorrectly - they were using L' instead of L.\\nUpshot - the tree would not not necessarily choose optimal splits\\nfor the given loss matrix.  Once chosen, splits were evaluated\\ncorrectly.  The printed “improvement” values are of course the\\nwrong ones as well.  It is interesting that for my little test\\ncase, with L quite asymmetric, the early splits in the tree are\\nunchanged - a good split still looks good.', 'Add the return.all argument to xpred.rpart().', 'Added a set of formal tests, i.e., cases with known answers to\\nwhich we can compare.', 'Add a usercode vignette, explaining how to add user defined\\nsplitting functions.', 'The class method now also returns the node probability.', 'Add the stagec data set, used in some tests.', 'The plot.rpart routine needs to store a value that will be visible\\nto the rpartco routine at a later time.  This is now done in an\\nenvironment in the namespace.', 'Force use of registered symbols in R >= 2.16.0', 'Update Polish translations.', 'Work on message formats.', 'Add Polish translations', 'rpart, rpart.matrix: allow backticks in formulae.', 'tests/backtick.R: regession test', 'src/xval.c: ensure unused code is not compiled in.', 'Change description of margin in ?plot.rpart as suggested by Bill\\nVenables.'), .Dim = c(29L, 4L)));dimnames(argv[[1]]);");
     }
 
     @Test
@@ -31719,8 +31719,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinduplicated_testduplicated11_616d0bc61740d01e3b62ffc4103ef85d() {
-        assertEval("argv <- list(c('\\title', '\\name', '\\alias', '\\alias', '\\keyword', '\\keyword', '\\description', '\\usage', '\\arguments', '\\details', '\\value', '\\section', '\\section', '\\seealso', '\\examples'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+    public void TestrGenBuiltinduplicated_testduplicated11_628721fe9585771ab8c5464adbfa0a29() {
+        assertEval("argv <- list(c('\\\\title', '\\\\name', '\\\\alias', '\\\\alias', '\\\\keyword', '\\\\keyword', '\\\\description', '\\\\usage', '\\\\arguments', '\\\\details', '\\\\value', '\\\\section', '\\\\section', '\\\\seealso', '\\\\examples'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -31809,13 +31809,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinencodeString_testencodeString1_5395d35fd6d3afc1b2b8e8637612dce0() {
-        assertEval("argv <- list(c('1', '2', NA), 0L, '\'', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinencodeString_testencodeString1_165276435e63a6cea841c7a230553669() {
+        assertEval("argv <- list(c('1', '2', NA), 0L, '\\'', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltinencodeString_testencodeString10_5efc60150193802dcba95d470735bbb2() {
-        assertEval("argv <- list('\'class\' is a reserved slot name and cannot be redefined', 0L, '\'', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinencodeString_testencodeString10_f20b8b448850faf4a0e67af782ad3288() {
+        assertEval("argv <- list('\\'class\\' is a reserved slot name and cannot be redefined', 0L, '\\'', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -31849,8 +31849,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinencodeString_testencodeString7_483afa40b1cf12620d175f3f7015292a() {
-        assertEval("argv <- list('ab\bc\ndef', 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinencodeString_testencodeString7_41925f2c48f3be3975a935c14068f397() {
+        assertEval("argv <- list('ab\\bc\\ndef', 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -32209,8 +32209,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinformat_testformat2_2379abf58df1090ec0ae2cf27bf4007d() {
-        assertEval("argv <- list('\\ab\\c', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltinformat_testformat2_f6ef8361fee0499b29434699fee374f9() {
+        assertEval("argv <- list('\\\\ab\\\\c', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32259,8 +32259,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinformat_testformat30_e0591066d60f824cbf2c2a251e884b36() {
-        assertEval("argv <- list(c('', '', '\'Adult\'', '\'No\'', '', '387'), FALSE, NULL, 0L, NULL, 1L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltinformat_testformat30_a2e67ed543a241e9635a898e228c3615() {
+        assertEval("argv <- list(c('', '', '\\'Adult\\'', '\\'No\\'', '', '387'), FALSE, NULL, 0L, NULL, 1L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32369,8 +32369,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinformat_testformat52_cbf311f0ce8ecdf66494d5f807da3d23() {
-        assertEval("argv <- list(structure('def\'gh', class = 'AsIs'), FALSE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltinformat_testformat52_acf7177d968484917ff6e4593e61618d() {
+        assertEval("argv <- list(structure('def\\'gh', class = 'AsIs'), FALSE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32674,8 +32674,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingettext_testgettext3_75727c605d955fb5d3bc5b8d3a34e9d4() {
-        assertEval("argv <- list(NULL, 'The following object is masked from ‘package:base’:\n\n    det\n'); .Internal(gettext(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltingettext_testgettext3_d94760f57357114c95e9b840712881ce() {
+        assertEval("argv <- list(NULL, 'The following object is masked from ‘package:base’:\\n\\n    det\\n'); .Internal(gettext(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -32699,8 +32699,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingregexpr_testgregexpr10_79a4a279cb790d9b8986dd8c9ae87ed3() {
-        assertEval("argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltingregexpr_testgregexpr10_10685022731e163e4d3e036a4d36259c() {
+        assertEval("argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -32714,8 +32714,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingregexpr_testgregexpr2_540b5d24bf3cbb6c069e64f2f1366e6c() {
-        assertEval("argv <- list('[^\\.\\w:?$@[\\]]+', 'version$m', FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltingregexpr_testgregexpr2_bca95179bee7fb70c744060ab2dcbc4b() {
+        assertEval("argv <- list('[^\\\\.\\\\w:?$@[\\\\]]+', 'version$m', FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -32749,8 +32749,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingregexpr_testgregexpr9_6a65e3564db15d010d2c8992d7905509() {
-        assertEval("argv <- list('\\[[^]]*\\]', 'FALSE', FALSE, FALSE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltingregexpr_testgregexpr9_97cda4c85bdd67d9fb77194ec7b4438a() {
+        assertEval("argv <- list('\\\\[[^]]*\\\\]', 'FALSE', FALSE, FALSE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -32769,8 +32769,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingrep_testgrep12_18115d5a8d82913ec61839f7735654a9() {
-        assertEval("argv <- list('^[[:blank:]]*$', 'mtext(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\', side = 3)', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrep_testgrep12_76258394edbd429e32c525d5a380f10d() {
+        assertEval("argv <- list('^[[:blank:]]*$', 'mtext(\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\', side = 3)', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32779,8 +32779,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingrep_testgrep3_a6fd4a3dee9bae2217251a0e9b9a92f4() {
-        assertEval("argv <- list('[', '^\\.__[MT]', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrep_testgrep3_b376e0028a221ad66d6d7ab9c23f4d5b() {
+        assertEval("argv <- list('[', '^\\\\.__[MT]', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32814,8 +32814,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingrepl_testgrepl10_2677a335c1dd0d73e25673e66cadcefa() {
-        assertEval("argv <- list('{refObject}', c('\\section{Extends}{', 'Class \\code{\'\\linkS4class{refClassA}\'}, directly.', 'Class \\code{\'\\linkS4class{envRefClass}\'}, by class \'refClassA\', distance 2.', 'Class \\code{\'\\linkS4class{.environment}\'}, by class \'refClassA\', distance 3.', 'Class \\code{\'\\linkS4class{refClass}\'}, by class \'refClassA\', distance 3.', 'Class \\code{\'\\linkS4class{environment}\'}, by class \'refClassA\', distance 4, with explicit coerce.', 'Class \\code{\'\\linkS4class{refObject}\'}, by class \'refClassA\', distance 4.', '}'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrepl_testgrepl10_0b78ff0b21a93bf0bf3d5629e3d267e0() {
+        assertEval("argv <- list('{refObject}', c('\\\\section{Extends}{', 'Class \\\\code{\\'\\\\linkS4class{refClassA}\\'}, directly.', 'Class \\\\code{\\'\\\\linkS4class{envRefClass}\\'}, by class \\'refClassA\\', distance 2.', 'Class \\\\code{\\'\\\\linkS4class{.environment}\\'}, by class \\'refClassA\\', distance 3.', 'Class \\\\code{\\'\\\\linkS4class{refClass}\\'}, by class \\'refClassA\\', distance 3.', 'Class \\\\code{\\'\\\\linkS4class{environment}\\'}, by class \\'refClassA\\', distance 4, with explicit coerce.', 'Class \\\\code{\\'\\\\linkS4class{refObject}\\'}, by class \\'refClassA\\', distance 4.', '}'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32824,8 +32824,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingrepl_testgrepl3_739ee281866def5d2420234dc276ae13() {
-        assertEval("argv <- list('\n', structure('c(person(\'José\', \'Pinheiro\', role = \'aut\',\n                    comment = \'S version\'),\n             person(\'Douglas\', \'Bates\', role = \'aut\',\n                    comment = \'up to 2007\'),\n             person(\'Saikat\', \'DebRoy\', role = \'ctb\',\n                    comment = \'up to 2002\'),\n             person(\'Deepayan\', \'Sarkar\', role = \'ctb\',\n                    comment = \'up to 2005\'),\n\t     person(\'R-core\', email = \'R-core@R-project.org\',\n                    role = c(\'aut\', \'cre\')),\n             person(\'EISPACK authors\', role = \'ctb\'))', .Names = 'Authors@R'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrepl_testgrepl3_7b0b57a854bc118394b5680456289d8c() {
+        assertEval("argv <- list('\\n', structure('c(person(\\'José\\', \\'Pinheiro\\', role = \\'aut\\',\\n                    comment = \\'S version\\'),\\n             person(\\'Douglas\\', \\'Bates\\', role = \\'aut\\',\\n                    comment = \\'up to 2007\\'),\\n             person(\\'Saikat\\', \\'DebRoy\\', role = \\'ctb\\',\\n                    comment = \\'up to 2002\\'),\\n             person(\\'Deepayan\\', \\'Sarkar\\', role = \\'ctb\\',\\n                    comment = \\'up to 2005\\'),\\n\\t     person(\\'R-core\\', email = \\'R-core@R-project.org\\',\\n                    role = c(\\'aut\\', \\'cre\\')),\\n             person(\\'EISPACK authors\\', role = \\'ctb\\'))', .Names = 'Authors@R'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32834,8 +32834,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingrepl_testgrepl5_f56f17e876235e379635150100dc7984() {
-        assertEval("argv <- list('\n', c('### Encoding: UTF-8', '', '### Name: text', '### Title: Add Text to a Plot', '### Aliases: text text.default', '### Keywords: aplot', '', '### ** Examples', '', 'plot(-1:1, -1:1, type = \'n\', xlab = \'Re\', ylab = \'Im\')', 'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)', '', '## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \'text(...) examples\\n~~~~~~~~~~~~~~\',', '     sub = \'R is GNU ©, but not ® ...\')', 'mtext(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\', side = 3)', 'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \'red\')', 'text(6, 2, \'the text is CENTERED around (x,y) = (6,2) by default\',', '     cex = .8)', 'text(2, 1, \'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\',', '     adj = c(0,0))', 'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))', 'text(4, 8.4, \'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\',', '     cex = .75)', 'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))', '', '## Two more latin1 examples', 'text(5, 10.2,', '     \'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\')', 'text(5, 9.8,', '     \'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\')', '', '', ''), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrepl_testgrepl5_4d07c02b6dea1f8845449f732ae53ed7() {
+        assertEval("argv <- list('\\n', c('### Encoding: UTF-8', '', '### Name: text', '### Title: Add Text to a Plot', '### Aliases: text text.default', '### Keywords: aplot', '', '### ** Examples', '', 'plot(-1:1, -1:1, type = \\'n\\', xlab = \\'Re\\', ylab = \\'Im\\')', 'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)', '', '## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \\'text(...) examples\\\\n~~~~~~~~~~~~~~\\',', '     sub = \\'R is GNU ©, but not ® ...\\')', 'mtext(\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\', side = 3)', 'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \\'red\\')', 'text(6, 2, \\'the text is CENTERED around (x,y) = (6,2) by default\\',', '     cex = .8)', 'text(2, 1, \\'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\\',', '     adj = c(0,0))', 'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))', 'text(4, 8.4, \\'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\\',', '     cex = .75)', 'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))', '', '## Two more latin1 examples', 'text(5, 10.2,', '     \\'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\\')', 'text(5, 9.8,', '     \\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\')', '', '', ''), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32849,13 +32849,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingrepl_testgrepl8_8d05330cbac1d6f43bf41736cc8f9978() {
-        assertEval("argv <- list('\\\\keyword\\{\\s*internal\\s*\\}', c('\\inputencoding{utf8}', '\\HeaderA{condest}{Compute Approximate CONDition number and 1-Norm of (Large) Matrices}{condest}', '\\aliasA{onenormest}{condest}{onenormest}', '%', '\\begin{Description}\\relax', '``Estimate'', i.e. compute approximately the CONDition number of', 'a (potentially large, often sparse) matrix \\code{A}.', 'It works by apply a fast approximation of the 1-norm,', '\\code{norm(A,\'1\')}, through \\code{onenormest(.)}.', '\\end{Description}', '%', '\\begin{Usage}', '\\begin{verbatim}', 'condest(A, t = min(n, 5), normA = norm(A, \'1\'),', '        silent = FALSE, quiet = TRUE)', '', 'onenormest(A, t = min(n, 5), A.x, At.x, n,', '           silent = FALSE, quiet = silent,', '           iter.max = 10, eps = 4 * .Machine$double.eps)', '\\end{verbatim}', '\\end{Usage}', '%', '\\begin{Arguments}', '\\begin{ldescription}', '\\item[\\code{A}] a square matrix, optional for \\code{onenormest()}, where', 'instead of \\code{A}, \\code{A.x} and \\code{At.x} can be specified,', 'see there.', '\\item[\\code{t}] number of columns to use in the iterations.', '\\item[\\code{normA}] number; (an estimate of) the 1-norm of \\code{A}, by', 'default \\code{\\LinkA{norm}{norm}(A, \'1\')}; may be replaced by an estimate.', '\\item[\\code{silent}] logical indicating if warning and (by default)', 'convergence messages should be displayed.', '\\item[\\code{quiet}] logical indicating if convergence messages should be', 'displayed.', '\\item[\\code{A.x, At.x}] when \\code{A} is missing, these two must be given as', 'functions which compute \\code{A \\%\\% x}, or \\code{t(A) \\%\\% x},', 'respectively.', '\\item[\\code{n}] \\code{ == nrow(A)}, only needed when \\code{A} is not specified.', '\\item[\\code{iter.max}] maximal number of iterations for the 1-norm estimator.', '\\item[\\code{eps}] the relaive change that is deemed irrelevant.', '\\end{ldescription}', '\\end{Arguments}', '%', '\\begin{Value}', 'Both functions return a \\code{\\LinkA{list}{list}};', '\\code{onenormest()} with components,', '\\begin{ldescription}', '\\item[\\code{est}] a number \\eqn{> 0}{}, the estimated \\code{norm(A, \'1\')}.', '\\item[\\code{v}] the maximal \\eqn{A X}{} column.', '', '\\end{ldescription}', 'The function \\code{condest()} returns a list with components,', '\\begin{ldescription}', '\\item[\\code{est}] a number \\eqn{> 0}{}, the estimated condition number', '\\eqn{\\hat\\kappa}{}; when \\eqn{r :=}{}\\code{rcond(A)},', '\\eqn{1/\\hat\\kappa \\approx r}{}.', '\\item[\\code{v}] integer vector length \\code{n}, with an \\code{1} at the index', '\\code{j} with maximal column \\code{A[,j]} in \\eqn{A}{}.', '\\item[\\code{w}] numeric vector, the largest \\eqn{A x}{} found.', '\\item[\\code{iter}] the number of iterations used.', '\\end{ldescription}', '\\end{Value}', '%', '\\begin{Author}\\relax', 'This is based on octave's \\code{condest()} and', '\\code{onenormest()} implementations with original author', 'Jason Riedy, U Berkeley; translation to \\R{} and', 'adaption by Martin Maechler.', '\\end{Author}', '%', '\\begin{References}\\relax', '', 'Nicholas J. Higham and Fran\303\247oise Tisseur (2000).', 'A Block Algorithm for Matrix 1-Norm Estimation, with an Application to 1-Norm', 'Pseudospectra.', '\\emph{SIAM J. Matrix Anal. Appl.} \\bold{21}, 4, 1185--1201.', '\\url{http://dx.doi.org/10.1137/S0895479899356080}', '', '', 'William W. Hager (1984).', 'Condition Estimates.', '\\emph{SIAM J. Sci. Stat. Comput.} \\bold{5}, 311--316.', '\\end{References}', '%', '\\begin{SeeAlso}\\relax', '\\code{\\LinkA{norm}{norm}}, \\code{\\LinkA{rcond}{rcond}}.', '\\end{SeeAlso}', '%', '\\begin{Examples}', '\\begin{ExampleCode}', 'data(KNex)', 'mtm <- with(KNex, crossprod(mm))', 'system.time(ce <- condest(mtm))', '## reciprocal', '1 / ce$est', 'system.time(rc <- rcond(mtm)) # takes ca  3 x  longer', 'rc', 'all.equal(rc, 1/ce$est) # TRUE -- the approxmation was good', '\\end{ExampleCode}', '\\end{Examples}'), FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrepl_testgrepl8_da254da3d31bc434df2292be5942a03c() {
+        assertEval("argv <- list('\\\\\\\\keyword\\\\{\\\\s*internal\\\\s*\\\\}', c('\\\\inputencoding{utf8}', '\\\\HeaderA{condest}{Compute Approximate CONDition number and 1-Norm of (Large) Matrices}{condest}', '\\\\aliasA{onenormest}{condest}{onenormest}', '%', '\\\\begin{Description}\\\\relax', '``Estimate'', i.e. compute approximately the CONDition number of', 'a (potentially large, often sparse) matrix \\\\code{A}.', 'It works by apply a fast approximation of the 1-norm,', '\\\\code{norm(A,\\'1\\')}, through \\\\code{onenormest(.)}.', '\\\\end{Description}', '%', '\\\\begin{Usage}', '\\\\begin{verbatim}', 'condest(A, t = min(n, 5), normA = norm(A, \\'1\\'),', '        silent = FALSE, quiet = TRUE)', '', 'onenormest(A, t = min(n, 5), A.x, At.x, n,', '           silent = FALSE, quiet = silent,', '           iter.max = 10, eps = 4 * .Machine$double.eps)', '\\\\end{verbatim}', '\\\\end{Usage}', '%', '\\\\begin{Arguments}', '\\\\begin{ldescription}', '\\\\item[\\\\code{A}] a square matrix, optional for \\\\code{onenormest()}, where', 'instead of \\\\code{A}, \\\\code{A.x} and \\\\code{At.x} can be specified,', 'see there.', '\\\\item[\\\\code{t}] number of columns to use in the iterations.', '\\\\item[\\\\code{normA}] number; (an estimate of) the 1-norm of \\\\code{A}, by', 'default \\\\code{\\\\LinkA{norm}{norm}(A, \\'1\\')}; may be replaced by an estimate.', '\\\\item[\\\\code{silent}] logical indicating if warning and (by default)', 'convergence messages should be displayed.', '\\\\item[\\\\code{quiet}] logical indicating if convergence messages should be', 'displayed.', '\\\\item[\\\\code{A.x, At.x}] when \\\\code{A} is missing, these two must be given as', 'functions which compute \\\\code{A \\\\%\\\\% x}, or \\\\code{t(A) \\\\%\\\\% x},', 'respectively.', '\\\\item[\\\\code{n}] \\\\code{ == nrow(A)}, only needed when \\\\code{A} is not specified.', '\\\\item[\\\\code{iter.max}] maximal number of iterations for the 1-norm estimator.', '\\\\item[\\\\code{eps}] the relaive change that is deemed irrelevant.', '\\\\end{ldescription}', '\\\\end{Arguments}', '%', '\\\\begin{Value}', 'Both functions return a \\\\code{\\\\LinkA{list}{list}};', '\\\\code{onenormest()} with components,', '\\\\begin{ldescription}', '\\\\item[\\\\code{est}] a number \\\\eqn{> 0}{}, the estimated \\\\code{norm(A, \\'1\\')}.', '\\\\item[\\\\code{v}] the maximal \\\\eqn{A X}{} column.', '', '\\\\end{ldescription}', 'The function \\\\code{condest()} returns a list with components,', '\\\\begin{ldescription}', '\\\\item[\\\\code{est}] a number \\\\eqn{> 0}{}, the estimated condition number', '\\\\eqn{\\\\hat\\\\kappa}{}; when \\\\eqn{r :=}{}\\\\code{rcond(A)},', '\\\\eqn{1/\\\\hat\\\\kappa \\\\approx r}{}.', '\\\\item[\\\\code{v}] integer vector length \\\\code{n}, with an \\\\code{1} at the index', '\\\\code{j} with maximal column \\\\code{A[,j]} in \\\\eqn{A}{}.', '\\\\item[\\\\code{w}] numeric vector, the largest \\\\eqn{A x}{} found.', '\\\\item[\\\\code{iter}] the number of iterations used.', '\\\\end{ldescription}', '\\\\end{Value}', '%', '\\\\begin{Author}\\\\relax', 'This is based on octave's \\\\code{condest()} and', '\\\\code{onenormest()} implementations with original author', 'Jason Riedy, U Berkeley; translation to \\\\R{} and', 'adaption by Martin Maechler.', '\\\\end{Author}', '%', '\\\\begin{References}\\\\relax', '', 'Nicholas J. Higham and Fran\\303\\247oise Tisseur (2000).', 'A Block Algorithm for Matrix 1-Norm Estimation, with an Application to 1-Norm', 'Pseudospectra.', '\\\\emph{SIAM J. Matrix Anal. Appl.} \\\\bold{21}, 4, 1185--1201.', '\\\\url{http://dx.doi.org/10.1137/S0895479899356080}', '', '', 'William W. Hager (1984).', 'Condition Estimates.', '\\\\emph{SIAM J. Sci. Stat. Comput.} \\\\bold{5}, 311--316.', '\\\\end{References}', '%', '\\\\begin{SeeAlso}\\\\relax', '\\\\code{\\\\LinkA{norm}{norm}}, \\\\code{\\\\LinkA{rcond}{rcond}}.', '\\\\end{SeeAlso}', '%', '\\\\begin{Examples}', '\\\\begin{ExampleCode}', 'data(KNex)', 'mtm <- with(KNex, crossprod(mm))', 'system.time(ce <- condest(mtm))', '## reciprocal', '1 / ce$est', 'system.time(rc <- rcond(mtm)) # takes ca  3 x  longer', 'rc', 'all.equal(rc, 1/ce$est) # TRUE -- the approxmation was good', '\\\\end{ExampleCode}', '\\\\end{Examples}'), FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
-    public void TestrGenBuiltingrepl_testgrepl9_cf99924a4d09f09fe5a41d99d99367e7() {
-        assertEval("argv <- list('\n', '\nqr(x, ...)\nqrR(qr, complete=FALSE, backPermute=TRUE)\n', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltingrepl_testgrepl9_8b93308733a57d44cfd0b73654bf0a78() {
+        assertEval("argv <- list('\\n', '\\nqr(x, ...)\\nqrR(qr, complete=FALSE, backPermute=TRUE)\\n', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -32864,8 +32864,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub1_6862b1f6b580f2cb75c68786214ced70() {
-        assertEval("argv <- list('([[:alnum:]])--([[:alnum:]])', '\\1-\\2', 'Date-Time Classes', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub1_b741582d9d12025e6c83247dd280829f() {
+        assertEval("argv <- list('([[:alnum:]])--([[:alnum:]])', '\\\\1-\\\\2', 'Date-Time Classes', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -32884,8 +32884,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub13_2ef41fee82759a1d26e6d66fa737e380() {
-        assertEval("argv <- list('\\b', '|', 'The quick brown èé', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub13_9848cd82002f6b6237e971853fab0753() {
+        assertEval("argv <- list('\\\\b', '|', 'The quick brown èé', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -32894,93 +32894,93 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub15_a7b6d1115d0187f2fb16378a392a1b1b() {
-        assertEval("argv <- list('(‘|’)', ''', c('', '', '> library(survival)', 'Loading required package: splines', '> options(na.action=na.exclude) # preserve missings', '> options(contrasts=c('contr.treatment', 'contr.poly')) #ensure constrast type', '> ', '> #', '> # Simple tests of concordance.  These numbers were derived in multiple', '> #   codes.', '> #', '> aeq <- function(x,y, ...) all.equal(as.vector(x), as.vector(y), ...)', '> ', '> grank <- function(x, time, grp, wt) ', '+     unlist(tapply(x, grp, rank))', '> grank2 <- function(x, time, grp, wt) {  #for case weights', '+     if (length(wt)==0) wt <- rep(1, length(x))', '+     z <- double(length(x))', '+     for (i in unique(grp)) {', '+         indx <- which(grp==i)', '+         temp <- tapply(wt[indx], x[indx], sum)', '+         temp <- temp/2  + c(0, cumsum(temp)[-length(temp)])', '+         z[indx] <- temp[match(x[indx], names(temp))]', '+     }', '+     z', '+ }', '> ', '> ', '> tdata <- aml[aml$x=='Maintained',]', '> tdata$y <- c(1,6,2,7,3,7,3,8,4,4,5)', '> tdata$wt <- c(1,2,3,2,1,2,3,4,3,2,1)', '> fit <- survConcordance(Surv(time, status) ~y, tdata)', '> aeq(fit$stats[1:4], c(14,24,2,0))', '[1] TRUE', '> cfit <- coxph(Surv(time, status) ~ tt(y), tdata, tt=grank, method='breslow',', '+               iter=0, x=T)', '> cdt <- coxph.detail(cfit)', '> aeq(4*sum(cdt$imat),fit$stats[5]^2) ', '[1] TRUE', '> aeq(2*sum(cdt$score), diff(fit$stats[2:1]))', '[1] TRUE', '> ', '> ', '> # Lots of ties', '> tempx <- Surv(c(1,2,2,2,3,4,4,4,5,2), c(1,0,1,0,1,0,1,1,0,1))', '> tempy <- c(5,5,4,4,3,3,7,6,5,4)', '> fit2 <- survConcordance(tempx ~ tempy)', '> aeq(fit2$stats[1:4], c(13,13,5,2))', '[1] TRUE', '> cfit2 <-  coxph(tempx ~ tt(tempy), tt=grank, method='breslow', iter=0)', '> aeq(4/cfit2$var, fit2$stats[5]^2)', '[1] TRUE', '> ', '> # Bigger data', '> fit3 <- survConcordance(Surv(time, status) ~ age, lung)', '> aeq(fit3$stats[1:4], c(10717, 8706, 591, 28))', '[1] TRUE', '> cfit3 <- coxph(Surv(time, status) ~ tt(age), lung, ', '+                iter=0, method='breslow', tt=grank, x=T)', '> cdt <- coxph.detail(cfit3)', '> aeq(4*sum(cdt$imat),fit3$stats[5]^2) ', '[1] TRUE', '> aeq(2*sum(cdt$score), diff(fit3$stats[2:1]))', '[1] TRUE', '> ', '> ', '> # More ties', '> fit4 <- survConcordance(Surv(time, status) ~ ph.ecog, lung)', '> aeq(fit4$stats[1:4], c(8392, 4258, 7137, 28))', '[1] TRUE', '> cfit4 <- coxph(Surv(time, status) ~ tt(ph.ecog), lung, ', '+                iter=0, method='breslow', tt=grank)', '> aeq(4/cfit4$var, fit4$stats[5]^2)', '[1] TRUE', '> ', '> # Case weights', '> fit5 <- survConcordance(Surv(time, status) ~ y, tdata, weight=wt)', '> fit6 <- survConcordance(Surv(time, status) ~y, tdata[rep(1:11,tdata$wt),])', '> aeq(fit5$stats[1:4], c(70, 91, 7, 0))  # checked by hand', '[1] TRUE', '> aeq(fit5$stats[1:3], fit6$stats[1:3])  #spurious \'tied on time\' value, ignore', '[1] TRUE', '> aeq(fit5$std, fit6$std)', '[1] TRUE', '> cfit5 <- coxph(Surv(time, status) ~ tt(y), tdata, weight=wt, ', '+                iter=0, method='breslow', tt=grank2)', '> cfit6 <- coxph(Surv(time, status) ~ tt(y), tdata[rep(1:11,tdata$wt),], ', '+                iter=0, method='breslow', tt=grank)', '> aeq(4/cfit6$var, fit6$stats[5]^2)', '[1] TRUE', '> aeq(cfit5$var, cfit6$var)', '[1] TRUE', '> ', '> # Start, stop simplest cases', '> fit7 <- survConcordance(Surv(rep(0,11), time, status) ~ y, tdata)', '> aeq(fit7$stats, fit$stats)', '[1] TRUE', '> aeq(fit7$std.err, fit$std.err)', '[1] TRUE', '> fit7 <- survConcordance(Surv(rep(0,11), time, status) ~ y, tdata, weight=wt)', '> aeq(fit5$stats, fit7$stats)', '[1] TRUE', '> ', '> # Multiple intervals for some, but same risk sets as tdata', '> tdata2 <- data.frame(time1=c(0,3, 5,  6,7,   0,  4,17,  7,  0,16,  2,  0, ', '+                              0,9, 5),', '+                      time2=c(3,9, 13, 7,13, 18, 17,23, 28, 16,31, 34, 45, ', '+                              9,48, 60),', '+                      status=c(0,1, 1, 0,0,  1,  0,1, 0, 0,1, 1, 0, 0,1, 0),', '+                      y = c(1,1, 6, 2,2, 7, 3,3, 7, 3,3, 8, 4, 4,4, 5),', '+                      wt= c(1,1, 2, 3,3, 2, 1,1, 2, 3,3, 4, 3, 2,2, 1))', '> fit8 <- survConcordance(Surv(time1, time2, status) ~y, tdata2, weight=wt)', '> aeq(fit5$stats, fit8$stats)', '[1] TRUE', '> aeq(fit5$std.err, fit8$std.err)', '[1] TRUE', '> cfit8 <- coxph(Surv(time1, time2, status) ~ tt(y), tdata2, weight=wt, ', '+                iter=0, method='breslow', tt=grank2)', '> aeq(4/cfit8$var, fit8$stats[5]^2)', '[1] TRUE', '> aeq(fit8$stats[5]/(2*sum(fit8$stats[1:3])), fit8$std.err)', '[1] TRUE', '> ', '> # Stratified', '> tdata3 <- data.frame(time1=c(tdata2$time1, rep(0, nrow(lung))),', '+                      time2=c(tdata2$time2, lung$time),', '+                      status = c(tdata2$status, lung$status -1),', '+                      x = c(tdata2$y, lung$ph.ecog),', '+                      wt= c(tdata2$wt, rep(1, nrow(lung))),', '+                      grp=rep(1:2, c(nrow(tdata2), nrow(lung))))', '> fit9 <- survConcordance(Surv(time1, time2, status) ~x + strata(grp),', '+                         data=tdata3, weight=wt)', '> aeq(fit9$stats[1,], fit5$stats)', '[1] TRUE', '> aeq(fit9$stats[2,], fit4$stats)', '[1] TRUE', '> '), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub15_036914d1301004274b1056eaf2d9b03b() {
+        assertEval("argv <- list('(‘|’)', ''', c('', '', '> library(survival)', 'Loading required package: splines', '> options(na.action=na.exclude) # preserve missings', '> options(contrasts=c('contr.treatment', 'contr.poly')) #ensure constrast type', '> ', '> #', '> # Simple tests of concordance.  These numbers were derived in multiple', '> #   codes.', '> #', '> aeq <- function(x,y, ...) all.equal(as.vector(x), as.vector(y), ...)', '> ', '> grank <- function(x, time, grp, wt) ', '+     unlist(tapply(x, grp, rank))', '> grank2 <- function(x, time, grp, wt) {  #for case weights', '+     if (length(wt)==0) wt <- rep(1, length(x))', '+     z <- double(length(x))', '+     for (i in unique(grp)) {', '+         indx <- which(grp==i)', '+         temp <- tapply(wt[indx], x[indx], sum)', '+         temp <- temp/2  + c(0, cumsum(temp)[-length(temp)])', '+         z[indx] <- temp[match(x[indx], names(temp))]', '+     }', '+     z', '+ }', '> ', '> ', '> tdata <- aml[aml$x=='Maintained',]', '> tdata$y <- c(1,6,2,7,3,7,3,8,4,4,5)', '> tdata$wt <- c(1,2,3,2,1,2,3,4,3,2,1)', '> fit <- survConcordance(Surv(time, status) ~y, tdata)', '> aeq(fit$stats[1:4], c(14,24,2,0))', '[1] TRUE', '> cfit <- coxph(Surv(time, status) ~ tt(y), tdata, tt=grank, method='breslow',', '+               iter=0, x=T)', '> cdt <- coxph.detail(cfit)', '> aeq(4*sum(cdt$imat),fit$stats[5]^2) ', '[1] TRUE', '> aeq(2*sum(cdt$score), diff(fit$stats[2:1]))', '[1] TRUE', '> ', '> ', '> # Lots of ties', '> tempx <- Surv(c(1,2,2,2,3,4,4,4,5,2), c(1,0,1,0,1,0,1,1,0,1))', '> tempy <- c(5,5,4,4,3,3,7,6,5,4)', '> fit2 <- survConcordance(tempx ~ tempy)', '> aeq(fit2$stats[1:4], c(13,13,5,2))', '[1] TRUE', '> cfit2 <-  coxph(tempx ~ tt(tempy), tt=grank, method='breslow', iter=0)', '> aeq(4/cfit2$var, fit2$stats[5]^2)', '[1] TRUE', '> ', '> # Bigger data', '> fit3 <- survConcordance(Surv(time, status) ~ age, lung)', '> aeq(fit3$stats[1:4], c(10717, 8706, 591, 28))', '[1] TRUE', '> cfit3 <- coxph(Surv(time, status) ~ tt(age), lung, ', '+                iter=0, method='breslow', tt=grank, x=T)', '> cdt <- coxph.detail(cfit3)', '> aeq(4*sum(cdt$imat),fit3$stats[5]^2) ', '[1] TRUE', '> aeq(2*sum(cdt$score), diff(fit3$stats[2:1]))', '[1] TRUE', '> ', '> ', '> # More ties', '> fit4 <- survConcordance(Surv(time, status) ~ ph.ecog, lung)', '> aeq(fit4$stats[1:4], c(8392, 4258, 7137, 28))', '[1] TRUE', '> cfit4 <- coxph(Surv(time, status) ~ tt(ph.ecog), lung, ', '+                iter=0, method='breslow', tt=grank)', '> aeq(4/cfit4$var, fit4$stats[5]^2)', '[1] TRUE', '> ', '> # Case weights', '> fit5 <- survConcordance(Surv(time, status) ~ y, tdata, weight=wt)', '> fit6 <- survConcordance(Surv(time, status) ~y, tdata[rep(1:11,tdata$wt),])', '> aeq(fit5$stats[1:4], c(70, 91, 7, 0))  # checked by hand', '[1] TRUE', '> aeq(fit5$stats[1:3], fit6$stats[1:3])  #spurious \\'tied on time\\' value, ignore', '[1] TRUE', '> aeq(fit5$std, fit6$std)', '[1] TRUE', '> cfit5 <- coxph(Surv(time, status) ~ tt(y), tdata, weight=wt, ', '+                iter=0, method='breslow', tt=grank2)', '> cfit6 <- coxph(Surv(time, status) ~ tt(y), tdata[rep(1:11,tdata$wt),], ', '+                iter=0, method='breslow', tt=grank)', '> aeq(4/cfit6$var, fit6$stats[5]^2)', '[1] TRUE', '> aeq(cfit5$var, cfit6$var)', '[1] TRUE', '> ', '> # Start, stop simplest cases', '> fit7 <- survConcordance(Surv(rep(0,11), time, status) ~ y, tdata)', '> aeq(fit7$stats, fit$stats)', '[1] TRUE', '> aeq(fit7$std.err, fit$std.err)', '[1] TRUE', '> fit7 <- survConcordance(Surv(rep(0,11), time, status) ~ y, tdata, weight=wt)', '> aeq(fit5$stats, fit7$stats)', '[1] TRUE', '> ', '> # Multiple intervals for some, but same risk sets as tdata', '> tdata2 <- data.frame(time1=c(0,3, 5,  6,7,   0,  4,17,  7,  0,16,  2,  0, ', '+                              0,9, 5),', '+                      time2=c(3,9, 13, 7,13, 18, 17,23, 28, 16,31, 34, 45, ', '+                              9,48, 60),', '+                      status=c(0,1, 1, 0,0,  1,  0,1, 0, 0,1, 1, 0, 0,1, 0),', '+                      y = c(1,1, 6, 2,2, 7, 3,3, 7, 3,3, 8, 4, 4,4, 5),', '+                      wt= c(1,1, 2, 3,3, 2, 1,1, 2, 3,3, 4, 3, 2,2, 1))', '> fit8 <- survConcordance(Surv(time1, time2, status) ~y, tdata2, weight=wt)', '> aeq(fit5$stats, fit8$stats)', '[1] TRUE', '> aeq(fit5$std.err, fit8$std.err)', '[1] TRUE', '> cfit8 <- coxph(Surv(time1, time2, status) ~ tt(y), tdata2, weight=wt, ', '+                iter=0, method='breslow', tt=grank2)', '> aeq(4/cfit8$var, fit8$stats[5]^2)', '[1] TRUE', '> aeq(fit8$stats[5]/(2*sum(fit8$stats[1:3])), fit8$std.err)', '[1] TRUE', '> ', '> # Stratified', '> tdata3 <- data.frame(time1=c(tdata2$time1, rep(0, nrow(lung))),', '+                      time2=c(tdata2$time2, lung$time),', '+                      status = c(tdata2$status, lung$status -1),', '+                      x = c(tdata2$y, lung$ph.ecog),', '+                      wt= c(tdata2$wt, rep(1, nrow(lung))),', '+                      grp=rep(1:2, c(nrow(tdata2), nrow(lung))))', '> fit9 <- survConcordance(Surv(time1, time2, status) ~x + strata(grp),', '+                         data=tdata3, weight=wt)', '> aeq(fit9$stats[1,], fit5$stats)', '[1] TRUE', '> aeq(fit9$stats[2,], fit4$stats)', '[1] TRUE', '> '), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub16_bd3432a922b4c5d9ebd3d9b1dd495a7a() {
-        assertEval("argv <- list('[[:blank:][:cntrl:]]*', '', structure(' unix\n', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub16_ba0a2be2b395794769c80eeea930b1ae() {
+        assertEval("argv <- list('[[:blank:][:cntrl:]]*', '', structure(' unix\\n', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub17_5fd72f4acbaee95f55027cdb7077debc() {
-        assertEval("argv <- list('(\\w)(\\w*)', '\\U\\1\\L\\2', 'a test of capitalizing', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub17_bdee42f75dcb4d58f9c68dd3a445d499() {
+        assertEval("argv <- list('(\\\\w)(\\\\w*)', '\\\\U\\\\1\\\\L\\\\2', 'a test of capitalizing', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub18_9c9b0986b812fb3350129dc696b4b83e() {
-        assertEval("argv <- list('\\.', '\\\\.', '^*.t??$', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub18_b5ecae04757fba9c37c2e55fd07ce7ca() {
+        assertEval("argv <- list('\\\\.', '\\\\\\\\.', '^*.t??$', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub19_fc1aed630791e65902a1cd16e44925db() {
-        assertEval("argv <- list('(\\w)(\\w*)(\\w)', '\\U\\1\\E\\2\\U\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub19_2b2431b050b9ec10955f081079ed0d48() {
+        assertEval("argv <- list('(\\\\w)(\\\\w*)(\\\\w)', '\\\\U\\\\1\\\\E\\\\2\\\\U\\\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub2_db79850a79f3e275e30cca6833d4ede0() {
-        assertEval("argv <- list('\\\\(link|var)\\{([^}]+)\\}', '\\2', structure('     \'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\')\n', Rd_tag = 'RCODE'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub2_c034d1455969b903307358fa6716203b() {
+        assertEval("argv <- list('\\\\\\\\(link|var)\\\\{([^}]+)\\\\}', '\\\\2', structure('     \\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\')\\n', Rd_tag = 'RCODE'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub20_b2e54deb11ac9c1dcf5a3c3bc02cc4af() {
-        assertEval("argv <- list('([&$%_#])', '\\\\\\1', structure('with 5% of the range added to each end.\n', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub20_557dade81f3bfa6ee72071a19f0727bf() {
+        assertEval("argv <- list('([&$%_#])', '\\\\\\\\\\\\1', structure('with 5% of the range added to each end.\\n', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub21_a511599b9b3dc6f4d585b3df77380d4d() {
-        assertEval("argv <- list('[[:space:]]*%+[[:space:]]*\\\\VignetteEngine\\{([^}]*)\\}', '\\1', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub21_f246facd891d6ae6354531873a6b06c6() {
+        assertEval("argv <- list('[[:space:]]*%+[[:space:]]*\\\\\\\\VignetteEngine\\\\{([^}]*)\\\\}', '\\\\1', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub22_cdf1d39e99834f76f846857b1962a249() {
-        assertEval("argv <- list('^\\s+', '', ' utilities ', FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub22_047f249a051be625467ba4b83220245b() {
+        assertEval("argv <- list('^\\\\s+', '', ' utilities ', FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub23_24c7f4280cb9e17296b2900efe3abeca() {
-        assertEval("argv <- list('([^\\])\\[', '\\1\\\\[', '^.*[.*$', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub23_c827d7a2b0952230ea4e05cad718f20b() {
+        assertEval("argv <- list('([^\\\\])\\\\[', '\\\\1\\\\\\\\[', '^.*[.*$', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub24_6e8e97bf9ed8d22ed9bb4a5f63a698da() {
-        assertEval("argv <- list('.__M__(.*):([^:]+)', '\\1', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub24_353e156defb1b30778851a21f8bf2c7b() {
+        assertEval("argv <- list('.__M__(.*):([^:]+)', '\\\\1', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub25_c84090e7745ac39bf6a65962c24e3105() {
-        assertEval("argv <- list('%', '\\\\%', structure('foo', .Names = 'object'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub25_e759254c5e5d6da45f534f8e03283b99() {
+        assertEval("argv <- list('%', '\\\\\\\\%', structure('foo', .Names = 'object'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub26_b4fd1906517c4fff92985b92ef148397() {
-        assertEval("argv <- list('\\\\(l|)dots', '...', structure('plot(1:10, 1:10, main = \'text(...) examples\\n~~~~~~~~~~~~~~\',\n', Rd_tag = 'RCODE'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub26_a6631bc9f1b0c1f13b46d61f09bc359e() {
+        assertEval("argv <- list('\\\\\\\\(l|)dots', '...', structure('plot(1:10, 1:10, main = \\'text(...) examples\\\\n~~~~~~~~~~~~~~\\',\\n', Rd_tag = 'RCODE'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub27_e88d227fdaa3393ab66a96eb72310524() {
-        assertEval("argv <- list('.__T__(.*):([^:]+(.*))', '\\2', c('.__T__!:base', '.__T__%%:base', '.__T__%*%:base', '.__T__%/%:base', '.__T__&:base', '.__T__*:base', '.__T__+:base', '.__T__-:base', '.__T__/:base', '.__T__Arith:base', '.__T__BunchKaufman:Matrix', '.__T__Cholesky:Matrix', '.__T__Compare:methods', '.__T__Logic:base', '.__T__Math2:methods', '.__T__Math:base', '.__T__Ops:base', '.__T__Schur:Matrix', '.__T__Summary:base', '.__T__[:base', '.__T__[<-:base', '.__T__^:base', '.__T__all.equal:base', '.__T__all:base', '.__T__any:base', '.__T__as.array:base', '.__T__as.integer:base', '.__T__as.logical:base', '.__T__as.matrix:base', '.__T__as.numeric:base', '.__T__as.vector:base', '.__T__band:Matrix', '.__T__cbind2:methods', '.__T__chol2inv:base', '.__T__chol:base', '.__T__coerce:methods', '.__T__coerce<-:methods', '.__T__colMeans:base', '.__T__colSums:base', '.__T__cov2cor:stats', '.__T__crossprod:base', '.__T__determinant:base', '.__T__diag:base', '.__T__diag<-:base', '.__T__diff:base', '.__T__dim:base', '.__T__dim<-:base', '.__T__dimnames:base', '.__T__dimnames<-:base', '.__T__drop:base', '.__T__expand:Matrix', '.__T__expm:Matrix', '.__T__facmul:Matrix', '.__T__forceSymmetric:Matrix', '.__T__format:base', '.__T__head:utils', '.__T__image:graphics', '.__T__initialize:methods', '.__T__is.finite:base', '.__T__is.infinite:base', '.__T__is.na:base', '.__T__isDiagonal:Matrix', '.__T__isSymmetric:base', '.__T__isTriangular:Matrix', '.__T__kronecker:base', '.__T__length:base', '.__T__lu:Matrix', '.__T__mean:base', '.__T__nnzero:Matrix', '.__T__norm:base', '.__T__pack:Matrix', '.__T__print:base', '.__T__prod:base', '.__T__qr.Q:base', '.__T__qr.R:base', '.__T__qr.coef:base', '.__T__qr.fitted:base', '.__T__qr.qty:base', '.__T__qr.qy:base', '.__T__qr.resid:base', '.__T__qr:base', '.__T__rbind2:methods', '.__T__rcond:base', '.__T__rep:base', '.__T__rowMeans:base', '.__T__rowSums:base', '.__T__show:methods', '.__T__skewpart:Matrix', '.__T__solve:base', '.__T__sum:base', '.__T__summary:base', '.__T__symmpart:Matrix', '.__T__t:base', '.__T__tail:utils', '.__T__tcrossprod:base', '.__T__toeplitz:stats', '.__T__tril:Matrix', '.__T__triu:Matrix', '.__T__unname:base', '.__T__unpack:Matrix', '.__T__update:stats', '.__T__updown:Matrix', '.__T__which:base', '.__T__writeMM:Matrix', '.__T__zapsmall:base'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub27_abf221cb6ca381e202b1dd98ead58967() {
+        assertEval("argv <- list('.__T__(.*):([^:]+(.*))', '\\\\2', c('.__T__!:base', '.__T__%%:base', '.__T__%*%:base', '.__T__%/%:base', '.__T__&:base', '.__T__*:base', '.__T__+:base', '.__T__-:base', '.__T__/:base', '.__T__Arith:base', '.__T__BunchKaufman:Matrix', '.__T__Cholesky:Matrix', '.__T__Compare:methods', '.__T__Logic:base', '.__T__Math2:methods', '.__T__Math:base', '.__T__Ops:base', '.__T__Schur:Matrix', '.__T__Summary:base', '.__T__[:base', '.__T__[<-:base', '.__T__^:base', '.__T__all.equal:base', '.__T__all:base', '.__T__any:base', '.__T__as.array:base', '.__T__as.integer:base', '.__T__as.logical:base', '.__T__as.matrix:base', '.__T__as.numeric:base', '.__T__as.vector:base', '.__T__band:Matrix', '.__T__cbind2:methods', '.__T__chol2inv:base', '.__T__chol:base', '.__T__coerce:methods', '.__T__coerce<-:methods', '.__T__colMeans:base', '.__T__colSums:base', '.__T__cov2cor:stats', '.__T__crossprod:base', '.__T__determinant:base', '.__T__diag:base', '.__T__diag<-:base', '.__T__diff:base', '.__T__dim:base', '.__T__dim<-:base', '.__T__dimnames:base', '.__T__dimnames<-:base', '.__T__drop:base', '.__T__expand:Matrix', '.__T__expm:Matrix', '.__T__facmul:Matrix', '.__T__forceSymmetric:Matrix', '.__T__format:base', '.__T__head:utils', '.__T__image:graphics', '.__T__initialize:methods', '.__T__is.finite:base', '.__T__is.infinite:base', '.__T__is.na:base', '.__T__isDiagonal:Matrix', '.__T__isSymmetric:base', '.__T__isTriangular:Matrix', '.__T__kronecker:base', '.__T__length:base', '.__T__lu:Matrix', '.__T__mean:base', '.__T__nnzero:Matrix', '.__T__norm:base', '.__T__pack:Matrix', '.__T__print:base', '.__T__prod:base', '.__T__qr.Q:base', '.__T__qr.R:base', '.__T__qr.coef:base', '.__T__qr.fitted:base', '.__T__qr.qty:base', '.__T__qr.qy:base', '.__T__qr.resid:base', '.__T__qr:base', '.__T__rbind2:methods', '.__T__rcond:base', '.__T__rep:base', '.__T__rowMeans:base', '.__T__rowSums:base', '.__T__show:methods', '.__T__skewpart:Matrix', '.__T__solve:base', '.__T__sum:base', '.__T__summary:base', '.__T__symmpart:Matrix', '.__T__t:base', '.__T__tail:utils', '.__T__tcrossprod:base', '.__T__toeplitz:stats', '.__T__tril:Matrix', '.__T__triu:Matrix', '.__T__unname:base', '.__T__unpack:Matrix', '.__T__update:stats', '.__T__updown:Matrix', '.__T__which:base', '.__T__writeMM:Matrix', '.__T__zapsmall:base'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub28_082b53f46c6e1bb38540caf17807f627() {
-        assertEval("argv <- list('([^\\])\\(', '\\1\\\\(', '^.*{n.*$', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub28_2786109e8ceb268fe75e04680d783361() {
+        assertEval("argv <- list('([^\\\\])\\\\(', '\\\\1\\\\\\\\(', '^.*{n.*$', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub3_9fa529d1bacfe64c7757061ea7e7a4c9() {
-        assertEval("argv <- list('\\bsl', '\\bsl{}', structure('     knots).\n', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub3_605ecb1828d714a8f1d642c31dfebab5() {
+        assertEval("argv <- list('\\\\bsl', '\\\\bsl{}', structure('     knots).\\n', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub4_4c1275bfdb19de4085a3a0c362191d1c() {
-        assertEval("argv <- list('\\bsl', '\\bsl{}', structure('  ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub4_992637880a818a82e4bc9fc17014c01e() {
+        assertEval("argv <- list('\\\\bsl', '\\\\bsl{}', structure('  ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub5_2c1ecbf3e09b66f3c4902da755f32f10() {
-        assertEval("argv <- list('([{}$#_])', '\\\\\\1', structure('2013-03-19 13:18:58', .Names = 'Date/Publication'), FALSE, FALSE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub5_8c0f11bb2f8aaf2acb931c9da4d16e43() {
+        assertEval("argv <- list('([{}$#_])', '\\\\\\\\\\\\1', structure('2013-03-19 13:18:58', .Names = 'Date/Publication'), FALSE, FALSE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -32989,18 +32989,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub7_3f85b62a95e499fb630f66dae3126636() {
-        assertEval("argv <- list('([&$%_#])', '\\\\\\1', structure(', then ', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub7_fee8d53b32d8c0dad2fad676cb70dfad() {
+        assertEval("argv <- list('([&$%_#])', '\\\\\\\\\\\\1', structure(', then ', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub8_10009d0364aad477fa28beae10e89bd8() {
-        assertEval("argv <- list(''([^']*)'', '‘\\1’', '‘/home/lzhao/hg/r-instrumented/tests/rpart.Rcheck’', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub8_312cf9b912b24f324a6eba363ce12cda() {
+        assertEval("argv <- list(''([^']*)'', '‘\\\\1’', '‘/home/lzhao/hg/r-instrumented/tests/rpart.Rcheck’', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub9_ddc531c33ecf239b007ac0aad1598c9f() {
-        assertEval("argv <- list('\\', '\\bsl', structure('range specified by ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltingsub_testgsub9_9394983adf7c6d99ae5ff180e19b7171() {
+        assertEval("argv <- list('\\\\', '\\\\bsl', structure('range specified by ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -33014,8 +33014,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltiniconv_testiconv3_5d8d294e86f52185db6f47140fd26a89() {
-        assertEval("argv <- list(c('% This file is part of the 'foreign' package for R', '% It is distributed under the GPL version 2 or later', '', '\\name{S3 read functions}', '\\alias{data.restore}', '\\alias{read.S}', '\\title{Read an S3 Binary or data.dump File}', '\\description{', '  Reads binary data files or \\code{data.dump} files that were produced', '  in S version 3.', '}', '\\usage{', '  data.restore(file, print = FALSE, verbose = FALSE, env = .GlobalEnv)', '  read.S(file)', '}', '\\arguments{', '  \\item{file}{the filename of the S-PLUS \\code{data.dump} or binary', '    file.}', '  \\item{print}{whether to print the name of each object as read from the', '    file.}', '  \\item{verbose}{whether to print the name of every subitem within each', '    object.}', '  \\item{env}{environment within which to create the restored object(s).}', '}', '\\value{', '  For \\code{read.S}, an R version of the S3 object.', '', '  For \\code{data.restore}, the name of the file.', '}', '\\details{', '  \\code{read.S} can read the binary files produced in some older', '  versions of S-PLUS on either Windows (versions 3.x, 4.x, 2000) or Unix', '  (version 3.x with 4 byte integers).  It automatically detects whether', '  the file was produced on a big- or little-endian machine and adapts', '  itself accordingly.', '', '  \\code{data.restore} can read a similar range of files produced by', '  \\code{data.dump} and for newer versions of S-PLUS, those from', '  \\code{data.dump(....., oldStyle=TRUE)}.', '', '  Not all S3 objects can be handled in the current version.  The most', '  frequently encountered exceptions are functions and expressions; you', '  will also have trouble with objects that contain model formulas.  In', '  particular, comments will be lost from function bodies, and the', '  argument lists of functions will often be changed.', '}', '\\author{', '  Duncan Murdoch', '}', '\\examples{', '\\dontrun{read.S(file.path(\'_Data\', \'myobj\'))', 'data.restore(\'dumpdata\', print = TRUE)', '}}', '\\keyword{data}', '\\keyword{file}'), '', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltiniconv_testiconv3_cb446fe63500870751ff30f909956f3c() {
+        assertEval("argv <- list(c('% This file is part of the 'foreign' package for R', '% It is distributed under the GPL version 2 or later', '', '\\\\name{S3 read functions}', '\\\\alias{data.restore}', '\\\\alias{read.S}', '\\\\title{Read an S3 Binary or data.dump File}', '\\\\description{', '  Reads binary data files or \\\\code{data.dump} files that were produced', '  in S version 3.', '}', '\\\\usage{', '  data.restore(file, print = FALSE, verbose = FALSE, env = .GlobalEnv)', '  read.S(file)', '}', '\\\\arguments{', '  \\\\item{file}{the filename of the S-PLUS \\\\code{data.dump} or binary', '    file.}', '  \\\\item{print}{whether to print the name of each object as read from the', '    file.}', '  \\\\item{verbose}{whether to print the name of every subitem within each', '    object.}', '  \\\\item{env}{environment within which to create the restored object(s).}', '}', '\\\\value{', '  For \\\\code{read.S}, an R version of the S3 object.', '', '  For \\\\code{data.restore}, the name of the file.', '}', '\\\\details{', '  \\\\code{read.S} can read the binary files produced in some older', '  versions of S-PLUS on either Windows (versions 3.x, 4.x, 2000) or Unix', '  (version 3.x with 4 byte integers).  It automatically detects whether', '  the file was produced on a big- or little-endian machine and adapts', '  itself accordingly.', '', '  \\\\code{data.restore} can read a similar range of files produced by', '  \\\\code{data.dump} and for newer versions of S-PLUS, those from', '  \\\\code{data.dump(....., oldStyle=TRUE)}.', '', '  Not all S3 objects can be handled in the current version.  The most', '  frequently encountered exceptions are functions and expressions; you', '  will also have trouble with objects that contain model formulas.  In', '  particular, comments will be lost from function bodies, and the', '  argument lists of functions will often be changed.', '}', '\\\\author{', '  Duncan Murdoch', '}', '\\\\examples{', '\\\\dontrun{read.S(file.path(\\'_Data\\', \\'myobj\\'))', 'data.restore(\\'dumpdata\\', print = TRUE)', '}}', '\\\\keyword{data}', '\\\\keyword{file}'), '', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -33064,8 +33064,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinidentical_testidentical11_a7d68a0668694193786ad623fc295df1() {
-        assertEval("argv <- list(NULL, '\\link', TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinidentical_testidentical11_dfb7b3054dcb75166b6daa12eeecceee() {
+        assertEval("argv <- list(NULL, '\\\\link', TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -33414,8 +33414,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible11_696d919e811af02b1d6ebe4e8f01a0b6() {
-        assertEval("argv <- list(structure('Error in `[.data.frame`(dd, , \'x\') : undefined columns selected\n', class = 'try-error', condition = structure(list(message = 'undefined columns selected', call = quote(`[.data.frame`(dd, , 'x'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible11_34db0568570617234ca5a6bdb0b13ece() {
+        assertEval("argv <- list(structure('Error in `[.data.frame`(dd, , \\'x\\') : undefined columns selected\\n', class = 'try-error', condition = structure(list(message = 'undefined columns selected', call = quote(`[.data.frame`(dd, , 'x'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
@@ -33434,13 +33434,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible15_95c5d6587a9f07375c773c41f4b0aad2() {
-        assertEval("argv <- list(structure('Error in scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings,  : \n  line 1 did not have 4 elements\n', class = 'try-error', condition = structure(list(message = 'line 1 did not have 4 elements', call = quote(scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings, flush, fill, strip.white, quiet, blank.lines.skip, multi.line, comment.char, allowEscapes, encoding))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible15_31c0731d7ba5f7db2e70451fc22f104d() {
+        assertEval("argv <- list(structure('Error in scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings,  : \\n  line 1 did not have 4 elements\\n', class = 'try-error', condition = structure(list(message = 'line 1 did not have 4 elements', call = quote(scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings, flush, fill, strip.white, quiet, blank.lines.skip, multi.line, comment.char, allowEscapes, encoding))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible16_b7e4cfdbe1ace38051b7aca810a931ae() {
-        assertEval("argv <- list(structure('Error in cor(Z[, FALSE], use = \'pairwise.complete.obs\', method = \'kendall\') : \n  'x' is empty\n', class = 'try-error', condition = structure(list(message = ''x' is empty', call = quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible16_632474aa60f9f8e86c2c21909b6d0576() {
+        assertEval("argv <- list(structure('Error in cor(Z[, FALSE], use = \\'pairwise.complete.obs\\', method = \\'kendall\\') : \\n  'x' is empty\\n', class = 'try-error', condition = structure(list(message = ''x' is empty', call = quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
@@ -33454,13 +33454,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible19_ad14344db8f0251cc37de03b05bb6144() {
-        assertEval("argv <- list(structure('Error in rnorm(2, c(1, NA)) : (converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, c(1, NA)))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible19_c9108ae2baa0501bff9f7c38148bb7cb() {
+        assertEval("argv <- list(structure('Error in rnorm(2, c(1, NA)) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, c(1, NA)))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible2_f2c65f2710fecc128ccf9bc1d312135f() {
-        assertEval("argv <- list(structure('Error in cov(rnorm(10), NULL) : \n  supply both 'x' and 'y' or a matrix-like 'x'\n', class = 'try-error', condition = structure(list(message = 'supply both 'x' and 'y' or a matrix-like 'x'', call = quote(cov(rnorm(10), NULL))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible2_c67b2ec11dd97e94653c8734488c781f() {
+        assertEval("argv <- list(structure('Error in cov(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n', class = 'try-error', condition = structure(list(message = 'supply both 'x' and 'y' or a matrix-like 'x'', call = quote(cov(rnorm(10), NULL))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
@@ -33594,8 +33594,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible45_080a0da4f591d3a497be5a98c56c9eff() {
-        assertEval("argv <- list(structure(list(TEST = structure(c(1L, 2L, 6L, 3L, 4L, 5L, 10L, 11L, 9L, 7L, 8L), .Label = c('1', '2', '4', '5', '\\040', '\\b', '\\n', '\\r', '\\t', '\\x20', 'c:\\spencer\\tests'), class = 'factor')), .Names = 'TEST', class = 'data.frame', row.names = c(NA, -11L)));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible45_fec62c8ea148215018219607475780ee() {
+        assertEval("argv <- list(structure(list(TEST = structure(c(1L, 2L, 6L, 3L, 4L, 5L, 10L, 11L, 9L, 7L, 8L), .Label = c('1', '2', '4', '5', '\\\\040', '\\\\b', '\\\\n', '\\\\r', '\\\\t', '\\\\x20', 'c:\\\\spencer\\\\tests'), class = 'factor')), .Names = 'TEST', class = 'data.frame', row.names = c(NA, -11L)));invisible(argv[[1]]);");
     }
 
     @Test
@@ -33609,8 +33609,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible49_f15fdde460ea0cea4a5129e29c8a0f23() {
-        assertEval("argv <- list(structure('Error in rnorm(1, sd = Inf) : (converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible49_7c6403ce92547d64d04d1c76c48fe755() {
+        assertEval("argv <- list(structure('Error in rnorm(1, sd = Inf) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
@@ -33624,8 +33624,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltininvisible_testinvisible51_f5485da8c3a11764c09c8e2d16e710de() {
-        assertEval("argv <- list(structure('Error in read.table(\'foo1\') : no lines available in input\n', class = 'try-error', condition = structure(list(message = 'no lines available in input', call = quote(read.table('foo1'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
+    public void TestrGenBuiltininvisible_testinvisible51_68b496fba06c5ceeb71dad776842ba7b() {
+        assertEval("argv <- list(structure('Error in read.table(\\'foo1\\') : no lines available in input\\n', class = 'try-error', condition = structure(list(message = 'no lines available in input', call = quote(read.table('foo1'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))));invisible(argv[[1]]);");
     }
 
     @Test
@@ -33739,8 +33739,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisS4_testisS45_6b63f0ec318201753dea78cbcaf045b8() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 2L, 2L), Deviance = c(NA, 5.45230478674972, 2.66453525910038e-15), `Resid. Df` = c(8L, 6L, 4L), `Resid. Dev` = c(10.5814458637509, 5.12914107700115, 5.12914107700115)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'outcome', 'treatment'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\n\nModel: poisson, link: log\n\nResponse: counts\n\nTerms added sequentially (first to last)\n\n'));isS4(argv[[1]]);");
+    public void TestrGenBuiltinisS4_testisS45_1a1f80864ccde3155748c39df3a23ceb() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 2L, 2L), Deviance = c(NA, 5.45230478674972, 2.66453525910038e-15), `Resid. Df` = c(8L, 6L, 4L), `Resid. Dev` = c(10.5814458637509, 5.12914107700115, 5.12914107700115)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'outcome', 'treatment'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\\n\\nModel: poisson, link: log\\n\\nResponse: counts\\n\\nTerms added sequentially (first to last)\\n\\n'));isS4(argv[[1]]);");
     }
 
     @Test
@@ -34289,8 +34289,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisenvironment_testisenvironment14_3aa2d2d22485e4db5358ba65ee94986e() {
-        assertEval("argv <- list(structure(list(loglik = c(-577.080015666702, -568.702653976085, -567.639101463216, -565.252511135152), Chisq = c(NA, 16.7547233812336, 2.12710502573896, 4.77318065612872), Df = c(NA, 1, 1, 3), `Pr(>|Chi|)` = c(NA, 4.25362427346476e-05, 0.144713844418628, 0.189179603743297)), .Names = c('loglik', 'Chisq', 'Df', 'Pr(>|Chi|)'), row.names = c('NULL', 'ph.ecog', 'wt.loss', 'poly(age, 3)'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\n Cox model: response is Surv(time, status)\nTerms added sequentially (first to last)\n'));is.environment(argv[[1]]);");
+    public void TestrGenBuiltinisenvironment_testisenvironment14_a9c58c3beff441942f449e5cd53cc09a() {
+        assertEval("argv <- list(structure(list(loglik = c(-577.080015666702, -568.702653976085, -567.639101463216, -565.252511135152), Chisq = c(NA, 16.7547233812336, 2.12710502573896, 4.77318065612872), Df = c(NA, 1, 1, 3), `Pr(>|Chi|)` = c(NA, 4.25362427346476e-05, 0.144713844418628, 0.189179603743297)), .Names = c('loglik', 'Chisq', 'Df', 'Pr(>|Chi|)'), row.names = c('NULL', 'ph.ecog', 'wt.loss', 'poly(age, 3)'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\\n Cox model: response is Surv(time, status)\\nTerms added sequentially (first to last)\\n'));is.environment(argv[[1]]);");
     }
 
     @Test
@@ -34659,8 +34659,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisfunction_testisfunction6_061f37b4d9927b654255093c915cf1a9() {
-        assertEval("argv <- list(structure(list(Df = c(1L, 7L), `Sum Sq` = c(158.407612694902, 204.202165082876), `Mean Sq` = c(158.407612694902, 29.1717378689823), `F value` = c(5.43017400630538, NA), `Pr(>F)` = c(0.052592726218915, NA)), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = c('depression', 'Residuals'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\n', 'Response: weight')));is.function(argv[[1]]);");
+    public void TestrGenBuiltinisfunction_testisfunction6_4c6c3213d74e8a742ef7f90e888ca45a() {
+        assertEval("argv <- list(structure(list(Df = c(1L, 7L), `Sum Sq` = c(158.407612694902, 204.202165082876), `Mean Sq` = c(158.407612694902, 29.1717378689823), `F value` = c(5.43017400630538, NA), `Pr(>F)` = c(0.052592726218915, NA)), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = c('depression', 'Residuals'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\\n', 'Response: weight')));is.function(argv[[1]]);");
     }
 
     @Test
@@ -35104,13 +35104,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinislistfactor_testislistfactor18_aaaf0dd5540e1378abc44a29d1b603b5() {
-        assertEval("argv <- list(list(structure(list(structure('rm', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('remove', Rd_tag = 'VERB')), Rd_tag = '\\alias')), TRUE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinislistfactor_testislistfactor18_1007193d145eb1792cb580a17cb3e2a9() {
+        assertEval("argv <- list(list(structure(list(structure('rm', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('remove', Rd_tag = 'VERB')), Rd_tag = '\\\\alias')), TRUE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    public void TestrGenBuiltinislistfactor_testislistfactor19_7cc4ac8e193ec3d3bbaf311d190aefb0() {
-        assertEval("argv <- list(list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render'))), FALSE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinislistfactor_testislistfactor19_285181287efed16bd5fa2cd276fc7007() {
+        assertEval("argv <- list(list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'))), FALSE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -35149,8 +35149,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinislistfactor_testislistfactor27_46464897805d31f9af26346f8f3c2b3d() {
-        assertEval("argv <- list(structure('mtext(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\', side = 3)\n', Rd_tag = 'RCODE'), TRUE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinislistfactor_testislistfactor27_9824b8abcad7928d0f355630b27477f1() {
+        assertEval("argv <- list(structure('mtext(\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\', side = 3)\\n', Rd_tag = 'RCODE'), TRUE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -35174,8 +35174,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinislistfactor_testislistfactor5_5a22ee1dde97af09d6cbd8e4a4b68dff() {
-        assertEval("argv <- list(list(structure(list(structure('text', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('text.default', Rd_tag = 'VERB')), Rd_tag = '\\alias')), TRUE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinislistfactor_testislistfactor5_75b22e55966cb2f065ed523bc0b523a2() {
+        assertEval("argv <- list(list(structure(list(structure('text', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('text.default', Rd_tag = 'VERB')), Rd_tag = '\\\\alias')), TRUE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -35269,8 +35269,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinismatrix_testismatrix16_22e37c9fc22368d3547f329400d396aa() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 1), Deviance = c(12.2441566485997, 32.825622681839), AIC = c(73.9421143635373, 92.5235803967766)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user'), class = c('anova', 'data.frame'), heading = c('Single term deletions', '\nModel:', 'cbind(X, M) ~ M.user')));is.matrix(argv[[1]]);");
+    public void TestrGenBuiltinismatrix_testismatrix16_673aa335bf6b95eef1b89672f7d182ad() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 1), Deviance = c(12.2441566485997, 32.825622681839), AIC = c(73.9421143635373, 92.5235803967766)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user'), class = c('anova', 'data.frame'), heading = c('Single term deletions', '\\nModel:', 'cbind(X, M) ~ M.user')));is.matrix(argv[[1]]);");
     }
 
     @Test
@@ -35949,8 +35949,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisrecursive_testisrecursive11_130e194f558037f211bc6c15fc34709d() {
-        assertEval("argv <- list(structure(list(Df = c(1L, 7L), `Sum Sq` = c(158.407612694902, 204.202165082876), `Mean Sq` = c(158.407612694902, 29.1717378689823), `F value` = c(5.43017400630538, NA), `Pr(>F)` = c(0.052592726218915, NA)), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = c('depression', 'Residuals'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\n', 'Response: weight')));is.recursive(argv[[1]]);");
+    public void TestrGenBuiltinisrecursive_testisrecursive11_e4e1483e8ab5784cc5e11e4780380246() {
+        assertEval("argv <- list(structure(list(Df = c(1L, 7L), `Sum Sq` = c(158.407612694902, 204.202165082876), `Mean Sq` = c(158.407612694902, 29.1717378689823), `F value` = c(5.43017400630538, NA), `Pr(>F)` = c(0.052592726218915, NA)), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = c('depression', 'Residuals'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\\n', 'Response: weight')));is.recursive(argv[[1]]);");
     }
 
     @Test
@@ -36184,8 +36184,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisvector_testisvector32_7feeaf1fe0d62a0c235db6a33a2a3e0d() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\n\nModel: gaussian, link: identity\n\nResponse: y\n\nTerms added sequentially (first to last)\n\n'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinisvector_testisvector32_e60307e990fccebb814dd51968c13492() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\\n\\nModel: gaussian, link: identity\\n\\nResponse: y\\n\\nTerms added sequentially (first to last)\\n\\n'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -36359,8 +36359,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinlength_testlength3_fb936f411c3de80b60a56e700117f1e3() {
-        assertEval("argv <- list(structure('     \'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\')\n', Rd_tag = 'RCODE'));length(argv[[1]]);");
+    public void TestrGenBuiltinlength_testlength3_098f5d0995cf8297ff6a5d72d907402e() {
+        assertEval("argv <- list(structure('     \\'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\\')\\n', Rd_tag = 'RCODE'));length(argv[[1]]);");
     }
 
     @Test
@@ -36549,8 +36549,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinlist_testlist15_2d8f9ab564302c573c8f25ed43ea614a() {
-        assertEval("argv <- list(error = function (e) warning(gettextf('%s namespace cannot be unloaded:\n  ', sQuote(pkgname)), conditionMessage(e), call. = FALSE, domain = NA));list(argv[[1]]);");
+    public void TestrGenBuiltinlist_testlist15_b3059bdb14bfb3e116caddd2d5b47397() {
+        assertEval("argv <- list(error = function (e) warning(gettextf('%s namespace cannot be unloaded:\\n  ', sQuote(pkgname)), conditionMessage(e), call. = FALSE, domain = NA));list(argv[[1]]);");
     }
 
     @Test
@@ -36644,8 +36644,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinlist_testlist32_797fed8ad8319694c26d1d29321f4b05() {
-        assertEval("argv <- list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\001NULL\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to 'Ops' (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')));list(argv[[1]]);");
+    public void TestrGenBuiltinlist_testlist32_4d167ac0dfe64bfcdcc76a228afa547a() {
+        assertEval("argv <- list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\\001NULL\\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to 'Ops' (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')));list(argv[[1]]);");
     }
 
     @Test
@@ -36844,8 +36844,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinlistfiles_testlistfiles1_13009139ebbfa92701a1f8ac5ced3974() {
-        assertEval("argv <- list('.', 'myTst_.*tar\\.gz$', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    public void TestrGenBuiltinlistfiles_testlistfiles1_fa1b00441fa4019b80c7bd9a3a43bb62() {
+        assertEval("argv <- list('.', 'myTst_.*tar\\\\.gz$', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -37089,8 +37089,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinmatch_testmatch25_0f5d2a3c386c3caee76592a216c61557() {
-        assertEval("argv <- list(' *** Run successfully completed ***', c('', '> ### R code from vignette source 'Design-issues.Rnw'', '> ', '> ###################################################', '> ### code chunk number 1: preliminarie .... [TRUNCATED] ', '', '> ###################################################', '> ### code chunk number 2: diag-class', '> ###################################################', '> li .... [TRUNCATED] ', 'Loading required package: lattice', '', 'Attaching package: ‘Matrix’', '', 'The following object is masked from ‘package:base’:', '', '    det', '', '', '> (D4 <- Diagonal(4, 10*(1:4)))', '4 x 4 diagonal matrix of class \'ddiMatrix\'', '     [,1] [,2] [,3] [,4]', '[1,]   10    .    .    .', '[2,]    .   20    .    .', '[3,]    .    .   30    .', '[4,]    .    .    .   40', '', '> str(D4)', 'Formal class 'ddiMatrix' [package \'Matrix\'] with 4 slots', '  ..@ diag    : chr \'N\'', '  ..@ Dim     : int [1:2] 4 4', '  ..@ Dimnames:List of 2', '  .. ..$ : NULL', '  .. ..$ : NULL', '  ..@ x       : num [1:4] 10 20 30 40', '', '> diag(D4)', '[1] 10 20 30 40', '', '> ###################################################', '> ### code chunk number 3: diag-2', '> ###################################################', '> diag(D .... [TRUNCATED] ', '', '> D4', '4 x 4 diagonal matrix of class \'ddiMatrix\'', '     [,1] [,2] [,3] [,4]', '[1,]   11    .    .    .', '[2,]    .   22    .    .', '[3,]    .    .   33    .', '[4,]    .    .    .   44', '', '> ###################################################', '> ### code chunk number 4: unit-diag', '> ###################################################', '> str .... [TRUNCATED] ', 'Formal class 'ddiMatrix' [package \'Matrix\'] with 4 slots', '  ..@ diag    : chr \'U\'', '  ..@ Dim     : int [1:2] 3 3', '  ..@ Dimnames:List of 2', '  .. ..$ : NULL', '  .. ..$ : NULL', '  ..@ x       : num(0) ', '', '> getClass(\'diagonalMatrix\') ## extending \'denseMatrix\'', 'Virtual Class \'diagonalMatrix\' [package \'Matrix\']', '', 'Slots:', '                                    ', 'Name:       diag       Dim  Dimnames', 'Class: character   integer      list', '', 'Extends: ', 'Class \'sparseMatrix\', directly', 'Class \'Matrix\', by class \'sparseMatrix\', distance 2', 'Class \'mMatrix\', by class \'Matrix\', distance 3', '', 'Known Subclasses: \'ddiMatrix\', \'ldiMatrix\'', '', '> ###################################################', '> ### code chunk number 5: Matrix-ex', '> ###################################################', '> (M  .... [TRUNCATED] ', '4 x 4 sparse Matrix of class \'dgTMatrix\'', '            ', '[1,] . . 4 .', '[2,] . 1 . .', '[3,] 4 . . .', '[4,] . . . 8', '', '> m <- as(M, \'matrix\')', '', '> (M. <- Matrix(m)) # dsCMatrix (i.e. *symmetric*)', '4 x 4 sparse Matrix of class \'dsCMatrix\'', '            ', '[1,] . . 4 .', '[2,] . 1 . .', '[3,] 4 . . .', '[4,] . . . 8', '', '> ###################################################', '> ### code chunk number 6: sessionInfo', '> ###################################################', '> t .... [TRUNCATED] ', '\\begin{itemize}\\raggedright', '  \\item R version 3.0.1 (2013-05-16), \\verb|x86_64-unknown-linux-gnu|', '  \\item Locale: \\verb|LC_CTYPE=en_US.UTF-8|, \\verb|LC_NUMERIC=C|, \\verb|LC_TIME=en_US.UTF-8|, \\verb|LC_COLLATE=C|, \\verb|LC_MONETARY=en_US.UTF-8|, \\verb|LC_MESSAGES=en_US.UTF-8|, \\verb|LC_PAPER=C|, \\verb|LC_NAME=C|, \\verb|LC_ADDRESS=C|, \\verb|LC_TELEPHONE=C|, \\verb|LC_MEASUREMENT=en_US.UTF-8|, \\verb|LC_IDENTIFICATION=C|', '  \\item Base packages: base, datasets, grDevices, graphics,', '    methods, stats, utils', '  \\item Other packages: Matrix~1.0-12, lattice~0.20-15', '  \\item Loaded via a namespace (and not attached): grid~3.0.1,', '    tools~3.0.1', '\\end{itemize}', '', ' *** Run successfully completed ***', '> proc.time()', '   user  system elapsed ', '157.417   4.183 161.773 '), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+    public void TestrGenBuiltinmatch_testmatch25_6678ace6d7395396f5a017a6ae4c25da() {
+        assertEval("argv <- list(' *** Run successfully completed ***', c('', '> ### R code from vignette source 'Design-issues.Rnw'', '> ', '> ###################################################', '> ### code chunk number 1: preliminarie .... [TRUNCATED] ', '', '> ###################################################', '> ### code chunk number 2: diag-class', '> ###################################################', '> li .... [TRUNCATED] ', 'Loading required package: lattice', '', 'Attaching package: ‘Matrix’', '', 'The following object is masked from ‘package:base’:', '', '    det', '', '', '> (D4 <- Diagonal(4, 10*(1:4)))', '4 x 4 diagonal matrix of class \\'ddiMatrix\\'', '     [,1] [,2] [,3] [,4]', '[1,]   10    .    .    .', '[2,]    .   20    .    .', '[3,]    .    .   30    .', '[4,]    .    .    .   40', '', '> str(D4)', 'Formal class 'ddiMatrix' [package \\'Matrix\\'] with 4 slots', '  ..@ diag    : chr \\'N\\'', '  ..@ Dim     : int [1:2] 4 4', '  ..@ Dimnames:List of 2', '  .. ..$ : NULL', '  .. ..$ : NULL', '  ..@ x       : num [1:4] 10 20 30 40', '', '> diag(D4)', '[1] 10 20 30 40', '', '> ###################################################', '> ### code chunk number 3: diag-2', '> ###################################################', '> diag(D .... [TRUNCATED] ', '', '> D4', '4 x 4 diagonal matrix of class \\'ddiMatrix\\'', '     [,1] [,2] [,3] [,4]', '[1,]   11    .    .    .', '[2,]    .   22    .    .', '[3,]    .    .   33    .', '[4,]    .    .    .   44', '', '> ###################################################', '> ### code chunk number 4: unit-diag', '> ###################################################', '> str .... [TRUNCATED] ', 'Formal class 'ddiMatrix' [package \\'Matrix\\'] with 4 slots', '  ..@ diag    : chr \\'U\\'', '  ..@ Dim     : int [1:2] 3 3', '  ..@ Dimnames:List of 2', '  .. ..$ : NULL', '  .. ..$ : NULL', '  ..@ x       : num(0) ', '', '> getClass(\\'diagonalMatrix\\') ## extending \\'denseMatrix\\'', 'Virtual Class \\'diagonalMatrix\\' [package \\'Matrix\\']', '', 'Slots:', '                                    ', 'Name:       diag       Dim  Dimnames', 'Class: character   integer      list', '', 'Extends: ', 'Class \\'sparseMatrix\\', directly', 'Class \\'Matrix\\', by class \\'sparseMatrix\\', distance 2', 'Class \\'mMatrix\\', by class \\'Matrix\\', distance 3', '', 'Known Subclasses: \\'ddiMatrix\\', \\'ldiMatrix\\'', '', '> ###################################################', '> ### code chunk number 5: Matrix-ex', '> ###################################################', '> (M  .... [TRUNCATED] ', '4 x 4 sparse Matrix of class \\'dgTMatrix\\'', '            ', '[1,] . . 4 .', '[2,] . 1 . .', '[3,] 4 . . .', '[4,] . . . 8', '', '> m <- as(M, \\'matrix\\')', '', '> (M. <- Matrix(m)) # dsCMatrix (i.e. *symmetric*)', '4 x 4 sparse Matrix of class \\'dsCMatrix\\'', '            ', '[1,] . . 4 .', '[2,] . 1 . .', '[3,] 4 . . .', '[4,] . . . 8', '', '> ###################################################', '> ### code chunk number 6: sessionInfo', '> ###################################################', '> t .... [TRUNCATED] ', '\\\\begin{itemize}\\\\raggedright', '  \\\\item R version 3.0.1 (2013-05-16), \\\\verb|x86_64-unknown-linux-gnu|', '  \\\\item Locale: \\\\verb|LC_CTYPE=en_US.UTF-8|, \\\\verb|LC_NUMERIC=C|, \\\\verb|LC_TIME=en_US.UTF-8|, \\\\verb|LC_COLLATE=C|, \\\\verb|LC_MONETARY=en_US.UTF-8|, \\\\verb|LC_MESSAGES=en_US.UTF-8|, \\\\verb|LC_PAPER=C|, \\\\verb|LC_NAME=C|, \\\\verb|LC_ADDRESS=C|, \\\\verb|LC_TELEPHONE=C|, \\\\verb|LC_MEASUREMENT=en_US.UTF-8|, \\\\verb|LC_IDENTIFICATION=C|', '  \\\\item Base packages: base, datasets, grDevices, graphics,', '    methods, stats, utils', '  \\\\item Other packages: Matrix~1.0-12, lattice~0.20-15', '  \\\\item Loaded via a namespace (and not attached): grid~3.0.1,', '    tools~3.0.1', '\\\\end{itemize}', '', ' *** Run successfully completed ***', '> proc.time()', '   user  system elapsed ', '157.417   4.183 161.773 '), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -37829,8 +37829,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnames_testnames28_0a39e6652b9fd217185619ebc849cf61() {
-        assertEval("argv <- list(list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\Sexpr', 'build', 'install', 'render'))));names(argv[[1]]);");
+    public void TestrGenBuiltinnames_testnames28_701720d16a6a4676833bf65a094afbe1() {
+        assertEval("argv <- list(list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'))));names(argv[[1]]);");
     }
 
     @Test
@@ -37854,8 +37854,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnames_testnames33_c8387d54e6c54a1372edefb41a83adc1() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\n\nModel: gaussian, link: identity\n\nResponse: y\n\nTerms added sequentially (first to last)\n\n'));names(argv[[1]]);");
+    public void TestrGenBuiltinnames_testnames33_8d74f9d886bcd994fe5f33cf566b1fa7() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\\n\\nModel: gaussian, link: identity\\n\\nResponse: y\\n\\nTerms added sequentially (first to last)\\n\\n'));names(argv[[1]]);");
     }
 
     @Test
@@ -37949,8 +37949,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnamesassign_testnamesassign18_3d3c6ead4cfdc16d64872dfa468d41f5() {
-        assertEval("argv <- list(structure(c(67L, 34L), .Dim = 2L, .Dimnames = list(c('\'actual\'', 'virtual')), class = 'table'), value = c('\'actual\'', 'virtual'));`names<-`(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinnamesassign_testnamesassign18_3a82f6c15e080877ecdfc4e91e18c506() {
+        assertEval("argv <- list(structure(c(67L, 34L), .Dim = 2L, .Dimnames = list(c('\\'actual\\'', 'virtual')), class = 'table'), value = c('\\'actual\\'', 'virtual'));`names<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -38009,8 +38009,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnchar_testnchar11_c6e9d266fa0add4c5b5881ae663c23e8() {
-        assertEval("argv <- list('> contour(x, y, volcano, levels = lev, col=\'yellow\', lty=\'solid\', add=TRUE)', 'c', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinnchar_testnchar11_dc443da77157cc6d434a029df4ee4b97() {
+        assertEval("argv <- list('> contour(x, y, volcano, levels = lev, col=\\'yellow\\', lty=\\'solid\\', add=TRUE)', 'c', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -38019,18 +38019,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnchar_testnchar13_4de0e6231ac52311fe5e97213f4a491a() {
-        assertEval("argv <- list(structure(c('rpart', 'recommended', '4.1-1', '2013-03-20', 'c(person(\'Terry\', \'Therneau\', role = \'aut\',\n\t             email = \'therneau@mayo.edu\'),\n             person(\'Beth\', \'Atkinson\', role = \'aut\',\t\n\t             email = \'atkinson@mayo.edu\'),\n             person(\'Brian\', \'Ripley\', role = c(\'aut\', \'trl\', \'cre\'),\n                    email = \'ripley@stats.ox.ac.uk\',\n\t\t   comment = \'author of R port\'))', 'Recursive partitioning and regression trees', 'Recursive Partitioning', 'R (>= 2.14.0), graphics, stats, grDevices', 'survival', 'GPL-2 | GPL-3', 'yes', 'yes', 'Maintainers are not available to give advice on using a package\nthey did not author.', '2013-03-20 07:27:05 UTC; ripley', 'Terry Therneau [aut],\n  Beth Atkinson [aut],\n  Brian Ripley [aut, trl, cre] (author of R port)', 'Brian Ripley <ripley@stats.ox.ac.uk>'), .Names = c('Package', 'Priority', 'Version', 'Date', 'Authors@R', 'Description', 'Title', 'Depends', 'Suggests', 'License', 'LazyData', 'ByteCompile', 'Note', 'Packaged', 'Author', 'Maintainer')), 'c', TRUE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinnchar_testnchar13_66517b48b1dedf647830b6a7f5588cd3() {
+        assertEval("argv <- list(structure(c('rpart', 'recommended', '4.1-1', '2013-03-20', 'c(person(\\'Terry\\', \\'Therneau\\', role = \\'aut\\',\\n\\t             email = \\'therneau@mayo.edu\\'),\\n             person(\\'Beth\\', \\'Atkinson\\', role = \\'aut\\',\\t\\n\\t             email = \\'atkinson@mayo.edu\\'),\\n             person(\\'Brian\\', \\'Ripley\\', role = c(\\'aut\\', \\'trl\\', \\'cre\\'),\\n                    email = \\'ripley@stats.ox.ac.uk\\',\\n\\t\\t   comment = \\'author of R port\\'))', 'Recursive partitioning and regression trees', 'Recursive Partitioning', 'R (>= 2.14.0), graphics, stats, grDevices', 'survival', 'GPL-2 | GPL-3', 'yes', 'yes', 'Maintainers are not available to give advice on using a package\\nthey did not author.', '2013-03-20 07:27:05 UTC; ripley', 'Terry Therneau [aut],\\n  Beth Atkinson [aut],\\n  Brian Ripley [aut, trl, cre] (author of R port)', 'Brian Ripley <ripley@stats.ox.ac.uk>'), .Names = c('Package', 'Priority', 'Version', 'Date', 'Authors@R', 'Description', 'Title', 'Depends', 'Suggests', 'License', 'LazyData', 'ByteCompile', 'Note', 'Packaged', 'Author', 'Maintainer')), 'c', TRUE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
-    public void TestrGenBuiltinnchar_testnchar2_dfbcae2ccba05526fdad770d7948884b() {
-        assertEval("argv <- list(c('\'a\'', '\'b\'', NA, NA, NA, '\'f\'', '\'g\'', '\'h\'', '\'i\'', '\'j\'', '\'k\'', '\'l\''), 'w', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinnchar_testnchar2_1c09ba86e60fdfa5eca5e1e367720a04() {
+        assertEval("argv <- list(c('\\'a\\'', '\\'b\\'', NA, NA, NA, '\\'f\\'', '\\'g\\'', '\\'h\\'', '\\'i\\'', '\\'j\\'', '\\'k\\'', '\\'l\\''), 'w', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
-    public void TestrGenBuiltinnchar_testnchar3_cab8fd10f080fd0fc15375797144a963() {
-        assertEval("argv <- list('\'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\'', 'w', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinnchar_testnchar3_57659592fc79341516fbcd5870d911ca() {
+        assertEval("argv <- list('\\'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\\'', 'w', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -38054,8 +38054,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnchar_testnchar9_e1dc8e13afe2993c2d4239169dbdb422() {
-        assertEval("argv <- list(c('\'1\'', '\'2\'', NA), 'w', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinnchar_testnchar9_f219c8ae8c855e0d0b72ad8810e6f695() {
+        assertEval("argv <- list(c('\\'1\\'', '\\'2\\'', NA), 'w', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -38119,8 +38119,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnzchar_testnzchar9_3290dd2c704fc6a73840ca036445e0b6() {
-        assertEval("argv <- list(c('  \036 The other major change was an error for asymmetric loss matrices,', '    prompted by a user query.  With L=loss asymmetric, the altered', '    priors were computed incorrectly - they were using L' instead of L.', '    Upshot - the tree would not not necessarily choose optimal splits', '    for the given loss matrix.  Once chosen, splits were evaluated', '    correctly.  The printed “improvement” values are of course the', '    wrong ones as well.  It is interesting that for my little test', '    case, with L quite asymmetric, the early splits in the tree are', '    unchanged - a good split still looks good.'));nzchar(argv[[1]]);");
+    public void TestrGenBuiltinnzchar_testnzchar9_dc3c4901c7dd8fd1d7f6b2192e5c78da() {
+        assertEval("argv <- list(c('  \\036 The other major change was an error for asymmetric loss matrices,', '    prompted by a user query.  With L=loss asymmetric, the altered', '    priors were computed incorrectly - they were using L' instead of L.', '    Upshot - the tree would not not necessarily choose optimal splits', '    for the given loss matrix.  Once chosen, splits were evaluated', '    correctly.  The printed “improvement” values are of course the', '    wrong ones as well.  It is interesting that for my little test', '    case, with L quite asymmetric, the early splits in the tree are', '    unchanged - a good split still looks good.'));nzchar(argv[[1]]);");
     }
 
     @Test
@@ -39149,8 +39149,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinoperators_testoperators269_5d2818c24c7dafb0bfdb79a8a4efcad7() {
-        assertEval("argv <- list(structure('(converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), '(converted from warning) NAs produced\n');`==`(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinoperators_testoperators269_e6c132c1830737323c03d8a1d4732811() {
+        assertEval("argv <- list(structure('(converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), '(converted from warning) NAs produced\\n');`==`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -40184,8 +40184,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinorder_testorder2_51e8bd6df64d6662758fe23e5802641d() {
-        assertEval("argv <- list(TRUE, FALSE, structure(c(1, 2, 2.1, 2.3, 2.3, 3, 4, 5, 7, 8, 11, 13, 14, 15), .Names = c('\\title', '\\name', '\\alias', '\\keyword', '\\keyword', '\\description', '\\usage', '\\arguments', '\\details', '\\value', '\\author', '\\references', '\\seealso', '\\examples')), c('', '', 'LOGLIN', '', '', '', '', '', '', '', '', '', '', ''), c('', '', 'loglin', '', '', '', '', '', '', '', '', '', '', '')); .Internal(order(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinorder_testorder2_7fbc1066c2ff2775e853f5836b5030aa() {
+        assertEval("argv <- list(TRUE, FALSE, structure(c(1, 2, 2.1, 2.3, 2.3, 3, 4, 5, 7, 8, 11, 13, 14, 15), .Names = c('\\\\title', '\\\\name', '\\\\alias', '\\\\keyword', '\\\\keyword', '\\\\description', '\\\\usage', '\\\\arguments', '\\\\details', '\\\\value', '\\\\author', '\\\\references', '\\\\seealso', '\\\\examples')), c('', '', 'LOGLIN', '', '', '', '', '', '', '', '', '', '', ''), c('', '', 'loglin', '', '', '', '', '', '', '', '', '', '', '')); .Internal(order(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -40224,8 +40224,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste_testpaste1_1543225e717fb89dcb7c9c6f03821542() {
-        assertEval("argv <- list(list('%%  ~~objects to See Also as', '\\code{\\link{~~fun~~}}, ~~~'), ' ', NULL); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinpaste_testpaste1_2f14ba48a54847e70d98312ef3c6b446() {
+        assertEval("argv <- list(list('%%  ~~objects to See Also as', '\\\\code{\\\\link{~~fun~~}}, ~~~'), ' ', NULL); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -40239,8 +40239,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste_testpaste2_1c0fae68b1698b436ba6c15093bdcdc7() {
-        assertEval("argv <- list(list(c('[', 'cox.zph', NA)), ' ', '\r'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinpaste_testpaste2_6bee94b7e42df245ee0c1dbf2b8d68b7() {
+        assertEval("argv <- list(list(c('[', 'cox.zph', NA)), ' ', '\\r'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -40259,8 +40259,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste_testpaste6_1c1060f13cf8614d615905186e5165cb() {
-        assertEval("argv <- list(list(c('dotplot', 'table', NA)), ' ', '\r'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinpaste_testpaste6_b7cad175a29bf140378fe64d7d07837e() {
+        assertEval("argv <- list(list(c('dotplot', 'table', NA)), ' ', '\\r'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -40294,8 +40294,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste0_testpaste012_2e843bcfd580993c0e7479e6ee343c68() {
-        assertEval("argv <- list(list(c('Package:', 'Type:', 'Version:', 'Date:', 'License:', 'Depends:'), ' \\tab ', structure(c('myTst2', 'Package', '1.0', '2014-03-17', 'What license is it under?', 'methods'), .Names = c('Package', 'Type', 'Version', 'Date', 'License', 'Depends')), '\\cr'), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinpaste0_testpaste012_da7ae95b81738a4f4b05dd30963aefe5() {
+        assertEval("argv <- list(list(c('Package:', 'Type:', 'Version:', 'Date:', 'License:', 'Depends:'), ' \\\\tab ', structure(c('myTst2', 'Package', '1.0', '2014-03-17', 'What license is it under?', 'methods'), .Names = c('Package', 'Type', 'Version', 'Date', 'License', 'Depends')), '\\\\cr'), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -40304,13 +40304,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste0_testpaste014_54ce05485d1f2bd4a5b895fb01b24244() {
-        assertEval("argv <- list(list(c('text> ', 'text> ', 'text> ', 'text+ '), c('## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \'text(...) examples\\n~~~~~~~~~~~~~~\',', '     sub = \'R is GNU ©, but not ® ...\')')), '\n'); .Internal(paste0(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinpaste0_testpaste014_2763f64f89765584d87fafc03ece4085() {
+        assertEval("argv <- list(list(c('text> ', 'text> ', 'text> ', 'text+ '), c('## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \\'text(...) examples\\\\n~~~~~~~~~~~~~~\\',', '     sub = \\'R is GNU ©, but not ® ...\\')')), '\\n'); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    public void TestrGenBuiltinpaste0_testpaste015_6cd387c7a12a643d7dbba5fbd6b6211d() {
-        assertEval("argv <- list(list('cnstrO> ', 'constrOptim(c(2,-1,-1), fQP, gQP, ui = t(Amat), ci = bvec)'), '\n'); .Internal(paste0(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinpaste0_testpaste015_7352ddb2b0f401ecb5853b5d8d4a9eb9() {
+        assertEval("argv <- list(list('cnstrO> ', 'constrOptim(c(2,-1,-1), fQP, gQP, ui = t(Amat), ci = bvec)'), '\\n'); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -40319,8 +40319,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste0_testpaste03_10fdddfdd71dda5ca2c8cdc1aeec3962() {
-        assertEval("argv <- list(list(c('\'1\'', '\'2\'', NA)), ','); .Internal(paste0(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinpaste0_testpaste03_bbfa316b88dc7ca9ae399ad493d89a28() {
+        assertEval("argv <- list(list(c('\\'1\\'', '\\'2\\'', NA)), ','); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -40334,8 +40334,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinpaste0_testpaste06_265e07a9bca314868e9010530a3830b9() {
-        assertEval("argv <- list(list(character(0), character(0)), '\n'); .Internal(paste0(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinpaste0_testpaste06_780513435573904f3d189e91f4da0262() {
+        assertEval("argv <- list(list(character(0), character(0)), '\\n'); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -40689,8 +40689,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinprintdefault_testprintdefault3_2c992cb06f5f83388b7f5355d9b12698() {
-        assertEval("argv <- list(structure(c('1', '2', '\\b', '4', '5', '\\040', '\\x20', 'c:\\spencer\\tests', '\\t', '\\n', '\\r'), .Dim = c(11L, 1L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'), 'TEST')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+    public void TestrGenBuiltinprintdefault_testprintdefault3_10bb59d71383d577ec34c676ad64302e() {
+        assertEval("argv <- list(structure(c('1', '2', '\\\\b', '4', '5', '\\\\040', '\\\\x20', 'c:\\\\spencer\\\\tests', '\\\\t', '\\\\n', '\\\\r'), .Dim = c(11L, 1L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'), 'TEST')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -40734,8 +40734,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinprintdefault_testprintdefault9_b35b730d4fa3b9c61575f789b019336a() {
-        assertEval("argv <- list(structure(c('abc', 'def\'gh'), .Dim = 1:2, .Dimnames = list('1', c('a', 'b'))), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+    public void TestrGenBuiltinprintdefault_testprintdefault9_ad3e9cdbbe7cbfef338c14d5524eabcd() {
+        assertEval("argv <- list(structure(c('abc', 'def\\'gh'), .Dim = 1:2, .Dimnames = list('1', c('a', 'b'))), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -40799,8 +40799,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinprmatrix_testprmatrix8_610234c13c958d0245568ec14852ecfd() {
-        assertEval("argv <- list(structure(c(' 0.00561', '-1.65487', '', '0.012', '0.483', '', '0.00872', '0.38527', '', ' 0.22', '11.74', '20.33', ' 1.0', ' 1.0', '13.9', '0.64000', '0.00061', '0.12000'), .Dim = c(3L, 6L), .Dimnames = list(c('age', 'sex', 'frailty(id, dist = \'t\', c'), c('coef', 'se(coef)', 'se2', 'Chisq', 'DF', 'p'))), c('age', 'sex', 'frailty(id, dist = \'t\', c'), c('coef', 'se(coef)', 'se2', 'Chisq', 'DF', 'p'), FALSE, FALSE, NULL); .Internal(prmatrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltinprmatrix_testprmatrix8_93153d21355a549222312d399fa77443() {
+        assertEval("argv <- list(structure(c(' 0.00561', '-1.65487', '', '0.012', '0.483', '', '0.00872', '0.38527', '', ' 0.22', '11.74', '20.33', ' 1.0', ' 1.0', '13.9', '0.64000', '0.00061', '0.12000'), .Dim = c(3L, 6L), .Dimnames = list(c('age', 'sex', 'frailty(id, dist = \\'t\\', c'), c('coef', 'se(coef)', 'se2', 'Chisq', 'DF', 'p'))), c('age', 'sex', 'frailty(id, dist = \\'t\\', c'), c('coef', 'se(coef)', 'se2', 'Chisq', 'DF', 'p'), FALSE, FALSE, NULL); .Internal(prmatrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -41299,23 +41299,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinregexpr_testregexpr4_a4d8a25c4b68282be877713726517424() {
-        assertEval("argv <- list('^.*\\{n', 'my(ugly[file{name', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltinregexpr_testregexpr4_3a566ba77511d0c212fa6647f00b00a8() {
+        assertEval("argv <- list('^.*\\\\{n', 'my(ugly[file{name', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
-    public void TestrGenBuiltinregexpr_testregexpr5_bb7b5863e60527d381c984f858dcb42e() {
-        assertEval("argv <- list('(\\\\S4method\\{([._[:alnum:]]*|\\$|\\[\\[?|\\+|\\-|\\*|\\/|\\^|<=?|>=?|!=?|==|\\&|\\||\\%[[:alnum:][:punct:]]*\\%)\\}\\{((([._[:alnum:]]+|`[^`]+`),)*([._[:alnum:]]+|`[^`]+`))\\})', '\nread.00Index(file)\n', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltinregexpr_testregexpr5_0cce0e9702e8f5ac2c108458c357d258() {
+        assertEval("argv <- list('(\\\\\\\\S4method\\\\{([._[:alnum:]]*|\\\\$|\\\\[\\\\[?|\\\\+|\\\\-|\\\\*|\\\\/|\\\\^|<=?|>=?|!=?|==|\\\\&|\\\\||\\\\%[[:alnum:][:punct:]]*\\\\%)\\\\}\\\\{((([._[:alnum:]]+|`[^`]+`),)*([._[:alnum:]]+|`[^`]+`))\\\\})', '\\nread.00Index(file)\\n', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
-    public void TestrGenBuiltinregexpr_testregexpr6_ac0c04aab94c40f64d4ef55c4ca3ec7c() {
-        assertEval("argv <- list('\\.([[:alnum:]]+)$', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltinregexpr_testregexpr6_6074b336e6e92e1b0a7c9f39675b6793() {
+        assertEval("argv <- list('\\\\.([[:alnum:]]+)$', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
-    public void TestrGenBuiltinregexpr_testregexpr7_136d322b2859044c0aefdd019822e832() {
-        assertEval("argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+    public void TestrGenBuiltinregexpr_testregexpr7_86ce7be97fa8499d3879c357e8fbbf13() {
+        assertEval("argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -41864,8 +41864,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinseq_testseq16_486e08825cd587be6f5dc6ddafcca2da() {
-        assertEval("argv <- list(list(list(c('', '', '\036', '', 'New', 'print()', '(S3)', 'method', 'for', 'class', '\'function\',', '', '', '', '', '', '', '', 'also', 'used', 'for', 'auto-printing.', '', 'Further,', '.Primitive', '', '', '', '', '', '', '', 'functions', 'now', 'print', 'and', 'auto-print', 'identically.', '', 'The', 'new', 'method', '', '', '', '', '', '', '', 'is', 'based', 'on', 'code', 'suggestions', 'by', 'Romain', 'François.'))));seq_along(argv[[1]]);");
+    public void TestrGenBuiltinseq_testseq16_c72638ffe848df023ca0ed216dc0247c() {
+        assertEval("argv <- list(list(list(c('', '', '\\036', '', 'New', 'print()', '(S3)', 'method', 'for', 'class', '\\'function\\',', '', '', '', '', '', '', '', 'also', 'used', 'for', 'auto-printing.', '', 'Further,', '.Primitive', '', '', '', '', '', '', '', 'functions', 'now', 'print', 'and', 'auto-print', 'identically.', '', 'The', 'new', 'method', '', '', '', '', '', '', '', 'is', 'based', 'on', 'code', 'suggestions', 'by', 'Romain', 'François.'))));seq_along(argv[[1]]);");
     }
 
     @Test
@@ -42089,8 +42089,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsetEncoding_testsetEncoding4_6d54ce8af5a7f160216df0d235c552a5() {
-        assertEval("argv <- list(structure(c('Matrix', '1.0-12', '2013-03-26', 'recommended', 'Sparse and Dense Matrix Classes and Methods', 'Douglas Bates <bates@stat.wisc.edu> and Martin Maechler\n        <maechler@stat.math.ethz.ch>', 'Martin Maechler <mmaechler+Matrix@gmail.com>', 'Doug and Martin <Matrix-authors@R-project.org>', 'Classes and methods for dense and sparse matrices and\n        operations on them using Lapack and SuiteSparse.', 'R (>= 2.15.0), stats, methods, utils, lattice', 'graphics, grid', 'expm, MASS', 'MatrixModels, graph, SparseM, sfsmisc', 'UTF-8', 'no', 'no longer available, since we use data/*.R *and* our\nclasses', 'yes', 'no', 'GPL (>= 2)', 'The Matrix package includes libraries AMD, CHOLMOD,\nCOLAMD, CSparse and SPQR from the SuiteSparse collection of Tim\nDavis.  All sections of that code are covered by the GPL or\nLGPL licenses.  See the directory doc/UFsparse for details.', 'http://Matrix.R-forge.R-project.org/', '2013-03-26 15:38:54 UTC; maechler', 'yes', 'CRAN', '2013-03-26 19:25:05', 'R 3.0.1; x86_64-unknown-linux-gnu; 2013-12-07 03:52:11 UTC; unix'), .Names = c('Package', 'Version', 'Date', 'Priority', 'Title', 'Author', 'Maintainer', 'Contact', 'Description', 'Depends', 'Imports', 'Suggests', 'Enhances', 'Encoding', 'LazyData', 'LazyDataNote', 'ByteCompile', 'BuildResaveData', 'License', 'LicenseDetails', 'URL', 'Packaged', 'NeedsCompilation', 'Repository', 'Date/Publication', 'Built')), structure('UTF-8', .Names = 'Encoding')); .Internal(setEncoding(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinsetEncoding_testsetEncoding4_45acb501e0d08be171b77f3f5a401738() {
+        assertEval("argv <- list(structure(c('Matrix', '1.0-12', '2013-03-26', 'recommended', 'Sparse and Dense Matrix Classes and Methods', 'Douglas Bates <bates@stat.wisc.edu> and Martin Maechler\\n        <maechler@stat.math.ethz.ch>', 'Martin Maechler <mmaechler+Matrix@gmail.com>', 'Doug and Martin <Matrix-authors@R-project.org>', 'Classes and methods for dense and sparse matrices and\\n        operations on them using Lapack and SuiteSparse.', 'R (>= 2.15.0), stats, methods, utils, lattice', 'graphics, grid', 'expm, MASS', 'MatrixModels, graph, SparseM, sfsmisc', 'UTF-8', 'no', 'no longer available, since we use data/*.R *and* our\\nclasses', 'yes', 'no', 'GPL (>= 2)', 'The Matrix package includes libraries AMD, CHOLMOD,\\nCOLAMD, CSparse and SPQR from the SuiteSparse collection of Tim\\nDavis.  All sections of that code are covered by the GPL or\\nLGPL licenses.  See the directory doc/UFsparse for details.', 'http://Matrix.R-forge.R-project.org/', '2013-03-26 15:38:54 UTC; maechler', 'yes', 'CRAN', '2013-03-26 19:25:05', 'R 3.0.1; x86_64-unknown-linux-gnu; 2013-12-07 03:52:11 UTC; unix'), .Names = c('Package', 'Version', 'Date', 'Priority', 'Title', 'Author', 'Maintainer', 'Contact', 'Description', 'Depends', 'Imports', 'Suggests', 'Enhances', 'Encoding', 'LazyData', 'LazyDataNote', 'ByteCompile', 'BuildResaveData', 'License', 'LicenseDetails', 'URL', 'Packaged', 'NeedsCompilation', 'Repository', 'Date/Publication', 'Built')), structure('UTF-8', .Names = 'Encoding')); .Internal(setEncoding(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -42099,18 +42099,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsetS4Object_testsetS4Object10_941fb128fe75be71d5da0019d1282d09() {
-        assertEval("argv <- list(structure(function (object) cat('I am a \'foo\'\n'), target = structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), defined = structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), generic = character(0), class = structure('MethodDefinition', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsetS4Object_testsetS4Object10_f1618bd52a1d19d12b81f01159dea332() {
+        assertEval("argv <- list(structure(function (object) cat('I am a \\'foo\\'\\n'), target = structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), defined = structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), generic = character(0), class = structure('MethodDefinition', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsetS4Object_testsetS4Object11_18b7b860b9e86d63d988057c8d47cff7() {
-        assertEval("argv <- list(structure(function (x = 1, nrow, ncol) standardGeneric('diag'), generic = character(0), package = character(0), group = list(), valueClass = character(0), signature = character(0), default = quote(`\001NULL\001`), skeleton = quote(`<undef>`()), class = structure('standardGeneric', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsetS4Object_testsetS4Object11_c9d4d5d9e8b0439e485064de85950760() {
+        assertEval("argv <- list(structure(function (x = 1, nrow, ncol) standardGeneric('diag'), generic = character(0), package = character(0), group = list(), valueClass = character(0), signature = character(0), default = quote(`\\001NULL\\001`), skeleton = quote(`<undef>`()), class = structure('standardGeneric', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsetS4Object_testsetS4Object12_1887ce2e2ac5a19c8b151af9ab68ffb3() {
-        assertEval("argv <- list(structure(list(`NA` = structure(function (object) cat('I am a \'foo\'\n'), target = structure('foo', .Names = 'object', package = 'myTst', class = structure('signature', package = 'methods')), defined = structure('foo', .Names = 'object', package = 'myTst', class = structure('signature', package = 'methods')), generic = structure('show', package = 'methods'), class = structure('MethodDefinition', package = 'methods'))), .Names = NA_character_, arguments = structure('object', simpleOnly = TRUE), signatures = list(), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')), class = structure('listOfMethods', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsetS4Object_testsetS4Object12_ebdc141e1b9aa511ef1e612848e54ec6() {
+        assertEval("argv <- list(structure(list(`NA` = structure(function (object) cat('I am a \\'foo\\'\\n'), target = structure('foo', .Names = 'object', package = 'myTst', class = structure('signature', package = 'methods')), defined = structure('foo', .Names = 'object', package = 'myTst', class = structure('signature', package = 'methods')), generic = structure('show', package = 'methods'), class = structure('MethodDefinition', package = 'methods'))), .Names = NA_character_, arguments = structure('object', simpleOnly = TRUE), signatures = list(), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')), class = structure('listOfMethods', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -42124,8 +42124,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsetS4Object_testsetS4Object2_d875032dd857442d1f3659594a4ac246() {
-        assertEval("argv <- list(structure(function (x, ...) standardGeneric('toeplitz'), generic = character(0), package = character(0), group = list(), valueClass = character(0), signature = character(0), default = quote(`\001NULL\001`), skeleton = quote(`<undef>`()), class = structure('standardGeneric', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsetS4Object_testsetS4Object2_ed883a7fd8b0bee8e11ee812189f7b75() {
+        assertEval("argv <- list(structure(function (x, ...) standardGeneric('toeplitz'), generic = character(0), package = character(0), group = list(), valueClass = character(0), signature = character(0), default = quote(`\\001NULL\\001`), skeleton = quote(`<undef>`()), class = structure('standardGeneric', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -42134,8 +42134,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsetS4Object_testsetS4Object4_461af4c09fb7e35645cfd822f5b06a1c() {
-        assertEval("argv <- list(structure(function (qr, complete = FALSE, Dvec) standardGeneric('qr.Q'), generic = character(0), package = character(0), group = list(), valueClass = character(0), signature = character(0), default = quote(`\001NULL\001`), skeleton = quote(`<undef>`()), class = structure('standardGeneric', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsetS4Object_testsetS4Object4_f0c5493b3da7d5cd4727d96805aadbb2() {
+        assertEval("argv <- list(structure(function (qr, complete = FALSE, Dvec) standardGeneric('qr.Q'), generic = character(0), package = character(0), group = list(), valueClass = character(0), signature = character(0), default = quote(`\\001NULL\\001`), skeleton = quote(`<undef>`()), class = structure('standardGeneric', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -42179,18 +42179,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinseterrmessage_testseterrmessage1_c2ebe071ff97bc19521be20a91a97920() {
-        assertEval("argv <- list('Error in cor(rnorm(10), NULL) : \n  supply both 'x' and 'y' or a matrix-like 'x'\n'); .Internal(seterrmessage(argv[[1]]))");
+    public void TestrGenBuiltinseterrmessage_testseterrmessage1_2970788180849cbc3a9e7baa853da53a() {
+        assertEval("argv <- list('Error in cor(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 
     @Test
-    public void TestrGenBuiltinseterrmessage_testseterrmessage2_a61eeb4b8b937fdbda192fb1874c0116() {
-        assertEval("argv <- list('Error in as.POSIXlt.character(x, tz, ...) : \n  character string is not in a standard unambiguous format\n'); .Internal(seterrmessage(argv[[1]]))");
+    public void TestrGenBuiltinseterrmessage_testseterrmessage2_bdd2bd1edc78df6b3afdcaf9a7a33a3a() {
+        assertEval("argv <- list('Error in as.POSIXlt.character(x, tz, ...) : \\n  character string is not in a standard unambiguous format\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 
     @Test
-    public void TestrGenBuiltinseterrmessage_testseterrmessage3_20257c59ec215dfcf32e855ac6dae1cb() {
-        assertEval("argv <- list('Error in validObject(.Object) : \n  invalid class “trackCurve” object: Unequal x,y lengths: 20, 10\n'); .Internal(seterrmessage(argv[[1]]))");
+    public void TestrGenBuiltinseterrmessage_testseterrmessage3_6b1137e46070ef431e77a376fc23fddb() {
+        assertEval("argv <- list('Error in validObject(.Object) : \\n  invalid class “trackCurve” object: Unequal x,y lengths: 20, 10\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 
     @Test
@@ -42304,8 +42304,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinshortRowNames_testshortRowNames23_b674780fa6cf908c800d69845a128a3b() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 1, 2), Deviance = c(12.2441566485997, 8.44399377410362, 11.9670615295804), AIC = c(73.9421143635373, 72.1419514890412, 77.665019244518)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', 'Temp', 'Soft'), class = c('anova', 'data.frame'), heading = c('Single term additions', '\nModel:', 'cbind(X, M) ~ M.user')), 2L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinshortRowNames_testshortRowNames23_ea1577a2b4a2eb4d8775095247e89489() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 1, 2), Deviance = c(12.2441566485997, 8.44399377410362, 11.9670615295804), AIC = c(73.9421143635373, 72.1419514890412, 77.665019244518)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', 'Temp', 'Soft'), class = c('anova', 'data.frame'), heading = c('Single term additions', '\\nModel:', 'cbind(X, M) ~ M.user')), 2L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -42319,8 +42319,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinshortRowNames_testshortRowNames5_3245df463db4b0dda9647e1d6ef98f19() {
-        assertEval("argv <- list(structure(list(c('4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-2', '4.0-2', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '3.1-55', '3.1-55', '3.1-55', '3.1-54', '3.1-53', '3.1-53', '3.1-52', '3.1-51'), c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), c('The C and R code has been reformatted for legibility.', 'The old compatibility function rpconvert() has been removed.', 'The cross-validation functions allow for user interrupt at the end\nof evaluating each split.', 'Variable Reliability in data set car90 is corrected to be an\nordered factor, as documented.', 'Surrogate splits are now considered only if they send two or more\ncases _with non-zero weight_ each way.  For numeric/ordinal\nvariables the restriction to non-zero weights is new: for\ncategorical variables this is a new restriction.', 'Surrogate splits which improve only by rounding error over the\ndefault split are no longer returned.  Where weights and missing\nvalues are present, the splits component for some of these was not\nreturned correctly.', 'A fit of class \'rpart\' now contains a component for variable\n‘importance’, which is reported by the summary() method.', 'The text() method gains a minlength argument, like the labels()\nmethod.  This adds finer control: the default remains pretty =\nNULL, minlength = 1L.', 'The handling of fits with zero and fractional weights has been\ncorrected: the results may be slightly different (or even\nsubstantially different when the proportion of zero weights is\nlarge).', 'Some memory leaks have been plugged.', 'There is a second vignette, longintro.Rnw, a version of the\noriginal Mayo Tecnical Report on rpart.', 'Added dataset car90, a corrected version of the S-PLUS dataset\ncar.all (used with permission).', 'This version does not use paste0{} and so works with R 2.14.x.', 'Merged in a set of Splus code changes that had accumulated at Mayo\nover the course of a decade. The primary one is a change in how\nindexing is done in the underlying C code, which leads to a major\nspeed increase for large data sets.  Essentially, for the lower\nleaves all our time used to be eaten up by bookkeeping, and this\nwas replaced by a different approach.  The primary routine also\nuses .Call{} so as to be more memory efficient.', 'The other major change was an error for asymmetric loss matrices,\nprompted by a user query.  With L=loss asymmetric, the altered\npriors were computed incorrectly - they were using L' instead of L.\nUpshot - the tree would not not necessarily choose optimal splits\nfor the given loss matrix.  Once chosen, splits were evaluated\ncorrectly.  The printed “improvement” values are of course the\nwrong ones as well.  It is interesting that for my little test\ncase, with L quite asymmetric, the early splits in the tree are\nunchanged - a good split still looks good.', 'Add the return.all argument to xpred.rpart().', 'Added a set of formal tests, i.e., cases with known answers to\nwhich we can compare.', 'Add a usercode vignette, explaining how to add user defined\nsplitting functions.', 'The class method now also returns the node probability.', 'Add the stagec data set, used in some tests.', 'The plot.rpart routine needs to store a value that will be visible\nto the rpartco routine at a later time.  This is now done in an\nenvironment in the namespace.', 'Force use of registered symbols in R >= 2.16.0', 'Update Polish translations.', 'Work on message formats.', 'Add Polish translations', 'rpart, rpart.matrix: allow backticks in formulae.', 'tests/backtick.R: regession test', 'src/xval.c: ensure unused code is not compiled in.', 'Change description of margin in ?plot.rpart as suggested by Bill\nVenables.')), row.names = c(NA, -29L), class = 'data.frame'), 1L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinshortRowNames_testshortRowNames5_6ad800fa0dc62a99bbb9658d334d1d11() {
+        assertEval("argv <- list(structure(list(c('4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.1-0', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-3', '4.0-2', '4.0-2', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '4.0-1', '3.1-55', '3.1-55', '3.1-55', '3.1-54', '3.1-53', '3.1-53', '3.1-52', '3.1-51'), c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), c('The C and R code has been reformatted for legibility.', 'The old compatibility function rpconvert() has been removed.', 'The cross-validation functions allow for user interrupt at the end\\nof evaluating each split.', 'Variable Reliability in data set car90 is corrected to be an\\nordered factor, as documented.', 'Surrogate splits are now considered only if they send two or more\\ncases _with non-zero weight_ each way.  For numeric/ordinal\\nvariables the restriction to non-zero weights is new: for\\ncategorical variables this is a new restriction.', 'Surrogate splits which improve only by rounding error over the\\ndefault split are no longer returned.  Where weights and missing\\nvalues are present, the splits component for some of these was not\\nreturned correctly.', 'A fit of class \\'rpart\\' now contains a component for variable\\n‘importance’, which is reported by the summary() method.', 'The text() method gains a minlength argument, like the labels()\\nmethod.  This adds finer control: the default remains pretty =\\nNULL, minlength = 1L.', 'The handling of fits with zero and fractional weights has been\\ncorrected: the results may be slightly different (or even\\nsubstantially different when the proportion of zero weights is\\nlarge).', 'Some memory leaks have been plugged.', 'There is a second vignette, longintro.Rnw, a version of the\\noriginal Mayo Tecnical Report on rpart.', 'Added dataset car90, a corrected version of the S-PLUS dataset\\ncar.all (used with permission).', 'This version does not use paste0{} and so works with R 2.14.x.', 'Merged in a set of Splus code changes that had accumulated at Mayo\\nover the course of a decade. The primary one is a change in how\\nindexing is done in the underlying C code, which leads to a major\\nspeed increase for large data sets.  Essentially, for the lower\\nleaves all our time used to be eaten up by bookkeeping, and this\\nwas replaced by a different approach.  The primary routine also\\nuses .Call{} so as to be more memory efficient.', 'The other major change was an error for asymmetric loss matrices,\\nprompted by a user query.  With L=loss asymmetric, the altered\\npriors were computed incorrectly - they were using L' instead of L.\\nUpshot - the tree would not not necessarily choose optimal splits\\nfor the given loss matrix.  Once chosen, splits were evaluated\\ncorrectly.  The printed “improvement” values are of course the\\nwrong ones as well.  It is interesting that for my little test\\ncase, with L quite asymmetric, the early splits in the tree are\\nunchanged - a good split still looks good.', 'Add the return.all argument to xpred.rpart().', 'Added a set of formal tests, i.e., cases with known answers to\\nwhich we can compare.', 'Add a usercode vignette, explaining how to add user defined\\nsplitting functions.', 'The class method now also returns the node probability.', 'Add the stagec data set, used in some tests.', 'The plot.rpart routine needs to store a value that will be visible\\nto the rpartco routine at a later time.  This is now done in an\\nenvironment in the namespace.', 'Force use of registered symbols in R >= 2.16.0', 'Update Polish translations.', 'Work on message formats.', 'Add Polish translations', 'rpart, rpart.matrix: allow backticks in formulae.', 'tests/backtick.R: regession test', 'src/xval.c: ensure unused code is not compiled in.', 'Change description of margin in ?plot.rpart as suggested by Bill\\nVenables.')), row.names = c(NA, -29L), class = 'data.frame'), 1L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -42634,13 +42634,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsprintf_testsprintf16_654fd9520033d51a810841e76a3331df() {
-        assertEval("argv <- list('checkRd: (%d) %s', -3, 'evalSource.Rd:157: Unnecessary braces at ‘{\'sourceEnvironment\'}’'); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsprintf_testsprintf16_f2c00ebf15d0dde06e0056b870d0fbe6() {
+        assertEval("argv <- list('checkRd: (%d) %s', -3, 'evalSource.Rd:157: Unnecessary braces at ‘{\\'sourceEnvironment\\'}’'); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsprintf_testsprintf17_5c2dcbe3c6acc9fac8529456e762629d() {
-        assertEval("argv <- list('tools:::check_compiled_code(\'%s\')', '/home/lzhao/hg/r-instrumented/library/foreign'); .Internal(sprintf(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinsprintf_testsprintf17_100d8c9855a2bd879eea0aa999086568() {
+        assertEval("argv <- list('tools:::check_compiled_code(\\'%s\\')', '/home/lzhao/hg/r-instrumented/library/foreign'); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -42689,8 +42689,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsprintf_testsprintf9_034a1cf6e1acbf980f45240da29bea2e() {
-        assertEval("argv <- list('tools:::.createExdotR(\'%s\', \'%s\', silent = TRUE, use_gct = %s, addTiming = %s)', structure('KernSmooth', .Names = 'Package'), '/home/lzhao/hg/r-instrumented/library/KernSmooth', FALSE, FALSE); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinsprintf_testsprintf9_5e5b031de333d0ce9390a4a857c270e9() {
+        assertEval("argv <- list('tools:::.createExdotR(\\'%s\\', \\'%s\\', silent = TRUE, use_gct = %s, addTiming = %s)', structure('KernSmooth', .Names = 'Package'), '/home/lzhao/hg/r-instrumented/library/KernSmooth', FALSE, FALSE); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -42839,8 +42839,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit10_2cea016d569d5b424eb5691f4e7f8a05() {
-        assertEval("argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\n', '[ \t\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit10_575c83bfde53fe0914403b6d440f0f0f() {
+        assertEval("argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -42849,8 +42849,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit12_b21c4cf65dd0dddc37d3f00a7517e156() {
-        assertEval("argv <- list('Keywords:  utilities ', '\n[ \t\n]*\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit12_5de2449138882559ccc5a074c2e9851f() {
+        assertEval("argv <- list('Keywords:  utilities ', '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -42859,13 +42859,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit14_851cbb2463ab3826c77855238c5eb345() {
-        assertEval("argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \'Writing R Extensions\' for more information.'), '\n[ \t\n]*\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit14_415059cf37554e7268040a36e0a17582() {
+        assertEval("argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\'Writing R Extensions\\' for more information.'), '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit15_8b9de2a3de033f8bab773cbd9fb71d5a() {
-        assertEval("argv <- list('  \036  Complex arithmetic sometimes warned incorrectly about       producing NAs when there were NaNs in the input.', '[ \t\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit15_677977956e5e5291bc42c15a6228a24a() {
+        assertEval("argv <- list('  \\036  Complex arithmetic sometimes warned incorrectly about       producing NAs when there were NaNs in the input.', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -42879,23 +42879,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit3_2310c2de65f0ea486d0573a2bc3d43a9() {
-        assertEval("argv <- list('  \036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \t\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit3_0d816b41818b324d788a52f13a14ca03() {
+        assertEval("argv <- list('  \\036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \\t\\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit4_1c84e27e543a0fe8fb113f53d96a5da8() {
-        assertEval("argv <- list('Keywords:  device ', '[ \t\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit4_654c2292a6f7bb31c116d50e55ac8864() {
+        assertEval("argv <- list('Keywords:  device ', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit5_ed8c5430f03372dab6547993fa67a30f() {
-        assertEval("argv <- list('R CMD check now gives an error if the R code in a vignette fails to\nrun, unless this is caused by a missing package.\n\n\036R CMD check now unpacks tarballs in the same way as R CMD INSTALL,\nincluding making use of the environment variable R_INSTALL_TAR to\noverride the default behaviour.\n\n\036R CMD check performs additional code analysis of package startup\nfunctions, and notifies about incorrect argument lists and\n(incorrect) calls to functions which modify the search path or\ninappropriately generate messages.\n\n\036R CMD check now also checks compiled code for symbols corresponding\nto functions which might terminate R or write to stdout/stderr\ninstead of the console.\n\n\036R CMD check now uses a pdf() device when checking examples (rather\nthan postscript()).\n\n\036R CMD check now checks line-endings of makefiles and C/C++/Fortran\nsources in subdirectories of src as well as in src itself.\n\n\036R CMD check now reports as a NOTE what look like methods documented\nwith their full names even if there is a namespace and they are\nexported.  In almost all cases they are intended to be used only as\nmethods and should use the \\method markup.  In the other rare cases\nthe recommended form is to use a function such as coefHclust which\nwould not get confused with a method, document that and register it\nin the NAMESPACE file by s3method(coef, hclust, coefHclust).\n\n\036The default for the environment variable _R_CHECK_COMPACT_DATA2_ is\nnow true: thus if using the newer forms of compression introduced\nin R 2.10.0 would be beneficial is now checked (by default).\n\n\036Reference output for a vignette can be supplied when checking a\npackage by R CMD check: see ‘Writing R Extensions’.\n\n\036R CMD Rd2dvi allows the use of LaTeX package inputenx rather than\ninputenc: the value of the environment variable RD2DVI_INPUTENC is\nused.  (LaTeX package inputenx is an optional install which\nprovides greater coverage of the UTF-8 encoding.)\n\n\036Rscript on a Unix-alike now accepts file names containing spaces\n(provided these are escaped or quoted in the shell).\n\n\036R CMD build on a Unix-alike (only) now tries to preserve dates on\nfiles it copies from its input directory.  (This was the\nundocumented behaviour prior to R 2.13.0.)', '\n\036', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit5_ced7f7dd6433c12941275eda3aa577a8() {
+        assertEval("argv <- list('R CMD check now gives an error if the R code in a vignette fails to\\nrun, unless this is caused by a missing package.\\n\\n\\036R CMD check now unpacks tarballs in the same way as R CMD INSTALL,\\nincluding making use of the environment variable R_INSTALL_TAR to\\noverride the default behaviour.\\n\\n\\036R CMD check performs additional code analysis of package startup\\nfunctions, and notifies about incorrect argument lists and\\n(incorrect) calls to functions which modify the search path or\\ninappropriately generate messages.\\n\\n\\036R CMD check now also checks compiled code for symbols corresponding\\nto functions which might terminate R or write to stdout/stderr\\ninstead of the console.\\n\\n\\036R CMD check now uses a pdf() device when checking examples (rather\\nthan postscript()).\\n\\n\\036R CMD check now checks line-endings of makefiles and C/C++/Fortran\\nsources in subdirectories of src as well as in src itself.\\n\\n\\036R CMD check now reports as a NOTE what look like methods documented\\nwith their full names even if there is a namespace and they are\\nexported.  In almost all cases they are intended to be used only as\\nmethods and should use the \\\\method markup.  In the other rare cases\\nthe recommended form is to use a function such as coefHclust which\\nwould not get confused with a method, document that and register it\\nin the NAMESPACE file by s3method(coef, hclust, coefHclust).\\n\\n\\036The default for the environment variable _R_CHECK_COMPACT_DATA2_ is\\nnow true: thus if using the newer forms of compression introduced\\nin R 2.10.0 would be beneficial is now checked (by default).\\n\\n\\036Reference output for a vignette can be supplied when checking a\\npackage by R CMD check: see ‘Writing R Extensions’.\\n\\n\\036R CMD Rd2dvi allows the use of LaTeX package inputenx rather than\\ninputenc: the value of the environment variable RD2DVI_INPUTENC is\\nused.  (LaTeX package inputenx is an optional install which\\nprovides greater coverage of the UTF-8 encoding.)\\n\\n\\036Rscript on a Unix-alike now accepts file names containing spaces\\n(provided these are escaped or quoted in the shell).\\n\\n\\036R CMD build on a Unix-alike (only) now tries to preserve dates on\\nfiles it copies from its input directory.  (This was the\\nundocumented behaviour prior to R 2.13.0.)', '\\n\\036', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit6_52315502093be9aa623781f2288b2981() {
-        assertEval("argv <- list(structure('Formal Methods and Classes', .Names = 'Title'), '\n\n', TRUE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit6_a320151be4f63c10bc8a16907fea43d9() {
+        assertEval("argv <- list(structure('Formal Methods and Classes', .Names = 'Title'), '\\n\\n', TRUE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -42904,8 +42904,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit8_70a186f7f9c91711f9c72b14cb9202c1() {
-        assertEval("argv <- list('The \\usage entries for S3 methods should use the \\method markup and not their full name.\n', '\n', FALSE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    public void TestrGenBuiltinstrsplit_teststrsplit8_027f322702ffd271952f87c9dd4247bf() {
+        assertEval("argv <- list('The \\\\usage entries for S3 methods should use the \\\\method markup and not their full name.\\n', '\\n', FALSE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -42939,8 +42939,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrtrim_teststrtrim1_811a30186b585d44bd04bb5e87aff846() {
-        assertEval("argv <- list(c('\'time\'', '\'status\''), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinstrtrim_teststrtrim1_98dcf016763f0a8af2564185c4f61440() {
+        assertEval("argv <- list(c('\\'time\\'', '\\'status\\''), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -42949,18 +42949,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrtrim_teststrtrim3_76b20a7a9704fff76946a10d219a4b1a() {
-        assertEval("argv <- list(c('\'1\'', '\'2\'', NA), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinstrtrim_teststrtrim3_c73b90d22523ecaef2b271fcc06b5533() {
+        assertEval("argv <- list(c('\\'1\\'', '\\'2\\'', NA), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    public void TestrGenBuiltinstrtrim_teststrtrim4_8fbfd0e4371659b597292b7cf96c532a() {
-        assertEval("argv <- list(c('\'gray17\'', '\'grey17\''), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinstrtrim_teststrtrim4_93ecb5198282d51ba5933e860ae3ef15() {
+        assertEval("argv <- list(c('\\'gray17\\'', '\\'grey17\\''), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    public void TestrGenBuiltinstrtrim_teststrtrim5_23323d6e7038b663d2b84cb0665e70b9() {
-        assertEval("argv <- list(structure('\'@CRAN@\'', .Names = 'CRAN'), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinstrtrim_teststrtrim5_eacf1c8782bf006d75594e9b44d8461a() {
+        assertEval("argv <- list(structure('\\'@CRAN@\\'', .Names = 'CRAN'), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -42979,8 +42979,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub10_3dab460e01eaf725e46a8408c4c76c1a() {
-        assertEval("argv <- list('^[[:space:]]*([[:alnum:].]+).*$', '\\1', structure('MASS', .Names = 'Suggests'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub10_8d6b7828b958f5447e6d29a1c78b3799() {
+        assertEval("argv <- list('^[[:space:]]*([[:alnum:].]+).*$', '\\\\1', structure('MASS', .Names = 'Suggests'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -42989,23 +42989,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub12_5d6dd00c6b4fc5065d30c622287a6304() {
-        assertEval("argv <- list('.* : ', '', structure('Error in rnorm(2, c(1, NA)) : (converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, c(1, NA)))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub12_18c19215e492e38ebc1c19bacd9268cb() {
+        assertEval("argv <- list('.* : ', '', structure('Error in rnorm(2, c(1, NA)) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, c(1, NA)))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub13_490587bd4ba55fcedeb99bf454df1f51() {
-        assertEval("argv <- list('.* : ', '', structure('Error in rexp(2, numeric()) : (converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rexp(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub13_2d0b9be4f1cde89df2f4aa084df2c101() {
+        assertEval("argv <- list('.* : ', '', structure('Error in rexp(2, numeric()) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rexp(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub14_c09fee904dc697fe3d2484f463e0cadf() {
-        assertEval("argv <- list('.* : ', '', structure('Error in rnorm(2, numeric()) : (converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub14_2d46a7cae6093ef511acd63305fecfbb() {
+        assertEval("argv <- list('.* : ', '', structure('Error in rnorm(2, numeric()) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub15_16a95fbfdc69cd2c525b9b7cf1506b7c() {
-        assertEval("argv <- list('.* : ', '', structure('Error in rnorm(1, sd = Inf) : (converted from warning) NAs produced\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub15_efadebb02fe28ae700fc046ae4ceef86() {
+        assertEval("argv <- list('.* : ', '', structure('Error in rnorm(1, sd = Inf) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -43014,18 +43014,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub17_930aba9904352d58f2f5591f3d0efcfd() {
-        assertEval("argv <- list('^msgstr[[:blank:]]+[\'](.*)[\'][[:blank:]]*$', '\\1', 'msgstr \'<U+043E><U+0442><U+0440><U+0438><U+0446><U+0430><U+0442><U+0435><U+043B><U+044C><U+043D><U+044B><U+0435> <U+0432><U+0435><U+0441><U+0430> <U+043D><U+0435> <U+0440><U+0430><U+0437><U+0440><U+0435><U+0448><U+0435><U+043D><U+044B>\'', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub17_80f9e2840d0a867ca64b619296c7d243() {
+        assertEval("argv <- list('^msgstr[[:blank:]]+[\\'](.*)[\\'][[:blank:]]*$', '\\\\1', 'msgstr \\'<U+043E><U+0442><U+0440><U+0438><U+0446><U+0430><U+0442><U+0435><U+043B><U+044C><U+043D><U+044B><U+0435> <U+0432><U+0435><U+0441><U+0430> <U+043D><U+0435> <U+0440><U+0430><U+0437><U+0440><U+0435><U+0448><U+0435><U+043D><U+044B>\\'', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub18_8a1abebf9e80afd63b6551f5adb1b4d1() {
-        assertEval("argv <- list('.*Content-Type:[^\\]*charset=([^\\[:space:]]*)[[:space:]]*\\\\n.*', '\\1', 'Project-Id-Version: lattice 0.20-10\\nReport-Msgid-Bugs-To: bugs@r-project.org\\nPOT-Creation-Date: 2012-03-10 14:42\\nPO-Revision-Date: 2012-08-31 16:36+0100\\nLast-Translator: \305\201ukasz Daniel <lukasz.daniel@gmail.com>\\nLanguage-Team: \305\201ukasz Daniel <lukasz.daniel@gmail.com>\\nLanguage: pl_PL\\nMIME-Version: 1.0\\nContent-Type: text/plain; charset=UTF-8\\nContent-Transfer-Encoding: 8bit\\nPlural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\\nX-Poedit-SourceCharset: iso-8859-1\\n', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub18_65cd5531a1824a8a9854980cb648276a() {
+        assertEval("argv <- list('.*Content-Type:[^\\\\]*charset=([^\\\\[:space:]]*)[[:space:]]*\\\\\\\\n.*', '\\\\1', 'Project-Id-Version: lattice 0.20-10\\\\nReport-Msgid-Bugs-To: bugs@r-project.org\\\\nPOT-Creation-Date: 2012-03-10 14:42\\\\nPO-Revision-Date: 2012-08-31 16:36+0100\\\\nLast-Translator: \\305\\201ukasz Daniel <lukasz.daniel@gmail.com>\\\\nLanguage-Team: \\305\\201ukasz Daniel <lukasz.daniel@gmail.com>\\\\nLanguage: pl_PL\\\\nMIME-Version: 1.0\\\\nContent-Type: text/plain; charset=UTF-8\\\\nContent-Transfer-Encoding: 8bit\\\\nPlural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\\\\nX-Poedit-SourceCharset: iso-8859-1\\\\n', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub19_27683de863ae5c14556465426ece75b4() {
-        assertEval("argv <- list('([^:]*):(.*)', '\\2', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub19_648ae4a162a67e16c0df72ff338b5419() {
+        assertEval("argv <- list('([^:]*):(.*)', '\\\\2', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -43039,8 +43039,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub4_3323f2e8d1368cad17d14f8dd8538856() {
-        assertEval("argv <- list('^  \036 ', '\036', c('', '  \036 Merged in a set of Splus code changes that had accumulated at Mayo', '    over the course of a decade. The primary one is a change in how', '    indexing is done in the underlying C code, which leads to a major', '    speed increase for large data sets.  Essentially, for the lower', '    leaves all our time used to be eaten up by bookkeeping, and this', '    was replaced by a different approach.  The primary routine also', '    uses .Call{} so as to be more memory efficient.', '', '  \036 The other major change was an error for asymmetric loss matrices,', '    prompted by a user query.  With L=loss asymmetric, the altered', '    priors were computed incorrectly - they were using L' instead of L.', '    Upshot - the tree would not not necessarily choose optimal splits', '    for the given loss matrix.  Once chosen, splits were evaluated', '    correctly.  The printed “improvement” values are of course the', '    wrong ones as well.  It is interesting that for my little test', '    case, with L quite asymmetric, the early splits in the tree are', '    unchanged - a good split still looks good.', '', '  \036 Add the return.all argument to xpred.rpart().', '', '  \036 Added a set of formal tests, i.e., cases with known answers to', '    which we can compare.', '', '  \036 Add a usercode vignette, explaining how to add user defined', '    splitting functions.', '', '  \036 The class method now also returns the node probability.', '', '  \036 Add the stagec data set, used in some tests.', '', '  \036 The plot.rpart routine needs to store a value that will be visible', '    to the rpartco routine at a later time.  This is now done in an', '    environment in the namespace.', ''), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub4_051701130f7d75c599bc06e0668a0b59() {
+        assertEval("argv <- list('^  \\036 ', '\\036', c('', '  \\036 Merged in a set of Splus code changes that had accumulated at Mayo', '    over the course of a decade. The primary one is a change in how', '    indexing is done in the underlying C code, which leads to a major', '    speed increase for large data sets.  Essentially, for the lower', '    leaves all our time used to be eaten up by bookkeeping, and this', '    was replaced by a different approach.  The primary routine also', '    uses .Call{} so as to be more memory efficient.', '', '  \\036 The other major change was an error for asymmetric loss matrices,', '    prompted by a user query.  With L=loss asymmetric, the altered', '    priors were computed incorrectly - they were using L' instead of L.', '    Upshot - the tree would not not necessarily choose optimal splits', '    for the given loss matrix.  Once chosen, splits were evaluated', '    correctly.  The printed “improvement” values are of course the', '    wrong ones as well.  It is interesting that for my little test', '    case, with L quite asymmetric, the early splits in the tree are', '    unchanged - a good split still looks good.', '', '  \\036 Add the return.all argument to xpred.rpart().', '', '  \\036 Added a set of formal tests, i.e., cases with known answers to', '    which we can compare.', '', '  \\036 Add a usercode vignette, explaining how to add user defined', '    splitting functions.', '', '  \\036 The class method now also returns the node probability.', '', '  \\036 Add the stagec data set, used in some tests.', '', '  \\036 The plot.rpart routine needs to store a value that will be visible', '    to the rpartco routine at a later time.  This is now done in an', '    environment in the namespace.', ''), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -43049,23 +43049,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub6_95c7eef127046a2032c13750370756d0() {
-        assertEval("argv <- list('\'', '\\\'', '\\method{as.dist}{default}', FALSE, FALSE, TRUE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub6_3bb9daceb957e4b41ea3686268c1c93b() {
+        assertEval("argv <- list('\\'', '\\\\\\'', '\\\\method{as.dist}{default}', FALSE, FALSE, TRUE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub7_8ed2b6b02e3e19c08d5a5135f5d06160() {
-        assertEval("argv <- list('(\\w)(\\w*)(\\w)', '\\U\\1\\E\\2\\U\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub7_ed68bd000c7a9a48ad26c645f528cc2f() {
+        assertEval("argv <- list('(\\\\w)(\\\\w*)(\\\\w)', '\\\\U\\\\1\\\\E\\\\2\\\\U\\\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub8_071871709a3e154f0ca90923dba1f2a4() {
-        assertEval("argv <- list('^(msgstr)\\[([[:digit:]]+)\\].*$', '\\1\\\\[\\2\\\\]', 'msgstr[0] \'%d ligne de poids nul non comptabilis<U+00E9>e\'', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub8_040dbe0982c43a6d8971fb226842136a() {
+        assertEval("argv <- list('^(msgstr)\\\\[([[:digit:]]+)\\\\].*$', '\\\\1\\\\\\\\[\\\\2\\\\\\\\]', 'msgstr[0] \\'%d ligne de poids nul non comptabilis<U+00E9>e\\'', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub9_a8ad64d814b123bd01d10264df4fceeb() {
-        assertEval("argv <- list('[[:space:]]*$', '', 'identical() has a new argument, ignore.environment, used when\ncomparing functions (with default FALSE as before).\n\n\036There is a new option, options(CBoundsCheck=), which controls how\n.C() and .Fortran() pass arguments to compiled code.  If true\n(which can be enabled by setting the environment variable\nR_C_BOUNDS_CHECK to yes), raw, integer, double and complex\narguments are always copied, and checked for writing off either end\nof the array on return from the compiled code (when a second copy\nis made).  This also checks individual elements of character\nvectors passed to .C().\n\nThis is not intended for routine use, but can be very helpful in\nfinding segfaults in package code.\n\n\036In layout(), the limits on the grid size have been raised (again).\n\n\036New simple provideDimnames() utility function.\n\n\036Where methods for length() return a double value which is\nrepresentable as an integer (as often happens for package Matrix),\nthis is converted to an integer.\n\n\036Matrix indexing of dataframes by two-column numeric indices is now\nsupported for replacement as well as extraction.\n\n\036setNames() now has a default for its object argument, useful for a\ncharacter result.\n\n\036StructTS() has a revised additive constant in the loglik component\nof the result: the previous definition is returned as the loglik0\ncomponent.  However, the help page has always warned of a lack of\ncomparability of log-likelihoods for non-stationary models.\n(Suggested by Jouni Helske.)\n\n\036The logic in aggregate.formula() has been revised.  It is now\npossible to use a formula stored in a variable; previously, it had\nto be given explicitly in the function call.\n\n\036install.packages() has a new argument quiet to reduce the amount of\noutput shown.\n\n\036Setting an element of the graphics argument lwd to a negative or\ninfinite value is now an error.  Lines corresponding to elements\nwith values NA or NaN are silently omitted.\n\nPreviously the behaviour was device-dependent.\n\n\036Setting graphical parameters cex, col, lty, lwd and pch in par()\nnow requires a length-one argument.  Previously some silently took\nthe first element of a longer vector, but not always when\ndocumented to do so.\n\n\036Sys.which() when used with inputs which would be unsafe in a shell\n(e.g. absolute paths containing spaces) now uses appropriate\nquoting.\n\n\036as.tclObj() has been extended to handle raw vectors.  Previously,\nit only worked in the other direction.  (Contributed by Charlie\nFriedemann, PR#14939.)\n\n\036New functions cite() and citeNatbib() have been added, to allow\ngeneration of in-text citations from \'bibentry\' objects.  A cite()\nfunction may be added to bibstyle() environments.\n\n\036A sort() method has been added for \'bibentry\' objects.\n\n\036The bibstyle() function now defaults to setting the default\nbibliography style. The getBibstyle() function has been added to\nreport the name of the current default style.\n\n\036scatter.smooth() now has an argument lpars to pass arguments to\nlines().\n\n\036pairs() has a new log argument, to allow some or all variables to\nbe plotted on logarithmic scale.  (In part, wish of PR#14919.)\n\n\036split() gains a sep argument.\n\n\036termplot() does a better job when given a model with interactions\n(and no longer attempts to plot interaction terms).\n\n\036The parser now incorporates code from Romain Francois' parser\npackage, to support more detailed computation on the code, such as\nsyntax highlighting, comment-based documentation, etc.  Functions\ngetParseData() and getParseText() access the data.\n\n\036There is a new function rep_len() analogous to rep.int() for when\nspeed is required (and names are not).\n\n\036The undocumented use rep(NULL, length.out = n) for n > 0 (which\nreturns NULL) now gives a warning.\n\n\036demo() gains an encoding argument for those packages with non-ASCII\ndemos: it defaults to the package encoding where there is one.\n\n\036strwrap() converts inputs with a marked encoding to the current\nlocale: previously it made some attempt to pass through as bytes\ninputs invalid in the current locale.\n\n\036Specifying both rate and scale to [dpqr]gamma is a warning (if they\nare essentially the same value) or an error.\n\n\036merge() works in more cases where the data frames include matrices.\n(Wish of PR#14974.)\n\n\036optimize() and uniroot() no longer use a shared parameter object\nacross calls.  (nlm(), nlminb() and optim() with numerical\nderivatives still do, as documented.)\n\n\036The all.equal() method for date-times is now documented: times are\nregarded as equal (by default) if they differ by up to 1 msec.\n\n\036duplicated() and unique() gain a nmax argument which can be used to\nmake them much more efficient when it is known that there are only\na small number of unique entries.  This is done automatically for\nfactors.\n\n\036Functions rbinom(), rgeom(), rhyper(), rpois(), rnbinom(),\nrsignrank() and rwilcox() now return integer (not double) vectors.\nThis halves the storage requirements for large simulations.\n\n\036sort(), sort.int() and sort.list() now use radix sorting for\nfactors of less than 100,000 levels when method is not supplied.\nSo does order() if called with a single factor, unless na.last =\nNA.\n\n\036diag() as used to generate a diagonal matrix has been re-written in\nC for speed and less memory usage.  It now forces the result to be\nnumeric in the case diag(x) since it is said to have ‘zero\noff-diagonal entries’.\n\n\036backsolve() (and forwardsolve()) are now internal functions, for\nspeed and support for large matrices.\n\n\036More matrix algebra functions (e.g. chol() and solve()) accept\nlogical matrices (and coerce to numeric).\n\n\036sample.int() has some support for n >= 2^31: see its help for the\nlimitations.\n\nA different algorithm is used for (n, size, replace = FALSE, prob =\nNULL) for n > 1e7 and size <= n/2.  This is much faster and uses\nless memory, but does give different results.\n\n\036approxfun() and splinefun() now return a wrapper to an internal\nfunction in the stats namespace rather than a .C() or .Call() call.\nThis is more likely to work if the function is saved and used in a\ndifferent session.\n\n\036The functions .C(), .Call(), .External() and .Fortran() now give an\nerror (rather than a warning) if called with a named first\nargument.\n\n\036Sweave() by default now reports the locations in the source file(s)\nof each chunk.\n\n\036clearPushBack() is now a documented interface to a long-existing\ninternal call.\n\n\036aspell() gains filters for R code, Debian Control Format and\nmessage catalog files, and support for R level dictionaries.  In\naddition, package utils now provides functions\naspell_package_R_files() and aspell_package_C_files() for spell\nchecking R and C level message strings in packages.\n\n\036bibentry() gains some support for “incomplete” entries with a\ncrossref field.\n\n\036gray() and gray.colors() finally allow alpha to be specified.\n\n\036monthplot() gains parameters to control the look of the reference\nlines.  (Suggestion of Ian McLeod.)\n\n\036Added support for new %~% relation (“is distributed as”) in\nplotmath.\n\n\036domain = NA is accepted by gettext() and ngettext(), analogously to\nstop() etc.\n\n\036termplot() gains a new argument plot = FALSE which returns\ninformation to allow the plots to be modified for use as part of\nother plots, but does not plot them.  (Contributed by Terry\nTherneau, PR#15076.)\n\n\036quartz.save(), formerly an undocumented part of R.app, is now\navailable to copy a device to a quartz() device.  dev.copy2pdf()\noptionally does this for PDF output: quartz.save() defaults to PNG.\n\n\036The default method of pairs() now allows text.panel = NULL and the\nuse of <foo>.panel = NULL is now documented.\n\n\036setRefClass() and getRefClass() now return class generator\nfunctions, similar to setClass(), but still with the reference\nfields and methods as before (suggestion of Romain Francois).\n\n\036New functions bitwNot(), bitwAnd(), bitwOr() and bitwXor(), using\nthe internal interfaces previously used for classes \'octmode\' and\n\'hexmode\'.\n\nAlso bitwShiftL() and bitwShiftR() for shifting bits in elements of\ninteger vectors.\n\n\036New option \'deparse.cutoff\' to control the deparsing of language\nobjects such as calls and formulae when printing.  (Suggested by a\ncomment of Sarah Goslee.)\n\n\036colors() gains an argument distinct.\n\n\036New demo(colors) and demo(hclColors), with utility functions.\n\n\036list.files() (aka dir()) gains a new optional argument no.. which\nallows to exclude \'.\' and \'..\' from listings.\n\n\036Multiple time series are also of class \'matrix\'; consequently,\nhead(), e.g., is more useful.\n\n\036encodeString() preserves UTF-8 marked encodings.  Thus if factor\nlevels are marked as UTF-8 an attempt is made to print them in\nUTF-8 in RGui on Windows.\n\n\036readLines() and scan() (and hence read.table()) in a UTF-8 locale\nnow discard a UTF-8 byte-order-mark (BOM).  Such BOMs are allowed\nbut not recommended by the Unicode Standard: however Microsoft\napplications can produce them and so they are sometimes found on\nwebsites.\n\nThe encoding name \'UTF-8-BOM\' for a connection will ensure that a\nUTF-8 BOM is discarded.\n\n\036mapply(FUN, a1, ..) now also works when a1 (or a further such\nargument) needs a length() method (which the documented arguments\nnever do).  (Requested by Hervé Pagès; with a patch.)\n\n\036.onDetach() is supported as an alternative to .Last.lib.  Unlike\n.Last.lib, this does not need to be exported from the package's\nnamespace.\n\n\036The srcfile argument to parse() may now be a character string, to\nbe used in error messages.\n\n\036The format() method for ftable objects gains a method argument,\npropagated to write.ftable() and print(), allowing more compact\noutput, notably for LaTeX formatting, thanks to Marius Hofert.\n\n\036The utils::process.events() function has been added to trigger\nimmediate event handling.\n\n\036Sys.which() now returns NA (not \'\') for NA inputs (related to\nPR#15147).\n\n\036The print() method for class \'htest\' gives fewer trailing spaces\n(wish of PR#15124).\n\nAlso print output from HoltWinters(), nls() and others.\n\n\036loadNamespace() allows a version specification to be given, and\nthis is used to check version specifications given in the Imports\nfield when a namespace is loaded.\n\n\036setClass() has a new argument, slots, clearer and less ambiguous\nthan representation.  It is recommended for future code, but should\nbe back-compatible.  At the same time, the allowed slot\nspecification is slightly more general.  See the documentation for\ndetails.\n\n\036mget() now has a default for envir (the frame from which it is\ncalled), for consistency with get() and assign().\n\n\036close() now returns an integer status where available, invisibly.\n(Wish of PR#15088.)\n\n\036The internal method of tar() can now store paths too long for the\nustar format, using the (widely supported) GNU extension.  It can\nalso store long link names, but these are much less widely\nsupported.  There is support for larger files, up to the ustar\nlimit of 8GB.\n\n\036Local reference classes have been added to package methods.  These\nare a technique for avoiding unneeded copying of large components\nof objects while retaining standard R functional behavior.  See\n?LocalReferenceClasses.\n\n\036untar() has a new argument restore_times which if false (not the\ndefault) discards the times in the tarball.  This is useful if they\nare incorrect (some tarballs submitted to CRAN have times in a\nlocal timezone or many years in the past even though the standard\nrequired them to be in UTC).\n\n\036replayplot() cannot (and will not attempt to) replay plots recorded\nunder R < 3.0.0.  It may crash the R session if an attempt is made\nto replay plots created in a different build of R >= 3.0.0.\n\n\036Palette changes get recorded on the display list, so replaying\nplots (including when resizing screen devices and using dev.copy())\nwill work better when the palette is changed during a plot.\n\n\036chol(pivot = TRUE) now defaults to LAPACK, not LINPACK.\n\n\036The parse() function has a new parameter keep.source, which\ndefaults to options(\'keep.source\').\n\n\036Profiling via Rprof() now optionally records information at the\nstatement level, not just the function level.\n\n\036The Rprof() function now quotes function names in in its output\nfile on Windows, to be consistent with the quoting in Unix.\n\n\036Profiling via Rprof() now optionally records information about time\nspent in GC.\n\n\036The HTML help page for a package now displays non-vignette\ndocumentation files in a more accessible format.\n\n\036To support options(stringsAsFactors = FALSE), model.frame(),\nmodel.matrix() and replications() now automatically convert\ncharacter vectors to factors without a warning.\n\n\036The print method for objects of class \'table\' now detects tables\nwith 0-extents and prints the results as, e.g., < table of extent 0\nx 1 x 2 >. (Wish of PR#15198.)\n\n\036Deparsing involving calls to anonymous functions and has been made\ncloser to reversible by the addition of extra parentheses.\n\n\036The function utils::packageName() has been added as a lightweight\nversion of methods::getPackageName().\n\n\036find.package(lib.loc = NULL) now treats loaded namespaces\npreferentially in the same way as attached packages have been for a\nlong time.\n\n\036In Windows, the Change Directory dialog now defaults to the current\nworking directory, rather than to the last directory chosen in that\ndialog.\n\n\036available.packages() gains a \'license/restricts_use\' filter which\nretains only packages for which installation can proceed solely\nbased on packages which are guaranteed not to restrict use.\n\n\036New check_packages_in_dir() function in package tools for\nconveniently checking source packages along with their reverse\ndependencies.\n\n\036R's completion mechanism has been improved to handle help requests\n(starting with a question mark).  In particular, help prefixes are\nnow supported, as well as quoted help topics.  To support this,\ncompletion inside quotes are now handled by R by default on all\nplatforms.\n\n\036The memory manager now allows the strategy used to balance garbage\ncollection and memory growth to be controlled by setting the\nenvironment variable R_GC_MEM_GROW. See ?Memory for more details.\n\n\036(‘For experts only’, as the introductory manual says.)  The use of\nenvironment variables R_NSIZE and R_VSIZE to control the initial (=\nminimum) garbage collection trigger for number of cons cels and\nsize of heap has been restored: they can be overridden by the\ncommand-line options --min-nsize and --min-vsize; see ?Memory.\n\n\036On Windows, the device name for bitmap devices as reported by\n.Device and .Devices no longer includes the file name.  This is for\nconsistency with other platforms and was requested by the lattice\nmaintainer.\n\nwin.metafile() still uses the file name: the exact form is used by\npackage tkrplot.\n\n\036set.seed(NULL) re-initializes .Random.seed as done at the beginning\nof the session if not already set.  (Suggestion of Bill Dunlap.)\n\n\036The breaks argument in hist.default() can now be a function that\nreturns the breakpoints to be used (previously it could only return\nthe suggested number of breakpoints).\n\n\036File share/licenses/licenses.db has some clarifications, especially\nas to which variants of ‘BSD’ and ‘MIT’ is intended and how to\napply them to packages.  The problematic licence ‘Artistic-1.0’ has\nbeen removed.\n', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    public void TestrGenBuiltinsub_testsub9_96541202337bd6721b51541d4ce00edc() {
+        assertEval("argv <- list('[[:space:]]*$', '', 'identical() has a new argument, ignore.environment, used when\\ncomparing functions (with default FALSE as before).\\n\\n\\036There is a new option, options(CBoundsCheck=), which controls how\\n.C() and .Fortran() pass arguments to compiled code.  If true\\n(which can be enabled by setting the environment variable\\nR_C_BOUNDS_CHECK to yes), raw, integer, double and complex\\narguments are always copied, and checked for writing off either end\\nof the array on return from the compiled code (when a second copy\\nis made).  This also checks individual elements of character\\nvectors passed to .C().\\n\\nThis is not intended for routine use, but can be very helpful in\\nfinding segfaults in package code.\\n\\n\\036In layout(), the limits on the grid size have been raised (again).\\n\\n\\036New simple provideDimnames() utility function.\\n\\n\\036Where methods for length() return a double value which is\\nrepresentable as an integer (as often happens for package Matrix),\\nthis is converted to an integer.\\n\\n\\036Matrix indexing of dataframes by two-column numeric indices is now\\nsupported for replacement as well as extraction.\\n\\n\\036setNames() now has a default for its object argument, useful for a\\ncharacter result.\\n\\n\\036StructTS() has a revised additive constant in the loglik component\\nof the result: the previous definition is returned as the loglik0\\ncomponent.  However, the help page has always warned of a lack of\\ncomparability of log-likelihoods for non-stationary models.\\n(Suggested by Jouni Helske.)\\n\\n\\036The logic in aggregate.formula() has been revised.  It is now\\npossible to use a formula stored in a variable; previously, it had\\nto be given explicitly in the function call.\\n\\n\\036install.packages() has a new argument quiet to reduce the amount of\\noutput shown.\\n\\n\\036Setting an element of the graphics argument lwd to a negative or\\ninfinite value is now an error.  Lines corresponding to elements\\nwith values NA or NaN are silently omitted.\\n\\nPreviously the behaviour was device-dependent.\\n\\n\\036Setting graphical parameters cex, col, lty, lwd and pch in par()\\nnow requires a length-one argument.  Previously some silently took\\nthe first element of a longer vector, but not always when\\ndocumented to do so.\\n\\n\\036Sys.which() when used with inputs which would be unsafe in a shell\\n(e.g. absolute paths containing spaces) now uses appropriate\\nquoting.\\n\\n\\036as.tclObj() has been extended to handle raw vectors.  Previously,\\nit only worked in the other direction.  (Contributed by Charlie\\nFriedemann, PR#14939.)\\n\\n\\036New functions cite() and citeNatbib() have been added, to allow\\ngeneration of in-text citations from \\'bibentry\\' objects.  A cite()\\nfunction may be added to bibstyle() environments.\\n\\n\\036A sort() method has been added for \\'bibentry\\' objects.\\n\\n\\036The bibstyle() function now defaults to setting the default\\nbibliography style. The getBibstyle() function has been added to\\nreport the name of the current default style.\\n\\n\\036scatter.smooth() now has an argument lpars to pass arguments to\\nlines().\\n\\n\\036pairs() has a new log argument, to allow some or all variables to\\nbe plotted on logarithmic scale.  (In part, wish of PR#14919.)\\n\\n\\036split() gains a sep argument.\\n\\n\\036termplot() does a better job when given a model with interactions\\n(and no longer attempts to plot interaction terms).\\n\\n\\036The parser now incorporates code from Romain Francois' parser\\npackage, to support more detailed computation on the code, such as\\nsyntax highlighting, comment-based documentation, etc.  Functions\\ngetParseData() and getParseText() access the data.\\n\\n\\036There is a new function rep_len() analogous to rep.int() for when\\nspeed is required (and names are not).\\n\\n\\036The undocumented use rep(NULL, length.out = n) for n > 0 (which\\nreturns NULL) now gives a warning.\\n\\n\\036demo() gains an encoding argument for those packages with non-ASCII\\ndemos: it defaults to the package encoding where there is one.\\n\\n\\036strwrap() converts inputs with a marked encoding to the current\\nlocale: previously it made some attempt to pass through as bytes\\ninputs invalid in the current locale.\\n\\n\\036Specifying both rate and scale to [dpqr]gamma is a warning (if they\\nare essentially the same value) or an error.\\n\\n\\036merge() works in more cases where the data frames include matrices.\\n(Wish of PR#14974.)\\n\\n\\036optimize() and uniroot() no longer use a shared parameter object\\nacross calls.  (nlm(), nlminb() and optim() with numerical\\nderivatives still do, as documented.)\\n\\n\\036The all.equal() method for date-times is now documented: times are\\nregarded as equal (by default) if they differ by up to 1 msec.\\n\\n\\036duplicated() and unique() gain a nmax argument which can be used to\\nmake them much more efficient when it is known that there are only\\na small number of unique entries.  This is done automatically for\\nfactors.\\n\\n\\036Functions rbinom(), rgeom(), rhyper(), rpois(), rnbinom(),\\nrsignrank() and rwilcox() now return integer (not double) vectors.\\nThis halves the storage requirements for large simulations.\\n\\n\\036sort(), sort.int() and sort.list() now use radix sorting for\\nfactors of less than 100,000 levels when method is not supplied.\\nSo does order() if called with a single factor, unless na.last =\\nNA.\\n\\n\\036diag() as used to generate a diagonal matrix has been re-written in\\nC for speed and less memory usage.  It now forces the result to be\\nnumeric in the case diag(x) since it is said to have ‘zero\\noff-diagonal entries’.\\n\\n\\036backsolve() (and forwardsolve()) are now internal functions, for\\nspeed and support for large matrices.\\n\\n\\036More matrix algebra functions (e.g. chol() and solve()) accept\\nlogical matrices (and coerce to numeric).\\n\\n\\036sample.int() has some support for n >= 2^31: see its help for the\\nlimitations.\\n\\nA different algorithm is used for (n, size, replace = FALSE, prob =\\nNULL) for n > 1e7 and size <= n/2.  This is much faster and uses\\nless memory, but does give different results.\\n\\n\\036approxfun() and splinefun() now return a wrapper to an internal\\nfunction in the stats namespace rather than a .C() or .Call() call.\\nThis is more likely to work if the function is saved and used in a\\ndifferent session.\\n\\n\\036The functions .C(), .Call(), .External() and .Fortran() now give an\\nerror (rather than a warning) if called with a named first\\nargument.\\n\\n\\036Sweave() by default now reports the locations in the source file(s)\\nof each chunk.\\n\\n\\036clearPushBack() is now a documented interface to a long-existing\\ninternal call.\\n\\n\\036aspell() gains filters for R code, Debian Control Format and\\nmessage catalog files, and support for R level dictionaries.  In\\naddition, package utils now provides functions\\naspell_package_R_files() and aspell_package_C_files() for spell\\nchecking R and C level message strings in packages.\\n\\n\\036bibentry() gains some support for “incomplete” entries with a\\ncrossref field.\\n\\n\\036gray() and gray.colors() finally allow alpha to be specified.\\n\\n\\036monthplot() gains parameters to control the look of the reference\\nlines.  (Suggestion of Ian McLeod.)\\n\\n\\036Added support for new %~% relation (“is distributed as”) in\\nplotmath.\\n\\n\\036domain = NA is accepted by gettext() and ngettext(), analogously to\\nstop() etc.\\n\\n\\036termplot() gains a new argument plot = FALSE which returns\\ninformation to allow the plots to be modified for use as part of\\nother plots, but does not plot them.  (Contributed by Terry\\nTherneau, PR#15076.)\\n\\n\\036quartz.save(), formerly an undocumented part of R.app, is now\\navailable to copy a device to a quartz() device.  dev.copy2pdf()\\noptionally does this for PDF output: quartz.save() defaults to PNG.\\n\\n\\036The default method of pairs() now allows text.panel = NULL and the\\nuse of <foo>.panel = NULL is now documented.\\n\\n\\036setRefClass() and getRefClass() now return class generator\\nfunctions, similar to setClass(), but still with the reference\\nfields and methods as before (suggestion of Romain Francois).\\n\\n\\036New functions bitwNot(), bitwAnd(), bitwOr() and bitwXor(), using\\nthe internal interfaces previously used for classes \\'octmode\\' and\\n\\'hexmode\\'.\\n\\nAlso bitwShiftL() and bitwShiftR() for shifting bits in elements of\\ninteger vectors.\\n\\n\\036New option \\'deparse.cutoff\\' to control the deparsing of language\\nobjects such as calls and formulae when printing.  (Suggested by a\\ncomment of Sarah Goslee.)\\n\\n\\036colors() gains an argument distinct.\\n\\n\\036New demo(colors) and demo(hclColors), with utility functions.\\n\\n\\036list.files() (aka dir()) gains a new optional argument no.. which\\nallows to exclude \\'.\\' and \\'..\\' from listings.\\n\\n\\036Multiple time series are also of class \\'matrix\\'; consequently,\\nhead(), e.g., is more useful.\\n\\n\\036encodeString() preserves UTF-8 marked encodings.  Thus if factor\\nlevels are marked as UTF-8 an attempt is made to print them in\\nUTF-8 in RGui on Windows.\\n\\n\\036readLines() and scan() (and hence read.table()) in a UTF-8 locale\\nnow discard a UTF-8 byte-order-mark (BOM).  Such BOMs are allowed\\nbut not recommended by the Unicode Standard: however Microsoft\\napplications can produce them and so they are sometimes found on\\nwebsites.\\n\\nThe encoding name \\'UTF-8-BOM\\' for a connection will ensure that a\\nUTF-8 BOM is discarded.\\n\\n\\036mapply(FUN, a1, ..) now also works when a1 (or a further such\\nargument) needs a length() method (which the documented arguments\\nnever do).  (Requested by Hervé Pagès; with a patch.)\\n\\n\\036.onDetach() is supported as an alternative to .Last.lib.  Unlike\\n.Last.lib, this does not need to be exported from the package's\\nnamespace.\\n\\n\\036The srcfile argument to parse() may now be a character string, to\\nbe used in error messages.\\n\\n\\036The format() method for ftable objects gains a method argument,\\npropagated to write.ftable() and print(), allowing more compact\\noutput, notably for LaTeX formatting, thanks to Marius Hofert.\\n\\n\\036The utils::process.events() function has been added to trigger\\nimmediate event handling.\\n\\n\\036Sys.which() now returns NA (not \\'\\') for NA inputs (related to\\nPR#15147).\\n\\n\\036The print() method for class \\'htest\\' gives fewer trailing spaces\\n(wish of PR#15124).\\n\\nAlso print output from HoltWinters(), nls() and others.\\n\\n\\036loadNamespace() allows a version specification to be given, and\\nthis is used to check version specifications given in the Imports\\nfield when a namespace is loaded.\\n\\n\\036setClass() has a new argument, slots, clearer and less ambiguous\\nthan representation.  It is recommended for future code, but should\\nbe back-compatible.  At the same time, the allowed slot\\nspecification is slightly more general.  See the documentation for\\ndetails.\\n\\n\\036mget() now has a default for envir (the frame from which it is\\ncalled), for consistency with get() and assign().\\n\\n\\036close() now returns an integer status where available, invisibly.\\n(Wish of PR#15088.)\\n\\n\\036The internal method of tar() can now store paths too long for the\\nustar format, using the (widely supported) GNU extension.  It can\\nalso store long link names, but these are much less widely\\nsupported.  There is support for larger files, up to the ustar\\nlimit of 8GB.\\n\\n\\036Local reference classes have been added to package methods.  These\\nare a technique for avoiding unneeded copying of large components\\nof objects while retaining standard R functional behavior.  See\\n?LocalReferenceClasses.\\n\\n\\036untar() has a new argument restore_times which if false (not the\\ndefault) discards the times in the tarball.  This is useful if they\\nare incorrect (some tarballs submitted to CRAN have times in a\\nlocal timezone or many years in the past even though the standard\\nrequired them to be in UTC).\\n\\n\\036replayplot() cannot (and will not attempt to) replay plots recorded\\nunder R < 3.0.0.  It may crash the R session if an attempt is made\\nto replay plots created in a different build of R >= 3.0.0.\\n\\n\\036Palette changes get recorded on the display list, so replaying\\nplots (including when resizing screen devices and using dev.copy())\\nwill work better when the palette is changed during a plot.\\n\\n\\036chol(pivot = TRUE) now defaults to LAPACK, not LINPACK.\\n\\n\\036The parse() function has a new parameter keep.source, which\\ndefaults to options(\\'keep.source\\').\\n\\n\\036Profiling via Rprof() now optionally records information at the\\nstatement level, not just the function level.\\n\\n\\036The Rprof() function now quotes function names in in its output\\nfile on Windows, to be consistent with the quoting in Unix.\\n\\n\\036Profiling via Rprof() now optionally records information about time\\nspent in GC.\\n\\n\\036The HTML help page for a package now displays non-vignette\\ndocumentation files in a more accessible format.\\n\\n\\036To support options(stringsAsFactors = FALSE), model.frame(),\\nmodel.matrix() and replications() now automatically convert\\ncharacter vectors to factors without a warning.\\n\\n\\036The print method for objects of class \\'table\\' now detects tables\\nwith 0-extents and prints the results as, e.g., < table of extent 0\\nx 1 x 2 >. (Wish of PR#15198.)\\n\\n\\036Deparsing involving calls to anonymous functions and has been made\\ncloser to reversible by the addition of extra parentheses.\\n\\n\\036The function utils::packageName() has been added as a lightweight\\nversion of methods::getPackageName().\\n\\n\\036find.package(lib.loc = NULL) now treats loaded namespaces\\npreferentially in the same way as attached packages have been for a\\nlong time.\\n\\n\\036In Windows, the Change Directory dialog now defaults to the current\\nworking directory, rather than to the last directory chosen in that\\ndialog.\\n\\n\\036available.packages() gains a \\'license/restricts_use\\' filter which\\nretains only packages for which installation can proceed solely\\nbased on packages which are guaranteed not to restrict use.\\n\\n\\036New check_packages_in_dir() function in package tools for\\nconveniently checking source packages along with their reverse\\ndependencies.\\n\\n\\036R's completion mechanism has been improved to handle help requests\\n(starting with a question mark).  In particular, help prefixes are\\nnow supported, as well as quoted help topics.  To support this,\\ncompletion inside quotes are now handled by R by default on all\\nplatforms.\\n\\n\\036The memory manager now allows the strategy used to balance garbage\\ncollection and memory growth to be controlled by setting the\\nenvironment variable R_GC_MEM_GROW. See ?Memory for more details.\\n\\n\\036(‘For experts only’, as the introductory manual says.)  The use of\\nenvironment variables R_NSIZE and R_VSIZE to control the initial (=\\nminimum) garbage collection trigger for number of cons cels and\\nsize of heap has been restored: they can be overridden by the\\ncommand-line options --min-nsize and --min-vsize; see ?Memory.\\n\\n\\036On Windows, the device name for bitmap devices as reported by\\n.Device and .Devices no longer includes the file name.  This is for\\nconsistency with other platforms and was requested by the lattice\\nmaintainer.\\n\\nwin.metafile() still uses the file name: the exact form is used by\\npackage tkrplot.\\n\\n\\036set.seed(NULL) re-initializes .Random.seed as done at the beginning\\nof the session if not already set.  (Suggestion of Bill Dunlap.)\\n\\n\\036The breaks argument in hist.default() can now be a function that\\nreturns the breakpoints to be used (previously it could only return\\nthe suggested number of breakpoints).\\n\\n\\036File share/licenses/licenses.db has some clarifications, especially\\nas to which variants of ‘BSD’ and ‘MIT’ is intended and how to\\napply them to packages.  The problematic licence ‘Artistic-1.0’ has\\nbeen removed.\\n', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -43199,13 +43199,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsubset2_testsubset212_5d511b739e8e5e3163008c5a3cb96815() {
-        assertEval("argv <- list(structure(list(Res.Df = c(20, 21), RSS = c(652424.52183908, 658770.746755654), Df = c(NA, -1), `Sum of Sq` = c(NA, -6346.22491657443), F = c(NA, 0.194542807762205), `Pr(>F)` = c(NA, 0.663893424608742)), .Names = c('Res.Df', 'RSS', 'Df', 'Sum of Sq', 'F', 'Pr(>F)'), row.names = c('1', '2'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\n', 'Model 1: birthw ~ sex + sex:age - 1\nModel 2: birthw ~ sex + age - 1')), 6L);.subset2(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinsubset2_testsubset212_5bbcd4f192754d4aa470bd81083731a2() {
+        assertEval("argv <- list(structure(list(Res.Df = c(20, 21), RSS = c(652424.52183908, 658770.746755654), Df = c(NA, -1), `Sum of Sq` = c(NA, -6346.22491657443), F = c(NA, 0.194542807762205), `Pr(>F)` = c(NA, 0.663893424608742)), .Names = c('Res.Df', 'RSS', 'Df', 'Sum of Sq', 'F', 'Pr(>F)'), row.names = c('1', '2'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\\n', 'Model 1: birthw ~ sex + sex:age - 1\\nModel 2: birthw ~ sex + age - 1')), 6L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    public void TestrGenBuiltinsubset2_testsubset213_a7c7fb413e98e76844bc1336460bf241() {
-        assertEval("argv <- list(structure(list(a = structure('abc', class = 'AsIs'), b = structure('def\'gh', class = 'AsIs')), .Names = c('a', 'b'), row.names = '1', class = 'data.frame'), 1L);.subset2(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinsubset2_testsubset213_ce5ca1294d484fdcb12cbe52cb2a72cb() {
+        assertEval("argv <- list(structure(list(a = structure('abc', class = 'AsIs'), b = structure('def\\'gh', class = 'AsIs')), .Names = c('a', 'b'), row.names = '1', class = 'data.frame'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -43274,8 +43274,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsubset2_testsubset226_dc3e47ec55117e9a6bfc0c96bf977f8c() {
-        assertEval("argv <- list(structure(list(Df = 10L, `Sum Sq` = 2.74035772634541, `Mean Sq` = 0.274035772634541, `F value` = NA_real_, `Pr(>F)` = NA_real_), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = 'Residuals', class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\n', 'Response: y')), 5L);.subset2(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinsubset2_testsubset226_af1b274ee1bd7c312af702a9fc3a286b() {
+        assertEval("argv <- list(structure(list(Df = 10L, `Sum Sq` = 2.74035772634541, `Mean Sq` = 0.274035772634541, `F value` = NA_real_, `Pr(>F)` = NA_real_), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = 'Residuals', class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\\n', 'Response: y')), 5L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -43329,8 +43329,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsubset2_testsubset26_fc9c0eba30999ca172040fb6f11a3563() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 2L, 2L), Deviance = c(NA, 5.45230478674972, 2.66453525910038e-15), `Resid. Df` = c(8L, 6L, 4L), `Resid. Dev` = c(10.5814458637509, 5.12914107700115, 5.12914107700115)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'outcome', 'treatment'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\n\nModel: poisson, link: log\n\nResponse: counts\n\nTerms added sequentially (first to last)\n\n'), 4L);.subset2(argv[[1]],argv[[2]]);");
+    public void TestrGenBuiltinsubset2_testsubset26_e63b182efc6dc78f9be7acc4bcc12d28() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 2L, 2L), Deviance = c(NA, 5.45230478674972, 2.66453525910038e-15), `Resid. Df` = c(8L, 6L, 4L), `Resid. Dev` = c(10.5814458637509, 5.12914107700115, 5.12914107700115)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'outcome', 'treatment'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\\n\\nModel: poisson, link: log\\n\\nResponse: counts\\n\\nTerms added sequentially (first to last)\\n\\n'), 4L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -43389,8 +43389,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsubstr_testsubstr9_314a2b7dd840e7bc6d2ba8990240c429() {
-        assertEval("argv <- list('> ### R code from vignette source 'parallel.Rnw'\n> \n> ###################################################\n> ### code chunk number 1: parallel.Rnw:474-475 (eval = FALSE)\n> ###################################################\n> ## library(parallel)\n> \n> \n> ###################################################\n> ### code chunk number 2: parallel.Rnw:500-507 (eval = FALSE)\n> ###################################################\n> ## library(boot)\n> ## cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\n> ## cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\n> ## cd4.boot <- boot(cd4, corr, R = 999, sim = \'parametric\',\n> ##                  ran.gen = cd4.rg, mle = cd4.mle)\n> ## boot.ci(cd4.boot,  type = c(\'norm\', \'basic\', \'perc\'),\n> ##         conf = 0.9, h = atanh, hinv = tanh)\n> \n> \n> ###################################################\n> ### code chunk number 3: parallel.Rnw:512-522 (eval = FALSE)\n> ###################################################\n> ## cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\n> ## cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\n> ## run1 <- function(...) boot(cd4, corr, R = 500, sim = \'parametric\',\n> ##                            ran.gen = cd4.rg, mle = cd4.mle)\n> ## mc <- 2 # set as appropriate for your hardware\n> ## ## To make this reproducible:\n> ## set.seed(123, \'L'Ecuyer\')\n> ## cd4.boot <- do.call(c, mclapply(seq_len(mc), run1) )\n> ## boot.ci(cd4.boot,  type = c(\'norm\', \'basic\', \'perc\'),\n> ##         conf = 0.9, h = atanh, hinv = tanh)\n> \n> \n> ###################################################\n> ### code chunk number 4: parallel.Rnw:527-528 (eval = FALSE)\n> ###################################################\n> ## do.call(c, lapply(seq_len(mc), run1))\n> \n> \n> ###################################################\n> ### code chunk number 5: parallel.Rnw:532-547 (eval = FALSE)\n> ###################################################\n> ## run1 <- function(...) {\n> ##    library(boot)\n> ##    cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\n> ##    cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\n> ##    boot(cd4, corr, R = 500, sim = \'parametric\',\n> ##         ran.gen = cd4.rg, mle = cd4.mle)\n> ## }\n> ## cl <- makeCluster(mc)\n> ## ## make this reproducible\n> ## clusterSetRNGStream(cl, 123)\n> ## library(boot) # needed for c() method on master\n> ## cd4.boot <- do.call(c, parLapply(cl, seq_len(mc), run1) )\n> ## boot.ci(cd4.boot,  type = c(\'norm\', \'basic\', \'perc\'),\n> ##         conf = 0.9, h = atanh, hinv = tanh)\n> ## stopCluster(cl)\n> \n> \n> ###################################################\n> ### code chunk number 6: parallel.Rnw:557-570 (eval = FALSE)\n> ###################################################\n> ## cl <- makeCluster(mc)\n> ## cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\n> ## cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\n> ## clusterExport(cl, c(\'cd4.rg\', \'cd4.mle\'))\n> ## junk <- clusterEvalQ(cl, library(boot)) # discard result\n> ## clusterSetRNGStream(cl, 123)\n> ## res <- clusterEvalQ(cl, boot(cd4, corr, R = 500,\n> ##                     sim = \'parametric\', ran.gen = cd4.rg, mle = cd4.mle))\n> ## library(boot) # needed for c() method on master\n> ## cd4.boot <- do.call(c, res)\n> ## boot.ci(cd4.boot,  type = c(\'norm\', \'basic\', \'perc\'),\n> ##         conf = 0.9, h = atanh, hinv = tanh)\n> ## stopCluster(cl)\n> \n> \n> ###################################################\n> ### code chunk number 7: parallel.Rnw:575-589 (eval = FALSE)\n> ###################################################\n> ## R <- 999; M <- 999 ## we would like at least 999 each\n> ## cd4.nest <- boot(cd4, nested.corr, R=R, stype=\'w\', t0=corr(cd4), M=M)\n> ## ## nested.corr is a function in package boot\n> ## op <- par(pty = \'s\', xaxs = \'i\', yaxs = \'i\')\n> ## qqplot((1:R)/(R+1), cd4.nest$t[, 2], pch = \'.\', asp = 1,\n> ##         xlab = \'nominal\', ylab = \'estimated\')\n> ## abline(a = 0, b = 1, col = \'grey\')\n> ## abline(h = 0.05, col = \'grey\')\n> ## abline(h = 0.95, col = \'grey\')\n> ## par(op)\n> ## \n> ## nominal <- (1:R)/(R+1)\n> ## actual <- cd4.nest$t[, 2]\n> ## 100*nominal[c(sum(actual <= 0.05), sum(actual < 0.95))]\n> \n> \n> ###################################################\n> ### code chunk number 8: parallel.Rnw:594-602 (eval = FALSE)\n> ###################################################\n> ## mc <- 9\n> ## R <- 999; M <- 999; RR <- floor(R/mc)\n> ## run2 <- function(...)\n> ##     cd4.nest <- boot(cd4, nested.corr, R=RR, stype=\'w\', t0=corr(cd4), M=M)\n> ## cd4.nest <- do.call(c, mclapply(seq_len(mc), run2, mc.cores = mc) )\n> ## nominal <- (1:R)/(R+1)\n> ## actual <- cd4.nest$t[, 2]\n> ## 100*nominal[c(sum(actual <= 0.05), sum(actual < 0.95))]\n> \n> \n> ###################################################\n> ### code chunk number 9: parallel.Rnw:616-627 (eval = FALSE)\n> ###################################################\n> ## library(spatial)\n> ## towns <- ppinit(\'towns.dat\')\n> ## tget <- function(x, r=3.5) sum(dist(cbind(x$x, x$y)) < r)\n> ## t0 <- tget(towns)\n> ## R <- 1000\n> ## c <- seq(0, 1, 0.1)\n> ## ## res[1] = 0\n> ## res <- c(0, sapply(c[-1], function(c)\n> ##     mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))))\n> ## plot(c, res, type=\'l\', ylab=\'E t\')\n> ## abline(h=t0, col=\'grey\')\n> \n> \n> ###################################################\n> ### code chunk number 10: parallel.Rnw:631-640 (eval = FALSE)\n> ###################################################\n> ## run3 <- function(c) {\n> ##     library(spatial)\n> ##     towns <- ppinit(\'towns.dat\') # has side effects\n> ##     mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))\n> ## }\n> ## cl <- makeCluster(10, methods = FALSE)\n> ## clusterExport(cl, c(\'R\', \'towns\', \'tget\'))\n> ## res <- c(0, parSapply(cl, c[-1], run3)) # 10 tasks\n> ## stopCluster(cl)\n> \n> \n> ###################################################\n> ### code chunk number 11: parallel.Rnw:644-648 (eval = FALSE)\n> ###################################################\n> ## cl <- makeForkCluster(10)  # fork after the variables have been set up\n> ## run4 <- function(c)  mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))\n> ## res <- c(0, parSapply(cl, c[-1], run4))\n> ## stopCluster(cl)\n> \n> \n> ###################################################\n> ### code chunk number 12: parallel.Rnw:651-653 (eval = FALSE)\n> ###################################################\n> ## run4 <- function(c)  mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))\n> ## res <- c(0, unlist(mclapply(c[-1], run4, mc.cores = 10)))\n> \n> \n> ###################################################\n> ### code chunk number 13: parallel.Rnw:684-718 (eval = FALSE)\n> ###################################################\n> ## pkgs <- \'<names of packages to be installed>\'\n> ## M <- 20 # number of parallel installs\n> ## M <- min(M, length(pkgs))\n> ## library(parallel)\n> ## unlink(\'install_log\')\n> ## cl <- makeCluster(M, outfile = \'install_log\')\n> ## clusterExport(cl, c(\'tars\', \'fakes\', \'gcc\')) # variables needed by do_one\n> ## \n> ## ## set up available via a call to available.packages() for\n> ## ## repositories containing all the packages involved and all their\n> ## ## dependencies.\n> ## DL <- utils:::.make_dependency_list(pkgs, available, recursive = TRUE)\n> ## DL <- lapply(DL, function(x) x[x %in% pkgs])\n> ## lens <- sapply(DL, length)\n> ## ready <- names(DL[lens == 0L])\n> ## done <- character() # packages already installed\n> ## n <- length(ready)\n> ## submit <- function(node, pkg)\n> ##     parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)\n> ## for (i in 1:min(n, M)) submit(i, ready[i])\n> ## DL <- DL[!names(DL) %in% ready[1:min(n, M)]]\n> ## av <- if(n < M) (n+1L):M else integer() # available workers\n> ## while(length(done) < length(pkgs)) {\n> ##     d <- parallel:::recvOneResult(cl)\n> ##     av <- c(av, d$node)\n> ##     done <- c(done, d$tag)\n> ##     OK <- unlist(lapply(DL, function(x) all(x %in% done) ))\n> ##     if (!any(OK)) next\n> ##     p <- names(DL)[OK]\n> ##     m <- min(length(p), length(av)) # >= 1\n> ##     for (i in 1:m) submit(av[i], p[i])\n> ##     av <- av[-(1:m)]\n> ##     DL <- DL[!names(DL) %in% p[1:m]]\n> ## }\n> \n> \n> ###################################################\n> ### code chunk number 14: parallel.Rnw:731-748 (eval = FALSE)\n> ###################################################\n> ##     fn <- function(r) statistic(data, i[r, ], ...)\n> ##     RR <- sum(R)\n> ##     res <- if (ncpus > 1L && (have_mc || have_snow)) {\n> ##         if (have_mc) {\n> ##             parallel::mclapply(seq_len(RR), fn, mc.cores = ncpus)\n> ##         } else if (have_snow) {\n> ##             list(...) # evaluate any promises\n> ##             if (is.null(cl)) {\n> ##                 cl <- parallel::makePSOCKcluster(rep(\'localhost\', ncpus))\n> ##                 if(RNGkind()[1L] == \'L'Ecuyer-CMRG\')\n> ##                     parallel::clusterSetRNGStream(cl)\n> ##                 res <- parallel::parLapply(cl, seq_len(RR), fn)\n> ##                 parallel::stopCluster(cl)\n> ##                 res\n> ##             } else parallel::parLapply(cl, seq_len(RR), fn)\n> ##         }\n> ##     } else lapply(seq_len(RR), fn)\n> \n> \n> ###################################################\n> ### code chunk number 15: parallel.Rnw:751-752 (eval = FALSE)\n> ###################################################\n> ##             list(...) # evaluate any promises\n> \n> ', 1L, 150L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinsubstr_testsubstr9_0580e95b49f5dfc11b23699aac0148d3() {
+        assertEval("argv <- list('> ### R code from vignette source 'parallel.Rnw'\\n> \\n> ###################################################\\n> ### code chunk number 1: parallel.Rnw:474-475 (eval = FALSE)\\n> ###################################################\\n> ## library(parallel)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 2: parallel.Rnw:500-507 (eval = FALSE)\\n> ###################################################\\n> ## library(boot)\\n> ## cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\\n> ## cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\\n> ## cd4.boot <- boot(cd4, corr, R = 999, sim = \\'parametric\\',\\n> ##                  ran.gen = cd4.rg, mle = cd4.mle)\\n> ## boot.ci(cd4.boot,  type = c(\\'norm\\', \\'basic\\', \\'perc\\'),\\n> ##         conf = 0.9, h = atanh, hinv = tanh)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 3: parallel.Rnw:512-522 (eval = FALSE)\\n> ###################################################\\n> ## cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\\n> ## cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\\n> ## run1 <- function(...) boot(cd4, corr, R = 500, sim = \\'parametric\\',\\n> ##                            ran.gen = cd4.rg, mle = cd4.mle)\\n> ## mc <- 2 # set as appropriate for your hardware\\n> ## ## To make this reproducible:\\n> ## set.seed(123, \\'L'Ecuyer\\')\\n> ## cd4.boot <- do.call(c, mclapply(seq_len(mc), run1) )\\n> ## boot.ci(cd4.boot,  type = c(\\'norm\\', \\'basic\\', \\'perc\\'),\\n> ##         conf = 0.9, h = atanh, hinv = tanh)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 4: parallel.Rnw:527-528 (eval = FALSE)\\n> ###################################################\\n> ## do.call(c, lapply(seq_len(mc), run1))\\n> \\n> \\n> ###################################################\\n> ### code chunk number 5: parallel.Rnw:532-547 (eval = FALSE)\\n> ###################################################\\n> ## run1 <- function(...) {\\n> ##    library(boot)\\n> ##    cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\\n> ##    cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\\n> ##    boot(cd4, corr, R = 500, sim = \\'parametric\\',\\n> ##         ran.gen = cd4.rg, mle = cd4.mle)\\n> ## }\\n> ## cl <- makeCluster(mc)\\n> ## ## make this reproducible\\n> ## clusterSetRNGStream(cl, 123)\\n> ## library(boot) # needed for c() method on master\\n> ## cd4.boot <- do.call(c, parLapply(cl, seq_len(mc), run1) )\\n> ## boot.ci(cd4.boot,  type = c(\\'norm\\', \\'basic\\', \\'perc\\'),\\n> ##         conf = 0.9, h = atanh, hinv = tanh)\\n> ## stopCluster(cl)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 6: parallel.Rnw:557-570 (eval = FALSE)\\n> ###################################################\\n> ## cl <- makeCluster(mc)\\n> ## cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)\\n> ## cd4.mle <- list(m = colMeans(cd4), v = var(cd4))\\n> ## clusterExport(cl, c(\\'cd4.rg\\', \\'cd4.mle\\'))\\n> ## junk <- clusterEvalQ(cl, library(boot)) # discard result\\n> ## clusterSetRNGStream(cl, 123)\\n> ## res <- clusterEvalQ(cl, boot(cd4, corr, R = 500,\\n> ##                     sim = \\'parametric\\', ran.gen = cd4.rg, mle = cd4.mle))\\n> ## library(boot) # needed for c() method on master\\n> ## cd4.boot <- do.call(c, res)\\n> ## boot.ci(cd4.boot,  type = c(\\'norm\\', \\'basic\\', \\'perc\\'),\\n> ##         conf = 0.9, h = atanh, hinv = tanh)\\n> ## stopCluster(cl)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 7: parallel.Rnw:575-589 (eval = FALSE)\\n> ###################################################\\n> ## R <- 999; M <- 999 ## we would like at least 999 each\\n> ## cd4.nest <- boot(cd4, nested.corr, R=R, stype=\\'w\\', t0=corr(cd4), M=M)\\n> ## ## nested.corr is a function in package boot\\n> ## op <- par(pty = \\'s\\', xaxs = \\'i\\', yaxs = \\'i\\')\\n> ## qqplot((1:R)/(R+1), cd4.nest$t[, 2], pch = \\'.\\', asp = 1,\\n> ##         xlab = \\'nominal\\', ylab = \\'estimated\\')\\n> ## abline(a = 0, b = 1, col = \\'grey\\')\\n> ## abline(h = 0.05, col = \\'grey\\')\\n> ## abline(h = 0.95, col = \\'grey\\')\\n> ## par(op)\\n> ## \\n> ## nominal <- (1:R)/(R+1)\\n> ## actual <- cd4.nest$t[, 2]\\n> ## 100*nominal[c(sum(actual <= 0.05), sum(actual < 0.95))]\\n> \\n> \\n> ###################################################\\n> ### code chunk number 8: parallel.Rnw:594-602 (eval = FALSE)\\n> ###################################################\\n> ## mc <- 9\\n> ## R <- 999; M <- 999; RR <- floor(R/mc)\\n> ## run2 <- function(...)\\n> ##     cd4.nest <- boot(cd4, nested.corr, R=RR, stype=\\'w\\', t0=corr(cd4), M=M)\\n> ## cd4.nest <- do.call(c, mclapply(seq_len(mc), run2, mc.cores = mc) )\\n> ## nominal <- (1:R)/(R+1)\\n> ## actual <- cd4.nest$t[, 2]\\n> ## 100*nominal[c(sum(actual <= 0.05), sum(actual < 0.95))]\\n> \\n> \\n> ###################################################\\n> ### code chunk number 9: parallel.Rnw:616-627 (eval = FALSE)\\n> ###################################################\\n> ## library(spatial)\\n> ## towns <- ppinit(\\'towns.dat\\')\\n> ## tget <- function(x, r=3.5) sum(dist(cbind(x$x, x$y)) < r)\\n> ## t0 <- tget(towns)\\n> ## R <- 1000\\n> ## c <- seq(0, 1, 0.1)\\n> ## ## res[1] = 0\\n> ## res <- c(0, sapply(c[-1], function(c)\\n> ##     mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))))\\n> ## plot(c, res, type=\\'l\\', ylab=\\'E t\\')\\n> ## abline(h=t0, col=\\'grey\\')\\n> \\n> \\n> ###################################################\\n> ### code chunk number 10: parallel.Rnw:631-640 (eval = FALSE)\\n> ###################################################\\n> ## run3 <- function(c) {\\n> ##     library(spatial)\\n> ##     towns <- ppinit(\\'towns.dat\\') # has side effects\\n> ##     mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))\\n> ## }\\n> ## cl <- makeCluster(10, methods = FALSE)\\n> ## clusterExport(cl, c(\\'R\\', \\'towns\\', \\'tget\\'))\\n> ## res <- c(0, parSapply(cl, c[-1], run3)) # 10 tasks\\n> ## stopCluster(cl)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 11: parallel.Rnw:644-648 (eval = FALSE)\\n> ###################################################\\n> ## cl <- makeForkCluster(10)  # fork after the variables have been set up\\n> ## run4 <- function(c)  mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))\\n> ## res <- c(0, parSapply(cl, c[-1], run4))\\n> ## stopCluster(cl)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 12: parallel.Rnw:651-653 (eval = FALSE)\\n> ###################################################\\n> ## run4 <- function(c)  mean(replicate(R, tget(Strauss(69, c=c, r=3.5))))\\n> ## res <- c(0, unlist(mclapply(c[-1], run4, mc.cores = 10)))\\n> \\n> \\n> ###################################################\\n> ### code chunk number 13: parallel.Rnw:684-718 (eval = FALSE)\\n> ###################################################\\n> ## pkgs <- \\'<names of packages to be installed>\\'\\n> ## M <- 20 # number of parallel installs\\n> ## M <- min(M, length(pkgs))\\n> ## library(parallel)\\n> ## unlink(\\'install_log\\')\\n> ## cl <- makeCluster(M, outfile = \\'install_log\\')\\n> ## clusterExport(cl, c(\\'tars\\', \\'fakes\\', \\'gcc\\')) # variables needed by do_one\\n> ## \\n> ## ## set up available via a call to available.packages() for\\n> ## ## repositories containing all the packages involved and all their\\n> ## ## dependencies.\\n> ## DL <- utils:::.make_dependency_list(pkgs, available, recursive = TRUE)\\n> ## DL <- lapply(DL, function(x) x[x %in% pkgs])\\n> ## lens <- sapply(DL, length)\\n> ## ready <- names(DL[lens == 0L])\\n> ## done <- character() # packages already installed\\n> ## n <- length(ready)\\n> ## submit <- function(node, pkg)\\n> ##     parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)\\n> ## for (i in 1:min(n, M)) submit(i, ready[i])\\n> ## DL <- DL[!names(DL) %in% ready[1:min(n, M)]]\\n> ## av <- if(n < M) (n+1L):M else integer() # available workers\\n> ## while(length(done) < length(pkgs)) {\\n> ##     d <- parallel:::recvOneResult(cl)\\n> ##     av <- c(av, d$node)\\n> ##     done <- c(done, d$tag)\\n> ##     OK <- unlist(lapply(DL, function(x) all(x %in% done) ))\\n> ##     if (!any(OK)) next\\n> ##     p <- names(DL)[OK]\\n> ##     m <- min(length(p), length(av)) # >= 1\\n> ##     for (i in 1:m) submit(av[i], p[i])\\n> ##     av <- av[-(1:m)]\\n> ##     DL <- DL[!names(DL) %in% p[1:m]]\\n> ## }\\n> \\n> \\n> ###################################################\\n> ### code chunk number 14: parallel.Rnw:731-748 (eval = FALSE)\\n> ###################################################\\n> ##     fn <- function(r) statistic(data, i[r, ], ...)\\n> ##     RR <- sum(R)\\n> ##     res <- if (ncpus > 1L && (have_mc || have_snow)) {\\n> ##         if (have_mc) {\\n> ##             parallel::mclapply(seq_len(RR), fn, mc.cores = ncpus)\\n> ##         } else if (have_snow) {\\n> ##             list(...) # evaluate any promises\\n> ##             if (is.null(cl)) {\\n> ##                 cl <- parallel::makePSOCKcluster(rep(\\'localhost\\', ncpus))\\n> ##                 if(RNGkind()[1L] == \\'L'Ecuyer-CMRG\\')\\n> ##                     parallel::clusterSetRNGStream(cl)\\n> ##                 res <- parallel::parLapply(cl, seq_len(RR), fn)\\n> ##                 parallel::stopCluster(cl)\\n> ##                 res\\n> ##             } else parallel::parLapply(cl, seq_len(RR), fn)\\n> ##         }\\n> ##     } else lapply(seq_len(RR), fn)\\n> \\n> \\n> ###################################################\\n> ### code chunk number 15: parallel.Rnw:751-752 (eval = FALSE)\\n> ###################################################\\n> ##             list(...) # evaluate any promises\\n> \\n> ', 1L, 150L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44019,13 +44019,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunclass_testunclass13_5846021e31340a70579579d410f53b58() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), heading = 'Analysis of Deviance Table\n\nModel: gaussian, link: identity\n\nResponse: y\n\nTerms added sequentially (first to last)\n\n'));unclass(argv[[1]]);");
+    public void TestrGenBuiltinunclass_testunclass13_c9a078a8a83eb28341f971b032bb7914() {
+        assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), heading = 'Analysis of Deviance Table\\n\\nModel: gaussian, link: identity\\n\\nResponse: y\\n\\nTerms added sequentially (first to last)\\n\\n'));unclass(argv[[1]]);");
     }
 
     @Test
-    public void TestrGenBuiltinunclass_testunclass14_4b1f6ca05e55214f4b767c45be86a558() {
-        assertEval("argv <- list(list(structure(list(title = 'foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\n...', author = structure(list(structure(list(given = 'R Core Team', family = NULL, role = c('aut', 'cph', 'cre'), email = 'R-core@R-project.org', comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'), year = '2013', note = 'R package version 0.8-53', url = 'http://CRAN.R-project.org/package=foreign'), .Names = c('title', 'author', 'year', 'note', 'url'), bibtype = 'Manual', textVersion = 'R Core Team (2013). foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\n.... R package version 0.8-53. http://CRAN.R-project.org/package=foreign', header = 'To cite package ‘foreign’ in publications use:')));unclass(argv[[1]]);");
+    public void TestrGenBuiltinunclass_testunclass14_690f6fad5e4b28126086c38091f955a6() {
+        assertEval("argv <- list(list(structure(list(title = 'foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\\n...', author = structure(list(structure(list(given = 'R Core Team', family = NULL, role = c('aut', 'cph', 'cre'), email = 'R-core@R-project.org', comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'), year = '2013', note = 'R package version 0.8-53', url = 'http://CRAN.R-project.org/package=foreign'), .Names = c('title', 'author', 'year', 'note', 'url'), bibtype = 'Manual', textVersion = 'R Core Team (2013). foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\\n.... R package version 0.8-53. http://CRAN.R-project.org/package=foreign', header = 'To cite package ‘foreign’ in publications use:')));unclass(argv[[1]]);");
     }
 
     @Test
@@ -44349,8 +44349,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunlist_testunlist10_45b2d4b7bfbd438138b90c5838689ae8() {
-        assertEval("argv <- list(structure('     \'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\')\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinunlist_testunlist10_d408ae7f928eb107b40a12dfa3a841f6() {
+        assertEval("argv <- list(structure('     \\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\')\\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44379,8 +44379,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunlist_testunlist16_ef8a39ab42b7988197c78595f300663c() {
-        assertEval("argv <- list(structure('print(.leap.seconds, tz = \'PST8PDT\')  # and in Seattle's\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinunlist_testunlist16_3518b37ddf6d7bb6cbec438ac99b48b0() {
+        assertEval("argv <- list(structure('print(.leap.seconds, tz = \\'PST8PDT\\')  # and in Seattle's\\n', Rd_tag = 'RCODE'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44474,8 +44474,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunlist_testunlist33_87846056b91a6826df76f89f559ead54() {
-        assertEval("argv <- list(list(c('  \036 The ‘internal’ graphics device invoked by .Call(\'R_GD_nullDevice\',', '    package = \'grDevices\') has been removed: use pdf(file = NULL)', '    instead.')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinunlist_testunlist33_e85233b20e2aaeb5b0287bc6ee251b1e() {
+        assertEval("argv <- list(list(c('  \\036 The ‘internal’ graphics device invoked by .Call(\\'R_GD_nullDevice\\',', '    package = \\'grDevices\\') has been removed: use pdf(file = NULL)', '    instead.')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44509,8 +44509,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunlist_testunlist4_bd6943a9d134b05f2fbd9ab9074dd76d() {
-        assertEval("argv <- list(list(list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\001NULL\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to 'Ops' (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')))), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinunlist_testunlist4_a00944e89f084d30168495fc507d084a() {
+        assertEval("argv <- list(list(list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\\001NULL\\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to 'Ops' (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')))), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44524,8 +44524,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunlist_testunlist42_0fdc29bddb215233b4aa47d0e8df01ac() {
-        assertEval("argv <- list(structure(list(structure('\n', Rd_tag = 'RCODE'), structure('Sys.timezone()\n', Rd_tag = 'RCODE'), structure('\n', Rd_tag = 'RCODE'), structure('#ifdef windows not active', Rd_tag = 'COMMENT'), structure(list(structure('\n', Rd_tag = 'VERB'), structure('## need to supply a suitable file path (if any) for your system\n', Rd_tag = 'VERB'), structure('tzfile <- \'/usr/share/zoneinfo/zone.tab\'\n', Rd_tag = 'VERB'), structure('tzones <- read.delim(tzfile, row.names = NULL, header = FALSE,\n', Rd_tag = 'VERB'),     structure('    col.names = c(\'country\', \'coords\', \'name\', \'comments\'),\n', Rd_tag = 'VERB'), structure('    as.is = TRUE, fill = TRUE, comment.char = \'#\')\n', Rd_tag = 'VERB'), structure('str(tzones$name)\n', Rd_tag = 'VERB')), Rd_tag = '\\dontrun'), structure('\n', Rd_tag = 'RCODE')), Rd_tag = '\\examples'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinunlist_testunlist42_d9b9aabe88fe01a4da857f87a1ad2c19() {
+        assertEval("argv <- list(structure(list(structure('\\n', Rd_tag = 'RCODE'), structure('Sys.timezone()\\n', Rd_tag = 'RCODE'), structure('\\n', Rd_tag = 'RCODE'), structure('#ifdef windows not active', Rd_tag = 'COMMENT'), structure(list(structure('\\n', Rd_tag = 'VERB'), structure('## need to supply a suitable file path (if any) for your system\\n', Rd_tag = 'VERB'), structure('tzfile <- \\'/usr/share/zoneinfo/zone.tab\\'\\n', Rd_tag = 'VERB'), structure('tzones <- read.delim(tzfile, row.names = NULL, header = FALSE,\\n', Rd_tag = 'VERB'),     structure('    col.names = c(\\'country\\', \\'coords\\', \\'name\\', \\'comments\\'),\\n', Rd_tag = 'VERB'), structure('    as.is = TRUE, fill = TRUE, comment.char = \\'#\\')\\n', Rd_tag = 'VERB'), structure('str(tzones$name)\\n', Rd_tag = 'VERB')), Rd_tag = '\\\\dontrun'), structure('\\n', Rd_tag = 'RCODE')), Rd_tag = '\\\\examples'), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44549,8 +44549,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunlist_testunlist47_9ea0da81edb2da1c0683bccd68ede7e2() {
-        assertEval("argv <- list(list(structure(list(structure('DateTimeClasses', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('print.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('print.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'),     structure(list(structure('summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('+.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('-.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('Ops.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('Math.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('Summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('Math.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'),     structure(list(structure('Summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('[<-.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('[[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('[.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('[<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('as.data.frame.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'),     structure(list(structure('as.data.frame.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('as.list.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('.leap.seconds', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('is.na.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('c.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('c.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(        structure('as.matrix.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('length.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('mean.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('mean.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('str.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('check_tzones', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('duplicated.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'),     structure(list(structure('unique.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('split.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('names.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('names<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\alias'), structure(list(structure('date-time', Rd_tag = 'VERB')), Rd_tag = '\\alias')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    public void TestrGenBuiltinunlist_testunlist47_5ea4c56cdf00ba28ef8fc04e18094dd1() {
+        assertEval("argv <- list(list(structure(list(structure('DateTimeClasses', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('print.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('+.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('-.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Ops.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Math.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Summary.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('Math.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('Summary.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[<-.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[[.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('[<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('as.data.frame.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('as.data.frame.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('as.list.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('.leap.seconds', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('is.na.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('c.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('c.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(        structure('as.matrix.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('length.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('mean.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('mean.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('str.POSIXt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('check_tzones', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('duplicated.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'),     structure(list(structure('unique.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('split.POSIXct', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('names.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('names<-.POSIXlt', Rd_tag = 'VERB')), Rd_tag = '\\\\alias'), structure(list(structure('date-time', Rd_tag = 'VERB')), Rd_tag = '\\\\alias')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -44599,8 +44599,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinvector_testvector10_10df1995690904192bb1b0bc0c548dd9() {
-        assertEval("argv <- list('list', structure(1L, .Names = '\\c')); .Internal(vector(argv[[1]], argv[[2]]))");
+    public void TestrGenBuiltinvector_testvector10_2e993bba51c7b9a7f3f6f152edc9aaa6() {
+        assertEval("argv <- list('list', structure(1L, .Names = '\\\\c')); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test

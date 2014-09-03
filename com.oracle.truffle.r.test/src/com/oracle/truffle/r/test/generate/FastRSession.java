@@ -29,6 +29,8 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FastRSession implements RSession {
 
+    private static final int TIMEOUT = 5000; // 5 seconds until tests are killed
+
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
      * comparison. It does not separate error output as the test analysis doesn't need it.
@@ -102,9 +104,27 @@ public class FastRSession implements RSession {
         REngine.initialize(new String[0], consoleHandler, false, false);
     }
 
+    @SuppressWarnings("deprecation")
     public String eval(String expression) {
         consoleHandler.reset();
-        REngine.getInstance().parseAndEvalTest(expression, true);
+
+        // run the script in a different thread and kill it after the timeout
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                REngine.getInstance().parseAndEvalTest(expression, true);
+            }
+        };
+        thread.start();
+        try {
+            thread.join(TIMEOUT);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (thread.isAlive()) {
+            consoleHandler.println("<timeout>");
+            thread.stop();
+        }
         return consoleHandler.buffer.toString();
     }
 

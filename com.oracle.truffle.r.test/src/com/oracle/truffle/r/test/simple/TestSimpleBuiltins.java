@@ -2101,8 +2101,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
         assertEval("{ cbind(1:3,1:2) }");
         assertEval("{ cbind(2,3, complex(3,3,2));}");
-        assertEval("{ cbind(2,3, c(1,1,1))");
-        assertEval("{ cbind(2.1:10,32.2)");
+        assertEval("{ cbind(2,3, c(1,1,1)) }");
+        assertEval("{ cbind(2.1:10,32.2) }");
     }
 
     @Test

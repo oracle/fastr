@@ -33,12 +33,13 @@ public class GnuROneShotRSession implements RSession {
 
     protected static final String[] GNUR_COMMANDLINE = new String[]{"R", "--vanilla", "--slave", "--silent"};
     //@formatter:off
-    protected static final String GNUR_OPTIONS = 
-                    "options(echo=FALSE)\n" + 
-                    "options(warn=FALSE)\n" + 
+    protected static final String GNUR_OPTIONS =
+                    "options(echo=FALSE)\n" +
+                    "options(warn=FALSE)\n" +
                     "options(error=dump.frames)\n" +
                     "options(showErrorCalls=FALSE)\n" +
-                    "options(keep.source=TRUE)\n";
+                    "options(keep.source=TRUE)\n" +
+                    "Sys.setenv(LANGUAGE=\"EN\");";
     //@formatter:on
 
     protected static final byte[] NL = "\n".getBytes();
