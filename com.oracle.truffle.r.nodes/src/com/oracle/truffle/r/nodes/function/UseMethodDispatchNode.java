@@ -29,19 +29,25 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        if (targetFunction == null) {
-            findTargetFunction(callerFrame);
+        Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        if (funFrame == null) {
+            funFrame = frame;
         }
-        return executeHelper(frame, callerFrame);
+        if (targetFunction == null) {
+            findTargetFunction(funFrame);
+        }
+        return executeHelper(frame, funFrame);
     }
 
     @Override
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
-        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        findTargetFunction(callerFrame);
-        return executeHelper(frame, callerFrame);
+        Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        if (funFrame == null) {
+            funFrame = frame;
+        }
+        findTargetFunction(funFrame);
+        return executeHelper(frame, funFrame);
     }
 
     @Override
@@ -81,17 +87,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argNames = Utils.resizeArray(argNames, argListSize);
                 Object[] varArgsValues = varArgsContainer.getValues();
                 String[] varArgsNames = varArgsContainer.getNames();
-// boolean allNamesNull = true;
                 for (int i = 0; i < varArgsContainer.length(); i++) {
                     addArg(argValues, varArgsValues[i], index);
                     String name = varArgsNames == null ? null : varArgsNames[i];
-// allNamesNull &= name == null;
                     argNames[index] = name;
                     index++;
                 }
-// if (allNamesNull && !hasNames) {
-// argNames = null;
-// }
             } else {
                 addArg(argValues, arg, index);
                 if (hasNames) {

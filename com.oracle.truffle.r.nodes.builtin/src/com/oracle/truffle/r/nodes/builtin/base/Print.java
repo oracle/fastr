@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO revert to R
 public abstract class Print extends RInvisibleBuiltinNode {
 
-    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
 
     @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, false);
 

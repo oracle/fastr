@@ -741,22 +741,6 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @SlowPath
     @Specialization
-    protected String prettyPrint(RDataFrame operand, Object listElementName, byte quote) {
-        if (operand.getVector().getLength() == 0) {
-            return "data frame with 0 columns and 0 rows";
-
-        }
-        if (operand.getRowNames() == RNull.instance || ((RAbstractVector) operand.getRowNames()).getLength() == 0) {
-            return "NULL\n<0 rows> (or 0-length row.names)";
-        }
-        VirtualFrame frame = currentFrame();
-        RFunction getFunction = RContext.getEngine().lookupBuiltin("get");
-        RFunction formatFunction = (RFunction) indirectCall.call(frame, getFunction.getTarget(), RArguments.create(getFunction, REnvironment.globalEnv().getFrame(), new Object[]{"format.data.frame"}));
-        return RRuntime.toString(indirectCall.call(frame, formatFunction.getTarget(), RArguments.create(formatFunction, new Object[]{operand})));
-    }
-
-    @SlowPath
-    @Specialization
     protected String prettyPrint(RCall operand, Object listElementName, byte quote) {
         return operand.toString();
     }

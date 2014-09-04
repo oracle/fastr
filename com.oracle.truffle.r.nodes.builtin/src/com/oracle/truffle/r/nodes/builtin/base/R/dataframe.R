@@ -460,3 +460,27 @@ data.frame <-
     attr(value, "class") <- "data.frame"
     value
 }
+
+### coercion and print methods
+
+print.data.frame <-
+		function(x, ..., digits = NULL, quote = FALSE, right = TRUE,
+				row.names = TRUE)
+{
+	n <- length(row.names(x))
+	if(length(x) == 0L) {
+		cat(gettextf("data frame with 0 columns and %d rows\n", n))
+	} else if(n == 0L) {
+		## FIXME: header format is inconsistent here
+		print.default(names(x), quote = FALSE)
+		cat(gettext("<0 rows> (or 0-length row.names)\n"))
+	} else {
+		## format.<*>() : avoiding picking up e.g. format.AsIs
+		m <- as.matrix(format.data.frame(x, digits = digits, na.encode = FALSE))
+		if(!isTRUE(row.names))
+			dimnames(m)[[1L]] <- if(identical(row.names,FALSE))
+						rep.int("", n) else row.names
+		print(m, ..., quote = quote, right = right)
+	}
+	invisible(x)
+}
