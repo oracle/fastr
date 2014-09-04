@@ -829,7 +829,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         private RIntVector findPositions(RAbstractContainer container, RStringVector names, RAbstractStringVector operand, boolean retainNames) {
             int[] data = new int[operand.getLength()];
-            boolean seenNA = false;
+            boolean hasSeenNA = false;
             for (int i = 0; i < data.length; i++) {
                 String positionName = operand.getDataAt(i);
                 int j = 0;
@@ -842,13 +842,13 @@ public abstract class ArrayPositionCast extends RNode {
                 if (j == names.getLength()) {
                     if (numDimensions == 1) {
                         data[i] = RRuntime.INT_NA;
-                        seenNA = true;
+                        hasSeenNA = true;
                     } else {
                         throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
                     }
                 }
             }
-            return RDataFactory.createIntVector(data, !seenNA);
+            return RDataFactory.createIntVector(data, !hasSeenNA);
         }
 
         private static int eliminateDuplicate(RAbstractStringVector operand, int[] data, int initialPos, int currentElementPos) {
@@ -1043,12 +1043,16 @@ public abstract class ArrayPositionCast extends RNode {
             return data;
         }
 
-        private AssumedValue<Boolean> hasSeenPositive = new AssumedValue<>("hasSeenPositive", false);
-        private AssumedValue<Boolean> hasSeenZero = new AssumedValue<>("hasSeenZero", false);
-        private AssumedValue<Boolean> hasSeenNegative = new AssumedValue<>("hasSeenNegative", false);
-        private AssumedValue<Boolean> hasSeenNA = new AssumedValue<>("hasSeenNA", false);
+        private final BranchProfile seenPositive = new BranchProfile();
+        private final BranchProfile seenZero = new BranchProfile();
+        private final BranchProfile seenNegative = new BranchProfile();
+        private final BranchProfile seenNA = new BranchProfile();
 
         private RAbstractIntVector transformIntoPositive(RAbstractContainer container, RAbstractIntVector positions) {
+            boolean hasSeenPositive = false;
+            boolean hasSeenZero = false;
+            boolean hasSeenNegative = false;
+            boolean hasSeenNA = false;
             int zeroCount = 0;
             positionNACheck.enable(positions);
             int positionsLength = positions.getLength();
@@ -1057,9 +1061,8 @@ public abstract class ArrayPositionCast extends RNode {
             for (int i = 0; i < positionsLength; ++i) {
                 int pos = positions.getDataAt(i);
                 if (positionNACheck.check(pos)) {
-                    if (!hasSeenNA.get()) {
-                        hasSeenNA.set(true);
-                    }
+                    seenNA.enter();
+                    hasSeenNA = true;
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
                         throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
@@ -1071,29 +1074,24 @@ public abstract class ArrayPositionCast extends RNode {
                             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
                         }
                     }
-                    if (!hasSeenPositive.get()) {
-                        hasSeenPositive.set(true);
-                    }
+                    seenPositive.enter();
+                    hasSeenPositive = true;
                 } else if (pos == 0) {
                     if (!isSubset) {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
                     }
-                    if (!hasSeenZero.get()) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        hasSeenZero.set(true);
-                    }
+                    seenZero.enter();
+                    hasSeenZero = true;
                     zeroCount++;
                 } else {
-                    if (!hasSeenNegative.get()) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        hasSeenNegative.set(true);
-                    }
+                    seenNegative.enter();
+                    hasSeenNegative = true;
                 }
             }
-            if (hasSeenPositive.get() || hasSeenNA.get()) {
-                if (hasSeenNegative.get()) {
+            if (hasSeenPositive || hasSeenNA) {
+                if (hasSeenNegative) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
-                } else if (hasSeenZero.get() || (outOfBounds && numDimensions == 1)) {
+                } else if (hasSeenZero || (outOfBounds && numDimensions == 1)) {
                     // eliminate 0-s and handle out-of-bounds for single-subscript accesses
                     int[] data = eliminateZeros(container, positions, zeroCount);
                     return RDataFactory.createIntVector(data, positionNACheck.neverSeenNA() && !outOfBounds);
@@ -1110,8 +1108,8 @@ public abstract class ArrayPositionCast extends RNode {
                         return positions;
                     }
                 }
-            } else if (hasSeenNegative.get()) {
-                if (hasSeenNA.get()) {
+            } else if (hasSeenNegative) {
+                if (hasSeenNA) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
                 }
                 boolean[] excludedPositions = new boolean[dimLength];
