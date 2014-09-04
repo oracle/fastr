@@ -215,7 +215,7 @@ public class PromiseNode extends RNode {
         return node;
     }
 
-    private static class VarArgsPromiseNode extends RNode {
+    public static class VarArgsPromiseNode extends RNode {
         protected final RNode[] nodes;
         protected final String[] names;
         protected final EnvProvider envProvider;
@@ -229,6 +229,7 @@ public class PromiseNode extends RNode {
         }
 
         @Override
+        @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {

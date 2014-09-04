@@ -11289,6 +11289,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRecall_9302e913fa9118c296d229ba8f6d2b1c() {
+        assertEval("{ f <- function(tarDepth,curDepth) { if (tarDepth == curDepth) {curDepth} else {Recall(tarDepth,curDepth+1)}}; f(3,0) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRecall_7c29fb4f1a8750978976ebb307ddc9c8() {
         assertEvalError("{ Recall(10) }");
     }
