@@ -187,7 +187,7 @@ nchar <- function(x, type = "chars", allowNA = FALSE)
 ###substitute <- function(expr, env=baseenv()) .Internal(substitute(expr, env))
 #
 #t.default <- function(x) .Internal(t.default(x))
-#typeof <- function(x) .Internal(typeof(x))
+typeof <- function(x) .Internal(typeof(x))
 #
 #
 #memory.profile <- function() .Internal(memory.profile())

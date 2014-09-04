@@ -119,6 +119,10 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{x<-c(1,2); class(x)<-\"data.frame\"; x}");
         assertEval("{ x<-integer(); class(x)<-\"data.frame\"; x }");
         assertEval("{ x<-c(1,2); class(x)<-\"data.frame\"; row.names(x)<-integer(); x }");
+    }
 
+    @Test
+    public void testDataFrame() {
+        assertEval("{ x<-c(7,42); y<-data.frame(x); is.data.frame(y) }");
     }
 }

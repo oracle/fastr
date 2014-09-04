@@ -228,6 +228,9 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..2 } ; x <- 1 ; f(100,x) }");
         assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+
+        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }");
+        assertEval("{ x<-7; y<-42; f<-function(...) { as.list(substitute(g(...))) }; f(x,y) }");
     }
 
     @Test
@@ -266,9 +269,13 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
+    public void testUnusedArgumentErrors() {
+        assertEval("{ foo <- function(x) x; foo(1, 2, 3) }");
+    }
+
+    @Test
     @Ignore
     public void testUnusedArgumentErrorsIgnore() {
         assertEval("{ foo <- function(x) x; foo() }");
-        assertEval("{ foo <- function(x) x; foo(1,2,3) }");
     }
 }
