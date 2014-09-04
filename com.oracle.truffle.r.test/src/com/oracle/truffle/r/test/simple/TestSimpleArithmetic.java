@@ -357,11 +357,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(as.raw(c(a=1,b=2))) }");
         assertEval("{ l <- list(); !l }");
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(matrix(as.raw(1:4),nrow=2 )) }");
-    }
-
-    @Test
-    @Ignore
-    public void testUnaryNotRawIgnored() {
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; x <- as.raw(10:11) ; attr(x, \"my\") <- 1 ; f(x) }");
     }
 

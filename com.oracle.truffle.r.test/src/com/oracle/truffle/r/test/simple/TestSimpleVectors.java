@@ -107,11 +107,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1L,2L,3L); x[-2.1] }");
         assertEval("{ x<-1:3; x[-1.1] }");
         assertEval("{ x<-1:3; x[-2.1] }");
-    }
-
-    @Test
-    @Ignore
-    public void testScalarDoubleNegativeIndexOnVectorIgnored() {
         assertEval("{ x<-c(1,2,3); x[-3.1] }");
         assertEval("{ x<-c(1L,2L,3L); x[-3.1] }");
         assertEval("{ x<-1:3; x[-3.1] }");
@@ -502,13 +497,6 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testVectorsOtherIgnore() {
-        assertEvalError("{ x<-c(1); x[[-4]]<-NULL }");
-        assertEvalError("{ x<-c(1,2,3); x[[-1]]<-NULL }");
-    }
-
-    @Test
     public void testNAIndex() {
         assertEval("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[NA] }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[NA]] }");
@@ -827,6 +815,10 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
         assertEvalError("{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
+
+        // inconsistent error messages in expected output and shell
+        assertEval("{ x <- c(1); x[[-4]] <- NULL }");
+        assertEval("{ x <- c(1,2,3); x[[-1]] <- NULL }");
     }
 
     @Test

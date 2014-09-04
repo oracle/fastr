@@ -1399,6 +1399,12 @@ $dimnames[[2]]
 [2,]   fd   fb
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotRaw
+#{ f <- function(arg) { !arg } ; f(as.raw(10)) ; x <- as.raw(10:11) ; attr(x, "my") <- 1 ; f(x) }
+[1] f5 f4
+attr(,"my")
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotRaw
 #{ l <- list(); !l }
 logical(0)
 
@@ -3343,6 +3349,13 @@ b c
 #{ x <- c(a=1,b=2) ;  attr(x, "hi") <- 2 ;  -x  }
  a  b
 -1 -2
+attr(,"hi")
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testArithmeticPropagation
+#{ x <- c(a=FALSE,b=TRUE) ;  attr(x, "hi") <- 2 ;  !x  }
+    a     b
+ TRUE FALSE
 attr(,"hi")
 [1] 2
 
@@ -54075,6 +54088,10 @@ numeric(0)
 [1] 1 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarDoubleNegativeIndexOnVector
+#{ x<-1:3; x[-3.1] }
+[1] 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarDoubleNegativeIndexOnVector
 #{ x<-c(1,2,3); x[-1.1] }
 [1] 2 3
 
@@ -54083,12 +54100,20 @@ numeric(0)
 [1] 1 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarDoubleNegativeIndexOnVector
+#{ x<-c(1,2,3); x[-3.1] }
+[1] 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarDoubleNegativeIndexOnVector
 #{ x<-c(1L,2L,3L); x[-1.1] }
 [1] 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarDoubleNegativeIndexOnVector
 #{ x<-c(1L,2L,3L); x[-2.1] }
 [1] 1 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarDoubleNegativeIndexOnVector
+#{ x<-c(1L,2L,3L); x[-3.1] }
+[1] 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarIndex
 # { x <- 1:3 ; x[[NULL]] }
