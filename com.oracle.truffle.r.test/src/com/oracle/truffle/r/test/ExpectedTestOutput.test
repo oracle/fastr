@@ -3110,8 +3110,20 @@ Error: object 'nonexistent' not found
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
+#{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }
+[[1]]
+[1] 4
+
+[[2]]
+[1] 1 2 3
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
 #{ a <- c(1,2,3) ; f <- function() { a[2] <<- 4 } ; f() ; a }
 [1] 1 4 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
+#{ answer <<- 42 }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
 #{ b <- 2 ; f <- function() { b <- 4 } ; f() ; b }
@@ -3181,6 +3193,13 @@ Error: object 'nonexistent' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
 #{ x <- 10 ; g <- function() { x <- 100 ; f <- function() { x <- x ; x <<- 2 ; x } ; c(f(), f()) } ; g() }
 [1] 100   2
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
+#{ x <<- 1 ; x }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testSuperAssign
+#{ x <<- 1 }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testArithmeticPropagation
 #{ x <- 1 ; attr(x, "my") <- 2; 2+x }

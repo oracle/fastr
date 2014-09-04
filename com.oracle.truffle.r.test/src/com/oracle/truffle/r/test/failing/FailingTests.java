@@ -159,21 +159,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleAssignment_testSuperAssignIgnore_aa206594ebb10eb912cbc08e7c82e4e3() {
-        assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
-    }
-
-    @Ignore
-    public void TestSimpleAssignment_testSuperAssignIgnore_cfdf1ec04d27a60bdfe3a1bea92933e6() {
-        assertEvalNoOutput("{ x <<- 1 }");
-    }
-
-    @Ignore
-    public void TestSimpleAssignment_testSuperAssignIgnore_437eb5c1cc18125d4b5896cf3d2b5365() {
-        assertEvalNoOutput("{ x <<- 1 ; x }");
-    }
-
-    @Ignore
     public void TestSimpleAttributes_testArithmeticPropagationIgnore_bd8aedf4ca4bd613b8c5ce35463c17a5() {
         assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
     }

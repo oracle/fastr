@@ -3564,17 +3564,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleAssignment_testSuperAssignIgnore_aa206594ebb10eb912cbc08e7c82e4e3() {
+    public void TestSimpleAssignment_testSuperAssign_aa7819c363cd9256dd72e3d33036853a() {
+        assertEval("{ answer <<- 42 }");
+    }
+
+    @Test
+    public void TestSimpleAssignment_testSuperAssign_aa206594ebb10eb912cbc08e7c82e4e3() {
         assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
     }
 
     @Test
-    public void TestSimpleAssignment_testSuperAssignIgnore_cfdf1ec04d27a60bdfe3a1bea92933e6() {
+    public void TestSimpleAssignment_testSuperAssign_cfdf1ec04d27a60bdfe3a1bea92933e6() {
         assertEvalNoOutput("{ x <<- 1 }");
     }
 
     @Test
-    public void TestSimpleAssignment_testSuperAssignIgnore_437eb5c1cc18125d4b5896cf3d2b5365() {
+    public void TestSimpleAssignment_testSuperAssign_437eb5c1cc18125d4b5896cf3d2b5365() {
         assertEvalNoOutput("{ x <<- 1 ; x }");
     }
 

@@ -78,12 +78,9 @@ public class TestSimpleAssignment extends TestBase {
         assertEval("{ b <- c(1,1) ; f <- function(v,x) { g <- function(y) { v[y] <<- 2 } ; g(x) ; v } ; k <- f(b,1) ; l <- f(b,2) ; list(k,l,b) }");
         assertEval("{ a <- c(0,0,0) ; u <- function() { a <- c(1,1,1) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; f() ; a } ; list(a,u()) }");
         assertEval("{ a <- c(0,0,0) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; u <- function() { a <- c(1,1,1) ; f() ; a } ; r <- a ; s <- u() ; t <- a ; list(r,s,t) }");
-    }
 
-    @Test
-    @Ignore
-    public void testSuperAssignIgnore() {
-        // FIXME print regression
+        assertEval("{ answer <<- 42 }");
+
         assertEvalNoOutput("{ x <<- 1 }");
         assertEvalNoOutput("{ x <<- 1 ; x }");
         assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
