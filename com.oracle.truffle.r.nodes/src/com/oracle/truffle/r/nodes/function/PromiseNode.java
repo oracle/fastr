@@ -171,6 +171,7 @@ public class PromiseNode extends RNode {
      */
     public static class VarArgPromiseNode extends RNode {
         private final RPromise promise;
+        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
@@ -179,7 +180,7 @@ public class PromiseNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return promise.evaluate(frame);
+            return PromiseHelper.evaluate(frame, exprExecNode, promise);
         }
 
         public RPromise getPromise() {
@@ -214,7 +215,7 @@ public class PromiseNode extends RNode {
         return node;
     }
 
-    private static class VarArgsPromiseNode extends RNode {
+    public static class VarArgsPromiseNode extends RNode {
         protected final RNode[] nodes;
         protected final String[] names;
         protected final EnvProvider envProvider;
@@ -228,6 +229,7 @@ public class PromiseNode extends RNode {
         }
 
         @Override
+        @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {

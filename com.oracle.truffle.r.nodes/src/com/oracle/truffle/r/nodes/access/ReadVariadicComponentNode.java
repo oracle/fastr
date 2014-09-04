@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.expressions.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -33,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public class ReadVariadicComponentNode extends RNode {
 
     @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RRuntime.TYPE_ANY, false, true);
+    @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
     private final int index;
 
@@ -61,7 +64,7 @@ public class ReadVariadicComponentNode extends RNode {
         if (ret instanceof RPromise) {
             // This might be the case, as lookup only checks for "..." to be a promise and forces it
             // eventually, NOT (all) of its content
-            ret = ((RPromise) ret).evaluate(frame);
+            ret = PromiseHelper.evaluate(frame, exprExecNode, (RPromise) ret);
         }
         return ret == null ? RMissing.instance : ret;
     }
