@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -125,7 +126,7 @@ public abstract class AccessArgumentNode extends RNode {
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promise.getEvalPolicy() == EvalPolicy.INLINED) {
-            if (useExprExecNode) {
+            if (CompilerAsserts.compilationConstant(useExprExecNode)) {
                 return PromiseHelper.evaluate(frame, exprExecNode, promise);
             } else {
                 strictEvaluation.enter();
