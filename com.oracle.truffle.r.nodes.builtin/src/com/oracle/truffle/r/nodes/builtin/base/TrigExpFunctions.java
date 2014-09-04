@@ -101,7 +101,7 @@ public class TrigExpFunctions {
             RComplex call(RComplex rComplex);
         }
 
-        protected RComplexVector callFunction(RAbstractComplexVector arguments, ComplexArgumentFunctionCall functionCall) {
+        protected static RComplexVector callFunction(RAbstractComplexVector arguments, ComplexArgumentFunctionCall functionCall) {
             int argumentsLength = arguments.getLength();
             double[] result = new double[argumentsLength * 2];
             for (int i = 0; i < argumentsLength; i++) {
@@ -157,13 +157,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector exp(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.exp(d));
+            return doFun(x, Math::exp);
         }
 
         @Specialization
         protected RDoubleVector exp(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.exp(d));
+            return doFun(x, Math::exp);
         }
 
         @Specialization
@@ -196,13 +196,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector expm1(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.expm1(d));
+            return doFun(x, Math::expm1);
         }
 
         @Specialization
         protected RDoubleVector expm1(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.expm1(d));
+            return doFun(x, Math::expm1);
         }
 
         @Specialization
@@ -220,7 +220,7 @@ public class TrigExpFunctions {
         protected RComplexVector exp(RComplexVector powersVector) {
             controlVisibility();
             RComplexVector exponents = calculateExpUsing(powersVector);
-            return callFunction(exponents, (RComplex rComplex) -> substract1From(rComplex));
+            return callFunction(exponents, ExpM1::substract1From);
         }
     }
 
@@ -241,13 +241,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector sin(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.sin(d));
+            return doFun(x, Math::sin);
         }
 
         @Specialization
         protected RDoubleVector sin(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.sin(d));
+            return doFun(x, Math::sin);
         }
     }
 
@@ -269,13 +269,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector cos(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.cos(d));
+            return doFun(x, Math::cos);
         }
 
         @Specialization
         protected RDoubleVector cos(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.cos(d));
+            return doFun(x, Math::cos);
         }
     }
 
@@ -297,13 +297,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector tan(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.tan(d));
+            return doFun(x, Math::tan);
         }
 
         @Specialization
         protected RDoubleVector tan(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.tan(d));
+            return doFun(x, Math::tan);
         }
     }
 
@@ -324,13 +324,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector asin(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.asin(d));
+            return doFun(x, Math::asin);
         }
 
         @Specialization
         protected RDoubleVector asin(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.asin(d));
+            return doFun(x, Math::asin);
         }
     }
 
@@ -351,13 +351,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector acos(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.acos(d));
+            return doFun(x, Math::acos);
         }
 
         @Specialization
         protected RDoubleVector acos(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.acos(d));
+            return doFun(x, Math::acos);
         }
     }
 
@@ -378,13 +378,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector atan(RIntVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.atan(d));
+            return doFun(x, Math::atan);
         }
 
         @Specialization
         protected RDoubleVector atan(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, (double d) -> Math.atan(d));
+            return doFun(x, Math::atan);
         }
     }
 
@@ -458,22 +458,21 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector atan2(RDoubleVector x, RDoubleVector y) {
             controlVisibility();
-            return doFun(x, y, (double d1, double d2) -> Math.atan2(d1, d2));
+            return doFun(x, y, Math::atan2);
         }
 
         @Specialization
         protected RDoubleVector atan2(double x, RDoubleVector y) {
             controlVisibility();
             RDoubleVector xv = RDataFactory.createDoubleVectorFromScalar(x).copyResized(y.getLength(), false);
-            return doFun(xv, y, (double d1, double d2) -> Math.atan2(d1, d2));
+            return doFun(xv, y, Math::atan2);
         }
 
         @Specialization
         protected RDoubleVector atan2(RDoubleVector x, double y) {
             controlVisibility();
             RDoubleVector yv = RDataFactory.createDoubleVectorFromScalar(y);
-            return doFun(x, yv, (double d1, double d2) -> Math.atan2(d1, d2));
+            return doFun(x, yv, Math::atan2);
         }
     }
-
 }

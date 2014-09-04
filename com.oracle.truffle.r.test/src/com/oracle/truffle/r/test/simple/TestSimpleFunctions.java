@@ -269,9 +269,13 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
+    public void testUnusedArgumentErrors() {
+        assertEval("{ foo <- function(x) x; foo(1, 2, 3) }");
+    }
+
+    @Test
     @Ignore
     public void testUnusedArgumentErrorsIgnore() {
         assertEval("{ foo <- function(x) x; foo() }");
-        assertEval("{ foo <- function(x) x; foo(1,2,3) }");
     }
 }

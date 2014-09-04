@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,47 +35,84 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * Simple {@link RNode} that returns a function argument specified by its formal index. Used to
- * populate a function's environment.
+ * This {@link RNode} returns a function's argument specified by its formal index (
+ * {@link #getIndex()}). It is used to populate a function's new frame right after the actual
+ * function call and before the function's actual body is executed.
  */
-public class AccessArgumentNode extends RNode {
-
-    private final int index;
+// Fully qualified type name to circumvent compiler bug..
+@NodeChild(value = "readArgNode", type = com.oracle.truffle.r.nodes.access.AccessArgumentNode.ReadArgumentNode.class)
+@NodeField(name = "envProvider", type = EnvProvider.class)
+public abstract class AccessArgumentNode extends RNode {
 
     /**
-     * This class should prevent the unnecessary creation of a new {@link REnvironment} for every
-     * argument. An instance of this class is shared between all {@link AccessArgumentNode}s of a
-     * function and provides them with a - lazy created - instance of the callee environment.
+     * The {@link EnvProvider} is used to provide all arguments of with the same, lazily create
+     * {@link REnvironment}.
+     *
+     * @return This arguments' {@link EnvProvider}
      */
-    private final EnvProvider envProvider;
+    public abstract EnvProvider getEnvProvider();
+
+    /**
+     * @return The {@link ReadArgumentNode} that does the actual extraction from
+     *         {@link RArguments#getArgument(Frame, int)}
+     */
+    public abstract ReadArgumentNode getReadArgNode();
+
+    /**
+     * @return Formal, 0-based index of the argument to read
+     */
+    public Integer getIndex() {
+        return getReadArgNode().getIndex();
+    }
+
+    /**
+     * Used to cache {@link RPromise} evaluations.
+     */
+    @Child public ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
     private final BranchProfile needsCalleeFrame = new BranchProfile();
     private final BranchProfile strictEvaluation = new BranchProfile();
 
-    public AccessArgumentNode(int index, EnvProvider envProvider) {
-        this.index = index;
-        this.envProvider = envProvider;
+    /**
+     * @param index {@link #getIndex()}
+     * @param envProvider
+     * @return A fresh {@link AccessArgumentNode} for the given index, in the {@link REnvironment}
+     *         specified by given {@link EnvProvider}
+     */
+    public static AccessArgumentNode create(Integer index, EnvProvider envProvider) {
+        return AccessArgumentNodeFactory.create(new ReadArgumentNode(index), envProvider);
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        Object obj = RArguments.getArgument(frame, index);
-        if (obj instanceof RPromise) {
-            return handlePromise(frame, obj);
-        } else if (obj instanceof RArgsValuesAndNames) {
-            RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) obj;
-            Object[] varArgs = varArgsContainer.getValues();
-            for (int i = 0; i < varArgsContainer.length(); i++) {
-                varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, varArgs[i]) : varArgs[i];
-            }
-            return varArgsContainer;
-        } else {
-            return obj;
+    @Specialization
+    public Object doArgument(VirtualFrame frame, RPromise promise) {
+        return handlePromise(frame, promise, getEnvProvider(), true);
+    }
+
+    @Specialization
+    public Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
+        Object[] varArgs = varArgsContainer.getValues();
+        for (int i = 0; i < varArgsContainer.length(); i++) {
+            // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
+            // "..." is a different expression
+            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i], getEnvProvider(), false) : varArgs[i];
         }
+        return varArgsContainer;
     }
 
-    private Object handlePromise(VirtualFrame frame, Object promiseObj) {
-        RPromise promise = (RPromise) promiseObj;
+    @Specialization(guards = {"!isPromise", "!isRArgsValuesAndNames"})
+    public Object doArgument(Object obj) {
+        return obj;
+    }
+
+    public static boolean isPromise(Object obj) {
+        return obj instanceof RPromise;
+    }
+
+    public static boolean isRArgsValuesAndNames(Object obj) {
+        return obj instanceof RArgsValuesAndNames;
+    }
+
+    private Object handlePromise(VirtualFrame frame, RPromise promise, EnvProvider envProvider, boolean useExprExecNode) {
         assert promise.getType() != PromiseType.NO_ARG;
 
         // Check whether it is necessary to create a callee REnvironment for the promise
@@ -86,9 +125,30 @@ public class AccessArgumentNode extends RNode {
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promise.getEvalPolicy() == EvalPolicy.INLINED) {
-            strictEvaluation.enter();
-            return promise.evaluate(frame);
+            if (useExprExecNode) {
+                return PromiseHelper.evaluate(frame, exprExecNode, promise);
+            } else {
+                strictEvaluation.enter();
+                return promise.evaluate(frame);
+            }
         }
-        return promiseObj;
+        return promise;
+    }
+
+    public static class ReadArgumentNode extends RNode {
+        private final int index;
+
+        private ReadArgumentNode(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return RArguments.getArgument(frame, index);
+        }
+
+        public int getIndex() {
+            return index;
+        }
     }
 }

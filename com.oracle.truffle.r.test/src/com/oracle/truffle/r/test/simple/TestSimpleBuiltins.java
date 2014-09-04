@@ -249,6 +249,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep.int(as.raw(14), 4) }");
         assertEval("{ rep.int(1L,3L) }");
         assertEval("{ rep.int(\"a\",3) }");
+        assertEval("{ rep.int(c(1,2,3),c(2,8,3)) }");
+        assertEval("{ rep.int(seq_len(2), rep.int(8, 2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRepIntIgnore() {
+        // Missing space in error message.
+        assertEval("{ rep.int(c(1,2,3),c(2,8)) }");
     }
 
     @Test
@@ -1345,7 +1354,6 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testAbsIgnore() {
         assertEval("{ abs(c(0/0,1i)) }");
-        assertEval("{ exp(-abs((0+1i)/(0+0i))) }");
         assertEval("{ abs(1:3) }");
         assertEval("{ abs(-1:-3) }");
         assertEvalError("{ abs(NULL) }");
@@ -1400,15 +1408,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ typeof(length(typeof(NULL))) }");
 
         assertEval("{ f <- function(...) typeof(...); f(1)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
     }
 
     @Test
     @Ignore
     public void testTypeOfIgnore() {
-        // Inaccurate error message: function src missing
-        assertEval("{ f <- function(...) typeof(...); f(1,2)}");
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3)}");
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3,4)}");
         assertEval("{ f <- function(...) typeof(...); f()}");
     }
 
@@ -2096,8 +2103,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
         assertEval("{ cbind(1:3,1:2) }");
         assertEval("{ cbind(2,3, complex(3,3,2));}");
-        assertEval("{ cbind(2,3, c(1,1,1))");
-        assertEval("{ cbind(2.1:10,32.2)");
+        assertEval("{ cbind(2,3, c(1,1,1)) }");
+        assertEval("{ cbind(2.1:10,32.2) }");
     }
 
     @Test
@@ -2338,6 +2345,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
         assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
         assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
+
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
     }
 
     @Test
@@ -2352,8 +2361,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         // All unprecise error message in ArgumentMatcher: function src is missing!
         assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
-        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
+        assertEval("{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }");
     }
 
     @Test
@@ -2759,6 +2768,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ print(c(11.1,2.34567),quote=TRUE) }");
         assertEval("{ nql <- noquote(letters); print(nql)}");
         assertEval("{ nql <- noquote(letters); nql[1:4] <- \"oh\"; print(nql)}");
+        assertEval("{ print(c(\"foo\"),quote=FALSE)}");
+        assertEval("{ x<-matrix(c(\"a\",\"b\",\"c\",\"d\"),nrow=2);print(x,quote=FALSE)}");
+        assertEval("{ y<-c(\"a\",\"b\",\"c\",\"d\");dim(y)<-c(1,2,2);print(y,quote=FALSE)}");
     }
 
     @Test
@@ -3516,11 +3528,11 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testFactor() {
         assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);print(fdata,FALSE)}");
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));print(rdata,FALSE);}");
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata,FALSE);}");
-        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12,FALSE);}");
-        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); print(schtyp.f,FALSE);}");
-        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order,FALSE); } ");
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));print(rdata);}");
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}");
+        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12);}");
+        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); print(schtyp.f);}");
+        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order); } ");
     }
 
     @Test
@@ -3569,5 +3581,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{tabulate(c(-2,0,2,3,3,5))}");
         assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
         assertEval("{tabulate(factor(letters[1:10]))}");
+    }
+
+    @Test
+    public void testGL() {
+        assertEval("{x<-gl(2, 8, labels = c(\"Control\", \"Treat\")); print(x)}");
+        assertEval("{x<-gl(2, 1, 20); print(x)}");
+        assertEval("{x<-gl(2, 2, 20); print(x)}");
     }
 }

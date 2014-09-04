@@ -33,6 +33,7 @@ import java.util.*;
  *
  */
 public class TestOutputManager {
+
     /**
      * Tests are recorded in a map keyed by the test input. An instance of this class is the value
      * associated with the key.
@@ -364,13 +365,9 @@ public class TestOutputManager {
     public static String[] join(String[]... arrays) {
         Set<String> set = new HashSet<>();
         for (String[] s : arrays) {
-            for (int i = 0; i < s.length; ++i) {
-                set.add(s[i]);
-            }
+            set.addAll(Arrays.asList(s));
         }
-        String[] newValues = new String[set.size()];
-        set.toArray(newValues);
-        return newValues;
+        return set.toArray(new String[set.size()]);
     }
 
     public static String[] template(String template, String[]... parameters) {

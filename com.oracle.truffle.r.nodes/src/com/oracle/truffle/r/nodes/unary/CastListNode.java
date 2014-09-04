@@ -89,5 +89,4 @@ public abstract class CastListNode extends CastNode {
     protected RList doLanguage(VirtualFrame frame, RLanguage operand) {
         return castList(frame, operand.getRep());
     }
-
 }

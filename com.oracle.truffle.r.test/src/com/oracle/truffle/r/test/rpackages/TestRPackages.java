@@ -44,7 +44,7 @@ public class TestRPackages extends TestBase {
      * environment is handled in the Makefile using environment variables set in
      * {@link #installPackage(String)}.
      */
-    private class PackagePaths {
+    private static class PackagePaths {
         private final Path rpackagesDists;
         private final Path rpackagesLibs;
 
@@ -82,29 +82,22 @@ public class TestRPackages extends TestBase {
         }
     }
 
-    @Test
-    public void testLoadVanilla() {
+    private static final PackagePaths packagePaths = new PackagePaths();
 
+    @BeforeClass
+    public static void setupInstallVanillaPackage() {
+        // @BeforeClass to avoid installation of already present package (results in RC == 1 on my
+        // platform)
+        assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
     }
 
     @Test
-    @Ignore
-    public void testLoadVanillaIgnore() {
-        PackagePaths packagePaths = new PackagePaths();
-        assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
+    public void testLoadVanilla() {
         assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
     @Test
     public void testLoadTestRFFI() {
-
-    }
-
-    @Test
-    @Ignore
-    public void testLoadTestRFFIIgnore() {
-        PackagePaths packagePaths = new PackagePaths();
-        assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_double(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }", new String[]{packagePaths.rpackagesLibs.toString()}));

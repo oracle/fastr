@@ -344,7 +344,7 @@ public abstract class CastStringNode extends CastNode {
         return ret;
     }
 
-    protected boolean isZeroLength(@SuppressWarnings("unused") VirtualFrame frame, RAbstractVector vector) {
+    protected boolean isZeroLength(RAbstractVector vector) {
         return vector.getLength() == 0;
     }
 

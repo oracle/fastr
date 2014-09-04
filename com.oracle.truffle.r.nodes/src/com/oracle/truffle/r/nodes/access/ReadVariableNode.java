@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariab
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
 import com.oracle.truffle.r.nodes.expressions.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
@@ -195,20 +196,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (!promise.isEvaluated() && isInOriginFrame(promise)) {
                 directlyEvaluatedProfile.enter();
 
-                // Check for dependency cycle
-                if (promise.isUnderEvaluation()) {
-                    // TODO Get SourceSection of funcall!
-                    throw RError.error(RError.Message.PROMISE_CYCLE);
-                }
-                try {
-                    promise.setUnderEvaluation(true);
-
-                    Object obj = exprExecNode.execute(frame, (RNode) promise.getRep());
-                    promise.setValue(obj);
-                    return obj;
-                } finally {
-                    promise.setUnderEvaluation(false);
-                }
+                return PromiseHelper.evaluate(frame, exprExecNode, promise);
             }
             return promise.evaluate(frame);
         }
