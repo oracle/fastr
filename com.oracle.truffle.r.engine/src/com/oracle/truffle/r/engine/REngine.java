@@ -457,8 +457,9 @@ public final class REngine implements RContext.Engine {
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
+            Object resultValue = RPromise.checkEvaluate(null, result);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
-            function.getTarget().call(RArguments.create(function, new Object[]{result, RRuntime.asLogical(true)}));
+            function.getTarget().call(RArguments.create(function, new Object[]{resultValue, RRuntime.asLogical(true)}));
         }
     }
 
