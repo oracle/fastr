@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "order", kind = SUBSTITUTE, parameterNames = {"x", "tie"})
@@ -53,43 +54,59 @@ public abstract class Order extends RBuiltinNode {
 
     // specialisations for one parameter
 
-    @Specialization
-    protected RIntVector order(RStringVector x, @SuppressWarnings("unused") RMissing tie) {
+    @SuppressWarnings("unused")
+    @Specialization(guards = "empty")
+    protected RIntVector orderEmpty(RAbstractVector x, RMissing tie) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "oneElement")
+    protected int orderOneElement(RAbstractVector x, RMissing tie) {
+        return 1;
+    }
+
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractStringVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
-        String[] xs = x.getDataCopy();
+        RStringVector v = x.materialize();
+        String[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(xs.length);
         stringSort(xs, ord, null, 0, xs.length - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RIntVector order(RDoubleVector x, @SuppressWarnings("unused") RMissing tie) {
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
-        double[] xs = x.getDataCopy();
+        RDoubleVector v = x.materialize();
+        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, null, 0, xs.length - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RIntVector order(RIntVector x, @SuppressWarnings("unused") RMissing tie) {
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractIntVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
-        int[] xs = x.getDataCopy();
+        RIntVector v = x.materialize();
+        int[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(xs.length);
         intSort(xs, ord, null, 0, xs.length - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RIntVector order(RIntVector x, @SuppressWarnings("unused") RNull nul) {
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractIntVector x, @SuppressWarnings("unused") RNull nul) {
         controlVisibility();
         return order(x, RMissing.instance);
     }
 
-    @Specialization
-    protected RIntVector order(RComplexVector x, @SuppressWarnings("unused") RMissing tie) {
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractComplexVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
-        double[] xs = x.getDataCopy();
+        RComplexVector v = x.materialize();
+        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(x.getLength());
         complexSort(xs, ord, null, 0, x.getLength() - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
@@ -97,33 +114,48 @@ public abstract class Order extends RBuiltinNode {
 
     // specialisations for vector and tie parameters
 
-    @Specialization
-    protected RIntVector order(RIntVector x, RStringVector tie) {
+    @SuppressWarnings("unused")
+    @Specialization(guards = "empty")
+    protected RIntVector orderEmpty(RAbstractVector x, RAbstractStringVector tie) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "oneElement")
+    protected int orderOneElement(RAbstractVector x, RAbstractStringVector tie) {
+        return 1;
+    }
+
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractIntVector x, RAbstractStringVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
-        int[] xs = x.getDataCopy();
+        RIntVector v = x.materialize();
+        int[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(xs.length);
         intSort(xs, ord, t, 0, xs.length - 1);
         fixTies(xs, ord, t);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RIntVector order(RDoubleVector x, RStringVector tie) {
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractDoubleVector x, RAbstractStringVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
-        double[] xs = x.getDataCopy();
+        RDoubleVector v = x.materialize();
+        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, t, 0, xs.length - 1);
         fixTies(xs, ord, t);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RIntVector order(RDoubleVector x, RDoubleVector tie) {
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractDoubleVector x, RAbstractDoubleVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
-        double[] xs = x.getDataCopy();
+        RDoubleVector v = x.materialize();
+        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, t, 0, xs.length - 1);
         fixTies(xs, ord, t);
@@ -344,6 +376,30 @@ public abstract class Order extends RBuiltinNode {
             b[i] = b[j];
             b[j] = t;
         }
+    }
+
+    protected boolean empty(RAbstractVector x, @SuppressWarnings("unused") RMissing tie) {
+        return x.getLength() == 0;
+    }
+
+    protected boolean oneElement(RAbstractVector x, @SuppressWarnings("unused") RMissing tie) {
+        return x.getLength() == 1;
+    }
+
+    protected boolean empty(RAbstractVector x, @SuppressWarnings("unused") RNull tie) {
+        return x.getLength() == 0;
+    }
+
+    protected boolean oneElement(RAbstractVector x, @SuppressWarnings("unused") RNull tie) {
+        return x.getLength() == 1;
+    }
+
+    protected boolean empty(RAbstractVector x, @SuppressWarnings("unused") RAbstractVector tie) {
+        return x.getLength() == 0;
+    }
+
+    protected boolean oneElement(RAbstractVector x, @SuppressWarnings("unused") RAbstractVector tie) {
+        return x.getLength() == 1;
     }
 
 }

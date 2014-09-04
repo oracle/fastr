@@ -1192,6 +1192,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ order(c(3i,1i,2i)) }");
         assertEval("{ order(c(3+1i,2+2i,1+3i)) }");
         assertEval("{ order(c(3+1i,2+3i,2+2i,1+3i)) }");
+
+        assertEval("{ order(7) }");
+        assertEval("{ order(FALSE) }");
+        assertEval("{ order(character()) }");
     }
 
     @Test
