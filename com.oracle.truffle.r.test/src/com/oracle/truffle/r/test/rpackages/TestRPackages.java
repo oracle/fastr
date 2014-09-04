@@ -89,6 +89,7 @@ public class TestRPackages extends TestBase {
         // @BeforeClass to avoid installation of already present package (results in RC == 1 on my
         // platform)
         assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
+        assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
     }
 
     @Test
