@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -31,11 +32,16 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their {@link #getNames()}
  * given to a specific function call. The arguments' order is the same as given at the call.<br/>
  * It additionally holds usage hints ({@link #modeChange}, {@link #modeChangeForAll}).
+ * <p>
+ * It also acts as {@link ClosureCache} for it's arguments, so there is effectively only ever one
+ * {@link RootCallTarget} for every argument.
+ * </p>
  */
 public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
@@ -48,6 +54,8 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     private final Integer[] varArgsSymbolIndices;
 
     private final FunctionSignature staticSignature;
+
+    private final Map<RNode, Closure> closureCache = new HashMap<>();
 
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
@@ -170,14 +178,13 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     @ExplodeLoop
     public UnrolledVariadicArguments executeFlatten(VirtualFrame frame) {
         if (!containsVarArgsSymbol()) {
-            return UnrolledVariadicArguments.create(getArguments(), getNames());
+            return UnrolledVariadicArguments.create(getArguments(), getNames(), this);
         } else {
             RNode[] values = new RNode[arguments.length];
             String[] newNames = new String[arguments.length];
 
             int vargsSymbolsIndex = 0;
             int index = 0;
-// boolean allNamesNull = true;
             for (int i = 0; i < arguments.length; i++) {
                 if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
                     // Vararg "..." argument. "execute" to retrieve RArgsValuesAndNames. This is the
@@ -211,20 +218,17 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                         }
                         String newName = varArgInfo.getNames()[j];
                         newNames[index] = newName;
-// allNamesNull &= newName == null;
                         index++;
                     }
                     vargsSymbolsIndex++;
                 } else {
                     values[index] = arguments[i];
-// String newName = names[i];
-// allNamesNull &= newName == null;
                     newNames[index] = names[i];
                     index++;
                 }
             }
 
-            return UnrolledVariadicArguments.create(values, newNames);
+            return UnrolledVariadicArguments.create(values, newNames, this);
         }
     }
 
@@ -233,6 +237,11 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      */
     public boolean containsVarArgsSymbol() {
         return varArgsSymbolIndices.length > 0;
+    }
+
+    @Override
+    public Map<RNode, Closure> getContent() {
+        return closureCache;
     }
 
     @Override

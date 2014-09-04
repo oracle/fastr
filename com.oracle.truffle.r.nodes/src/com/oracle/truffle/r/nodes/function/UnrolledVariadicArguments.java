@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * @author TODO Gero, add comment!
@@ -30,12 +33,16 @@ import com.oracle.truffle.r.nodes.*;
  */
 public class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 
-    private UnrolledVariadicArguments(RNode[] arguments, String[] names) {
+    private final Map<RNode, Closure> closureCache;
+
+    private UnrolledVariadicArguments(RNode[] arguments, String[] names, ClosureCache closureCache) {
         super(arguments, names);
+        this.closureCache = closureCache.getContent();
+
     }
 
-    public static UnrolledVariadicArguments create(RNode[] arguments, String[] names) {
-        return new UnrolledVariadicArguments(arguments, names);
+    public static UnrolledVariadicArguments create(RNode[] arguments, String[] names, ClosureCache closureCache) {
+        return new UnrolledVariadicArguments(arguments, names, closureCache);
     }
 
     @Override
@@ -46,5 +53,10 @@ public class UnrolledVariadicArguments extends Arguments<RNode> implements Unmat
     @Override
     public String[] getNames() {
         return names;
+    }
+
+    @Override
+    public Map<RNode, Closure> getContent() {
+        return closureCache;
     }
 }

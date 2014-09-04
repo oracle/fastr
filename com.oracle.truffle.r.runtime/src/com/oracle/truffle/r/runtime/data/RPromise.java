@@ -99,6 +99,11 @@ public final class RPromise extends RLanguageRep {
     protected REnvironment env;
 
     /**
+     * Might not be <code>null</code>
+     */
+    private final Closure closure;
+
+    /**
      * When {@code null} the promise has not been evaluated.
      */
     protected Object value = null;
@@ -119,24 +124,26 @@ public final class RPromise extends RLanguageRep {
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
-     * @param expr {@link #getRep()}
+     * @param closure {@link #getClosure()}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
-        super(expr);
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Closure closure) {
+        super(closure.getExpr());
         this.evalPolicy = evalPolicy;
         this.type = type;
         this.env = env;
+        this.closure = closure;
     }
 
     /**
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
-     * @param expr {@link #getRep()}
-     * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Object)}
+     * @param closure {@link #getClosure()}
+     * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Closure)}
      */
-    public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
-        assert expr != null;
-        return new RPromise(evalPolicy, type, env, expr);
+    public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Closure closure) {
+        assert closure != null;
+        assert closure.getExpr() != null;
+        return new RPromise(evalPolicy, type, env, closure);
     }
 
     /**
@@ -162,8 +169,7 @@ public final class RPromise extends RLanguageRep {
             underEvaluation = true;
 
             // Evaluate this promises value!
-            // TODO Performance: We can use frame directly if we are sure that it matches the on in
-            // env!
+            // Performance: We can use frame directly
             if (env != null) {
                 newValue = doEvalArgument();
             } else {
@@ -174,7 +180,9 @@ public final class RPromise extends RLanguageRep {
         }
 
         setValue(newValue);
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+        // No invalidate here, as RPromise is NOT part of the AST! It is in most scenarios a
+        // one-shot object, that gets discarded after first execution.
+        // CompilerDirectives.transferToInterpreterAndInvalidate();
         return value;
     }
 
@@ -276,6 +284,13 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
+     * @return {@link #closure}
+     */
+    public Closure getClosure() {
+        return closure;
+    }
+
+    /**
      * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
      */
     public boolean isDefaulted() {
@@ -334,12 +349,12 @@ public final class RPromise extends RLanguageRep {
      * @see RPromiseFactory#createPromiseArgEvaluated(Object)
      */
     public static final class RPromiseFactory {
-        private final Object expr;
-        private final Object defaultExpr;
+        private final Closure exprClosure;
+        private final Closure defaultClosure;
         private final EvalPolicy evalPolicy;
         private final PromiseType type;
 
-        public static RPromiseFactory create(PromiseType type, Object rep, Object defaultExpr) {
+        public static RPromiseFactory create(PromiseType type, Closure rep, Closure defaultExpr) {
             return new RPromiseFactory(EvalPolicy.PROMISED, type, rep, defaultExpr);
         }
 
@@ -348,22 +363,22 @@ public final class RPromise extends RLanguageRep {
          * frame. The frame may need to be set if the promise is passed as an argument to another
          * function.
          */
-        public static RPromiseFactory create(EvalPolicy evalPolicy, PromiseType type, Object argument, Object defaultExpr) {
-            return new RPromiseFactory(evalPolicy, type, argument, defaultExpr);
+        public static RPromiseFactory create(EvalPolicy evalPolicy, PromiseType type, Closure suppliedClosure, Closure defaultClosure) {
+            return new RPromiseFactory(evalPolicy, type, suppliedClosure, defaultClosure);
         }
 
-        private RPromiseFactory(EvalPolicy evalPolicy, PromiseType type, Object expr, Object defaultExpr) {
+        private RPromiseFactory(EvalPolicy evalPolicy, PromiseType type, Closure suppliedClosure, Closure defaultClosure) {
             this.evalPolicy = evalPolicy;
             this.type = type;
-            this.expr = expr;
-            this.defaultExpr = defaultExpr;
+            this.exprClosure = suppliedClosure;
+            this.defaultClosure = defaultClosure;
         }
 
         /**
          * @return A {@link RPromise} from the given parameters
          */
         public RPromise createPromise(REnvironment env) {
-            return RPromise.create(evalPolicy, type, env, expr);
+            return RPromise.create(evalPolicy, type, env, exprClosure);
         }
 
         /**
@@ -376,7 +391,7 @@ public final class RPromise extends RLanguageRep {
          */
         public RPromise createPromiseDefault() {
             assert type == PromiseType.ARG_SUPPLIED;
-            return RPromise.create(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultExpr);
+            return RPromise.create(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultClosure);
         }
 
         /**
@@ -393,11 +408,17 @@ public final class RPromise extends RLanguageRep {
         }
 
         public Object getExpr() {
-            return expr;
+            if (exprClosure == null) {
+                return null;
+            }
+            return exprClosure.getExpr();
         }
 
         public Object getDefaultExpr() {
-            return defaultExpr;
+            if (defaultClosure == null) {
+                return null;
+            }
+            return defaultClosure.getExpr();
         }
 
         public EvalPolicy getEvalPolicy() {
@@ -406,6 +427,24 @@ public final class RPromise extends RLanguageRep {
 
         public PromiseType getType() {
             return type;
+        }
+    }
+
+    public static class Closure {
+        private final RootCallTarget callTarget;
+        private final Object expr;
+
+        public Closure(RootCallTarget callTarget, Object expr) {
+            this.callTarget = callTarget;
+            this.expr = expr;
+        }
+
+        public RootCallTarget getCallTarget() {
+            return callTarget;
+        }
+
+        public Object getExpr() {
+            return expr;
         }
     }
 }

@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -95,6 +95,7 @@ public abstract class RCallNode extends RNode {
      * Creates a modified call in which the first argument if replaced by {@code arg1}. This is, for
      * example, to support {@code HiddenInternalFunctions.MakeLazy}.
      */
+    @SlowPath
     public static RCallNode createCloneReplacingFirstArg(RCallNode call, ConstantNode arg1) {
         assert call instanceof UninitializedCallNode;
         UninitializedCallNode callClone = NodeUtil.cloneNode((UninitializedCallNode) call);

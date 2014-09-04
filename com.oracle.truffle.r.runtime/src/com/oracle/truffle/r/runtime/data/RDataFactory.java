@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -326,8 +328,11 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
+    @SlowPath
     public static RPromise createPromise(Object rep, REnvironment env) {
-        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env, rep));
+        RootCallTarget callTarget = RContext.getEngine().makeCallTarget(rep);
+        Closure closure = new Closure(callTarget, rep);
+        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env, closure));
     }
 
     public static RPromise createPromise(Object rep) {
