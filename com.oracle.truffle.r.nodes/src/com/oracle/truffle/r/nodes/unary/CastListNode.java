@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -29,7 +30,17 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CastListNode extends CastNode {
 
+    @Child CastListNode castListRecursive;
+
     public abstract RList executeList(VirtualFrame frame, Object o);
+
+    private RList castList(VirtualFrame frame, Object operand) {
+        if (castListRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castListRecursive = insert(CastListNodeFactory.create(null, false, false, false));
+        }
+        return castListRecursive.executeList(frame, operand);
+    }
 
     @Specialization
     @SuppressWarnings("unused")
@@ -67,6 +78,16 @@ public abstract class CastListNode extends CastNode {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
+    }
+
+    @Specialization
+    protected RList doExpression(RExpression operand) {
+        return operand.getList();
+    }
+
+    @Specialization
+    protected RList doLanguage(VirtualFrame frame, RLanguage operand) {
+        return castList(frame, operand.getRep());
     }
 
 }

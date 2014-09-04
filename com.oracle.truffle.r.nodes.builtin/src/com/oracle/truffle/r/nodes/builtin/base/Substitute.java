@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -41,6 +42,9 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class Substitute extends RBuiltinNode {
 
     @Child private Quote quote;
+    @Child private Substitute substituteRecursive;
+
+    protected abstract Object executeObject(VirtualFrame frame, RPromise promise, Object env);
 
     @Override
     public RNode[] getParameterValues() {
@@ -54,8 +58,15 @@ public abstract class Substitute extends RBuiltinNode {
         return quote;
     }
 
+    private Substitute checkSubstituteRecursive() {
+        if (substituteRecursive == null) {
+            substituteRecursive = insert(SubstituteFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return substituteRecursive;
+    }
+
     @Specialization
-    protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
+    protected Object doSubstitute(VirtualFrame frame, RPromise expr, RMissing envMissing) {
         controlVisibility();
         // In the global environment, substitute behaves like quote
         if (REnvironment.isGlobalEnvFrame(frame)) {
@@ -88,6 +99,33 @@ public abstract class Substitute extends RBuiltinNode {
             } else {
                 return val;
             }
+        } else if (unode instanceof UninitializedCallNode) {
+            UninitializedCallNode callNode = (UninitializedCallNode) unode;
+            ReadVariableNode funReadNode = (ReadVariableNode) callNode.getFunctionNode();
+            REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
+            Object fun = env.get(funReadNode.getSymbol().getName());
+            if (fun == null) {
+                fun = RDataFactory.createSymbol(funReadNode.getSymbol().getName());
+            }
+            CallArgumentsNode arguments = callNode.getClonedArgs();
+            UnrolledVariadicArguments unrolledArgs = arguments.executeFlatten(frame);
+            RNode[] argValues = unrolledArgs.getArguments();
+            Object[] listData = new Object[argValues.length + 1];
+            listData[0] = fun;
+            for (int i = 0; i < argValues.length; i++) {
+                if (argValues[i] instanceof VarArgPromiseNode) {
+                    RPromise p = ((VarArgPromiseNode) argValues[i]).getPromise();
+                    listData[i + 1] = checkSubstituteRecursive().executeObject(frame, p, envMissing);
+                } else {
+                    ReadVariableNode argReadNode = (ReadVariableNode) ((WrapArgumentNode) argValues[i]).getOperand();
+                    Object arg = env.get(argReadNode.getSymbol().getName());
+                    if (arg == null) {
+                        arg = RDataFactory.createSymbol(argReadNode.getSymbol().getName());
+                    }
+                    listData[i + 1] = arg;
+                }
+            }
+            return RDataFactory.createLanguage(RDataFactory.createExpression(RDataFactory.createList(listData)));
         } else {
             throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr), unsupported arg");
         }

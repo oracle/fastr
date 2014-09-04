@@ -166,7 +166,7 @@ public class PromiseNode extends RNode {
     /**
      * TODO Gero, add comment!
      */
-    private static class VarArgPromiseNode extends RNode {
+    public static class VarArgPromiseNode extends RNode {
         private final RPromise promise;
 
         private VarArgPromiseNode(RPromise promise) {
@@ -176,6 +176,10 @@ public class PromiseNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             return promise.evaluate(frame);
+        }
+
+        public RPromise getPromise() {
+            return promise;
         }
     }
 

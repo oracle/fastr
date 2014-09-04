@@ -164,6 +164,12 @@ public abstract class AsVector extends RBuiltinNode {
         return castList(frame, x);
     }
 
+    @Specialization
+    protected RAbstractVector asVectorList(VirtualFrame frame, RLanguage x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return castList(frame, x);
+    }
+
     @Specialization(guards = "castToSymbol")
     protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();

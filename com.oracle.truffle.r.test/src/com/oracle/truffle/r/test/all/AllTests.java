@@ -10449,6 +10449,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testOrder_4c3803cc90ae96baaceb31dff9d35880() {
+        assertEval("{ order(7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_99663477341c7f5256cca2b070dd3ca9() {
+        assertEval("{ order(FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_f27adcb88b731598a1bbccef9b12a8ee() {
+        assertEval("{ order(character()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOrderIgnore_9d9e462e8a8cc7dbbf92366b9602bf39() {
         assertEval("{ order(1:3) }");
     }
@@ -15554,6 +15569,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testDataFrame_43228704ec40ab584d0ad4a6bfd5a2b1() {
+        assertEval("{ x<-c(7,42); y<-data.frame(x); is.data.frame(y) }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testIsDataFrame_d6c0af441e754a72f4efaea8bfe20102() {
         assertEval("{ is.data.frame(1) }");
     }
@@ -16251,6 +16271,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDots_d6e84b6c4d84ca15395f370802824ec0() {
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_2db2f298f9591fc863d46b2337031365() {
+        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_d266ad072a43522cdf323bfec4bb824d() {
+        assertEval("{ x<-7; y<-42; f<-function(...) { as.list(substitute(g(...))) }; f(x,y) }");
     }
 
     @Test

@@ -212,7 +212,7 @@ public abstract class RCallNode extends RNode {
         }
     }
 
-    private static final class UninitializedCallNode extends RootCallNode {
+    public static final class UninitializedCallNode extends RootCallNode {
 
         @Child private CallArgumentsNode args;
         private final int depth;
@@ -269,8 +269,12 @@ public abstract class RCallNode extends RNode {
             return parentNode;
         }
 
+        public CallArgumentsNode getClonedArgs() {
+            return NodeUtil.cloneNode(args);
+        }
+
         protected RCallNode createCacheNode(VirtualFrame frame, RFunction function, SourceSection debugSrc) {
-            CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
+            CallArgumentsNode clonedArgs = getClonedArgs();
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
