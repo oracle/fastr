@@ -42,7 +42,6 @@ import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
@@ -193,16 +192,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
-            if (!promise.isEvaluated() && isInOriginFrame(promise)) {
+            if (!promise.isEvaluated() && promise.isInOriginFrame(frame)) {
                 directlyEvaluatedProfile.enter();
 
                 return PromiseHelper.evaluate(frame, exprExecNode, promise);
             }
             return promise.evaluate(frame);
-        }
-
-        public static boolean isInOriginFrame(RPromise promise) {
-            return promise.getEvalPolicy() == EvalPolicy.PROMISED && promise.getType() == PromiseType.ARG_DEFAULT;
         }
 
         @Specialization

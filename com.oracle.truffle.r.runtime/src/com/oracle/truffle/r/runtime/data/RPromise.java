@@ -173,6 +173,7 @@ public final class RPromise extends RLanguageRep {
             if (env != null) {
                 newValue = doEvalArgument();
             } else {
+                assert isInOriginFrame(frame);
                 newValue = doEvalArgument(frame);
             }
         } finally {
@@ -258,6 +259,25 @@ public final class RPromise extends RLanguageRep {
      */
     public boolean needsCalleeFrame() {
         return evalPolicy == EvalPolicy.PROMISED && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
+    }
+
+    /**
+     * @param frame
+     * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
+     *         directly inside the AST.
+     */
+    public boolean isInOriginFrame(VirtualFrame frame) {
+        if (evalPolicy == EvalPolicy.INLINED) {
+            return true;
+        }
+        assert evalPolicy == EvalPolicy.PROMISED;
+
+        if (type == PromiseType.ARG_DEFAULT && env == null) {
+            return true;
+        }
+
+        assert env != null;
+        return REnvironment.isFrameForEnv(frame, env);
     }
 
     /**

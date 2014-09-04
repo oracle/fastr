@@ -171,6 +171,7 @@ public class PromiseNode extends RNode {
      */
     public static class VarArgPromiseNode extends RNode {
         private final RPromise promise;
+        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
@@ -179,7 +180,7 @@ public class PromiseNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return promise.evaluate(frame);
+            return PromiseHelper.evaluate(frame, exprExecNode, promise);
         }
 
         public RPromise getPromise() {

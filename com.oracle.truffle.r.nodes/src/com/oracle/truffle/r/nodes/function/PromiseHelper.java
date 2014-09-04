@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class PromiseHelper {
     /**
+     * Guarded by {@link RPromise#isInOriginFrame(VirtualFrame)}.
+     *
      * @param frame The current {@link VirtualFrame}
      * @param exprExecNode The {@link ExpressionExecutorNode}
      * @param promise The {@link RPromise} to evaluate
@@ -41,7 +43,7 @@ public class PromiseHelper {
      *         {@link ExpressionExecutorNode}
      */
     public static Object evaluate(VirtualFrame frame, ExpressionExecutorNode exprExecNode, RPromise promise) {
-        if (promise.isEvaluated()) {
+        if (promise.isEvaluated() || !promise.isInOriginFrame(frame)) {
             return promise.evaluate(frame);
         }
 
