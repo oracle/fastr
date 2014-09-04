@@ -298,7 +298,7 @@ public final class REngine implements RContext.Engine {
         // have to do the full out eval
         try {
             REnvironment env = promise.getEnv();
-            return eval(lookupBuiltin("eval"), (RNode) promise.getRep(), env == null ? REnvironment.globalEnv() : env, null);
+            return eval(lookupBuiltin("eval"), (RNode) promise.getRep(), env, null);
         } catch (PutException ex) {
             // TODO a new, rather unlikely, error
             assert false;

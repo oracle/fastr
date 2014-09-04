@@ -280,8 +280,13 @@ public class RDeparse {
                 break;
 
             case PROMSXP:
-                Object v = RContext.getEngine().evalPromise((RPromise) obj);
-                deparse2buff(state, v);
+                RPromise promise = (RPromise) obj;
+                if (promise.isEvaluated()) {
+                    deparse2buff(state, promise.getValue());
+                } else {
+                    Object v = RContext.getEngine().evalPromise((RPromise) obj);
+                    deparse2buff(state, v);
+                }
                 break;
 
             case CLOSXP: {
