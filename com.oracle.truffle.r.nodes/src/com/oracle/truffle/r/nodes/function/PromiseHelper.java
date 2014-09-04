@@ -22,31 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * Holds {@link RPromise}-related functionality that cannot be implemented in
  * "com.oracle.truffle.r.runtime.data" due to package import restrictions.
  */
 public class PromiseHelper {
-
-    /**
-     * @param expr
-     * @return A fresh {@link RootCallTarget} wrapping expr inside a new {@link Closure}
-     */
-    @SlowPath
-    public static Closure createClosure(RNode expr) {
-        RootCallTarget callTarget = RContext.getEngine().makeCallTarget(expr);
-        return new Closure(callTarget, expr);
-    }
-
     /**
      * @param frame The current {@link VirtualFrame}
      * @param exprExecNode The {@link ExpressionExecutorNode}

@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.env.*;
 
 public final class RDataFactory {
@@ -330,8 +331,8 @@ public final class RDataFactory {
 
     @SlowPath
     public static RPromise createPromise(Object rep, REnvironment env) {
-        RootCallTarget callTarget = RContext.getEngine().makeCallTarget(rep);
-        Closure closure = new Closure(callTarget, rep);
+        // TODO Cache closures? Maybe in the callers of this function?
+        Closure closure = new Closure(rep);
         return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env, closure));
     }
 

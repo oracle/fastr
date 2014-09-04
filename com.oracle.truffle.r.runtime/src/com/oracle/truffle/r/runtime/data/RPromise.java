@@ -431,15 +431,19 @@ public final class RPromise extends RLanguageRep {
     }
 
     public static class Closure {
-        private final RootCallTarget callTarget;
+        @CompilationFinal private RootCallTarget callTarget;
         private final Object expr;
 
-        public Closure(RootCallTarget callTarget, Object expr) {
-            this.callTarget = callTarget;
+        public Closure(Object expr) {
             this.expr = expr;
         }
 
         public RootCallTarget getCallTarget() {
+            if (callTarget == null) {
+                // Create lazily, as it is not needed at all for INLINED promises!
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                callTarget = RContext.getEngine().makeCallTarget(expr);
+            }
             return callTarget;
         }
 

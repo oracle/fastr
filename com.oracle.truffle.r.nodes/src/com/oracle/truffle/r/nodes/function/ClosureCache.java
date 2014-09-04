@@ -44,7 +44,7 @@ public interface ClosureCache {
         Map<RNode, Closure> cache = getContent();
         Closure result = cache.get(expr);
         if (result == null) {
-            result = PromiseHelper.createClosure(expr);
+            result = new Closure(expr);
             cache.put(expr, result);
         }
         return result;

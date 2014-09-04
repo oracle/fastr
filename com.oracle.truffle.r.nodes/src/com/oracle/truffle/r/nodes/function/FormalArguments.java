@@ -50,7 +50,7 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
      */
     private final int varArgsIndex;
 
-    private final Map<RNode, Closure> closureCache = new HashMap<>();
+    private final Map<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     /**
      * @param argumentsNames {@link #getNames()}
