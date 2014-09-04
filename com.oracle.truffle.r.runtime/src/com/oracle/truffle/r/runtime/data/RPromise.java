@@ -170,7 +170,7 @@ public final class RPromise extends RLanguageRep {
 
             // Evaluate this promises value!
             // Performance: We can use frame directly
-            if (env != null) {
+            if (env != null && !isInOriginFrame(frame)) {
                 newValue = doEvalArgument();
             } else {
                 assert isInOriginFrame(frame);
@@ -277,6 +277,9 @@ public final class RPromise extends RLanguageRep {
         }
 
         assert env != null;
+        if (frame == null) {
+            return false;
+        }
         return REnvironment.isFrameForEnv(frame, env);
     }
 
