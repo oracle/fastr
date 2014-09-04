@@ -31,7 +31,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
-import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -58,26 +58,16 @@ public class Recall extends RCustomBuiltinNode {
             callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
         }
 
-        // TODO mjj This is almost certainly incorrect
-        // Match arguments for function
+        // Use arguments in "..." as arguments for RECALL call
         Object[] argsObject = RArguments.create(function, createArgs(frame, arguments[0]));
         return callNode.call(frame, argsObject);
     }
 
-    @ExplodeLoop
-    private static void executeArgs(VirtualFrame frame, RNode[] args, Object[] argValues) {
-        for (int i = 0; i < args.length; i++) {
-            argValues[i] = args[i].execute(frame);
-        }
-    }
-
     private static Object[] createArgs(VirtualFrame frame, RNode argNode) {
         RNode actualArgNode = argNode instanceof WrapArgumentNode ? ((WrapArgumentNode) argNode).getOperand() : argNode;
-        if (actualArgNode instanceof VarArgsNode) {
-            RNode[] args = ((VarArgsNode) actualArgNode).getArgumentNodes();
-            Object[] argValues = new Object[args.length];
-            executeArgs(frame, args, argValues);
-            return argValues;
+        if (actualArgNode instanceof VarArgsPromiseNode) {
+            RArgsValuesAndNames varArgs = (RArgsValuesAndNames) actualArgNode.execute(frame);
+            return varArgs.getValues();
         } else {
             return new Object[]{argNode.execute(frame)};
         }

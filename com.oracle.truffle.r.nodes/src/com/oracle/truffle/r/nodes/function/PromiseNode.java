@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
@@ -154,7 +155,7 @@ public class PromiseNode extends RNode {
         public InlinedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
             // defaultExpr and expr are identical here!
-            this.defaultExpr = (RNode) factory.getExpr();
+            this.defaultExpr = (RNode) factory.getDefaultExpr();
         }
 
         @Override
@@ -170,6 +171,7 @@ public class PromiseNode extends RNode {
      */
     public static class VarArgPromiseNode extends RNode {
         private final RPromise promise;
+        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
@@ -178,7 +180,7 @@ public class PromiseNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return promise.evaluate(frame);
+            return PromiseHelper.evaluate(frame, exprExecNode, promise);
         }
 
         public RPromise getPromise() {
@@ -194,7 +196,7 @@ public class PromiseNode extends RNode {
      * @param names
      * @return TODO Gero, add comment!
      */
-    public static VarArgsPromiseNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names) {
+    public static VarArgsPromiseNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache) {
         VarArgsPromiseNode node;
         switch (evalPolicy) {
             case INLINED:
@@ -202,7 +204,7 @@ public class PromiseNode extends RNode {
                 break;
 
             case PROMISED:
-                node = new VarArgsPromiseNode(envProvider, nodes, names);
+                node = new VarArgsPromiseNode(envProvider, nodes, names, closureCache);
                 break;
 
             default:
@@ -213,22 +215,26 @@ public class PromiseNode extends RNode {
         return node;
     }
 
-    private static class VarArgsPromiseNode extends RNode {
+    public static class VarArgsPromiseNode extends RNode {
         protected final RNode[] nodes;
         protected final String[] names;
         protected final EnvProvider envProvider;
+        protected final ClosureCache closureCache;
 
-        public VarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names) {
+        public VarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache) {
             this.envProvider = envProvider;
             this.nodes = nodes;
             this.names = names;
+            this.closureCache = closureCache;
         }
 
         @Override
+        @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
-                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, envProvider.getREnvironmentFor(frame), nodes[i]);
+                Closure closure = closureCache.getOrCreateClosure(nodes[i]);
+                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, envProvider.getREnvironmentFor(frame), closure);
             }
             return new RArgsValuesAndNames(promises, names);
         }
@@ -238,7 +244,7 @@ public class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
 
         public InlineVarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names) {
-            super(envProvider, nodes, names);
+            super(envProvider, nodes, names, null);
             this.varargs = nodes;
         }
 

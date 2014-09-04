@@ -22,8 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This class denotes a list of formal arguments which consist of the tuple
@@ -32,8 +36,12 @@ import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
  * <li>expression ({@link RNode}, {@link #getDefaultArgs()})</li>
  * </ul>
  * The order is always the one defined by the function definition.
+ * <p>
+ * It also acts as {@link ClosureCache} for it's default arguments, so there is effectively only
+ * ever one {@link RootCallTarget} for every default argument.
+ * </p>
  */
-public final class FormalArguments extends Arguments<RNode> {
+public final class FormalArguments extends Arguments<RNode> implements ClosureCache {
 
     public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
 
@@ -41,6 +49,8 @@ public final class FormalArguments extends Arguments<RNode> {
      * Serves as cache for {@link #hasVarArgs()}/{@link #getVarArgIndex()}.
      */
     private final int varArgsIndex;
+
+    private final Map<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     /**
      * @param argumentsNames {@link #getNames()}
@@ -68,6 +78,11 @@ public final class FormalArguments extends Arguments<RNode> {
     @Override
     public int getVarArgIndex() {
         return varArgsIndex;
+    }
+
+    @Override
+    public Map<RNode, Closure> getContent() {
+        return closureCache;
     }
 
     /**

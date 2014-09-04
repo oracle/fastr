@@ -88,14 +88,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return execute(frame);
     }
 
-    @ExplodeLoop
-    private void executeArguments(VirtualFrame frame) {
-        RNode[] unevaluatedArgs = getArguments();
-        for (int i = 0; i < unevaluatedArgs.length; i++) {
-            getArguments()[i] = (RNode) unevaluatedArgs[i].execute(frame);
-        }
-    }
-
     @Override
     public final int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         return executeInteger(frame);
@@ -173,7 +165,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
         args[index++] = builtinArguments;
         args[index++] = factory;
-        args[index++] = argNames;
+        args[index] = argNames;
 
         return factory.getFactory().createNode(args);
     }

@@ -437,7 +437,12 @@ public abstract class ArrayPositionCast extends RNode {
         @Specialization(guards = "isNegative")
         protected Object doDoubleNegative(VirtualFrame frame, RAbstractContainer container, double operand) {
             // returns object as it may return either int or RIntVector due to conversion
-            return convertOperatorRecursive(frame, container, castInteger(frame, operand));
+            return convertOperatorRecursive(frame, container, castInteger(frame, Math.abs(operand) > container.getLength() ? operand - 1 : operand));
+            // The check for the operand size in relation to the vector length is done to maintain
+            // compatibility with GNU R, which (oddly) does not seem to apply as.integer semantics
+            // to a negative argument here. For instance, { x <- c(1,2,3); x[-3.1] } will give the
+            // answer 1 2 3 even though as.integer would turn -3.1 into -3, which should lead to
+            // removal of the third element.
         }
 
         @Specialization(guards = {"indNA", "numDimensionsOne", "!isSubset"})

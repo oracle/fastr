@@ -154,21 +154,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleAssignment_testSuperAssignIgnore_aa206594ebb10eb912cbc08e7c82e4e3() {
-        assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
-    }
-
-    @Ignore
-    public void TestSimpleAssignment_testSuperAssignIgnore_cfdf1ec04d27a60bdfe3a1bea92933e6() {
-        assertEvalNoOutput("{ x <<- 1 }");
-    }
-
-    @Ignore
-    public void TestSimpleAssignment_testSuperAssignIgnore_437eb5c1cc18125d4b5896cf3d2b5365() {
-        assertEvalNoOutput("{ x <<- 1 ; x }");
-    }
-
-    @Ignore
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_df9b3724960b222fffd20b6a1ef94ed5() {
         assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
     }
@@ -2279,6 +2264,41 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleVectors_testComplexIndexIgnored_ee8c1f9af263214be7bfa6591824f335() {
+        assertEvalError("{ x<-c(1,2,3,4); x[[1+1i]]<-NULL }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testComplexIndexIgnored_593fc8e31f28867ca49ec0bbe21bbc5f() {
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testListIndexIgnore_2223add8510c9d9c0c26ffc36fbf858e() {
+        assertEvalError("{ z<-1:4; z[[list()]]<-NULL }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testListUpdateIgnore_942201d73db7111f1ae9c68deaed4964() {
+        assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testListUpdateIgnore_b0c34f83e997bfdf47a82b1531934031() {
+        assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",NULL) }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_7ee80d10536234dea050bd3a45a963b1() {
+        assertEval("{ x <- c(1); x[[-4]] <- NULL }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_c24d10e5b756a7869655b4f8f0960bd4() {
+        assertEval("{ x <- c(1,2,3); x[[-1]] <- NULL }");
+    }
+
+    @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_461a050f655ae44ddfc5d11f6a011e93() {
         assertEvalError("{ x<-1:4; x[[1]]<-NULL; x }");
     }
@@ -2321,6 +2341,26 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_d5bbba1f1bb5b771dbc80175679415c5() {
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testScalarIndexIgnored_c5bf8fe63f55705b2cb57df329d3fc2d() {
+        assertEval("{ x<-1:4; x[c(-0.5)] }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testScalarOutOfBoundsOnVectorIgnored_56fb30c1f1e1c458babb43d54682aec0() {
+        assertEval("{ x<-c(1,2,3); x[-0.1] }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testScalarOutOfBoundsOnVectorIgnored_75ebae7c0fbc6f076571ecc1eca34950() {
+        assertEval("{ x<-c(1L,2L,3L); x[-0.1] }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testScalarOutOfBoundsOnVectorIgnored_824bad7757ef4527e818848c9a152ddb() {
+        assertEval("{ x<-1:3; x[-0.1] }");
     }
 
     @Ignore

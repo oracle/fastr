@@ -138,7 +138,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         REnvironment.FunctionDefinition funcEnvironment = new REnvironment.FunctionDefinition(environment);
         this.environment = funcEnvironment; // Update the visitors state...
 
-        RootCallTarget callTarget;
+        RootCallTarget callTarget = null;
         try {
             // Parse function body
             ASTNode astBody = func.getBody();
@@ -191,6 +191,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String functionBody = func.getSource().getCode();
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, formals, functionBody.substring(0, Math.min(functionBody.length(), 50)), false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        } catch (Throwable err) {
+            err.printStackTrace();
         } finally {
             this.environment = environment.getParent(); // ... and be sure to reset it!
         }

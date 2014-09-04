@@ -280,7 +280,12 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             if (writeNode.getFrameSlotNode().hasValue(enclosingFrame)) {
                 writeNode.execute(frame, value, enclosingFrame);
             } else {
-                nextNode.execute(frame, value, RArguments.getEnclosingFrame(enclosingFrame));
+                MaterializedFrame superFrame = RArguments.getEnclosingFrame(enclosingFrame);
+                if (superFrame == null) {
+                    // Might be the case if "{ x <<- 42 }": This is in glovalEnv!
+                    superFrame = REnvironment.globalEnv().getFrame();
+                }
+                nextNode.execute(frame, value, superFrame);
             }
         }
 

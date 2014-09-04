@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.expressions;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -57,6 +58,10 @@ public abstract class ExpressionExecutorNode extends Node {
                 depth++;
                 parent = parent.getParent();
             }
+
+            // Guard node creation/cloning. No
+            // invalidate, as we are being replaced anyway
+            CompilerDirectives.transferToInterpreter();
 
             ExpressionExecutorNode replacement;
             if (depth < INLINE_CACHE_SIZE) {

@@ -2052,6 +2052,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; g <- f ; f <- sum ; g(10) }");
         assertEval("{ f<-function(i) { if (i==1) { 1 } else if (i==2) { 1 } else { Recall(i-1) + Recall(i-2) } } ; f(10) }");
         assertEvalError("{ Recall(10) }");
+        // Recall with more then 1 argument
+        assertEval("{ f <- function(tarDepth,curDepth) { if (tarDepth == curDepth) {curDepth} else {Recall(tarDepth,curDepth+1)}}; f(3,0) }");
     }
 
     @Test

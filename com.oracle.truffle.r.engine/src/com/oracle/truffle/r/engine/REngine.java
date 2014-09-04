@@ -196,9 +196,22 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object eval(RLanguage expr, VirtualFrame frame) {
-        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep());
+        RootCallTarget callTarget = doMakeCallTarget((RNode) expr.getRep());
         return runCall(callTarget, frame, false, false);
 
+    }
+
+    /**
+     * @param function
+     * @param exprRep
+     * @param envir
+     * @param enclos
+     * @return @see {@link #eval(RFunction, RootCallTarget, REnvironment, REnvironment)}
+     * @throws PutException
+     */
+    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos) throws PutException {
+        RootCallTarget callTarget = doMakeCallTarget(exprRep);
+        return eval(function, callTarget, envir, enclos);
     }
 
     /**
@@ -216,8 +229,7 @@ public final class REngine implements RContext.Engine {
      * to avoid the patch? and get the enclosing frame correct on definition?
      *
      */
-    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
-        RootCallTarget callTarget = makeCallTarget(exprRep);
+    private static Object eval(RFunction function, RootCallTarget callTarget, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createFunctionFrame(function);
         RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
@@ -290,15 +302,15 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
-        RootCallTarget callTarget = makeCallTarget((RNode) promise.getRep());
-        return runCall(callTarget, frame, false, false);
+        return runCall(promise.getClosure().getCallTarget(), frame, false, false);
     }
 
     public Object evalPromise(RPromise promise) throws RError {
         // have to do the full out eval
         try {
             REnvironment env = promise.getEnv();
-            return eval(lookupBuiltin("eval"), (RNode) promise.getRep(), env, null);
+            assert env != null;
+            return eval(lookupBuiltin("eval"), promise.getClosure().getCallTarget(), env, null);
         } catch (PutException ex) {
             // TODO a new, rather unlikely, error
             assert false;
@@ -308,7 +320,7 @@ public final class REngine implements RContext.Engine {
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
-            RootCallTarget callTarget = makeCallTarget(parseToRNode(stream, source));
+            RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source));
             Object result = runCall(callTarget, frame, printResult, true);
             return result;
         } catch (NoViableAltException | MismatchedTokenException e) {
@@ -371,8 +383,17 @@ public final class REngine implements RContext.Engine {
      *
      * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
+    public RootCallTarget makeCallTarget(Object body) {
+        assert body instanceof RNode;
+        return doMakeCallTarget((RNode) body);
+    }
+
+    /**
+     * @param body
+     * @return {@link #makeCallTarget(Object)}
+     */
     @SlowPath
-    private static RootCallTarget makeCallTarget(RNode body) {
+    private static RootCallTarget doMakeCallTarget(RNode body) {
         if (traceMakeCallTarget) {
             doTraceMakeCallTarget(body);
         }
