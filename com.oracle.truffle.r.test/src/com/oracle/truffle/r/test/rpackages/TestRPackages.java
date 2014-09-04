@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.test.rpackages;
 
+import java.io.*;
 import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.*;
 
 import org.junit.*;
@@ -59,9 +61,9 @@ public class TestRPackages extends TestBase {
         }
 
         private boolean installPackage(String packageZip) {
-            Path vanilla = rpackagesDists.resolve(packageZip);
+            Path packagePath = rpackagesDists.resolve(packageZip);
             // install the package (using GnuR for now)
-            ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", vanilla.toString());
+            ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", packagePath.toString());
             Map<String, String> env = pb.environment();
             env.put("R_LIBS_USER", rpackagesLibs.toString());
             String installKind = generatingExpected() ? "GNUR" : "FASTR";
@@ -80,16 +82,58 @@ public class TestRPackages extends TestBase {
                 return false;
             }
         }
+
+        private boolean uninstallPackage(String packageZip) {
+            String packageName = packageZip.substring(0, packageZip.indexOf('_'));
+            Path packageDir = rpackagesLibs.resolve(packageName);
+            try {
+                Files.walkFileTree(packageDir, DELETE_VISITOR);
+            } catch (Exception e) {
+                return false;
+            }
+            return true;
+        }
+
+        private static final class DeleteVisitor extends SimpleFileVisitor<Path> {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                return del(file);
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                return del(dir);
+            }
+
+            private static FileVisitResult del(Path p) throws IOException {
+                Files.delete(p);
+                return FileVisitResult.CONTINUE;
+            }
+
+        }
+
+        private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
     }
 
     private static final PackagePaths packagePaths = new PackagePaths();
 
+    private static final String[] TEST_PACKAGES = new String[]{"vanilla_1.0.tar.gz", "testrffi_1.0.tar.gz"};
+
     @BeforeClass
-    public static void setupInstallVanillaPackage() {
+    public static void setupInstallTestPackages() {
         // @BeforeClass to avoid installation of already present package (results in RC == 1 on my
         // platform)
-        assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
-        assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
+        for (String p : TEST_PACKAGES) {
+            assertTrue(packagePaths.installPackage(p));
+        }
+    }
+
+    @AfterClass
+    public static void tearDownUninstallTestPackages() {
+        for (String p : TEST_PACKAGES) {
+            assertTrue(packagePaths.uninstallPackage(p));
+        }
     }
 
     @Test
