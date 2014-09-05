@@ -80,6 +80,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
         this.staticSignature = signature;
+        ArgumentsTrait.internalize(names);
     }
 
     /**
