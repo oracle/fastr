@@ -148,7 +148,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @SlowPath
     private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, arguments, argNames);
+        Object[] argObject = RArguments.createS3Args(targetFunction, funCallNode.getSourceSection(), arguments, argNames);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);

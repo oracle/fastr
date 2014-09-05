@@ -123,7 +123,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         if (callName != null) {
             final String functionName = RRuntime.toString(callName);
             if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
-                return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
+                return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, callSource, aCallArgNode);
             }
             return RCallNode.createCall(callSource, ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false, true, false, true), aCallArgNode);
         } else {
@@ -205,7 +205,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         final String functionName = op.getPrettyOperator();
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
         if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
-            return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
+            return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, op.getSource(), aCallArgNode);
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
     }
@@ -217,7 +217,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         final String functionName = op.getPrettyOperator();
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, left, right);
         if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
-            return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
+            return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, op.getSource(), aCallArgNode);
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
     }
@@ -497,7 +497,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         rfArgs.add(ArgNode.create(null, (Symbol) null, AccessVariable.create(null, rhsSymbol)));
 
         // replacement function call (use visitor for FunctionCall)
-        FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs, simpleReplacement);
+        FunctionCall rfCall = new FunctionCall(f.getSource(), f.getName(), rfArgs, simpleReplacement);
         return (RCallNode) visit(rfCall);
     }
 

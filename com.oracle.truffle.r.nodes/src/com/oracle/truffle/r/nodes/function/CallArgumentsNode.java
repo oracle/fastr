@@ -55,7 +55,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
 
     private final FunctionSignature staticSignature;
 
-    private final Map<RNode, Closure> closureCache = new IdentityHashMap<>();
+    private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
@@ -240,7 +240,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     }
 
     @Override
-    public Map<RNode, Closure> getContent() {
+    public IdentityHashMap<RNode, Closure> getContent() {
         return closureCache;
     }
 

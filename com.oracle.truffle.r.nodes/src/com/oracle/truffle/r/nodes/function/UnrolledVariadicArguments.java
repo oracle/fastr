@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  */
 public class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 
-    private final Map<RNode, Closure> closureCache;
+    private final IdentityHashMap<RNode, Closure> closureCache;
 
     private UnrolledVariadicArguments(RNode[] arguments, String[] names, ClosureCache closureCache) {
         super(arguments, names);
@@ -56,7 +56,7 @@ public class UnrolledVariadicArguments extends Arguments<RNode> implements Unmat
     }
 
     @Override
-    public Map<RNode, Closure> getContent() {
+    public IdentityHashMap<RNode, Closure> getContent() {
         return closureCache;
     }
 }

@@ -194,9 +194,10 @@ public class PromiseNode extends RNode {
      * @param envProvider
      * @param nodes
      * @param names
+     * @param callSrc
      * @return TODO Gero, add comment!
      */
-    public static VarArgsPromiseNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache) {
+    public static VarArgsPromiseNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
         VarArgsPromiseNode node;
         switch (evalPolicy) {
             case INLINED:

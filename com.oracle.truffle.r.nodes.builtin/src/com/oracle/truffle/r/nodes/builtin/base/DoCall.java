@@ -50,7 +50,7 @@ public abstract class DoCall extends RBuiltinNode {
         for (int i = 0; i < args.length; i++) {
             args[i] = argsAsList.getDataAt(i);
         }
-        Object[] callArgs = RArguments.create(func, args);
+        Object[] callArgs = RArguments.create(func, funCall.getSourceSection(), args);
         return funCall.call(frame, func.getTarget(), callArgs);
     }
 

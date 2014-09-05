@@ -59,9 +59,8 @@ public abstract class ExpressionExecutorNode extends Node {
                 parent = parent.getParent();
             }
 
-            // Guard node creation/cloning. No
-            // invalidate, as we are being replaced anyway
-            CompilerDirectives.transferToInterpreter();
+            // Specialize below
+            CompilerDirectives.transferToInterpreterAndInvalidate();
 
             ExpressionExecutorNode replacement;
             if (depth < INLINE_CACHE_SIZE) {

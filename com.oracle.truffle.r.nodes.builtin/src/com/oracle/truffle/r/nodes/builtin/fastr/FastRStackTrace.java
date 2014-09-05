@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,35 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "force", kind = SUBSTITUTE, parameterNames = {"x"})
-// TODO revert to R (promises)
-public abstract class Force extends RBuiltinNode {
+@RBuiltin(name = "fastr.stacktrace", kind = PRIMITIVE, parameterNames = {"print.frame.contents"})
+@RBuiltinComment("Prints current stack trace.")
+public abstract class FastRStackTrace extends RBuiltinNode {
+
+    public boolean getVisibility() {
+        return false;
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+    }
 
     @Specialization
-    protected Object force(VirtualFrame frame, Object arg) {
-        if (arg instanceof RPromise) {
-            RPromise promise = (RPromise) arg;
-            if (promise.isEvaluated()) {
-                return promise.getValue();
-            } else {
-                SourceSection callSrc = RArguments.getCallSourceSection(frame);
-                Object result = RContext.getEngine().evalPromise(promise, callSrc);
-                return result;
-            }
-        } else {
-            // argument already evaluated - nothing to do
-            return arg;
-        }
+    @SlowPath
+    protected Object printStackTrace(byte printFrameContents) {
+        controlVisibility();
+
+        boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
+        RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
+        return RRuntime.NULL;
     }
 }

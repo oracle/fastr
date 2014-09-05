@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -111,7 +112,7 @@ public final class RPromise extends RLanguageRep {
     /**
      * A flag to indicate the promise has been evaluated.
      */
-    @CompilationFinal protected boolean isEvaluated = false;
+    protected boolean isEvaluated = false;
 
     /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
@@ -160,8 +161,8 @@ public final class RPromise extends RLanguageRep {
 
         // Check for dependency cycle
         if (underEvaluation) {
-            // TODO Get SourceSection of funcall!
-            throw RError.error(RError.Message.PROMISE_CYCLE);
+            SourceSection callSrc = RArguments.getCallSourceSection(frame);
+            throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
         }
 
         Object newValue;
@@ -170,8 +171,9 @@ public final class RPromise extends RLanguageRep {
 
             // Evaluate this promises value!
             // Performance: We can use frame directly
-            if (env != null) {
-                newValue = doEvalArgument();
+            if (env != null && !isInOriginFrame(frame)) {
+                SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
+                newValue = doEvalArgument(callSrc);
             } else {
                 assert isInOriginFrame(frame);
                 newValue = doEvalArgument(frame);
@@ -200,11 +202,11 @@ public final class RPromise extends RLanguageRep {
     }
 
     @SlowPath
-    protected Object doEvalArgument() {
+    protected Object doEvalArgument(SourceSection callSrc) {
         Object result = null;
         assert env != null;
         try {
-            result = RContext.getEngine().evalPromise(this);
+            result = RContext.getEngine().evalPromise(this, callSrc);
         } catch (RError e) {
             result = e;
             throw e;
@@ -277,6 +279,9 @@ public final class RPromise extends RLanguageRep {
         }
 
         assert env != null;
+        if (frame == null) {
+            return false;
+        }
         return REnvironment.isFrameForEnv(frame, env);
     }
 
@@ -450,21 +455,30 @@ public final class RPromise extends RLanguageRep {
         }
     }
 
-    public static class Closure {
+    public static final class Closure {
         @CompilationFinal private RootCallTarget callTarget;
         private final Object expr;
 
-        public Closure(Object expr) {
+        private Closure(Object expr) {
             this.expr = expr;
+        }
+
+        public static Closure create(Object expr) {
+            return new Closure(expr);
         }
 
         public RootCallTarget getCallTarget() {
             if (callTarget == null) {
                 // Create lazily, as it is not needed at all for INLINED promises!
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                callTarget = RContext.getEngine().makeCallTarget(expr);
+                callTarget = generateCallTarget(expr);
             }
             return callTarget;
+        }
+
+        @SlowPath
+        private static RootCallTarget generateCallTarget(Object expr) {
+            return RContext.getEngine().makeCallTarget(expr);
         }
 
         public Object getExpr() {

@@ -17,6 +17,7 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 import edu.umd.cs.findbugs.annotations.*;
@@ -169,8 +170,8 @@ public class RRuntime {
     /**
      * Create a {@link VirtualFrame} for {@link RFunction} {@code function}.
      */
-    public static VirtualFrame createFunctionFrame(RFunction function) {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function), new FrameDescriptor());
+    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc) {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc), new FrameDescriptor());
     }
 
     public static RComplex createComplexNA() {

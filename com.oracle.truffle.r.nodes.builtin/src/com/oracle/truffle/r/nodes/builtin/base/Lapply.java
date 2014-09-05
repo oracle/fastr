@@ -64,7 +64,7 @@ public abstract class Lapply extends RBuiltinNode {
     static Object[] applyHelper(VirtualFrame frame, IndirectCallNode funCall, RVector xMat, RFunction fun, Object[] combinedArgs) {
         /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
         Object[] result = new Object[xMat.getLength()];
-        Object[] arguments = RArguments.create(fun, combinedArgs);
+        Object[] arguments = RArguments.create(fun, funCall.getSourceSection(), combinedArgs);
         int firstArgOffset = arguments.length - combinedArgs.length;
         for (int i = 0; i < result.length; ++i) {
             // FIXME breaks encapsulation.
