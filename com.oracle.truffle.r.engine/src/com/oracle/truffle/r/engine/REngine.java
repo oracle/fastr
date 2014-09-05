@@ -43,10 +43,11 @@ import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.*;
-import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is exactly one
@@ -195,8 +196,10 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    private static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
+
     public Object eval(RLanguage expr, VirtualFrame frame) {
-        RootCallTarget callTarget = doMakeCallTarget((RNode) expr.getRep());
+        RootCallTarget callTarget = doMakeCallTarget((RNode) expr.getRep(), EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
 
     }
@@ -206,12 +209,14 @@ public final class REngine implements RContext.Engine {
      * @param exprRep
      * @param envir
      * @param enclos
-     * @return @see {@link #eval(RFunction, RootCallTarget, REnvironment, REnvironment)}
+     * @return @see
+     *         {@link #eval(RFunction, RootCallTarget, SourceSection, REnvironment, REnvironment)}
      * @throws PutException
      */
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos) throws PutException {
-        RootCallTarget callTarget = doMakeCallTarget(exprRep);
-        return eval(function, callTarget, envir, enclos);
+        RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
+        SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
+        return eval(function, callTarget, callSrc, envir, enclos);
     }
 
     /**
@@ -229,9 +234,9 @@ public final class REngine implements RContext.Engine {
      * to avoid the patch? and get the enclosing frame correct on definition?
      *
      */
-    private static Object eval(RFunction function, RootCallTarget callTarget, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
+    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         MaterializedFrame envFrame = envir.getFrame();
-        VirtualFrame vFrame = RRuntime.createFunctionFrame(function);
+        VirtualFrame vFrame = RRuntime.createFunctionFrame(function, callSrc);
         RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
         // We make the new frame look like it was a real call to "function" (why?)
         RArguments.setFunction(vFrame, function);
@@ -305,12 +310,13 @@ public final class REngine implements RContext.Engine {
         return runCall(promise.getClosure().getCallTarget(), frame, false, false);
     }
 
-    public Object evalPromise(RPromise promise) throws RError {
+    public Object evalPromise(RPromise promise, SourceSection callSrc) throws RError {
         // have to do the full out eval
         try {
             REnvironment env = promise.getEnv();
             assert env != null;
-            return eval(lookupBuiltin("eval"), promise.getClosure().getCallTarget(), env, null);
+            Closure closure = promise.getClosure();
+            return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null);
         } catch (PutException ex) {
             // TODO a new, rather unlikely, error
             assert false;
@@ -320,7 +326,7 @@ public final class REngine implements RContext.Engine {
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
-            RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source));
+            RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source), "<repl wrapper>");
             Object result = runCall(callTarget, frame, printResult, true);
             return result;
         } catch (NoViableAltException | MismatchedTokenException e) {
@@ -383,22 +389,23 @@ public final class REngine implements RContext.Engine {
      *
      * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
-    public RootCallTarget makeCallTarget(Object body) {
+    @Override
+    public RootCallTarget makeCallTarget(Object body, String funName) {
         assert body instanceof RNode;
-        return doMakeCallTarget((RNode) body);
+        return doMakeCallTarget((RNode) body, funName);
     }
 
     /**
      * @param body
-     * @return {@link #makeCallTarget(Object)}
+     * @return {@link #makeCallTarget(Object, String)}
      */
     @SlowPath
-    private static RootCallTarget doMakeCallTarget(RNode body) {
+    private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         if (traceMakeCallTarget) {
             doTraceMakeCallTarget(body);
         }
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, "<wrapper>", true, true);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }
@@ -457,8 +464,9 @@ public final class REngine implements RContext.Engine {
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
+            Object resultValue = RPromise.checkEvaluate(null, result);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
-            function.getTarget().call(RArguments.create(function, new Object[]{result, RRuntime.asLogical(true)}));
+            function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, RRuntime.asLogical(true)}));
         }
     }
 

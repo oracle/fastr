@@ -67,7 +67,7 @@ public abstract class FastRRunDump extends RInvisibleBuiltinNode {
         graphPrinter.beginGroup(RRuntime.toString(function));
         try (Scope s = Debug.scope("FastR")) {
             graphPrinter.beginGraph("before").visit(function.getTarget().getRootNode());
-            r = call.call(frame, function.getTarget(), RArguments.create(function));
+            r = call.call(frame, function.getTarget(), RArguments.create(function, call.getSourceSection()));
             graphPrinter.beginGraph("after").visit(function.getTarget().getRootNode());
         } catch (Throwable t) {
             Debug.handle(t);

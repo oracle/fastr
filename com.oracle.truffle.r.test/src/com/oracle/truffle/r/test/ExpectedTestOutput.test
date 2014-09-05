@@ -6176,12 +6176,61 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 [1] 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", y); delayedAssign("y", x) ; x }
+Error: promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
 #{ delayedAssign("x", y); y <- 10; x }
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() print ("outer");  g <- function() { delayedAssign("f", 1); f() }; g()}
+[1] "outer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x", 3); delayedAssign("x", 2); x } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x", y); delayedAssign("y", x) ; x } ; f() }
+Error in f() :
+  promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
 #{ f <- function() { delayedAssign("x", y); y <- 10; x  } ; f() }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x",y); delayedAssign("y",x); g(x, y)}; g <- function(x, y) { x + y }; f() }
+Error in g(x, y) :
+  promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x",y); delayedAssign("y",x); list(x, y)}; f() }
+Error in f() :
+  promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x",y); delayedAssign("y",x); paste(x, y)}; f() }
+Error in paste(x, y) :
+  promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x",y); delayedAssign("y",x); print(x, y)}; f() }
+Error in print(x, y) :
+  promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function(...) { delayedAssign("x", ..1) ; y <<- x } ; f(10) ; y }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ h <- new.env(parent=emptyenv()) ; assign("x", 1, h) ; delayedAssign("x", y, h, h) ; assign("y", 2, h) ; get("x", h) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ h <- new.env(parent=emptyenv()) ; delayedAssign("x", y, h, h) ; assign("y", 2, h) ; get("x", h) }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(TRUE) }
@@ -8962,6 +9011,10 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(...) { missing(..2) } ; f(x + z, a * b) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }
 [1] TRUE
 
@@ -8982,6 +9035,10 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z, z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }
 [1]  TRUE FALSE
 
@@ -8990,7 +9047,15 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a) { g(a) } ; g <- function(b=2) { missing(b) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a,b,c) { missing(b) } ; f(1,,2) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
@@ -8998,11 +9063,31 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }
+[1] TRUE
+[1] TRUE
+[1] TRUE
+Error in h(y) : argument "x" is missing, with no default
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }
+[1] TRUE
+[1] TRUE
+[1] TRUE
+Error in k(y) : argument "x" is missing, with no default
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }
 [1] FALSE
 [1] FALSE
 [1] FALSE
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }
+[1] TRUE
+[1] TRUE
+Error in g(x) : argument "x" is missing, with no default
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f(1) }
@@ -9013,6 +9098,10 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ g <- function(a, b, c) { b } ; f <- function(a,b,c) { g(a,b=2,c) } ; f(1,,2) }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }
+Error in k() : argument "y" is missing, with no default
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k(y=1) }
@@ -14457,6 +14546,10 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testReturn
 #{ f<-function() { return(2) ; 3 } ; f() }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testUnusedArgumentErrors
+#{ foo <- function(x) x; foo() }
+Error in foo() : argument "x" is missing, with no default
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testUnusedArgumentErrors
 #{ foo <- function(x) x; foo(1, 2, 3) }

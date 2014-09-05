@@ -144,7 +144,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     protected boolean checkType(VirtualFrame frame, Object objArg, String type, boolean readMissing, boolean forcePromise) {
         Object obj = objArg;
         if (obj == RMissing.instance && !readMissing && !getSymbol().isVarArg()) {
-            throw RError.error(RError.Message.ARGUMENT_MISSING, getSymbol());
+            SourceSection callSrc = RArguments.getCallSourceSection(frame);
+            throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getSymbol());
         }
         if (type.equals(RRuntime.TYPE_ANY)) {
             return true;

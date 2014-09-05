@@ -273,32 +273,45 @@ public final class Utils {
         return frame;
     }
 
+    @SlowPath
+    public static String createStackTrace() {
+        return createStackTrace(true);
+    }
+
     /**
      * Generate a stack trace as a string.
      */
     @SlowPath
-    public static String createStackTrace() {
+    public static String createStackTrace(boolean printFrameSlots) {
         StringBuilder str = new StringBuilder();
 
         FrameInstance current = Truffle.getRuntime().getCurrentFrame();
-        dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), current.isVirtualFrame());
+        dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), printFrameSlots, current.isVirtualFrame());
 
         Truffle.getRuntime().iterateFrames(frameInstance -> {
-            dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), frameInstance.isVirtualFrame());
+            dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), printFrameSlots, frameInstance.isVirtualFrame());
             return null;
         });
-
+        str.append("\n");
         return str.toString();
     }
 
-    private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean isVirtual) {
+    private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean printFrameSlots, boolean isVirtual) {
         if (str.length() > 0) {
             str.append("\n");
         }
+        SourceSection callSrc = RArguments.getCallSourceSection(frame);
         str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        for (FrameSlot s : frameDescriptor.getSlots()) {
-            str.append("\n  ").append(s.getIdentifier()).append("=").append(frame.getValue(s));
+        if (callSrc == null) {
+            str.append("\n  <no call info>");
+        } else {
+            str.append("\n  called as: ").append(callSrc.getCode());
+        }
+        if (printFrameSlots) {
+            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            for (FrameSlot s : frameDescriptor.getSlots()) {
+                str.append("\n  ").append(s.getIdentifier()).append("=").append(frame.getValue(s));
+            }
         }
     }
 

@@ -119,7 +119,7 @@ public abstract class Apply extends RBuiltinNode {
     }
 
     private Object callFunction(VirtualFrame frame, RFunction fun, Object input) {
-        Object[] args = RArguments.create(fun, new Object[]{input});
+        Object[] args = RArguments.create(fun, funCall.getSourceSection(), new Object[]{input});
         return funCall.call(frame, fun.getTarget(), args);
     }
 }

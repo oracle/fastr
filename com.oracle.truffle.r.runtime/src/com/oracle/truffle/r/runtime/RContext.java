@@ -29,6 +29,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
@@ -235,7 +236,7 @@ public final class RContext extends ExecutionContext {
          * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should
          * <b>only</b> be called by the {@link RPromise} class.
          */
-        Object evalPromise(RPromise expr) throws RError;
+        Object evalPromise(RPromise expr, SourceSection callSrc) throws RError;
 
         /**
          * Wraps the Truffle AST in {@code body} in an anonymous function and returns a
@@ -250,7 +251,7 @@ public final class RContext extends ExecutionContext {
          *
          * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
          */
-        RootCallTarget makeCallTarget(Object body);
+        RootCallTarget makeCallTarget(Object body, String funName);
 
         /**
          * Print 'e' and any associated warnings.

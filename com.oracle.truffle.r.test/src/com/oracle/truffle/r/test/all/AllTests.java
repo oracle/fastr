@@ -6704,38 +6704,63 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssignIgnore_87d161302160393963ba6b1003b818c8() {
-        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
+    public void TestSimpleBuiltins_testDelayedAssign_018af82f24bd19556a876af608fef1e6() {
+        assertEval("{ delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssignIgnore_79fb1d399e2b39a496dac5a9749fb873() {
-        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+    public void TestSimpleBuiltins_testDelayedAssign_83064c7d347757ad66074441e8cfc90e() {
+        assertEval("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssignIgnore_af327b1b6a16f6b664839a659452d6ff() {
-        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+    public void TestSimpleBuiltins_testDelayedAssign_2650fc25df477fca9f65b4ae42030ddc() {
+        assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssignIgnore_b0a8cc01cf8e5fc94f5e4084097107ad() {
+    public void TestSimpleBuiltins_testDelayedAssign_b0a8cc01cf8e5fc94f5e4084097107ad() {
         assertEval("{ f <- function(...) { delayedAssign(\"x\", ..1) ; y <<- x } ; f(10) ; y }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssignIgnore_2650fc25df477fca9f65b4ae42030ddc() {
-        assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
+    public void TestSimpleBuiltins_testDelayedAssign_87d161302160393963ba6b1003b818c8() {
+        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssign_79fb1d399e2b39a496dac5a9749fb873() {
+        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssign_af327b1b6a16f6b664839a659452d6ff() {
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssign_3286f74c945a289f7ebf4456a04e57c6() {
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); g(x, y)}; g <- function(x, y) { x + y }; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssign_381ebd5284bd59377d4fa449345a575b() {
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); list(x, y)}; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssign_ffe9395f2f843501d7365254e3b4524e() {
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); paste(x, y)}; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssign_646cd20eed11f6c2828c215baa6dbe58() {
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); print(x, y)}; f() }");
     }
 
     @Test
     public void TestSimpleBuiltins_testDelayedAssignIgnore_8c59e6c2915b2b15a962ae541292c0db() {
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testDelayedAssignIgnore_83064c7d347757ad66074441e8cfc90e() {
-        assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
     }
 
     @Test
@@ -10124,42 +10149,42 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_77e99ff6cfb53e3c7d569e2a3ec713fd() {
+    public void TestSimpleBuiltins_testMissing_77e99ff6cfb53e3c7d569e2a3ec713fd() {
         assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_3b1c18d77df4f57cd223b95c8c205d89() {
+    public void TestSimpleBuiltins_testMissing_3b1c18d77df4f57cd223b95c8c205d89() {
         assertEval("{ f <- function(a = z, z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_12f97d45e336adc392898885f48afa76() {
+    public void TestSimpleBuiltins_testMissing_12f97d45e336adc392898885f48afa76() {
         assertEval("{ f <- function(a) { g(a) } ; g <- function(b=2) { missing(b) } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_a96249c626958ddb13c95b4628e7f318() {
+    public void TestSimpleBuiltins_testMissing_a96249c626958ddb13c95b4628e7f318() {
         assertEval("{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_7a7476796aa855e4eef288a9fa74b80f() {
+    public void TestSimpleBuiltins_testMissing_7a7476796aa855e4eef288a9fa74b80f() {
         assertEval("{ f <- function(...) { missing(..2) } ; f(x + z, a * b) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_72acc1b3617e48b2fa82bb26c3766005() {
+    public void TestSimpleBuiltins_testMissing_72acc1b3617e48b2fa82bb26c3766005() {
         assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_32e4fa660fad3f0468fe84a74a8ee913() {
+    public void TestSimpleBuiltins_testMissing_32e4fa660fad3f0468fe84a74a8ee913() {
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_c6c7ca5b1c15e6206546dac9ba1c9206() {
+    public void TestSimpleBuiltins_testMissing_c6c7ca5b1c15e6206546dac9ba1c9206() {
         assertEval("{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }");
     }
 
@@ -16659,7 +16684,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testUnusedArgumentErrorsIgnore_750a30256b5db1960c52679f4d9e5e84() {
+    public void TestSimpleFunctions_testUnusedArgumentErrors_750a30256b5db1960c52679f4d9e5e84() {
         assertEval("{ foo <- function(x) x; foo() }");
     }
 

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
@@ -49,8 +50,8 @@ public class PromiseHelper {
 
         // Check for dependency cycle
         if (promise.isUnderEvaluation()) {
-            // TODO Get SourceSection of funcall!
-            throw RError.error(RError.Message.PROMISE_CYCLE);
+            SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
+            throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
         }
 
         // Evaluate guarded by underEvaluation
