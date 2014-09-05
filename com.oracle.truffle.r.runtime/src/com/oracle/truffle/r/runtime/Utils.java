@@ -292,7 +292,7 @@ public final class Utils {
             dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), printFrameSlots, frameInstance.isVirtualFrame());
             return null;
         });
-
+        str.append("\n");
         return str.toString();
     }
 

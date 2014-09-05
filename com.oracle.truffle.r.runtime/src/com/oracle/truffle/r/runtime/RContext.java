@@ -251,7 +251,7 @@ public final class RContext extends ExecutionContext {
          *
          * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
          */
-        RootCallTarget makeCallTarget(Object body);
+        RootCallTarget makeCallTarget(Object body, String funName);
 
         /**
          * Print 'e' and any associated warnings.

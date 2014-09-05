@@ -196,8 +196,10 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    private static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
+
     public Object eval(RLanguage expr, VirtualFrame frame) {
-        RootCallTarget callTarget = doMakeCallTarget((RNode) expr.getRep());
+        RootCallTarget callTarget = doMakeCallTarget((RNode) expr.getRep(), EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
 
     }
@@ -212,7 +214,7 @@ public final class REngine implements RContext.Engine {
      * @throws PutException
      */
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos) throws PutException {
-        RootCallTarget callTarget = doMakeCallTarget(exprRep);
+        RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
         SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
         return eval(function, callTarget, callSrc, envir, enclos);
     }
@@ -324,7 +326,7 @@ public final class REngine implements RContext.Engine {
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
-            RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source));
+            RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source), "<repl wrapper>");
             Object result = runCall(callTarget, frame, printResult, true);
             return result;
         } catch (NoViableAltException | MismatchedTokenException e) {
@@ -387,22 +389,23 @@ public final class REngine implements RContext.Engine {
      *
      * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
-    public RootCallTarget makeCallTarget(Object body) {
+    @Override
+    public RootCallTarget makeCallTarget(Object body, String funName) {
         assert body instanceof RNode;
-        return doMakeCallTarget((RNode) body);
+        return doMakeCallTarget((RNode) body, funName);
     }
 
     /**
      * @param body
-     * @return {@link #makeCallTarget(Object)}
+     * @return {@link #makeCallTarget(Object, String)}
      */
     @SlowPath
-    private static RootCallTarget doMakeCallTarget(RNode body) {
+    private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         if (traceMakeCallTarget) {
             doTraceMakeCallTarget(body);
         }
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, "<wrapper>", true, true);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }

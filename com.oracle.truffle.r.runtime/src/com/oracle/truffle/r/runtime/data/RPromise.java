@@ -83,6 +83,8 @@ public final class RPromise extends RLanguageRep {
         NO_ARG;
     }
 
+    private static final String CLOSURE_WRAPPER_NAME = "<promise>";
+
     /**
      * @see EvalPolicy
      */
@@ -478,7 +480,7 @@ public final class RPromise extends RLanguageRep {
 
         @SlowPath
         private static RootCallTarget generateCallTarget(Object expr) {
-            return RContext.getEngine().makeCallTarget(expr);
+            return RContext.getEngine().makeCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }
 
         public Object getExpr() {
