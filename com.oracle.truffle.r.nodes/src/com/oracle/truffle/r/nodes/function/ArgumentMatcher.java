@@ -175,16 +175,16 @@ public class ArgumentMatcher {
      * @param function The 'Method' which is going to be 'Use'd
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
-     * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
+     * @param callSrc The source code of the call
      *
      * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection encapsulatingSrc) {
+    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(), null,
-                        encapsulatingSrc);
+        Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(), callSrc,
+                        null);
 
         // Replace RMissing with default value!
         RNode[] defaultArgs = formals.getDefaultArgs();
@@ -239,7 +239,7 @@ public class ArgumentMatcher {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc, callSrc);
+        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), callSrc, encapsulatingSrc);
 
         // Check for "missing" symbols
         RNode[] argsChecked = resultArgs;
@@ -262,7 +262,7 @@ public class ArgumentMatcher {
         }
 
         PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
-        return wrapInPromises(function, argsChecked, formals, wrapper, closureCache);
+        return wrapInPromises(function, argsChecked, formals, wrapper, closureCache, callSrc);
     }
 
     /**
@@ -542,7 +542,7 @@ public class ArgumentMatcher {
      * @param closureCache The {@link ClosureCache} for the supplied arguments
      * @return A list of {@link RNode} wrapped in {@link PromiseNode}s
      */
-    private static RNode[] wrapInPromises(RFunction function, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper, ClosureCache closureCache) {
+    private static RNode[] wrapInPromises(RFunction function, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper, ClosureCache closureCache, SourceSection callSrc) {
         RNode[] defaultArgs = formals.getDefaultArgs();
         RNode[] resArgs = arguments;
 
@@ -586,7 +586,7 @@ public class ArgumentMatcher {
                 }
 
                 EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, fi);
-                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, newVarArgs, newNames, closureCache);
+                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, newVarArgs, newNames, closureCache, callSrc);
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
@@ -725,7 +725,7 @@ public class ArgumentMatcher {
 
     /**
      * This interface was introduced to reuse
-     * {@link ArgumentMatcher#wrapInPromises(RFunction, RNode[], FormalArguments, PromiseWrapper, ClosureCache)}
+     * {@link ArgumentMatcher#wrapInPromises(RFunction, RNode[], FormalArguments, PromiseWrapper, ClosureCache, SourceSection)}
      * and encapsulates the wrapping of a single argument into a {@link PromiseNode}.
      */
     private interface PromiseWrapper {

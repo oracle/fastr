@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,13 +36,14 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Force extends RBuiltinNode {
 
     @Specialization
-    protected Object force(@SuppressWarnings("unused") VirtualFrame frame, Object arg) {
+    protected Object force(VirtualFrame frame, Object arg) {
         if (arg instanceof RPromise) {
             RPromise promise = (RPromise) arg;
             if (promise.isEvaluated()) {
                 return promise.getValue();
             } else {
-                Object result = RContext.getEngine().evalPromise(promise);
+                SourceSection callSrc = RArguments.getCallSourceSection(frame);
+                Object result = RContext.getEngine().evalPromise(promise, callSrc);
                 return result;
             }
         } else {

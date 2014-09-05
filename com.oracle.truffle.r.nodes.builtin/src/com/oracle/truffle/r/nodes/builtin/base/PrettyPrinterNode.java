@@ -751,8 +751,9 @@ public abstract class PrettyPrinterNode extends RNode {
         }
         VirtualFrame frame = currentFrame();
         RFunction getFunction = RContext.getEngine().lookupBuiltin("get");
-        RFunction formatFunction = (RFunction) indirectCall.call(frame, getFunction.getTarget(), RArguments.create(getFunction, REnvironment.globalEnv().getFrame(), new Object[]{"format.data.frame"}));
-        return RRuntime.toString(indirectCall.call(frame, formatFunction.getTarget(), RArguments.create(formatFunction, new Object[]{operand})));
+        RFunction formatFunction = (RFunction) indirectCall.call(frame, getFunction.getTarget(),
+                        RArguments.create(getFunction, indirectCall.getSourceSection(), REnvironment.globalEnv().getFrame(), new Object[]{"format.data.frame"}));
+        return RRuntime.toString(indirectCall.call(frame, formatFunction.getTarget(), RArguments.create(formatFunction, indirectCall.getSourceSection(), new Object[]{operand})));
     }
 
     @SlowPath

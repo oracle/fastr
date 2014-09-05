@@ -332,7 +332,7 @@ public final class RDataFactory {
     @SlowPath
     public static RPromise createPromise(Object rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?
-        Closure closure = new Closure(rep);
+        Closure closure = Closure.create(rep);
         return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env, closure));
     }
 

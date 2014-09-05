@@ -2317,17 +2317,22 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
         assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
         assertEval("{ f <- function() { delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
+        assertEval("{ delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x }");
+        assertEval("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
+        assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
+        assertEval("{ f <- function(...) { delayedAssign(\"x\", ..1) ; y <<- x } ; f(10) ; y }");
+        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); g(x, y)}; g <- function(x, y) { x + y }; f() }");
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); list(x, y)}; f() }");
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); paste(x, y)}; f() }");
+        assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); print(x, y)}; f() }");
     }
 
     @Test
     @Ignore
     public void testDelayedAssignIgnore() {
-        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
-        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
-        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
-        assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
-        assertEval("{ f <- function(...) { delayedAssign(\"x\", ..1) ; y <<- x } ; f(10) ; y }");
-        assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
     }
 
@@ -2349,11 +2354,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
 
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
-    }
-
-    @Test
-    @Ignore
-    public void testMissingIgnore() {
         assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
 
         assertEval("{ f <- function(a = z, z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
@@ -2361,7 +2361,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }");
         assertEval("{ f <- function(...) { missing(..2) } ; f(x + z, a * b) }");
 
-        // All unprecise error message in ArgumentMatcher: function src is missing!
         assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
         assertEval("{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }");

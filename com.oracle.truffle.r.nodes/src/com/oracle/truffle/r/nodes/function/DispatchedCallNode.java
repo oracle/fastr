@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -32,9 +33,9 @@ public abstract class DispatchedCallNode extends RNode {
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "RDotGroup is intended to be used as an identity")
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, final CallArgumentsNode callArgsNode) {
+    public static DispatchedCallNode create(final String genericName, final String dispatchType, SourceSection callSrc, final CallArgumentsNode callArgsNode) {
         if (dispatchType == RGroupGenerics.RDotGroup) {
-            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callArgsNode));
+            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callSrc, callArgsNode));
         }
         throw new AssertionError();
     }
@@ -179,6 +180,7 @@ public abstract class DispatchedCallNode extends RNode {
 
         public ResolvedDispatchedCallNode(GroupDispatchNode dNode) {
             this.aDispatchNode = dNode;
+            this.assignSourceSection(dNode.getSourceSection());
         }
 
         @Override
@@ -201,10 +203,10 @@ public abstract class DispatchedCallNode extends RNode {
         private Object executeHelper(VirtualFrame frame, DispatchNode.FunctionCall aFuncCall) {
             if (aCallNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                aCallNode = insert(RCallNode.createCall(null, aFuncCall.args));
+                aCallNode = insert(RCallNode.createCall(getSourceSection(), null, aFuncCall.args));
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                aCallNode.replace(RCallNode.createCall(null, aFuncCall.args));
+                aCallNode.replace(RCallNode.createCall(getSourceSection(), null, aFuncCall.args));
             }
             try {
                 Object result = aCallNode.execute(frame, aFuncCall.function);

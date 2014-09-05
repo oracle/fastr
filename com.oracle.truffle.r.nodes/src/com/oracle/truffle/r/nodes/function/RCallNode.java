@@ -61,14 +61,8 @@ public abstract class RCallNode extends RNode {
         return RTypesGen.RTYPES.expectDouble(execute(frame, function));
     }
 
-    public static RCallNode createStaticCall(String function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(ReadVariableNode.create(function, RRuntime.TYPE_FUNCTION, false), arguments);
-    }
-
     public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
-        RCallNode cn = createStaticCall(function, arguments);
-        cn.assignSourceSection(src);
-        return cn;
+        return RCallNode.createCall(src, ReadVariableNode.create(function, RRuntime.TYPE_FUNCTION, false), arguments);
     }
 
     /**
@@ -86,9 +80,8 @@ public abstract class RCallNode extends RNode {
         BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, symbol);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
-        RCallNode result = current.createCacheNode(frame, function, src);
-        result.assignSourceSection(src);
-        return result;
+        current.assignSourceSection(src);
+        return current.createCacheNode(frame, function);
     }
 
     /**
@@ -103,10 +96,6 @@ public abstract class RCallNode extends RNode {
         RNode[] argNodes = args.getArguments();
         argNodes[0].replace(arg1);
         return callClone;
-    }
-
-    public static RCallNode createCall(RNode function, CallArgumentsNode arguments) {
-        return new UninitializedCallNode(function, arguments);
     }
 
     public static RCallNode createCall(SourceSection src, RNode function, CallArgumentsNode arguments) {
@@ -236,6 +225,7 @@ public abstract class RCallNode extends RNode {
             super(null);
             this.args = copy.args;
             this.depth = depth;
+            this.assignSourceSection(copy.getSourceSection());
         }
 
         @Override
@@ -248,14 +238,16 @@ public abstract class RCallNode extends RNode {
             CompilerAsserts.neverPartOfCompilation();
 
             if (depth < INLINE_CACHE_SIZE) {
-                final RCallNode current = createCacheNode(frame, function, getEncapsulatingSourceSection());
+                final RCallNode current = createCacheNode(frame, function);
                 final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
+                cachedNode.assignSourceSection(getSourceSection());
                 current.onCreate();
                 this.replace(cachedNode);
                 return cachedNode;
             } else {
                 RootCallNode topMost = (RootCallNode) getTopNode();
                 RCallNode generic = args.containsVarArgsSymbol() ? new GenericVarArgsCallNode(topMost.functionNode, args) : new GenericCallNode(topMost.functionNode, args);
+                generic.assignSourceSection(getSourceSection());
                 generic = topMost.replace(generic);
                 generic.onCreate();
                 return generic;
@@ -274,8 +266,11 @@ public abstract class RCallNode extends RNode {
             return NodeUtil.cloneNode(args);
         }
 
-        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function, SourceSection debugSrc) {
+        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
             CallArgumentsNode clonedArgs = getClonedArgs();
+            SourceSection callSrc = getSourceSection();
+            SourceSection argsSrc = args.getEncapsulatingSourceSection();
+
             RCallNode callNode = null;
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
@@ -284,7 +279,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, clonedArgs, getSourceSection(), debugSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, clonedArgs, callSrc, argsSrc);
                     callNode = root.inline(inlinedArgs);
                 }
             } else {
@@ -294,12 +289,12 @@ public abstract class RCallNode extends RNode {
                     callNode = new DispatchedVarArgsCallNode(function, clonedArgs);
                 } else {
                     // Nope! (peeewh)
-                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, getSourceSection(), debugSrc);
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, callSrc, argsSrc);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
 
-            callNode.assignSourceSection(debugSrc);
+            callNode.assignSourceSection(callSrc);
             return callNode;
         }
     }
@@ -322,7 +317,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            Object[] argsObject = RArguments.create(function, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(function, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -359,7 +354,7 @@ public abstract class RCallNode extends RNode {
                 reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
-            Object[] argsObject = RArguments.create(function, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
+            Object[] argsObject = RArguments.create(function, getSourceSection(), reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -392,7 +387,7 @@ public abstract class RCallNode extends RNode {
                 reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
-            Object[] argsObject = RArguments.create(currentFunction, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -430,7 +425,7 @@ public abstract class RCallNode extends RNode {
                 reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
-            Object[] argsObject = RArguments.create(currentFunction, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }

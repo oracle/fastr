@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
@@ -44,12 +45,16 @@ public class GroupDispatchNode extends S3DispatchNode {
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "GROUP_OPS is intended to be used as an identity")
-    public static GroupDispatchNode create(final String aGenericName, final CallArgumentsNode callArgNode) {
+    public static GroupDispatchNode create(final String aGenericName, SourceSection callSrc, final CallArgumentsNode callArgNode) {
         final String grpName = RGroupGenerics.getGroup(aGenericName);
+        GroupDispatchNode result;
         if (grpName == RGroupGenerics.GROUP_OPS) {
-            return new OpsGroupDispatchNode(aGenericName, grpName, callArgNode);
+            result = new OpsGroupDispatchNode(aGenericName, grpName, callArgNode);
+        } else {
+            result = new GroupDispatchNode(aGenericName, grpName, callArgNode);
         }
-        return new GroupDispatchNode(aGenericName, grpName, callArgNode);
+        result.assignSourceSection(callSrc);
+        return result;
     }
 
     protected void findTargetFunction(VirtualFrame frame) {
@@ -86,7 +91,8 @@ public class GroupDispatchNode extends S3DispatchNode {
     }
 
     private void setEnvironment() {
-        final VirtualFrame newFrame = RRuntime.createFunctionFrame(targetFunction);
+        // TODO Where to get the SourceSection of the call from??
+        final VirtualFrame newFrame = RRuntime.createFunctionFrame(targetFunction, null);
         defineVars(newFrame);
         wvnMethod.execute(newFrame, dotMethod);
         if (writeGroup) {
