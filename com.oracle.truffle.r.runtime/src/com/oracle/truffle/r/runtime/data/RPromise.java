@@ -112,7 +112,7 @@ public final class RPromise extends RLanguageRep {
     /**
      * A flag to indicate the promise has been evaluated.
      */
-    @CompilationFinal protected boolean isEvaluated = false;
+    protected boolean isEvaluated = false;
 
     /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
@@ -455,7 +455,7 @@ public final class RPromise extends RLanguageRep {
         }
     }
 
-    public static class Closure {
+    public static final class Closure {
         @CompilationFinal private RootCallTarget callTarget;
         private final Object expr;
 
@@ -471,9 +471,14 @@ public final class RPromise extends RLanguageRep {
             if (callTarget == null) {
                 // Create lazily, as it is not needed at all for INLINED promises!
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                callTarget = RContext.getEngine().makeCallTarget(expr);
+                callTarget = generateCallTarget(expr);
             }
             return callTarget;
+        }
+
+        @SlowPath
+        private static RootCallTarget generateCallTarget(Object expr) {
+            return RContext.getEngine().makeCallTarget(expr);
         }
 
         public Object getExpr() {

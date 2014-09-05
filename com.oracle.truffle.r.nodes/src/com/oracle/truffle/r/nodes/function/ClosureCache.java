@@ -41,7 +41,7 @@ public interface ClosureCache {
             return null;
         }
 
-        Map<RNode, Closure> cache = getContent();
+        IdentityHashMap<RNode, Closure> cache = getContent();
         Closure result = cache.get(expr);
         if (result == null) {
             result = Closure.create(expr);
@@ -55,5 +55,5 @@ public interface ClosureCache {
      *
      * @return The {@link Map} containing the cached values
      */
-    Map<RNode, Closure> getContent();
+    IdentityHashMap<RNode, Closure> getContent();
 }
