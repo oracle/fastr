@@ -30,6 +30,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        // S3 method can be dispatched from top-level where there is no caller frame
         if (funFrame == null) {
             funFrame = frame;
         }
@@ -43,6 +44,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
         Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        // S3 method can be dispatched from top-level where there is no caller frame
         if (funFrame == null) {
             funFrame = frame;
         }
