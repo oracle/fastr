@@ -67,6 +67,27 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return data;
     }
 
+    /**
+     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
+     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
+     *
+     * @return vector data
+     */
+    public String[] getDataNonShared() {
+        return isShared() ? getDataCopy() : getDataWithoutCopying();
+
+    }
+
+    /**
+     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
+     * of vector sharing mode).
+     *
+     * @return vector data
+     */
+    public String[] getDataTemp() {
+        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
+    }
+
     @Override
     @SlowPath
     public String toString() {

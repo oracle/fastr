@@ -117,6 +117,27 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return data;
     }
 
+    /**
+     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
+     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
+     *
+     * @return vector data
+     */
+    public int[] getDataNonShared() {
+        return isShared() ? getDataCopy() : getDataWithoutCopying();
+
+    }
+
+    /**
+     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
+     * of vector sharing mode).
+     *
+     * @return vector data
+     */
+    public int[] getDataTemp() {
+        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
+    }
+
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }

@@ -70,7 +70,7 @@ public abstract class Order extends RBuiltinNode {
     protected RIntVector order(RAbstractStringVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         RStringVector v = x.materialize();
-        String[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        String[] xs = v.getDataNonShared();
         int[] ord = ordArray(xs.length);
         stringSort(xs, ord, null, 0, xs.length - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
@@ -80,7 +80,7 @@ public abstract class Order extends RBuiltinNode {
     protected RIntVector order(RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         RDoubleVector v = x.materialize();
-        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        double[] xs = v.getDataNonShared();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, null, 0, xs.length - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
@@ -90,7 +90,7 @@ public abstract class Order extends RBuiltinNode {
     protected RIntVector order(RAbstractIntVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         RIntVector v = x.materialize();
-        int[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        int[] xs = v.getDataNonShared();
         int[] ord = ordArray(xs.length);
         intSort(xs, ord, null, 0, xs.length - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
@@ -106,7 +106,7 @@ public abstract class Order extends RBuiltinNode {
     protected RIntVector order(RAbstractComplexVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         RComplexVector v = x.materialize();
-        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        double[] xs = v.getDataNonShared();
         int[] ord = ordArray(x.getLength());
         complexSort(xs, ord, null, 0, x.getLength() - 1);
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
@@ -131,7 +131,7 @@ public abstract class Order extends RBuiltinNode {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         RIntVector v = x.materialize();
-        int[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        int[] xs = v.getDataNonShared();
         int[] ord = ordArray(xs.length);
         intSort(xs, ord, t, 0, xs.length - 1);
         fixTies(xs, ord, t);
@@ -143,7 +143,7 @@ public abstract class Order extends RBuiltinNode {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         RDoubleVector v = x.materialize();
-        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        double[] xs = v.getDataNonShared();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, t, 0, xs.length - 1);
         fixTies(xs, ord, t);
@@ -155,7 +155,7 @@ public abstract class Order extends RBuiltinNode {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         RDoubleVector v = x.materialize();
-        double[] xs = v.isShared() ? v.getDataCopy() : v.getDataWithoutCopying();
+        double[] xs = v.getDataNonShared();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, t, 0, xs.length - 1);
         fixTies(xs, ord, t);

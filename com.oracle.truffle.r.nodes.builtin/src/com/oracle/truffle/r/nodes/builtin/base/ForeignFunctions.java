@@ -100,10 +100,10 @@ public class ForeignFunctions {
                 RDoubleVector qrauxVec = (RDoubleVector) argValues[6];
                 RIntVector pivotVec = (RIntVector) argValues[7];
                 RDoubleVector workVec = (RDoubleVector) argValues[8];
-                double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
-                int[] rank = rankVec.isTemporary() ? rankVec.getDataWithoutCopying() : rankVec.getDataCopy();
-                double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
-                int[] pivot = pivotVec.isTemporary() ? pivotVec.getDataWithoutCopying() : pivotVec.getDataCopy();
+                double[] x = xVec.getDataTemp();
+                int[] rank = rankVec.getDataTemp();
+                double[] qraux = qrauxVec.getDataTemp();
+                int[] pivot = pivotVec.getDataTemp();
                 RFFIFactory.getRFFI().getRDerivedRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
                 // @formatter:off
                 Object[] data = new Object[]{
@@ -142,11 +142,11 @@ public class ForeignFunctions {
                 int ny = (int) argValues[5];
                 RDoubleVector bVec = (RDoubleVector) argValues[6];
                 RIntVector infoVec = (RIntVector) argValues[7];
-                double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
-                double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
-                double[] y = yVec.isTemporary() ? yVec.getDataWithoutCopying() : yVec.getDataCopy();
-                double[] b = bVec.isTemporary() ? bVec.getDataWithoutCopying() : bVec.getDataCopy();
-                int[] info = infoVec.isTemporary() ? infoVec.getDataWithoutCopying() : infoVec.getDataCopy();
+                double[] x = xVec.getDataTemp();
+                double[] qraux = qrauxVec.getDataTemp();
+                double[] y = yVec.getDataTemp();
+                double[] b = bVec.getDataTemp();
+                int[] info = infoVec.getDataTemp();
                 RFFIFactory.getRFFI().getRDerivedRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
                 coef.copyAttributesFrom(bVec);
@@ -331,7 +331,7 @@ public class ForeignFunctions {
             // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
             Object[] argValues = ((RArgsValuesAndNames) args).getValues();
             RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, argValues[0]));
-            double[] z = zVec.isTemporary() ? zVec.getDataWithoutCopying() : zVec.getDataCopy();
+            double[] z = zVec.getDataTemp();
             RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, argValues[1]));
             int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;

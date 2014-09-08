@@ -99,6 +99,27 @@ public final class RList extends RVector implements RAbstractVector {
         return copy;
     }
 
+    /**
+     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
+     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
+     *
+     * @return vector data
+     */
+    public Object[] getDataNonShared() {
+        return isShared() ? getDataCopy() : getDataWithoutCopying();
+
+    }
+
+    /**
+     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
+     * of vector sharing mode).
+     *
+     * @return vector data
+     */
+    public Object[] getDataTemp() {
+        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
+    }
+
     public Object getDataAt(int i) {
         return data[i];
     }
