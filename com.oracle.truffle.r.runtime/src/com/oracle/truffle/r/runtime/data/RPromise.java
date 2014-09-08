@@ -180,14 +180,11 @@ public final class RPromise extends RLanguageRep {
                 assert isInOriginFrame(frame);
                 newValue = doEvalArgument(frame);
             }
+
+            setValue(newValue);
         } finally {
             underEvaluation = false;
         }
-
-        setValue(newValue);
-        // No invalidate here, as RPromise is NOT part of the AST! It is in most scenarios a
-        // one-shot object, that gets discarded after first execution.
-        // CompilerDirectives.transferToInterpreterAndInvalidate();
         return value;
     }
 

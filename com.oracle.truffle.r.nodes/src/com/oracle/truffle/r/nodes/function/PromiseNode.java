@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -36,8 +38,10 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * This {@link RNode} implementation is used as a factory node for {@link RPromise} as it integrates
- * well with the architecture.
+ * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
+ * evaluation of these {@link RPromise}s, depending on the promises {@link EvalPolicy}.<br/>
+ * All these classes are created during/after argument matching and get cached afterwards, so they
+ * get (and need to get) called every repeated call to a function with the same arguments.
  */
 public class PromiseNode extends RNode {
     /**
@@ -94,10 +98,12 @@ public class PromiseNode extends RNode {
 
     /**
      * @param promise
-     * @return TODO Gero, add comment!
+     * @return Creates a {@link VarArgPromiseNode} for the given {@link RPromise}
      */
     public static VarArgPromiseNode createVarArg(RPromise promise) {
-        return new VarArgPromiseNode(promise);
+        VarArgPromiseNode result = new VarArgPromiseNode(promise);
+        result.assignSourceSection(((RNode) promise.getRep()).getSourceSection());
+        return result;
     }
 
     /**
@@ -114,7 +120,7 @@ public class PromiseNode extends RNode {
      * evaluate it here, and as it's {@link EvalPolicy#INLINED}, return its value and not the
      * {@link RPromise} itself! {@link EvalPolicy#INLINED} {@link PromiseType#ARG_SUPPLIED}
      */
-    private static class InlinedSuppliedPromiseNode extends PromiseNode {
+    private final static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
         @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
@@ -149,7 +155,7 @@ public class PromiseNode extends RNode {
      * the caller frame: This means we can simply evaluate it here, and as it's
      * {@link EvalPolicy#INLINED}, return its value and not the {@link RPromise} itself!
      */
-    private static class InlinedPromiseNode extends PromiseNode {
+    private final static class InlinedPromiseNode extends PromiseNode {
         @Child private RNode defaultExpr;
 
         public InlinedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
@@ -167,20 +173,30 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * TODO Gero, add comment!
+     * This {@link RNode} is used to evaluate the expression given in a {@link RPromise} formerly
+     * wrapped into a "..." after unrolling.
      */
-    public static class VarArgPromiseNode extends RNode {
+    public final static class VarArgPromiseNode extends RNode {
         private final RPromise promise;
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @CompilationFinal private boolean isEvaluated = false;
 
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
-            assignSourceSection(((RNode) promise.getRep()).getSourceSection());
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return PromiseHelper.evaluate(frame, exprExecNode, promise);
+            // ExpressionExecutorNode would be overkill, as this is only executed once, and not in
+            // the correct frame anyway
+            if (!isEvaluated) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                Object result = promise.evaluate(frame);
+                isEvaluated = promise.isEvaluated();
+                return result;
+            }
+
+            // Should be easily compile to constant
+            return promise.getValue();
         }
 
         public RPromise getPromise() {
@@ -190,18 +206,19 @@ public class PromiseNode extends RNode {
 
     /**
      * @param src
-     * @param evalPolicy
-     * @param envProvider
-     * @param nodes
-     * @param names
-     * @param callSrc
-     * @return TODO Gero, add comment!
+     * @param evalPolicy {@link EvalPolicy}
+     * @param envProvider {@link EnvProvider}
+     * @param nodes The argument {@link RNode}s that got wrapped into this "..."
+     * @param names The argument's names
+     * @param callSrc The {@link SourceSection} of the call this "..." belongs to
+     * @return Creates either a {@link InlineVarArgsPromiseNode} or a {@link VarArgsPromiseNode},
+     *         depending on the {@link EvalPolicy}
      */
-    public static VarArgsPromiseNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
-        VarArgsPromiseNode node;
+    public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
+        RNode node;
         switch (evalPolicy) {
             case INLINED:
-                node = new InlineVarArgsPromiseNode(envProvider, nodes, names);
+                node = new InlineVarArgsPromiseNode(nodes, names);
                 break;
 
             case PROMISED:
@@ -216,7 +233,10 @@ public class PromiseNode extends RNode {
         return node;
     }
 
-    public static class VarArgsPromiseNode extends RNode {
+    /**
+     * This class is used for wrapping arguments into "..." ({@link RArgsValuesAndNames}).
+     */
+    private final static class VarArgsPromiseNode extends RNode {
         protected final RNode[] nodes;
         protected final String[] names;
         protected final EnvProvider envProvider;
@@ -241,12 +261,18 @@ public class PromiseNode extends RNode {
         }
     }
 
-    private static class InlineVarArgsPromiseNode extends VarArgsPromiseNode {
+    /**
+     * The {@link EvalPolicy#INLINED} counterpart of {@link VarArgsPromiseNode}: This gets a bit
+     * more complicated, as "..." might also values from an outer "...", which might resolve to an
+     * empty argument list.
+     */
+    public final static class InlineVarArgsPromiseNode extends RNode {
         @Children private final RNode[] varargs;
+        protected final String[] names;
 
-        public InlineVarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names) {
-            super(envProvider, nodes, names, null);
+        public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
             this.varargs = nodes;
+            this.names = names;
         }
 
         @Override
