@@ -24,8 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.Node.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -33,6 +38,16 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "dim", kind = PRIMITIVE, parameterNames = {"x"})
 @SuppressWarnings("unused")
 public abstract class Dim extends RBuiltinNode {
+
+    @Child ShortRowNames shortRowNames;
+
+    private int dataFrameRowNames(VirtualFrame frame, RDataFrame operand) {
+        if (shortRowNames == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shortRowNames = insert(ShortRowNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return (int) shortRowNames.executeObject(frame, operand, 2);
+    }
 
     @Specialization
     protected RNull dim(RNull vector) {
@@ -70,7 +85,14 @@ public abstract class Dim extends RBuiltinNode {
         return RDataFactory.createIntVector(vector.getDimensions(), RDataFactory.COMPLETE_VECTOR);
     }
 
+    @Specialization
+    protected RIntVector dim(VirtualFrame frame, RDataFrame dataFrame) {
+        controlVisibility();
+        return RDataFactory.createIntVector(new int[]{dataFrameRowNames(frame, dataFrame), dataFrame.getLength()}, RDataFactory.COMPLETE_VECTOR);
+    }
+
     public static boolean hasDimensions(RAbstractVector vector) {
         return vector.hasDimensions();
     }
+
 }

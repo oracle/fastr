@@ -88,7 +88,8 @@ interface ArgumentsTrait {
     static void internalize(String[] names) {
         // Internalize names
         for (int i = 0; i < names.length; i++) {
-            names[i] = names[i].intern();
+            String name = names[i];
+            names[i] = name != null ? name.intern() : null;
         }
     }
 }

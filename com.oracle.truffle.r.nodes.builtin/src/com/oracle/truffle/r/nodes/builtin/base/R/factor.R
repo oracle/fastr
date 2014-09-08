@@ -116,8 +116,6 @@ as.list.factor <- function(x,...)
 print.factor <- function (x, quote = FALSE, max.levels = NULL,
 		width = getOption("width"), ...)
 {
-	##FIXME
-	quote<-FALSE
 	ord <- is.ordered(x)
 	if (length(x) == 0L)
 		cat(if(ord)"ordered" else "factor", "(0)\n", sep = "")
@@ -128,9 +126,7 @@ print.factor <- function (x, quote = FALSE, max.levels = NULL,
 		class(xx) <- NULL
 		levels(xx) <- NULL
 		xx[] <- as.character(x)
-		##print(xx, quote = quote, ...)
-		##FIXME
-		print(xx,quote)
+		print(xx, quote = quote, ...)
 	}
 	maxl <- if(is.null(max.levels)) TRUE else max.levels
 	if (maxl) {

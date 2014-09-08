@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.CombineFactory.UnwrapExpressionFactory;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -55,6 +56,8 @@ public abstract class Combine extends RBuiltinNode {
     @Child private PrecedenceNode precedenceNode;
 
     @Child private Combine combineRecursive;
+
+    @Child private UnwrapExpression unwrapExpression;
 
     public abstract Object executeCombine(VirtualFrame frame, Object value);
 
@@ -174,6 +177,12 @@ public abstract class Combine extends RBuiltinNode {
         return result;
     }
 
+    @Specialization
+    protected RExpression pass(RExpression expr) {
+        controlVisibility();
+        return expr;
+    }
+
     @Specialization(guards = "noArgNames")
     protected int pass(int value) {
         controlVisibility();
@@ -276,6 +285,10 @@ public abstract class Combine extends RBuiltinNode {
 
     protected boolean isListPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.LIST_PRECEDENCE;
+    }
+
+    protected boolean isExprPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.EXPRESSION_PRECEDENCE;
     }
 
     private int precedence(VirtualFrame frame, RArgsValuesAndNames args) {
@@ -610,6 +623,44 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
+    private Object unwrapExpression(VirtualFrame frame, Object operand) {
+        if (unwrapExpression == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            unwrapExpression = insert(UnwrapExpressionFactory.create(null));
+        }
+        return unwrapExpression.executeObject(frame, operand);
+    }
+
+    @Specialization(guards = {"isExprPrecedence", "noArgNames", "!oneElement"})
+    @ExplodeLoop
+    protected Object expr(VirtualFrame frame, RArgsValuesAndNames args) {
+        controlVisibility();
+        Object[] array = args.getValues();
+        RList current = RDataFactory.createList();
+        for (int i = 0; i < array.length; ++i) {
+            Object op = unwrapExpression(frame, array[i]);
+            Object other = castList(frame, op);
+            current = (RList) foldOperation.executeList(frame, current, other);
+        }
+        return RDataFactory.createExpression(current);
+    }
+
+    @Specialization(guards = {"isExprPrecedence", "hasArgNames", "!oneElement"})
+    protected Object exprArgs(VirtualFrame frame, RArgsValuesAndNames args) {
+        controlVisibility();
+        Object[] array = args.getValues();
+        Object op = unwrapExpression(frame, array[0]);
+        RAbstractVector currentVector = castVector(frame, op);
+        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        for (int i = 1; i < array.length; i++) {
+            op = unwrapExpression(frame, array[i]);
+            RAbstractVector otherVector = castVector(frame, op);
+            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            current = foldOperation.executeList(frame, current, other);
+        }
+        return RDataFactory.createExpression((RList) current);
+    }
+
     protected boolean oneElement(RArgsValuesAndNames args) {
         return args.length() == 1;
     }
@@ -620,5 +671,37 @@ public abstract class Combine extends RBuiltinNode {
 
     protected boolean noArgNames() {
         return !hasArgNames();
+    }
+
+    @NodeChild("operand")
+    protected abstract static class UnwrapExpression extends RNode {
+
+        public abstract Object executeObject(VirtualFrame frame, Object operand);
+
+        @Specialization
+        protected RNull unwrap(RNull operand) {
+            return operand;
+        }
+
+        @Specialization
+        protected RList unwrap(RExpression operand) {
+            return operand.getList();
+        }
+
+        @Specialization
+        protected RAbstractVector unwrap(RAbstractVector operand) {
+            return operand;
+        }
+
+        @Specialization
+        protected RDataFrame unwrap(RDataFrame operand) {
+            return operand;
+        }
+
+        @Specialization
+        protected RLanguage unwrap(RLanguage operand) {
+            return operand;
+        }
+
     }
 }

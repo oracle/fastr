@@ -42,6 +42,7 @@ public abstract class PrecedenceNode extends UnaryNode {
     public static final int COMPLEX_PRECEDENCE = 4;
     public static final int STRING_PRECEDENCE = 5;
     public static final int LIST_PRECEDENCE = 6;
+    public static final int EXPRESSION_PRECEDENCE = 7;
 
     @Override
     public int executeInteger(VirtualFrame frame) {
@@ -152,7 +153,12 @@ public abstract class PrecedenceNode extends UnaryNode {
 
     @Specialization
     protected int doDataFrame(VirtualFrame frame, RDataFrame val, byte recursive) {
-        return precedenceRecursive(frame, val.getVector(), recursive);
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    protected int doExpression(RExpression val, byte recursive) {
+        return EXPRESSION_PRECEDENCE;
     }
 
     protected boolean isRecursive(RList val, byte recursive) {

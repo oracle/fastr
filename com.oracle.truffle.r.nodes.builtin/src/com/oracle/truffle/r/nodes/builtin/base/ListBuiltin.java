@@ -24,10 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,8 +39,6 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class ListBuiltin extends RBuiltinNode {
 
     protected abstract Object executeObject(VirtualFrame frame, Object arg);
-
-    @Child private ListBuiltin listRecursive;
 
     private RList list(Object[] args) {
         return RDataFactory.createList(args, argNameVector(getSuppliedArgsNames()));
@@ -96,20 +92,10 @@ public abstract class ListBuiltin extends RBuiltinNode {
         return list(new Object[]{value});
     }
 
-    @Specialization(guards = {"!missing", "!oneElement"})
+    @Specialization(guards = "!missing")
     protected RList list(RArgsValuesAndNames args) {
         controlVisibility();
         return RDataFactory.createList(args.getValues(), argNameVector(args.getNamesNull()));
-    }
-
-    @Specialization(guards = {"!missing", "oneElement"})
-    protected Object listOneElement(VirtualFrame frame, RArgsValuesAndNames args) {
-        controlVisibility();
-        if (listRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            listRecursive = insert(ListBuiltinFactory.create(new RNode[1], getBuiltin(), args.getNamesNull()));
-        }
-        return listRecursive.executeObject(frame, args.getValues()[0]);
     }
 
     @Specialization(guards = "missing")

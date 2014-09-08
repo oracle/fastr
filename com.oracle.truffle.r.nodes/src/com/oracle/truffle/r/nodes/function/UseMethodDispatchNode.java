@@ -30,6 +30,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        // S3 method can be dispatched from top-level where there is no caller frame
         if (funFrame == null) {
             funFrame = frame;
         }
@@ -43,6 +44,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
         Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        // S3 method can be dispatched from top-level where there is no caller frame
         if (funFrame == null) {
             funFrame = frame;
         }
@@ -84,7 +86,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) arg;
                 argListSize += varArgsContainer.length() - 1;
                 argValues = Utils.resizeArray(argValues, argListSize);
-                argNames = Utils.resizeArray(argNames, argListSize);
+                // argNames can be null if no names for arguments have been specified
+                argNames = argNames == null ? new String[argListSize] : Utils.resizeArray(argNames, argListSize);
                 Object[] varArgsValues = varArgsContainer.getValues();
                 String[] varArgsNames = varArgsContainer.getNames();
                 for (int i = 0; i < varArgsContainer.length(); i++) {

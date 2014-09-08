@@ -32,14 +32,14 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = {-1})
 public abstract class Expression extends RBuiltinNode {
     /*
-     * Owing to the nonEvalArgs, all arguments are RPromise, but an expression actually consists of
-     * RLanguage elements so we convert, even though an RPromise is a subclass.
+     * Owing to the nonEvalArgs, all arguments are RPromise, but an expression may contain
+     * non-RLanguage elements.
      */
 
     @Specialization
     protected Object doExpression(RArgsValuesAndNames args) {
         Object[] argValues = args.getValues();
-        RLanguage[] data = new RLanguage[argValues.length];
+        Object[] data = new Object[argValues.length];
         for (int i = 0; i < argValues.length; i++) {
             data[i] = convert((RPromise) argValues[i]);
         }
@@ -53,8 +53,12 @@ public abstract class Expression extends RBuiltinNode {
         return RDataFactory.createExpression(list);
     }
 
-    private static RLanguage convert(RPromise promise) {
-        return RDataFactory.createLanguage(promise.getRep());
+    private static Object convert(RPromise promise) {
+        if (promise.isEvaluated()) {
+            return promise.getValue();
+        } else {
+            return RDataFactory.createLanguage(promise.getRep());
+        }
     }
 
 }

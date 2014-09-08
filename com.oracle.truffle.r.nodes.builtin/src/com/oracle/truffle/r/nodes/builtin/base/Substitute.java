@@ -116,11 +116,19 @@ public abstract class Substitute extends RBuiltinNode {
                 if (argValues[i] instanceof VarArgPromiseNode) {
                     RPromise p = ((VarArgPromiseNode) argValues[i]).getPromise();
                     listData[i + 1] = checkSubstituteRecursive().executeObject(frame, p, envMissing);
+                } else if (argValues[i] instanceof ConstantNode) {
+                    listData[i + 1] = ((ConstantNode) argValues[i]).getValue();
                 } else {
-                    ReadVariableNode argReadNode = (ReadVariableNode) ((WrapArgumentNode) argValues[i]).getOperand();
-                    Object arg = env.get(argReadNode.getSymbol().getName());
-                    if (arg == null) {
-                        arg = RDataFactory.createSymbol(argReadNode.getSymbol().getName());
+                    Object argNode = ((WrapArgumentNode) argValues[i]).getOperand();
+                    Object arg;
+                    if (argNode instanceof ReadVariableNode) {
+                        ReadVariableNode argReadNode = (ReadVariableNode) argNode;
+                        arg = env.get(argReadNode.getSymbol().getName());
+                        if (arg == null) {
+                            arg = RDataFactory.createSymbol(argReadNode.getSymbol().getName());
+                        }
+                    } else {
+                        arg = ((ConstantNode) argNode).getValue();
                     }
                     listData[i + 1] = arg;
                 }

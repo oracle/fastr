@@ -32,11 +32,13 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "quote"})
+@RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
 // TODO revert to R
 public abstract class Print extends RInvisibleBuiltinNode {
 
-    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance),
+                    ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance),
+                    ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
 
     @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, false);
 
@@ -49,8 +51,9 @@ public abstract class Print extends RInvisibleBuiltinNode {
         return PARAMETER_VALUES;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected Object print(VirtualFrame frame, Object o, byte quote) {
+    protected Object print(VirtualFrame frame, Object o, Object digits, byte quote, Object naPrint, Object printGap, Object right, Object max, Object useSource, Object noOpt) {
         String s = (String) prettyPrinter.executeString(frame, o, null, quote);
         if (s != null && !s.isEmpty()) {
             printHelper(s);

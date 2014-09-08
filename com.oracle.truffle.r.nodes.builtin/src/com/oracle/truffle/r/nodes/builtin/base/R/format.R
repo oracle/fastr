@@ -74,16 +74,14 @@ format.data.frame <- function(x, ..., justify = "none")
     nc <- length(x)
     rval <- vector("list", nc)
     for(i in 1L:nc)
-# TODO: something wrong with argument passing
-#        rval[[i]] <- format(x[[i]], ..., justify = justify)
-        rval[[i]] <- format(x[[i]])
-    lens <- sapply(rval, NROW)
+        rval[[i]] <- format(x[[i]], ..., justify = justify)
+	lens <- sapply(rval, NROW)
     if(any(lens != nr)) { # corrupt data frame, must have at least one column
-        warning("corrupt data frame: columns will be truncated or padded with NAs")
+		warning("corrupt data frame: columns will be truncated or padded with NAs")
         for(i in 1L:nc) {
             len <- NROW(rval[[i]])
             if(len == nr) next
-            if(length(dim(rval[[i]])) == 2L) {
+			if(length(dim(rval[[i]])) == 2L) {
                 rval[[i]] <- if(len < nr)
                     rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
                 else rval[[i]][1L:nr,]
@@ -93,7 +91,7 @@ format.data.frame <- function(x, ..., justify = "none")
             }
         }
     }
-    for(i in 1L:nc) {
+	for(i in 1L:nc) {
         if(is.character(rval[[i]]) && inherits(rval[[i]], "character"))
             oldClass(rval[[i]]) <- "AsIs"
     }
@@ -107,10 +105,8 @@ format.data.frame <- function(x, ..., justify = "none")
     names(rval) <- cn
     rval$check.names <- FALSE
     rval$row.names <- row.names(x)
-# TODO: implement do.call
-#    x <- do.call("data.frame", rval)
-    x <- data.frame(rval)
-    ## x will have more cols than rval if there are matrix/data.frame cols
+    x <- do.call("data.frame", rval)
+	## x will have more cols than rval if there are matrix/data.frame cols
     if(any(m)) names(x) <- sub("^..dfd.", "", names(x))
     x
 }

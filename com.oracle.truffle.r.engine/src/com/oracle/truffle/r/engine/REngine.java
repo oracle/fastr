@@ -190,8 +190,11 @@ public final class REngine implements RContext.Engine {
     public Object eval(RExpression expr, VirtualFrame frame) {
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
-            RLanguage lang = (RLanguage) expr.getDataAt(i);
-            result = eval(lang, frame);
+            result = expr.getDataAt(i);
+            if (result instanceof RLanguage) {
+                RLanguage lang = (RLanguage) result;
+                result = eval(lang, frame);
+            }
         }
         return result;
     }
@@ -466,7 +469,7 @@ public final class REngine implements RContext.Engine {
             // TODO cache this
             Object resultValue = RPromise.checkEvaluate(null, result);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
-            function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, RRuntime.asLogical(true)}));
+            function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, new RArgsValuesAndNames(new Object[]{RRuntime.asLogical(true)}, new String[]{"qoute"})}));
         }
     }
 

@@ -16,25 +16,19 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-print <- function(x,quote = TRUE) UseMethod("print")
+print <- function(x, ...) UseMethod("print")
 
-###- Need '...' such that it can be called as  NextMethod("print", ...):
-#print.default <- function(x, digits = NULL, quote = TRUE, na.print = NULL,
-#		print.gap = NULL, right = FALSE, max = NULL,
-#		useSource = TRUE, ...)
-#{
-#	noOpt <- missing(digits) && missing(quote) && missing(na.print) &&
-#			missing(print.gap) && missing(right) && missing(max) &&
-#			missing(useSource) && missing(...)
-#	.Internal(print.default(x, digits, quote, na.print, print.gap, right, max,
-#					useSource, noOpt))
-#}
-##FIXME
-print.default <- function(x, quote=TRUE)
+print.default <- function(x, digits = NULL, quote = TRUE, na.print = NULL,
+		print.gap = NULL, right = FALSE, max = NULL,
+		useSource = TRUE, ...)
 {
-	.Internal(print.default(x,quote))
+	noOpt <- missing(digits) && missing(quote) && missing(na.print) &&
+			missing(print.gap) && missing(right) && missing(max) &&
+			missing(useSource) && missing(...)
+	.Internal(print.default(x, digits, quote, na.print, print.gap, right, max,
+					useSource, noOpt))
 }
-#
+
 #prmatrix <-
 #		function (x, rowlab = dn[[1]], collab = dn[[2]],
 #				quote = TRUE, right = FALSE,
