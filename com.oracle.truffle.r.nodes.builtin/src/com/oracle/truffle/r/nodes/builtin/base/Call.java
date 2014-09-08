@@ -26,14 +26,16 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Construct a {@linkplain RCall call} object from a name and optional arguments.
+ * Construct a call object from a name and optional arguments.
  */
 @RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"name", "..."})
 public abstract class Call extends RBuiltinNode {
@@ -44,24 +46,58 @@ public abstract class Call extends RBuiltinNode {
     }
 
     @Specialization
-    protected RCall call(String name, @SuppressWarnings("unused") RMissing args) {
+    protected RLanguage call(String name, @SuppressWarnings("unused") RMissing args) {
         return makeCall(name, null);
     }
 
     @Specialization
-    protected RCall call(String name, RArgsValuesAndNames args) {
+    protected RLanguage call(String name, RArgsValuesAndNames args) {
         return makeCall(name, args);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RNull call(Object name, Object args) {
+    protected RLanguage call(Object name, Object args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
     }
 
     @SlowPath
-    private static RCall makeCall(String name, RArgsValuesAndNames args) {
-        return RDataFactory.createCall(name, args);
+    protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
+        ReadVariableNode functionLookup = ReadVariableNode.create(name, RRuntime.TYPE_FUNCTION, false, true, false, true);
+        CallArgumentsNode callArgs = null;
+        if (args != null) {
+            Object[] argValues = args.getValues();
+            RNode[] argValueNodes = new RNode[argValues.length];
+            for (int i = 0; i < argValues.length; ++i) {
+                argValueNodes[i] = ConstantNode.create(argValues[i]);
+            }
+            callArgs = CallArgumentsNode.create(false, false, argValueNodes, args.getNames());
+        }
+        NullSourceSection src = new NullSourceSection("call", "call", makeSource(name, args));
+        RCallNode call = RCallNode.createCall(src, functionLookup, callArgs);
+        return RDataFactory.createLanguage(call);
+    }
+
+    @SlowPath
+    private static String makeSource(String name, RArgsValuesAndNames args) {
+        StringBuilder sb = new StringBuilder(name);
+        sb.append('(');
+        if (args != null) {
+            String[] names = args.getNames();
+            Object[] values = args.getValues();
+            for (int i = 0; i < args.length(); ++i) {
+                if (names != null && names[i] != null) {
+                    sb.append(names[i]).append(" = ");
+                }
+                // TODO not sure deparse is the right way to do this (might be better to get hold of
+                // the source sections of the arguments)
+                sb.append(RDeparse.deparse(values[i], 60, false, -1)[0]);
+                if (i + 1 < args.length()) {
+                    sb.append(", ");
+                }
+            }
+        }
+        return RRuntime.toString(sb.append(')'));
     }
 
 }

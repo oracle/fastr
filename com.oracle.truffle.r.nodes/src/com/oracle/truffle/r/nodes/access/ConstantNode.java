@@ -66,6 +66,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantFunctionNode((RFunction) value);
         } else if (value instanceof RFormula) {
             return new ConstantFormulaNode((RFormula) value);
+        } else if (value instanceof RSymbol) {
+            return new ConstantStringScalarNode(((RSymbol) value).getName());
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }

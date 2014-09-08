@@ -25,10 +25,4 @@ public abstract class IsCall extends IsTypeNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Override
-    @Specialization
-    protected byte isType(RCall call) {
-        return RRuntime.LOGICAL_TRUE;
-    }
-
 }
