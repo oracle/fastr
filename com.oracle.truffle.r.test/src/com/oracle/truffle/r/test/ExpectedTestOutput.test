@@ -14344,6 +14344,15 @@ Error in g() : could not find function "dummy"
 Hello world
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) g(...); g <- function(a,b) { print(a); print(b) }; f(1,2); f(a=3,b=4); f(a=5,b=6) }
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }
 [1] 1
 

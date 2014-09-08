@@ -59,6 +59,7 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
     private FormalArguments(String[] argumentsNames, RNode[] defaultArguments) {
         super(defaultArguments, argumentsNames);
         this.varArgsIndex = super.getVarArgIndex();
+        ArgumentsTrait.internalize(argumentsNames);
     }
 
     /**

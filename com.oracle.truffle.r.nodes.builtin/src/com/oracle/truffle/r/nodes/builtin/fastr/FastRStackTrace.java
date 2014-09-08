@@ -32,12 +32,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
 @RBuiltin(name = "fastr.stacktrace", kind = PRIMITIVE, parameterNames = {"print.frame.contents"})
-@RBuiltinComment("Prints current stack trace.")
-public abstract class FastRStackTrace extends RBuiltinNode {
-
-    public boolean getVisibility() {
-        return false;
-    }
+@RBuiltinComment("Prints current stack trace. If 'print.frame.contents' is TRUE, each frame's content is printed, too.")
+public abstract class FastRStackTrace extends RInvisibleBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
@@ -48,7 +44,6 @@ public abstract class FastRStackTrace extends RBuiltinNode {
     @SlowPath
     protected Object printStackTrace(byte printFrameContents) {
         controlVisibility();
-
         boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
         RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
         return RRuntime.NULL;
