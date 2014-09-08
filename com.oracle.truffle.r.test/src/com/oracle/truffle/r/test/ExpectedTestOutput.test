@@ -13851,6 +13851,12 @@ NULL
 2 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-c(7,42); y<-data.frame(x); y }
+   x
+1  7
+2 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-integer(); class(x)<-"data.frame"; x }
 data frame with 0 columns and 0 rows
 

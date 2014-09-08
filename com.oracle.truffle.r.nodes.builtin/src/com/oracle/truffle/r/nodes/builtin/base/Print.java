@@ -40,7 +40,7 @@ public abstract class Print extends RInvisibleBuiltinNode {
                     ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance),
                     ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
 
-    @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, false);
+    @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, null, false);
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);
@@ -53,8 +53,8 @@ public abstract class Print extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object print(VirtualFrame frame, Object o, Object digits, byte quote, Object naPrint, Object printGap, Object right, Object max, Object useSource, Object noOpt) {
-        String s = (String) prettyPrinter.executeString(frame, o, null, quote);
+    protected Object print(VirtualFrame frame, Object o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt) {
+        String s = (String) prettyPrinter.executeString(frame, o, null, quote, right);
         if (s != null && !s.isEmpty()) {
             printHelper(s);
         }

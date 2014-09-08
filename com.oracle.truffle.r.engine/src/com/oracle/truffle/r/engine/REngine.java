@@ -469,7 +469,7 @@ public final class REngine implements RContext.Engine {
             // TODO cache this
             Object resultValue = RPromise.checkEvaluate(null, result);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
-            function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, new RArgsValuesAndNames(new Object[]{RRuntime.asLogical(true)}, new String[]{"qoute"})}));
+            function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, RMissing.instance}));
         }
     }
 

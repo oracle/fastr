@@ -15794,6 +15794,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testPrint_212d66e12053c185fdfd484eb6156160() {
+        assertEval("{ x<-c(7,42); y<-data.frame(x); y }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testRowNames_a3af62479ea621f4e185c40355da07ce() {
         assertEval("{ x<-c(1,2); row.names(x)<-NULL; attributes(x) }");
     }
