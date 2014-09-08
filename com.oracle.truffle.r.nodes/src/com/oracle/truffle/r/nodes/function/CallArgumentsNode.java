@@ -53,8 +53,6 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      */
     private final Integer[] varArgsSymbolIndices;
 
-    private final FunctionSignature staticSignature;
-
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     /**
@@ -74,12 +72,11 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, String[] names, Integer[] varArgsSymbolIndices, FunctionSignature signature, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, String[] names, Integer[] varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, names);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
-        this.staticSignature = signature;
         ArgumentsTrait.internalize(names);
     }
 
@@ -102,7 +99,6 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
-        String[] statisSignature = new String[args.length];
         List<Integer> varArgsSymbolIndices = new ArrayList<>();
         for (int i = 0; i < wrappedArgs.length; ++i) {
             RNode arg = args[i];
@@ -115,7 +111,6 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                     if (rvn.getSymbol().isVarArg()) {
                         varArgsSymbolIndices.add(i);
                     }
-                    statisSignature[i] = rvn.getSymbol().getName();
                 }
                 wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true);
             }
@@ -132,7 +127,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
         Integer[] varArgsSymbolIndicesArr = varArgsSymbolIndices.toArray(new Integer[varArgsSymbolIndices.size()]);
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndicesArr, new FunctionSignature(statisSignature), modeChange, modeChangeForAll);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndicesArr, modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -151,29 +146,51 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
         throw new AssertionError();
     }
 
-    public FunctionSignature createSignature(VirtualFrame frame) {
+    /**
+     * @param frame
+     * @return The {@link VarArgsSignature} of these arguments, or
+     *         {@link VarArgsSignature#TAKES_NO_VARARGS} if ! {@link #containsVarArgsSymbol()}
+     */
+    public VarArgsSignature createSignature(VirtualFrame frame) {
         if (!containsVarArgsSymbol()) {
-            return staticSignature;
+            return VarArgsSignature.TAKES_NO_VARARGS;
         }
 
-        // Unroll "..."s and insert their names into FunctionSignature
-        String[] callSignature = Arrays.copyOf(names, names.length);
+        // Unroll "..."s and insert their arguments into VarArgsSignature
         Object varArgContent = varArgsSlotNode.execute(frame);
-        int index = 0;
-        for (Integer i : varArgsSymbolIndices) {
-            if (varArgContent == RMissing.instance) {
-                // Nothing to insert
-                callSignature[i] = ArgumentsTrait.VARARG_NAME;
-            } else {
-                // Insert passed names
-                RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
-                // length == 0 cannot happen, in that case RMissing is caught above
-                callSignature = Utils.resizeArray(callSignature, callSignature.length + varArgInfo.length() - 1);
-                System.arraycopy(varArgInfo.getNames(), 0, callSignature, i + index, varArgInfo.length());
-                index += varArgInfo.length() - 1;
+        RNode[] content;
+        if (varArgContent == RMissing.instance) {
+            content = new RNode[]{VarArgsSignature.NO_VARARGS};
+        } else {
+            // Arguments wrapped into "..."
+            Object[] varArgs = ((RArgsValuesAndNames) varArgContent).getValues();
+            content = new RNode[varArgs.length];
+
+            // As we want to check on expression identity later on:
+            for (int i = 0; i < varArgs.length; i++) {
+                Object varArg = varArgs[i];
+                if (varArg instanceof RPromise) {
+                    // Unwrap expression (one instance per argument/call site)
+                    content[i] = (RNode) ((RPromise) varArg).getRep();
+                } else if (varArg == RMissing.instance) {
+                    // Use static symbol for "missing" instead of ConstantNode.create
+                    content[i] = VarArgsSignature.NO_VARARGS;
+                } else {
+                    assert false;
+                }
             }
         }
-        return new FunctionSignature(callSignature);
+
+        // More then one "..."? Copy content!
+        int times = varArgsSymbolIndices.length;
+        if (times > 1) {
+            int newLength = content.length * times;
+            RNode[] newContent = new RNode[newLength];
+            for (int i = 0; i < times; i++) {
+                System.arraycopy(content, 0, newContent, i * content.length, content.length);
+            }
+        }
+        return VarArgsSignature.create(content);
     }
 
     @ExplodeLoop
