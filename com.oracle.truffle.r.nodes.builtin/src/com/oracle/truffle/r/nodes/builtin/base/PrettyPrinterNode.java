@@ -62,6 +62,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child private PrettyPrinterNode attributePrettyPrinter;
     @Child private PrettyPrinterNode recursivePrettyPrinter;
     @Child private PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
+    @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
     @Child private PrintVectorMultiDimNode multiDimPrinter;
 
     @Child private Re re;
@@ -99,6 +100,14 @@ public abstract class PrettyPrinterNode extends RNode {
             singleListElementPrettyPrinter = insert(PrettyPrinterSingleListElementNodeFactory.create(null, null, null));
         }
         return (String) singleListElementPrettyPrinter.executeString(currentFrame(), o, listElementName, quote);
+    }
+
+    private String prettyPrintSingleVectorElement(Object o, byte isQuoted) {
+        if (singleVectorElementPrettyPrinter == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null, null));
+        }
+        return (String) singleVectorElementPrettyPrinter.executeString(null, o, isQuoted);
     }
 
     private String printVectorMultiDim(RAbstractVector vector, boolean isListOrStringVector, boolean isComplexOrRawVector, byte quote) {
@@ -227,7 +236,8 @@ public abstract class PrettyPrinterNode extends RNode {
             if (i != 0) {
                 builder.append(", ");
             }
-            builder.append(prettyPrintLanguageRep((RLanguage) exprs.getDataAt(i), listElementName));
+            builder.append(prettyPrintSingleVectorElement(exprs.getDataAt(i), quote));
+// builder.append(prettyPrintLanguageRep((RLanguage) exprs.getDataAt(i), listElementName));
         }
         builder.append(')');
         return builderToString(builder);
@@ -245,17 +255,17 @@ public abstract class PrettyPrinterNode extends RNode {
         if (promise.isEvaluated()) {
             return prettyPrintRecursive(promise.getValue(), listElementName, quote);
         } else {
-            return prettyPrintLanguageRep(promise, listElementName);
+            return prettyPrintLanguageRep(promise);
         }
     }
 
     @SlowPath
     @Specialization
     protected String prettyPrintLanguage(RLanguage language, Object listElementName, byte quote) {
-        return prettyPrintLanguageRep(language, listElementName);
+        return prettyPrintLanguageRep(language);
     }
 
-    public String prettyPrintLanguageRep(RLanguageRep languageRep, Object listElementName) {
+    public static String prettyPrintLanguageRep(RLanguageRep languageRep) {
         RNode node = (RNode) languageRep.getRep();
         SourceSection ss = node.getSourceSection();
         if (ss == null) {
@@ -1088,6 +1098,12 @@ public abstract class PrettyPrinterNode extends RNode {
         @Specialization(guards = {"isLengthOne", "!isVectorList"})
         protected String prettyPrintVectorElementLengthOne(RAbstractVector operand, byte isQuoted) {
             return prettyPrintRecursive(operand.getDataAtAsObject(0), isQuoted);
+        }
+
+        @SlowPath
+        @Specialization
+        protected String prettyPrintVectorElement(RLanguage operand, byte isQuoted) {
+            return prettyPrintLanguageRep(operand);
         }
 
         protected static boolean isVectorList(RAbstractVector v) {

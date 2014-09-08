@@ -454,7 +454,8 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @SlowPath
-    private static int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private static int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
+        Object o = obj;
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -466,6 +467,10 @@ public abstract class Unlist extends RBuiltinNode {
             saveSeqNo = namesInfo.seqNo;
             saveCount = namesInfo.count;
             namesInfo.reset();
+        }
+
+        if (o instanceof RDataFrame) {
+            o = ((RDataFrame) o).getVector();
         }
 
         if (o instanceof RAbstractVector) {

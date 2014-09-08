@@ -170,6 +170,12 @@ public abstract class AsVector extends RBuiltinNode {
         return castList(frame, x);
     }
 
+    @Specialization(guards = "castToList")
+    protected RAbstractVector asVectorList(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return RDataFactory.createList();
+    }
+
     @Specialization(guards = "castToSymbol")
     protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -236,6 +242,10 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean castToList(@SuppressWarnings("unused") RLanguage x, String mode) {
+        return mode.equals("list");
+    }
+
+    protected boolean castToList(@SuppressWarnings("unused") RNull x, String mode) {
         return mode.equals("list");
     }
 

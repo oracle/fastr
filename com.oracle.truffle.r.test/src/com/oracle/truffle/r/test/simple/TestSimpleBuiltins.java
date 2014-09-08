@@ -377,6 +377,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ c(1,z=list(1,b=22,3)) }");
 
         assertEval("{ is.matrix(c(matrix(1:4,2))) }");
+
+        assertEval("{ x<-expression(1); c(x) }");
+        assertEval("{ x<-expression(1); c(x,2) }");
     }
 
     @Test
@@ -591,6 +594,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(a=1, b=2); as.vector(x, \"list\") }");
         assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x, \"list\"); attributes(y) }");
         assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
+
+        assertEval("{ as.vector(NULL, \"list\") }");
     }
 
     @Test
@@ -2367,6 +2372,21 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testExpression() {
+        assertEval("{ f <- function(z) {z}; e<-c(expression(f), 7); eval(e) }");
+        assertEval("{ f <- function(z) {z}; e<-expression(f); e2<-c(e, 7); eval(e2) }");
+
+        assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }");
+    }
+
+    @Test
+    @Ignore
+    public void testExpressionIgnore() {
+        assertEval("{ x<-expression(1); typeof(x[[1]]) }");
+        assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[1]]) }");
+    }
+
+    @Test
     public void testQuote() {
         assertEval("{ quote(1:3) }");
         assertEval("{ quote(list(1, 2)) }");
@@ -2391,8 +2411,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSubstitute() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSubstituteIgnore() {
         assertEval("{ substitute(x + y, list(x=1)) }");
         assertEval("{ f <- function(expr) { substitute(expr) } ; f(a * b) }");
         assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(expr) } ; f() }");
@@ -2668,6 +2693,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() 23 ; l <- list(\"f\") ; cl <- as.call(l) ; eval(cl) }");
         assertEval("{ f <- function(a,b) a+b ; l <- list(\"f\",2,3) ; cl <- as.call(l) ; eval(cl) }");
         assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(\"f\", g()) ; cl <- as.call(l) ; eval(cl) }");
+    }
+
+    @Test
+    public void testDoCall() {
+        assertEval("{ x<-list(c(1,2)); do.call(\"as.matrix\", x) }");
     }
 
     @Test

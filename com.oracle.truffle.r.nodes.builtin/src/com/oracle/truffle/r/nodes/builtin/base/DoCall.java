@@ -28,29 +28,36 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-// TODO Implement properly, this is a simple implementation that works when the function is a builtin,
-// the environment doesn't matter, and named argument matching isn't required
+// TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"name", "args", "env"})
 public abstract class DoCall extends RBuiltinNode {
     @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private Get getNode;
 
     @Specialization(guards = "lengthOne")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         RFunction func = RContext.getEngine().lookupBuiltin(fname.getDataAt(0));
         if (func == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION, fname);
+            if (getNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin(), getSuppliedArgsNames()));
+            }
+            func = (RFunction) getNode.execute(frame, fname.getDataAt(0), 0, RMissing.instance, RRuntime.TYPE_FUNCTION, RRuntime.LOGICAL_TRUE);
         }
-        Object[] args = new Object[argsAsList.getLength()];
-        for (int i = 0; i < args.length; i++) {
-            args[i] = argsAsList.getDataAt(i);
-        }
-        Object[] callArgs = RArguments.create(func, funCall.getSourceSection(), args);
+        Object[] argValues = argsAsList.isShared() ? argsAsList.getDataCopy() : argsAsList.getDataWithoutCopying();
+        Object n = argsAsList.getNames();
+        String[] argNames = n == RNull.instance ? null : (((RStringVector) n).isShared() ? ((RStringVector) n).getDataCopy() : ((RStringVector) n).getDataWithoutCopying());
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection());
+        Object[] callArgs = RArguments.create(func, funCall.getSourceSection(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         return funCall.call(frame, func.getTarget(), callArgs);
     }
 

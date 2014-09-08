@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -34,6 +35,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"})
 public abstract class ShortRowNames extends RBuiltinNode {
+
+    public abstract Object executeObject(VirtualFrame frame, Object operand, Object type);
 
     @CreateCast({"arguments"})
     public RNode[] createCastValue(RNode[] children) {

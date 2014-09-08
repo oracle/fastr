@@ -92,4 +92,20 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
             return updateNames(vector, (String) castString(frame, names));
         }
     }
+
+    @Specialization
+    protected RAbstractVector updateNames(RDataFrame dataFrame, RStringVector names) {
+        return updateNames(dataFrame.getVector(), names);
+    }
+
+    @Specialization
+    protected RAbstractVector updateNames(RDataFrame dataFrame, String names) {
+        return updateNames(dataFrame.getVector(), names);
+    }
+
+    @Specialization
+    protected RAbstractVector updateNames(VirtualFrame frame, RDataFrame dataFrame, Object names) {
+        return updateNames(frame, dataFrame.getVector(), names);
+    }
+
 }

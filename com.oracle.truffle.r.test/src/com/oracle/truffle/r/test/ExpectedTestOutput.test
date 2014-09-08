@@ -4619,6 +4619,10 @@ Warning messages:
   out-of-range values treated as 0 in coercion to raw
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsVector
+#{ as.vector(NULL, "list") }
+list()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsVector
 #{ as.vector(c("foo", "bar"), "raw") }
 [1] 00 00
 Warning messages:
@@ -6007,6 +6011,14 @@ a1 a2
  a
  1 42
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
+#{ x<-expression(1); c(x) }
+expression(1)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
+#{ x<-expression(1); c(x,2) }
+expression(1, 2)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
 #{ complex(3) }
 [1] 0+0i 0+0i 0+0i
@@ -6700,6 +6712,12 @@ attr(,"foo")
 #{ z <- 1 ; dim(z) <- c(1,1) ; dim(z) <- NULL ; z }
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDoCall
+#{ x<-list(c(1,2)); do.call("as.matrix", x) }
+     [,1]
+[1,]    1
+[2,]    2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDrop
 #{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }
 , , 1
@@ -7098,6 +7116,18 @@ Error in rm("foo", envir = baseenv()) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExp
 #{ round( exp(c(1+1i,-2-3i)), digits=5 ) }
 [1]  1.46869+2.28736i -0.13398-0.01910i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
+#{ f <- function(z) {z}; e<-c(expression(f), 7); eval(e) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
+#{ f <- function(z) {z}; e<-expression(f); e2<-c(e, 7); eval(e2) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
+#{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }
+[1] "double"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFFT
 #{ fft(10) }
@@ -11297,6 +11327,10 @@ Error: object 'x' not found
 #{ sub("a","aa", "prague alley") }
 [1] "praague alley"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }
+[1] "language"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ substr("123456", -1, 3) }
 [1] "123"
@@ -13809,6 +13843,12 @@ $foo
 #{ x<-c(1,2); class(x)<-"data.frame"; row.names(x)<-integer(); x }
 NULL
 <0 rows> (or 0-length row.names)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-c(1,2); y<-data.frame(x); y }
+  x
+1 1
+2 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-integer(); class(x)<-"data.frame"; x }
