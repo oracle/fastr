@@ -64,7 +64,18 @@ public abstract class Call extends RBuiltinNode {
     @SlowPath
     protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
         ReadVariableNode functionLookup = ReadVariableNode.create(name, RRuntime.TYPE_FUNCTION, false, true, false, true);
-        CallArgumentsNode callArgs = null;
+        return makeCall0(functionLookup, name, args);
+    }
+
+    @SlowPath
+    protected static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
+        ConstantNode func = ConstantNode.create(function);
+        return makeCall0(func, ((RRootNode) function.getTarget().getRootNode()).getSourceCode(), args);
+    }
+
+    @SlowPath
+    private static RLanguage makeCall0(RNode fn, String fnSource, RArgsValuesAndNames args) {
+        CallArgumentsNode callArgs;
         if (args != null) {
             Object[] argValues = args.getValues();
             RNode[] argValueNodes = new RNode[argValues.length];
@@ -72,9 +83,11 @@ public abstract class Call extends RBuiltinNode {
                 argValueNodes[i] = ConstantNode.create(argValues[i]);
             }
             callArgs = CallArgumentsNode.create(false, false, argValueNodes, args.getNames());
+        } else {
+            callArgs = CallArgumentsNode.create(false, false, EMTPY_RNODE_ARRAY, null);
         }
-        NullSourceSection src = new NullSourceSection("call", "call", makeSource(name, args));
-        RCallNode call = RCallNode.createCall(src, functionLookup, callArgs);
+        NullSourceSection src = new NullSourceSection("call", "call", makeSource(fnSource, args));
+        RCallNode call = RCallNode.createCall(src, fn, callArgs);
         return RDataFactory.createLanguage(call);
     }
 

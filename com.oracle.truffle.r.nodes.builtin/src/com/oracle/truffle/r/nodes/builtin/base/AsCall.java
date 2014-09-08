@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -33,14 +32,9 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class AsCall extends RBuiltinNode {
 
-    @Specialization(guards = "functionIsName")
-    protected RLanguage asCallName(RList x) {
-        return Call.makeCall(quote((String) x.getDataAt(0)), makeNamesAndValues(x));
-    }
-
-    @Specialization(guards = "functionIsFunction")
+    @Specialization
     protected RLanguage asCallFunction(RList x) {
-        return Call.makeCall(quote(x.getDataAt(0).toString()), makeNamesAndValues(x));
+        return Call.makeCall((RFunction) x.getDataAt(0), makeNamesAndValues(x));
     }
 
     private static RArgsValuesAndNames makeNamesAndValues(RList x) {
@@ -53,19 +47,6 @@ public abstract class AsCall extends RBuiltinNode {
             System.arraycopy(ns.getDataWithoutCopying(), 1, names, 0, length);
         }
         return new RArgsValuesAndNames(values, names);
-    }
-
-    protected static boolean functionIsName(RList x) {
-        return x.getDataAt(0) instanceof String;
-    }
-
-    protected static boolean functionIsFunction(RList x) {
-        return x.getDataAt(0) instanceof RFunction;
-    }
-
-    @SlowPath
-    private static String quote(String s) {
-        return "\"" + s + "\"";
     }
 
 }
