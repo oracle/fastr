@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -65,6 +66,53 @@ public class FrameFunctions {
             }
             return callerFrame;
         }
+    }
+
+    @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
+    public abstract static class SysCall extends RBuiltinNode {
+
+        @Specialization(guards = "whichZero")
+        protected RLanguage sysCall(@SuppressWarnings("unused") int which) {
+            Frame cframe = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+            Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
+            RArguments.copyArgumentsInto(cframe, values);
+            int namesLength = RArguments.getNamesLength(cframe);
+            String[] names = new String[namesLength];
+            for (int i = 0; i < namesLength; ++i) {
+                names[i] = RArguments.getName(cframe, i);
+            }
+            String fname = extractFunctionPart(RArguments.getCallSourceSection(cframe).getCode());
+            return Call.makeCall(fname, new RArgsValuesAndNames(values, names));
+        }
+
+        @Specialization(guards = "!whichZero")
+        protected RLanguage sysCallWhich(@SuppressWarnings("unused") int which) {
+            throw RInternalError.unimplemented();
+        }
+
+        protected static boolean whichZero(int which) {
+            return which == 0;
+        }
+
+        /**
+         * Extract the function name from a call string by finding the first open bracket that does
+         * not belong to the function side of the call.
+         */
+        @SlowPath
+        private static String extractFunctionPart(String call) {
+            // TODO find a better way to extract the function name from the call
+            int pos = 0;
+            int brackets = 0;
+            do {
+                if (call.charAt(pos) == '(') {
+                    ++brackets;
+                } else if (call.charAt(pos) == ')') {
+                    --brackets;
+                }
+            } while (call.charAt(++pos) != '(' || brackets > 0);
+            return call.substring(0, pos);
+        }
+
     }
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})

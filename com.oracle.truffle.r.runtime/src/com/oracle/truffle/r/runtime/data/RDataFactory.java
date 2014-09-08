@@ -340,8 +340,4 @@ public final class RDataFactory {
         return createPromise(rep, null);
     }
 
-    public static RCall createCall(String name, RArgsValuesAndNames args) {
-        return traceDataCreated(new RCall(name, args));
-    }
-
 }

@@ -79,4 +79,17 @@ interface ArgumentsTrait {
         }
         return NO_VARARG;
     }
+
+    /**
+     * Replaces each {@link String} with its {@link String#intern()} equivalent
+     *
+     * @param names
+     */
+    static void internalize(String[] names) {
+        // Internalize names
+        for (int i = 0; i < names.length; i++) {
+            String name = names[i];
+            names[i] = name != null ? name.intern() : null;
+        }
+    }
 }

@@ -166,10 +166,6 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRLanguage(execute(frame));
     }
 
-    public RCall executeRCall(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRCall(execute(frame));
-    }
-
     public RPromise executeRPromise(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectRPromise(execute(frame));
     }

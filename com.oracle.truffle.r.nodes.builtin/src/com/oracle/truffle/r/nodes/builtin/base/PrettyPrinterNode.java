@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVec
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.RCall.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -760,12 +759,6 @@ public abstract class PrettyPrinterNode extends RNode {
             values[i] = operand.getDataAt(i).isNA() ? "NA" : concat(realValues[i], imaginaryParts.getDataAt(i) < 0.0 ? "-" : "+", imaginaryValues[i], "i");
         }
         return printVector(operand, values, false, false);
-    }
-
-    @SlowPath
-    @Specialization
-    protected String prettyPrint(RCall operand, Object listElementName, byte quote, byte right) {
-        return operand.toString();
     }
 
     protected static boolean twoDimsOrMore(RAbstractVector v) {

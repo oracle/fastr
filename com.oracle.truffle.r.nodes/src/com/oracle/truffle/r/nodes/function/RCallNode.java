@@ -332,7 +332,7 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
 
         private final RFunction function;
-        @CompilationFinal private FunctionSignature callSignature = null;
+        @CompilationFinal private VarArgsSignature varArgsSignature = null;
         @CompilationFinal private MatchedArguments reorderedArgs = null;
 
         DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
@@ -345,12 +345,12 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
             // As this function takes "..." as argument, it's argument may change every call. Thus
             // we check whether the signature changed - only then rematching is necessary!
-            FunctionSignature newCallSignature = suppliedArgs.createSignature(frame);
-            if (newCallSignature.isNotEqualTo(callSignature) || reorderedArgs == null) {
+            VarArgsSignature newVarArgsSignature = suppliedArgs.createSignature(frame);
+            if (reorderedArgs == null || newVarArgsSignature.isNotEqualTo(varArgsSignature)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
                 // ...to match them against the chosen function's formal arguments
-                callSignature = newCallSignature;
+                varArgsSignature = newVarArgsSignature;
                 reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
@@ -402,7 +402,7 @@ public abstract class RCallNode extends RNode {
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
         @CompilationFinal private RFunction lastFunction = null;
-        @CompilationFinal private FunctionSignature callSignature = null;
+        @CompilationFinal private VarArgsSignature varArgsSignature = null;
         @CompilationFinal private MatchedArguments reorderedArgs = null;
 
         GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
@@ -414,13 +414,13 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             // Function may change every call, plus each takes one or more "...": Check if rematch
             // is necessary...
-            FunctionSignature newCallSignature = suppliedArgs.createSignature(frame);
-            if (currentFunction != lastFunction || newCallSignature.isNotEqualTo(callSignature) || reorderedArgs == null) {
+            VarArgsSignature newVarArgsSignature = suppliedArgs.createSignature(frame);
+            if (currentFunction != lastFunction || reorderedArgs == null || newVarArgsSignature.isNotEqualTo(varArgsSignature)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 // ...yes!
                 UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
                 lastFunction = currentFunction;
-                callSignature = newCallSignature;
+                varArgsSignature = newVarArgsSignature;
                 // Match them against the chosen function's formal arguments
                 reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
