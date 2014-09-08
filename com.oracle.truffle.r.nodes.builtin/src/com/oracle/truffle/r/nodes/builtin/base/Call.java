@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -80,7 +81,11 @@ public abstract class Call extends RBuiltinNode {
             Object[] argValues = args.getValues();
             RNode[] argValueNodes = new RNode[argValues.length];
             for (int i = 0; i < argValues.length; ++i) {
-                argValueNodes[i] = ConstantNode.create(argValues[i]);
+                if (argValues[i] instanceof RPromise) {
+                    argValueNodes[i] = NodeUtil.cloneNode((RNode) ((RPromise) argValues[i]).getRep());
+                } else {
+                    argValueNodes[i] = ConstantNode.create(argValues[i]);
+                }
             }
             callArgs = CallArgumentsNode.create(false, false, argValueNodes, args.getNames());
         } else {
@@ -104,7 +109,11 @@ public abstract class Call extends RBuiltinNode {
                 }
                 // TODO not sure deparse is the right way to do this (might be better to get hold of
                 // the source sections of the arguments)
-                sb.append(RDeparse.deparse(values[i], 60, false, -1)[0]);
+                if (values[i] instanceof RPromise) {
+                    sb.append(((RNode) ((RPromise) values[i]).getRep()).getSourceSection().getCode());
+                } else {
+                    sb.append(RDeparse.deparse(values[i], 60, false, -1)[0]);
+                }
                 if (i + 1 < args.length()) {
                     sb.append(", ");
                 }

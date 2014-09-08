@@ -13359,6 +13359,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSysCall_ffdd075dd1a47fd18359279945ca339a() {
+        assertEval("{ f <- function() sys.call() ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCall_f44ee9a6ea3efb3dd3af1c314ae8b266() {
+        assertEval("{ (function() sys.call())() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_7cbf9b612d6ed31bbb101daf73e590f7() {
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_76d487db1e13401e8bbda4051cbde274() {
+        assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testTabulate_4b7b5ec3ddf837f6040cf4105e954f88() {
         assertEval("{tabulate(c(2,3,5))}");
     }
