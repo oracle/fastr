@@ -2692,13 +2692,15 @@ public class TestSimpleBuiltins extends TestBase {
     public void testSysCall() {
         assertEval("{ f <- function() sys.call() ; f() }");
         assertEval("{ (function() sys.call())() }");
-    }
-
-    @Test
-    @Ignore
-    public void testSysCallIgnore() {
         assertEval("{ f <- function(x) sys.call() ; f(2) }");
+        assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
         assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
     }
 
     @Test

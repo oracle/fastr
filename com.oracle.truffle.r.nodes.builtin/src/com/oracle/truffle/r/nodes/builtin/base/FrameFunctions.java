@@ -24,12 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -47,6 +44,13 @@ public class FrameFunctions {
     public abstract static class FrameHelper extends RBuiltinNode {
 
         /**
+         * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
+         * only use the frame internally should not materialise it, i.e., they should use
+         * {@link FrameAccess#READ_ONLY} or {@link FrameAccess#READ_WRITE}.
+         */
+        protected abstract FrameAccess frameAccess();
+
+        /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
         protected Frame getFrame(int nn) {
@@ -56,11 +60,11 @@ public class FrameFunctions {
                 if (n > d) {
                     RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
-                n = d - n;
+                n = d - n + 1; // add one to skip internal evaluation frame
             } else {
                 n = -n + 1;
             }
-            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n);
+            Frame callerFrame = Utils.getStackFrame(frameAccess(), n);
             if (callerFrame == null) {
                 RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
             }
@@ -69,11 +73,17 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
-    public abstract static class SysCall extends RBuiltinNode {
+    public abstract static class SysCall extends FrameHelper {
 
-        @Specialization(guards = "whichZero")
-        protected RLanguage sysCall(@SuppressWarnings("unused") int which) {
-            Frame cframe = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
+        }
+
+        @Specialization
+        protected RLanguage sysCall(int which) {
+            controlVisibility();
+            Frame cframe = getFrame(which);
             Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
             RArguments.copyArgumentsInto(cframe, values);
             int namesLength = RArguments.getNamesLength(cframe);
@@ -81,36 +91,13 @@ public class FrameFunctions {
             for (int i = 0; i < namesLength; ++i) {
                 names[i] = RArguments.getName(cframe, i);
             }
-            String fname = extractFunctionPart(RArguments.getCallSourceSection(cframe).getCode());
-            return Call.makeCall(fname, new RArgsValuesAndNames(values, names));
+            RFunction function = RArguments.getFunction(cframe);
+            return Call.makeCall(RArguments.getCallSourceSection(cframe), function, new RArgsValuesAndNames(values, names));
         }
 
-        @Specialization(guards = "!whichZero")
-        protected RLanguage sysCallWhich(@SuppressWarnings("unused") int which) {
-            throw RInternalError.unimplemented();
-        }
-
-        protected static boolean whichZero(int which) {
-            return which == 0;
-        }
-
-        /**
-         * Extract the function name from a call string by finding the first open bracket that does
-         * not belong to the function side of the call.
-         */
-        @SlowPath
-        private static String extractFunctionPart(String call) {
-            // TODO find a better way to extract the function name from the call
-            int pos = 0;
-            int brackets = 0;
-            do {
-                if (call.charAt(pos) == '(') {
-                    ++brackets;
-                } else if (call.charAt(pos) == ')') {
-                    --brackets;
-                }
-            } while (call.charAt(++pos) != '(' || brackets > 0);
-            return call.substring(0, pos);
+        @Specialization
+        protected RLanguage sysCall(double which) {
+            return sysCall((int) which);
         }
 
     }
@@ -128,8 +115,8 @@ public class FrameFunctions {
     public abstract static class SysFrame extends FrameHelper {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(0)};
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.MATERIALIZE;
         }
 
         @Specialization
@@ -155,11 +142,6 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"})
     public abstract static class SysParent extends RBuiltinNode {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(1)};
-        }
-
         @Specialization
         protected int sysParent(int nd) {
             controlVisibility();
@@ -182,8 +164,8 @@ public class FrameFunctions {
     public abstract static class SysFunction extends FrameHelper {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(0)};
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
         }
 
         @Specialization
@@ -208,6 +190,12 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {})
     public abstract static class SysParents extends FrameHelper {
+
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
+        }
+
         @Specialization
         protected RIntVector sysParents() {
             controlVisibility();
@@ -218,14 +206,22 @@ public class FrameFunctions {
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
+
     }
 
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
     public abstract static class SysFrames extends FrameHelper {
+
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
+        }
+
         @Specialization
         protected Object sysFrames() {
             throw RError.nyi(null, "sys.frames is not implemented");
         }
+
     }
 
     /**
@@ -235,8 +231,8 @@ public class FrameFunctions {
     public abstract static class ParentFrame extends FrameHelper {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(1)};
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.MATERIALIZE;
         }
 
         @Specialization

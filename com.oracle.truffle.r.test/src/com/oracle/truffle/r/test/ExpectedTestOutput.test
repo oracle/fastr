@@ -11659,6 +11659,42 @@ character(0)
 #{ f <- function() sys.call() ; f() }
 f()
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }
+f()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }
+g()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }
+h()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(1) ; g <- function() f() ; g() }
+g()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }
+h()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }
+g()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; f(2) }
+f(2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; f(x = 2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }
+f(g())
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTabulate
 #{tabulate(c(-2,0,2,3,3,5))}
 [1] 0 1 2 0 1
