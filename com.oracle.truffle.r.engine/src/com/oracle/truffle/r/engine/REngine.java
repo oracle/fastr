@@ -237,77 +237,84 @@ public final class REngine implements RContext.Engine {
      * to avoid the patch? and get the enclosing frame correct on definition?
      *
      */
-    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
+    @SuppressWarnings("unused")
+    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, REnvironment enclos) throws PutException {
         MaterializedFrame envFrame = envir.getFrame();
-        VirtualFrame vFrame = RRuntime.createFunctionFrame(function, callSrc);
-        RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
-        // We make the new frame look like it was a real call to "function" (why?)
-        RArguments.setFunction(vFrame, function);
-        FrameDescriptor envfd = envFrame.getFrameDescriptor();
-        FrameDescriptor vfd = vFrame.getFrameDescriptor();
-        // Copy existing bindings. Logically we want to clone the existing frame contents.
-        // N.B. Since FrameDescriptors can be shared between frames, the descriptor may
-        // contain slots that do not have values in the frame.
-        int i = 0;
-        for (; i < envfd.getSlots().size(); i++) {
-            FrameSlot slot = envfd.getSlots().get(i);
-            FrameSlotKind slotKind = slot.getKind();
-            FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
-            Object slotValue = envFrame.getValue(slot);
-            if (slotValue != null) {
-                try {
-                    switch (slotKind) {
-                        case Byte:
-                            vFrame.setByte(vFrameSlot, (byte) slotValue);
-                            break;
-                        case Int:
-                            vFrame.setInt(vFrameSlot, (int) slotValue);
-                            break;
-                        case Double:
-                            vFrame.setDouble(vFrameSlot, (double) slotValue);
-                            break;
-                        case Object:
-                            vFrame.setObject(vFrameSlot, slotValue);
-                            break;
-                        case Illegal:
-                            break;
-                        default:
-                            throw new FrameSlotTypeException();
-                    }
-                } catch (FrameSlotTypeException ex) {
-                    throw new RuntimeException("unexpected FrameSlot exception", ex);
-                }
-            }
-
-        }
+        // TODO This is temporary for now, to be able to push and use buildbot infrastructure to
+        // check for compilation issues
+        VirtualFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc);
         Object result = runCall(callTarget, vFrame, false, false);
-        if (result != null) {
-            FrameDescriptor fd = vFrame.getFrameDescriptor();
-            for (FrameSlot slot : fd.getSlots()) {
-                if (slot.getKind() != FrameSlotKind.Illegal) {
-                    // the put will take care of checking the slot type, so getValue is ok
-                    Object value = vFrame.getValue(slot);
-                    if (value != null) {
-                        if (value instanceof RFunction) {
-                            checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
-                        }
-                        envir.put(slot.getIdentifier().toString(), value);
-                    }
-                }
-            }
-        }
-        if (result instanceof RFunction) {
-            checkPatchRFunctionEnclosingFrame((RFunction) result, vFrame, envFrame);
-        }
+
+// VirtualFrame vFrame = RRuntime.createFunctionFrame(function, callSrc);
+// RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
+// // We make the new frame look like it was a real call to "function" (why?)
+// RArguments.setFunction(vFrame, function);
+// FrameDescriptor envfd = envFrame.getFrameDescriptor();
+// FrameDescriptor vfd = vFrame.getFrameDescriptor();
+// // Copy existing bindings. Logically we want to clone the existing frame contents.
+// // N.B. Since FrameDescriptors can be shared between frames, the descriptor may
+// // contain slots that do not have values in the frame.
+// int i = 0;
+// for (; i < envfd.getSlots().size(); i++) {
+// FrameSlot slot = envfd.getSlots().get(i);
+// FrameSlotKind slotKind = slot.getKind();
+// FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
+// Object slotValue = envFrame.getValue(slot);
+// if (slotValue != null) {
+// try {
+// switch (slotKind) {
+// case Byte:
+// vFrame.setByte(vFrameSlot, (byte) slotValue);
+// break;
+// case Int:
+// vFrame.setInt(vFrameSlot, (int) slotValue);
+// break;
+// case Double:
+// vFrame.setDouble(vFrameSlot, (double) slotValue);
+// break;
+// case Object:
+// vFrame.setObject(vFrameSlot, slotValue);
+// break;
+// case Illegal:
+// break;
+// default:
+// throw new FrameSlotTypeException();
+// }
+// } catch (FrameSlotTypeException ex) {
+// throw new RuntimeException("unexpected FrameSlot exception", ex);
+// }
+// }
+//
+// }
+// Object result = runCall(callTarget, vFrame, false, false);
+// if (result != null) {
+// FrameDescriptor fd = vFrame.getFrameDescriptor();
+// for (FrameSlot slot : fd.getSlots()) {
+// if (slot.getKind() != FrameSlotKind.Illegal) {
+// // the put will take care of checking the slot type, so getValue is ok
+// Object value = vFrame.getValue(slot);
+// if (value != null) {
+// if (value instanceof RFunction) {
+// checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
+// }
+// envir.put(slot.getIdentifier().toString(), value);
+// }
+// }
+// }
+// }
+// if (result instanceof RFunction) {
+// checkPatchRFunctionEnclosingFrame((RFunction) result, vFrame, envFrame);
+// }
         return result;
     }
 
-    private static void checkPatchRFunctionEnclosingFrame(RFunction func, Frame vFrame, MaterializedFrame envFrame) {
-        if (func.getEnclosingFrame() == vFrame) {
-            // this function's enclosing environment should be envFrame
-            func.setEnclosingFrame(envFrame);
-        }
-    }
+// private static void checkPatchRFunctionEnclosingFrame(RFunction func, Frame vFrame,
+// MaterializedFrame envFrame) {
+// if (func.getEnclosingFrame() == vFrame) {
+// // this function's enclosing environment should be envFrame
+// func.setEnclosingFrame(envFrame);
+// }
+// }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
         return runCall(promise.getClosure().getCallTarget(), frame, false, false);
