@@ -2493,6 +2493,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
         assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
         assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
+
+        assertEval("{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }");
     }
 
     @Test

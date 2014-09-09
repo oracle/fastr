@@ -7130,6 +7130,10 @@ Error in rm("foo", envir = baseenv()) :
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ ne <- new.env(); eval(x <- 1, ne); ls() }
 [1] "ne" "x"
 

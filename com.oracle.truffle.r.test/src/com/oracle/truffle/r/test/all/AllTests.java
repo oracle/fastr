@@ -7754,6 +7754,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEval_0cfcca8d1d0d9f4f9bb286adaf4da5ea() {
+        assertEval("{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
