@@ -36,20 +36,16 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "make.unique", kind = INTERNAL, parameterNames = {"names", "sep"})
 public abstract class MakeUnique extends RBuiltinNode {
 
-    private final BranchProfile identity = new BranchProfile();
-    private final BranchProfile makeUnique = new BranchProfile();
-    private final BranchProfile noDuplicates = new BranchProfile();
-    private final BranchProfile withDuplicates = new BranchProfile();
+    private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile duplicatesProfile = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
 
     @Specialization
     protected RAbstractStringVector makeUnique(RAbstractStringVector names, String sep) {
         controlVisibility();
-        if (names.getLength() == 0 || names.getLength() == 1) {
-            identity.enter();
+        if (namesProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
             return names;
         } else {
-            makeUnique.enter();
             // TODO: perhaps for longer vectors there is a faster algorithm using hash maps, but
             // then it would probably have to be put on the slow path even for cases when no
             // duplicates actually exist
@@ -69,11 +65,9 @@ public abstract class MakeUnique extends RBuiltinNode {
                     }
                 }
             }
-            if (!duplicatesExist) {
-                noDuplicates.enter();
+            if (duplicatesProfile.profile(!duplicatesExist)) {
                 return names;
             } else {
-                withDuplicates.enter();
                 RStringVector newNames = names.materialize();
                 if (newNames.isShared()) {
                     newNames = (RStringVector) newNames.copy();
