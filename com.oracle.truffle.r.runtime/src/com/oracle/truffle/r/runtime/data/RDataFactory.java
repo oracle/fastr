@@ -325,7 +325,7 @@ public final class RDataFactory {
         return traceDataCreated(new RSymbol(name));
     }
 
-    public static RLanguage createLanguage(Object rep, RLanguage.TYPE type) {
+    public static RLanguage createLanguage(Object rep, RLanguage.Type type) {
         return traceDataCreated(new RLanguage(rep, type));
     }
 

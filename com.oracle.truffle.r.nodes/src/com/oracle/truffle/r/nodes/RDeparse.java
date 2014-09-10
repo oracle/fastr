@@ -357,9 +357,9 @@ public class RDeparse {
             case LANGSXP: {
                 if (obj instanceof RLanguage) {
                     RLanguage lang = (RLanguage) obj;
-                    if (lang.getType() == RLanguage.TYPE.EXPR) {
+                    if (lang.getType() == RLanguage.Type.EXPR) {
                         deparse2buff(state, ((RLanguage) obj).getRep());
-                    } else if (lang.getType() == RLanguage.TYPE.RNODE) {
+                    } else if (lang.getType() == RLanguage.Type.RNODE) {
                         state.append(((RNode) ((RLanguage) obj).getRep()).getSourceSection().getCode());
                     }
                     break;

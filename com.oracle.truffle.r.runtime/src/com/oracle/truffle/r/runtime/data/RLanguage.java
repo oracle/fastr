@@ -30,19 +30,19 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 @ValueType
 public class RLanguage extends RLanguageRep {
 
-    public static enum TYPE {
+    public static enum Type {
         RNODE,
         EXPR;
     }
 
-    private final TYPE type;
+    private final Type type;
 
-    public RLanguage(Object rep, TYPE type) {
+    public RLanguage(Object rep, Type type) {
         super(rep);
         this.type = type;
     }
 
-    public TYPE getType() {
+    public Type getType() {
         return type;
     }
 }

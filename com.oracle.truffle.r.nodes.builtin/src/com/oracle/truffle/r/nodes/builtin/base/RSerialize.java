@@ -415,7 +415,7 @@ public class RSerialize {
         RCallNode call = RCallNode.createCloneReplacingFirstArg(getNamespaceCall, ConstantNode.create(name));
         try {
             // TODO: should we distinguish a different RLanguage type for calls?
-            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call, RLanguage.TYPE.RNODE), REnvironment.globalEnv());
+            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call, RLanguage.Type.RNODE), REnvironment.globalEnv());
         } catch (PutException ex) {
             throw RError.error((SourceSection) null, ex);
         }
