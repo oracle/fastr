@@ -31,8 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 public class RLanguage extends RLanguageRep {
 
     public static enum Type {
-        RNODE,
-        EXPR;
+        RNODE; // wait for it - there will be more types!
     }
 
     private final Type type;

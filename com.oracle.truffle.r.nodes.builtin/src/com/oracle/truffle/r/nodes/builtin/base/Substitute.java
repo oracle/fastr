@@ -133,7 +133,7 @@ public abstract class Substitute extends RBuiltinNode {
                     listData[i + 1] = arg;
                 }
             }
-            return RDataFactory.createLanguage(RDataFactory.createExpression(RDataFactory.createList(listData)), RLanguage.Type.EXPR);
+            return RDataFactory.createExpression(RDataFactory.createList(listData));
         } else {
             throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr), unsupported arg");
         }
