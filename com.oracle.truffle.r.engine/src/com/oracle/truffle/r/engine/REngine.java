@@ -158,7 +158,7 @@ public final class REngine implements RContext.Engine {
             ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
-                data[i] = RDataFactory.createLanguage(transform(exprs[i], REnvironment.emptyEnv()));
+                data[i] = RDataFactory.createLanguage(transform(exprs[i], REnvironment.emptyEnv()), RLanguage.TYPE.RNODE);
             }
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {

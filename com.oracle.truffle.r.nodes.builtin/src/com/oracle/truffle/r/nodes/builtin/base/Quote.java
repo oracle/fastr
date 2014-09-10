@@ -59,7 +59,7 @@ public abstract class Quote extends RBuiltinNode {
             ConstantNode cnode = (ConstantNode) unode;
             return cnode.getValue();
         } else {
-            return RDataFactory.createLanguage(expr.getRep());
+            return RDataFactory.createLanguage(expr.getRep(), RLanguage.TYPE.RNODE);
         }
     }
 }

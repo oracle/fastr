@@ -2522,6 +2522,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ deparse(c(T, F)) }");
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");
+        assertEval("{ x<-expression(1); deparse(x) }");
     }
 
     @Test

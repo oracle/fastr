@@ -6814,6 +6814,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDeparse_d28b757104124865c681059f155437d9() {
+        assertEval("{ x<-expression(1); deparse(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDeparseIgnore_1dc435ef27d6d10df26ec2271cb67316() {
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
     }
