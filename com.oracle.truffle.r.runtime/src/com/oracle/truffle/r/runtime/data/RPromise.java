@@ -22,10 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
@@ -455,7 +454,7 @@ public final class RPromise extends RLanguageRep {
     }
 
     public static final class Closure {
-        @CompilationFinal private RootCallTarget callTarget;
+        private RootCallTarget callTarget;
         private final Object expr;
 
         private Closure(Object expr) {
@@ -469,7 +468,6 @@ public final class RPromise extends RLanguageRep {
         public RootCallTarget getCallTarget() {
             if (callTarget == null) {
                 // Create lazily, as it is not needed at all for INLINED promises!
-                CompilerDirectives.transferToInterpreterAndInvalidate();
                 callTarget = generateCallTarget(expr);
             }
             return callTarget;
