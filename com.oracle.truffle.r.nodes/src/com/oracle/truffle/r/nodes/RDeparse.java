@@ -9,13 +9,14 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.nodes;
 
 import java.text.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
@@ -316,8 +317,19 @@ public class RDeparse {
 
             case ENVSXP:
             case VECSXP:
-            case EXPRSXP:
                 assert false;
+                break;
+            case EXPRSXP:
+                RExpression expr = (RExpression) obj;
+                state.append("expression(");
+                for (int i = 0; i < expr.getLength(); i++) {
+                    deparse2buff(state, expr.getDataAt(i));
+                    if (i == expr.getLength() - 1) {
+                        break;
+                    }
+                    state.append(", ");
+                }
+                state.append(")");
                 break;
 
             case LISTSXP: {
@@ -343,6 +355,15 @@ public class RDeparse {
             }
 
             case LANGSXP: {
+                if (obj instanceof RLanguage) {
+                    RLanguage lang = (RLanguage) obj;
+                    if (lang.getType() == RLanguage.TYPE.EXPR) {
+                        deparse2buff(state, ((RLanguage) obj).getRep());
+                    } else if (lang.getType() == RLanguage.TYPE.RNODE) {
+                        state.append(((RNode) ((RLanguage) obj).getRep()).getSourceSection().getCode());
+                    }
+                    break;
+                }
                 RPairList f = (RPairList) obj;
                 Object car = f.car();
                 Object cdr = f.cdr();

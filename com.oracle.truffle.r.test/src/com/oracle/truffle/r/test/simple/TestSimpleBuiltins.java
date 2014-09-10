@@ -2493,6 +2493,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
         assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
         assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
+
+        assertEval("{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }");
     }
 
     @Test
@@ -2520,6 +2522,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ deparse(c(T, F)) }");
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");
+        assertEval("{ x<-expression(1); deparse(x) }");
     }
 
     @Test
@@ -2662,37 +2665,45 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ call(\"f\", quote(A)) }");
         assertEval("{ f <- \"f\" ; call(f, quote(A)) }");
         assertEval("{ f <- round ; call(f, quote(A)) }");
-    }
-
-    @Test
-    @Ignore
-    public void testCallIgnore() {
+        assertEval("{ f <- function() 23 ; cl <- call(\"f\") ; eval(cl) }");
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
+        assertEval("{ cl <- call(\"f\") ; typeof(cl) }");
+        assertEval("{ cl <- call(\"f\") ; class(cl) }");
     }
 
     @Test
     public void testIsCall() {
         assertEval("{ cl <- call(\"f\") ; is.call(cl) }");
         assertEval("{ cl <- call(\"f\", 2, 3) ; is.call(cl) }");
-        assertEval("{ cl <- list(\"f\", 2, 3) ; is.call(cl) }");
+        assertEval("{ cl <- list(f, 2, 3) ; is.call(cl) }");
         assertEval("{ is.call(call) }");
     }
 
     @Test
     public void testAsCall() {
-        assertEval("{ l <- list(\"f\") ; as.call(l) }");
-        assertEval("{ l <- list(\"f\", 2, 3) ; as.call(l) }");
-        assertEval("{ g <- function() 23 ; l <- list(\"f\", g()) ; as.call(l) }");
+        assertEval("{ l <- list(f) ; as.call(l) }");
+        assertEval("{ l <- list(f, 2, 3) ; as.call(l) }");
+        assertEval("{ g <- function() 23 ; l <- list(f, g()) ; as.call(l) }");
         assertEval("{ f <- round ; g <- as.call(list(f, quote(A))) }");
+        assertEval("{ f <- function() 23 ; l <- list(f) ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(a,b) a+b ; l <- list(f,2,3) ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(f, g()) ; cl <- as.call(l) ; eval(cl) }");
     }
 
     @Test
-    @Ignore
-    public void testAsCallIgnore() {
-        assertEval("{ f <- function() 23 ; l <- list(\"f\") ; cl <- as.call(l) ; eval(cl) }");
-        assertEval("{ f <- function(a,b) a+b ; l <- list(\"f\",2,3) ; cl <- as.call(l) ; eval(cl) }");
-        assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(\"f\", g()) ; cl <- as.call(l) ; eval(cl) }");
+    public void testSysCall() {
+        assertEval("{ f <- function() sys.call() ; f() }");
+        assertEval("{ (function() sys.call())() }");
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+        assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+        assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
     }
 
     @Test

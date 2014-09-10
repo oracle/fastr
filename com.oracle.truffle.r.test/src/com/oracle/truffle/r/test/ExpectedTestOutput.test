@@ -4180,19 +4180,31 @@ logical(0)
 raw(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- function() 23 ; l <- list(f) ; cl <- as.call(l) ; eval(cl) }
+[1] 23
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- function(a,b) a+b ; l <- list(f,2,3) ; cl <- as.call(l) ; eval(cl) }
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(f, g()) ; cl <- as.call(l) ; eval(cl) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
 #{ f <- round ; g <- as.call(list(f, quote(A))) }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
-#{ g <- function() 23 ; l <- list("f", g()) ; as.call(l) }
-"f"(23)
+#{ g <- function() 23 ; l <- list(f, g()) ; as.call(l) }
+Error: object 'f' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
-#{ l <- list("f") ; as.call(l) }
-"f"()
+#{ l <- list(f) ; as.call(l) }
+Error: object 'f' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
-#{ l <- list("f", 2, 3) ; as.call(l) }
-"f"(2, 3)
+#{ l <- list(f, 2, 3) ; as.call(l) }
+Error: object 'f' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCharacter
 #{ as.character(1) }
@@ -4832,8 +4844,28 @@ f(2, 3)
 f(A)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ cl <- call("f") ; class(cl) }
+[1] "call"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ cl <- call("f") ; typeof(cl) }
+[1] "language"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
 #{ f <- "f" ; call(f, quote(A)) }
 f(A)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- function() 23 ; cl <- call("f") ; eval(cl) }
+[1] 23
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- function(a, b) { a + b } ; l <- call("f", 2, 3) ; eval(l) }
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call("f", x, y) ; x <- 10 ; eval(l) }
+[1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
 #{ f <- round ; call(f, quote(A)) }
@@ -6260,6 +6292,10 @@ Error in print(x, y) :
 #{ k <- 2 ; deparse(k) }
 [1] "2"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ x<-expression(1); deparse(x) }
+[1] "expression(1)"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiagonal
 #{ diag(1, 2, 7) }
      [,1] [,2] [,3] [,4] [,5] [,6] [,7]
@@ -7098,6 +7134,10 @@ Error in rm("foo", envir = baseenv()) :
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ ne <- new.env(); eval(x <- 1, ne); ls() }
 [1] "ne" "x"
 
@@ -7504,8 +7544,8 @@ Error in rnorm(s = 1, s = 1) :
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
-#{ cl <- list("f", 2, 3) ; is.call(cl) }
-[1] FALSE
+#{ cl <- list(f, 2, 3) ; is.call(cl) }
+Error: object 'f' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
 #{ is.call(call) }
@@ -11619,6 +11659,50 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{switch(4,1,2,3)}
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ (function() sys.call())() }
+(function() sys.call())()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; f() }
+f()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }
+f()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }
+g()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }
+h()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(1) ; g <- function() f() ; g() }
+g()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }
+h()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }
+g()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; f(2) }
+f(2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; f(x = 2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }
+f(g())
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTabulate
 #{tabulate(c(-2,0,2,3,3,5))}
 [1] 0 1 2 0 1
@@ -13849,6 +13933,12 @@ NULL
   x
 1 1
 2 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-c(7,42); y<-data.frame(x); y }
+   x
+1  7
+2 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-integer(); class(x)<-"data.frame"; x }

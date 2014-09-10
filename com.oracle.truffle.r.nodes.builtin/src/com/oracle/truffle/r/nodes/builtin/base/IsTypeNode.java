@@ -159,11 +159,6 @@ public abstract class IsTypeNode extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isType(RCall value) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
     protected byte isType(RPromise value) {
         return RRuntime.LOGICAL_FALSE;
     }
