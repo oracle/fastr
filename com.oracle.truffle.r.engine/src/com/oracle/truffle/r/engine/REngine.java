@@ -243,7 +243,7 @@ public final class REngine implements RContext.Engine {
         // TODO This is temporary for now, to be able to push and use buildbot infrastructure to
         // check for compilation issues
         VirtualFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc);
-        Object result = runCall(callTarget, vFrame, false, false);
+        return runCall(callTarget, vFrame, false, false);
 
 // VirtualFrame vFrame = RRuntime.createFunctionFrame(function, callSrc);
 // RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
@@ -305,7 +305,7 @@ public final class REngine implements RContext.Engine {
 // if (result instanceof RFunction) {
 // checkPatchRFunctionEnclosingFrame((RFunction) result, vFrame, envFrame);
 // }
-        return result;
+// return result;
     }
 
 // private static void checkPatchRFunctionEnclosingFrame(RFunction func, Frame vFrame,
