@@ -57,13 +57,19 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * list is constructed at the point when the {@link FunctionDefinitionNode} object is constructed.
  * The supplied (actual) arguments list is constructed at the point when the
  * {@link CallArgumentsNode} is constructed. At the point of executing the actual function call, the
- * supplied arguments are not processed (they are represented as {@link RNode}-s) and must be
- * "executed" to get converted into language-level values or promises. Then, the matching procedure
- * takes a list of formal arguments and a list of "executed" supplied arguments and applies the
- * actual matching algorithm taking into consideration names and positions of arguments, as well as
- * their number. The last step of the function call execution is packaging of the matched
- * (potentially reordered) "executed" supplied arguments into an {@link RArguments} object that is
- * stored in the callee's frame.
+ * matching procedure takes a list of formal arguments and a list of supplied (actual) arguments
+ * (which actually has to be constructed by flattening "...", as it obviously may contain more then
+ * one argument, all of which might have a name, see below) and applies the actual matching
+ * algorithm taking into consideration the names and positions of arguments as well as their number.
+ * After that, the resulting arguments (potentially reordered and eventually wrapped into "...") are
+ * wrapped into additional {@link PromiseNode}s which are basically an abstraction layer for normal
+ * and {@link EvalPolicy#INLINED} functions.<br/>
+ * The resulting {@link RNode} are cached inside {@link RCallNode} and executed every call (the
+ * cache is not invalidated): Depending on whether the function to be called is a normal or
+ * {@link EvalPolicy#INLINED} function, or a separate argument needs special treatment, the
+ * {@link PromiseNode} returns either a {@link RPromise} OR the directly evaluated value.<br/>
+ * The final step of the function call execution is packaging of the resulting values
+ * {@code Object[]} into an {@link RArguments} object that is stored in the callee's frame.
  * </p>
  *
  * <p>
@@ -200,7 +206,6 @@ public class ArgumentMatcher {
                 } else {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
-                    // TODO Caching of closure possible here??
                     Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
                     evaledArgs[i] = RPromise.create(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultClosure);
                 }

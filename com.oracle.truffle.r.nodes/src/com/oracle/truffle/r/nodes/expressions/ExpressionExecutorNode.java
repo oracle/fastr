@@ -48,27 +48,26 @@ public abstract class ExpressionExecutorNode extends Node {
     }
 
     private static final class UninitializedExpressionExecutorNode extends ExpressionExecutorNode {
+        /** The current depth of the inline cache */
+        private int picDepth = 0;
 
         @Override
         public Object execute(VirtualFrame frame, RNode node) {
-            // determine the current depth of the inline cache
-            int depth = 0;
-            Node parent = getParent();
-            while (parent instanceof ExpressionExecutorNode) {
-                depth++;
-                parent = parent.getParent();
-            }
-
-            // Specialize below
             CompilerDirectives.transferToInterpreterAndInvalidate();
 
+            // Specialize below
             ExpressionExecutorNode replacement;
-            if (depth < INLINE_CACHE_SIZE) {
+            if (picDepth < INLINE_CACHE_SIZE) {
+                this.incPicDepth();
                 replacement = new DirectExpressionExecutorNode(node, this);
             } else {
                 replacement = new GenericExpressionExecutorNode();
             }
             return replace(replacement).execute(frame, node);
+        }
+
+        private void incPicDepth() {
+            picDepth += 1;
         }
     }
 
