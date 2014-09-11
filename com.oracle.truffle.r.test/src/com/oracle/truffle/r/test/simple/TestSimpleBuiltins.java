@@ -2424,7 +2424,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
-
     }
 
     @Test
@@ -2507,6 +2506,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
 
         assertEval("{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; x<-1; eval(f(c(x,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(x=1,2))) }");
     }
 
     @Test

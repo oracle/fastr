@@ -7146,6 +7146,25 @@ Error in rm("foo", envir = baseenv()) :
 [1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ f<-function(...) { substitute(list(...)) }; eval(f(c(1,2))) }
+[[1]]
+[1] 1 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ f<-function(...) { substitute(list(...)) }; eval(f(c(x=1,2))) }
+[[1]]
+x
+1 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ f<-function(...) { substitute(list(...)) }; x<-1; eval(f(c(x,2))) }
+[[1]]
+[1] 1 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ ne <- new.env(); eval(x <- 1, ne); ls() }
 [1] "ne" "x"
 

@@ -7774,6 +7774,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEval_a4a0ccafd170f23c63cdfafe695a743f() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_e16aad7031bb1b7268f9b808f42b6905() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; x<-1; eval(f(c(x,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_c30b8cc3303d55cb52e74a9b5171b60f() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(x=1,2))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
