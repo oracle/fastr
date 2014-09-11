@@ -357,7 +357,12 @@ public class RDeparse {
             case LANGSXP: {
                 if (obj instanceof RLanguage) {
                     RLanguage lang = (RLanguage) obj;
-                    state.append(((RNode) lang.getRep()).getSourceSection().getCode());
+                    SourceSection ss = ((RNode) lang.getRep()).getSourceSection();
+                    if (ss == null) {
+                        state.append("<no source available>");
+                    } else {
+                        state.append(ss.getCode());
+                    }
                     break;
                 }
                 RPairList f = (RPairList) obj;
