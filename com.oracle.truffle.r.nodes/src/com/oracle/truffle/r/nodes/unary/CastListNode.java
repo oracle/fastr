@@ -87,7 +87,7 @@ public abstract class CastListNode extends CastNode {
 
     @Specialization
     protected RList doLanguage(RLanguage operand) {
-        return RDataFactory.createList(new Object[]{operand});
+        return operand.getList();
     }
 
     @Specialization

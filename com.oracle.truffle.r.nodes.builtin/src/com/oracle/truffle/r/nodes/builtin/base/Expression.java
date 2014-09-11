@@ -57,7 +57,7 @@ public abstract class Expression extends RBuiltinNode {
         if (promise.isEvaluated()) {
             return promise.getValue();
         } else {
-            return RDataFactory.createLanguage(promise.getRep(), RLanguage.Type.RNODE);
+            return RDataFactory.createLanguage(promise.getRep());
         }
     }
 

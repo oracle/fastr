@@ -101,7 +101,7 @@ public abstract class Call extends RBuiltinNode {
         }
         RCallNode call = RCallNode.createCall(src, fn, callArgs);
         // TODO: should we distinguish a different RLanguage type for calls?
-        return RDataFactory.createLanguage(call, RLanguage.Type.RNODE);
+        return RDataFactory.createLanguage(call);
     }
 
     @SlowPath

@@ -96,7 +96,7 @@ public abstract class ExpressionExecutorNode extends Node {
     private static final class GenericExpressionExecutorNode extends ExpressionExecutorNode {
         @Override
         public Object execute(VirtualFrame frame, RNode node) {
-            return RContext.getEngine().eval(new RLanguage(node, RLanguage.Type.RNODE), frame);
+            return RContext.getEngine().eval(new RLanguage(node), frame);
         }
     }
 }

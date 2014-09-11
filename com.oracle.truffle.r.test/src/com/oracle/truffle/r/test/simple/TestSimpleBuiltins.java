@@ -2377,6 +2377,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(z) {z}; e<-expression(f); e2<-c(e, 7); eval(e2) }");
 
         assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }");
+        assertEval("{ class(expression(1)) }");
     }
 
     @Test
@@ -2413,13 +2414,22 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testSubstitute() {
         assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(1,2))) }");
+        // language is a list (of sorts)
+        assertEval("{ f<-function(...) { substitute(list(...)) }; length(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[1]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(x=1,2))[[2]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[2]][[1]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
+
     }
 
     @Test
     @Ignore
     public void testSubstituteIgnore() {
-        assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
-
         assertEval("{ substitute(x + y, list(x=1)) }");
         assertEval("{ f <- function(expr) { substitute(expr) } ; f(a * b) }");
         assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(expr) } ; f() }");
@@ -2525,6 +2535,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");
         assertEval("{ x<-expression(1); deparse(x) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
     }
 
     @Test

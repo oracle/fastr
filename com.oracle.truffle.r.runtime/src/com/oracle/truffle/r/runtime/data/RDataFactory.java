@@ -325,8 +325,12 @@ public final class RDataFactory {
         return traceDataCreated(new RSymbol(name));
     }
 
-    public static RLanguage createLanguage(Object rep, RLanguage.Type type) {
-        return traceDataCreated(new RLanguage(rep, type));
+    public static RLanguage createLanguage(Object rep) {
+        return traceDataCreated(new RLanguage(rep));
+    }
+
+    public static RLanguage createLanguage(RList list, RLanguage.Type type) {
+        return traceDataCreated(new RLanguage(list, type));
     }
 
     @SlowPath

@@ -230,6 +230,7 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
 
         assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; is.language(f(x,y)) }");
+        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }");
         assertEval("{ x<-7; y<-42; f<-function(...) { as.list(substitute(g(...))) }; f(x,y) }");
 
         assertEval("{ f <- function(...) g(...); g <- function(a,b) { print(a); print(b) }; f(1,2); f(a=3,b=4); f(a=5,b=6) }");
@@ -238,8 +239,6 @@ public class TestSimpleFunctions extends TestBase {
     @Test
     @Ignore
     public void testDotsIgnore() {
-        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }");
-
         assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
 
         assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");

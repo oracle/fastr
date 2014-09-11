@@ -1624,11 +1624,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_ce2bc68ff37b6d7d58a6dc6aa7592f4a() {
-        assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_4d6f07ded5992a096c046ebead59dfd0() {
         assertEval("{ substitute(x + y, list(x=1)) }");
     }
@@ -1961,11 +1956,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testDefinitionsIgnore_1c3efc0657001d0ce5000a68b2e7b18d() {
         assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testDotsIgnore_2db2f298f9591fc863d46b2337031365() {
-        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }");
     }
 
     @Ignore
