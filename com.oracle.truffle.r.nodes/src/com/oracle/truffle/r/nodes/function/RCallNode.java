@@ -326,7 +326,7 @@ public abstract class RCallNode extends RNode {
      * A {@link RCallNode} for calls to fixed {@link RFunction}s which have varargs in their
      * {@link FormalArguments}. Varargs have to be matched again every call!
      */
-    private static class DispatchedVarArgsCallNode extends RCallNode {
+    public static class DispatchedVarArgsCallNode extends RCallNode {
 
         @Child private CallArgumentsNode suppliedArgs;    // Is not executed!
         @Child private DirectCallNode call;
@@ -335,10 +335,15 @@ public abstract class RCallNode extends RNode {
         @CompilationFinal private VarArgsSignature varArgsSignature = null;
         @CompilationFinal private MatchedArguments reorderedArgs = null;
 
-        DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
+        public DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.suppliedArgs = suppliedArgs;
             this.function = function;
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return execute(frame, function);
         }
 
         @Override

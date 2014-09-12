@@ -7789,6 +7789,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEval_28807060e395854605a0d31d78cacc8a() {
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; eval(g()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_a6ebba4db1f42998b89ca5dc35c79bd7() {
+        assertEval("{ g<-function(y) { f<-function(x) { x }; substitute(f(y)) } ; eval(g(42)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
@@ -12936,6 +12946,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSubstitute_be58256a33b599ba19bf61eba5fc857a() {
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_7308b6fdc29cc37e6d3885f09aed6ed8() {
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }");
     }
 
     @Test

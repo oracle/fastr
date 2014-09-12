@@ -36,6 +36,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.RCallNode.DispatchedVarArgsCallNode;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
@@ -210,7 +211,6 @@ public final class REngine implements RContext.Engine {
     @SlowPath
     private RCallNode makeCallNode(RLanguage expr) {
         RStringVector names = expr.getList().getNames() == RNull.instance ? null : (RStringVector) expr.getList().getNames();
-        RSymbol funcName = (RSymbol) expr.getDataAt(0);
 
         int argLength = expr.getLength() - 1;
         RNode[] args = new RNode[argLength];
@@ -227,6 +227,9 @@ public final class REngine implements RContext.Engine {
                 } else {
                     args[i] = makeCallNode(l);
                 }
+            } else if (a instanceof RPromise) {
+                // TODO: flatten nested promises?
+                args[i] = ((WrapArgumentNode) ((RPromise) a).getRep()).getOperand();
             } else {
                 args[i] = ConstantNode.create(a);
             }
@@ -239,8 +242,13 @@ public final class REngine implements RContext.Engine {
         boolean isReplacement = false;
         final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, argNames);
 
-        // TODO: source section?
-        return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RRuntime.TYPE_FUNCTION, false, true, false, true), callArgsNode);
+        if (expr.getDataAt(0) instanceof RSymbol) {
+            RSymbol funcName = (RSymbol) expr.getDataAt(0);
+            // TODO: source section?
+            return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RRuntime.TYPE_FUNCTION, false, true, false, true), callArgsNode);
+        } else {
+            return new DispatchedVarArgsCallNode((RFunction) expr.getDataAt(0), callArgsNode);
+        }
     }
 
     /**

@@ -2424,6 +2424,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
+
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }");
     }
 
     @Test
@@ -2510,6 +2512,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; x<-1; eval(f(c(x,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(x=1,2))) }");
+
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; eval(g()) }");
+        assertEval("{ g<-function(y) { f<-function(x) { x }; substitute(f(y)) } ; eval(g(42)) }");
     }
 
     @Test
