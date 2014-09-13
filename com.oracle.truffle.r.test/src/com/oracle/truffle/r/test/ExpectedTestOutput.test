@@ -4188,6 +4188,14 @@ raw(0)
 [1] 5
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[1]]) }
+[1] "closure"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[2]]) }
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
 #{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(f, g()) ; cl <- as.call(l) ; eval(cl) }
 [1] 42
 

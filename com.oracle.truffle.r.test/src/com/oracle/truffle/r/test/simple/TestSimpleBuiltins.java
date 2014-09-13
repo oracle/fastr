@@ -2711,6 +2711,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() 23 ; l <- list(f) ; cl <- as.call(l) ; eval(cl) }");
         assertEval("{ f <- function(a,b) a+b ; l <- list(f,2,3) ; cl <- as.call(l) ; eval(cl) }");
         assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(f, g()) ; cl <- as.call(l) ; eval(cl) }");
+
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[1]]) }");
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[2]]) }");
     }
 
     @Test
@@ -2726,6 +2729,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysCallIgnore() {
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
