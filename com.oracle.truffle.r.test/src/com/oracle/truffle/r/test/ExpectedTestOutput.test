@@ -13945,6 +13945,18 @@ $class
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testDataFrame
+#{ data.frame(c(1,2)) }
+  c.1..2.
+1       1
+2       2
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testDataFrame
+#{ data.frame(c(1,2), c(11,12)) }
+  c.1..2. c.11..12.
+1       1        11
+2       2        12
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testDataFrame
 #{ x<-c(7,42); y<-data.frame(x); is.data.frame(y) }
 [1] TRUE
 
