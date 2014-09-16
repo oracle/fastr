@@ -1804,6 +1804,21 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testSysCallIgnore_27098193cb36cf8c763bc06a7cc91a50() {
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysCallIgnore_8572e1ef4a32293f18c6393bf5fb9d3e() {
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testTriangular_41ca685d92138926005a9f7fb6ca8478() {
         assertEval("{ m <- { matrix( as.character(1:6), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
     }

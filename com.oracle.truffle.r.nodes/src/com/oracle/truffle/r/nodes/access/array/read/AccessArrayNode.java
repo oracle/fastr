@@ -1274,6 +1274,11 @@ public abstract class AccessArrayNode extends RNode {
         return accessRecursive(frame, expression.getList(), position, recLevel, dropDim);
     }
 
+    @Specialization
+    protected Object access(VirtualFrame frame, RLanguage lang, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        return accessRecursive(frame, lang.getList(), position, recLevel, dropDim);
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected Object access(RPairList pairlist, int recLevel, int position, RAbstractLogicalVector dropDim) {

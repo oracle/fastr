@@ -23,26 +23,127 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Denotes an (unevaluated) element of, e.g. an {@link RExpression}.
  */
 @ValueType
-public class RLanguage extends RLanguageRep {
+public class RLanguage implements RShareable, RAbstractContainer {
 
-    public static enum TYPE {
+    public static enum Type {
         RNODE,
-        EXPR;
+        FUNCALL;
     }
 
-    private final TYPE type;
+    private final RList data;
 
-    public RLanguage(Object rep, TYPE type) {
-        super(rep);
+    private final Type type;
+
+    public RLanguage(RList data, Type type) {
+        this.data = data;
         this.type = type;
     }
 
-    public TYPE getType() {
+    public RLanguage(Object rep) {
+        this.data = RDataFactory.createList(new Object[]{rep});
+        this.type = Type.RNODE;
+    }
+
+    public Type getType() {
         return type;
     }
+
+    public Object getRep() {
+        // this is meant to be used only for language objects that contain one RNode
+        assert type == Type.RNODE && data.getLength() == 1;
+        return data.getDataAt(0);
+    }
+
+    public RList getList() {
+        return data;
+    }
+
+    public Object getDataAt(int index) {
+        return data.getDataAt(index);
+    }
+
+    public RAttributes initAttributes() {
+        return data.initAttributes();
+    }
+
+    public RAttributes getAttributes() {
+        return data.getAttributes();
+    }
+
+    public int getLength() {
+        return data.getLength();
+    }
+
+    public int[] getDimensions() {
+        return data.getDimensions();
+    }
+
+    public Class<?> getElementClass() {
+        return RLanguage.class;
+    }
+
+    public RVector materializeNonSharedVector() {
+        return data.materializeNonSharedVector();
+    }
+
+    public Object getDataAtAsObject(int index) {
+        return data.getDataAtAsObject(index);
+    }
+
+    public Object getNames() {
+        return data.getNames();
+    }
+
+    public RList getDimNames() {
+        return data.getDimNames();
+    }
+
+    public Object getRowNames() {
+        return data.getRowNames();
+    }
+
+    public RStringVector getClassHierarchy() {
+        return data.getClassHierarchy();
+    }
+
+    public boolean isObject() {
+        return false;
+    }
+
+    @Override
+    public void markNonTemporary() {
+        data.markNonTemporary();
+    }
+
+    @Override
+    public boolean isTemporary() {
+        return data.isTemporary();
+    }
+
+    @Override
+    public boolean isShared() {
+        return data.isShared();
+    }
+
+    @Override
+    public RVector makeShared() {
+        return data.makeShared();
+    }
+
+    @Override
+    public RExpression copy() {
+        return RDataFactory.createExpression((RList) data.copy());
+    }
+
+    @Override
+    public RShareable materializeToShareable() {
+        return this;
+    }
+
 }

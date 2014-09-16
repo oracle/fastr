@@ -229,6 +229,7 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
 
+        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; is.language(f(x,y)) }");
         assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }");
         assertEval("{ x<-7; y<-42; f<-function(...) { as.list(substitute(g(...))) }; f(x,y) }");
 

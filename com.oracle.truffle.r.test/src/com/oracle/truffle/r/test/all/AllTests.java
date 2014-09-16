@@ -4589,6 +4589,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsCall_8f770ac294b20702940b73eddb851281() {
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[1]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsCall_e73068132fe0e5dbd044e7de543fd447() {
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[2]]) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsCharacter_9a2f22325dbb9e10761ad0f6022bc8d7() {
         assertEval("{ as.character(1) }");
     }
@@ -6819,6 +6829,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDeparse_14eea62c8be1bd99f73f7d2fd2273d2e() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_411a9258a18af4a8ef9f57454d6ce99b() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDeparseIgnore_1dc435ef27d6d10df26ec2271cb67316() {
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
     }
@@ -7764,6 +7784,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEval_a4a0ccafd170f23c63cdfafe695a743f() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_e16aad7031bb1b7268f9b808f42b6905() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; x<-1; eval(f(c(x,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_c30b8cc3303d55cb52e74a9b5171b60f() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(x=1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_28807060e395854605a0d31d78cacc8a() {
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; eval(g()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_a6ebba4db1f42998b89ca5dc35c79bd7() {
+        assertEval("{ g<-function(y) { f<-function(x) { x }; substitute(f(y)) } ; eval(g(42)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
@@ -7791,6 +7836,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testExpression_b4bf3bd356c1514a59ae2abc2dec89b0() {
         assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testExpression_55b0a3b3f40fe05748c0db073364e647() {
+        assertEval("{ class(expression(1)) }");
     }
 
     @Test
@@ -12864,8 +12914,53 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSubstitute_1afd7096f29a5802dd58c6f939da35d4() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_17d338bb527ba3b913aab6a2b5ebf941() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; length(f(c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_88c8b7c8f5c0fcddbf54d24e60e1875f() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[1]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_7c92a6efbe34930f417d81e8d6f1e9f1() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(x=1,2))[[2]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_20f021d1d41a594161afb2473c5075b5() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[2]][[1]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_3faa9d4c1d87b6641b46796a806e690d() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSubstitute_ce2bc68ff37b6d7d58a6dc6aa7592f4a() {
         assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_dcda7433c118d9ecb4b91548f0d40c2c() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_be58256a33b599ba19bf61eba5fc857a() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_7308b6fdc29cc37e6d3885f09aed6ed8() {
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }");
     }
 
     @Test
@@ -13421,6 +13516,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSysCall_3ad24bf5ef2ddd4a5ce2bb9e20fc412d() {
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_27098193cb36cf8c763bc06a7cc91a50() {
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_8572e1ef4a32293f18c6393bf5fb9d3e() {
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
@@ -15784,6 +15894,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testDataFrame_5cc191f01769a1065bca90250e27a21d() {
+        assertEval("{ data.frame(c(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testDataFrame_51b7d3e9fae558140b224fabd14429d6() {
+        assertEval("{ data.frame(c(1,2), c(11,12)) }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testIsDataFrame_d6c0af441e754a72f4efaea8bfe20102() {
         assertEval("{ is.data.frame(1) }");
     }
@@ -16491,6 +16611,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDots_d6e84b6c4d84ca15395f370802824ec0() {
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_8c619123210a09423d8fcbc211f475b3() {
+        assertEval("{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; is.language(f(x,y)) }");
     }
 
     @Test

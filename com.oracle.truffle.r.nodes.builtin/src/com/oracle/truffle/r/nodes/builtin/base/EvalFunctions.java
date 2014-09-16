@@ -72,7 +72,7 @@ public class EvalFunctions {
             if (expr instanceof RSymbol) {
                 String symbolName = ((RSymbol) expr).getName();
                 // We have to turn the string value back into a RLanguage object
-                return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false), RLanguage.TYPE.RNODE);
+                return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
             } else {
                 return expr;
             }
@@ -147,7 +147,7 @@ public class EvalFunctions {
 
         @Specialization
         protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
-            return doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep(), RLanguage.TYPE.RNODE));
+            return doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep()));
         }
 
         @Specialization
@@ -156,7 +156,7 @@ public class EvalFunctions {
              * evalq does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(RDataFactory.createLanguage(expr.getRep(), RLanguage.TYPE.RNODE), envir, enclos);
+            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
         }
 
     }
@@ -186,7 +186,7 @@ public class EvalFunctions {
              * local does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(RDataFactory.createLanguage(expr.getRep(), RLanguage.TYPE.RNODE), envir, enclos);
+            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
         }
 
     }

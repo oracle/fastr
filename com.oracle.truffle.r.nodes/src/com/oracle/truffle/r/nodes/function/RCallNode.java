@@ -73,13 +73,13 @@ import com.oracle.truffle.r.runtime.data.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function fixed, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching)
  * </pre>
@@ -92,11 +92,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV
@@ -104,11 +104,11 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    UVC
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DGV-UV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * GV
@@ -169,6 +169,11 @@ public abstract class RCallNode extends RNode {
 
     public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
         return RCallNode.createCall(src, ReadVariableNode.create(function, RRuntime.TYPE_FUNCTION, false), arguments);
+    }
+
+    public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
+        Symbol symbol = Symbol.create(function.getName());
+        return RCallNode.createCall(src, BuiltinFunctionVariableNodeFactory.create(function, symbol), arguments);
     }
 
     /**
@@ -602,8 +607,8 @@ public abstract class RCallNode extends RNode {
     }
 
     /**
-     * [DGV] {@link RootCallNode} in case there is a cached {@link RFunction} with cached varargs
-     * that exceeded the cache size {@link RCallNode#VARARGS_INLINE_CACHE_SIZE}.}
+     * [DGV] {@link RCallNode} in case there is a cached {@link RFunction} with cached varargs that
+     * exceeded the cache size {@link RCallNode#VARARGS_INLINE_CACHE_SIZE}.}
      *
      * @see RCallNode
      */

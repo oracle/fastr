@@ -357,10 +357,32 @@ public class RDeparse {
             case LANGSXP: {
                 if (obj instanceof RLanguage) {
                     RLanguage lang = (RLanguage) obj;
-                    if (lang.getType() == RLanguage.TYPE.EXPR) {
-                        deparse2buff(state, ((RLanguage) obj).getRep());
-                    } else if (lang.getType() == RLanguage.TYPE.RNODE) {
-                        state.append(((RNode) ((RLanguage) obj).getRep()).getSourceSection().getCode());
+                    if (lang.getType() == RLanguage.Type.RNODE) {
+                        SourceSection ss = ((RNode) lang.getRep()).getSourceSection();
+                        if (ss == null) {
+                            state.append("<no source available>");
+                        } else {
+                            state.append(ss.getCode());
+                        }
+                    } else {
+                        RList data = lang.getList();
+                        RStringVector argNames = data.getNames() == RNull.instance ? null : (RStringVector) data.getNames();
+                        deparse2buff(state, data.getDataAt(0));
+                        state.append('(');
+                        for (int i = 1; i < data.getLength(); i++) {
+                            if (argNames != null && !argNames.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
+                                state.append(argNames.getDataAt(i));
+                                state.append(" = ");
+                            }
+                            deparse2buff(state, data.getDataAt(i));
+                            if (i == data.getLength() - 1) {
+                                continue;
+                            }
+                            state.append(", ");
+                        }
+                        state.append(')');
+                        break;
+
                     }
                     break;
                 }
