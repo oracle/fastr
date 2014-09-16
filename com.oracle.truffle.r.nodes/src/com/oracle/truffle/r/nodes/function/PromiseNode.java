@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -72,6 +73,7 @@ public class PromiseNode extends RNode {
      * @return Depending on {@link RPromiseFactory#getEvalPolicy()} and
      *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
      */
+    @SlowPath
     public static PromiseNode create(SourceSection src, RPromiseFactory factory, EnvProvider envProvider) {
         PromiseNode pn = null;
         assert factory.getType() != PromiseType.NO_ARG;
@@ -214,6 +216,7 @@ public class PromiseNode extends RNode {
      * @return Creates either a {@link InlineVarArgsPromiseNode} or a {@link VarArgsPromiseNode},
      *         depending on the {@link EvalPolicy}
      */
+    @SlowPath
     public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
         RNode node;
         switch (evalPolicy) {

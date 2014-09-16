@@ -80,8 +80,7 @@ public final class MatchedArguments extends Arguments<RNode> {
     public Object[] doExecuteArray(VirtualFrame frame) {
         Object[] result = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            RNode arg = arguments[i];
-            result[i] = arg.execute(frame);
+            result[i] = arguments[i].execute(frame);
         }
         return result;
     }
