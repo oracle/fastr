@@ -1804,18 +1804,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSysNFrameIgnore_17d834568c640b6a0227e3d10a88da86() {
-        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_27098193cb36cf8c763bc06a7cc91a50() {
         assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
-        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Ignore
@@ -1826,6 +1816,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
         assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysNFrameIgnore_17d834568c640b6a0227e3d10a88da86() {
+        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
+        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Ignore

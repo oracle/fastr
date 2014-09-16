@@ -13529,18 +13529,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSysNFrame_c3d97dfd45908c32f8cfe394553f4c63() {
-        assertEval("{ sys.nframe() }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testSysCallIgnore_27098193cb36cf8c763bc06a7cc91a50() {
         assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSysNFrame_30dedef8a0698bff34b4b97a34fdb72e() {
-        assertEval("{ f <- function() sys.nframe() ; f() }");
     }
 
     @Test
@@ -13549,13 +13539,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSysNFrame_2cd412ff707741932dc44f80b9b7b17a() {
-        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; g() }");
+    public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+    public void TestSimpleBuiltins_testSysNFrame_c3d97dfd45908c32f8cfe394553f4c63() {
+        assertEval("{ sys.nframe() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_30dedef8a0698bff34b4b97a34fdb72e() {
+        assertEval("{ f <- function() sys.nframe() ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_2cd412ff707741932dc44f80b9b7b17a() {
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; g() }");
     }
 
     @Test
