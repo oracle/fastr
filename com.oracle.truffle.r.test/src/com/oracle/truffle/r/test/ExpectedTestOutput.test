@@ -11952,6 +11952,26 @@ Error in sum("42", as.character(NA), na.rm = TRUE) :
 [1] 6
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(0, 1[3]) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(0, 1[3], na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(0, 1[3], na.rm=TRUE) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(0, na.rm=FALSE, 1[3]) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(1+1i,2,NA, na.rm=TRUE) }
+[1] 3+1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum(1:6, 3, 4) }
 [1] 28
 
@@ -12058,6 +12078,10 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum(c(0, 1, 2, 3), 4) }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(na.rm=FALSE, 0, 1[3]) }
+[1] NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ x<-c(FALSE, FALSE); is.double(sum(x)) }

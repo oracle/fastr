@@ -13744,6 +13744,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSum_512304594d55f1330efacd6cc594cf7a() {
+        assertEval("{ sum(0, 1[3]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_b579f0fccb80261d02dd8e36a1c21977() {
+        assertEval("{ sum(na.rm=FALSE, 0, 1[3]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_71b125cd0c9f2fe015befa381709e1a6() {
+        assertEval("{ sum(0, na.rm=FALSE, 1[3]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_d6658778aa6ef9490e87eee1748c00b1() {
+        assertEval("{ sum(0, 1[3], na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_d8048d7927bb3ae55032b224e19caf66() {
+        assertEval("{ sum(0, 1[3], na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_79d5da5603083c8a7cd4e867a99de305() {
+        assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSum_d3eeae41362589157918ed1d85a19a51() {
         assertEvalError("{ sum(as.raw(42), as.raw(7)) }");
     }
@@ -13791,36 +13821,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSum_801b1d35aaf5b5ea058da849e4513508() {
         assertEvalError("{ sum(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSumIgnore_512304594d55f1330efacd6cc594cf7a() {
-        assertEval("{ sum(0, 1[3]) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSumIgnore_b579f0fccb80261d02dd8e36a1c21977() {
-        assertEval("{ sum(na.rm=FALSE, 0, 1[3]) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSumIgnore_71b125cd0c9f2fe015befa381709e1a6() {
-        assertEval("{ sum(0, na.rm=FALSE, 1[3]) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSumIgnore_d6658778aa6ef9490e87eee1748c00b1() {
-        assertEval("{ sum(0, 1[3], na.rm=FALSE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSumIgnore_d8048d7927bb3ae55032b224e19caf66() {
-        assertEval("{ sum(0, 1[3], na.rm=TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSumIgnore_79d5da5603083c8a7cd4e867a99de305() {
-        assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
     }
 
     @Test
