@@ -102,6 +102,47 @@ public class FrameFunctions {
 
     }
 
+    /**
+     * Generate a call object in which all of the arguments are fully qualified.
+     */
+    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots"})
+    public abstract static class MatchCall extends FrameHelper {
+
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
+        }
+
+        @Specialization
+        // TODO support expand.dots argument
+        protected RLanguage matchCall(@SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, @SuppressWarnings("unused") byte expandDots) {
+            controlVisibility();
+            Frame cframe = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+            Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
+            RArguments.copyArgumentsInto(cframe, values);
+            int namesLength = RArguments.getNamesLength(cframe);
+            String[] names = new String[namesLength];
+            for (int i = 0; i < namesLength; ++i) {
+                names[i] = RArguments.getName(cframe, i);
+            }
+
+            // extract the name of the function that was called
+            // TODO find a better solution for this
+            String callSource = RArguments.getCallSourceSection(cframe).getCode();
+            String functionName = callSource.substring(0, callSource.indexOf('('));
+
+            return Call.makeCall(functionName, new RArgsValuesAndNames(values, names));
+        }
+
+        @Specialization
+        @SuppressWarnings("unused")
+        protected RLanguage matchCall(RFunction definition, RLanguage call, byte expandDots) {
+            controlVisibility();
+            throw RInternalError.unimplemented();
+        }
+
+    }
+
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
     public abstract static class SysNFrame extends RBuiltinNode {
         @Specialization

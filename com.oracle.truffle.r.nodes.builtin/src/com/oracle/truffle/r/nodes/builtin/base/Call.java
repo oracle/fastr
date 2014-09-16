@@ -100,7 +100,7 @@ public abstract class Call extends RBuiltinNode {
             callArgs = CallArgumentsNode.create(false, false, EMTPY_RNODE_ARRAY, null);
         }
         RCallNode call = RCallNode.createCall(src, fn, callArgs);
-        return RDataFactory.createLanguage(call);
+        return RDataFactory.createCall(call, args);
     }
 
     @SlowPath

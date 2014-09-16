@@ -21,6 +21,10 @@
 match <- function(x, table, nomatch = NA_integer_, incomparables = NULL)
     .Internal(match(x, table, nomatch, incomparables))
 
+match.call <-
+    function(definition=NULL, call=sys.call(sys.parent()), expand.dots=TRUE)
+    .Internal(match.call(definition,call,expand.dots))
+
 pmatch <- function(x, table, nomatch = NA, duplicates.ok = FALSE)
     .Internal(pmatch(as.character(x), as.character(table), nomatch,
                     duplicates.ok))
