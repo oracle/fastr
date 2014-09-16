@@ -8896,6 +8896,34 @@ attr(,"class")
 [2,]   NA   NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ is.logical(max(TRUE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ is.logical(max(TRUE, FALSE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max("42", "7") }
+[1] "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max("42", as.character(NA), "7", na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max("42", as.character(NA), "7", na.rm=TRUE) }
+[1] "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max("42", as.character(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max("42", as.character(NA), na.rm=TRUE) }
+[1] "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ max("hi","abbey","hello") }
 [1] "hi"
 
@@ -8930,6 +8958,43 @@ In max() : no non-missing arguments to max; returning -Inf
 [1] 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42+42i, 7+7i) }
+Error in max(42 + (0+42i), 7 + (0+7i)) :
+  invalid 'type' (complex) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42, as.double(NA), 7, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42, as.double(NA), 7, na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42, as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42, as.double(NA), na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42L, as.integer(NA), 7L, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42L, as.integer(NA), 7L, na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42L, as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(42L, as.integer(NA), na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ max(NA, 1.1) }
 [1] NA
 
@@ -8938,6 +9003,76 @@ In max() : no non-missing arguments to max; returning -Inf
 [1] -Inf
 Warning message:
 In max(NULL) : no non-missing arguments to max; returning -Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.character(NA), as.character(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.character(NA), as.character(NA), na.rm=TRUE) }
+[1] NA
+Warning message:
+In max(as.character(NA), as.character(NA), na.rm = TRUE) :
+  no non-missing arguments, returning NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.character(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.character(NA), na.rm=TRUE) }
+[1] NA
+Warning message:
+In max(as.character(NA), na.rm = TRUE) :
+  no non-missing arguments, returning NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.double(NA), as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.double(NA), as.double(NA), na.rm=TRUE) }
+[1] -Inf
+Warning message:
+In max(as.double(NA), as.double(NA), na.rm = TRUE) :
+  no non-missing arguments to max; returning -Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.double(NA), na.rm=TRUE) }
+[1] -Inf
+Warning message:
+In max(as.double(NA), na.rm = TRUE) :
+  no non-missing arguments to max; returning -Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.integer(NA), as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }
+[1] -Inf
+Warning message:
+In max(as.integer(NA), as.integer(NA), na.rm = TRUE) :
+  no non-missing arguments to max; returning -Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.integer(NA), na.rm=TRUE) }
+[1] -Inf
+Warning message:
+In max(as.integer(NA), na.rm = TRUE) :
+  no non-missing arguments to max; returning -Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.raw(42), as.raw(7)) }
+Error in max(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ max(c("hi","abbey","hello")) }
@@ -9024,8 +9159,36 @@ In max(integer(0)) : no non-missing arguments to max; returning -Inf
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ is.logical(min(TRUE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ is.logical(min(TRUE, FALSE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
 #{ max(c(1,2,0/0)) }
 [1] NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min("42", "7") }
+[1] "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min("42", as.character(NA), "7", na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min("42", as.character(NA), "7", na.rm=TRUE) }
+[1] "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min("42", as.character(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min("42", as.character(NA), na.rm=TRUE) }
+[1] "42"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
 #{ min("hi","abbey","hello") }
@@ -9066,6 +9229,43 @@ In min() : no non-missing arguments to min; returning Inf
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42+42i, 7+7i) }
+Error in min(42 + (0+42i), 7 + (0+7i)) :
+  invalid 'type' (complex) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42, as.double(NA), 7, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42, as.double(NA), 7, na.rm=TRUE) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42, as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42, as.double(NA), na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42L, as.integer(NA), 7L, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42L, as.integer(NA), 7L, na.rm=TRUE) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42L, as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(42L, as.integer(NA), na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
 #{ min(NA, 1.1) }
 [1] NA
 
@@ -9074,6 +9274,76 @@ In min() : no non-missing arguments to min; returning Inf
 [1] Inf
 Warning message:
 In min(NULL) : no non-missing arguments to min; returning Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.character(NA), as.character(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.character(NA), as.character(NA), na.rm=TRUE) }
+[1] NA
+Warning message:
+In min(as.character(NA), as.character(NA), na.rm = TRUE) :
+  no non-missing arguments, returning NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.character(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.character(NA), na.rm=TRUE) }
+[1] NA
+Warning message:
+In min(as.character(NA), na.rm = TRUE) :
+  no non-missing arguments, returning NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.double(NA), as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.double(NA), as.double(NA), na.rm=TRUE) }
+[1] Inf
+Warning message:
+In min(as.double(NA), as.double(NA), na.rm = TRUE) :
+  no non-missing arguments to min; returning Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.double(NA), na.rm=TRUE) }
+[1] Inf
+Warning message:
+In min(as.double(NA), na.rm = TRUE) :
+  no non-missing arguments to min; returning Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.integer(NA), as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }
+[1] Inf
+Warning message:
+In min(as.integer(NA), as.integer(NA), na.rm = TRUE) :
+  no non-missing arguments to min; returning Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.integer(NA), na.rm=TRUE) }
+[1] Inf
+Warning message:
+In min(as.integer(NA), na.rm = TRUE) :
+  no non-missing arguments to min; returning Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
+#{ min(as.raw(42), as.raw(7)) }
+Error in min(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
 #{ min(c("hi","abbey","hello")) }
@@ -11642,6 +11912,38 @@ character(0)
 [1] 55
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ is.logical(sum(TRUE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ is.logical(sum(TRUE, FALSE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum("42", "7") }
+Error in sum("42", "7") : invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum("42", as.character(NA), "7", na.rm=FALSE) }
+Error in sum("42", as.character(NA), "7", na.rm = FALSE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum("42", as.character(NA), "7", na.rm=TRUE) }
+Error in sum("42", as.character(NA), "7", na.rm = TRUE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum("42", as.character(NA), na.rm=FALSE) }
+Error in sum("42", as.character(NA), na.rm = FALSE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum("42", as.character(NA), na.rm=TRUE) }
+Error in sum("42", as.character(NA), na.rm = TRUE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum() }
 [1] 0
 
@@ -11656,6 +11958,98 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum(1:6, 3L, TRUE) }
 [1] 25
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42+42i, 7+7i) }
+[1] 49+49i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42, as.double(NA), 7, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42, as.double(NA), 7, na.rm=TRUE) }
+[1] 49
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42, as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42, as.double(NA), na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42L, as.integer(NA), 7L, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42L, as.integer(NA), 7L, na.rm=TRUE) }
+[1] 49
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42L, as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(42L, as.integer(NA), na.rm=TRUE) }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.character(NA), as.character(NA), na.rm=FALSE) }
+Error in sum(as.character(NA), as.character(NA), na.rm = FALSE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.character(NA), as.character(NA), na.rm=TRUE) }
+Error in sum(as.character(NA), as.character(NA), na.rm = TRUE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.character(NA), na.rm=FALSE) }
+Error in sum(as.character(NA), na.rm = FALSE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.character(NA), na.rm=TRUE) }
+Error in sum(as.character(NA), na.rm = TRUE) :
+  invalid 'type' (character) of argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.double(NA), as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.double(NA), as.double(NA), na.rm=TRUE) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.double(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.double(NA), na.rm=TRUE) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.integer(NA), as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.integer(NA), as.integer(NA), na.rm=TRUE) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.integer(NA), na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.integer(NA), na.rm=TRUE) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ sum(as.raw(42), as.raw(7)) }
+Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum(c(0, 1, 2, 3)) }

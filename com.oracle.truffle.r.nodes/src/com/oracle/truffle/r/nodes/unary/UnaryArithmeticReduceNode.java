@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
+@NodeChild(value = "naRm", type = RNode.class)
 public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     private final BinaryArithmeticFactory factory;
@@ -54,16 +57,18 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return semantics.isNullInt();
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "isNullInt")
-    protected int doInt(@SuppressWarnings("unused") RNull operand) {
+    protected int doInt(RNull operand, byte naRm) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return semantics.getIntStart();
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "!isNullInt")
-    protected double doDouble(@SuppressWarnings("unused") RNull operand) {
+    protected double doDouble(RNull operand, byte naRm) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
@@ -71,171 +76,322 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    protected int doInt(int operand) {
+    protected int doInt(int operand, byte naRm) {
         na.enable(operand);
-        return na.check(operand) ? RRuntime.INT_NA : arithmetic.op(semantics.getIntStart(), operand);
+        if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (na.check(operand)) {
+                if (semantics.getEmptyWarning() != null) {
+                    RError.warning(semantics.emptyWarning);
+                }
+                return semantics.getIntStart();
+            } else {
+                return operand;
+            }
+        } else {
+            return na.check(operand) ? RRuntime.INT_NA : operand;
+        }
     }
 
     @Specialization
-    protected double doDouble(double operand) {
+    protected double doDouble(double operand, byte naRm) {
         na.enable(operand);
-        return na.check(operand) ? RRuntime.DOUBLE_NA : arithmetic.op(semantics.getDoubleStart(), operand);
+        if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (na.check(operand)) {
+                if (semantics.getEmptyWarning() != null) {
+                    RError.warning(semantics.emptyWarning);
+                }
+                return semantics.getIntStart();
+            } else {
+                return operand;
+            }
+        } else {
+            return na.check(operand) ? RRuntime.DOUBLE_NA : operand;
+        }
     }
 
     @Specialization
-    protected int doIntVector(RIntVector operand) {
+    protected int doLogical(byte operand, byte naRm) {
+        na.enable(operand);
+        if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (na.check(operand)) {
+                if (semantics.getEmptyWarning() != null) {
+                    RError.warning(semantics.emptyWarning);
+                }
+                return semantics.getIntStart();
+            } else {
+                return operand;
+            }
+        } else {
+            return na.check(operand) ? RRuntime.INT_NA : operand;
+        }
+    }
+
+    @Specialization
+    protected RComplex doComplex(RComplex operand, byte naRm) {
+        if (semantics.supportComplex) {
+            na.enable(operand);
+            if (naRm == RRuntime.LOGICAL_TRUE) {
+                if (na.check(operand)) {
+                    if (semantics.getEmptyWarning() != null) {
+                        RError.warning(semantics.emptyWarning);
+                    }
+                    return RRuntime.double2complex(semantics.getDoubleStart());
+                } else {
+                    return operand;
+                }
+            } else {
+                return na.check(operand) ? RRuntime.createComplexNA() : operand;
+            }
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+        }
+    }
+
+    @Specialization
+    protected String doString(String operand, byte naRm) {
+        if (semantics.supportString) {
+            na.enable(operand);
+            if (naRm == RRuntime.LOGICAL_TRUE) {
+                if (na.check(operand)) {
+                    if (semantics.getEmptyWarning() != null) {
+                        RError.warning(semantics.emptyWarning);
+                    }
+                    return semantics.getStringStart();
+                } else {
+                    return operand;
+                }
+            } else {
+                return na.check(operand) ? RRuntime.STRING_NA : operand;
+            }
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected RRaw doString(RRaw operand, byte naRm) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+    }
+
+    @Specialization
+    protected int doIntVector(RIntVector operand, byte naRm) {
         int result = semantics.getIntStart();
         na.enable(operand);
-        int i = 0;
-        for (; i < operand.getLength(); i++) {
+        int opCount = 0;
+        for (int i = 0; i < operand.getLength(); i++) {
             int d = operand.getDataAt(i);
             na.enable(d);
-            result = na.check(d) ? RRuntime.INT_NA : arithmetic.op(result, d);
-            na.enable(result);
-            if (na.check(result)) {
-                return result;
+            if (na.check(d)) {
+                if (naRm == RRuntime.LOGICAL_TRUE) {
+                    continue;
+                } else {
+                    return RRuntime.INT_NA;
+                }
+            } else {
+                result = arithmetic.op(result, d);
             }
+            opCount++;
         }
-        if (i == 0 && semantics.getEmptyWarning() != null) {
+        if (opCount == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
     }
 
     @Specialization
-    protected double doDoubleVector(RDoubleVector operand) {
+    protected double doDoubleVector(RDoubleVector operand, byte naRm) {
         double result = semantics.getDoubleStart();
         na.enable(operand);
-        int i = 0;
-        for (; i < operand.getLength(); i++) {
+        int opCount = 0;
+        for (int i = 0; i < operand.getLength(); i++) {
             double d = operand.getDataAt(i);
             na.enable(d);
-            result = na.check(d) ? RRuntime.DOUBLE_NA : arithmetic.op(result, d);
-            na.enable(result);
-            if (na.check(result)) {
-                return result;
+            if (na.check(d)) {
+                if (naRm == RRuntime.LOGICAL_TRUE) {
+                    continue;
+                } else {
+                    return RRuntime.DOUBLE_NA;
+                }
+            } else {
+                result = arithmetic.op(result, d);
             }
+            opCount++;
         }
-        if (i == 0 && semantics.getEmptyWarning() != null) {
+        if (opCount == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
     }
 
     @Specialization
-    protected int doLogicalVector(RLogicalVector operand) {
+    protected int doLogicalVector(RLogicalVector operand, byte naRm) {
         int result = semantics.getIntStart();
         na.enable(operand);
-        int i = 0;
-        for (; i < operand.getLength(); i++) {
+        int opCount = 0;
+        for (int i = 0; i < operand.getLength(); i++) {
             byte d = operand.getDataAt(i);
             na.enable(d);
-            result = na.check(d) ? RRuntime.INT_NA : arithmetic.op(result, d);
-            na.enable(result);
-            if (na.check(result)) {
-                return result;
+            if (na.check(d)) {
+                if (naRm == RRuntime.LOGICAL_TRUE) {
+                    continue;
+                } else {
+                    return RRuntime.INT_NA;
+                }
+            } else {
+                result = arithmetic.op(result, d);
             }
+            opCount++;
         }
-        if (i == 0 && semantics.getEmptyWarning() != null) {
+        if (opCount == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
     }
 
     @Specialization
-    protected int doIntSequence(RIntSequence operand) {
+    protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") byte naRm) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
-        int i = 0;
-        for (; i < operand.getLength(); ++i) {
+        int opCount = 0;
+        for (int i = 0; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
-            na.enable(result);
-            if (na.check(result)) {
-                return result;
-            }
             current += operand.getStride();
         }
-        if (i == 0 && semantics.getEmptyWarning() != null) {
+        if (opCount == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
     }
 
     @Specialization
-    protected double doDoubleSequence(RDoubleSequence operand) {
+    protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") byte naRm) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
-        int i = 0;
-        for (; i < operand.getLength(); ++i) {
+        int opCount = 0;
+        for (int i = 0; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
-            na.enable(result);
-            if (na.check(result)) {
-                return result;
-            }
             current += operand.getStride();
         }
-        if (i == 0 && semantics.getEmptyWarning() != null) {
+        if (opCount == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
     }
 
     @Specialization
-    protected RComplex doComplexVector(RComplexVector operand) {
-        RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
-        int i = 0;
-        for (; i < operand.getLength(); ++i) {
-            RComplex current = operand.getDataAt(i);
-            na.enable(current);
-            result = na.check(current) ? RRuntime.createComplexNA() : arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());
-            na.enable(result);
-            if (na.check(result)) {
-                return result;
+    protected RComplex doComplexVector(RComplexVector operand, byte naRm) {
+        if (semantics.supportComplex) {
+            RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
+            int opCount = 0;
+            for (int i = 0; i < operand.getLength(); ++i) {
+                RComplex current = operand.getDataAt(i);
+                na.enable(current);
+                if (na.check(current)) {
+                    if (naRm == RRuntime.LOGICAL_TRUE) {
+                        continue;
+                    } else {
+                        return RRuntime.createComplexNA();
+                    }
+                } else {
+                    result = arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());
+                }
+                opCount++;
             }
+            if (opCount == 0 && semantics.getEmptyWarning() != null) {
+                RError.warning(semantics.emptyWarning);
+            }
+            return result;
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+
         }
-        if (i == 0 && semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
-        }
-        return result;
     }
 
     // the algorithm that works for other types (reducing a vector starting with the "start value")
     // does not work for String-s as, in particular, we cannot supply the (lexicographically)
     // "largest" String for the implementation of max function
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "empty")
-    protected String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand) {
-        if (semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
+    protected String doStringVectorEmpty(RStringVector operand, byte naRm) {
+        if (semantics.supportString) {
+            if (semantics.getEmptyWarning() != null) {
+                RError.warning(semantics.emptyWarning);
+            }
+            return semantics.getStringStart();
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
-        return semantics.getStringStart();
     }
 
     @Specialization(guards = "lengthOne")
-    protected String doStringVectorOneElem(RStringVector operand) {
-        return operand.getDataAt(0);
+    protected String doStringVectorOneElem(RStringVector operand, byte naRm) {
+        if (semantics.supportString) {
+            String result = operand.getDataAt(0);
+            if (naRm == RRuntime.LOGICAL_TRUE) {
+                na.enable(result);
+                if (na.check(result)) {
+                    return doStringVectorEmpty(operand, naRm);
+                }
+            }
+            return result;
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+        }
     }
 
-    @Specialization(guards = "longerThanOne")
-    protected String doStringVector(RStringVector operand) {
+    @SlowPath
+    private String doStringVectorMultiElem(RStringVector operand, byte naRm, int offset) {
         String result = operand.getDataAt(0);
         na.enable(result);
-        if (na.check(result)) {
-            return result;
-        }
-        for (int i = 1; i < operand.getLength(); ++i) {
-            String current = operand.getDataAt(i);
-            na.enable(current);
-            if (na.check(current)) {
-                return current;
+        if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (na.check(result)) {
+                // the following is meant to eliminate leading NA-s
+                if (offset == operand.getLength() - 1) {
+                    // last element - all other are NAs
+                    return doStringVectorEmpty(operand, naRm);
+                } else {
+                    return doStringVectorMultiElem(operand, naRm, offset + 1);
+                }
             }
-            result = arithmetic.op(result, current);
-            na.enable(result);
+        } else {
             if (na.check(result)) {
                 return result;
             }
         }
+        // when we reach here, it means that we have already seen one non-NA element
+        assert !RRuntime.isNA(result);
+        for (int i = 1; i < operand.getLength(); ++i) {
+            String current = operand.getDataAt(i);
+            na.enable(current);
+            if (na.check(current)) {
+                if (naRm == RRuntime.LOGICAL_TRUE) {
+                    // skip NA-s
+                    continue;
+                } else {
+                    return RRuntime.STRING_NA;
+                }
+            } else {
+                result = arithmetic.op(result, current);
+            }
+        }
         return result;
+    }
+
+    @Specialization(guards = "longerThanOne")
+    protected String doStringVector(RStringVector operand, byte naRm) {
+        if (semantics.supportString) {
+            return doStringVectorMultiElem(operand, naRm, 0);
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected RRaw doString(RRawVector operand, byte naRm) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "raw");
     }
 
     protected boolean empty(RStringVector vector) {
@@ -257,12 +413,16 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         private final String stringStart = RRuntime.STRING_NA; // does not seem to change
         private final boolean nullInt;
         private final RError.Message emptyWarning;
+        private final boolean supportComplex;
+        private final boolean supportString;
 
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning) {
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, boolean supportComplex, boolean supportString) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
             this.emptyWarning = emptyWarning;
+            this.supportComplex = supportComplex;
+            this.supportString = supportString;
         }
 
         public int getIntStart() {
@@ -283,6 +443,14 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
         public RError.Message getEmptyWarning() {
             return emptyWarning;
+        }
+
+        public boolean supportsComplex() {
+            return supportComplex;
+        }
+
+        public boolean supportsString() {
+            return supportString;
         }
 
     }

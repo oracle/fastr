@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
  * 'UseMethod' and
- * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
+ * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)}
  * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
  * </p>
  *
@@ -162,14 +162,16 @@ public class ArgumentMatcher {
      * @param suppliedArgs The arguments supplied to the call
      * @param callSrc The source of the function call currently executed
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
+     * @param matchArgs Determines if arguments should be matched
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
      * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, SourceSection,
      *      boolean, ClosureCache)
      */
-    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection encapsulatingSrc) {
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, encapsulatingSrc, true, suppliedArgs);
+    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection encapsulatingSrc,
+                    boolean matchArgs) {
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, encapsulatingSrc, matchArgs, suppliedArgs);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
