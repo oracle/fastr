@@ -145,19 +145,15 @@ public class FrameFunctions {
         @Specialization
         protected int sysParent(int nd) {
             controlVisibility();
-            int n = nd;
-            int d = Utils.stackDepth();
-            if (n > d) {
-                return 0;
-            } else {
-                return d - n;
-            }
+            int p = Utils.stackDepth() - nd;
+            return p < 0 ? 0 : p;
         }
 
         @Specialization
         protected int sysParent(double nd) {
             return sysParent((int) nd);
         }
+
     }
 
     @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"})
@@ -250,4 +246,5 @@ public class FrameFunctions {
             }
         }
     }
+
 }
