@@ -2704,6 +2704,55 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSysParent() {
+        assertEval("{ sys.parent() }");
+        assertEval("{ f <- function() sys.parent() ; f() }");
+        assertEval("{ f <- function() sys.parent() ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.parent() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
+        assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testSysParents() {
+        assertEval("{ sys.parents() }");
+        assertEval("{ f <- function() sys.parents() ; f() }");
+        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x=sys.parents()) x ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parents()) g(z) ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysParentsIgnore() {
+        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testSysNFrame() {
+        assertEval("{ sys.nframe() }");
+        assertEval("{ f <- function() sys.nframe() ; f() }");
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x=sys.nframe()) x ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.nframe()) g(z) ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysNFrameIgnore() {
+        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testMatchCall() {
+        assertEval("{ f <- function() match.call() ; f() }");
+        assertEval("{ f <- function(x) match.call() ; f(2) }");
+    }
+
+    @Test
     public void testDoCall() {
         assertEval("{ x<-list(c(1,2)); do.call(\"as.matrix\", x) }");
     }

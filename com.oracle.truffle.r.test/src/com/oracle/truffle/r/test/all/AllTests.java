@@ -9754,6 +9754,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatchCall_a0448ccc47d09e1ad95ea97342b088e9() {
+        assertEval("{ f <- function() match.call() ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatchCall_b16970ba5a0fdc6cac07900fcdcf214b() {
+        assertEval("{ f <- function(x) match.call() ; f(2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatchFun_4dc251ff1db19e52f20841e136754b32() {
         assertEval("{ f <- match.fun(length) ; f(c(1,2,3)) }");
     }
@@ -13411,6 +13421,111 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSysCall_3ad24bf5ef2ddd4a5ce2bb9e20fc412d() {
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_c3d97dfd45908c32f8cfe394553f4c63() {
+        assertEval("{ sys.nframe() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_30dedef8a0698bff34b4b97a34fdb72e() {
+        assertEval("{ f <- function() sys.nframe() ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_2cd412ff707741932dc44f80b9b7b17a() {
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_7f96e07123460e87bc11864977426026() {
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_5eaf283d4cade78ea655f788c8520f1b() {
+        assertEval("{ f <- function(x=sys.nframe()) x ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrame_53dab62970d1a3ec43b1f0ba50f70ed0() {
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.nframe()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysNFrameIgnore_17d834568c640b6a0227e3d10a88da86() {
+        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_dc8281a71f0743a334066df460d5d250() {
+        assertEval("{ sys.parent() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_2a69faf7b4cb3ed979d37dcebbba2b5d() {
+        assertEval("{ f <- function() sys.parent() ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_10ef67d132292ca00886e996eade9514() {
+        assertEval("{ f <- function() sys.parent() ; g <- function() f() ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_addd9a102d0607d5468ae286159e9926() {
+        assertEval("{ f <- function() sys.parent() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_ec8486194fe801b1b55426331942e705() {
+        assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_8f717f04a5ba89c5cf2ffeeeab21de0b() {
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParent_daad3815e7f45995c349db50245808a5() {
+        assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParents_8a154bf595446ee38981490446bf3dd2() {
+        assertEval("{ sys.parents() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParents_87513796edf8bb11cbebe94457b9803e() {
+        assertEval("{ f <- function() sys.parents() ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParents_01cb12e566a9cfb00b0c8d620dfae646() {
+        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParents_23a33f023d6a23983b4bca3668923720() {
+        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParents_5f3be8dcfca25bcda8b29ff546f7d82c() {
+        assertEval("{ f <- function(x=sys.parents()) x ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParents_845cdff1d9da4ed2264439f90ae7789c() {
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parents()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
+        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Test
