@@ -302,6 +302,11 @@ public abstract class CastStringNode extends CastNode {
         return ret;
     }
 
+    @Specialization
+    protected String doRSymbol(RSymbol s) {
+        return s.getName();
+    }
+
     private RStringVector performAbstractIntVector(VirtualFrame frame, RAbstractIntVector vector) {
         int length = vector.getLength();
         String[] result = new String[length];

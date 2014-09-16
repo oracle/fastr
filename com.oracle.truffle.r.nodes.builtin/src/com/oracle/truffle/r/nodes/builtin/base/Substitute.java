@@ -133,7 +133,18 @@ public abstract class Substitute extends RBuiltinNode {
                     listData[i + 1] = arg;
                 }
             }
-            return RDataFactory.createLanguage(RDataFactory.createExpression(RDataFactory.createList(listData)));
+            if (unrolledArgs.getNames() != null) {
+                String[] argNames = unrolledArgs.getNames();
+                String[] names = new String[listData.length];
+                names[0] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                for (int i = 1; i < names.length; i++) {
+                    names[i] = argNames[i - 1] == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : argNames[i - 1];
+                }
+                return RDataFactory.createLanguage(RDataFactory.createList(listData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)), RLanguage.Type.FUNCALL);
+
+            } else {
+                return RDataFactory.createLanguage(RDataFactory.createList(listData), RLanguage.Type.FUNCALL);
+            }
         } else {
             throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr), unsupported arg");
         }

@@ -9,13 +9,14 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.nodes;
 
 import java.text.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
@@ -316,8 +317,19 @@ public class RDeparse {
 
             case ENVSXP:
             case VECSXP:
-            case EXPRSXP:
                 assert false;
+                break;
+            case EXPRSXP:
+                RExpression expr = (RExpression) obj;
+                state.append("expression(");
+                for (int i = 0; i < expr.getLength(); i++) {
+                    deparse2buff(state, expr.getDataAt(i));
+                    if (i == expr.getLength() - 1) {
+                        break;
+                    }
+                    state.append(", ");
+                }
+                state.append(")");
                 break;
 
             case LISTSXP: {
@@ -343,6 +355,37 @@ public class RDeparse {
             }
 
             case LANGSXP: {
+                if (obj instanceof RLanguage) {
+                    RLanguage lang = (RLanguage) obj;
+                    if (lang.getType() == RLanguage.Type.RNODE) {
+                        SourceSection ss = ((RNode) lang.getRep()).getSourceSection();
+                        if (ss == null) {
+                            state.append("<no source available>");
+                        } else {
+                            state.append(ss.getCode());
+                        }
+                    } else {
+                        RList data = lang.getList();
+                        RStringVector argNames = data.getNames() == RNull.instance ? null : (RStringVector) data.getNames();
+                        deparse2buff(state, data.getDataAt(0));
+                        state.append('(');
+                        for (int i = 1; i < data.getLength(); i++) {
+                            if (argNames != null && !argNames.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
+                                state.append(argNames.getDataAt(i));
+                                state.append(" = ");
+                            }
+                            deparse2buff(state, data.getDataAt(i));
+                            if (i == data.getLength() - 1) {
+                                continue;
+                            }
+                            state.append(", ");
+                        }
+                        state.append(')');
+                        break;
+
+                    }
+                    break;
+                }
                 RPairList f = (RPairList) obj;
                 Object car = f.car();
                 Object cdr = f.cdr();

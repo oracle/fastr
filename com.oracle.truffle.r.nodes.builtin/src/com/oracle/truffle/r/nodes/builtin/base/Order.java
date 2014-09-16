@@ -112,6 +112,16 @@ public abstract class Order extends RBuiltinNode {
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @Specialization(guards = {"!empty", "!oneElement"})
+    protected RIntVector order(RAbstractLogicalVector x, @SuppressWarnings("unused") RMissing tie) {
+        controlVisibility();
+        RLogicalVector v = x.materialize();
+        byte[] xs = v.getDataNonShared();
+        int[] ord = ordArray(xs.length);
+        byteSort(xs, ord, null, 0, xs.length - 1);
+        return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
+    }
+
     // specialisations for vector and tie parameters
 
     @SuppressWarnings("unused")
@@ -292,6 +302,37 @@ public abstract class Order extends RBuiltinNode {
             }
             complexSort(x, o, t, l, i - 1);
             complexSort(x, o, t, i + 1, r);
+        }
+    }
+
+    @SlowPath
+    protected void byteSort(byte[] x, int[] o, int[] t, int l, int r) {
+        if (l < r) {
+            int i = l;
+            int j = r - 1;
+            byte p = x[r];
+            do {
+                while (le.op(x[i], p) == RRuntime.LOGICAL_TRUE && i < r) {
+                    ++i;
+                }
+                while (ge.op(x[j], p) == RRuntime.LOGICAL_TRUE && j > l) {
+                    --j;
+                }
+                if (i < j) {
+                    byte st = x[i];
+                    x[i] = x[j];
+                    x[j] = st;
+                    swaps(o, t, i, j);
+                }
+            } while (i < j);
+            if (gt.op(x[i], p) == RRuntime.LOGICAL_TRUE) {
+                byte st = x[i];
+                x[i] = x[r];
+                x[r] = st;
+                swaps(o, t, i, r);
+            }
+            byteSort(x, o, t, l, i - 1);
+            byteSort(x, o, t, i + 1, r);
         }
     }
 

@@ -2377,6 +2377,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(z) {z}; e<-expression(f); e2<-c(e, 7); eval(e2) }");
 
         assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }");
+        assertEval("{ class(expression(1)) }");
     }
 
     @Test
@@ -2412,7 +2413,19 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testSubstitute() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(1,2))) }");
+        // language is a list (of sorts)
+        assertEval("{ f<-function(...) { substitute(list(...)) }; length(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[1]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(x=1,2))[[2]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[2]][[1]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }");
+
         assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
+
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }");
     }
 
     @Test
@@ -2493,6 +2506,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
         assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
         assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
+
+        assertEval("{ f <- function(z) {z}; e<-as.call(c(expression(f), 7)); eval(e) }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; x<-1; eval(f(c(x,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; eval(f(c(x=1,2))) }");
+
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; eval(g()) }");
+        assertEval("{ g<-function(y) { f<-function(x) { x }; substitute(f(y)) } ; eval(g(42)) }");
     }
 
     @Test
@@ -2520,6 +2542,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ deparse(c(T, F)) }");
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");
+        assertEval("{ x<-expression(1); deparse(x) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
     }
 
     @Test
@@ -2686,6 +2711,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() 23 ; l <- list(f) ; cl <- as.call(l) ; eval(cl) }");
         assertEval("{ f <- function(a,b) a+b ; l <- list(f,2,3) ; cl <- as.call(l) ; eval(cl) }");
         assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(f, g()) ; cl <- as.call(l) ; eval(cl) }");
+
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[1]]) }");
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[2]]) }");
     }
 
     @Test
@@ -2712,6 +2740,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
         assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysCallIgnore() {
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test

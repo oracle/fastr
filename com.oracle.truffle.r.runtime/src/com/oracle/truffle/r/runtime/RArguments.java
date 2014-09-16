@@ -318,6 +318,13 @@ public final class RArguments {
         getArgumentsWithEvalCheck(frame)[INDEX_FUNCTION] = function;
     }
 
+    /**
+     * Explicitly set the callSrc. Used by {@code REngine.eval}.
+     */
+    public static void setCallSourceSection(Frame frame, SourceSection callSrc) {
+        getArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC] = callSrc;
+    }
+
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
         Object[] arguments = getArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;

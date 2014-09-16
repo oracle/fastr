@@ -127,5 +127,7 @@ public class TestSimpleDataFrames extends TestBase {
     @Test
     public void testDataFrame() {
         assertEval("{ x<-c(7,42); y<-data.frame(x); is.data.frame(y) }");
+        assertEval("{ data.frame(c(1,2)) }");
+        assertEval("{ data.frame(c(1,2), c(11,12)) }");
     }
 }

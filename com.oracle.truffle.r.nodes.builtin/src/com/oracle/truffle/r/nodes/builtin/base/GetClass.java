@@ -23,13 +23,13 @@ import com.oracle.truffle.r.runtime.env.*;
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetClass extends RBuiltinNode {
 
-    @Specialization(guards = "isObject")
+    @Specialization(guards = {"isObject", "!isLanguage", "!isExpression"})
     protected Object getClassForObject(RAbstractContainer arg) {
         controlVisibility();
         return arg.getClassHierarchy();
     }
 
-    @Specialization(guards = "!isObject")
+    @Specialization(guards = {"!isObject", "!isLanguage", "!isExpression"})
     protected Object getClass(RAbstractContainer arg) {
         controlVisibility();
         final String klass = arg.getClassHierarchy().getDataAt(0);
@@ -79,6 +79,20 @@ public abstract class GetClass extends RBuiltinNode {
     protected Object getClass(@SuppressWarnings("unused") RLanguage arg) {
         controlVisibility();
         return RRuntime.CLASS_LANGUAGE;
+    }
+
+    @Specialization
+    protected Object getClass(@SuppressWarnings("unused") RExpression arg) {
+        controlVisibility();
+        return RRuntime.CLASS_EXPRESSION;
+    }
+
+    protected boolean isExpression(RAbstractContainer arg) {
+        return arg.getElementClass() == RExpression.class;
+    }
+
+    protected boolean isLanguage(RAbstractContainer arg) {
+        return arg.getElementClass() == RLanguage.class;
     }
 
     protected boolean isObject(RAbstractContainer arg) {

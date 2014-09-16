@@ -79,6 +79,11 @@ public abstract class CastToContainerNode extends CastNode {
     }
 
     @Specialization
+    protected RLanguage cast(RLanguage lang) {
+        return lang;
+    }
+
+    @Specialization
     protected RPairList cast(RPairList pairlist) {
         return pairlist;
     }

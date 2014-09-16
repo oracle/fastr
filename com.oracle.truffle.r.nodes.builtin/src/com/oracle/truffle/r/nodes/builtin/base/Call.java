@@ -64,26 +64,44 @@ public abstract class Call extends RBuiltinNode {
 
     @SlowPath
     protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
-        ReadVariableNode functionLookup = ReadVariableNode.create(name, RRuntime.TYPE_FUNCTION, false, true, false, true);
-        SourceSection src = new NullSourceSection("call", "call", makeSource(name, args));
-        return makeCall0(functionLookup, src, args);
+        return makeCall0(new RSymbol(name), args);
     }
 
     @SlowPath
     protected static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
-        ConstantNode func = ConstantNode.create(function);
-        SourceSection src = new NullSourceSection("call", "call", makeSource(((RRootNode) function.getTarget().getRootNode()).getSourceCode(), args));
-        return makeCall0(func, src, args);
+        return makeCall0(function, args);
     }
 
     @SlowPath
-    protected static RLanguage makeCall(SourceSection callSource, RFunction function, RArgsValuesAndNames args) {
+    protected static RLanguage makeCall(SourceSection src, RFunction function, RArgsValuesAndNames args) {
         ConstantNode func = ConstantNode.create(function);
-        return makeCall0(func, callSource, args);
+        return makeCall0Old(func, src, args);
     }
 
     @SlowPath
-    private static RLanguage makeCall0(RNode fn, SourceSection src, RArgsValuesAndNames args) {
+    private static RLanguage makeCall0(Object fn, RArgsValuesAndNames args) {
+        int dataLen = args == null ? 1 : args.length() + 1;
+        Object[] data = new Object[dataLen];
+        String[] names = null;
+        data[0] = fn;
+        if (dataLen > 1) {
+            Object[] argValues = args.getValues();
+            String[] argNames = args.getNames();
+            if (argNames != null) {
+                names = new String[dataLen];
+            }
+            for (int i = 1; i < dataLen; i++) {
+                data[i] = argValues[i - 1];
+                if (argNames != null) {
+                    names[i] = argNames[i - 1] == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : argNames[i - 1];
+                }
+            }
+        }
+        return RDataFactory.createLanguage(RDataFactory.createList(data, names == null ? null : RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)), RLanguage.Type.FUNCALL);
+    }
+
+    @SlowPath
+    private static RLanguage makeCall0Old(RNode fn, SourceSection src, RArgsValuesAndNames args) {
         CallArgumentsNode callArgs;
         if (args != null) {
             Object[] argValues = args.getValues();

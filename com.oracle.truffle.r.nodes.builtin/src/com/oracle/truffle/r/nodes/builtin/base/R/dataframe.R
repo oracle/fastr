@@ -137,11 +137,8 @@ as.data.frame.list <-
                 cn[m] <- paste0("..adfl.", cn[m])
                 names(x) <- cn
             }
-			# TODO: add support for eval taking result of as.call as argument
-#    x <- eval(as.call(c(expression(data.frame), x, check.names = !optional,
-#                        stringsAsFactors = stringsAsFactors)))
-			x <- eval(c(expression(data.frame), x, check.names = !optional,
-									stringsAsFactors = stringsAsFactors))
+            x <- eval(as.call(c(expression(data.frame), x, check.names = !optional,
+                                stringsAsFactors = stringsAsFactors)))
             if(any(m)) names(x) <- sub("^\\.\\.adfl\\.", "", names(x))
             if(!is.null(row.names)) {
                 # row.names <- as.character(row.names)

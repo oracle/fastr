@@ -57,7 +57,7 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     public Class<?> getElementClass() {
-        return null;
+        return RExpression.class;
     }
 
     public RVector materializeNonSharedVector() {
