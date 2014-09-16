@@ -63,7 +63,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     }
 
     // setting value of the mode parameter to COPY is meant to induce creation of a copy
-    // of the THS; this needed for the implementation of the replacement forms of
+    // of the RHS; this needed for the implementation of the replacement forms of
     // builtin functions whose last argument can be mutated; for example, in
     // "dimnames(x)<-list(1)", the assigned value list(1) must become list("1"), with the latter
     // value returned as a result of the call;
@@ -77,51 +77,42 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     // is needed for the replacement forms of vector updates where a vector is assigned to a
     // temporary (visible) variable and then, again, to the original variable (which would cause the
     // vector to be copied each time);
-    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
+    protected final void writeObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
         Object newValue = value;
         if (!isArgWrite()) {
-            Object frameValue;
-            try {
-                frameValue = frame.getObject(frameSlot);
-            } catch (FrameSlotTypeException ex) {
-                throw new IllegalStateException();
-            }
-            if (frameValue != value) {
-                if (mode != Mode.INVISIBLE) {
-                    // for the meaning of INVISIBLE mode see the comment preceding the current
-                    // method
-                    everSeenNonEqual.enter();
-                    if (value instanceof RShareable) {
-                        everSeenVector.enter();
-                        RShareable rShareable = (RShareable) value;
-                        if (rShareable.isTemporary()) {
-                            everSeenTemporary.enter();
-                            if (mode == Mode.COPY) {
-                                RShareable shareableCopy = rShareable.copy();
-                                newValue = shareableCopy;
-                            } else {
-                                rShareable.markNonTemporary();
-                            }
-                        } else if (rShareable.isShared()) {
-                            everSeenShared.enter();
+            // for the meaning of INVISIBLE mode see the comment preceding the current method
+            if (mode != Mode.INVISIBLE && isCurrentValue(frame, frameSlot, value)) {
+                everSeenNonEqual.enter();
+                if (value instanceof RShareable) {
+                    everSeenVector.enter();
+                    RShareable rShareable = (RShareable) value;
+                    if (rShareable.isTemporary()) {
+                        everSeenTemporary.enter();
+                        if (mode == Mode.COPY) {
                             RShareable shareableCopy = rShareable.copy();
-                            if (mode != Mode.COPY) {
-                                shareableCopy.markNonTemporary();
-                            }
                             newValue = shareableCopy;
                         } else {
-                            everSeenNonShared.enter();
-                            if (mode == Mode.COPY) {
-                                RShareable shareableCopy = rShareable.copy();
-                                newValue = shareableCopy;
-                            } else if (mode != Mode.TEMP || isSuper) {
-                                // mark shared when assigning to the enclosing frame as there must
-                                // be a distinction between variables with the same name defined in
-                                // different scopes, for example to correctly support:
-                                // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 } ; f()
+                            rShareable.markNonTemporary();
+                        }
+                    } else if (rShareable.isShared()) {
+                        everSeenShared.enter();
+                        RShareable shareableCopy = rShareable.copy();
+                        if (mode != Mode.COPY) {
+                            shareableCopy.markNonTemporary();
+                        }
+                        newValue = shareableCopy;
+                    } else {
+                        everSeenNonShared.enter();
+                        if (mode == Mode.COPY) {
+                            RShareable shareableCopy = rShareable.copy();
+                            newValue = shareableCopy;
+                        } else if (mode != Mode.TEMP || isSuper) {
+                            // mark shared when assigning to the enclosing frame as there must
+                            // be a distinction between variables with the same name defined in
+                            // different scopes, for example to correctly support:
+                            // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 } ; f()
 
-                                rShareable.makeShared();
-                            }
+                            rShareable.makeShared();
                         }
                     }
                 }
@@ -129,6 +120,14 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
 
         frame.setObject(frameSlot, newValue);
+    }
+
+    private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
+        try {
+            return !frame.isObject(frameSlot) || frame.getObject(frameSlot) != value;
+        } catch (FrameSlotTypeException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
@@ -220,10 +219,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return value;
         }
 
-        @Specialization(guards = "isFrameObjectKind")
+        @Specialization
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
-            super.writeObjectValue(frame, frame, frameSlot, value, getMode(), false);
+            writeObjectValue(frame, frameSlot, value, getMode(), false);
             return value;
         }
 
@@ -238,11 +237,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected static boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
             return isDoubleKind(frameSlot);
         }
-
-        protected static boolean isFrameObjectKind(FrameSlot frameSlot, @SuppressWarnings("unused") Object value) {
-            return isObjectKind(frameSlot);
-        }
-
     }
 
     public abstract static class AbstractWriteSuperVariableNode extends WriteVariableNode {
@@ -384,10 +378,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return value;
         }
 
-        @Specialization(guards = "isFrameObjectKind")
+        @Specialization
         protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            super.writeObjectValue(frame, enclosingFrame, frameSlot, value, getMode(), true);
+            writeObjectValue(enclosingFrame, frameSlot, value, getMode(), true);
             return value;
         }
 
@@ -402,10 +396,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected static boolean isFrameDoubleKind(double arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isDoubleKind(frameSlot);
         }
-
-        protected static boolean isFrameObjectKind(Object arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
-            return isObjectKind(frameSlot);
-        }
     }
 
     protected static boolean isBooleanKind(FrameSlot frameSlot) {
@@ -418,14 +408,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     protected static boolean isDoubleKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Double);
-    }
-
-    @SlowPath
-    protected static boolean isObjectKind(FrameSlot frameSlot) {
-        if (frameSlot.getKind() != FrameSlotKind.Object) {
-            frameSlot.setKind(FrameSlotKind.Object);
-        }
-        return true;
     }
 
     private static boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
