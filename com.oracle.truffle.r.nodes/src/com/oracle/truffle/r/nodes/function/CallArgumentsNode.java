@@ -183,14 +183,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
 
         // More then one "..."? Copy content!
         int times = varArgsSymbolIndices.length;
-        if (times > 1) {
-            int newLength = content.length * times;
-            RNode[] newContent = new RNode[newLength];
-            for (int i = 0; i < times; i++) {
-                System.arraycopy(content, 0, newContent, i * content.length, content.length);
-            }
-        }
-        return VarArgsSignature.create(content);
+        return VarArgsSignature.create(content, times);
     }
 
     @ExplodeLoop

@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * This class should allow caching for calls to function taking "..." arguments.<br/>
  * The idea is the following: We want to cache processed (matched and wrapped) arguments (and thus
- * argument processing) per callsite.<br/>
+ * argument processing) per call site.<br/>
  * The problem: If a function takes "...", arguments may change each call - even on the same call
  * site! <br/>
  * Example:
@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * The basic assumption is that the expressions used for two different calls on the same callsite
  * are identical ({@code ==} returns <code>true</code>). So by comparing two {@link RNode}s by
  * identity we can decide whether the call was issued using the same arguments or not and thus
- * whether the call originated from the same callsite as before.
+ * whether the call originated from the same call site as before.
  */
 public final class VarArgsSignature {
     /**
@@ -54,21 +54,28 @@ public final class VarArgsSignature {
      * {@link #isEqualTo(VarArgsSignature)}. Never to be executed!
      */
     public static final RNode NO_VARARGS = ConstantNode.create(RMissing.instance);
-    public static final VarArgsSignature TAKES_NO_VARARGS = new VarArgsSignature(null);
+    public static final VarArgsSignature TAKES_NO_VARARGS = new VarArgsSignature(null, 0);
 
     private final RNode[] expressions;
+    private final int times;
 
-    private VarArgsSignature(RNode[] expressions) {
+    private VarArgsSignature(RNode[] expressions, int times) {
         this.expressions = expressions;
+        this.times = times;
     }
 
-    public static VarArgsSignature create(RNode[] expressions) {
-        assert expressions != null;
-        return new VarArgsSignature(expressions);
+    /**
+     * @param expressions Must be non-<code>null</code> and longer then 0
+     * @param times Must be <code>>= 1</code>
+     * @return a fresh {@link VarArgsSignature}
+     */
+    public static VarArgsSignature create(RNode[] expressions, int times) {
+        assert expressions != null && expressions.length > 0;
+        assert times >= 1;
+        return new VarArgsSignature(expressions, times);
     }
 
-    @ExplodeLoop
-    public boolean isEqualTo(VarArgsSignature other) {
+    public boolean isEqualTo(final VarArgsSignature other) {
         if (other == null) {
             return false;
         }
@@ -77,10 +84,14 @@ public final class VarArgsSignature {
         }
 
         // Check expressions for identity of each element
-        if (expressions.length != other.expressions.length) {
+        if (expressions.length != other.expressions.length || times != other.times) {
             return false;
         }
+        return checkExpressionsIdentity(other);
+    }
 
+    @ExplodeLoop
+    private boolean checkExpressionsIdentity(final VarArgsSignature other) {
         for (int i = 0; i < expressions.length; i++) {
             if (expressions[i] != other.expressions[i]) {
                 return false;
