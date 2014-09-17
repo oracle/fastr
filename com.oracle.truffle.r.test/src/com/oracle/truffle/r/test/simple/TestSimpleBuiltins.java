@@ -187,6 +187,37 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ max(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
         assertEval("{ max(c(\"hi\",\"abbey\",\"hello\")) }");
         assertEval("{ max(\"hi\",\"abbey\",\"hello\") }");
+
+        assertEval("{ is.logical(max(TRUE, FALSE)) }");
+        assertEval("{ is.logical(max(TRUE)) }");
+        assertEvalError("{ max(as.raw(42), as.raw(7)) }");
+        assertEvalError("{ max(42+42i, 7+7i) }");
+        assertEval("{ max(\"42\", \"7\") }");
+
+        assertEvalWarning("{ max(as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.double(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.double(NA), as.double(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ max(as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.integer(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ max(as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), as.character(NA), na.rm=FALSE) }");
+        assertEval("{ max(42L, as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ max(42L, as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ max(42, as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(42, as.double(NA), na.rm=FALSE) }");
+        assertEval("{ max(\"42\", as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(\"42\", as.character(NA), na.rm=FALSE) }");
+        assertEval("{ max(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+        assertEval("{ max(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+        assertEval("{ max(42, as.double(NA), 7, na.rm=TRUE) }");
+        assertEval("{ max(42, as.double(NA), 7, na.rm=FALSE) }");
+        assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+        assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
     }
 
     @Test
@@ -213,6 +244,37 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ min(c(\"hi\",\"abbey\",\"hello\")) }");
         assertEval("{ min(\"hi\",\"abbey\",\"hello\") }");
         assertEval("{ min(\"hi\",100) }");
+
+        assertEval("{ is.logical(min(TRUE, FALSE)) }");
+        assertEval("{ is.logical(min(TRUE)) }");
+        assertEvalError("{ min(as.raw(42), as.raw(7)) }");
+        assertEvalError("{ min(42+42i, 7+7i) }");
+        assertEval("{ min(\"42\", \"7\") }");
+
+        assertEvalWarning("{ min(as.double(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.double(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ min(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.double(NA), as.double(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ min(as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.integer(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ min(as.character(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.character(NA), na.rm=FALSE) }");
+        assertEvalWarning("{ min(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.character(NA), as.character(NA), na.rm=FALSE) }");
+        assertEval("{ min(42L, as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ min(42L, as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ min(42, as.double(NA), na.rm=TRUE) }");
+        assertEval("{ min(42, as.double(NA), na.rm=FALSE) }");
+        assertEval("{ min(\"42\", as.character(NA), na.rm=TRUE) }");
+        assertEval("{ min(\"42\", as.character(NA), na.rm=FALSE) }");
+        assertEval("{ min(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+        assertEval("{ min(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+        assertEval("{ min(42, as.double(NA), 7, na.rm=TRUE) }");
+        assertEval("{ min(42, as.double(NA), 7, na.rm=FALSE) }");
+        assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+        assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
     }
 
     @Test
@@ -714,11 +776,38 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ `sum`(1:10) }");
         assertEval("{ x<-c(FALSE, FALSE); is.double(sum(x)) }");
         assertEval("{ x<-c(FALSE, FALSE); is.integer(sum(x)) }");
-    }
 
-    @Test
-    @Ignore
-    public void testSumIgnore() {
+        assertEval("{ is.logical(sum(TRUE, FALSE)) }");
+        assertEval("{ is.logical(sum(TRUE)) }");
+        assertEvalError("{ sum(as.raw(42), as.raw(7)) }");
+        assertEval("{ sum(42+42i, 7+7i) }");
+        assertEvalError("{ sum(\"42\", \"7\") }");
+
+        assertEval("{ sum(as.double(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.double(NA), na.rm=FALSE) }");
+        assertEval("{ sum(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.double(NA), as.double(NA), na.rm=FALSE) }");
+        assertEval("{ sum(as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ sum(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+        assertEvalError("{ sum(as.character(NA), na.rm=TRUE) }");
+        assertEvalError("{ sum(as.character(NA), na.rm=FALSE) }");
+        assertEvalError("{ sum(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEvalError("{ sum(as.character(NA), as.character(NA), na.rm=FALSE) }");
+        assertEval("{ sum(42L, as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ sum(42L, as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ sum(42, as.double(NA), na.rm=TRUE) }");
+        assertEval("{ sum(42, as.double(NA), na.rm=FALSE) }");
+        assertEvalError("{ sum(\"42\", as.character(NA), na.rm=TRUE) }");
+        assertEvalError("{ sum(\"42\", as.character(NA), na.rm=FALSE) }");
+        assertEval("{ sum(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+        assertEval("{ sum(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+        assertEval("{ sum(42, as.double(NA), 7, na.rm=TRUE) }");
+        assertEval("{ sum(42, as.double(NA), 7, na.rm=FALSE) }");
+        assertEvalError("{ sum(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+        assertEvalError("{ sum(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+
         assertEval("{ sum(0, 1[3]) }");
         assertEval("{ sum(na.rm=FALSE, 0, 1[3]) }");
         assertEval("{ sum(0, na.rm=FALSE, 1[3]) }");

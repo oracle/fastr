@@ -10004,6 +10004,121 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMaximum_920b2f6dac1ade728c1ff9467f759a52() {
+        assertEval("{ is.logical(max(TRUE, FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_3ab05fdc89f943d144728d7a542257f2() {
+        assertEval("{ is.logical(max(TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_bc1bc0a527d332a102840917c9fb6c45() {
+        assertEval("{ max(\"42\", \"7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_e15a02fcf6c464e8c7b2a97349eb527f() {
+        assertEval("{ max(as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_18015584876e133dd075b60a59902c63() {
+        assertEval("{ max(as.double(NA), as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_2b36f1d9f9bea20709ef36f5bdb44786() {
+        assertEval("{ max(as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_c856510c795f71b803f85b9d56ad211e() {
+        assertEval("{ max(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_07bcdc2f051c96b5500242cddb262b26() {
+        assertEval("{ max(as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_193067b75eda0b417bae6194c6ca2be5() {
+        assertEval("{ max(as.character(NA), as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_f10d3fb7a81a009eb7c9546d8f4df07b() {
+        assertEval("{ max(42L, as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_2067c5f27b8858b4ab0da562b0d5541f() {
+        assertEval("{ max(42L, as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_ee0de0e77cb666bcfa5000fddb01efb2() {
+        assertEval("{ max(42, as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_4f3fc8bea1494255303f1b0c316d5d10() {
+        assertEval("{ max(42, as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_009bf836d27a2876b8b1cd9842b67bf0() {
+        assertEval("{ max(\"42\", as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_1618739767a9ce93cffd3d20947561ff() {
+        assertEval("{ max(\"42\", as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_3edb817a778d13f6663cc6ecb8fcfc46() {
+        assertEval("{ max(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_787076a058937b80f6366382978bbea5() {
+        assertEval("{ max(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_5e9d127b016b30b46cd295fb11f298bd() {
+        assertEval("{ max(42, as.double(NA), 7, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_4167033431d14412d99fe30ba9df7cb3() {
+        assertEval("{ max(42, as.double(NA), 7, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_cf9fcbabaf666f8d2d2f7ffafc67ab62() {
+        assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_0e398066f1ac666284d53043f4feb14e() {
+        assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_fb36815b5b8996417de7e952ad295967() {
+        assertEvalError("{ max(as.raw(42), as.raw(7)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_296967288f7219a5ce89ea1010d2e45f() {
+        assertEvalError("{ max(42+42i, 7+7i) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMaximum_bc432220dfa79d23e7855e16bba7c766() {
         assertEvalWarning("{ max() }");
     }
@@ -10041,6 +10156,36 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testMaximum_23aa639b4adc6f6f527d3865a6d1d9e4() {
         assertEvalWarning("{ max(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_05875616cdd99d66296e18f3c1479797() {
+        assertEvalWarning("{ max(as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_b7c05126df11e142c0e794af9a2d7c1b() {
+        assertEvalWarning("{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_44d80d06febc50cb8a2f75e4a7cff700() {
+        assertEvalWarning("{ max(as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_61f1b21a542fddfde846fcea3a827f75() {
+        assertEvalWarning("{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_d974f643a331234bf69a1c457bfbe8e1() {
+        assertEvalWarning("{ max(as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_f51cb5ac1cd4d565f05d38ee72d99b7d() {
+        assertEvalWarning("{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
     }
 
     @Test
@@ -10159,6 +10304,121 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMinimum_49b63733dee703226dd7633ad3f1323f() {
+        assertEval("{ is.logical(min(TRUE, FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_989f95def8f14b36ad111b4509fa8701() {
+        assertEval("{ is.logical(min(TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_4811b7a08e06ec8b8467557b634099c6() {
+        assertEval("{ min(\"42\", \"7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_424d1486e2630195e77444770c363329() {
+        assertEval("{ min(as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_9be42c59ec69c8e378c9283689f1bd8b() {
+        assertEval("{ min(as.double(NA), as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_7ff21f7936595b5f5ccc5e57a79765e5() {
+        assertEval("{ min(as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_98eb5dd38bb1db8422ffd5108f6a2abb() {
+        assertEval("{ min(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_4ab26aac60eaace281c5c249c6a15b47() {
+        assertEval("{ min(as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_0bf63e6b9e736602b203c35a5e6eecdf() {
+        assertEval("{ min(as.character(NA), as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_e32fdea1382f0343c37998c0065acbec() {
+        assertEval("{ min(42L, as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_49002036c730fe7fb2b517e73307b054() {
+        assertEval("{ min(42L, as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_3f5e3070945b7ba833014ee6172803f5() {
+        assertEval("{ min(42, as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_167fe215141456c2be6470cf28c7cba2() {
+        assertEval("{ min(42, as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_afeafad4659f9d952fc6cbf818b6a8e6() {
+        assertEval("{ min(\"42\", as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_396ef28576f51cebba94fa7589d3ac7d() {
+        assertEval("{ min(\"42\", as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_e03ecb8d8ab3700c6755b390af8808c4() {
+        assertEval("{ min(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_3da6156fb94493f7a48434b7269bae1d() {
+        assertEval("{ min(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_116b87fc966aed204d54962895060671() {
+        assertEval("{ min(42, as.double(NA), 7, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_3f4cff1d00d33d26e58f004b471688d5() {
+        assertEval("{ min(42, as.double(NA), 7, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_ee98d3ac1972a0151fbef0c4b0c50bb2() {
+        assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_87ea1c0c5132cbfcdbd8e89759d89ed0() {
+        assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_2a6e5142002ceb92b7184020d31302e0() {
+        assertEvalError("{ min(as.raw(42), as.raw(7)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_360b52645169d7abc8acbfa6c1b20e80() {
+        assertEvalError("{ min(42+42i, 7+7i) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMinimum_2cc02ae7579e178d45b0fbe3c78005ec() {
         assertEvalWarning("{ min() }");
     }
@@ -10196,6 +10456,36 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testMinimum_713f789575d36f92139d4df2c3515237() {
         assertEvalWarning("{ min(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_ae9919d9f356b70b302307c2dfbbf996() {
+        assertEvalWarning("{ min(as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_f2ecf49d168de8bdb6520911002c63d2() {
+        assertEvalWarning("{ min(as.double(NA), as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_c11c23df5b476bd65352912994813106() {
+        assertEvalWarning("{ min(as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_c6e05761f19dab9ecf49c0118e262786() {
+        assertEvalWarning("{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_8aa50b4d9464c2f7c09a4c5849f6f193() {
+        assertEvalWarning("{ min(as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMinimum_635ceb88e7b986329ea6b5654b48e13c() {
+        assertEvalWarning("{ min(as.character(NA), as.character(NA), na.rm=TRUE) }");
     }
 
     @Test
@@ -13359,33 +13649,178 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSumIgnore_512304594d55f1330efacd6cc594cf7a() {
+    public void TestSimpleBuiltins_testSum_47da0e729877bc7b9ebaae084255f557() {
+        assertEval("{ is.logical(sum(TRUE, FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_5e8466f95daf339f55e5bc2f380fc181() {
+        assertEval("{ is.logical(sum(TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_833b18f9fd68d4ed0bd8e9c6b34555bf() {
+        assertEval("{ sum(42+42i, 7+7i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_aca81d73a5587762d85391d3f279d527() {
+        assertEval("{ sum(as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_bec2c02a7f502b2833748ddbbdab8483() {
+        assertEval("{ sum(as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_126cc52d08016ab97a6c1fd344e0a7ae() {
+        assertEval("{ sum(as.double(NA), as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_cdb6003a4d43023fafdbc2d8a0e07894() {
+        assertEval("{ sum(as.double(NA), as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_f3cd592f4a919ac6a5b645f25ec9a591() {
+        assertEval("{ sum(as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_b83d1fc238d3b634a77e751ab2260a6e() {
+        assertEval("{ sum(as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_956e22ff2935a379a76def5b3f51cd30() {
+        assertEval("{ sum(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_60a1402de0149560f88f1bc6f384d913() {
+        assertEval("{ sum(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_e1af0a8bce868add507346a9eb8b642b() {
+        assertEval("{ sum(42L, as.integer(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_d721a81fb9599ecbfec9cc443251be9a() {
+        assertEval("{ sum(42L, as.integer(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_a4017d41644eb9f8edbdb00f57529a27() {
+        assertEval("{ sum(42, as.double(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_2fd9de42f24ec5463866cd8b2807e963() {
+        assertEval("{ sum(42, as.double(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_17fbb9c360548d814ddd791a13bd9c4d() {
+        assertEval("{ sum(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_90f70fbf04ba7326ae1b54488cf35950() {
+        assertEval("{ sum(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_2a01531d11a755ee202064eefb7ce543() {
+        assertEval("{ sum(42, as.double(NA), 7, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_c4f6b307b4988457553fed5bae276e43() {
+        assertEval("{ sum(42, as.double(NA), 7, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_512304594d55f1330efacd6cc594cf7a() {
         assertEval("{ sum(0, 1[3]) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSumIgnore_b579f0fccb80261d02dd8e36a1c21977() {
+    public void TestSimpleBuiltins_testSum_b579f0fccb80261d02dd8e36a1c21977() {
         assertEval("{ sum(na.rm=FALSE, 0, 1[3]) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSumIgnore_71b125cd0c9f2fe015befa381709e1a6() {
+    public void TestSimpleBuiltins_testSum_71b125cd0c9f2fe015befa381709e1a6() {
         assertEval("{ sum(0, na.rm=FALSE, 1[3]) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSumIgnore_d6658778aa6ef9490e87eee1748c00b1() {
+    public void TestSimpleBuiltins_testSum_d6658778aa6ef9490e87eee1748c00b1() {
         assertEval("{ sum(0, 1[3], na.rm=FALSE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSumIgnore_d8048d7927bb3ae55032b224e19caf66() {
+    public void TestSimpleBuiltins_testSum_d8048d7927bb3ae55032b224e19caf66() {
         assertEval("{ sum(0, 1[3], na.rm=TRUE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSumIgnore_79d5da5603083c8a7cd4e867a99de305() {
+    public void TestSimpleBuiltins_testSum_79d5da5603083c8a7cd4e867a99de305() {
         assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_d3eeae41362589157918ed1d85a19a51() {
+        assertEvalError("{ sum(as.raw(42), as.raw(7)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_775c3e4483bc3d03410b703c79f4662e() {
+        assertEvalError("{ sum(\"42\", \"7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_c41089de7f0871700f11650de9663042() {
+        assertEvalError("{ sum(as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_c1430f6f8056d0ea937f173d1bf7ae54() {
+        assertEvalError("{ sum(as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_2c4aa4f867874e7ba913079f1b0deafd() {
+        assertEvalError("{ sum(as.character(NA), as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_4d9d07f576fd993a8f8f65d86df87e64() {
+        assertEvalError("{ sum(as.character(NA), as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_f6962d9da1f0239a1328ef0959597028() {
+        assertEvalError("{ sum(\"42\", as.character(NA), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_050ae755823d72e24c2ccabaf81ca0f9() {
+        assertEvalError("{ sum(\"42\", as.character(NA), na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_1bc592da7aa03357bd67a2ab654bc784() {
+        assertEvalError("{ sum(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_801b1d35aaf5b5ea058da849e4513508() {
+        assertEvalError("{ sum(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
     }
 
     @Test

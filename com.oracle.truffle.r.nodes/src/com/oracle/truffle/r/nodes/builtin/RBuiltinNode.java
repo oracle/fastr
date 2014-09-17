@@ -64,6 +64,25 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     public abstract RNode[] getArguments();
 
     /**
+     * In most cases, we do not match arguments for builtins, but in some cases (where this method
+     * needs to be overridden) we do.
+     *
+     * @return whether arguments should be matched
+     */
+    public boolean matchArguments() {
+        return false;
+    }
+
+    /**
+     * Meant to be overridded for special cases.
+     *
+     * @return size of the execution signature
+     */
+    public int getExecutionSignatureSize() {
+        return getBuiltin().getFactory().getExecutionSignature().size();
+    }
+
+    /**
      * Return the names of the builtin's formal arguments. Historically this was always manually
      * overridden by the subclass. Now the information is acquired from the {@link RBuiltin}
      * annotation. If that cannot be determined (because {@link #getBuiltin()} returns {@code null}
@@ -171,7 +190,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     }
 
     protected RNode[] inlineStaticArguments(InlinedArguments args) {
-        int signatureSize = getBuiltin().getFactory().getExecutionSignature().size();
+        int signatureSize = getExecutionSignatureSize();
         RNode[] children = new RNode[signatureSize];
 
         // Fill with already determined arguments..
