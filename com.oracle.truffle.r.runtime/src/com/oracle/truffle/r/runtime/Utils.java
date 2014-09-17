@@ -236,9 +236,10 @@ public final class Utils {
     }
 
     /**
-     * Return the depth of the stack. This is done by walking up the call stack and counting those
-     * frames that are not for promise evaluation wrappers and not substituted frames (see
-     * {@link #isSubstitutedFrame(Frame)}.
+     * Return the depth of the stack. The "R depth" of the stack is determined by those frames that
+     * contribute to actual R function execution, hence, FastR-internal frames that are used to,
+     * e.g., evaluate promises must be left out. The same is true for substituted frames (see
+     * {@code FunctionDefinitionNode#substituteFrame}).
      */
     public static int stackDepth() {
         LongAdder n = new LongAdder();
@@ -247,10 +248,14 @@ public final class Utils {
             if (REnvironment.isGlobalEnvFrame(frame)) {
                 return n.intValue();
             }
-            if (!isPromiseEvaluationFrame(frameInstance)) {
+            boolean promise = isPromiseEvaluationFrame(frameInstance);
+            boolean substituted = isSubstitutedFrame(frame);
+            if (!promise) {
                 n.increment();
+            } else if (!substituted) {
+                n.decrement();
             }
-            if (isSubstitutedFrame(frame)) {
+            if (substituted) {
                 n.decrement();
             }
             return null;
@@ -262,6 +267,7 @@ public final class Utils {
      * TODO provide a better way of determining promise evaluation nature of frames than using
      * {@code toString()} on the call target.
      */
+    @SlowPath
     private static boolean isPromiseEvaluationFrame(FrameInstance frameInstance) {
         String desc = frameInstance.getCallTarget().toString();
         return desc == RPromise.CLOSURE_WRAPPER_NAME;
