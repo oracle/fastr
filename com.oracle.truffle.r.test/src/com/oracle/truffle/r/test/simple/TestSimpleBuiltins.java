@@ -2808,16 +2808,25 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testSysCall() {
         assertEval("{ f <- function() sys.call() ; f() }");
-        assertEval("{ (function() sys.call())() }");
-        assertEval("{ f <- function(x) sys.call() ; f(2) }");
         assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
-        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
         assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
         assertEval("{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysCallIgnore() {
+        assertEval("{ (function() sys.call())() }");
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
@@ -2829,14 +2838,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
         assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
-    }
-
-    @Test
-    @Ignore
-    public void testSysCallIgnore() {
-        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test

@@ -310,7 +310,7 @@ public class RDeparse {
                     state.append(f.getName());
                     state.append("\\\")");
                 } else {
-                    throw RInternalError.unimplemented();
+                    state.append(((RRootNode) f.getTarget().getRootNode()).getSourceCode());
                 }
                 break;
             }

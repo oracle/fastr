@@ -12169,10 +12169,6 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 #{switch(4,1,2,3)}
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
-#{ (function() sys.call())() }
-(function() sys.call())()
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
 #{ f <- function() sys.call() ; f() }
 f()
 
@@ -12201,16 +12197,8 @@ h()
 g()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
-#{ f <- function(x) sys.call() ; f(2) }
-f(2)
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
 #{ f <- function(x) sys.call() ; f(x = 2) }
 f(x = 2)
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
-#{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }
-f(g())
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysNFrame
 #{ f <- function() sys.nframe() ; f() }

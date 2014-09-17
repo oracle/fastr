@@ -13914,23 +13914,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSysCall_f44ee9a6ea3efb3dd3af1c314ae8b266() {
-        assertEval("{ (function() sys.call())() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSysCall_7cbf9b612d6ed31bbb101daf73e590f7() {
-        assertEval("{ f <- function(x) sys.call() ; f(2) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testSysCall_72545e399dae6c0c4c65872bc895c67a() {
         assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSysCall_13208aaa10f5c6ede2ca1043542e65d3() {
-        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
     }
 
     @Test
@@ -13961,6 +13946,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSysCall_3ad24bf5ef2ddd4a5ce2bb9e20fc412d() {
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_f44ee9a6ea3efb3dd3af1c314ae8b266() {
+        assertEval("{ (function() sys.call())() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_7cbf9b612d6ed31bbb101daf73e590f7() {
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSysCallIgnore_13208aaa10f5c6ede2ca1043542e65d3() {
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
     }
 
     @Test

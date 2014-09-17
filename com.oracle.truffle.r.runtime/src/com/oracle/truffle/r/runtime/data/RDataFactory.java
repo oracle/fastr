@@ -329,10 +329,6 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RCall createCall(Object rep, RArgsValuesAndNames args) {
-        return traceDataCreated(new RCall(rep, args));
-    }
-
     public static RLanguage createLanguage(RList list, RLanguage.Type type) {
         return traceDataCreated(new RLanguage(list, type));
     }

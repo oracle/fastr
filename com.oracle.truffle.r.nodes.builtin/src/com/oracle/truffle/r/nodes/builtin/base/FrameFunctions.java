@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -91,13 +93,20 @@ public class FrameFunctions {
             for (int i = 0; i < namesLength; ++i) {
                 names[i] = RArguments.getName(cframe, i);
             }
-            RFunction function = RArguments.getFunction(cframe);
-            return Call.makeCall(RArguments.getCallSourceSection(cframe), function, new RArgsValuesAndNames(values, names));
+            SourceSection callSource = RArguments.getCallSourceSection(cframe);
+            String functionName = extractFunctionName(callSource.getCode());
+            return Call.makeCall(functionName, new RArgsValuesAndNames(values, names));
         }
 
         @Specialization
         protected RLanguage sysCall(double which) {
             return sysCall((int) which);
+        }
+
+        @SlowPath
+        private static String extractFunctionName(String callSource) {
+            // TODO remove the need for this by assembling a proper RLanguage object for the call
+            return callSource.substring(0, callSource.indexOf('('));
         }
 
     }
