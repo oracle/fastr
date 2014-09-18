@@ -1774,6 +1774,21 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testSysCallIgnore_f44ee9a6ea3efb3dd3af1c314ae8b266() {
+        assertEval("{ (function() sys.call())() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysCallIgnore_7cbf9b612d6ed31bbb101daf73e590f7() {
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysCallIgnore_13208aaa10f5c6ede2ca1043542e65d3() {
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_27098193cb36cf8c763bc06a7cc91a50() {
         assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
     }
@@ -1786,6 +1801,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
         assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysNFrameIgnore_17d834568c640b6a0227e3d10a88da86() {
+        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
+        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Ignore
@@ -1946,16 +1971,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testDotsIgnore_581191e3ee585752a4393b1dd5c20af3() {
         assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testDotsIgnore_168904965e7c99fe53738eba7ef80c6e() {
-        assertEval("{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testDotsIgnore_446276723386c4e17ee775d34b52759a() {
-        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }");
     }
 
     @Ignore

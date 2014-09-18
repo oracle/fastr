@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -91,13 +93,61 @@ public class FrameFunctions {
             for (int i = 0; i < namesLength; ++i) {
                 names[i] = RArguments.getName(cframe, i);
             }
-            RFunction function = RArguments.getFunction(cframe);
-            return Call.makeCall(RArguments.getCallSourceSection(cframe), function, new RArgsValuesAndNames(values, names));
+            SourceSection callSource = RArguments.getCallSourceSection(cframe);
+            String functionName = extractFunctionName(callSource.getCode());
+            return Call.makeCall(functionName, new RArgsValuesAndNames(values, names));
         }
 
         @Specialization
         protected RLanguage sysCall(double which) {
             return sysCall((int) which);
+        }
+
+        @SlowPath
+        private static String extractFunctionName(String callSource) {
+            // TODO remove the need for this by assembling a proper RLanguage object for the call
+            return callSource.substring(0, callSource.indexOf('('));
+        }
+
+    }
+
+    /**
+     * Generate a call object in which all of the arguments are fully qualified.
+     */
+    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots"})
+    public abstract static class MatchCall extends FrameHelper {
+
+        @Override
+        protected final FrameAccess frameAccess() {
+            return FrameAccess.READ_ONLY;
+        }
+
+        @Specialization
+        // TODO support expand.dots argument
+        protected RLanguage matchCall(@SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, @SuppressWarnings("unused") byte expandDots) {
+            controlVisibility();
+            Frame cframe = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+            Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
+            RArguments.copyArgumentsInto(cframe, values);
+            int namesLength = RArguments.getNamesLength(cframe);
+            String[] names = new String[namesLength];
+            for (int i = 0; i < namesLength; ++i) {
+                names[i] = RArguments.getName(cframe, i);
+            }
+
+            // extract the name of the function that was called
+            // TODO find a better solution for this
+            String callSource = RArguments.getCallSourceSection(cframe).getCode();
+            String functionName = callSource.substring(0, callSource.indexOf('('));
+
+            return Call.makeCall(functionName, new RArgsValuesAndNames(values, names));
+        }
+
+        @Specialization
+        @SuppressWarnings("unused")
+        protected RLanguage matchCall(RFunction definition, RLanguage call, byte expandDots) {
+            controlVisibility();
+            throw RInternalError.unimplemented();
         }
 
     }
@@ -145,19 +195,15 @@ public class FrameFunctions {
         @Specialization
         protected int sysParent(int nd) {
             controlVisibility();
-            int n = nd;
-            int d = Utils.stackDepth();
-            if (n > d) {
-                return 0;
-            } else {
-                return d - n;
-            }
+            int p = Utils.stackDepth() - nd;
+            return p < 0 ? 0 : p;
         }
 
         @Specialization
         protected int sysParent(double nd) {
             return sysParent((int) nd);
         }
+
     }
 
     @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"})
@@ -250,4 +296,5 @@ public class FrameFunctions {
             }
         }
     }
+
 }
