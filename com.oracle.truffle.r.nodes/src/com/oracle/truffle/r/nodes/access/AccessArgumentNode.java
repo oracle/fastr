@@ -136,7 +136,7 @@ public abstract class AccessArgumentNode extends RNode {
         return promise;
     }
 
-    public static class ReadArgumentNode extends RNode {
+    public static final class ReadArgumentNode extends RNode {
         private final int index;
 
         private ReadArgumentNode(int index) {

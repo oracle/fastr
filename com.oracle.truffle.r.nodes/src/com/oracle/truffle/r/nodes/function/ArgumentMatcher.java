@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
  * 'UseMethod' and
- * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)}
+ * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
  * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
  * </p>
  *
@@ -161,7 +161,6 @@ public class ArgumentMatcher {
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param callSrc The source of the function call currently executed
-     * @param matchArgs Determines if arguments should be matched
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
@@ -169,8 +168,8 @@ public class ArgumentMatcher {
      * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, SourceSection,
      *      boolean, ClosureCache)
      */
-    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean matchArgs) {
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, matchArgs, suppliedArgs);
+    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, true, suppliedArgs);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 

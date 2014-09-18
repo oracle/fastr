@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -119,7 +120,25 @@ public abstract class Apply extends RBuiltinNode {
     }
 
     private Object callFunction(VirtualFrame frame, RFunction fun, Object input) {
-        Object[] args = RArguments.create(fun, funCall.getSourceSection(), new Object[]{input});
+        FormalArguments formals = ((RRootNode) fun.getTarget().getRootNode()).getFormalArguments();
+
+        // Create arguments: Set 1. to input and fill the rest with defaults
+        Object[] evaluatedArgs = new Object[formals.getArgsCount()];
+        if (evaluatedArgs.length > 0) {
+            evaluatedArgs[0] = input;
+        }
+        for (int i = 1; i < evaluatedArgs.length; i++) {
+            RNode node = formals.getDefaultArgs()[i];
+            if (node == null) {
+                evaluatedArgs[i] = RMissing.instance;
+            } else if (node instanceof ConstantNode) {
+                evaluatedArgs[i] = ((ConstantNode) node).getValue();
+            } else {
+                // TODO Set default values in AccessArgumentNode instead of this??
+                Utils.nyi();
+            }
+        }
+        Object[] args = RArguments.create(fun, funCall.getSourceSection(), evaluatedArgs);
         return funCall.call(frame, fun.getTarget(), args);
     }
 }

@@ -10109,6 +10109,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMaximum_f5adf3eb65411f16da79fcd519585f41() {
+        assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_e9c2a4fbc3eed59f75b571edfa22fd88() {
+        assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_e0b736d0d8c6f4e5b43783e862af2811() {
+        assertEval("{ max(123, NA, TRUE, 12, FALSE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMaximum_fb36815b5b8996417de7e952ad295967() {
         assertEvalError("{ max(as.raw(42), as.raw(7)) }");
     }

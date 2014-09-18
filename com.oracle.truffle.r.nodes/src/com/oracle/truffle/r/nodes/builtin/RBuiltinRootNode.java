@@ -80,9 +80,4 @@ public final class RBuiltinRootNode extends RRootNode {
     public RootNode split() {
         return new RBuiltinRootNode(NodeUtil.cloneNode(uninitializedBuiltin), getFormalArguments(), getFrameDescriptor().shallowCopy());
     }
-
-    public boolean matchArguments() {
-        return builtin.matchArguments();
-    }
-
 }

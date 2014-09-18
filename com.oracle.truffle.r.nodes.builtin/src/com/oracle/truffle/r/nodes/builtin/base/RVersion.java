@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class RVersion extends RBuiltinNode {
 
     @Specialization
-    protected Object doRVersion(@SuppressWarnings("unused") RMissing x) {
+    protected Object doRVersion() {
         controlVisibility();
         return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
     }

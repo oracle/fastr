@@ -236,6 +236,10 @@ public abstract class RBuiltinPackage {
         return new RBuiltinBuilder(this, factory);
     }
 
+    /**
+     * A {@link NodeFactory} implementation used to create {@link RCustomBuiltinNode}s.
+     * {@link #createNode(Object...)} uses {@link RBuiltinCustomConstructors} is maintained by hand.
+     */
     private static class ReflectiveNodeFactory implements NodeFactory<RBuiltinNode> {
 
         private final Class<? extends RBuiltinNode> clazz;
@@ -268,9 +272,8 @@ public abstract class RBuiltinPackage {
         }
 
         public List<Class<? extends Node>> getExecutionSignature() {
-            return Arrays.<Class<? extends Node>> asList(RNode.class);
+            return Collections.emptyList();
         }
-
     }
 
 }

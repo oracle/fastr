@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -64,25 +65,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     public abstract RNode[] getArguments();
 
     /**
-     * In most cases, we do not match arguments for builtins, but in some cases (where this method
-     * needs to be overridden) we do.
-     *
-     * @return whether arguments should be matched
-     */
-    public boolean matchArguments() {
-        return false;
-    }
-
-    /**
-     * Meant to be overridded for special cases.
-     *
-     * @return size of the execution signature
-     */
-    public int getExecutionSignatureSize() {
-        return getBuiltin().getFactory().getExecutionSignature().size();
-    }
-
-    /**
      * Return the names of the builtin's formal arguments. Historically this was always manually
      * overridden by the subclass. Now the information is acquired from the {@link RBuiltin}
      * annotation. If that cannot be determined (because {@link #getBuiltin()} returns {@code null}
@@ -118,7 +100,8 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     }
 
     private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {
-        int total = builtin.getFactory().getExecutionSignature().size();
+        int total = builtin.getRBuiltin().parameterNames().length;
+        // int total = builtin.getFactory().getExecutionSignature().size();
         RNode[] args = new RNode[total];
         EnvProvider envProvider = new EnvProvider();
         for (int i = 0; i < total; i++) {
@@ -190,32 +173,26 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     }
 
     protected RNode[] inlineStaticArguments(InlinedArguments args) {
-        int signatureSize = getExecutionSignatureSize();
-        RNode[] children = new RNode[signatureSize];
-
-        // Fill with already determined arguments..
-        RNode[] pureArgs = args.getInlinedArgs();
-        int argsSize = pureArgs.length;
-        int di = Math.min(argsSize, signatureSize);
-        System.arraycopy(args.getInlinedArgs(), 0, children, 0, di);
-
-        // ...and the rest with RMissing
-        // TODO Or default values???
-        for (; di < signatureSize; di++) {
-            children[di] = ConstantNode.create(RMissing.instance);
+        int execSignatureSize = getBuiltin().getFactory().getExecutionSignature().size();
+        int parameterLength = getBuiltin().getRBuiltin().parameterNames().length;
+        if (execSignatureSize > parameterLength) {
+            throwMissingFormalParameterError(parameterLength, execSignatureSize);
         }
 
-        return children;
+        return args.getInlinedArgs();
+    }
+
+    @SlowPath
+    private void throwMissingFormalParameterError(int argsLength, int specializationExpectesArgs) {
+        String name = getBuiltin().getRBuiltin().name();
+        throw new IllegalStateException("Builtin '" + name + "': Length of 'parameterNames' (" + argsLength + ") and specialization signature (" + specializationExpectesArgs + ") must be consistent!");
     }
 
     /**
      * A wrapper builtin is a {@link RCustomBuiltinNode} that is able to create any arbitrary node
-     * as builtin. It can be used as normal builtin. Implement {@link #createDelegate()} to create
-     * that node. Warning: setting argument count is not yet implemented. set {@link RBuiltin} to
-     * varargs to get all arguments in a single node in the arguments array.
+     * as builtin (e.g., 'max', 'sum', etc.). It can be used as normal builtin. Implement
+     * {@link #createDelegate()} to create that node.
      */
-    // TODO support argument for number of arguments. Currently no arguments are passed
-    // or in case of var args exactly one.
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
         @Child private RNode delegate;
@@ -302,6 +279,11 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         @Override
         public RBuiltinFactory getBuiltin() {
             return builtin;
+        }
+
+        @Override
+        protected RBuiltin getRBuiltin() {
+            return builtin.getRBuiltin();
         }
 
         @Override

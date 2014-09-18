@@ -8946,6 +8946,18 @@ In max() : no non-missing arguments to max; returning -Inf
 [1] NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(123, NA, TRUE, 12, FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(123, NA, TRUE, 12, FALSE, na.rm=FALSE) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(123, NA, TRUE, 12, FALSE, na.rm=TRUE) }
+[1] 123
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ max(1:10, 100:200, c(4.0, 5.0)) }
 [1] 200
 

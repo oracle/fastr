@@ -218,6 +218,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ max(42, as.double(NA), 7, na.rm=FALSE) }");
         assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
         assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+
+        assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=TRUE) }");
+        assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=FALSE) }");
+        assertEval("{ max(123, NA, TRUE, 12, FALSE) }");
     }
 
     @Test

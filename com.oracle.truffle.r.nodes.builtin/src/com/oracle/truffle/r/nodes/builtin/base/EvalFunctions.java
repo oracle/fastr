@@ -163,12 +163,6 @@ public class EvalFunctions {
 
     @RBuiltin(name = "local", nonEvalArgs = {0}, kind = SUBSTITUTE, parameterNames = {"expr", "envir"})
     public abstract static class Local extends EvalAdapter {
-        @SuppressWarnings("hiding") protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir"};
-
-        @Override
-        public String[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -176,17 +170,17 @@ public class EvalFunctions {
         }
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), 0), enclos);
+        protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir) {
+            return doEval(expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), 0));
         }
 
         @Specialization
-        protected Object doEval(RPromise expr, REnvironment envir, RMissing enclos) {
+        protected Object doEval(RPromise expr, REnvironment envir) {
             /*
              * local does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
+            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, null);
         }
 
     }

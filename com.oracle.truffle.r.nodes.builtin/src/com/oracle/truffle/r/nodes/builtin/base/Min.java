@@ -42,16 +42,6 @@ public final class Min extends RWrapperBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Override
-    public boolean matchArguments() {
-        return true;
-    }
-
-    @Override
-    public int getExecutionSignatureSize() {
-        return 2;
-    }
-
     public Min(RBuiltinNode prev) {
         super(prev);
     }

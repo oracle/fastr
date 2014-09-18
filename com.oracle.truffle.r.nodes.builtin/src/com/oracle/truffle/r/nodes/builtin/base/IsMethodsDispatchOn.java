@@ -25,13 +25,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
 public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
     @Specialization
-    protected byte doIsMethodsDispatchOn(@SuppressWarnings("unused") RMissing x) {
+    protected byte doIsMethodsDispatchOn() {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }

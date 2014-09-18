@@ -42,16 +42,6 @@ public final class Max extends RWrapperBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Override
-    public boolean matchArguments() {
-        return true;
-    }
-
-    @Override
-    public int getExecutionSignatureSize() {
-        return 2;
-    }
-
     public Max(RBuiltinNode prev) {
         super(prev);
     }
