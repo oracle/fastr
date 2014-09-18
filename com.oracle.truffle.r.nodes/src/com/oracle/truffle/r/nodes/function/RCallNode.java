@@ -59,20 +59,20 @@ import com.oracle.truffle.r.runtime.data.*;
  * {@link DirectCallNode} which is not as performant as the latter but has no further disadvantages.
  * But as the function changed its formal parameters changed, too, so a re-match has to be done as
  * well, which involves the creation of nodes and thus must happen on the {@link SlowPath}.<br/>
- * Problem 2 however is not that easy, too: It is solved by reading the values associated with "..."
- * (which are Promises) and wrapping them in newly created {@link RNode}s. These nodes get inserted
- * into the arguments list ({@link CallArgumentsNode#executeFlatten(VirtualFrame)}) - which needs to
+ * Problem 2 is not that easy, too: It is solved by reading the values associated with "..." (which
+ * are Promises) and wrapping them in newly created {@link RNode}s. These nodes get inserted into
+ * the arguments list ({@link CallArgumentsNode#executeFlatten(VirtualFrame)}) - which needs to be
  * be matched against the formal parameters again, as theses arguments may carry names as well which
  * may have an impact on argument order. As matching involves node creation, it has to happen on the
  * {@link SlowPath}.
  * </p>
- * To cache those node creations, two interwoven PICs are implemented. The cache is constructed
- * using the following classes:
+ * To avoid repeated node creations as much as possible by caching two interwoven PICs are
+ * implemented. The caches are constructed using the following classes:
  *
  * <pre>
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
- *  G = {@link GenericCallNode}: Function fixed, no varargs (generic case)
+ *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
  *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
@@ -81,12 +81,12 @@ import com.oracle.truffle.r.runtime.data.*;
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
  *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
- * which is not aware of caching)
+ * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
+ * the cache and just behaves like a D/DGV)
  * </pre>
  *
- * As the function's identity is the primary id for this cache and as the property
- * "takes varargs as argument" is static for each call site, we effectively end up with two separate
- * cache structures. Some examples of each are depicted below:
+ * As the property "takes varargs as argument" is static for each call site, we effectively end up
+ * with two separate cache structures. Some examples of each are depicted below:
  *
  * <pre>
  * non varargs, max depth:
@@ -95,23 +95,31 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  * no varargs, generic (if max depth is exceeded):
  * |
- * G
+ * D-D-D-D-G
  *
  * varargs:
+ * |
+ * DV-DV-UV         <- function identity level cache
+ *    |
+ *    DV
+ *    |
+ *    UVC           <- varargs signature level cache
+ *
+ * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
  *    |
  *    DV
  *    |
- *    UVC
- *
- * varargs, max varargs depth exceeded:
- * |
- * DV-DGV-UV
+ *    DV
+ *    |
+ *    DV
+ *    |
+ *    DGV
  *
  * varargs, max function depth exceeded:
  * |
- * GV
+ * DV-DV-DV-DV-GV
  * </pre>
  * <p>
  * In the diagrams above every horizontal connection "-" is in fact established by a separate node:
@@ -142,8 +150,6 @@ public abstract class RCallNode extends RNode {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
-    private static final String GENERIC_VARARGS_WARNING = "Warning: RCallNode varargs generic case!";
-    private static final String GENERIC_FUNCTION_WARNING = "Warning: RCallNode function generic case!";
 
     protected RCallNode() {
     }
@@ -264,7 +270,7 @@ public abstract class RCallNode extends RNode {
     }
 
     /**
-     * [C]
+     * [C] Extracts the check for function identity away from the individual cache nodes
      *
      * @see RCallNode
      */
@@ -307,7 +313,7 @@ public abstract class RCallNode extends RNode {
     }
 
     /**
-     * [U]/[UV]
+     * [U]/[UV] Forms the uninitialized end of the function PIC
      *
      * @see RCallNode
      */
@@ -347,20 +353,24 @@ public abstract class RCallNode extends RNode {
         private RCallNode specialize(VirtualFrame frame, RFunction function) {
             CompilerAsserts.neverPartOfCompilation();
 
-            if (depth < FUNCTION_INLINE_CACHE_SIZE) {
-                final RCallNode current = createCacheNode(frame, function);
-                final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
-                current.onCreate();
-                this.replace(cachedNode);
-                return cachedNode;
+            RCallNode current = createCacheNode(frame, function);
+            RootCallNode next = createNextNode();
+            RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
+            next.onCreate();
+            current.onCreate();
+            this.replace(cachedNode);
+            return cachedNode;
+        }
+
+        @SlowPath
+        protected RootCallNode createNextNode() {
+            if (depth + 1 < FUNCTION_INLINE_CACHE_SIZE) {
+                return new UninitializedCallNode(this);
             } else {
-                RootCallNode topMost = (RootCallNode) getTopNode();
                 // 2 possible cases: G (Multiple functions, no varargs) or GV (Multiple function
                 // arbitrary varargs)
-                RCallNode generic = args.containsVarArgsSymbol() ? new GenericVarArgsCallNode(topMost.functionNode, args) : new GenericCallNode(topMost.functionNode, args);
-                generic = topMost.replace(generic, GENERIC_FUNCTION_WARNING);
-                generic.onCreate();
-                return generic;
+                CallArgumentsNode clonedArgs = getClonedArgs();
+                return args.containsVarArgsSymbol() ? new GenericVarArgsCallNode(functionNode, clonedArgs) : new GenericCallNode(functionNode, clonedArgs);
             }
         }
 
@@ -399,14 +409,6 @@ public abstract class RCallNode extends RNode {
 
             callNode.assignSourceSection(callSrc);
             return callNode;
-        }
-
-        protected Node getTopNode() {
-            Node parentNode = this;
-            for (int i = 0; i < depth; i++) {
-                parentNode = parentNode.getParent();
-            }
-            return parentNode;
         }
 
         public CallArgumentsNode getClonedArgs() {
@@ -514,29 +516,26 @@ public abstract class RCallNode extends RNode {
             return specializeAndExecute(frame, function, varArgsSignature);
         }
 
+        @SlowPath
         private Object specializeAndExecute(VirtualFrame frame, RFunction function, VarArgsSignature varArgsSignature) {
             CompilerAsserts.neverPartOfCompilation();
 
-            if (depth < VARARGS_INLINE_CACHE_SIZE) {
-                // Extend cache
-                this.depth += 1;
-                CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-                DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, this, getSourceSection(), function, varArgsSignature, false);
-                return replace(newCallNode).execute(frame, function, varArgsSignature);
-            } else {
-                // Add stable generic case
-                DispatchedGenericVarArgsCallNode dgv = new DispatchedGenericVarArgsCallNode(function, args);
-                RCallNode topMostVarargsCache = getTopMost();
-                return topMostVarargsCache.replace(dgv, GENERIC_VARARGS_WARNING).execute(frame, function);
-            }
+            // Extend cache
+            this.depth += 1;
+            CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
+            VarArgsCacheCallNode next = createNextNode(function);
+            DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, getSourceSection(), function, varArgsSignature, false);
+            return replace(newCallNode).execute(frame, function, varArgsSignature);
         }
 
-        private RCallNode getTopMost() {
-            Node parent = this;
-            for (int i = 0; i < depth; i--) {
-                parent = parent.getParent();
+        @SlowPath
+        private VarArgsCacheCallNode createNextNode(RFunction function) {
+            if (depth < VARARGS_INLINE_CACHE_SIZE) {
+                return this;
+            } else {
+                CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
+                return new DispatchedGenericVarArgsCallNode(function, clonedArgs);
             }
-            return (RCallNode) parent;
         }
     }
 
@@ -612,7 +611,7 @@ public abstract class RCallNode extends RNode {
      *
      * @see RCallNode
      */
-    private static final class DispatchedGenericVarArgsCallNode extends RCallNode {
+    private static final class DispatchedGenericVarArgsCallNode extends VarArgsCacheCallNode {
 
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode suppliedArgs;
@@ -627,7 +626,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         @SlowPath
-        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+        protected Object execute(VirtualFrame frame, RFunction currentFunction, VarArgsSignature varArgsSignature) {
             CompilerAsserts.neverPartOfCompilation();
             assert function == currentFunction;
 
