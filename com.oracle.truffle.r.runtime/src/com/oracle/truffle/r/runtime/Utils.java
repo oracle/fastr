@@ -34,6 +34,7 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public final class Utils {
 
@@ -235,17 +236,49 @@ public final class Utils {
     }
 
     /**
-     * Return the depth of the stack, excluding the current frame and the pseudo-frame at the base.
+     * Return the depth of the stack. The "R depth" of the stack is determined by those frames that
+     * contribute to actual R function execution, hence, FastR-internal frames that are used to,
+     * e.g., evaluate promises must be left out. The same is true for substituted frames (see
+     * {@code FunctionDefinitionNode#substituteFrame}).
      */
     public static int stackDepth() {
-        LongAdder depth = new LongAdder();
-
-        Truffle.getRuntime().iterateFrames(frameInstance -> {
-            depth.increment();
+        LongAdder n = new LongAdder();
+        Object depth = Truffle.getRuntime().iterateFrames(frameInstance -> {
+            Frame frame = frameInstance.getFrame(FrameAccess.READ_ONLY, false);
+            if (REnvironment.isGlobalEnvFrame(frame)) {
+                return n.intValue();
+            }
+            boolean promise = isPromiseEvaluationFrame(frameInstance);
+            boolean substituted = isSubstitutedFrame(frame);
+            if (!promise) {
+                n.increment();
+            } else if (!substituted) {
+                n.decrement();
+            }
+            if (substituted) {
+                n.decrement();
+            }
             return null;
         });
+        return depth == null ? 0 : (int) depth;
+    }
 
-        return depth.intValue() - 1;
+    /**
+     * TODO provide a better way of determining promise evaluation nature of frames than using
+     * {@code toString()} on the call target.
+     */
+    @SlowPath
+    private static boolean isPromiseEvaluationFrame(FrameInstance frameInstance) {
+        String desc = frameInstance.getCallTarget().toString();
+        return desc == RPromise.CLOSURE_WRAPPER_NAME;
+    }
+
+    /**
+     * An arguments array length of 1 is indicative of a substituted frame. See
+     * {@code FunctionDefinitionNode.substituteFrame}.
+     */
+    private static boolean isSubstitutedFrame(Frame frame) {
+        return frame.getArguments().length == 1;
     }
 
     /**
@@ -266,8 +299,7 @@ public final class Utils {
     public static VirtualFrame getActualCurrentFrame() {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
-        if (frame.getArguments().length == 1) {
-            // an arguments array length of 1 is indicative of a substituted frame
+        if (isSubstitutedFrame(frame)) {
             frame = (VirtualFrame) frame.getArguments()[0];
         }
         return frame;

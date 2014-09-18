@@ -2808,10 +2808,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testSysCall() {
         assertEval("{ f <- function() sys.call() ; f() }");
-        assertEval("{ (function() sys.call())() }");
-        assertEval("{ f <- function(x) sys.call() ; f(2) }");
         assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
-        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
         assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
         assertEval("{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }");
@@ -2823,9 +2820,62 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testSysCallIgnore() {
+        assertEval("{ (function() sys.call())() }");
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+
         assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
         assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
         assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+    }
+
+    @Test
+    public void testSysParent() {
+        assertEval("{ sys.parent() }");
+        assertEval("{ f <- function() sys.parent() ; f() }");
+        assertEval("{ f <- function() sys.parent() ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.parent() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x=sys.parent()) x ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parent()) g(z) ; h() }");
+        assertEval("{ u <- function() sys.parent() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testSysParents() {
+        assertEval("{ sys.parents() }");
+        assertEval("{ f <- function() sys.parents() ; f() }");
+        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.parents() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x=sys.parents()) x ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parents()) g(z) ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysParentsIgnore() {
+        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testSysNFrame() {
+        assertEval("{ sys.nframe() }");
+        assertEval("{ f <- function() sys.nframe() ; f() }");
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; g() }");
+        assertEval("{ f <- function() sys.nframe() ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x=sys.nframe()) x ; g <- function() f() ; h <- function() g() ; h() }");
+        assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.nframe()) g(z) ; h() }");
+    }
+
+    @Test
+    @Ignore
+    public void testSysNFrameIgnore() {
+        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testMatchCall() {
+        assertEval("{ f <- function() match.call() ; f() }");
+        assertEval("{ f <- function(x) match.call() ; f(2) }");
     }
 
     @Test

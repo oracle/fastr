@@ -82,7 +82,7 @@ public final class RPromise extends RLanguageRep {
         NO_ARG;
     }
 
-    private static final String CLOSURE_WRAPPER_NAME = "<promise>";
+    public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
     /**
      * @see EvalPolicy
