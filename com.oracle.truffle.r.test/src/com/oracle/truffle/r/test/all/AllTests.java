@@ -17069,6 +17069,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_168904965e7c99fe53738eba7ef80c6e() {
+        assertEval("{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_446276723386c4e17ee775d34b52759a() {
+        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDots_2a99369402e3625a074eafef17085ffa() {
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
     }
@@ -17131,16 +17141,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDotsIgnore_581191e3ee585752a4393b1dd5c20af3() {
         assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
-    }
-
-    @Test
-    public void TestSimpleFunctions_testDotsIgnore_168904965e7c99fe53738eba7ef80c6e() {
-        assertEval("{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
-    }
-
-    @Test
-    public void TestSimpleFunctions_testDotsIgnore_446276723386c4e17ee775d34b52759a() {
-        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }");
     }
 
     @Test

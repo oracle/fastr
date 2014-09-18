@@ -14993,6 +14993,10 @@ Error in f(a = 1, ...) :
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }
 Error in f(a = 1, ...) : argument 2 matches multiple formal arguments
 
@@ -15004,6 +15008,10 @@ Error in f(a = 1, ...) : argument 2 matches multiple formal arguments
 #{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }
 Error in f(a = 1, ...) :
   formal argument "bextra" matched by multiple actual arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }
+[1] 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a=1,...) a ; f() }
