@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * Temporary substitutions that just evaluate the expression for package loading and assume no
@@ -42,6 +43,8 @@ public class TryFunctions {
 
         @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
+        private final PromiseProfile promiseProfile = new PromiseProfile();
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
@@ -50,7 +53,7 @@ public class TryFunctions {
         @Specialization
         protected Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
-            return PromiseHelper.evaluate(frame, exprExecNode, expr);
+            return PromiseHelper.evaluate(frame, exprExecNode, expr, promiseProfile);
         }
     }
 
@@ -59,6 +62,8 @@ public class TryFunctions {
     public abstract static class TryCatch extends RBuiltinNode {
 
         @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+
+        private final PromiseProfile promiseProfile = new PromiseProfile();
 
         @Override
         public RNode[] getParameterValues() {
@@ -74,7 +79,7 @@ public class TryFunctions {
         @Specialization
         protected Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
             controlVisibility();
-            return PromiseHelper.evaluate(frame, exprExecNode, expr);
+            return PromiseHelper.evaluate(frame, exprExecNode, expr, promiseProfile);
         }
     }
 }

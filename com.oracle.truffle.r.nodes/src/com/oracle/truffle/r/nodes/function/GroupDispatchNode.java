@@ -22,6 +22,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 import edu.umd.cs.findbugs.annotations.*;
@@ -177,6 +178,8 @@ public class GroupDispatchNode extends S3DispatchNode {
         return null;
     }
 
+    private final PromiseProfile promiseProfile = new PromiseProfile();
+
     @SlowPath
     private void initFunCall(VirtualFrame frame, RFunction func) {
         // avoid re-evaluating arguments.
@@ -189,11 +192,11 @@ public class GroupDispatchNode extends S3DispatchNode {
                     if (evaluatedArgs[i] instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) evaluatedArgs[i];
                         if (argsValuesAndNames.length() == 1) {
-                            argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[0]));
+                            argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[0], promiseProfile));
                         } else {
                             argArray = new RNode[argArray.length + argsValuesAndNames.length() - 1];
                             for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                                argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[j]));
+                                argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[j], promiseProfile));
                             }
                         }
                     } else {

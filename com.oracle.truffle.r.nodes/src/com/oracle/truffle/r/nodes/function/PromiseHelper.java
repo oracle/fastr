@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 /**
  * Holds {@link RPromise}-related functionality that cannot be implemented in
@@ -35,17 +36,18 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class PromiseHelper {
     /**
-     * Guarded by {@link RPromise#isInOriginFrame(VirtualFrame)}.
+     * Guarded by {@link RPromise#isInOriginFrame(VirtualFrame,PromiseProfile)}.
      *
      * @param frame The current {@link VirtualFrame}
      * @param exprExecNode The {@link ExpressionExecutorNode}
      * @param promise The {@link RPromise} to evaluate
+     * @param profile the profile for the site that operates on the promise
      * @return Evaluates the given {@link RPromise} in the given frame using the
      *         {@link ExpressionExecutorNode}
      */
-    public static Object evaluate(VirtualFrame frame, ExpressionExecutorNode exprExecNode, RPromise promise) {
-        if (promise.isEvaluated() || !promise.isInOriginFrame(frame)) {
-            return promise.evaluate(frame);
+    public static Object evaluate(VirtualFrame frame, ExpressionExecutorNode exprExecNode, RPromise promise, PromiseProfile profile) {
+        if (promise.isEvaluated(profile) || !promise.isInOriginFrame(frame, profile)) {
+            return promise.evaluate(frame, profile);
         }
 
         // Check for dependency cycle

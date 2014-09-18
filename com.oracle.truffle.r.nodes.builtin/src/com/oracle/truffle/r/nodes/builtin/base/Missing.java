@@ -32,9 +32,12 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 @RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = {0})
 public abstract class Missing extends RBuiltinNode {
+
+    private final PromiseProfile promiseProfile = new PromiseProfile();
 
     @Specialization
     protected byte missing(VirtualFrame frame, RPromise promise) {
@@ -54,13 +57,13 @@ public abstract class Missing extends RBuiltinNode {
             return RRuntime.asLogical(false);
         }
 
-        return RRuntime.asLogical(RMissingHelper.isMissing(obj));
+        return RRuntime.asLogical(RMissingHelper.isMissing(obj, promiseProfile));
     }
 
     @Specialization(guards = "!isPromise")
     protected byte missing(Object obj) {
         controlVisibility();
-        return RRuntime.asLogical(RMissingHelper.isMissing(obj));
+        return RRuntime.asLogical(RMissingHelper.isMissing(obj, promiseProfile));
     }
 
     public boolean isPromise(Object obj) {

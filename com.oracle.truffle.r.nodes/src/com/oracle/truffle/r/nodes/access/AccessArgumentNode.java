@@ -31,8 +31,7 @@ import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -73,6 +72,7 @@ public abstract class AccessArgumentNode extends RNode {
 
     private final BranchProfile needsCalleeFrame = new BranchProfile();
     private final BranchProfile strictEvaluation = new BranchProfile();
+    private final PromiseProfile promiseProfile = new PromiseProfile();
 
     /**
      * @param index {@link #getIndex()}
@@ -114,23 +114,24 @@ public abstract class AccessArgumentNode extends RNode {
     }
 
     private Object handlePromise(VirtualFrame frame, RPromise promise, EnvProvider envProvider, boolean useExprExecNode) {
-        assert promise.getType() != PromiseType.NO_ARG;
+        assert !promise.isNonArgument();
+        CompilerAsserts.compilationConstant(useExprExecNode);
 
         // Check whether it is necessary to create a callee REnvironment for the promise
-        if (promise.needsCalleeFrame()) {
+        if (promise.needsCalleeFrame(promiseProfile)) {
             needsCalleeFrame.enter();
             // In this case the promise might lack the proper REnvironment, as it was created before
             // the environment was
-            promise.updateEnv(envProvider.getREnvironmentFor(frame));
+            promise.updateEnv(envProvider.getREnvironmentFor(frame), promiseProfile);
         }
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
-        if (promise.getEvalPolicy() == EvalPolicy.INLINED) {
-            if (CompilerAsserts.compilationConstant(useExprExecNode)) {
-                return PromiseHelper.evaluate(frame, exprExecNode, promise);
+        if (promise.isInlined(promiseProfile)) {
+            if (useExprExecNode) {
+                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
             } else {
                 strictEvaluation.enter();
-                return promise.evaluate(frame);
+                return promise.evaluate(frame, promiseProfile);
             }
         }
         return promise;

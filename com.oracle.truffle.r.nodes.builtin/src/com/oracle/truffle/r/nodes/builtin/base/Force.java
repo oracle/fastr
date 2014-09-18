@@ -30,16 +30,19 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 @RBuiltin(name = "force", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO revert to R (promises)
 public abstract class Force extends RBuiltinNode {
 
+    private final PromiseProfile promiseProfile = new PromiseProfile();
+
     @Specialization
     protected Object force(VirtualFrame frame, Object arg) {
         if (arg instanceof RPromise) {
             RPromise promise = (RPromise) arg;
-            if (promise.isEvaluated()) {
+            if (promise.isEvaluated(promiseProfile)) {
                 return promise.getValue();
             } else {
                 SourceSection callSrc = RArguments.getCallSourceSection(frame);

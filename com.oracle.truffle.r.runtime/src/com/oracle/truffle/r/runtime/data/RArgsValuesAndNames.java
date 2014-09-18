@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments
@@ -49,10 +50,10 @@ public class RArgsValuesAndNames {
         }
     }
 
-    public RArgsValuesAndNames evaluate(VirtualFrame frame) {
+    public RArgsValuesAndNames evaluate(VirtualFrame frame, PromiseProfile promiseProfile) {
         Object[] newValues = new Object[values.length];
         for (int i = 0; i < values.length; i++) {
-            newValues[i] = RPromise.checkEvaluate(frame, values[i]);
+            newValues[i] = RPromise.checkEvaluate(frame, values[i], promiseProfile);
         }
         return new RArgsValuesAndNames(newValues, names);
     }

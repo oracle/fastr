@@ -30,7 +30,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
@@ -42,9 +41,12 @@ import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
+
+    protected final PromiseProfile promiseProfile = new PromiseProfile();
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
@@ -152,13 +154,13 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
         if (obj instanceof RPromise) {
             RPromise promise = (RPromise) obj;
-            if (!promise.isEvaluated()) {
+            if (!promise.isEvaluated(promiseProfile)) {
                 if (!forcePromise) {
                     // since we do not know what type the evaluates to, it may match.
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    obj = promise.evaluate(frame);
+                    obj = promise.evaluate(frame, promiseProfile);
                 }
             } else {
                 obj = promise.getValue();
@@ -189,16 +191,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
-        private final BranchProfile directlyEvaluatedProfile = new BranchProfile();
-
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
-            if (!promise.isEvaluated() && promise.isInOriginFrame(frame)) {
-                directlyEvaluatedProfile.enter();
-
-                return PromiseHelper.evaluate(frame, exprExecNode, promise);
+            if (!promise.isEvaluated(promiseProfile) && promise.isInOriginFrame(frame, promiseProfile)) {
+                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
             }
-            return promise.evaluate(frame);
+            return promise.evaluate(frame, promiseProfile);
         }
 
         @Specialization

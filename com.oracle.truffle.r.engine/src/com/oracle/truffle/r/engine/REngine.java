@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -513,11 +514,13 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
+
     @SlowPath
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
-            Object resultValue = RPromise.checkEvaluate(null, result);
+            Object resultValue = RPromise.checkEvaluate(null, result, globalPromiseProfile);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
             function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, RMissing.instance}));
         }
