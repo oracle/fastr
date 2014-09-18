@@ -159,6 +159,7 @@ public class TestBase {
             } else {
                 try {
                     expectedOutputManager = new ExpectedTestOutputManager(new File(expectedTestOutputURL.getPath()), false, false, false);
+                    fastROutputManager = new FastRTestOutputManager(null);
                 } catch (IOException ex) {
                     Assert.fail("error reading: " + expectedTestOutputURL.getPath() + ": " + ex);
                 }
