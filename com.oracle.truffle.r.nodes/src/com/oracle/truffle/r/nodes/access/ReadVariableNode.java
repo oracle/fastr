@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
@@ -543,6 +544,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final boolean readMissing;
         private final boolean forcePromise;
 
+        private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
+
         ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, boolean readMissing, boolean forcePromise, String mode) {
             this.readNode = readNode;
             this.nextNode = nextNode;
@@ -560,13 +563,14 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             controlVisibility();
-            if (readNode.getFrameSlotNode().hasValue(enclosingFrame)) {
-                Object result = readNode.execute(frame, enclosingFrame);
+            MaterializedFrame typedEnclosingFrame = frameTypeProfile.profile(enclosingFrame);
+            if (readNode.getFrameSlotNode().hasValue(typedEnclosingFrame)) {
+                Object result = readNode.execute(frame, typedEnclosingFrame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
                     return result;
                 }
             }
-            return nextNode.execute(frame, RArguments.getEnclosingFrame(enclosingFrame));
+            return nextNode.execute(frame, RArguments.getEnclosingFrame(typedEnclosingFrame));
         }
 
         @Override

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -99,6 +100,8 @@ public final class RArguments {
      */
     public static final int MINIMAL_ARRAY_LENGTH = 6;
 
+    private static final ValueProfile materializedFrameProfile = ValueProfile.createClassProfile();
+
     private RArguments() {
     }
 
@@ -110,7 +113,7 @@ public final class RArguments {
     private static Object[] getArgumentsWithEvalCheck(Frame frame) {
         Object[] arguments = frame.getArguments();
         if (arguments.length == 1) {
-            return ((Frame) arguments[0]).getArguments();
+            return materializedFrameProfile.profile((Frame) arguments[0]).getArguments();
         } else {
             return arguments;
         }
