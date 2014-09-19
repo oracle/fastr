@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -34,11 +36,34 @@ import com.oracle.truffle.r.runtime.*;
  * supplied argument, the default argument or <code>null</code>, if neither is provided.
  * </p>
  * <p>
- * The {@link #doExecuteArray(VirtualFrame)} method executes the argument nodes and converts them
- * into a form that can be passed into functions.
+ * The {@link #doExecuteArray(VirtualFrame,ExpressionExecutorNode)} method executes the argument
+ * nodes and converts them into a form that can be passed into functions.
  * </p>
  */
 public final class MatchedArguments extends Arguments<RNode> {
+
+    public static final class MatchedArgumentsNode extends Node {
+        @Children private final RNode[] arguments;
+        private final String[] names;
+
+        private MatchedArgumentsNode(RNode[] arguments, String[] names) {
+            this.arguments = arguments;
+            this.names = names;
+        }
+
+        @ExplodeLoop
+        public Object[] executeArray(VirtualFrame frame) {
+            Object[] result = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                result[i] = arguments[i].execute(frame);
+            }
+            return result;
+        }
+
+        public String[] getNames() {
+            return names;
+        }
+    }
 
     /**
      * @param arguments {@link #getArguments()}
@@ -46,6 +71,10 @@ public final class MatchedArguments extends Arguments<RNode> {
      */
     private MatchedArguments(RNode[] arguments, String[] names) {
         super(arguments, names);
+    }
+
+    public MatchedArgumentsNode createNode() {
+        return new MatchedArgumentsNode(arguments, names);
     }
 
     /**
@@ -76,11 +105,11 @@ public final class MatchedArguments extends Arguments<RNode> {
      * @return The <code>Object[]</code> containing the values of the arguments this class
      *         represents
      */
-    @ExplodeLoop
-    public Object[] doExecuteArray(VirtualFrame frame) {
+    public Object[] doExecuteArray(VirtualFrame frame, ExpressionExecutorNode executor) {
+        CompilerAsserts.compilationConstant(executor);
         Object[] result = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            result[i] = arguments[i].execute(frame);
+            result[i] = executor.execute(frame, arguments[i]);
         }
         return result;
     }
