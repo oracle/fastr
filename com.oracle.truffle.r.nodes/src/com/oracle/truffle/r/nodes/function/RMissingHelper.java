@@ -127,6 +127,8 @@ public class RMissingHelper {
         }
     }
 
+    public static final PromiseProfile globalMissingPromiseProfile = new PromiseProfile();
+
     /**
      * @param promise The {@link RPromise} which is checked whether it contains a
      *            {@link #isMissingArgument(Frame, Symbol)}.
@@ -151,7 +153,7 @@ public class RMissingHelper {
                 Symbol symbol = rvn.getSymbol();
 
                 // Check: If there is a cycle, return true. (This is done like in GNU R)
-                if (promise.isUnderEvaluation()) {
+                if (promise.isUnderEvaluation(globalMissingPromiseProfile)) {
                     return true;
                 }
                 try {
