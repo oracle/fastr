@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -139,9 +140,23 @@ public final class RArguments {
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_N_ARGS] = evaluatedArgs.length;
         a[INDEX_N_NAMES] = names.length;
-        System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
-        System.arraycopy(names, 0, a, INDEX_ARGUMENTS + evaluatedArgs.length, names.length);
+        copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
+        copyArguments(names, a, INDEX_ARGUMENTS + evaluatedArgs.length);
         assert envFunctionInvariant(a);
+    }
+
+    /**
+     * This method is used instead of System.arraycopy because the arraycopy would be optimized too
+     * late (after Truffle partial evaluation). At this late stage, there is no more information
+     * about the finalness of array contents, and according to the Java spec array contents can
+     * change at any point in time. Therefore, even though source is known at compile time, Graal
+     * would have to be conservative and keep the array copy.
+     */
+    @ExplodeLoop
+    private static void copyArguments(Object[] source, Object[] destination, int position) {
+        for (int i = 0; i < source.length; i++) {
+            destination[position + i] = source[i];
+        }
     }
 
     private static boolean envFunctionInvariant(Object[] a) {
