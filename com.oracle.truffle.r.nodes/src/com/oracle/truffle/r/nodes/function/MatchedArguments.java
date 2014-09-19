@@ -22,11 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -36,8 +34,8 @@ import com.oracle.truffle.r.runtime.*;
  * supplied argument, the default argument or <code>null</code>, if neither is provided.
  * </p>
  * <p>
- * The {@link #doExecuteArray(VirtualFrame,ExpressionExecutorNode)} method executes the argument
- * nodes and converts them into a form that can be passed into functions.
+ * The {@link #doExecuteArray(VirtualFrame)} method executes the argument nodes and converts them
+ * into a form that can be passed into functions.
  * </p>
  */
 public final class MatchedArguments extends Arguments<RNode> {
