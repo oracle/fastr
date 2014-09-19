@@ -428,8 +428,6 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
-    private static boolean traceMakeCallTarget;
-
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
      * {@link RootCallTarget} for it. We define the
@@ -455,30 +453,10 @@ public final class REngine implements RContext.Engine {
      */
     @SlowPath
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
-        if (traceMakeCallTarget) {
-            doTraceMakeCallTarget(body);
-        }
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
-    }
-
-    private static void doTraceMakeCallTarget(RNode body) {
-        String nodeClassName = body.getClass().getSimpleName();
-        SourceSection ss = body.getSourceSection();
-        String trace;
-        if (ss == null) {
-            if (body instanceof ConstantNode) {
-                trace = ((ConstantNode) body).getValue().toString();
-            } else {
-                trace = "not constant/no source";
-            }
-        } else {
-            trace = ss.toString();
-        }
-        RContext.getInstance().getConsoleHandler().printf("makeCallTarget: node: %s, %s%n", nodeClassName, trace);
-
     }
 
     /**

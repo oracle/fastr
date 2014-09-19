@@ -83,12 +83,21 @@ public class REnvVars {
         }
     }
 
+    private static String rHome;
+
     public static String rHome() {
         // This can be called before initialize, "R RHOME"
-        String rHome = getEnvVars().get("R_HOME");
         if (rHome == null) {
-            // Should only happen in a unit test run
-            rHome = System.getProperty("user.dir");
+            rHome = getEnvVars().get("R_HOME");
+            if (rHome == null) {
+                // Should only happen in a unit test run, but can differ whether
+                // run from within IDE or from command line.
+                File file = new File(System.getProperty("user.dir"));
+                if (file.getName().endsWith("r.test")) {
+                    file = file.getParentFile();
+                }
+                rHome = file.getAbsolutePath();
+            }
         }
         return rHome;
     }
