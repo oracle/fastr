@@ -75,13 +75,13 @@ import com.oracle.truffle.r.runtime.data.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -94,11 +94,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function identity level cache
@@ -106,7 +106,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -118,7 +118,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -455,7 +455,6 @@ public abstract class RCallNode extends RNode {
 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
         @Child private CallArgumentsNode args;
-        @Child private ExpressionExecutorNode expressionExecutor = ExpressionExecutorNode.create();
 
         private RFunction lastFunction = null;
         private MatchedArguments lastMatchedArgs = null;
@@ -469,7 +468,7 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             if (lastFunction == currentFunction && lastMatchedArgs != null) {
                 // Same function: No re-match needed
-                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), lastMatchedArgs.doExecuteArray(frame, expressionExecutor), lastMatchedArgs.getNames());
+                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
 
@@ -477,7 +476,7 @@ public abstract class RCallNode extends RNode {
             this.lastMatchedArgs = matchedArgs;
             this.lastFunction = currentFunction;
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame, expressionExecutor), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -618,7 +617,6 @@ public abstract class RCallNode extends RNode {
 
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode suppliedArgs;
-        @Child private ExpressionExecutorNode expressionExecutor = ExpressionExecutorNode.create();
 
         private final RFunction function;
 
@@ -638,7 +636,7 @@ public abstract class RCallNode extends RNode {
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(function, getSourceSection(), matchedArgs.doExecuteArray(frame, expressionExecutor), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(function, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -652,7 +650,6 @@ public abstract class RCallNode extends RNode {
 
         @Child private CallArgumentsNode suppliedArgs;
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-        @Child private ExpressionExecutorNode expressionExecutor = ExpressionExecutorNode.create();
 
         GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
             super(functionNode);
@@ -668,7 +665,7 @@ public abstract class RCallNode extends RNode {
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame, expressionExecutor), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }

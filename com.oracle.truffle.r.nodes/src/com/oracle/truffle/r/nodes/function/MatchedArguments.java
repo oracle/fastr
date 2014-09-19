@@ -105,11 +105,11 @@ public final class MatchedArguments extends Arguments<RNode> {
      * @return The <code>Object[]</code> containing the values of the arguments this class
      *         represents
      */
-    public Object[] doExecuteArray(VirtualFrame frame, ExpressionExecutorNode executor) {
-        CompilerAsserts.compilationConstant(executor);
+    @ExplodeLoop
+    public Object[] doExecuteArray(VirtualFrame frame) {
         Object[] result = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            result[i] = executor.execute(frame, arguments[i]);
+            result[i] = arguments[i].execute(frame);
         }
         return result;
     }
