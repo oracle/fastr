@@ -242,10 +242,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     private interface HasMode {
         String getMode();
-
-        boolean readMissing();
-
-        boolean forcePromise();
     }
 
     public static final class UnresolvedReadVariableNode extends ReadVariableNode implements HasMode {
@@ -340,16 +336,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public String getMode() {
             return mode;
         }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
-        }
     }
 
     public static final class ReadVariableNonFrameNode extends ReadVariableNode {
@@ -435,16 +421,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public String getMode() {
             return mode;
         }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
-        }
     }
 
     public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode implements HasMode {
@@ -490,16 +466,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public String getMode() {
             return mode;
-        }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
         }
     }
 
@@ -581,16 +547,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public String getMode() {
             return mode;
-        }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
         }
     }
 
@@ -723,15 +679,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         protected Object doObject() {
             controlVisibility();
             throw RError.error(getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
-        }
-
-        @Override
-        public boolean readMissing() {
-            return getReadMissing();
-        }
-
-        public boolean forcePromise() {
-            return getForcePromise();
         }
     }
 }
