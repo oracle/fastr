@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -43,7 +44,7 @@ public class RMissingHelper {
      * @param value The value that should be examined
      * @return <code>true</code> iff this value is 'missing' in the definition of R
      */
-    public static boolean isMissing(Object value) {
+    public static boolean isMissing(Object value, PromiseProfile promiseProfile) {
         if (value == RMissing.instance) {
             return true;
         }
@@ -51,7 +52,7 @@ public class RMissingHelper {
         // This might be a promise...
         if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
-            if (promise.isDefaulted() || isMissingSymbol(promise)) {
+            if (promise.isDefault(promiseProfile) || isMissingSymbol(promise)) {
                 return true;
             }
         }

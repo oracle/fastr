@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -149,19 +150,60 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
+     * This class contains a profile of a specific promise evaluation site, i.e., a specific point
+     * in the AST where promises are inspected.
+     *
+     * This is useful to keep the amount of code included in Truffle compilation for each promise
+     * operation to a minimum.
+     */
+    public static final class PromiseProfile {
+        private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile underEvaluationProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isNullEnvProfile = ConditionProfile.createBinaryProfile();
+
+        private final ConditionProfile isInlinedProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
+    }
+
+    public boolean isInlined(PromiseProfile profile) {
+        return profile.isInlinedProfile.profile(evalPolicy == EvalPolicy.INLINED);
+    }
+
+    /**
+     * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
+     */
+    public boolean isDefault(PromiseProfile profile) {
+        return profile.isDefaultProfile.profile(type == PromiseType.ARG_DEFAULT);
+    }
+
+    public boolean isNonArgument() {
+        return type == PromiseType.NO_ARG;
+    }
+
+    public boolean isNullEnv(PromiseProfile profile) {
+        return profile.isNullEnvProfile.profile(env == null);
+    }
+
+    public boolean isEvaluated(PromiseProfile profile) {
+        return profile.isEvaluatedProfile.profile(isEvaluated);
+    }
+
+    /**
      * Evaluates this promise. If it has already been evaluated ({@link #isEvaluated()}),
      * {@link #getValue()} is returned.
      *
      * @param frame The {@link VirtualFrame} in which the evaluation of this promise is forced
      * @return The value this promise resolves to
      */
-    public Object evaluate(VirtualFrame frame) {
-        if (isEvaluated) {
+    public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
+        CompilerAsserts.compilationConstant(profile);
+        if (isEvaluated(profile)) {
             return value;
         }
 
         // Check for dependency cycle
-        if (underEvaluation) {
+        if (profile.underEvaluationProfile.profile(underEvaluation)) {
             SourceSection callSrc = RArguments.getCallSourceSection(frame);
             throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
         }
@@ -170,13 +212,13 @@ public final class RPromise extends RLanguageRep {
         try {
             underEvaluation = true;
 
-            // Evaluate this promises value!
+            // Evaluate this promise's value!
             // Performance: We can use frame directly
-            if (env != null && !isInOriginFrame(frame)) {
+            if (!isNullEnv(profile) && !isInOriginFrame(frame, profile)) {
                 SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
                 newValue = doEvalArgument(callSrc);
             } else {
-                assert isInOriginFrame(frame);
+                assert isInOriginFrame(frame, profile);
                 newValue = doEvalArgument(frame);
             }
 
@@ -228,73 +270,59 @@ public final class RPromise extends RLanguageRep {
      * call, but the callee frame and environment get created _after_ the call happened. This update
      * has to take place in AccessArgumentNode, just before arguments get stuffed into the fresh
      * environment for the function. Whether a {@link RPromise} needs one is determined by
-     * {@link #needsCalleeFrame()}!
+     * {@link #needsCalleeFrame(PromiseProfile)}!
      *
      * @param newEnv The REnvironment this promise is to be evaluated in
      */
-    public void updateEnv(REnvironment newEnv) {
+    public void updateEnv(REnvironment newEnv, PromiseProfile profile) {
         assert type == PromiseType.ARG_DEFAULT;
-        if (env == null && !isEvaluated) {
+        if (isNullEnv(profile) && !isEvaluated(profile)) {
             env = newEnv;
         }
     }
 
     /**
      * @param obj
+     * @param profile
      * @return If obj is a {@link RPromise}, it is evaluated and its result returned
      */
-    public static Object checkEvaluate(VirtualFrame frame, Object obj) {
+    public static Object checkEvaluate(VirtualFrame frame, Object obj, PromiseProfile profile) {
         if (obj instanceof RPromise) {
-            return ((RPromise) obj).evaluate(frame);
+            return ((RPromise) obj).evaluate(frame, profile);
         }
         return obj;
     }
 
     /**
      * Only to be called from AccessArgumentNode, and in combination with
-     * {@link #updateEnv(REnvironment)}!
+     * {@link #updateEnv(REnvironment,PromiseProfile)}!
      *
      * @return Whether this promise needs a callee environment set (see
-     *         {@link #updateEnv(REnvironment)})
+     *         {@link #updateEnv(REnvironment,PromiseProfile)})
      */
-    public boolean needsCalleeFrame() {
-        return evalPolicy == EvalPolicy.PROMISED && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
+    public boolean needsCalleeFrame(PromiseProfile profile) {
+        return !isInlined(profile) && isDefault(profile) && isNullEnv(profile) && !isEvaluated(profile);
     }
 
     /**
      * @param frame
+     * @param profile
      * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
      *         directly inside the AST.
      */
-    public boolean isInOriginFrame(VirtualFrame frame) {
-        if (evalPolicy == EvalPolicy.INLINED) {
-            return true;
-        }
-        assert evalPolicy == EvalPolicy.PROMISED;
-
-        if (type == PromiseType.ARG_DEFAULT && env == null) {
+    public boolean isInOriginFrame(VirtualFrame frame, PromiseProfile profile) {
+        if (isInlined(profile)) {
             return true;
         }
 
-        assert env != null;
+        if (isDefault(profile) && isNullEnv(profile)) {
+            return true;
+        }
+
         if (frame == null) {
             return false;
         }
-        return REnvironment.isFrameForEnv(frame, env);
-    }
-
-    /**
-     * @return {@link #evalPolicy}
-     */
-    public EvalPolicy getEvalPolicy() {
-        return evalPolicy;
-    }
-
-    /**
-     * @return {@link #type}
-     */
-    public PromiseType getType() {
-        return type;
+        return profile.isFrameForEnvProfile.profile(REnvironment.isFrameForEnv(frame, env));
     }
 
     /**
@@ -311,13 +339,6 @@ public final class RPromise extends RLanguageRep {
      */
     public Closure getClosure() {
         return closure;
-    }
-
-    /**
-     * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
-     */
-    public boolean isDefaulted() {
-        return type == PromiseType.ARG_DEFAULT;
     }
 
     /**

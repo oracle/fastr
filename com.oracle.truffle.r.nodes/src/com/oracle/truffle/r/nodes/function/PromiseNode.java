@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.*;
@@ -56,6 +57,8 @@ public class PromiseNode extends RNode {
      * created here.
      */
     protected final EnvProvider envProvider;
+
+    protected final PromiseProfile promiseProfile = new PromiseProfile();
 
     /**
      * @param factory {@link #factory}
@@ -142,11 +145,11 @@ public class PromiseNode extends RNode {
                     return RMissing.instance;
                 }
                 RPromise promise = factory.createPromiseDefault();
-                return PromiseHelper.evaluate(frame, exprExecNode, promise);
+                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
             } else if (obj instanceof RArgsValuesAndNames) {
-                return ((RArgsValuesAndNames) obj).evaluate(frame);
+                return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
             } else {
-                return RPromise.checkEvaluate(frame, obj);
+                return RPromise.checkEvaluate(frame, obj, promiseProfile);
             }
         }
     }
@@ -182,6 +185,8 @@ public class PromiseNode extends RNode {
         private final RPromise promise;
         @CompilationFinal private boolean isEvaluated = false;
 
+        private final PromiseProfile promiseProfile = new PromiseProfile();
+
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
         }
@@ -192,8 +197,8 @@ public class PromiseNode extends RNode {
             // the correct frame anyway
             if (!isEvaluated) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                Object result = promise.evaluate(frame);
-                isEvaluated = promise.isEvaluated();
+                Object result = promise.evaluate(frame, promiseProfile);
+                isEvaluated = promise.isEvaluated(promiseProfile);
                 return result;
             }
 
@@ -273,6 +278,8 @@ public class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
         protected final String[] names;
 
+        private final PromiseProfile promiseProfile = new PromiseProfile();
+
         public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
             this.varargs = nodes;
             this.names = names;
@@ -302,12 +309,12 @@ public class PromiseNode extends RNode {
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
                     for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index] = RPromise.checkEvaluate(frame, varargValues[j]);
+                        evaluatedArgs[index] = RPromise.checkEvaluate(frame, varargValues[j], promiseProfile);
                         evaluatedNames[index] = argsValuesAndNames.getNames()[j];
                         index++;
                     }
                 } else {
-                    evaluatedArgs[index++] = RPromise.checkEvaluate(frame, argValue);
+                    evaluatedArgs[index++] = RPromise.checkEvaluate(frame, argValue, promiseProfile);
                 }
             }
             return new RArgsValuesAndNames(evaluatedArgs, evaluatedNames);

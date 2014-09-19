@@ -22,6 +22,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 @RBuiltin(name = "UseMethod", kind = PRIMITIVE, parameterNames = {"generic", "object"})
 public abstract class UseMethod extends RBuiltinNode {
@@ -54,6 +55,8 @@ public abstract class UseMethod extends RBuiltinNode {
         @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
         protected final String[] suppliedArgsNames;
 
+        private final PromiseProfile promiseProfile = new PromiseProfile();
+
         public UseMethodNode(String[] suppliedArgsNames) {
             this.suppliedArgsNames = suppliedArgsNames;
         }
@@ -79,7 +82,7 @@ public abstract class UseMethod extends RBuiltinNode {
                 enclosingArg = varArgs.getValues()[0];
             }
 
-            enclosingArg = RPromise.checkEvaluate(frame, enclosingArg);
+            enclosingArg = RPromise.checkEvaluate(frame, enclosingArg, promiseProfile);
             return enclosingArg;
         }
     }

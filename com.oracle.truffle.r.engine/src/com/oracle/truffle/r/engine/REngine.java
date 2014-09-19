@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -427,8 +428,6 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
-    private static boolean traceMakeCallTarget;
-
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
      * {@link RootCallTarget} for it. We define the
@@ -454,30 +453,10 @@ public final class REngine implements RContext.Engine {
      */
     @SlowPath
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
-        if (traceMakeCallTarget) {
-            doTraceMakeCallTarget(body);
-        }
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
-    }
-
-    private static void doTraceMakeCallTarget(RNode body) {
-        String nodeClassName = body.getClass().getSimpleName();
-        SourceSection ss = body.getSourceSection();
-        String trace;
-        if (ss == null) {
-            if (body instanceof ConstantNode) {
-                trace = ((ConstantNode) body).getValue().toString();
-            } else {
-                trace = "not constant/no source";
-            }
-        } else {
-            trace = ss.toString();
-        }
-        RContext.getInstance().getConsoleHandler().printf("makeCallTarget: node: %s, %s%n", nodeClassName, trace);
-
     }
 
     /**
@@ -513,11 +492,13 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
+
     @SlowPath
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
-            Object resultValue = RPromise.checkEvaluate(null, result);
+            Object resultValue = RPromise.checkEvaluate(null, result, globalPromiseProfile);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
             function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, RMissing.instance}));
         }

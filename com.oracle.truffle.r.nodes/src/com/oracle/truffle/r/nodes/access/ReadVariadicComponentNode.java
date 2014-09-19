@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
@@ -38,6 +39,8 @@ public class ReadVariadicComponentNode extends RNode {
     @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
     private final int index;
+
+    private final PromiseProfile promiseProfile = new PromiseProfile();
 
     public ReadVariadicComponentNode(int index) {
         this.index = index;
@@ -64,7 +67,7 @@ public class ReadVariadicComponentNode extends RNode {
         if (ret instanceof RPromise) {
             // This might be the case, as lookup only checks for "..." to be a promise and forces it
             // eventually, NOT (all) of its content
-            ret = PromiseHelper.evaluate(frame, exprExecNode, (RPromise) ret);
+            ret = PromiseHelper.evaluate(frame, exprExecNode, (RPromise) ret, promiseProfile);
         }
         return ret == null ? RMissing.instance : ret;
     }
