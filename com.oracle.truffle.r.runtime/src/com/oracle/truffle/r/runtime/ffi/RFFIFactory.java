@@ -40,6 +40,7 @@ public abstract class RFFIFactory {
     }
 
     public static RFFI getRFFI() {
+        assert theRFFI != null : "RFFI factory is not initialized!";
         return theRFFI;
     }
 
