@@ -9810,6 +9810,138 @@ integer(0)
 #{ sub <- function(x,y) { x - y }; sub(10,5) }
 [1] 5
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(7+42i) }
+Error in pmax(7 + (0+42i)) : invalid input type
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(as.raw(42)) }
+Error in pmax(as.raw(42)) : invalid input type
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1, 7), c(42, 1)) }
+[1] 42  7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1, 7), c(42, as.double(NA))) }
+[1] 42 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }
+[1] 42  7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1, 7), double()) }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1, 7, 8), c(1), c(42, 1)) }
+[1] 42  7 42
+Warning message:
+In pmax(c(1, 7, 8), c(1), c(42, 1)) :
+  an argument will be fractionally recycled
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1L, 7L), c(42L, 1L)) }
+[1] 42  7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1L, 7L), c(42L, as.integer(NA))) }
+[1] 42 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }
+[1] 42  7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1L, 7L), integer()) }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }
+[1] 42  7 42
+Warning message:
+In pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) :
+  an argument will be fractionally recycled
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }
+[1]  0 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(FALSE, TRUE), c(TRUE, FALSE)) }
+[1] 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c(FALSE, TRUE), logical()) }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(7+42i) }
+Error in pmin(7 + (0+42i)) : invalid input type
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(as.raw(42)) }
+Error in pmin(as.raw(42)) : invalid input type
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1, 7), c(42, 1)) }
+[1] 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1, 7), c(42, as.double(NA))) }
+[1]  1 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }
+[1] 1 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1, 7), double()) }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1, 7, 8), c(1), c(42, 1)) }
+[1] 1 1 1
+Warning message:
+In pmin(c(1, 7, 8), c(1), c(42, 1)) :
+  an argument will be fractionally recycled
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1L, 7L), c(42L, 1L)) }
+[1] 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1L, 7L), c(42L, as.integer(NA))) }
+[1]  1 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }
+[1] 1 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1L, 7L), integer()) }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }
+[1] 1 1 1
+Warning message:
+In pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) :
+  an argument will be fractionally recycled
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(FALSE, TRUE), c(FALSE, NA)) }
+[1]  0 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(FALSE, TRUE), c(TRUE, FALSE)) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c(FALSE, TRUE), logical()) }
+integer(0)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPaste
 #{ a <- as.raw(200) ; b <- as.raw(255) ; paste(a, b) }
 [1] "c8 ff"
