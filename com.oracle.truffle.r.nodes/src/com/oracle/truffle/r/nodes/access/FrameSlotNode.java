@@ -90,6 +90,7 @@ public abstract class FrameSlotNode extends Node {
         }
 
         private FrameSlotNode resolveFrameSlot(Frame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameSlotNode newNode;
             FrameSlot frameSlot;
             if (createIfAbsent) {
@@ -137,6 +138,8 @@ public abstract class FrameSlotNode extends Node {
         private final ConditionProfile initializedProfile = ConditionProfile.createBinaryProfile();
         private final FrameSlot frameSlot;
 
+        private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
+
         public PresentFrameSlotNode(FrameSlot frameSlot) {
             this.frameSlot = frameSlot;
         }
@@ -146,9 +149,10 @@ public abstract class FrameSlotNode extends Node {
             return frameSlot;
         }
 
-        private static boolean isInitialized(Frame frame, FrameSlot frameSlot) {
+        private boolean isInitialized(Frame frame) {
             try {
-                return !frame.isObject(frameSlot) || frame.getObject(frameSlot) != null;
+                Frame typedFrame = frameTypeProfile.profile(frame);
+                return !typedFrame.isObject(frameSlot) || typedFrame.getObject(frameSlot) != null;
             } catch (FrameSlotTypeException e) {
                 throw new IllegalStateException();
             }
@@ -156,7 +160,7 @@ public abstract class FrameSlotNode extends Node {
 
         @Override
         public boolean hasValue(Frame frame) {
-            return initializedProfile.profile(isInitialized(frame, frameSlot));
+            return initializedProfile.profile(isInitialized(frame));
         }
     }
 }

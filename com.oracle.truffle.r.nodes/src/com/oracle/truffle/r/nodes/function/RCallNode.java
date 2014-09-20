@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -357,7 +358,6 @@ public abstract class RCallNode extends RNode {
             RootCallNode next = createNextNode();
             RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
             next.onCreate();
-            current.onCreate();
             this.replace(cachedNode);
             return cachedNode;
         }
@@ -405,6 +405,7 @@ public abstract class RCallNode extends RNode {
                     MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, callSrc, argsSrc);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
+                callNode.onCreate();
             }
 
             callNode.assignSourceSection(callSrc);
@@ -425,12 +426,12 @@ public abstract class RCallNode extends RNode {
     private static final class DispatchedCallNode extends RCallNode {
 
         @Child private DirectCallNode call;
-        private final MatchedArguments matchedArgs;
+        @Child private MatchedArgumentsNode matchedArgs;
 
         private final RFunction cachedFunction;
 
         DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
-            this.matchedArgs = matchedArgs;
+            this.matchedArgs = matchedArgs.createNode();
             this.cachedFunction = function;
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
         }
@@ -439,7 +440,7 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             assert cachedFunction == currentFunction;
 
-            Object[] argsObject = RArguments.create(cachedFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(cachedFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -548,10 +549,10 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode args;
         @Child private VarArgsCacheCallNode next;
+        @Child private MatchedArgumentsNode matchedArgs;
 
         private final RFunction cachedFunction;
         private final VarArgsSignature cachedSignature;
-        private final MatchedArguments matchedArgs;
 
         /**
          * Whether this [DV] node is the root of the varargs sub-cache (cmp. {@link RCallNode})
@@ -570,7 +571,7 @@ public abstract class RCallNode extends RNode {
             this.next = next;
             this.cachedFunction = function;
             this.cachedSignature = varArgsSignature;
-            this.matchedArgs = matchedArgs;
+            this.matchedArgs = matchedArgs.createNode();
             this.isVarArgsRoot = isVarArgsRoot;
         }
 
@@ -600,7 +601,7 @@ public abstract class RCallNode extends RNode {
             }
 
             // Our cached function and matched arguments do match, simply execute!
-            Object[] argsObject = RArguments.create(cachedFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(cachedFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }

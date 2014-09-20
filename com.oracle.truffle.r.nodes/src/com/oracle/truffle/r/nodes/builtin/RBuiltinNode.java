@@ -101,7 +101,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
     private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {
         int total = builtin.getRBuiltin().parameterNames().length;
-        // int total = builtin.getFactory().getExecutionSignature().size();
         RNode[] args = new RNode[total];
         EnvProvider envProvider = new EnvProvider();
         for (int i = 0; i < total; i++) {
@@ -185,7 +184,8 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     @SlowPath
     private void throwMissingFormalParameterError(int argsLength, int specializationExpectesArgs) {
         String name = getBuiltin().getRBuiltin().name();
-        throw new IllegalStateException("Builtin '" + name + "': Length of 'parameterNames' (" + argsLength + ") and specialization signature (" + specializationExpectesArgs + ") must be consistent!");
+        RInternalError.shouldNotReachHere("Builtin '" + name + "': Length of 'parameterNames' (" + argsLength + ") and specialization signature (" + specializationExpectesArgs +
+                        ") must be consistent!");
     }
 
     /**

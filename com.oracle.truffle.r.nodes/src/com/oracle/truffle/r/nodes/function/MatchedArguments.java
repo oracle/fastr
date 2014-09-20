@@ -40,12 +40,39 @@ import com.oracle.truffle.r.runtime.*;
  */
 public final class MatchedArguments extends Arguments<RNode> {
 
+    public static final class MatchedArgumentsNode extends Node {
+        @Children private final RNode[] arguments;
+        private final String[] names;
+
+        private MatchedArgumentsNode(RNode[] arguments, String[] names) {
+            this.arguments = arguments;
+            this.names = names;
+        }
+
+        @ExplodeLoop
+        public Object[] executeArray(VirtualFrame frame) {
+            Object[] result = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                result[i] = arguments[i].execute(frame);
+            }
+            return result;
+        }
+
+        public String[] getNames() {
+            return names;
+        }
+    }
+
     /**
      * @param arguments {@link #getArguments()}
      * @param names {@link #getNames()}
      */
     private MatchedArguments(RNode[] arguments, String[] names) {
         super(arguments, names);
+    }
+
+    public MatchedArgumentsNode createNode() {
+        return new MatchedArgumentsNode(arguments, names);
     }
 
     /**

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
@@ -241,10 +242,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     private interface HasMode {
         String getMode();
-
-        boolean readMissing();
-
-        boolean forcePromise();
     }
 
     public static final class UnresolvedReadVariableNode extends ReadVariableNode implements HasMode {
@@ -339,16 +336,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public String getMode() {
             return mode;
         }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
-        }
     }
 
     public static final class ReadVariableNonFrameNode extends ReadVariableNode {
@@ -434,16 +421,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public String getMode() {
             return mode;
         }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
-        }
     }
 
     public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode implements HasMode {
@@ -490,16 +467,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public String getMode() {
             return mode;
         }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
-        }
     }
 
     @NodeField(name = "symbol", type = Symbol.class)
@@ -543,6 +510,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final boolean readMissing;
         private final boolean forcePromise;
 
+        private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
+
         ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, boolean readMissing, boolean forcePromise, String mode) {
             this.readNode = readNode;
             this.nextNode = nextNode;
@@ -560,13 +529,14 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             controlVisibility();
-            if (readNode.getFrameSlotNode().hasValue(enclosingFrame)) {
-                Object result = readNode.execute(frame, enclosingFrame);
+            MaterializedFrame typedEnclosingFrame = frameTypeProfile.profile(enclosingFrame);
+            if (readNode.getFrameSlotNode().hasValue(typedEnclosingFrame)) {
+                Object result = readNode.execute(frame, typedEnclosingFrame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
                     return result;
                 }
             }
-            return nextNode.execute(frame, RArguments.getEnclosingFrame(enclosingFrame));
+            return nextNode.execute(frame, RArguments.getEnclosingFrame(typedEnclosingFrame));
         }
 
         @Override
@@ -577,16 +547,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public String getMode() {
             return mode;
-        }
-
-        @Override
-        public boolean readMissing() {
-            return readMissing;
-        }
-
-        @Override
-        public boolean forcePromise() {
-            return forcePromise;
         }
     }
 
@@ -719,15 +679,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         protected Object doObject() {
             controlVisibility();
             throw RError.error(getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
-        }
-
-        @Override
-        public boolean readMissing() {
-            return getReadMissing();
-        }
-
-        public boolean forcePromise() {
-            return getForcePromise();
         }
     }
 }

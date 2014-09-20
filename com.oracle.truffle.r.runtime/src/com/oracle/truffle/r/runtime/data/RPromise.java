@@ -118,7 +118,8 @@ public final class RPromise extends RLanguageRep {
 
     /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
-     * {@link #setUnderEvaluation(boolean)} and can by checked via {@link #isUnderEvaluation()}.
+     * {@link #setUnderEvaluation(boolean)} and can by checked via
+     * {@link #isUnderEvaluation(PromiseProfile)}.
      */
     private boolean underEvaluation = false;
 
@@ -203,7 +204,7 @@ public final class RPromise extends RLanguageRep {
         }
 
         // Check for dependency cycle
-        if (profile.underEvaluationProfile.profile(underEvaluation)) {
+        if (isUnderEvaluation(profile)) {
             SourceSection callSrc = RArguments.getCallSourceSection(frame);
             throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
         }
@@ -375,8 +376,8 @@ public final class RPromise extends RLanguageRep {
     /**
      * @return The state of the {@link #underEvaluation} flag.
      */
-    public boolean isUnderEvaluation() {
-        return underEvaluation;
+    public boolean isUnderEvaluation(PromiseProfile profile) {
+        return profile.underEvaluationProfile.profile(underEvaluation);
     }
 
     @Override

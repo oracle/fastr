@@ -302,9 +302,7 @@ public class ArgumentMatcher {
         int unmatchedNameCount = 0; // The nr of named supplied args that do not match
         // si = suppliedIndex, fi = formalIndex
         for (int si = 0; si < suppliedNames.length; si++) {
-            if (suppliedNames[si] == null || suppliedNames[si] == "") {
-                // suppliedNames[si] == "" is OK below as formals' "unmatched" name is specified as
-                // a literal as well
+            if (suppliedNames[si] == null || suppliedNames[si].isEmpty()) {
                 continue;
             }
 
@@ -326,9 +324,7 @@ public class ArgumentMatcher {
         for (int fi = 0; fi < resultArgs.length; fi++) {
             // Unmatched?
             if (!matchedFormalArgs.get(fi)) {
-                // suppliedNames[siCursor.nextIndex()] != "" is OK below as formals' "unmatched"
-                // name is specified as a literal as well
-                while (siCursor.hasNext() && siCursor.nextIndex() < suppliedNames.length && suppliedNames[siCursor.nextIndex()] != null && suppliedNames[siCursor.nextIndex()] != "") {
+                while (siCursor.hasNext() && siCursor.nextIndex() < suppliedNames.length && suppliedNames[siCursor.nextIndex()] != null && !suppliedNames[siCursor.nextIndex()].isEmpty()) {
                     // Slide over named parameters and find subsequent location of unnamed parameter
                     siCursor.next();
                 }
@@ -518,9 +514,7 @@ public class ArgumentMatcher {
                 }
                 matchedSuppliedArgs.set(found);
                 break;
-            } else if (suppliedName != "" && formalName.startsWith(suppliedName)) {
-                // suppliedName != "" is OK here as formals' "unmatched" name is specified as a
-// literal as well
+            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName)) {
                 if (found >= 0) {
                     throw RError.error(argsSrc, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
                 }
