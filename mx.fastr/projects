@@ -1,5 +1,5 @@
 suite=fastr
-mxversion=2.5.5
+mxversion=2.6.1
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 library@JDK_TOOLS@sha1=NOCHECK
@@ -48,9 +48,12 @@ library@JNR_X86ASM@path=lib/jnr-x86asm-1.0.2.jar
 library@JNR_X86ASM@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-x86asm-1.0.2.jar,http://repo1.maven.org/maven2/com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar
 library@JNR_X86ASM@sha1=006936bbd6c5b235665d87bd450f5e13b52d4b48
 
-library@ASM@path=lib/asm-4.0.jar
-library@ASM@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm/4.0/asm-4.0.jar
-library@ASM@sha1=659add6efc75a4715d738e73f07505246edf4d66
+library@ASM@path=lib/asm-5.0.3.jar
+library@ASM@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar,http://central.maven.org/maven2/org/ow2/asm/asm/5.0.3/asm-5.0.3.jar
+library@ASM@sha1=dcc2193db20e19e1feca8b1240dbbc4e190824fa
+library@ASM@sourcePath=lib/asm-5.0.3-sources.jar
+library@ASM@sourceSha1=f0f24f6666c1a15c7e202e91610476bd4ce59368
+library@ASM@sourceUrls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar,http://central.maven.org/maven2/org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar
 
 library@ASM_ANALYSIS@path=lib/asm-analysis-4.0.jar
 library@ASM_ANALYSIS@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar
