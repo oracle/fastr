@@ -1,9 +1,9 @@
 suite = {
-  "mxversion" : "2.6.1",
+  "mxversion" : "2.6.2",
   "name" : "fastr",
   "libraries" : {
     "JDK_TOOLS" : {
-      "path" : "/Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home/lib/tools.jar",
+      "path" : "${JAVA_HOME}/lib/tools.jar",
       "sha1" : "NOCHECK",
     },
 
