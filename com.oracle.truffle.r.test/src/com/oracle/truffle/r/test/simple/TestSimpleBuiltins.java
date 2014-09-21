@@ -19,6 +19,50 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testPMax() {
+        assertEval("{ pmax(c(1L, 7L), c(42L, 1L)) }");
+        assertEval("{ pmax(c(1L, 7L), integer()) }");
+        assertEvalWarning("{ pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA))) }");
+        assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmax(c(1, 7), c(42, 1)) }");
+        assertEval("{ pmax(c(1, 7), double()) }");
+        assertEvalWarning("{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmax(c(1, 7), c(42, as.double(NA))) }");
+        assertEval("{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmax(c(FALSE, TRUE), c(TRUE, FALSE)) }");
+        assertEval("{ pmax(c(FALSE, TRUE), logical()) }");
+        assertEval("{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }");
+
+        assertEvalError("{ pmax(as.raw(42)) }");
+        assertEvalError("{ pmax(7+42i) }");
+    }
+
+    @Test
+    public void testPMin() {
+        assertEval("{ pmin(c(1L, 7L), c(42L, 1L)) }");
+        assertEval("{ pmin(c(1L, 7L), integer()) }");
+        assertEvalWarning("{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA))) }");
+        assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmin(c(1, 7), c(42, 1)) }");
+        assertEval("{ pmin(c(1, 7), double()) }");
+        assertEvalWarning("{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmin(c(1, 7), c(42, as.double(NA))) }");
+        assertEval("{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmin(c(FALSE, TRUE), c(TRUE, FALSE)) }");
+        assertEval("{ pmin(c(FALSE, TRUE), logical()) }");
+        assertEval("{ pmin(c(FALSE, TRUE), c(FALSE, NA)) }");
+
+        assertEvalError("{ pmin(as.raw(42)) }");
+        assertEvalError("{ pmin(7+42i) }");
+    }
+
+    @Test
     public void testMakeNames() {
         assertEval("{ make.names(7) }");
         assertEval("{ make.names(\"a_a\") }");

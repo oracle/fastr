@@ -11089,6 +11089,156 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testPMax_28878c7ab3c008eb284872ac9ac2c212() {
+        assertEval("{ pmax(c(1L, 7L), c(42L, 1L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_f240be5532dba049aa584e758dd074d9() {
+        assertEval("{ pmax(c(1L, 7L), integer()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_7014448980c02c19e73ca9f3ec62df70() {
+        assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_e233c3479f47b5ef9a65e84886b8f12c() {
+        assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_f33bf601a10480a6e655abf7d6a3112b() {
+        assertEval("{ pmax(c(1, 7), c(42, 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_5f0f039f7cf3678730f38cae08115270() {
+        assertEval("{ pmax(c(1, 7), double()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_27887b238c7347a566f62b0dc0341d63() {
+        assertEval("{ pmax(c(1, 7), c(42, as.double(NA))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_ccb94250caabbc466bf26bc413df52f2() {
+        assertEval("{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_835849fdf0d1b6da7aa2e34dd879e955() {
+        assertEval("{ pmax(c(FALSE, TRUE), c(TRUE, FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_3c38a3f6e96af8fe90c48e43cb48df9e() {
+        assertEval("{ pmax(c(FALSE, TRUE), logical()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_c5b01367f4559f73c34b5185cb339362() {
+        assertEval("{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_1b53a79efcf345b2e339fd5276917b84() {
+        assertEvalError("{ pmax(as.raw(42)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_f9f505d06b5b5710a5792a1b3d87310c() {
+        assertEvalError("{ pmax(7+42i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_b44d9bd77af44fb8ec306d6dd45edbb7() {
+        assertEvalWarning("{ pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_5b6514495dda7f5c846db63966b35078() {
+        assertEvalWarning("{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_ed673aa55e7a1c2a8d40c87bcb4e1ada() {
+        assertEval("{ pmin(c(1L, 7L), c(42L, 1L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_ce791be426daa039470041d07067797b() {
+        assertEval("{ pmin(c(1L, 7L), integer()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_d39070dc303a04d03283e41346f67caf() {
+        assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_b1bf8ca40cf792c053045f94490e5328() {
+        assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_2b0595ae24223d21815439788e98914f() {
+        assertEval("{ pmin(c(1, 7), c(42, 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_537706f25472d8295893631620a432e6() {
+        assertEval("{ pmin(c(1, 7), double()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_6a80a3a6cb8256891d7ef0f0fc04023c() {
+        assertEval("{ pmin(c(1, 7), c(42, as.double(NA))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_0b795946ca6ecafba05ed310a0c217a8() {
+        assertEval("{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_af8dffea1ee168a9cdae131b7ac14b57() {
+        assertEval("{ pmin(c(FALSE, TRUE), c(TRUE, FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_cd786630b9cadd4013fcfb2acd3ad77c() {
+        assertEval("{ pmin(c(FALSE, TRUE), logical()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_7da52f855355a21884666c59cc4b7cb9() {
+        assertEval("{ pmin(c(FALSE, TRUE), c(FALSE, NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_f7db7c0c8aef9eeb520e7da787cc1481() {
+        assertEvalError("{ pmin(as.raw(42)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_592dc1a3816b77de1800bfae51ac9e4f() {
+        assertEvalError("{ pmin(7+42i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_9b2de90b2ad152649c797b5f352655af() {
+        assertEvalWarning("{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_ae7a9ca78626d59cc87b728d3052c103() {
+        assertEvalWarning("{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testParen_499acebd19ac76555ed92ca7ecc3ec53() {
         assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }

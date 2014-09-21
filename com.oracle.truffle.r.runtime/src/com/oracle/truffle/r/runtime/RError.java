@@ -239,6 +239,7 @@ public final class RError extends RuntimeException {
          * available.
          */
         GENERIC("%s"),
+        ARG_RECYCYLED("an argument will be fractionally recycled"),
         LENGTH_GT_1("the condition has length > 1 and only the first element will be used"),
         LENGTH_ZERO("argument is of length zero"),
         NA_UNEXP("missing value where TRUE/FALSE needed"),
@@ -337,6 +338,7 @@ public final class RError extends RuntimeException {
         SD_ZERO("the standard deviation is zero"),
         INVALID_UNNAMED_ARGUMENTS("invalid arguments"),
         INVALID_INPUT("invalid input"),
+        INVALID_INPUT_TYPE("invalid input type"),
         NA_PRODUCED("NAs produced"),
         DETERMINANT_COMPLEX("determinant not currently defined for complex matrices"),
         NON_NUMERIC_ARGUMENT("non-numeric argument"),
