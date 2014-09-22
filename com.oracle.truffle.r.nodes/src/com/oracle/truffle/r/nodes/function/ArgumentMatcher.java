@@ -287,6 +287,7 @@ public class ArgumentMatcher {
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
+    @SlowPath
     private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
                     SourceSection callSrc, SourceSection argsSrc) {
         String[] formalNames = formals.getNames();
@@ -785,7 +786,7 @@ public class ArgumentMatcher {
      * {@link VarArgsFactory} implementation that returns varargs as <code>Object[]</code>.
      */
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
-        public Object makeList(final Object[] elements, final String[] names) {
+        public Object makeList(Object[] elements, String[] names) {
             if (elements.length > 0) {
                 return new RArgsValuesAndNames(elements, names);
             } else {
@@ -814,7 +815,7 @@ public class ArgumentMatcher {
      * {@link VarArgsAsObjectArrayNode}.
      */
     public static final class VarArgsAsObjectArrayNodeFactory implements VarArgsFactory<RNode> {
-        public RNode makeList(final RNode[] elements, final String[] names) {
+        public RNode makeList(RNode[] elements, String[] names) {
             if (elements.length > 0) {
                 return new VarArgsAsObjectArrayNode(elements, names);
             } else {
