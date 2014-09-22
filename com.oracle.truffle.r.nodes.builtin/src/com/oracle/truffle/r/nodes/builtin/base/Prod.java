@@ -48,7 +48,7 @@ public abstract class Prod extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             prodRecursive = insert(ProdFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
-        // TODO: evantually handle multiple vectors properly
+        // TODO: eventually handle multiple vectors properly
         return prodRecursive.executeObject(frame, args.getValues()[0]);
     }
 
