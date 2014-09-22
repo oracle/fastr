@@ -20,7 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import tempfile, shutil, filecmp, platform, zipfile, sys
+import tempfile, shutil, filecmp, platform, zipfile, sys, subprocess
 from os.path import join, sep, exists
 from argparse import ArgumentParser
 import mx
@@ -269,6 +269,14 @@ def testgen(args):
     parser = ArgumentParser(prog='r testgen')
     parser.add_argument('--tests', action='store', default=_all_unit_tests(), help='pattern to match test classes')
     args = parser.parse_args(args)
+    # check the version of GnuR against FastR
+    try:
+        fastr_version = subprocess.check_output([mx.java().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
+        gnur_version = subprocess.check_output(['R', '--version'])
+        if not gnur_version.startswith(fastr_version):
+            mx.abort('R version is incompatible with FastR, please update to ' + fastr_version)
+    except subprocess.CalledProcessError:
+        mx.abort('RVersionNumber.main failed')
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
     mx.clean(['--no-dist', ] + testOnly)

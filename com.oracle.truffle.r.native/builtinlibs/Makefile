@@ -63,7 +63,7 @@ LIB_RDUMMY := $(OBJ)/libR.$(SHARED_EXT)
 libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version 3.1.0 -compatibility_version 3.1.0 $(OBJ)/rdummy.o
+	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version 3.1.1 -compatibility_version 3.1.1 $(OBJ)/rdummy.o
 
 cleanlibr:
 	rm -f $(LIB_RDUMMY)

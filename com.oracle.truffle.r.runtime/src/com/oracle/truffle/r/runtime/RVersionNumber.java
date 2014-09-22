@@ -27,21 +27,26 @@ package com.oracle.truffle.r.runtime;
  * use in {@code static final} fields and to finesse the fact that such fields cannot precede the
  * {@code enum} elements.
  *
- * N.B. Since packages check against the version number, we have to have a GnuR version number.
+ * N.B. Since packages check against the version number, we have to have a GnuR version number and,
+ * for consistency, we set the date to that of the corresponding GnuR release.
  */
 public class RVersionNumber {
     public static final String MAJOR = "3";
     public static final String MINOR = "1";
-    public static final String PATCH = "0";
+    public static final String PATCH = "1";
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
 
     public static final String RELEASE_YEAR = "2014";
-    public static final String RELEASE_MONTH = "06";
-    public static final String RELEASE_DAY = "05";
+    public static final String RELEASE_MONTH = "07";
+    public static final String RELEASE_DAY = "10";
 
     public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
+
+    public static void main(String[] args) {
+        System.out.printf("R version %s", FULL);
+    }
 
 }
