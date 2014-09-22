@@ -189,7 +189,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
 
             String functionBody = func.getSource().getCode();
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, formals, functionBody.substring(0, Math.min(functionBody.length(), 50)), false);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, formals, functionBody.substring(0, Math.min(functionBody.length(), 50)).replace("\n",
+                            "\\n"), false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         } catch (Throwable err) {
             err.printStackTrace();
