@@ -514,12 +514,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction function, VarArgsSignature varArgsSignature) {
-            return specializeAndExecute(frame, function, varArgsSignature);
-        }
-
-        @SlowPath
-        private Object specializeAndExecute(VirtualFrame frame, RFunction function, VarArgsSignature varArgsSignature) {
-            CompilerAsserts.neverPartOfCompilation();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
 
             // Extend cache
             this.depth += 1;
@@ -529,7 +524,6 @@ public abstract class RCallNode extends RNode {
             return replace(newCallNode).execute(frame, function, varArgsSignature);
         }
 
-        @SlowPath
         private VarArgsCacheCallNode createNextNode(RFunction function) {
             if (depth < VARARGS_INLINE_CACHE_SIZE) {
                 return this;
