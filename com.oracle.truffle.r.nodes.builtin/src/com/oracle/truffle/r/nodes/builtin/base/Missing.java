@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -39,6 +40,8 @@ public abstract class Missing extends RBuiltinNode {
 
     private final PromiseProfile promiseProfile = new PromiseProfile();
 
+    @Child private GetMissingValueNode getMissingValue;
+
     @Specialization
     protected byte missing(VirtualFrame frame, RPromise promise) {
         controlVisibility();
@@ -50,7 +53,11 @@ public abstract class Missing extends RBuiltinNode {
         }
 
         // Read symbols value directly
-        Object obj = RMissingHelper.getMissingValue(frame, symbol);
+        if (getMissingValue == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getMissingValue = insert(GetMissingValueNode.create(symbol));
+        }
+        Object obj = getMissingValue.execute(frame);
         if (obj == null) {
             // In case we are not able to read the symbol in current frame: This is not an argument
             // and thus return false
