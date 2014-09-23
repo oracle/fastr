@@ -100,7 +100,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  * varargs:
  * |
- * DV-DV-UV         <- function identity level cache
+ * DV-DV-UV         <- function call target identity level cache
  *    |
  *    DV
  *    |
@@ -124,8 +124,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * </pre>
  * <p>
  * In the diagrams above every horizontal connection "-" is in fact established by a separate node:
- * {@link CachedCallNode}, which encapsulates the check for functions identity. So the 1. example in
- * fact looks like this:
+ * {@link CachedCallNode}, which encapsulates the check for function call target identity. So the 1.
+ * example in fact looks like this:
  *
  * <pre>
  * |
@@ -271,7 +271,7 @@ public abstract class RCallNode extends RNode {
     }
 
     /**
-     * [C] Extracts the check for function identity away from the individual cache nodes
+     * [C] Extracts the check for function call target identity away from the individual cache nodes
      *
      * @see RCallNode
      */
@@ -279,35 +279,35 @@ public abstract class RCallNode extends RNode {
 
         @Child private RootCallNode nextNode;
         @Child private RCallNode currentNode;
-        private final RFunction cachedFunction;
+        private final CallTarget cachedCallTarget;
 
         public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
             super(function);
             this.currentNode = current;
             this.nextNode = next;
-            this.cachedFunction = cachedFunction;
+            this.cachedCallTarget = cachedFunction.getTarget();
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction f) {
-            if (cachedFunction == f) {
-                return currentNode.execute(frame, cachedFunction);
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.execute(frame, f);
             }
             return nextNode.execute(frame, f);
         }
 
         @Override
         public int executeInteger(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedFunction == f) {
-                return currentNode.executeInteger(frame, cachedFunction);
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.executeInteger(frame, f);
             }
             return nextNode.executeInteger(frame, f);
         }
 
         @Override
         public double executeDouble(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedFunction == f) {
-                return currentNode.executeDouble(frame, cachedFunction);
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.executeDouble(frame, f);
             }
             return nextNode.executeDouble(frame, f);
         }
@@ -428,19 +428,14 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
 
-        private final RFunction cachedFunction;
-
         DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
             this.matchedArgs = matchedArgs.createNode();
-            this.cachedFunction = function;
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            assert cachedFunction == currentFunction;
-
-            Object[] argsObject = RArguments.create(cachedFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -455,7 +450,7 @@ public abstract class RCallNode extends RNode {
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
         @Child private CallArgumentsNode args;
 
-        private RFunction lastFunction = null;
+        private CallTarget lastCallTarget = null;
         private MatchedArguments lastMatchedArgs = null;
 
         GenericCallNode(RNode functionNode, CallArgumentsNode args) {
@@ -465,15 +460,15 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            if (lastFunction == currentFunction && lastMatchedArgs != null) {
-                // Same function: No re-match needed
+            if (lastCallTarget == currentFunction.getTarget() && lastMatchedArgs != null) {
+                // poor man's caching succeeded - same function: no re-match needed
                 Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
 
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, args, getSourceSection(), args.getEncapsulatingSourceSection());
             this.lastMatchedArgs = matchedArgs;
-            this.lastFunction = currentFunction;
+            this.lastCallTarget = currentFunction.getTarget();
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
@@ -545,7 +540,6 @@ public abstract class RCallNode extends RNode {
         @Child private VarArgsCacheCallNode next;
         @Child private MatchedArgumentsNode matchedArgs;
 
-        private final RFunction cachedFunction;
         private final VarArgsSignature cachedSignature;
 
         /**
@@ -563,7 +557,6 @@ public abstract class RCallNode extends RNode {
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.args = args;
             this.next = next;
-            this.cachedFunction = function;
             this.cachedSignature = varArgsSignature;
             this.matchedArgs = matchedArgs.createNode();
             this.isVarArgsRoot = isVarArgsRoot;
@@ -578,8 +571,6 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, VarArgsSignature varArgsSignature) {
-            assert currentFunction == cachedFunction;
-
             // If this is the root of the varargs sub-cache: The signature needs to be created
             // once
             VarArgsSignature currentSignature;
@@ -595,7 +586,7 @@ public abstract class RCallNode extends RNode {
             }
 
             // Our cached function and matched arguments do match, simply execute!
-            Object[] argsObject = RArguments.create(cachedFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -611,25 +602,21 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode suppliedArgs;
 
-        private final RFunction function;
-
         DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.suppliedArgs = suppliedArgs;
-            this.function = function;
         }
 
         @Override
         @SlowPath
         protected Object execute(VirtualFrame frame, RFunction currentFunction, VarArgsSignature varArgsSignature) {
             CompilerAsserts.neverPartOfCompilation();
-            assert function == currentFunction;
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(function, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
