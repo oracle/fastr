@@ -215,6 +215,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             return value;
         }
 
+        private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
+
         /**
          * Catch all calls to {@link #execute(VirtualFrame, MaterializedFrame)} ({@code final} so it
          * is not overridden by the annotation processor) and forward them to {@link #getReadNode()}
@@ -224,7 +226,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public final Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             Object obj = getReadNode().execute(frame, enclosingFrame);
-            if (isPromise(obj)) {
+            if (isPromiseProfile.profile(isPromise(obj))) {
                 return doValue(frame, (RPromise) obj);
             }
             return obj;
