@@ -56,6 +56,10 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
         return arguments;
     }
 
+    public MaterializedFrame materialize() {
+        return this;
+    }
+
     /*
      * Delegates to #originalFrame
      */
@@ -118,10 +122,6 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
 
     public Object getValue(FrameSlot slot) {
         return originalFrame.getValue(slot);
-    }
-
-    public MaterializedFrame materialize() {
-        return this;
     }
 
     public boolean isObject(FrameSlot slot) {

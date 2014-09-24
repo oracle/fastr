@@ -269,96 +269,22 @@ public final class REngine implements RContext.Engine {
     /**
      * This is tricky because the {@link Frame} "f" associated with {@code envir} has been
      * materialized so we can't evaluate in it directly. Instead we create a new
-     * {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then update "f"
-     * on return.
+     * {@link VirtualEvalFrame} that behaves like "f" (delegates most calls to it) but has a
+     * slightly changed arguments array.
      *
      * N.B. The implementation should do its utmost to avoid calling this method as it is inherently
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      *
-     * TODO The check to patch the enclosing frame for {@code RFunctions} defined during the eval is
-     * painful and perhaps inadequate (should we be deep analysis of the result?). Can we find a way
-     * to avoid the patch? and get the enclosing frame correct on definition?
-     *
      */
     @SuppressWarnings("unused")
     private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, REnvironment enclos) throws PutException {
         MaterializedFrame envFrame = envir.getFrame();
-        // TODO This is temporary for now, to be able to push and use buildbot infrastructure to
-        // check for compilation issues
+        // Here we create fake frame that wraps the original frame's context and has an only
+        // slightly changed arguments array (functio and callSrc).
         VirtualFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc);
         return runCall(callTarget, vFrame, false, false);
-
-// VirtualFrame vFrame = RRuntime.createFunctionFrame(function, callSrc);
-// RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
-// // We make the new frame look like it was a real call to "function" (why?)
-// RArguments.setFunction(vFrame, function);
-// FrameDescriptor envfd = envFrame.getFrameDescriptor();
-// FrameDescriptor vfd = vFrame.getFrameDescriptor();
-// // Copy existing bindings. Logically we want to clone the existing frame contents.
-// // N.B. Since FrameDescriptors can be shared between frames, the descriptor may
-// // contain slots that do not have values in the frame.
-// int i = 0;
-// for (; i < envfd.getSlots().size(); i++) {
-// FrameSlot slot = envfd.getSlots().get(i);
-// FrameSlotKind slotKind = slot.getKind();
-// FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
-// Object slotValue = envFrame.getValue(slot);
-// if (slotValue != null) {
-// try {
-// switch (slotKind) {
-// case Byte:
-// vFrame.setByte(vFrameSlot, (byte) slotValue);
-// break;
-// case Int:
-// vFrame.setInt(vFrameSlot, (int) slotValue);
-// break;
-// case Double:
-// vFrame.setDouble(vFrameSlot, (double) slotValue);
-// break;
-// case Object:
-// vFrame.setObject(vFrameSlot, slotValue);
-// break;
-// case Illegal:
-// break;
-// default:
-// throw new FrameSlotTypeException();
-// }
-// } catch (FrameSlotTypeException ex) {
-// throw new RuntimeException("unexpected FrameSlot exception", ex);
-// }
-// }
-//
-// }
-// Object result = runCall(callTarget, vFrame, false, false);
-// if (result != null) {
-// FrameDescriptor fd = vFrame.getFrameDescriptor();
-// for (FrameSlot slot : fd.getSlots()) {
-// if (slot.getKind() != FrameSlotKind.Illegal) {
-// // the put will take care of checking the slot type, so getValue is ok
-// Object value = vFrame.getValue(slot);
-// if (value != null) {
-// if (value instanceof RFunction) {
-// checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
-// }
-// envir.put(slot.getIdentifier().toString(), value);
-// }
-// }
-// }
-// }
-// if (result instanceof RFunction) {
-// checkPatchRFunctionEnclosingFrame((RFunction) result, vFrame, envFrame);
-// }
-// return result;
     }
-
-// private static void checkPatchRFunctionEnclosingFrame(RFunction func, Frame vFrame,
-// MaterializedFrame envFrame) {
-// if (func.getEnclosingFrame() == vFrame) {
-// // this function's enclosing environment should be envFrame
-// func.setEnclosingFrame(envFrame);
-// }
-// }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
         return runCall(promise.getClosure().getCallTarget(), frame, false, false);
