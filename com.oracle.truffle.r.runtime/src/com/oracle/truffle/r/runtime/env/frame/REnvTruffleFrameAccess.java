@@ -70,6 +70,18 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         super.put(key, value);
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = fd.findFrameSlot(key);
+
+        // Handle RPromise: It cannot be cast to a int/double/byte!
+        if (value instanceof RPromise) {
+            if (slot == null) {
+                slot = fd.addFrameSlot(key, FrameSlotKind.Object);
+            }
+            // Overwrites former FrameSlotKind
+            frame.setObject(slot, value);
+            return;
+        }
+
+        // Handle all other values
         FrameSlotKind slotKind = null;
         if (slot == null) {
             slotKind = RRuntime.getSlotKind(value);
