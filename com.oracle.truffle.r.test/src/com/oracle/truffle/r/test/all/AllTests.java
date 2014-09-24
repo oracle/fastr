@@ -6799,6 +6799,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDelayedAssign_6cfba29e9e2c88780f55688485ac3e50() {
+        assertEval("{ f <- function() { p <- 0; for (i in 1:10) { if (i %% 2 == 0) { delayedAssign(\"a\", p + 1); } else { a <- p + 1; }; p <- a; }; p }; f() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDelayedAssignIgnore_8c59e6c2915b2b15a962ae541292c0db() {
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
     }
