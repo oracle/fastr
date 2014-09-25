@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -489,6 +490,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
     // implementation
 
+    @SlowPath
     private void copyAttributes(RVector ret, RAbstractVector left, RAbstractVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
@@ -498,6 +500,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         ret.copyNamesFrom(leftLength == length ? left : right);
     }
 
+    @SlowPath
     private void copyAttributesSameLength(RVector ret, RAbstractVector left, RAbstractVector right) {
         ret.copyRegAttributesFrom(right);
         ret.copyRegAttributesFrom(left);
