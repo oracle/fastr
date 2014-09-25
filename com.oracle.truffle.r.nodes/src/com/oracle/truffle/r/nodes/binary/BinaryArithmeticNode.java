@@ -46,8 +46,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private final NACheck rightNACheck;
     private final NACheck resultNACheck;
 
-    private final BranchProfile emptyVector = new BranchProfile();
-    private final BranchProfile nonEmptyVector = new BranchProfile();
+    private final ConditionProfile emptyVector = ConditionProfile.createBinaryProfile();
 
     public BinaryArithmeticNode(BinaryArithmeticFactory factory, UnaryArithmeticFactory unaryFactory) {
         this.arithmetic = factory.create();
@@ -513,11 +512,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RComplexVector performComplexVectorOpDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
-        if (leftLength == 0 || rightLength == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyComplexVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         int length = Math.max(leftLength, rightLength);
@@ -547,11 +544,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         int length = Math.max(leftLength, rightLength);
-        if (leftLength == 0 || rightLength == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         double[] result = new double[length];
@@ -576,11 +571,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RIntVector performIntVectorOpDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
-        if (leftLength == 0 || rightLength == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyIntVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         int length = Math.max(leftLength, rightLength);
@@ -606,11 +599,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RDoubleVector performIntVectorOpDoubleDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
-        if (leftLength == 0 || rightLength == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         int length = Math.max(leftLength, rightLength);
@@ -636,11 +627,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RComplexVector performComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
-        if (length == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyComplexVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         double[] result = new double[length << 1];
@@ -660,11 +649,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RDoubleVector performDoubleVectorOpSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
-        if (length == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         double[] result = new double[length];
@@ -681,11 +668,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RIntVector performIntVectorOpSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
-        if (length == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyIntVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         int[] result = new int[length];
@@ -702,11 +687,9 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private RDoubleVector performIntVectorOpDoubleSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
-        if (length == 0) {
-            emptyVector.enter();
+        if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        nonEmptyVector.enter();
         leftNACheck.enable(!left.isComplete());
         rightNACheck.enable(!right.isComplete());
         double[] result = new double[length];
