@@ -459,7 +459,10 @@ public abstract class RCallNode extends RNode {
         }
 
         @Override
+        @SlowPath
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            CompilerDirectives.transferToInterpreter();
+
             if (lastCallTarget == currentFunction.getTarget() && lastMatchedArgs != null) {
                 // poor man's caching succeeded - same function: no re-match needed
                 Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
@@ -639,7 +642,7 @@ public abstract class RCallNode extends RNode {
         @Override
         @SlowPath
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            CompilerAsserts.neverPartOfCompilation();
+            CompilerDirectives.transferToInterpreter();
 
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
