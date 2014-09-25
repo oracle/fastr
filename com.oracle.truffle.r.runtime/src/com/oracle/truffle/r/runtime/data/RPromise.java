@@ -239,7 +239,12 @@ public final class RPromise extends RLanguageRep {
         this.value = newValue;
         this.isEvaluated = true;
         this.env = null; // REnvironment and associated frame are no longer needed after execution
-        // TODO set NAMED = 2
+
+        // TODO Does this apply to other values, too?
+        if (newValue instanceof RVector) {
+            // set NAMED = 2
+            ((RVector) newValue).makeShared();
+        }
     }
 
     @SlowPath
