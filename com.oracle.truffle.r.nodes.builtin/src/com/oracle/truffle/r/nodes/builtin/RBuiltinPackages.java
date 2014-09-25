@@ -67,7 +67,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return packages;
     }
 
-    public static void load(String name, VirtualFrame frame, REnvironment envForFrame) {
+    public static void load(String name, MaterializedFrame frame, REnvironment envForFrame) {
         RBuiltinPackage pkg = packages.get(name);
         if (pkg == null) {
             Utils.fail("unknown default package: " + name);
