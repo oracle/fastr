@@ -29,7 +29,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.expressions.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -45,7 +48,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * All these classes are created during/after argument matching and get cached afterwards, so they
  * get (and need to get) called every repeated call to a function with the same arguments.
  */
-public class PromiseNode extends RNode {
+public abstract class PromiseNode extends RNode {
     /**
      * The {@link RPromiseFactory} which holds all information necessary to construct a proper
      * {@link RPromise} for every case that might occur.
@@ -57,8 +60,6 @@ public class PromiseNode extends RNode {
      * created here.
      */
     protected final EnvProvider envProvider;
-
-    protected final PromiseProfile promiseProfile = new PromiseProfile();
 
     /**
      * @param factory {@link #factory}
@@ -78,8 +79,9 @@ public class PromiseNode extends RNode {
      */
     @SlowPath
     public static PromiseNode create(SourceSection src, RPromiseFactory factory, EnvProvider envProvider) {
-        PromiseNode pn = null;
         assert factory.getType() != PromiseType.NO_ARG;
+
+        PromiseNode pn = null;
         switch (factory.getEvalPolicy()) {
             case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
@@ -90,7 +92,22 @@ public class PromiseNode extends RNode {
                 break;
 
             case PROMISED:
-                pn = new PromiseNode(factory, envProvider);
+                if (factory.getType() == PromiseType.ARG_SUPPLIED) {
+                    RNode expr = (RNode) factory.getExpr();
+                    if (isConstantArgument(expr)) {
+                        pn = new ConstantPromiseNode(factory, expr);
+                    } else {
+                        pn = new SuppliedPromiseNode(factory, envProvider);
+                    }
+                } else {
+                    RNode defaultExpr = (RNode) factory.getDefaultExpr();
+                    if (isConstantArgument(defaultExpr)) {
+                        // As this is a constant, we can easily execute it here!
+                        pn = new ConstantPromiseNode(factory, defaultExpr);
+                    } else {
+                        pn = new DefaultPromiseNode(factory, envProvider);
+                    }
+                }
                 break;
 
             default:
@@ -99,6 +116,27 @@ public class PromiseNode extends RNode {
 
         pn.assignSourceSection(src);
         return pn;
+    }
+
+    /**
+     * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
+     * does not need to handle "..." as special case (which might result in a
+     * {@link ConstantMissingNode} if empty).
+     *
+     * @param exprArg
+     * @return Whether the given {@link RNode} is a {@link ConstantNode} (or a {@link ConstantNode}
+     *         wrapped into a {@link WrapArgumentNode})
+     */
+    private static boolean isConstantArgument(RNode exprArg) {
+        if (!FastROptions.EagerEvalConstants.getValue()) {
+            return false;
+        }
+
+        RNode expr = exprArg;
+        if (expr instanceof WrapArgumentNode) {
+            expr = ((WrapArgumentNode) expr).getOperand();
+        }
+        return expr instanceof ConstantNode;
     }
 
     /**
@@ -112,11 +150,61 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * Creates a new {@link RPromise} every time.
+     * The first optimizing {@link PromiseNode}: It actually
      */
-    @Override
-    public Object execute(VirtualFrame frame) {
-        return factory.createPromise(factory.getType() == PromiseType.ARG_DEFAULT ? null : envProvider.getREnvironmentFor(frame));
+    private static final class ConstantPromiseNode extends PromiseNode {
+
+        @Child private RNode constantExpr;
+        @CompilationFinal private Object constant = null;
+
+        private ConstantPromiseNode(RPromiseFactory factory, RNode constantExpr) {
+            super(factory, null);
+            this.constantExpr = constantExpr;
+        }
+
+        /**
+         * Creates a new {@link RPromise} every time.
+         */
+        @Override
+        public Object execute(VirtualFrame frame) {
+            if (constant == null) {
+                // Eval constant the first time
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                constant = constantExpr.execute(frame);
+            }
+
+            return factory.createPromiseArgEvaluated(constant);
+        }
+    }
+
+    /**
+     * A {@link PromiseNode} for supplied arguments
+     */
+    private static final class SuppliedPromiseNode extends PromiseNode {
+
+        private SuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
+            super(factory, envProvider);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return factory.createPromise(envProvider.getREnvironmentFor(frame));
+        }
+    }
+
+    /**
+     * A {@link PromiseNode} for defaulted arguments
+     */
+    private static final class DefaultPromiseNode extends PromiseNode {
+
+        private DefaultPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
+            super(factory, envProvider);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return factory.createPromise(null);
+        }
     }
 
     /**
@@ -128,6 +216,7 @@ public class PromiseNode extends RNode {
     private final static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
         @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        private final PromiseProfile promiseProfile = new PromiseProfile();
 
         public InlinedSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);

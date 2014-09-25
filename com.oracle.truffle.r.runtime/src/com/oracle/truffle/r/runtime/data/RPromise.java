@@ -124,7 +124,8 @@ public final class RPromise extends RLanguageRep {
     private boolean underEvaluation = false;
 
     /**
-     * This creates a new tuple (env, expr), which may later be evaluated.
+     * This creates a new tuple (isEvaluated=false, expr, env, closure, value=null), which may later
+     * be evaluated.
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
@@ -136,6 +137,26 @@ public final class RPromise extends RLanguageRep {
         this.type = type;
         this.env = env;
         this.closure = closure;
+    }
+
+    /**
+     * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
+     * evaluated. Meant to be called via {@link RPromiseFactory#createPromiseArgEvaluated(Object)}
+     * only!
+     *
+     * @param evalPolicy {@link EvalPolicy}
+     * @param expr
+     */
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, Object expr, Object value) {
+        super(expr);
+        this.evalPolicy = evalPolicy;
+        this.type = type;
+        this.value = value;
+        this.isEvaluated = true;
+        // Not needed as already evaluated:
+        this.env = null;
+        this.closure = null;
+
     }
 
     /**
@@ -446,10 +467,7 @@ public final class RPromise extends RLanguageRep {
          * @return A {@link RPromise} whose supplied argument has already been evaluated
          */
         public RPromise createPromiseArgEvaluated(Object argumentValue) {
-            RPromise result = new RPromise(evalPolicy, type, null, null);
-            result.value = argumentValue;
-            result.isEvaluated = true;
-            return result;
+            return new RPromise(evalPolicy, type, exprClosure.getExpr(), argumentValue);
         }
 
         public Object getExpr() {

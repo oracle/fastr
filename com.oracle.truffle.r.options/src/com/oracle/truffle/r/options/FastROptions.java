@@ -45,6 +45,10 @@ public class FastROptions {
     public static final OptionValue<Boolean> DisableGroupGenerics = new OptionValue<>(false);
     @Option(help = "Prints Java and R stack traces for all R errors")
     public static final OptionValue<Boolean> PrintErrorStacktraces = new OptionValue<>(false);
+
+    // Promises optimizations
+    @Option(help = "Unconditionally evaluates constants before creating Promises")
+    public static final OptionValue<Boolean> EagerEvalConstants = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();
