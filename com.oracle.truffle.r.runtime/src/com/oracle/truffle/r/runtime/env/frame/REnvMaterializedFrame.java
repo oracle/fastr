@@ -51,7 +51,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
         int i = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             FrameSlotKind kind = getFrameSlotKindForValue(entry.getValue());
-            descriptor.addFrameSlot(entry.getKey(), kind);
+            addFrameSlot(entry.getKey(), kind);
             tags[i++] = (byte) kind.ordinal();
         }
         frameAccess.setMaterializedFrame(this);
@@ -70,10 +70,14 @@ public class REnvMaterializedFrame implements MaterializedFrame {
         FrameSlot slot = descriptor.findFrameSlot(name);
         if (slot == null) {
             FrameSlotKind kind = getFrameSlotKindForValue(value);
-            slot = descriptor.addFrameSlot(name, kind);
+            slot = addFrameSlot(name, kind);
             resize();
             tags[slot.getIndex()] = (byte) kind.ordinal();
         }
+    }
+
+    private FrameSlot addFrameSlot(String name, FrameSlotKind kind) {
+        return descriptor.addFrameSlot(name, new FrameSlotChangeMonitor(), kind);
     }
 
     /**

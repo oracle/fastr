@@ -49,6 +49,8 @@ public class FastROptions {
     // Promises optimizations
     @Option(help = "Unconditionally evaluates constants before creating Promises")
     public static final OptionValue<Boolean> EagerEvalConstants = new OptionValue<>(false);
+    @Option(help = "Tries to eagerly evaluate variables reads before creating Promises")
+    public static final OptionValue<Boolean> EagerEvalVariables = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();

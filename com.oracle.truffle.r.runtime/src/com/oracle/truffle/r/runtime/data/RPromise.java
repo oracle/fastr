@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * Denotes an R {@code promise}.
  */
 @ValueType
-public final class RPromise extends RLanguageRep {
+public class RPromise extends RLanguageRep {
 
     /**
      * The policy used to evaluate a promise.
@@ -141,7 +141,7 @@ public final class RPromise extends RLanguageRep {
 
     /**
      * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
-     * evaluated. Meant to be called via {@link RPromiseFactory#createPromiseArgEvaluated(Object)}
+     * evaluated. Meant to be called via {@link RPromiseFactory#createSuppliedArgEvaluated(Object)}
      * only!
      *
      * @param evalPolicy {@link EvalPolicy}
@@ -186,6 +186,7 @@ public final class RPromise extends RLanguageRep {
         private final ConditionProfile isInlinedProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isEagerPromise = ConditionProfile.createBinaryProfile();
     }
 
     public boolean isInlined(PromiseProfile profile) {
@@ -386,6 +387,13 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
+     * @return Whether this is a eagerly evaluated Promise
+     */
+    public boolean isEagerPromise(PromiseProfile profile) {
+        return profile.isEagerPromise.profile(false);
+    }
+
+    /**
      * Used to manipulate {@link #underEvaluation}.
      *
      * @param underEvaluation The new value to set
@@ -407,12 +415,67 @@ public final class RPromise extends RLanguageRep {
         return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
+    // TODO @ValueType annotation necessary here?
+    private static final class EagerPromise extends RPromise {
+        private final Object eagerValue;
+
+        private final Assumption assumption;
+        // TODO sth to resolve the correct REnvironment! Maybe envprovider useful here?
+        private final EagerFeedback feedback;
+
+        private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, EagerFeedback feedback) {
+            super(EvalPolicy.PROMISED, type, null, closure);
+            this.eagerValue = eagerValue;
+            this.assumption = assumption;
+            this.feedback = feedback;
+        }
+
+        @Override
+        public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
+            if (profile.isEvaluatedProfile.profile(isEvaluated)) {
+                return value;
+            }
+
+            // Check if assumption is still true
+            if (assumption.isValid()) {
+                // If yes: return value and notify success!
+                feedback.notifySuccess();
+                setValue(eagerValue);
+            } else {
+                // Fallback: eager evaluation failed,
+                feedback.notifyFailure();
+                this.env = null; // TODO Magically produce REnvironment!
+
+                // Call
+                super.evaluate(null, profile);
+            }
+            return value;
+        }
+
+        @Override
+        public boolean needsCalleeFrame(PromiseProfile profile) {
+            // In case it is default: We certainly do not need the REnvironment
+            return false;
+        }
+
+        @Override
+        public boolean isEagerPromise(PromiseProfile profile) {
+            return profile.isEagerPromise.profile(true);
+        }
+    }
+
+    public interface EagerFeedback {
+        void notifySuccess();
+
+        void notifyFailure();
+    }
+
     /**
      * A factory which produces instances of {@link RPromise}.
      *
      * @see RPromiseFactory#createPromise(REnvironment)
      * @see RPromiseFactory#createPromiseDefault()
-     * @see RPromiseFactory#createPromiseArgEvaluated(Object)
+     * @see RPromiseFactory#createSuppliedArgEvaluated(Object)
      */
     public static final class RPromiseFactory {
         private final Closure exprClosure;
@@ -466,8 +529,38 @@ public final class RPromise extends RLanguageRep {
          *            'missing'.
          * @return A {@link RPromise} whose supplied argument has already been evaluated
          */
-        public RPromise createPromiseArgEvaluated(Object argumentValue) {
+        public RPromise createSuppliedArgEvaluated(Object argumentValue) {
             return new RPromise(evalPolicy, type, exprClosure.getExpr(), argumentValue);
+        }
+
+        /**
+         * @param argumentValue The already evaluated value of the default argument. Only applicable
+         *            to eager evaluated constants!!
+         * @return A {@link RPromise} whose default argument has already been evaluated
+         */
+        public RPromise createDefaultArgEvaluated(Object argumentValue) {
+            return new RPromise(evalPolicy, type, defaultClosure.getExpr(), argumentValue);
+        }
+
+        /**
+         * @param eagerValue The eagerly evaluated value
+         * @param assumption The {@link Assumption} that eagerValue is still valid
+         * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
+         *            until evaluation
+         * @return An {@link EagerPromise}
+         */
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption assumption, EagerFeedback feedback) {
+            return new EagerPromise(type, exprClosure, eagerValue, assumption, feedback);
+        }
+
+        /**
+         * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
+         *            until evaluation
+         * @return An {@link EagerPromise} (which needs to be fully fixed after the call!)
+         */
+        public RPromise createEagerDefaultPromise(EagerFeedback feedback) {
+            // TODO Does this work??
+            return new EagerPromise(type, defaultClosure, null, null, feedback);
         }
 
         public Object getExpr() {

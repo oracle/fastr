@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 @RBuiltin(name = "assign", kind = SUBSTITUTE, parameterNames = {"x", "value", "pos", "envir", "inherits", "immediate"})
 // TODO INTERNAL
@@ -112,7 +113,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     private static void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
         FrameSlot fs = frameSlot;
         if (fs == null) {
-            fs = frame.getFrameDescriptor().addFrameSlot(variableName);
+            fs = frame.getFrameDescriptor().addFrameSlot(variableName, new FrameSlotChangeMonitor(), FrameSlotKind.Illegal);
         }
         frame.setObject(fs, variableValue);
     }

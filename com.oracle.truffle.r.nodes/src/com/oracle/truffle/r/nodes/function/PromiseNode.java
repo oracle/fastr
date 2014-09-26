@@ -93,17 +93,21 @@ public abstract class PromiseNode extends RNode {
 
             case PROMISED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    RNode expr = (RNode) factory.getExpr();
+                    RNode expr = unfold(factory.getExpr());
                     if (isConstantArgument(expr)) {
-                        pn = new ConstantPromiseNode(factory, expr);
+                        pn = new ConstantSuppliedPromiseNode(factory);
+                    } else if (isVariableArgument(expr)) {
+                        pn = null;
                     } else {
                         pn = new SuppliedPromiseNode(factory, envProvider);
                     }
                 } else {
-                    RNode defaultExpr = (RNode) factory.getDefaultExpr();
+                    RNode defaultExpr = unfold(factory.getDefaultExpr());
                     if (isConstantArgument(defaultExpr)) {
                         // As this is a constant, we can easily execute it here!
-                        pn = new ConstantPromiseNode(factory, defaultExpr);
+                        pn = new ConstantDefaultPromiseNode(factory);
+                    } else if (isVariableArgument(defaultExpr)) {
+                        pn = null;  // TODO
                     } else {
                         pn = new DefaultPromiseNode(factory, envProvider);
                     }
@@ -118,25 +122,44 @@ public abstract class PromiseNode extends RNode {
         return pn;
     }
 
+    private static RNode unfold(Object argObj) {
+        RNode arg = (RNode) argObj;
+        if (arg instanceof WrapArgumentNode) {
+            return ((WrapArgumentNode) arg).getOperand();
+        }
+        return arg;
+    }
+
     /**
      * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
      * does not need to handle "..." as special case (which might result in a
      * {@link ConstantMissingNode} if empty).
      *
-     * @param exprArg
+     * @param expr
      * @return Whether the given {@link RNode} is a {@link ConstantNode} (or a {@link ConstantNode}
      *         wrapped into a {@link WrapArgumentNode})
+     * @see FastROptions#EagerEvalConstants
      */
-    private static boolean isConstantArgument(RNode exprArg) {
+    private static boolean isConstantArgument(RNode expr) {
         if (!FastROptions.EagerEvalConstants.getValue()) {
             return false;
         }
-
-        RNode expr = exprArg;
-        if (expr instanceof WrapArgumentNode) {
-            expr = ((WrapArgumentNode) expr).getOperand();
-        }
         return expr instanceof ConstantNode;
+    }
+
+    /**
+     * This methods checks if an argument is a {@link ReadVariableNode}.
+     *
+     * @param expr
+     * @return Whether the given {@link RNode} is a {@link ConstantNode} (or a {@link ConstantNode}
+     *         wrapped into a {@link WrapArgumentNode})
+     * @see FastROptions#EagerEvalConstants
+     */
+    private static boolean isVariableArgument(RNode expr) {
+        if (!FastROptions.EagerEvalVariables.getValue()) {
+            return false;
+        }
+        return expr instanceof ReadVariableNode;
     }
 
     /**
@@ -150,16 +173,16 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * The first optimizing {@link PromiseNode}: It actually
+     * A optimizing {@link PromiseNode}: It evaluates a constant directly.
      */
-    private static final class ConstantPromiseNode extends PromiseNode {
+    private static final class ConstantDefaultPromiseNode extends PromiseNode {
 
         @Child private RNode constantExpr;
         @CompilationFinal private Object constant = null;
 
-        private ConstantPromiseNode(RPromiseFactory factory, RNode constantExpr) {
+        private ConstantDefaultPromiseNode(RPromiseFactory factory) {
             super(factory, null);
-            this.constantExpr = constantExpr;
+            this.constantExpr = (RNode) factory.getDefaultExpr();
         }
 
         /**
@@ -168,12 +191,54 @@ public abstract class PromiseNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             if (constant == null) {
-                // Eval constant the first time
+                // Eval constant on first time
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 constant = constantExpr.execute(frame);
             }
 
-            return factory.createPromiseArgEvaluated(constant);
+            return factory.createDefaultArgEvaluated(constant);
+        }
+    }
+
+    /**
+     * A optimizing {@link PromiseNode}: It evaluates a constant directly.
+     */
+    private static final class ConstantSuppliedPromiseNode extends PromiseNode {
+
+        @Child private RNode constantExpr;
+        @CompilationFinal private Object constant = null;
+
+        private ConstantSuppliedPromiseNode(RPromiseFactory factory) {
+            super(factory, null);
+            this.constantExpr = (RNode) factory.getExpr();
+        }
+
+        /**
+         * Creates a new {@link RPromise} every time.
+         */
+        @Override
+        public Object execute(VirtualFrame frame) {
+            if (constant == null) {
+                // Eval constant on first time
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                constant = constantExpr.execute(frame);
+            }
+
+            return factory.createSuppliedArgEvaluated(constant);
+        }
+    }
+
+    private static final class VariableSuppliedPromiseNode extends PromiseNode {
+        public VariableSuppliedPromiseNode(RPromiseFactory factory) {
+            super(factory, null);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            // TODO Eager Promises
+            // Execute
+            // Get assumption
+            return null;
         }
     }
 

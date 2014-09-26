@@ -46,7 +46,9 @@ public class PromiseHelper {
      *         {@link ExpressionExecutorNode}
      */
     public static Object evaluate(VirtualFrame frame, ExpressionExecutorNode exprExecNode, RPromise promise, PromiseProfile profile) {
-        if (promise.isEvaluated(profile) || !promise.isInOriginFrame(frame, profile)) {
+        if (promise.isEvaluated(profile) || promise.isEagerPromise(profile) || !promise.isInOriginFrame(frame, profile)) {
+            // Evaluate eager Promises directly; at the risk that its assumption does not hold and
+            // expensive evaluation is necessary
             return promise.evaluate(frame, profile);
         }
 
