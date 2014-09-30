@@ -10124,6 +10124,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMaximum_5e6479a2a6452ee70ccf9c41cef980b1() {
+        assertEval("{ max(as.character(NA), as.character(NA), \"42\", na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMaximum_ff3b6fdb41d5de0a5783d292d154bd0a() {
+        assertEval("{ max(as.character(NA), as.character(NA), \"42\", \"7\", na.rm=TRUE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMaximum_f5adf3eb65411f16da79fcd519585f41() {
         assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=TRUE) }");
     }
@@ -11134,6 +11144,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testPMax_0ad681abd0347fc3f329a5de4446750e() {
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_b03d9fc7b1b74e088e80e50d516b1e27() {
+        assertEval("{ pmax(c(\"1\", \"7\"), character()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_280f0aa34b8a627b370c19b2685fcdef() {
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_bad8ae5eb0c03b007b5430b14b0d1c96() {
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_4a39be88715bd7849ef8a84628a2bfbd() {
+        assertEval("{ pmax(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_ef454dbb5881c936173763ac86ab6816() {
+        assertEval("{ pmax(c(\"1\", as.character(NA)), c(as.character(NA), as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testPMax_835849fdf0d1b6da7aa2e34dd879e955() {
         assertEval("{ pmax(c(FALSE, TRUE), c(TRUE, FALSE)) }");
     }
@@ -11166,6 +11206,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testPMax_5b6514495dda7f5c846db63966b35078() {
         assertEvalWarning("{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMax_7e7482b7816a663ffb8ae05e759fc8c2() {
+        assertEvalWarning("{ pmax(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
     }
 
     @Test
@@ -11209,6 +11254,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testPMin_cba510383b0da53141c20db44e4130cb() {
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_6c548f27b81ae28280508da7fb1d59d0() {
+        assertEval("{ pmin(c(\"1\", \"7\"), character()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_80e247d9adaff94718babba7fd798c59() {
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_9370e766db410333698ba931ad44da9b() {
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_9f6669bbf3ddb91ddbbb94b07b857347() {
+        assertEval("{ pmin(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_046977a3522a36099d402b3c7dd515cd() {
+        assertEval("{ pmin(c(\"1\", as.character(NA)), c(as.character(NA), as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testPMin_af8dffea1ee168a9cdae131b7ac14b57() {
         assertEval("{ pmin(c(FALSE, TRUE), c(TRUE, FALSE)) }");
     }
@@ -11241,6 +11316,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testPMin_ae7a9ca78626d59cc87b728d3052c103() {
         assertEvalWarning("{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPMin_c56e1872347158ba0ec8a2002fec7de9() {
+        assertEvalWarning("{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
     }
 
     @Test

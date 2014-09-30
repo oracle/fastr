@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -44,6 +45,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @Child private CastToVectorNode castVector;
     @Child private CastIntegerNode castInteger;
     @Child private CastDoubleNode castDouble;
+    @Child private CastStringNode castString;
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeFactory.create(null, null);
     private final ReduceSemantics semantics;
     private final NACheck na = NACheck.create();
@@ -90,6 +92,14 @@ public abstract class PMinMax extends RBuiltinNode {
         return castDouble;
     }
 
+    private CastNode getStringCastNode() {
+        if (castString == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castString = insert(CastStringNodeFactory.create(null, true, true, true, false));
+        }
+        return castString;
+    }
+
     private int convertToVectorAndEnableNACheck(VirtualFrame frame, RArgsValuesAndNames args, CastNode castNode) {
         int length = 0;
         Object[] argValues = args.getValues();
@@ -118,7 +128,7 @@ public abstract class PMinMax extends RBuiltinNode {
             boolean warningAdded = false;
             for (int i = 0; i < maxLength; i++) {
                 int result = semantics.getIntStart();
-                for (int j = 0; j < args.length(); j++) {
+                for (int j = 0; j < argValues.length; j++) {
                     RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
                     if (vec.getLength() < maxLength && !warningAdded) {
                         RError.warning(RError.Message.ARG_RECYCYLED);
@@ -158,7 +168,7 @@ public abstract class PMinMax extends RBuiltinNode {
             boolean warningAdded = false;
             for (int i = 0; i < maxLength; i++) {
                 double result = semantics.getDoubleStart();
-                for (int j = 0; j < args.length(); j++) {
+                for (int j = 0; j < argValues.length; j++) {
                     RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
                     if (vec.getLength() < maxLength && !warningAdded) {
                         RError.warning(RError.Message.ARG_RECYCYLED);
@@ -182,7 +192,75 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    // TODO implement support for strings
+    @SlowPath
+    private boolean doStringVectorMultiElem(Object[] argValues, byte naRm, int offset, int ind, int maxLength, boolean warning, String[] data) {
+        boolean warningAdded = warning;
+        RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
+        if (vec.getLength() < maxLength && !warningAdded) {
+            RError.warning(RError.Message.ARG_RECYCYLED);
+            warningAdded = true;
+        }
+        String result = vec.getDataAt(ind % vec.getLength());
+        na.enable(result);
+        if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (na.check(result)) {
+                // the following is meant to eliminate leading NA-s
+                if (offset == argValues.length - 1) {
+                    // last element - all other are NAs
+                    data[ind] = semantics.getStringStart();
+                } else {
+                    return doStringVectorMultiElem(argValues, naRm, offset + 1, ind, maxLength, warningAdded, data);
+                }
+                return warningAdded;
+            }
+        } else {
+            if (na.check(result)) {
+                data[ind] = result;
+                return warningAdded;
+            }
+        }
+        // when we reach here, it means that we have already seen one non-NA element
+        assert !RRuntime.isNA(result);
+        for (int i = offset + 1; i < argValues.length; ++i) {
+            vec = (RAbstractStringVector) argValues[i];
+            if (vec.getLength() < maxLength && !warningAdded) {
+                RError.warning(RError.Message.ARG_RECYCYLED);
+                warningAdded = true;
+            }
+
+            String current = vec.getDataAt(ind % vec.getLength());
+            na.enable(current);
+            if (na.check(current)) {
+                if (naRm == RRuntime.LOGICAL_TRUE) {
+                    // skip NA-s
+                    continue;
+                } else {
+                    data[ind] = RRuntime.STRING_NA;
+                    return warningAdded;
+                }
+            } else {
+                result = op.op(result, current);
+            }
+        }
+        data[ind] = result;
+        return warningAdded;
+    }
+
+    @Specialization(guards = "isStringPrecedence")
+    protected RStringVector pMinMaxString(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
+        int maxLength = convertToVectorAndEnableNACheck(frame, args, getStringCastNode());
+        if (lengthProfile.profile(maxLength == 0)) {
+            return RDataFactory.createEmptyStringVector();
+        } else {
+            String[] data = new String[maxLength];
+            Object[] argValues = args.getValues();
+            boolean warningAdded = false;
+            for (int i = 0; i < maxLength; i++) {
+                warningAdded = doStringVectorMultiElem(argValues, naRm, 0, i, maxLength, warningAdded, data);
+            }
+            return RDataFactory.createStringVector(data, na.neverSeenNA() || naRm == RRuntime.LOGICAL_TRUE);
+        }
+    }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isComplexPrecedence")
