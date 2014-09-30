@@ -26,10 +26,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.ResolvePromiseNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
@@ -73,31 +72,42 @@ public abstract class Substitute extends RBuiltinNode {
             return checkQuote().execute(frame, expr);
         }
         // We have to examine all the names in the expression:
-        // 1. Ordinary variable, replace by value (if bound)
+        // 1. Ordinary variable, replace by value (if bound), else unchanged
         // 2. promise (aka function argument): replace by expression associated with the promise
         // 3. ..., replace by contents of ...
-        // TODO handle trees other than simple variables
+        // TODO handle generalized expression trees
         RNode node = (RNode) expr.getRep();
         RNode unode = ((WrapArgumentNode) node).getOperand();
-        SourceSection ss = node.getSourceSection();
         if (unode instanceof ConstantNode) {
             return ((ConstantNode) node).getValue();
         } else if (unode instanceof ReadVariableNode) {
-            String name = ss.toString();
-            if (isFunctionArg(name)) {
-                // Without real promises this is essentially impossible, as we need the expression
-                // that was uttered in the caller of the function this substitute call occurs in,
-                // and that may itself be a promise from an earlier call.
-                // N.B. In many cases it is ok to just return the value, which is what we do to
-                // allow progress on package loading
-            }
-            REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-            Object val = env.get(name);
-            if (val == null) {
-                // not bound in env
-                return RDataFactory.createSymbol(name);
+            // The common case (1, 2)
+            String name = ((ReadVariableNode) unode).getSymbol().getName();
+            if (unode instanceof ResolvePromiseNode) {
+                // Case 2
+                // Access the promise to get the expression
+                RPromise promise = ((ResolvePromiseNode) unode).getPromise(frame);
+                WrapArgumentNode rep = (WrapArgumentNode) promise.getRep();
+                RNode paramNode = rep.getOperand();
+                if (paramNode instanceof ConstantNode) {
+                    return ((ConstantNode) paramNode).getValue();
+                } else if (paramNode instanceof ReadVariableNode) {
+                    return RDataFactory.createSymbol(((ReadVariableNode) paramNode).getSymbol().getName());
+                } else {
+                    // an expression
+                    return RDataFactory.createLanguage(rep);
+                }
             } else {
-                return val;
+                // Case 1
+                // N.B. do not need to look in parent
+                REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
+                Object val = env.get(name);
+                if (val == null) {
+                    // not bound in env,
+                    return RDataFactory.createSymbol(name);
+                } else {
+                    return val;
+                }
             }
         } else if (unode instanceof UninitializedCallNode) {
             UninitializedCallNode callNode = (UninitializedCallNode) unode;
@@ -148,26 +158,6 @@ public abstract class Substitute extends RBuiltinNode {
         } else {
             throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr), unsupported arg");
         }
-    }
-
-    /**
-     * Locate the {@link FunctionDefinitionNode} that this call occurs in an check signature for
-     * {code name}.
-     */
-    private boolean isFunctionArg(String name) {
-        Node node = this;
-        while (node != null && !(node instanceof FunctionDefinitionNode)) {
-            node = node.getParent();
-        }
-        assert node != null;
-        FunctionDefinitionNode fdNode = (FunctionDefinitionNode) node;
-        Object[] paramNames = fdNode.getParameterNames();
-        for (Object paramName : paramNames) {
-            if (paramName.equals(name)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @SuppressWarnings("unused")
