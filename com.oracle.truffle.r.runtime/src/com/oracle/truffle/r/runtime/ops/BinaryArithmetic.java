@@ -202,7 +202,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public String op(String left, String right) {
-            throw new UnsupportedOperationException("illegal type 'String' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -251,7 +251,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public String op(String left, String right) {
-            throw new UnsupportedOperationException("illegal type 'String' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -304,7 +304,7 @@ public abstract class BinaryArithmetic extends Operation {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 MultiplyNaN multNaN = new MultiplyNaN();
                 replace(multNaN);
-                return MultiplyNaN.handleNaN(leftReal, leftImag, rightReal, rightImag, res, interm);
+                return multNaN.handleNaN(leftReal, leftImag, rightReal, rightImag, res, interm);
             }
             return RDataFactory.createComplex(res[0], res[1]);
         }
@@ -321,7 +321,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public String op(String left, String right) {
-            throw new UnsupportedOperationException("illegal type 'String' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -341,6 +341,10 @@ public abstract class BinaryArithmetic extends Operation {
 
     private static final class MultiplyNaN extends Multiply {
 
+        private final ConditionProfile inf1 = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile inf2 = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile inf3 = ConditionProfile.createBinaryProfile();
+
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             double[] res = new double[2];
@@ -352,27 +356,27 @@ public abstract class BinaryArithmetic extends Operation {
             return RDataFactory.createComplex(res[0], res[1]);
         }
 
-        protected static RComplex handleNaN(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
+        protected RComplex handleNaN(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
             boolean recalc = false;
             double ra = leftReal;
             double rb = leftImag;
             double rc = rightReal;
             double rd = rightImag;
-            if (Double.isInfinite(ra) || Double.isInfinite(rb)) {
+            if (inf1.profile(Double.isInfinite(ra) || Double.isInfinite(rb))) {
                 ra = convertInf(ra);
                 rb = convertInf(rb);
                 rc = convertNaN(rc);
                 rd = convertNaN(rd);
                 recalc = true;
             }
-            if (Double.isInfinite(rc) || Double.isInfinite(rd)) {
+            if (inf2.profile(Double.isInfinite(rc) || Double.isInfinite(rd))) {
                 rc = convertInf(rc);
                 rd = convertInf(rd);
                 ra = convertNaN(ra);
                 rb = convertNaN(rb);
                 recalc = true;
             }
-            if (!recalc && (Double.isInfinite(interm[0]) || Double.isInfinite(interm[1]) || Double.isInfinite(interm[2]) || Double.isInfinite(interm[3]))) {
+            if (inf3.profile(!recalc && (Double.isInfinite(interm[0]) || Double.isInfinite(interm[1]) || Double.isInfinite(interm[2]) || Double.isInfinite(interm[3])))) {
                 ra = convertNaN(ra);
                 rb = convertNaN(rb);
                 rc = convertNaN(rc);
@@ -396,7 +400,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public final int op(int left, int right) {
-            throw new AssertionError();
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Override
@@ -408,7 +412,10 @@ public abstract class BinaryArithmetic extends Operation {
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // libgcc2
 
-        private final BranchProfile everSeenNaN = new BranchProfile();
+        private final ConditionProfile everSeenNaN = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile needCopySign = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile leftInf = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile rightInf = ConditionProfile.createBinaryProfile();
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
@@ -427,17 +434,16 @@ public abstract class BinaryArithmetic extends Operation {
                 imag = (leftImag - (leftReal * ratio)) / denom;
             }
 
-            if (Double.isNaN(real) && Double.isNaN(imag)) {
-                everSeenNaN.enter();
-                if (rightReal == 0.0 && rightImag == 0.0 && (!Double.isNaN(leftReal) || !Double.isNaN(leftImag)) && leftReal != 0.0 && rightReal != 0.0) {
+            if (everSeenNaN.profile(Double.isNaN(real) && Double.isNaN(imag))) {
+                if (needCopySign.profile(rightReal == 0.0 && rightImag == 0.0 && (!Double.isNaN(leftReal) || !Double.isNaN(leftImag)) && leftReal != 0.0 && rightReal != 0.0)) {
                     real = Math.copySign(Double.POSITIVE_INFINITY, rightReal) * leftReal;
                     imag = Math.copySign(Double.POSITIVE_INFINITY, rightReal) * leftImag;
-                } else if ((Double.isInfinite(leftReal) || Double.isInfinite(leftImag)) && isFinite(rightReal) && isFinite(rightImag)) {
+                } else if (leftInf.profile((Double.isInfinite(leftReal) || Double.isInfinite(leftImag)) && isFinite(rightReal) && isFinite(rightImag))) {
                     double ra = convertInf(leftReal);
                     double rb = convertInf(leftImag);
                     real = Double.POSITIVE_INFINITY * (ra * rightReal + rb * rightImag);
                     imag = Double.POSITIVE_INFINITY * (rb * rightReal - ra * rightImag);
-                } else if ((Double.isInfinite(rightReal) || Double.isInfinite(rightImag)) && isFinite(leftReal) && isFinite(leftImag)) {
+                } else if (rightInf.profile((Double.isInfinite(rightReal) || Double.isInfinite(rightImag)) && isFinite(leftReal) && isFinite(leftImag))) {
                     double rc = convertInf(rightReal);
                     double rd = convertInf(rightImag);
                     real = 0.0 * (leftReal * rc + leftImag * rd);
@@ -454,7 +460,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public String op(String left, String right) {
-            throw new UnsupportedOperationException("illegal type 'String' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -480,7 +486,6 @@ public abstract class BinaryArithmetic extends Operation {
                 double qfloor = Math.floor(q);
                 double tmp = a - qfloor * b;
                 return qfloor + Math.floor(tmp / b);
-
             } else {
                 return q;
             }
@@ -489,13 +494,13 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw new UnsupportedOperationException("unsupported complex operation");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
         @SlowPath
         public String op(String left, String right) {
-            throw new UnsupportedOperationException("illegal type 'String' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -525,6 +530,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
@@ -532,7 +538,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public String op(String left, String right) {
-            throw new UnsupportedOperationException("illegal type 'String' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -548,7 +554,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public int op(int left, int right) {
-            throw new AssertionError();
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Override
@@ -697,12 +703,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CHypot extends Node {
 
-            private final BranchProfile everSeenInfinite = new BranchProfile();
+            private final ConditionProfile everSeenInfinite = ConditionProfile.createBinaryProfile();
 
             public double chypot(double real, double imag) {
                 double res = Math.sqrt(real * real + imag * imag);
-                if (!isFinite(real) || !isFinite(imag)) {
-                    everSeenInfinite.enter();
+                if (everSeenInfinite.profile(!isFinite(real) || !isFinite(imag))) {
                     if (Double.isInfinite(real) || Double.isInfinite(imag)) {
                         res = Double.POSITIVE_INFINITY;
                     } else if (Double.isNaN(imag)) {
@@ -718,7 +723,9 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CPow2 extends Node {
 
-            private final BranchProfile everSeenNaN = new BranchProfile();
+            private final ConditionProfile everSeenNaN = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile inf1 = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile inf2 = ConditionProfile.createBinaryProfile();
 
             public RComplex cpow2(double cre, double cim) {
                 double cre2 = cre * cre;
@@ -726,17 +733,16 @@ public abstract class BinaryArithmetic extends Operation {
                 double crecim = cre * cim;
                 double real = cre2 - cim2;
                 double imag = 2 * crecim;
-                if (Double.isNaN(real) && Double.isNaN(imag)) {
-                    everSeenNaN.enter();
+                if (everSeenNaN.profile(Double.isNaN(real) && Double.isNaN(imag))) {
                     boolean recalc = false;
                     double ra = cre;
                     double rb = cim;
-                    if (Double.isInfinite(ra) || Double.isInfinite(rb)) {
+                    if (inf1.profile(Double.isInfinite(ra) || Double.isInfinite(rb))) {
                         ra = convertInf(ra);
                         rb = convertInf(rb);
                         recalc = true;
                     }
-                    if (!recalc && (Double.isInfinite(cre2) || Double.isInfinite(cim2) || Double.isInfinite(crecim))) {
+                    if (inf2.profile(!recalc && (Double.isInfinite(cre2) || Double.isInfinite(cim2) || Double.isInfinite(crecim)))) {
                         ra = convertNaN(ra);
                         rb = convertNaN(rb);
                         recalc = true;
@@ -824,7 +830,9 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CReciprocal extends Node {
 
-            private final BranchProfile everSeenNaN = new BranchProfile();
+            private final ConditionProfile everSeenNaN = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile zero = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile inf = ConditionProfile.createBinaryProfile();
 
             public RComplex creciprocal(RComplex c) {
                 double cre = c.getRealPart();
@@ -843,12 +851,11 @@ public abstract class BinaryArithmetic extends Operation {
                     real = 1 / denom;
                     imag = -ratio / denom;
                 }
-                if (Double.isNaN(real) && Double.isNaN(imag)) {
-                    everSeenNaN.enter();
-                    if (cre == 0.0 && cim == 0.0) {
+                if (everSeenNaN.profile(Double.isNaN(real) && Double.isNaN(imag))) {
+                    if (zero.profile(cre == 0.0 && cim == 0.0)) {
                         real = Math.copySign(Double.POSITIVE_INFINITY, cre);
                         imag = Math.copySign(Double.NaN, cre);
-                    } else if (Double.isInfinite(cre) || Double.isInfinite(cim)) {
+                    } else if (inf.profile(Double.isInfinite(cre) || Double.isInfinite(cim))) {
                         double rc = convertInf(cre);
                         double rd = convertInf(cim);
                         real = 0.0 * rc;
@@ -864,6 +871,14 @@ public abstract class BinaryArithmetic extends Operation {
 
     private static final class PowFull extends Pow {
 
+        private final ConditionProfile pow2 = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile one = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile zero = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile finite = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile nan = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile infiniteA = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile infiniteB = ConditionProfile.createBinaryProfile();
+
         @Override
         public double op(double a, double b) {
             // LICENSE: transcribed code from GNU R, which is licensed under GPL
@@ -872,13 +887,13 @@ public abstract class BinaryArithmetic extends Operation {
             // GLIBC (SSE2 optimized) is about 2x faster
 
             // arithmetic.c (GNU R)
-            if (b == 2.0D) {
+            if (pow2.profile(b == 2.0D)) {
                 return a * a;
             }
-            if (a == 1.0D || b == 0.0D) {
+            if (one.profile(a == 1.0D || b == 0.0D)) {
                 return 1;
             }
-            if (a == 0.0D) {
+            if (zero.profile(a == 0.0D)) {
                 if (b > 0.0D) {
                     return 0.0D;
                 }
@@ -887,14 +902,14 @@ public abstract class BinaryArithmetic extends Operation {
                 }
                 return b;  // NA or NaN
             }
-            if (isFinite(a) && isFinite(b)) {
+            if (finite.profile(isFinite(a) && isFinite(b))) {
                 return Math.pow(a, b);
             }
-            if (isNAorNaN(a) || isNAorNaN(b)) {
+            if (nan.profile(isNAorNaN(a) || isNAorNaN(b))) {
                 // NA check was before, so this can only mean NaN
                 return a + b;
             }
-            if (!isFinite(a)) {
+            if (infiniteA.profile(!isFinite(a))) {
                 if (a > 0) { // Inf ^ y
                     if (b < 0) {
                         return 0;
@@ -907,7 +922,7 @@ public abstract class BinaryArithmetic extends Operation {
                     return fmod(b, 2) != 0 ? a : -a;
                 }
             }
-            if (!isFinite(b)) {
+            if (infiniteB.profile(!isFinite(b))) {
                 if (a >= 0) {
                     if (b > 0) {
                         return (a >= 1) ? Double.POSITIVE_INFINITY : 0;
@@ -949,10 +964,11 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw new UnsupportedOperationException("illegal type 'complex' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
             return left.compareTo(right) > 0 ? left : right;
         }
@@ -977,10 +993,11 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw new UnsupportedOperationException("illegal type 'complex' of argument");
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
             return left.compareTo(right) < 0 ? left : right;
         }
