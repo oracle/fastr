@@ -74,13 +74,13 @@ import com.oracle.truffle.r.runtime.data.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -93,11 +93,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -105,7 +105,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -117,7 +117,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -350,10 +350,7 @@ public abstract class RCallNode extends RNode {
             return specialize(frame, function).execute(frame, function);
         }
 
-        @SlowPath
         private RCallNode specialize(VirtualFrame frame, RFunction function) {
-            CompilerAsserts.neverPartOfCompilation();
-
             RCallNode current = createCacheNode(frame, function);
             RootCallNode next = createNextNode();
             RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
@@ -362,7 +359,6 @@ public abstract class RCallNode extends RNode {
             return cachedNode;
         }
 
-        @SlowPath
         protected RootCallNode createNextNode() {
             if (depth + 1 < FUNCTION_INLINE_CACHE_SIZE) {
                 return new UninitializedCallNode(this);
@@ -374,10 +370,7 @@ public abstract class RCallNode extends RNode {
             }
         }
 
-        @SlowPath
         protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
-            CompilerAsserts.neverPartOfCompilation();
-
             CallArgumentsNode clonedArgs = getClonedArgs();
             SourceSection callSrc = getSourceSection();
             SourceSection argsSrc = args.getEncapsulatingSourceSection();
@@ -459,7 +452,6 @@ public abstract class RCallNode extends RNode {
         }
 
         @Override
-        @SlowPath
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             CompilerDirectives.transferToInterpreter();
 
@@ -611,9 +603,8 @@ public abstract class RCallNode extends RNode {
         }
 
         @Override
-        @SlowPath
         protected Object execute(VirtualFrame frame, RFunction currentFunction, VarArgsSignature varArgsSignature) {
-            CompilerAsserts.neverPartOfCompilation();
+            CompilerDirectives.transferToInterpreter();
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
@@ -640,7 +631,6 @@ public abstract class RCallNode extends RNode {
         }
 
         @Override
-        @SlowPath
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             CompilerDirectives.transferToInterpreter();
 
