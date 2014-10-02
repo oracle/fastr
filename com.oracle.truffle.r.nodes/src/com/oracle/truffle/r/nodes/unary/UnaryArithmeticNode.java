@@ -68,12 +68,12 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return RRuntime.DOUBLE_NA;
     }
 
-    @Specialization(guards = "!isComplexNA")
+    @Specialization(guards = "!isNA")
     protected RComplex doComplex(RComplex operand) {
         return arithmetic.op(operand.getRealPart(), operand.getImaginaryPart());
     }
 
-    @Specialization(guards = "isComplexNA")
+    @Specialization(guards = "isNA")
     protected RComplex doComplexNA(@SuppressWarnings("unused") RComplex operand) {
         return RRuntime.createComplexNA();
     }
@@ -109,15 +109,14 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "!isComplete")
     protected RDoubleVector doDoubleVectorNA(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
-        na.enable(operands);
         for (int i = 0; i < operands.getLength(); ++i) {
-            if (na.check(operands.getDataAt(i))) {
+            if (RRuntime.isNA(operands.getDataAt(i))) {
                 res[i] = RRuntime.DOUBLE_NA;
             } else {
                 res[i] = arithmetic.op(operands.getDataAt(i));
             }
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(res, na.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(res, false);
         copyAttributes(ret, operands);
         return ret;
     }
@@ -138,9 +137,8 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "!isComplete")
     protected RComplexVector doComplexVectorNA(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
-        na.enable(operands);
         for (int i = 0; i < operands.getLength(); ++i) {
-            if (na.check(operands.getDataAt(i))) {
+            if (RRuntime.isNA(operands.getDataAt(i))) {
                 res[2 * i] = RRuntime.DOUBLE_NA;
                 res[2 * i + 1] = 0.0;
             } else {
@@ -149,7 +147,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
                 res[2 * i + 1] = r.getImaginaryPart();
             }
         }
-        RComplexVector ret = RDataFactory.createComplexVector(res, na.neverSeenNA());
+        RComplexVector ret = RDataFactory.createComplexVector(res, false);
         copyAttributes(ret, operands);
         return ret;
     }
@@ -168,15 +166,14 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "!isComplete")
     protected RIntVector doIntVectorNA(RAbstractIntVector operands) {
         int[] res = new int[operands.getLength()];
-        na.enable(operands);
         for (int i = 0; i < operands.getLength(); ++i) {
-            if (na.check(operands.getDataAt(i))) {
+            if (RRuntime.isNA(operands.getDataAt(i))) {
                 res[i] = RRuntime.INT_NA;
             } else {
                 res[i] = arithmetic.op(operands.getDataAt(i));
             }
         }
-        RIntVector ret = RDataFactory.createIntVector(res, na.neverSeenNA());
+        RIntVector ret = RDataFactory.createIntVector(res, false);
         copyAttributes(ret, operands);
         return ret;
     }
@@ -193,20 +190,15 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Specialization
     protected Object doStringVector(@SuppressWarnings("unused") RAbstractStringVector operands) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
     }
 
     @Specialization
     protected Object doRawVector(@SuppressWarnings("unused") RAbstractRawVector operands) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
-    }
-
-    protected static boolean isComplexNA(RComplex c) {
-        return c.isNA();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
     }
 
     protected static boolean isComplete(RAbstractVector cv) {
         return cv.isComplete();
     }
-
 }

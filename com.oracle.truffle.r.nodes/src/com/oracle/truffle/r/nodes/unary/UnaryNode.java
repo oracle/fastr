@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChildren({@NodeChild("operand")})
 public abstract class UnaryNode extends RNode {
@@ -47,4 +48,7 @@ public abstract class UnaryNode extends RNode {
         return Double.isNaN(operand);
     }
 
+    protected static boolean isNA(RComplex c) {
+        return c.isNA();
+    }
 }
