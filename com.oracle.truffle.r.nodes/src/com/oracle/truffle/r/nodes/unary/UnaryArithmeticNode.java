@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
@@ -87,6 +88,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return RRuntime.INT_NA;
     }
 
+    @SlowPath
     private static void copyAttributes(RVector ret, RAbstractVector v) {
         ret.copyRegAttributesFrom(v);
         ret.setDimensions(v.getDimensions());
