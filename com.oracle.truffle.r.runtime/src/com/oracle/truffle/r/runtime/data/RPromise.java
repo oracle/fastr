@@ -262,10 +262,10 @@ public class RPromise extends RLanguageRep {
         this.isEvaluated = true;
         this.env = null; // REnvironment and associated frame are no longer needed after execution
 
-        // TODO Does this apply to other values, too?
-        if (newValue instanceof RVector) {
+        // Does this apply to other values, too?
+        if (newValue instanceof RShareable) {
             // set NAMED = 2
-            ((RVector) newValue).makeShared();
+            ((RShareable) newValue).makeShared();
         }
     }
 
