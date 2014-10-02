@@ -52,11 +52,11 @@ public class LaFunctions {
         protected Object doRg(RDoubleVector matrix, byte onlyValues) {
             controlVisibility();
             if (!matrix.isMatrix()) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
             }
             int[] dims = matrix.getDimensions();
             if (onlyValues == RRuntime.LOGICAL_NA) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "only.values");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "only.values");
             }
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
@@ -80,14 +80,14 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, -1);
             if (info != 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeev");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeev");
             }
             // now allocate work array and make the actual call
             int lwork = (int) work[0];
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, lwork);
             if (info != 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeev");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeev");
             }
             // result is a list containing "values" and "vectors" (unless only.values is TRUE)
             boolean complexValues = false;
@@ -130,7 +130,7 @@ public class LaFunctions {
         protected RList doQr(RAbstractVector aIn) {
             // This implementation is sufficient for B25 matcal-5.
             if (!aIn.isMatrix()) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
             }
             if (!(aIn instanceof RDoubleVector)) {
                 RError.nyi(getEncapsulatingSourceSection(), "non-real vectors not supported (yet)");
@@ -147,13 +147,13 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, -1);
             if (info < 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeqp3");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeqp3");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, lwork);
             if (info < 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeqp3");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeqp3");
             }
             Object[] data = new Object[4];
             // TODO check complete
@@ -183,7 +183,7 @@ public class LaFunctions {
         @Specialization
         protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn) {
             if (!bIn.isMatrix()) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
             }
             // If bIn was coerced this extra copy is unnecessary
             RDoubleVector b = (RDoubleVector) bIn.copy();
@@ -197,7 +197,7 @@ public class LaFunctions {
             int[] qrDims = qr.getDimensions();
             int n = qrDims[0];
             if (bDims[0] != n) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.RHS_SHOULD_HAVE_ROWS, n, bDims[0]);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RHS_SHOULD_HAVE_ROWS, n, bDims[0]);
             }
             int nrhs = bDims[1];
             double[] work = new double[1];
@@ -209,17 +209,17 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
             if (info < 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dormqr");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dormqr");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, lwork);
             if (info < 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dormqr");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dormqr");
             }
             info = RFFIFactory.getRFFI().getLapackRFFI().dtrtrs('U', 'N', 'N', k, nrhs, qrData, n, bData, n);
             if (info < 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dtrtrs");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dtrtrs");
             }
             // TODO check complete
             return b;
@@ -236,13 +236,13 @@ public class LaFunctions {
         @Specialization
         protected RList doDetGeReal(RDoubleVector aIn, byte useLogIn) {
             if (!aIn.isMatrix()) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
             }
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = aIn.getDimensions();
             int n = aDims[0];
             if (n != aDims[1]) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE, "a");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE, "a");
             }
             int[] ipiv = new int[n];
             double modulus = 0;
@@ -251,7 +251,7 @@ public class LaFunctions {
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgetrf(n, n, aData, n, ipiv);
             int sign = 1;
             if (info < 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgetrf");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgetrf");
             } else if (info > 0) {
                 modulus = useLog ? Double.NEGATIVE_INFINITY : 0;
             } else {
@@ -299,10 +299,10 @@ public class LaFunctions {
             int n = aDims[0];
             int m = aDims[1];
             if (n != m) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE, "a");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE, "a");
             }
             if (m <= 0) {
-                RError.error(getEncapsulatingSourceSection(), RError.Message.DIMS_GT_ZERO, "a");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMS_GT_ZERO, "a");
             }
             double[] aData = a.getDataWithoutCopying();
             /* zero the lower triangle */
@@ -317,7 +317,7 @@ public class LaFunctions {
                 info = RFFIFactory.getRFFI().getLapackRFFI().dpotrf('U', m, aData, m);
                 if (info != 0) {
                     // TODO informative error message (aka GnuR)
-                    RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dpotrf");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
             } else {
                 int[] ipiv = new int[m];
@@ -326,7 +326,7 @@ public class LaFunctions {
                 info = RFFIFactory.getRFFI().getLapackRFFI().dpstrf('U', n, aData, n, ipiv, rank, tol, work);
                 if (info != 0) {
                     // TODO informative error message (aka GnuR)
-                    RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dpotrf");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
                 a.setAttr("pivot", pivot);
                 a.setAttr("rank", rank[0]);
