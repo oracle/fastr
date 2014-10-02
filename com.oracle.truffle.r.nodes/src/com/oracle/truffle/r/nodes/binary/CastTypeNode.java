@@ -14,13 +14,13 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class CastTypeNode extends RInvisibleBuiltinNode {
+public abstract class CastTypeNode extends BinaryNode {
+
     @Child private CastStringNode castStringNode;
     @Child private CastComplexNode castComplexNode;
     @Child private CastDoubleNode castDoubleNode;

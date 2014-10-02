@@ -186,7 +186,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), this.getSuppliedArgsNames()));
+            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
         }
     }
 

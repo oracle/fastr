@@ -17,7 +17,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -114,7 +113,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
+            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
         }
     }
 
