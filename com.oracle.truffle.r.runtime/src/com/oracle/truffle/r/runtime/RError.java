@@ -111,7 +111,7 @@ public final class RError extends RuntimeException {
 
     @SlowPath
     public static RError error(SourceSection src, Message msg) {
-        throw error(src, msg, (Object[]) null);
+        throw error0(src, msg, (Object[]) null);
     }
 
     private static final RError MARKER_EXCEPTION = new RError(null, "<marker exception>");
