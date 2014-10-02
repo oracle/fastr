@@ -9029,6 +9029,14 @@ Warning message:
 In max(NULL) : no non-missing arguments to max; returning -Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.character(NA), as.character(NA), "42", "7", na.rm=TRUE) }
+[1] "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
+#{ max(as.character(NA), as.character(NA), "42", na.rm=TRUE) }
+[1] "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ max(as.character(NA), as.character(NA), na.rm=FALSE) }
 [1] NA
 
@@ -9823,6 +9831,37 @@ Error in pmax(7 + (0+42i)) : invalid input type
 Error in pmax(as.raw(42)) : invalid input type
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", "7"), c("42", "1")) }
+[1] "42" "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", "7"), c("42", as.character(NA))) }
+[1] "42" NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", "7"), c("42", as.character(NA)), na.rm=TRUE) }
+[1] "42" "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", "7"), character()) }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", "7", "8"), c("1"), c("42", "1")) }
+[1] "42" "7"  "8"
+Warning message:
+In pmax(c("1", "7", "8"), c("1"), c("42", "1")) :
+  an argument will be fractionally recycled
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", as.character(NA)), c("42", "1"), na.rm=TRUE) }
+[1] "42" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
+#{ pmax(c("1", as.character(NA)), c(as.character(NA), as.character(NA)), c("42", "1"), na.rm=TRUE) }
+[1] "42" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMax
 #{ pmax(c(1, 7), c(42, 1)) }
 [1] 42  7
 
@@ -9887,6 +9926,37 @@ Error in pmin(7 + (0+42i)) : invalid input type
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
 #{ pmin(as.raw(42)) }
 Error in pmin(as.raw(42)) : invalid input type
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", "7"), c("42", "1")) }
+[1] "1" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", "7"), c("42", as.character(NA))) }
+[1] "1" NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", "7"), c("42", as.character(NA)), na.rm=TRUE) }
+[1] "1" "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", "7"), character()) }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", "7", "8"), c("1"), c("42", "1")) }
+[1] "1" "1" "1"
+Warning message:
+In pmin(c("1", "7", "8"), c("1"), c("42", "1")) :
+  an argument will be fractionally recycled
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", as.character(NA)), c("42", "1"), na.rm=TRUE) }
+[1] "1" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
+#{ pmin(c("1", as.character(NA)), c(as.character(NA), as.character(NA)), c("42", "1"), na.rm=TRUE) }
+[1] "1" "1"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPMin
 #{ pmin(c(1, 7), c(42, 1)) }

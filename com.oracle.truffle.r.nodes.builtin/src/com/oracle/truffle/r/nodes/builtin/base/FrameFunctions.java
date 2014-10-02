@@ -60,7 +60,7 @@ public class FrameFunctions {
             if (n > 0) {
                 int d = Utils.stackDepth();
                 if (n > d) {
-                    RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                    throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 n = d - n + 1; // add one to skip internal evaluation frame
             } else {
@@ -68,7 +68,7 @@ public class FrameFunctions {
             }
             Frame callerFrame = Utils.getStackFrame(frameAccess(), n);
             if (callerFrame == null) {
-                RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
             }
             return callerFrame;
         }
@@ -286,7 +286,7 @@ public class FrameFunctions {
             controlVisibility();
             int n = (int) nd;
             if (n == 0) {
-                RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
+                throw RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n + 1);
             if (callerFrame == null) {

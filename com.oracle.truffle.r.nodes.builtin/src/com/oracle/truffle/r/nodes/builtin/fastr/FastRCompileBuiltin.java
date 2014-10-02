@@ -46,7 +46,7 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
                 clazz = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
                 method = clazz.getDeclaredMethod("compile");
             } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
-                Utils.fail("DebugCompileBuiltin failed to find compile method");
+                Utils.fail("fastr.compile: failed to find 'compile' method");
             }
             optimizedCallTarget = clazz;
             compileMethod = method;
@@ -56,7 +56,7 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
             if (System.getProperty("fastr.truffle.compile", "true").equals("true") && Truffle.getRuntime().getName().contains("Graal")) {
                 return new Compiler();
             } else {
-                Utils.warn("DebugCompileBuiltin not supported in this environment");
+                Utils.warn("fastr.compile not supported in this environment");
                 return null;
             }
         }

@@ -111,7 +111,7 @@ public final class RError extends RuntimeException {
 
     @SlowPath
     public static RError error(SourceSection src, Message msg) {
-        throw error(src, msg, (Object[]) null);
+        throw error0(src, msg, (Object[]) null);
     }
 
     private static final RError MARKER_EXCEPTION = new RError(null, "<marker exception>");
@@ -270,7 +270,6 @@ public final class RError extends RuntimeException {
         BY_TOO_SMALL("'by' argument is much too small"),
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
-        INVALID_TYPE_LIST("invalid 'type' (list) of argument"),
         INVALID_SEP("invalid 'sep' specification"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("argument is not a function, character or symbol"),

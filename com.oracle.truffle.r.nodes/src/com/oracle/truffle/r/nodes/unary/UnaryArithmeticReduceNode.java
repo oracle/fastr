@@ -343,7 +343,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @SlowPath
     private String doStringVectorMultiElem(RStringVector operand, byte naRm, int offset) {
-        String result = operand.getDataAt(0);
+        String result = operand.getDataAt(offset);
         na.enable(result);
         if (naRm == RRuntime.LOGICAL_TRUE) {
             if (na.check(result)) {
@@ -362,7 +362,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         }
         // when we reach here, it means that we have already seen one non-NA element
         assert !RRuntime.isNA(result);
-        for (int i = 1; i < operand.getLength(); ++i) {
+        for (int i = offset + 1; i < operand.getLength(); ++i) {
             String current = operand.getDataAt(i);
             na.enable(current);
             if (na.check(current)) {

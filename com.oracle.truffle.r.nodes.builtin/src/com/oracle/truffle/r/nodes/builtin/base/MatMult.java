@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +41,9 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Child private BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
     @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
+
+    private final ConditionProfile notOneRow = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile notOneColumn = ConditionProfile.createBinaryProfile();
 
     protected abstract Object executeObject(VirtualFrame frame, Object a, Object b);
 
@@ -131,7 +135,7 @@ public abstract class MatMult extends RBuiltinNode {
         }
         na.enable(a);
         na.enable(b);
-        if (aCols != 1) {
+        if (notOneColumn.profile(aCols != 1)) {
             double[] result = new double[aRows];
             for (int row = 0; row < aRows; ++row) {
                 double x = 0;
@@ -165,7 +169,7 @@ public abstract class MatMult extends RBuiltinNode {
         }
         na.enable(a);
         na.enable(b);
-        if (bRows != 1) {
+        if (notOneRow.profile(bRows != 1)) {
             double[] result = new double[bCols];
             for (int k = 0; k < bCols; ++k) {
                 double x = 0.0;
@@ -245,7 +249,7 @@ public abstract class MatMult extends RBuiltinNode {
         }
         na.enable(a);
         na.enable(b);
-        if (aCols != 1) {
+        if (notOneColumn.profile(aCols != 1)) {
             double[] result = new double[aRows << 1];
             for (int row = 0; row < aRows; ++row) {
                 RComplex x = RDataFactory.createComplexZero();
@@ -281,7 +285,7 @@ public abstract class MatMult extends RBuiltinNode {
         }
         na.enable(a);
         na.enable(b);
-        if (bRows != 1) {
+        if (notOneRow.profile(bRows != 1)) {
             double[] result = new double[bCols << 1];
             for (int k = 0; k < bCols; ++k) {
                 RComplex x = RDataFactory.createComplexZero();
@@ -360,7 +364,7 @@ public abstract class MatMult extends RBuiltinNode {
         }
         na.enable(a);
         na.enable(b);
-        if (aCols != 1) {
+        if (notOneColumn.profile(aCols != 1)) {
             int[] result = new int[aRows];
             for (int row = 0; row < aRows; ++row) {
                 int x = 0;
@@ -394,7 +398,7 @@ public abstract class MatMult extends RBuiltinNode {
         }
         na.enable(a);
         na.enable(b);
-        if (bRows != 1) {
+        if (notOneRow.profile(bRows != 1)) {
             int[] result = new int[bCols];
             for (int k = 0; k < bCols; ++k) {
                 int x = 0;
