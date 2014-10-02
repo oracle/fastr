@@ -72,12 +72,12 @@ public final class RError extends RuntimeException {
      * in a {@code try finally} block, e.g:
      *
      * <pre>
-     * boolean prev = RError.ignore(true);
+     * boolean prev = RError.ignoreError(true);
      * try {
      *     // do something that might throw an RError
      *     ...
      * } finally {
-     *     RError.ignore(prev);
+     *     RError.ignoreError(prev);
      * }
      * </pre>
      *
@@ -546,7 +546,8 @@ public final class RError extends RuntimeException {
         QUOTE_G_ONE("only the first character of 'quote' will be used"),
         UNEXPECTED("unexpected '%s' in \"%s\""),
         FIRST_ELEMENT_USED("first element used of '%s' argument"),
-        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer");
+        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer"),
+        DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'");
 
         public final String message;
         private final boolean hasArgs;
