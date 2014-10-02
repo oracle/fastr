@@ -141,9 +141,9 @@ public final class RError extends RuntimeException {
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                 VirtualFrame frame = Utils.getActualCurrentFrame();
                 if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                    RContext.getEngine().eval((RLanguage) errorExpr, frame.materialize());
                 } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                    RContext.getEngine().eval((RExpression) errorExpr, frame.materialize());
                 }
             } else {
                 // GnuR checks this earlier when the option is set

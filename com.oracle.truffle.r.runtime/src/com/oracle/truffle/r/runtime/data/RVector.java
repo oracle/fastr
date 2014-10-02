@@ -400,7 +400,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
             for (int i = 0; i < classAttr.getLength(); i++) {
-                if (classAttr.getDataAt(i).equals(RRuntime.TYPE_DATA_FRAME)) {
+                if (RType.DataFrame.getName().equals(classAttr.getDataAt(i))) {
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (enclosingDataFrame != null) {
                         // was a frame and still is a frame
@@ -620,11 +620,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     // class hierarchy on the fly.
     protected final RStringVector getClassHierarchyHelper(final String[] classHr, final String[] classHrDyn) {
         if (isMatrix()) {
-            classHrDyn[0] = RRuntime.TYPE_MATRIX;
+            classHrDyn[0] = RType.Matrix.getName();
             return RDataFactory.createStringVector(classHrDyn, true);
         }
         if (isArray()) {
-            classHrDyn[0] = RRuntime.TYPE_ARRAY;
+            classHrDyn[0] = RType.Array.getName();
             return RDataFactory.createStringVector(classHrDyn, true);
         }
         return RDataFactory.createStringVector(classHr, true);

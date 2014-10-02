@@ -16,7 +16,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -30,7 +30,9 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
     @Child private CastStringNode castStringNode;
-    @Child private Typeof typeof;
+    @Child private TypeofNode typeof;
+
+    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
@@ -60,19 +62,22 @@ public abstract class UpdateClass extends RBuiltinNode {
         controlVisibility();
         initTypeof();
         if (!arg.isObject()) {
-            final String argType = this.typeof.execute(frame, arg);
-            if (argType.equals(className) || (className.equals(RRuntime.TYPE_NUMERIC) && (argType.equals(RRuntime.TYPE_INTEGER) || (argType.equals(RRuntime.TYPE_DOUBLE))))) {
+            RType argType = this.typeof.execute(frame, arg);
+            if (argType.equals(className) || (RType.Numeric.getName().equals(className) && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);
             }
         }
         initCastTypeNode();
-        Object result = castTypeNode.execute(frame, arg, className);
-        if (result != null) {
-            return setClass((RAbstractVector) result, RNull.instance);
+        RType mode = RType.fromString(modeProfile.profile(className));
+        if (mode != null) {
+            Object result = castTypeNode.execute(frame, arg, mode);
+            if (result != null) {
+                return setClass((RAbstractVector) result, RNull.instance);
+            }
         }
         RVector resultVector = arg.materializeNonSharedVector();
-        if (className.equals(RRuntime.TYPE_MATRIX)) {
+        if (RType.Matrix.getName().equals(className)) {
             if (resultVector.isMatrix()) {
                 return setClass(resultVector, RNull.instance);
             }
@@ -83,7 +88,7 @@ public abstract class UpdateClass extends RBuiltinNode {
             }
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
         }
-        if (className.equals(RRuntime.TYPE_ARRAY)) {
+        if (RType.Array.getName().equals(className)) {
             if (resultVector.isArray()) {
                 return setClass(resultVector, RNull.instance);
             }
@@ -108,14 +113,14 @@ public abstract class UpdateClass extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
+            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
         }
     }
 
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
+            typeof = insert(TypeofNodeFactory.create(null));
         }
     }
 

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 @SuppressWarnings("unused")
-public abstract class BinaryBooleanNode extends BinaryNode {
+public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     private final BooleanOperationFactory factory;
     @Child private BooleanOperation logic;
@@ -59,6 +60,18 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     // raw vector).
 
     // empty raw vectors
+
+    public static boolean isEmpty(RAbstractVector left, Object right) {
+        return left.getLength() == 0;
+    }
+
+    public static boolean isEmpty(Object left, RAbstractVector right) {
+        return right.getLength() == 0;
+    }
+
+    public static boolean isEmpty(RAbstractVector left, RAbstractVector right) {
+        return left.getLength() == 0 || right.getLength() == 0;
+    }
 
     @Specialization(guards = {"isEmpty", "expectLogical"})
     protected RLogicalVector doEmptyLogical(RRawVector left, RRaw right) {
