@@ -76,7 +76,7 @@ public final class REngine implements RContext.Engine {
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
      * @return a {@link VirtualFrame} that can be passed to
-     *         {@link #parseAndEval(String, String, VirtualFrame, REnvironment, boolean, boolean)}
+     *         {@link #parseAndEval(String, String, MaterializedFrame, REnvironment, boolean, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         singleton.startTime = System.nanoTime();
@@ -101,16 +101,16 @@ public final class REngine implements RContext.Engine {
         ROptions.initialize();
         RProfile.initialize();
         // eval the system profile
-        singleton.parseAndEval("<system_profile>", RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
+        singleton.parseAndEval("<system_profile>", RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
         REnvironment.packagesInitialize(RPackages.initialize());
         RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {
-            singleton.parseAndEval("<site_profile>", siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
+            singleton.parseAndEval("<site_profile>", siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
         }
         String userProfile = RProfile.userProfile();
         if (userProfile != null) {
-            singleton.parseAndEval("<user_profile>", userProfile, globalFrame, REnvironment.globalEnv(), false, false);
+            singleton.parseAndEval("<user_profile>", userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
         }
         return globalFrame;
     }
@@ -119,7 +119,7 @@ public final class REngine implements RContext.Engine {
         return singleton;
     }
 
-    public void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame) {
+    public void loadDefaultPackage(String name, MaterializedFrame frame, REnvironment envForFrame) {
         RBuiltinPackages.load(name, frame, envForFrame);
     }
 
@@ -135,14 +135,14 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
-    public Object parseAndEval(String sourceDesc, String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+    public Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, sourceDesc), frame, printResult, allowIncompleteSource);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult, false);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame.materialize(), printResult, false);
     }
 
     public class ParseException extends Exception {
@@ -188,7 +188,7 @@ public final class REngine implements RContext.Engine {
         return eval(ffunction, (RNode) expr.getRep(), envir, enclos);
     }
 
-    public Object eval(RExpression expr, VirtualFrame frame) {
+    public Object eval(RExpression expr, MaterializedFrame frame) {
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
             result = expr.getDataAt(i);
@@ -202,7 +202,7 @@ public final class REngine implements RContext.Engine {
 
     private static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
 
-    public Object eval(RLanguage expr, VirtualFrame frame) {
+    public Object eval(RLanguage expr, MaterializedFrame frame) {
         RNode n = expr.getType() == RLanguage.Type.RNODE ? (RNode) expr.getRep() : makeCallNode(expr);
         RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
@@ -219,7 +219,7 @@ public final class REngine implements RContext.Engine {
         for (int i = 0; i < argLength; i++) {
             Object a = expr.getDataAt(i + 1);
             if (a instanceof RSymbol) {
-                args[i] = ReadVariableNode.create(((RSymbol) a).getName(), RRuntime.TYPE_ANY, false, true, false, true);
+                args[i] = ReadVariableNode.create(((RSymbol) a).getName(), RType.Any, false, true, false, true);
             } else if (a instanceof RLanguage) {
                 RLanguage l = (RLanguage) a;
                 if (l.getType() == RLanguage.Type.RNODE) {
@@ -245,7 +245,7 @@ public final class REngine implements RContext.Engine {
         if (expr.getDataAt(0) instanceof RSymbol) {
             RSymbol funcName = (RSymbol) expr.getDataAt(0);
             // TODO: source section?
-            return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RRuntime.TYPE_FUNCTION, false, true, false, true), callArgsNode);
+            return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RType.Function, false, true, false, true), callArgsNode);
         } else {
             return RCallNode.createStaticCall(null, (RFunction) expr.getDataAt(0), callArgsNode);
         }
@@ -281,12 +281,12 @@ public final class REngine implements RContext.Engine {
     private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, REnvironment enclos) throws PutException {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
-        // slightly changed arguments array (functio and callSrc).
-        VirtualFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc);
+        // slightly changed arguments array (function and callSrc).
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc);
         return runCall(callTarget, vFrame, false, false);
     }
 
-    public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
+    public Object evalPromise(RPromise promise, MaterializedFrame frame) throws RError {
         return runCall(promise.getClosure().getCallTarget(), frame, false, false);
     }
 
@@ -304,7 +304,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult, boolean allowIncompleteSource) {
+    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
             RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source), "<repl wrapper>");
             Object result = runCall(callTarget, frame, printResult, true);
@@ -393,12 +393,12 @@ public final class REngine implements RContext.Engine {
      * {@code frame} will be accessible via {@code newFrame.getArguments()[0]}, and the execution
      * will continue using {@code frame}.
      */
-    private static Object runCall(RootCallTarget callTarget, VirtualFrame frame, boolean printResult, boolean topLevel) {
+    private static Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;
         try {
             try {
                 // FIXME: callTargets should only be called via Direct/IndirectCallNode
-                result = callTarget.call(frame.materialize());
+                result = callTarget.call(frame);
             } catch (ControlFlowException cfe) {
                 throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }

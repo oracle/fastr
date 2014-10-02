@@ -42,7 +42,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
     private void naCheck(boolean na) {
         if (na) {
-            RError.error(getSourceSection(), RError.Message.NA_OR_NAN);
+            throw RError.error(getSourceSection(), RError.Message.NA_OR_NAN);
         }
     }
 

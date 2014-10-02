@@ -39,17 +39,17 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
+        return RDataFactory.createStringVector(RType.Logical.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_CHARACTER);
+        return RDataFactory.createStringVector(RType.Character.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_INTEGER);
+        return RDataFactory.createStringVector(RType.Integer.getName());
     }
 
     @Specialization
@@ -59,17 +59,17 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
+        return RDataFactory.createStringVector(RType.Complex.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RFunction arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_FUNCTION);
+        return RDataFactory.createStringVector(RType.Function.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
-        return RDataFactory.createStringVector(RRuntime.NULL);
+        return RDataFactory.createStringVector(RType.Null.getName());
     }
 
     @Specialization
@@ -79,12 +79,12 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") REnvironment arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_ENVIRONMENT);
+        return RDataFactory.createStringVector(RType.Environment.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RPairList arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_PAIR_LIST);
+        return RDataFactory.createStringVector(RType.PairList.getName());
     }
 
     @Specialization
@@ -94,7 +94,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RFormula arg) {
-        return RDataFactory.createStringVector(RRuntime.TYPE_FORMULA);
+        return RDataFactory.createStringVector(RType.Formula.getName());
     }
 
     @Specialization

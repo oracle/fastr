@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  */
 public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
-    @Child private ReadVariableNode varArgsSlotNode = ReadVariableNode.create(ArgumentsTrait.VARARG_NAME, RRuntime.TYPE_ANY, false, false, true, false);
+    @Child private ReadVariableNode varArgsSlotNode = ReadVariableNode.create(ArgumentsTrait.VARARG_NAME, RType.Any, false, false, true, false);
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this

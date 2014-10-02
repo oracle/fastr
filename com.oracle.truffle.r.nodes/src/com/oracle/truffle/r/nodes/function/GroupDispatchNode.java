@@ -152,7 +152,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         this.typeLast = null;
         if (builtInNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            builtInNode = insert(ReadVariableNode.create(this.genericName, RRuntime.TYPE_FUNCTION, false));
+            builtInNode = insert(ReadVariableNode.create(this.genericName, RType.Function, false));
         }
         RFunction builtinFunc = null;
         try {

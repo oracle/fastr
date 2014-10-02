@@ -42,7 +42,6 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
     @Child private CastStringNode castStringNode;
-    @Child private Typeof typeof;
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 

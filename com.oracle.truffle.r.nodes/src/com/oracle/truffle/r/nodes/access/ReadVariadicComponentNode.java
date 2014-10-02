@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.*;
  */
 public class ReadVariadicComponentNode extends RNode {
 
-    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RRuntime.TYPE_ANY, false, true);
+    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RType.Any, false, true);
     @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
     private final int index;
