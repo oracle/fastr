@@ -219,7 +219,7 @@ public final class REngine implements RContext.Engine {
         for (int i = 0; i < argLength; i++) {
             Object a = expr.getDataAt(i + 1);
             if (a instanceof RSymbol) {
-                args[i] = ReadVariableNode.create(((RSymbol) a).getName(), RRuntime.TYPE_ANY, false, true, false, true);
+                args[i] = ReadVariableNode.create(((RSymbol) a).getName(), RType.Any, false, true, false, true);
             } else if (a instanceof RLanguage) {
                 RLanguage l = (RLanguage) a;
                 if (l.getType() == RLanguage.Type.RNODE) {
@@ -245,7 +245,7 @@ public final class REngine implements RContext.Engine {
         if (expr.getDataAt(0) instanceof RSymbol) {
             RSymbol funcName = (RSymbol) expr.getDataAt(0);
             // TODO: source section?
-            return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RRuntime.TYPE_FUNCTION, false, true, false, true), callArgsNode);
+            return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RType.Function, false, true, false, true), callArgsNode);
         } else {
             return RCallNode.createStaticCall(null, (RFunction) expr.getDataAt(0), callArgsNode);
         }

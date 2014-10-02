@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -28,19 +29,27 @@ import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateStorageMode extends RBuiltinNode {
 
-    @Child private Typeof typeof;
+    @Child private TypeofNode typeof;
     @Child private CastTypeNode castTypeNode;
     @Child private IsFactorNode isFactor;
 
-    @Specialization(guards = {"!isReal", "!isSingle"})
-    protected Object update(VirtualFrame frame, final Object x, final String value) {
+    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+    private final BranchProfile errorProfile = new BranchProfile();
+
+    @Specialization
+    protected Object update(VirtualFrame frame, Object x, String value) {
         controlVisibility();
+        RType mode = RType.fromString(modeProfile.profile(value));
+        if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
+        }
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
+            typeof = insert(TypeofNodeFactory.create(null));
         }
-        String typeX = typeof.execute(frame, x);
-        if (typeX.equals(value)) {
+        RType typeX = typeof.execute(frame, x);
+        if (typeX == mode) {
             return x;
         }
         if (isFactor == null) {
@@ -48,59 +57,37 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             isFactor = insert(IsFactorNodeFactory.create(null));
         }
         if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
         }
-        Object result = castTypeNode.execute(frame, x, value);
-        if (result == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
-        } else {
-            if (x instanceof RAttributable && result instanceof RAttributable) {
-                RAttributable rx = (RAttributable) x;
-                RAttributes attrs = rx.getAttributes();
-                if (attrs != null) {
-                    RAttributable rresult = (RAttributable) result;
-                    for (RAttribute attr : attrs) {
-                        rresult.setAttr(attr.getName(), attr.getValue());
+        if (mode != null) {
+            Object result = castTypeNode.execute(frame, x, mode);
+            if (result != null) {
+                if (x instanceof RAttributable && result instanceof RAttributable) {
+                    RAttributable rx = (RAttributable) x;
+                    RAttributes attrs = rx.getAttributes();
+                    if (attrs != null) {
+                        RAttributable rresult = (RAttributable) result;
+                        for (RAttribute attr : attrs) {
+                            rresult.setAttr(attr.getName(), attr.getValue());
+                        }
                     }
                 }
+                return result;
             }
-            return result;
         }
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isReal")
-    protected Object updateReal(final Object x, final String value) {
-        controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.REAL, RRuntime.TYPE_DOUBLE);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isSingle")
-    protected Object updateSingle(final Object x, final String value) {
-        controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.SINGLE, "mode<-");
+        errorProfile.enter();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object update(final Object x, final Object value) {
+    protected Object update(Object x, Object value) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
     }
-
-    @SuppressWarnings("unused")
-    protected static boolean isReal(VirtualFrame frame, final Object x, final String value) {
-        return value.equals(RRuntime.REAL);
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean isSingle(VirtualFrame frame, final Object x, final String value) {
-        return value.equals(RRuntime.SINGLE);
-    }
-
 }

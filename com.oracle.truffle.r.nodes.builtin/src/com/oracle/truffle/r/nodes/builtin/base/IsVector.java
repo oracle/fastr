@@ -38,7 +38,7 @@ public abstract class IsVector extends RBuiltinNode {
     @Override
     public RNode[] getParameterValues() {
         // x, mode = "any"
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.TYPE_ANY)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName())};
     }
 
     @SuppressWarnings("unused")
@@ -108,8 +108,8 @@ public abstract class IsVector extends RBuiltinNode {
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-        return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || (x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode)) ||
-                        (x.getElementClass() == Object.class && mode.equals("list"));
+        return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) ||
+                        (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) || (x.getElementClass() == Object.class && mode.equals("list"));
     }
 
 }

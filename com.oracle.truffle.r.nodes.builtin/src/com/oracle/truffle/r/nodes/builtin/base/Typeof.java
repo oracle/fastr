@@ -42,7 +42,7 @@ public abstract class Typeof extends RBuiltinNode {
         if (typeofNode == null) {
             typeofNode = insert(TypeofNodeFactory.create(null));
         }
-        return typeofNode.execute(frame, obj);
+        return typeofNode.execute(frame, obj).getName();
     }
 
 }
