@@ -33,6 +33,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -54,10 +55,8 @@ public final class Utils {
         return Boolean.parseBoolean(getProperty(key, dfltValue ? "true" : "false"));
     }
 
-    public static final boolean DEBUG = true;
-
     public static void debug(String msg) {
-        if (DEBUG) {
+        if (FastROptions.Debug.getValue()) {
             // CheckStyle: stop system..print check
             System.err.println(msg);
             // CheckStyle: resume system..print check
