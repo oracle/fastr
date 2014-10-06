@@ -9,14 +9,13 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.nodes;
+package com.oracle.truffle.r.runtime;
 
 import java.text.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
@@ -25,12 +24,15 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *
  * There are two distinct clients of this class:
  * <ul>
- * <li>{@code RSerialize} when it needs to convert an unserialzied GnuR {@code pairlist} instance
- * that denotes a closure into an {@link RFunction} which is, currently done, by deparsing and
+ * <li>{@code RSerialize} when it needs to convert an unserialized GnuR {@code pairlist} instance
+ * that denotes a closure into an {@link RFunction} which is, currently, done by deparsing and
  * reparsing the value.</li>
  * <li>The {@code deparse} builtin.</li>
  * </ul>
  *
+ * Much of the code here is related to case 1, which would be unnecessary if unserialize created
+ * ASTs for language elements directly rather than via deparse/parse. The deparsing of ASTs is
+ * handled in {@code RASTDeparse} via the {@link RASTHelper} interface.
  */
 public class RDeparse {
     public static final int KEEPINTEGER = 1;
@@ -49,7 +51,7 @@ public class RDeparse {
     public static final int MAX_Cutoff = 500;
     public static final int DEFAULT_Cutoff = 60;
 
-    private static enum PP {
+    public static enum PP {
         FUNCALL,
         RETURN,
         BINARY,
@@ -69,15 +71,15 @@ public class RDeparse {
         DOLLAR;
     }
 
-    private static final int PREC_SUM = 9;
-    private static final int PREC_SIGN = 13;
+    public static final int PREC_SUM = 9;
+    public static final int PREC_SIGN = 13;
 
-    private static class PPInfo {
-        final PP kind;
-        final int prec;
-        final boolean rightassoc;
+    public static class PPInfo {
+        public final PP kind;
+        public final int prec;
+        public final boolean rightassoc;
 
-        PPInfo(PP kind, int prec, boolean rightassoc) {
+        public PPInfo(PP kind, int prec, boolean rightassoc) {
             this.kind = kind;
             this.prec = prec;
             this.rightassoc = rightassoc;
@@ -85,9 +87,9 @@ public class RDeparse {
 
     }
 
-    private static class Func {
-        final String op;
-        final PPInfo info;
+    public static class Func {
+        public final String op;
+        public final PPInfo info;
 
         Func(String op, PPInfo info) {
             this.op = op;
@@ -139,19 +141,28 @@ public class RDeparse {
     };
     // @formatter:on
 
-    private static final PPInfo BUILTIN = new PPInfo(PP.FUNCALL, 0, false);
+    public static final PPInfo BUILTIN = new PPInfo(PP.FUNCALL, 0, false);
 
-    private static PPInfo ppInfo(String op) {
+    public static Func getFunc(String op) {
         for (Func func : FUNCTAB) {
             if (func.op.equals(op)) {
-                return func.info;
+                return func;
             }
         }
-        // must be a builtin that we don't have in FUNCTAB
-        return BUILTIN;
+        return null;
     }
 
-    private static class State {
+    public static PPInfo ppInfo(String op) {
+        Func func = getFunc(op);
+        if (func == null) {
+            // must be a builtin that we don't have in FUNCTAB
+            return BUILTIN;
+        } else {
+            return func.info;
+        }
+    }
+
+    public static class State {
         private final StringBuilder sb = new StringBuilder();
         private final ArrayList<String> lines;
         private int linenumber;
@@ -172,7 +183,7 @@ public class RDeparse {
         private State(int widthCutOff, boolean backtick, int maxlines, boolean needVector) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
-            this.maxlines = maxlines;
+            this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
             lines = needVector ? new ArrayList<>() : null;
         }
 
@@ -183,7 +194,7 @@ public class RDeparse {
             }
         }
 
-        private void indent() {
+        public void indent() {
             for (int i = 1; i <= indent; i++) {
                 if (i <= 4) {
                     append("    ");
@@ -193,13 +204,21 @@ public class RDeparse {
             }
         }
 
-        private void append(String s) {
+        public void incIndent() {
+            indent++;
+        }
+
+        public void decIndent() {
+            indent--;
+        }
+
+        public void append(String s) {
             preAppend();
             sb.append(s);
             len += s.length();
         }
 
-        private void append(char ch) {
+        public void append(char ch) {
             preAppend();
             sb.append(ch);
             len++;
@@ -217,7 +236,7 @@ public class RDeparse {
             return result;
         }
 
-        private void writeline() {
+        public void writeline() {
             if (lines == null) {
                 // nl for debugging really, we don't care about format,
                 // although line length could be an issues also.
@@ -241,7 +260,7 @@ public class RDeparse {
      */
     @SlowPath
     public static String deparse(RPairList pl) {
-        State state = new State(80, false, Integer.MAX_VALUE, false);
+        State state = new State(80, false, -1, false);
         return deparse2buff(state, pl).sb.toString();
     }
 
@@ -260,7 +279,7 @@ public class RDeparse {
 
     @SuppressWarnings("unused")
     @SlowPath
-    private static State deparse2buff(State state, Object obj) {
+    public static State deparse2buff(State state, Object obj) {
         boolean lbreak = false;
         if (!state.active) {
             return state;
@@ -310,7 +329,7 @@ public class RDeparse {
                     state.append(f.getName());
                     state.append("\\\")");
                 } else {
-                    state.append(((RRootNode) f.getTarget().getRootNode()).getSourceCode());
+                    RContext.getRASTHelper().deparse(state, f);
                 }
                 break;
             }
@@ -356,34 +375,7 @@ public class RDeparse {
 
             case LANGSXP: {
                 if (obj instanceof RLanguage) {
-                    RLanguage lang = (RLanguage) obj;
-                    if (lang.getType() == RLanguage.Type.RNODE) {
-                        SourceSection ss = ((RNode) lang.getRep()).getSourceSection();
-                        if (ss == null) {
-                            state.append("<no source available>");
-                        } else {
-                            state.append(ss.getCode());
-                        }
-                    } else {
-                        RList data = lang.getList();
-                        RStringVector argNames = data.getNames() == RNull.instance ? null : (RStringVector) data.getNames();
-                        deparse2buff(state, data.getDataAt(0));
-                        state.append('(');
-                        for (int i = 1; i < data.getLength(); i++) {
-                            if (argNames != null && !argNames.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                                state.append(argNames.getDataAt(i));
-                                state.append(" = ");
-                            }
-                            deparse2buff(state, data.getDataAt(i));
-                            if (i == data.getLength() - 1) {
-                                continue;
-                            }
-                            state.append(", ");
-                        }
-                        state.append(')');
-                        break;
-
-                    }
+                    RContext.getRASTHelper().deparse(state, (RLanguage) obj);
                     break;
                 }
                 RPairList f = (RPairList) obj;
@@ -624,18 +616,11 @@ public class RDeparse {
 
     private static SEXPTYPE typeof(Object obj) {
         Class<?> klass = obj.getClass();
-        if (klass == String.class) {
-            return typeofSymbol((String) obj);
-        } else if (klass == RPairList.class) {
+        if (klass == RPairList.class) {
             return ((RPairList) obj).getType();
         } else {
             return SEXPTYPE.typeForClass(klass);
         }
-    }
-
-    private static SEXPTYPE typeofSymbol(@SuppressWarnings("unused") String s) {
-        assert false;
-        return null;
     }
 
     @SuppressWarnings("unused")
@@ -655,7 +640,13 @@ public class RDeparse {
         } else {
             return (RPairList) pairlist.cdr();
         }
+    }
 
+    @SuppressWarnings("unused")
+    private static boolean needsParens(PPInfo mainop, Object arg, boolean isLeft) {
+        // TODO
+        assert false;
+        return false;
     }
 
     @SlowPath

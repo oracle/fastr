@@ -6301,6 +6301,10 @@ Error in print(x, y) :
 [1] ".Primitive(\"round\")"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }
+[1] "a + b * (c - d)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }
 [1] "list(c(1, 2))"
 
@@ -7217,8 +7221,20 @@ x
 [1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
+#{ x<-expression(1); typeof(x[[1]]) }
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
+#{ x<-expression(1); y<-c(x,2); typeof(y[[1]]) }
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
 #{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }
 [1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExpression
+#{ x<-expression(a); typeof(x[[1]]) }
+[1] "symbol"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFFT
 #{ fft(10) }
@@ -11841,11 +11857,87 @@ Error: object 'x' not found
 [1] "praague alley"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ delayedAssign("expr", a * b) ; substitute(expr) }
+expr
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ env <- new.env() ; z <- 0 ; delayedAssign("var", z+2, assign.env=env) ; substitute(var, env=env) }
+z + 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ env <- new.env() ; z <- 0 ; delayedAssign("var", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }
+z + 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { delayedAssign("expr", a * b) ; substitute(dummy) } ; f() }
+dummy
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { delayedAssign("expr", a * b) ; substitute(expr) } ; f() }
+a * b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }
+list(a = 1, b = 2, ..., 3, ...)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }
+sum(1:10)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }
+list(x + z, a * b)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }
+list(a = 1, b = 2, 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f(x + z, a * b) }
+list(a = 1, b = 2, x + z, a * b, 3, x + z, a * b)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }
+c
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(expr) { expr ; substitute(expr) } ; a <- 10; b <- 2; f(a * b) }
+a * b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(expr) { substitute(expr) } ; f(a * b) }
+a * b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }
+a * b + (a + b)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(x = y, y = x) { substitute(x) } ; f() }
+y
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(x) { g <- function() { substitute(x) } ; g() } ;  f(a * b) }
+x
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(x) { substitute(x, list(a=1,b=2)) } ; f(a + b) }
+x
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(y) { as.character(substitute(y)) } ; f("a") }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ f <- function(y) { substitute(y) } ; typeof(f()) }
+[1] "symbol"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
 #{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }
 list(c(1, 2))
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
-#{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }
+#{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2)) }
 list(c(x = 1, 2))
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
@@ -11879,6 +11971,22 @@ list(c(x = 1, 2))
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
 #{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }
 [1] "closure"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ substitute(a, list(a = quote(x + y), x = 1)) }
+x + y
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }
+if (x + y) {
+    1
+} else {
+    1 * (x + y)
+}
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstitute
+#{ substitute(x + y, list(x=1)) }
+1 + y
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ substr("123456", -1, 3) }

@@ -9,16 +9,10 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
@@ -27,7 +21,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
 // Code loosely transcribed from GnuR serialize.c.
 
 /**
- * Serialize/unserialize.
+ * Serialize/unserialize. Only unserialize is implemented currently to support package loading.
  *
  */
 public class RSerialize {
@@ -195,7 +189,7 @@ public class RSerialize {
 
             case NAMESPACESXP: {
                 RStringVector s = inStringVec(false);
-                return addReadRef(findNamespace(s));
+                return addReadRef(RContext.getRASTHelper().findNamespace(s));
             }
 
             case VECSXP: {
@@ -399,26 +393,6 @@ public class RSerialize {
             data[i] = item;
         }
         return RDataFactory.createStringVector(data, complete);
-    }
-
-    private static RCallNode getNamespaceCall;
-
-    private static REnvironment findNamespace(RStringVector name) {
-        if (getNamespaceCall == null) {
-            try {
-                getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse("..getNamespace(name)").getDataAt(0)).getRep();
-            } catch (ParseException ex) {
-                // most unexpected
-                Utils.fail("findNameSpace");
-            }
-        }
-        RCallNode call = RCallNode.createCloneReplacingFirstArg(getNamespaceCall, ConstantNode.create(name));
-        try {
-            // TODO: should we distinguish a different RLanguage type for calls?
-            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
-        } catch (PutException ex) {
-            throw RError.error((SourceSection) null, ex);
-        }
     }
 
     private abstract static class PStream {

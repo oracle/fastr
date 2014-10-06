@@ -16,7 +16,6 @@ com.oracle.truffle.r.native/include/jni/R.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rconfig.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rdefines.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rinternals.h,gnu_r.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/RDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchedCallNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchNode.java,purdue.copyright
@@ -26,6 +25,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3DispatchNod
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3MethodDispatch.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/UseMethodDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/binary/CastTypeNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/runtime/RASTDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/InheritsNode.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/AnyDuplicated.java,purdue.copyright
@@ -48,7 +48,6 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/L
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/HiddenInternalFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/IsCall.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Prod.java,purdue.copyright
-com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RSerialize.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RepeatLength.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowMeans.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowSums.java,purdue.copyright
@@ -127,6 +126,8 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/BasicVisitor.j
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/DuplicateVisitor.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/PrettyPrinter.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/TreeViewer.java,purdue.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RSerialize.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RRNG.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RNGInitAdapter.java,gnu_r.copyright

@@ -280,6 +280,7 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private ConsoleHandler consoleHandler;
     @CompilationFinal private String[] commandArgs;
     @CompilationFinal private Engine engine;
+    @CompilationFinal private RASTHelper rASTHelper;
 
     private static final RContext singleton = new RContext();
 
@@ -301,14 +302,12 @@ public final class RContext extends ExecutionContext {
     /**
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
-     *
-     * @param commandArgs
-     * @param consoleHandler
      */
-    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
+    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean headless) {
         singleton.engine = engine;
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
+        singleton.rASTHelper = rLanguageHelper;
         singleton.headless = headless;
         return singleton;
     }
@@ -330,6 +329,10 @@ public final class RContext extends ExecutionContext {
             Utils.fail("no console handler set");
         }
         return consoleHandler;
+    }
+
+    public static RASTHelper getRASTHelper() {
+        return singleton.rASTHelper;
     }
 
     public RFunction putCachedFunction(Object key, RFunction function) {

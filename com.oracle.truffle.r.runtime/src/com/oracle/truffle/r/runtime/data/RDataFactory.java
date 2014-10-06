@@ -329,10 +329,6 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RLanguage createLanguage(RList list, RLanguage.Type type) {
-        return traceDataCreated(new RLanguage(list, type));
-    }
-
     @SlowPath
     public static RPromise createPromise(Object rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?

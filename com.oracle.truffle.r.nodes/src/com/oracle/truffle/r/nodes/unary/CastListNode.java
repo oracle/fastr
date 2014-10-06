@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -87,7 +88,7 @@ public abstract class CastListNode extends CastNode {
 
     @Specialization
     protected RList doLanguage(RLanguage operand) {
-        return operand.getList();
+        return RContext.getRASTHelper().asList(operand);
     }
 
     @Specialization

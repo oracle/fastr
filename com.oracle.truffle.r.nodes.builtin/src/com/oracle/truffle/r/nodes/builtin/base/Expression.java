@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -57,7 +58,7 @@ public abstract class Expression extends RBuiltinNode {
         if (promise.isEvaluated()) {
             return promise.getValue();
         } else {
-            return RDataFactory.createLanguage(promise.getRep());
+            return RASTUtils.createLanguageElement(RASTUtils.unwrap(promise.getRep()));
         }
     }
 

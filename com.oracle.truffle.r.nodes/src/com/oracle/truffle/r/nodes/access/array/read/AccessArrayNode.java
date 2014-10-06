@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConvert
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -1274,14 +1275,21 @@ public abstract class AccessArrayNode extends RNode {
         return accessRecursive(frame, expression.getList(), position, recLevel, dropDim);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
     protected Object access(VirtualFrame frame, RLanguage lang, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        return accessRecursive(frame, lang.getList(), position, recLevel, dropDim);
+        if (position < 1) {
+            throw RError.error(Message.SELECT_LESS_1);
+        }
+        return lang.getDataAtAsObject(position - 1);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object access(RPairList pairlist, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        if (position < 1) {
+            throw RError.error(Message.SELECT_LESS_1);
+        }
         return pairlist.getDataAtAsObject(position - 1);
     }
 
