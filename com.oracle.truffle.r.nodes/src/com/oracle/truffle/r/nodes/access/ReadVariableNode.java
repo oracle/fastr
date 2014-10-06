@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariable
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -193,13 +194,40 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract ReadVariableNode getReadNode();
 
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+        @Child private InlineCacheNode<Frame, Closure> promiseClosureCache = InlineCacheNode.createPromise(3);
 
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
-            if (!promise.isEvaluated(promiseProfile) && promise.isInOriginFrame(frame, promiseProfile)) {
+            if (promise.isEvaluated(promiseProfile)) {
+                return promise.getValue();
+            }
+
+            if (promise.isInOriginFrame(frame, promiseProfile)) {
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             }
-            return promise.evaluate(frame, promiseProfile);
+
+            // Check for dependency cycle
+            if (promise.isUnderEvaluation(promiseProfile)) {
+                SourceSection callSrc = RArguments.getCallSourceSection(frame);
+                throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
+            }
+
+            Frame promiseFrame = promise.getFrame();
+            assert promiseFrame != null;
+            SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
+            Object newValue;
+            try {
+                promise.setUnderEvaluation(true);
+                RArguments.setCallSourceSection(promiseFrame, RArguments.getCallSourceSection(frame));
+
+                newValue = promiseClosureCache.execute(promiseFrame, promise.getClosure());
+
+                promise.setValue(newValue);
+            } finally {
+                RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                promise.setUnderEvaluation(false);
+            }
+            return newValue;
         }
 
         @Specialization
