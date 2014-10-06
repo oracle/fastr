@@ -48,6 +48,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     protected final PromiseProfile promiseProfile = new PromiseProfile();
 
+    protected final BranchProfile unexpectedMissingProfile = new BranchProfile();
+
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
     /**
@@ -146,6 +148,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     protected boolean checkType(VirtualFrame frame, Object objArg, RType type, boolean readMissing, boolean forcePromise) {
         Object obj = objArg;
         if (obj == RMissing.instance && !readMissing && !getSymbol().isVarArg()) {
+            unexpectedMissingProfile.enter();
             SourceSection callSrc = RArguments.getCallSourceSection(frame);
             throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getSymbol());
         }
