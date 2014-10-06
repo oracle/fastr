@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
@@ -61,6 +62,16 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
      */
     public static <F extends Frame> InlineCacheNode<F, RNode> createExpression(int maxPicDepth) {
         return create(maxPicDepth, value -> value, (frame, value) -> RContext.getEngine().eval(new RLanguage(value), frame.materialize()));
+    }
+
+    /**
+     * Creates an inline cache that will execute promises closures by using a PIC and falling back
+     * to {@link Engine#evalPromise(Closure, MaterializedFrame)}.
+     *
+     * @param maxPicDepth maximum number of entries in the polymorphic inline cache
+     */
+    public static <F extends Frame> InlineCacheNode<F, Closure> createPromise(int maxPicDepth) {
+        return create(maxPicDepth, closure -> (RNode) closure.getExpr(), (frame, closure) -> RContext.getEngine().evalPromise(closure, frame.materialize()));
     }
 
     private static final class UninitializedInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
