@@ -59,6 +59,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             toString.setSeparator(sep);
             toString.setQuotes(false);
             toString.setIntL(false);
+            currentSep = sep;
         }
     }
 
@@ -105,7 +106,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     private static void catSep(String sep, Object[] os, int j) {
-        if (j < os.length - 1 || sep.contains("\n")) {
+        if (j < os.length - 1 || sep.indexOf('\n') != -1) {
             catIntl(sep);
         }
     }
@@ -114,5 +115,4 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     private static void catIntl(String s) {
         RContext.getInstance().getConsoleHandler().print(s);
     }
-
 }
