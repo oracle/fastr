@@ -93,4 +93,16 @@ public class IfNode extends RNode implements VisibilityController {
         // NA is the only remaining option
         throw RError.error(getSourceSection(), RError.Message.NA_UNEXP);
     }
+
+    public ConvertBooleanNode getCondition() {
+        return condition;
+    }
+
+    public RNode getThenPart() {
+        return thenPart;
+    }
+
+    public RNode getElsePart() {
+        return elsePart;
+    }
 }

@@ -609,11 +609,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDeparseIgnore_1dc435ef27d6d10df26ec2271cb67316() {
-        assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testDeparseIgnore_9e5a5fc2f13f5ca564f74ada29302b9d() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
     }
@@ -696,16 +691,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testExpressionIgnore_7c253346f21d07a5774aff62ade64454() {
-        assertEval("{ x<-expression(1); typeof(x[[1]]) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testExpressionIgnore_e583a43a1422cdc087574d462a1e517b() {
-        assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[1]]) }");
     }
 
     @Ignore
@@ -1624,78 +1609,13 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_4d6f07ded5992a096c046ebead59dfd0() {
-        assertEval("{ substitute(x + y, list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_69aeec67da0ee58f71a5a4244df69a7c() {
-        assertEval("{ f <- function(expr) { substitute(expr) } ; f(a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_4c1a0e897f6f8dcba279129803430c82() {
-        assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(expr) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_f82a54616cf2b4be6f752e5c66c635c9() {
-        assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(dummy) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_587cbbd25dcab3e16f1b360e583c7db5() {
-        assertEval("{ delayedAssign(\"expr\", a * b) ; substitute(expr) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_dc45366e3a931d33e1c7ea987435cdd1() {
-        assertEval("{ f <- function(expr) { expr ; substitute(expr) } ; a <- 10; b <- 2; f(a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_61078b0c4da1266fe57918a4361362dd() {
-        assertEval("{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_d84d47dddb7bd0bf96bf16437eadd619() {
         assertEval("{ f <- function(y) { substitute(y) } ; f() }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_5f9847b1be03c329f3c41d8883684dc2() {
-        assertEval("{ f <- function(y) { substitute(y) } ; typeof(f()) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_8308ab3830982170f12169a348ea89e8() {
         assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_a8173ff3145e5caeadfe0a38e28a2a09() {
-        assertEval("{ f <- function(x) { g <- function() { substitute(x) } ; g() } ;  f(a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_89798b3d8963d8d31c6b22ed6bc05491() {
-        assertEval("{ substitute(a, list(a = quote(x + y), x = 1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_3e4cc116e9a592c28b2159c6e8365bfa() {
-        assertEval("{ f <- function(x = y, y = x) { substitute(x) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_1bcbef75639b8b543cc72a07279a2203() {
-        assertEval("{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_b728de23a3c96c7d1c7e179ba0cf22c8() {
-        assertEval("{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }");
     }
 
     @Ignore
@@ -1706,46 +1626,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_9d646fcf10648fbae8e8087bb65a9bd6() {
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_844fb1f54ddd6fb3cb03e5a9d632edda() {
-        assertEval("{ f <- function(x) { substitute(x, list(a=1,b=2)) } ; f(a + b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_0083a2f370b2d901d6617b52259cd8ef() {
-        assertEval("{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_ba8b61c2d3fa9c76a2c14d5e96138f4b() {
-        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; substitute(var, env=env) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_91aaa32f72b8dab4c7856c1e7e89ed54() {
-        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_8b21e0ecb7d6143dab8b63c68608f906() {
-        assertEval("{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_6da555da9a31bfb212efe33b45c838d7() {
-        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_fc2154960706a9f7207993aa89aaca50() {
-        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f(x + z, a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_b6449119b833609315c063f2a2c5a363() {
-        assertEval("{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }");
     }
 
     @Ignore
@@ -11334,31 +11214,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestrGenBuiltinpmax_testpmax1_577dbb437ac154628f077467816101fe() {
-        assertEval("argv <- list(FALSE, 5L, 12); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax10_e76c5f2bff2d1ed705c10245445ec187() {
-        assertEval("argv <- list(FALSE, c(1.05, 1.92, 0.36, 4.98, 4.56, 0.69, -5.97, 1.26, 5.58, -0.06, -4.92, -1.38, -0.3, 3.75, 1.11, 0.93, 3.33, 4.95, 0.99, 2.67, -0.75, -2.61, -0.66, 2.13, -6.78, 2.31, -0.15, 0.96, -1.92, 1.17, 0.57, -4.86, 1.11, 0.06, 2.91, -7.86, 0.45, 4.65, -4.23, -7.05, -1.29, 1.71, -1.98, -0.24, 0.06, 0.72, -0.99, -0.09, -3.39, 0.96, 4.65, 6.39, -0.3, -0.96, -2.01, 4.32, 0.12, -3.3, -2.85, -0.57, -2.04, -1.29, -2.52, 2.07, -1.95, 2.13, 0.57, 1.35, 1.35, -3.57, 3.9, 0.42, -1.08, -1.5, -1.41, -3.93, -3.06, 3.51, 4.53, -0.99, -0.03, -1.77, -0.84, -0.54, -3.21, 1.98, -2.13, 5.64, -0.42, -0.57, 2.52, 1.32, 3.99, -0.6, -1.35, 4.38, 3, -3.06, 2.04, 2.52), 0); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax11_4028665897dd35dd481469eba539d54c() {
-        assertEval("argv <- list(FALSE, c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L), 7L, c(7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 6L)); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax12_e6edb5d0881bbda799bf365556658391() {
-        assertEval("argv <- list(FALSE, 1:7, structure(c(2, 3, 4, 2, 2, 2), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('a', '')))); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax13_1600b3cabda6c0beb7c32b97933824dd() {
-        assertEval("argv <- list(FALSE, c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)); .Internal(pmax(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
     public void TestrGenBuiltinpmax_testpmax14_80e524df95a2776589a3d3ad4eea1117() {
         assertEval("argv <- list(FALSE, structure(c(0, 0, -0.0906283137921162, -0.0801994352402973, -0.0235093686536505, -0.131187875867331, -0.131187875867331, -0.131187875867331, -0.131187875867331, 0, 0, 0, -0.106539777104723, -0.106539777104723, -0.106539777104723, 0, 0, 0.126786975893341, 0.126786975893341, 0.126786975893341, 0, -0.131187875867331, -0.131187875867331, -0.131187875867331, 0, -0.106539777104723, -0.106539777104723, -0.106539777104723, 0, 0, 0, -0.106539777104723, 0.172297822926899, 0.172297822926899, 0, 0, 0, 0, 0, -0.106539777104723, -0.106539777104723, -0.106539777104723, -0.106539777104723, 0, 0, 0, 0.172297822926899, 0.172297822926899), .Dim = c(12L, 4L)), 0); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -11369,51 +11224,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestrGenBuiltinpmax_testpmax3_e2111b6921e28636ab438e66f1b7aceb() {
-        assertEval("argv <- list(FALSE, c(0L, 1L, 1L, 1L, 2L), 5L, c(6L, 5L, 5L, 5L, 4L)); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax4_c2a123a6b1fc765eba27203547ed16a4() {
-        assertEval("argv <- list(FALSE, 0, numeric(0)); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax5_53770b6669953d0dc54a256d5f75a6d1() {
-        assertEval("argv <- list(FALSE, structure(c(63.5607991023966, 46.8465846258113, 40.7088275958184, 31.3395189414991, 42.5666751143734, 47.0610532806931, 23.9315410227325, 43.0690616089581, 66.7869292908986, 49.2243580808943, 31.6784834018036, 24.3875466143556, 48.4619434336134, 53.5787701502931, 25.0466211495357, 45.0758464889871, 66.9256619232735, 49.3266089980428, 31.7843035976521, 24.4690118450696, 50.7406402769298, 56.0980619029545, 17.201254072711, 30.956714016252), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24')), 2.22044604925031e-16); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax6_463977440101226b958d5647d70733a7() {
-        assertEval("argv <- list(FALSE, FALSE, FALSE); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax7_12e4d25d490485d4ce70627b29b17cf2() {
-        assertEval("argv <- list(FALSE, 1L, c(15L, 15L, 15L, 15L, 15L, 15L, 15L, 15L, 15L)); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax8_e23c4e0c8028a272a8a0fabc6dfc87cd() {
-        assertEval("argv <- list(FALSE, structure(c(0.0193057433072215, 0.00434780301273374, 0.0549750394687487, 0.510714717273168, 0.0482077179041234, 0.349752997299534, 0.15114556457294, 0.614610341225044, 0.270367074042314, 0.376738504472563, 0.00100006670765362, 0.616978737736246, 0.000115089535300671, 0.114479803728228, 0.0345012755277619, 0.520238904129887, 0.0177036726480846, 0.00345369763623826, 0.0372744005491215, 0.245210198359521, 0.0651842100459408, 0.4506670448926, 0.178923774229777, 0.332256206500317, 0.402299202627705, 0.380395198873703, 0.000984316947253816, 0.403063829062269, 0.000174431720286923, 0.138958543973059, 0.0379750520636422, 0.379247258699123), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32')), 0); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmax_testpmax9_c038e74f3e217137c0de9c9808766677() {
-        assertEval("argv <- list(FALSE, structure(c(35.2592591597479, 59.4999999843455, 12.4507044164935, 2.53543312099158, 10.3703703404756, 42.0000005728299, 8.14084538858294, 34.04724471918, 7.77778142338517, 26.9999999889474, 6.70422536805755, 3.62204828940961, 2.59259259558406, 14.4999999939529, 6.70422536805755, 5.79527724426002, 32.7407408614199, 59.5000000376209, 13.54929592464, 4.46456690511876, 9.62962966454155, 42.0000006104361, 8.85915523787816, 59.9527554977598, 7.22222565443263, 27.0000000131229, 7.29577463400041, 6.37795443616981, 2.40740742585304, 14.500000006936, 7.29577463400041, 10.2047270647755), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32')), 2.22044604925031e-16); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin1_72e68bfc3fae179c2ac94236955f06ae() {
-        assertEval("argv <- list(FALSE, c(0, 0.25, 0.5, 0.75, 1), 1); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin10_04ee451767a8d8cae02fb34ae2a41eae() {
-        assertEval("argv <- list(FALSE, 1, 0.341867139159); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
     public void TestrGenBuiltinpmin_testpmin11_96e9aae810452d3c92e783cf262716d8() {
         assertEval("argv <- list(FALSE, c(2.35405350797934e-06, 0.000210159024072429, 0.000257684187404011, 0.000981478332360736, 0.00105260958830543, 0.00124148072892802, 0.00132598801923585, 0.00156850331255678, 0.00225455732762676, 0.003795380309271, 0.00611494315340942, 0.0161395372907077, 0.0330242962313738, 0.0353834177611007, 0.0523699658057458, 0.068319089314331, 0.0705922565893261, 0.0880512860101142, 0.0940103983967277, 0.112979808322889, 0.211501681388388, 0.492273640304204, 0.605329775053071, 0.626223946736039, 0.739515289321684, 0.828110328240387, 0.86333312789587, 1.19065433061771, 1.89079625396729, 2.05849377808347, 2.20921371984431, 2.85600042559897, 3.04889487308354, 4.66068200259841, 4.83080935233713, 4.92175460488491, 5.31945286062773, 5.75155046407955, 5.78319462345744), 0.943789021783783); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -11421,41 +11231,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestrGenBuiltinpmin_testpmin2_e54be3c218a34fb4c1b808215121e317() {
         assertEval("argv <- list(FALSE, c(1.01547865839261, 1.01252937204691, 1.00644625408792, 0.998699246049516, 0.989861830865133, 0.980229984263028, 0.969980509594864, 0.959229159804225, 0.948056660278026, 0.948056660278026, 0.936413637553504, 0.924430242566905, 0.924430242566905, 0.912012661079992, 0.912012661079992, 0.912012661079992, 0.912012661079992, 0.912012661079992, 0.912012661079992, 0.89856564301575, 0.89856564301575, 0.89856564301575, 0.89856564301575, 0.884221004526004, 0.884221004526004, 0.884221004526004, 0.884221004526004, 0.868846889674391, 0.852918138766346, 0.852918138766346, 0.852918138766346, 0.836013989965276, 0.836013989965276, 0.818281118997659, 0.818281118997659, 0.799674858806929, 0.78048190648179, 0.760752205123712, 0.740524405390135, 0.698688252548957, 0.677121358432204, 0.677121358432204, 0.677121358432204, 0.653968759838845, 0.630226345284056, 0.60591293760604, 0.5810405538867, 0.5810405538867, 0.554772713636871, 0.554772713636871, 0.526885054753327, 0.526885054753327, 0.497124929362659, 0.497124929362659, 0.465290373327728, 0.431410832191818, 0.395597572090297, 0.358012869967492, 0.358012869967492, 0.358012869967492, 0.390645999939295, 0.390645999939295, 1.00856963764107, 1.00691545377429, 1.00354783420184, 0.994430782349702, 0.989161076962549, 0.983568844113983, 0.971651869906627, 0.965403818059832, 0.958998025317496, 0.952453588123512, 0.945785731840592, 0.939006829762577, 0.932127100227826, 0.925155098145928, 0.918098070593368, 0.910962219832367, 0.903752901643838, 0.896474777439562, 0.889131932689408, 0.874266085562073, 0.866749125736792, 0.85917963981466, 0.85917963981466, 0.85917963981466, 0.851432533571458, 0.851432533571458, 0.835646571743332, 0.819657377450186, 0.811591248493136, 0.811591248493136, 0.803403072648503, 0.803403072648503, 0.803403072648503, 0.79500789222886, 0.79500789222886, 0.78647848620035, 0.777810139927498, 0.777810139927498, 0.768997769554365, 0.760132009504045, 0.751214427604144, 0.751214427604144, 0.751214427604144, 0.742042333451995, 0.742042333451995, 0.732706928458195, 0.723314130803801, 0.713865427684027, 0.713865427684027, 0.704242881823747, 0.704242881823747, 0.694438026993695, 0.684573363315093, 0.674650164742493, 0.664669564073024, 0.664669564073024, 0.664669564073024, 0.654342845821626, 0.643951412016272, 0.633496370097346, 0.633496370097346, 0.622814395282618, 0.622814395282618, 0.611712238653597, 0.600530813249145, 0.589271296091113, 0.577934661160654, 0.577934661160654, 0.554603983179207, 0.542813560886543, 0.530698712197854, 0.530698712197854, 0.518231810914377, 0.518231810914377, 0.518231810914377, 0.505091485230836, 0.491816896403255, 0.478408881208852, 0.464867758182769, 0.464867758182769, 0.450831087639633, 0.43663736059032, 0.422285766886131, 0.422285766886131, 0.407334269006221, 0.392187384239101, 0.376842383287708, 0.376842383287708, 0.36074886771613, 0.344393472477708, 0.327769800745284, 0.310869313273075, 0.293681131444043, 0.27619182464681, 0.258385252532011, 0.240242648154923, 0.221743435532848, 0.202868148187672, 0.183607543425597, 0.183607543425597, 0.16434288099768, 0.16434288099768, 0.16434288099768, 0.16434288099768, 1.01958384078021, 1.0158820929578, 1.00818641731953, 0.998355892450852, 0.98711678103063, 0.974844224342501, 0.961762390694789, 0.94801800556359, 0.933713296997721, 0.918922795982771, 0.918922795982771, 0.903505632185222, 0.887664218536847, 0.8714385967694, 0.854601072478364, 0.837400228461143, 0.81986117753083, 0.80200434269104, 0.783846415628184, 0.765401054645917, 0.746679400612251, 0.727690462294359, 0.70844140545579, 0.688937769124757, 0.669183625153216, 0.649181692191925, 0.628933411668998, 0.608438990755048, 0.608438990755048, 0.587078835123946, 0.565417411428399, 0.543452081149807, 0.521178337588507, 0.498589701519445, 0.475677565090786, 0.475677565090786, 0.451501204504207, 0.426861888982249, 0.401742325799741, 0.376120821121693, 0.349971441565183, 0.323265236972233, 0.323265236972233, 0.294966951140867, 0.265661696527275, 0.265661696527275, 0.24198035833067, 0.229359831745471, NA, NA), 1); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin3_897bd631d9a55fa318b4b3de23375478() {
-        assertEval("argv <- list(FALSE, c(19.7787405591752, 12504507.4953993, 12504507.4953993, 5.96190157728191e+41), 1); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin4_47bf1e411d8a55724829d60837438c00() {
-        assertEval("argv <- list(FALSE, structure(c(2, 3, 4, 2, 2, 2), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('a', ''))), 1:7); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin5_2406b271107468c875aa9afae3f93b53() {
-        assertEval("argv <- list(FALSE, structure(c(-2.30560410637911, -1.56788329848973, -0.885216282233891, -0.246592299284877, 0.350190802022645, 0.913941628350052, 1.44466017969734, 1.94895291106052), .Names = c('1', '2', '3', '4', '5', '6', '7', '8')), 700); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin6_b00af5eb9844ca72a2a0c5e51c4b6be1() {
-        assertEval("argv <- list(FALSE, 1, structure(numeric(0), .Dim = c(4L, 0L))); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin7_12e21777f7ad77dd64c735ce36ccc26c() {
-        assertEval("argv <- list(FALSE, FALSE, FALSE); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin8_636bcd8067c2ba4023c0db564bad03dc() {
-        assertEval("argv <- list(FALSE, FALSE); .Internal(pmin(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinpmin_testpmin9_4ec25d509351b9f32214421601e1a414() {
-        assertEval("argv <- list(FALSE, 48L, 19L); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Ignore

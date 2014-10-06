@@ -29,11 +29,12 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Construct a call object from a name and optional arguments.
+ * Construct a call object ({@link RLanguage}) from a name and optional arguments.
  */
 @RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"name", "..."})
 public abstract class Call extends RBuiltinNode {
@@ -53,7 +54,7 @@ public abstract class Call extends RBuiltinNode {
         return makeCall(name, args);
     }
 
-    @Specialization
+    @Fallback
     @SuppressWarnings("unused")
     protected RLanguage call(Object name, Object args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
@@ -61,7 +62,7 @@ public abstract class Call extends RBuiltinNode {
 
     @SlowPath
     protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
-        return makeCall0(new RSymbol(name), args);
+        return makeCall0(name, args);
     }
 
     @SlowPath
@@ -70,25 +71,37 @@ public abstract class Call extends RBuiltinNode {
     }
 
     @SlowPath
-    private static RLanguage makeCall0(Object fn, RArgsValuesAndNames args) {
-        int dataLen = args == null ? 1 : args.length() + 1;
-        Object[] data = new Object[dataLen];
-        String[] names = null;
-        data[0] = fn;
-        if (dataLen > 1) {
-            Object[] argValues = args.getValues();
-            String[] argNames = args.getNames();
-            if (argNames != null) {
-                names = new String[dataLen];
-            }
-            for (int i = 1; i < dataLen; i++) {
-                data[i] = argValues[i - 1];
-                if (argNames != null) {
-                    names[i] = argNames[i - 1] == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : argNames[i - 1];
-                }
+    /**
+     *
+     * @param fn an {@link RFunction} or {@link String}
+     * @param argsAndNames if not {@code null} the argument values and (optional) names
+     * @return the {@link RLanguage} instance denoting the call
+     */
+    private static RLanguage makeCall0(Object fn, RArgsValuesAndNames argsAndNames) {
+        int argLength = argsAndNames == null ? 0 : argsAndNames.length();
+        RNode[] args = new RNode[argLength];
+        Object[] values = argsAndNames == null ? null : argsAndNames.getValues();
+        String[] names = argsAndNames == null ? new String[0] : argsAndNames.getNames();
+
+        for (int i = 0; i < argLength; i++) {
+            Object a = values[i];
+            if (a instanceof RSymbol) {
+                args[i] = RASTUtils.createReadVariableNode(((RSymbol) a).getName());
+            } else if (a instanceof RLanguage) {
+                RLanguage l = (RLanguage) a;
+                args[i] = (RNode) l.getRep();
+            } else if (a instanceof RPromise) {
+                // TODO: flatten nested promises?
+                args[i] = ((WrapArgumentNode) ((RPromise) a).getRep()).getOperand();
+            } else {
+                args[i] = ConstantNode.create(a);
             }
         }
-        return RDataFactory.createLanguage(RDataFactory.createList(data, names == null ? null : RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)), RLanguage.Type.FUNCALL);
+
+        // TODO: handle replacement calls
+        boolean isReplacement = false;
+        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, names);
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, callArgsNode));
     }
 
 }

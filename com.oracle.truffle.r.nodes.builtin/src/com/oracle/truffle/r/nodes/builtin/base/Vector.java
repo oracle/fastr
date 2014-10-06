@@ -41,7 +41,7 @@ public abstract class Vector extends RBuiltinNode {
     @Override
     public RNode[] getParameterValues() {
         // mode = "logical", length = 0
-        return new RNode[]{ConstantNode.create(RRuntime.TYPE_LOGICAL), ConstantNode.create(0)};
+        return new RNode[]{ConstantNode.create(RType.Logical.getName()), ConstantNode.create(0)};
     }
 
     @CreateCast("arguments")

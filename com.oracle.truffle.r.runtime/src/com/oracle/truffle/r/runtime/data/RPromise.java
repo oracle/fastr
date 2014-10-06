@@ -220,7 +220,7 @@ public final class RPromise extends RLanguageRep {
                 newValue = doEvalArgument(callSrc);
             } else {
                 assert isInOriginFrame(frame, profile);
-                newValue = doEvalArgument(frame);
+                newValue = doEvalArgument(frame.materialize());
             }
 
             setValue(newValue);
@@ -260,7 +260,7 @@ public final class RPromise extends RLanguageRep {
         return result;
     }
 
-    protected Object doEvalArgument(VirtualFrame frame) {
+    protected Object doEvalArgument(MaterializedFrame frame) {
         Object result = null;
         try {
             result = RContext.getEngine().evalPromise(this, frame);

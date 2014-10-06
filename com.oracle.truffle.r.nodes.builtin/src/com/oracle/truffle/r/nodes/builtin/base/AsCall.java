@@ -25,9 +25,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -36,17 +36,19 @@ public abstract class AsCall extends RBuiltinNode {
 
     @Specialization
     protected RLanguage asCallFunction(RList x) {
+        // TODO error check rather than cast
         return Call.makeCall((RFunction) x.getDataAt(0), makeNamesAndValues(x));
     }
 
     @Specialization
     protected RLanguage asCallFunction(RExpression x) {
+        // TODO error check on function
         String f;
         if (x.getDataAt(0) instanceof RSymbol) {
             f = ((RSymbol) x.getDataAt(0)).getName();
         } else {
             RLanguage l = (RLanguage) x.getDataAt(0);
-            f = ((ReadVariableNode) ((WrapArgumentNode) l.getRep()).getOperand()).getSymbol().getName();
+            f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getSymbol().getName();
         }
         return Call.makeCall(f, makeNamesAndValues(x.getList()));
     }

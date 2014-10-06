@@ -128,7 +128,7 @@ public abstract class RBuiltinPackage {
     /**
      * Runtime component of the package initialization process.
      */
-    public void loadSources(VirtualFrame frame, REnvironment envForFrame) {
+    public void loadSources(MaterializedFrame frame, REnvironment envForFrame) {
         this.env = envForFrame;
         for (RBuiltinFactory factory : builtins.values()) {
             if (factory.getPackage() == this) {

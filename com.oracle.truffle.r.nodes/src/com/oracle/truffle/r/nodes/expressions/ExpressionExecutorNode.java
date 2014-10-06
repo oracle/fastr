@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * {@link RNode}. This in essence bridges the gap between code as runtime data and executed code. To
  * make this as efficient as possible, it creates a PIC (polymorphic inline cache) for a certain
  * number of known expressions before delegating to a generic version which uses the
- * {@link Engine#eval(RLanguage, VirtualFrame)} functionality.
+ * {@link Engine#eval(RLanguage, MaterializedFrame)} functionality.
  */
 public abstract class ExpressionExecutorNode extends Node {
 
@@ -58,7 +58,7 @@ public abstract class ExpressionExecutorNode extends Node {
             // Specialize below
             ExpressionExecutorNode replacement;
             if (picDepth < INLINE_CACHE_SIZE) {
-                this.incPicDepth();
+                incPicDepth();
                 replacement = new DirectExpressionExecutorNode(node, this);
             } else {
                 replacement = new GenericExpressionExecutorNode();
@@ -96,7 +96,7 @@ public abstract class ExpressionExecutorNode extends Node {
     private static final class GenericExpressionExecutorNode extends ExpressionExecutorNode {
         @Override
         public Object execute(VirtualFrame frame, RNode node) {
-            return RContext.getEngine().eval(new RLanguage(node), frame);
+            return RContext.getEngine().eval(new RLanguage(node), frame.materialize());
         }
     }
 }

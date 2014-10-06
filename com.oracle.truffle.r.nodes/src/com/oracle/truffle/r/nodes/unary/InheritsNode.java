@@ -13,10 +13,10 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -25,7 +25,7 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
  */
-public abstract class InheritsNode extends RBuiltinNode {
+public abstract class InheritsNode extends BinaryNode {
     public abstract byte execute(VirtualFrame frame, Object x, Object what);
 
     @SuppressWarnings("unused")
@@ -64,5 +64,4 @@ public abstract class InheritsNode extends RBuiltinNode {
         }
         return classToPos;
     }
-
 }

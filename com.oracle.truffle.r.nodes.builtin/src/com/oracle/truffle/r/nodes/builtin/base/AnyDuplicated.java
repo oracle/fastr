@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class AnyDuplicated extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
-    @Child private Typeof typeof;
+    @Child private TypeofNode typeof;
 
     @Override
     public RNode[] getParameterValues() {
@@ -60,7 +60,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     protected int anyDuplicatedTrueIncomparablesFromStart(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
         initTypeof();
         initCastTypeNode();
-        final String xType = typeof.execute(frame, x);
+        RType xType = typeof.execute(frame, x);
         return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
@@ -69,7 +69,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     protected int anyDuplicatedTrueIncomparablesFromLast(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
         initTypeof();
         initCastTypeNode();
-        String xType = typeof.execute(frame, x);
+        RType xType = typeof.execute(frame, x);
         return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
@@ -77,7 +77,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     protected int anyDuplicatedFromStart(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, @SuppressWarnings("unused") byte fromLast) {
         initTypeof();
         initCastTypeNode();
-        String xType = typeof.execute(frame, x);
+        RType xType = typeof.execute(frame, x);
         return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
@@ -85,7 +85,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     protected int anyDuplicatedFromLast(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, @SuppressWarnings("unused") byte fromLast) {
         initTypeof();
         initCastTypeNode();
-        String xType = typeof.execute(frame, x);
+        RType xType = typeof.execute(frame, x);
         return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
@@ -186,14 +186,14 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), this.getSuppliedArgsNames()));
+            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
         }
     }
 
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), this.getSuppliedArgsNames()));
+            typeof = insert(TypeofNodeFactory.create(null));
         }
     }
 }

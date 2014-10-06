@@ -23,14 +23,13 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 
 public final class CbindFoldOperationNode extends FoldOperationNode {
 
     @Child private CbindBinaryNode cbind;
 
     public CbindFoldOperationNode() {
-        this.cbind = CbindBinaryNodeFactory.create(new RNode[2], null, null);
+        this.cbind = CbindBinaryNodeFactory.create(null, null);
     }
 
     private Object executeCbind(VirtualFrame frame, Object left, Object right) {

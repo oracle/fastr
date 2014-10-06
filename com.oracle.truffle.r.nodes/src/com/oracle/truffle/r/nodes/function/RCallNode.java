@@ -175,7 +175,7 @@ public abstract class RCallNode extends RNode {
     }
 
     public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(src, ReadVariableNode.create(function, RRuntime.TYPE_FUNCTION, false), arguments);
+        return RCallNode.createCall(src, ReadVariableNode.create(function, RType.Function, false), arguments);
     }
 
     public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
