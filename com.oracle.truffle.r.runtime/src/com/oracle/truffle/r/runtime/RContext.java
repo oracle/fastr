@@ -194,26 +194,26 @@ public final class RContext extends ExecutionContext {
          *            href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/eval.html">here
          *            for details</a>.
          */
-        Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
+        Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
 
         /**
          * Convenience method for common case.
          */
-        default Object eval(RExpression expr, REnvironment envir) throws PutException {
-            return eval(null, expr, envir, null);
+        default Object eval(RExpression expr, REnvironment envir, int depth) throws PutException {
+            return eval(null, expr, envir, null, depth);
         }
 
         /**
-         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} for a single
-         * language element.
+         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment, int)} for a
+         * single language element.
          */
-        Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+        Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
 
         /**
          * Convenience method for common case.
          */
-        default Object eval(RLanguage expr, REnvironment envir) throws PutException {
-            return eval(null, expr, envir, null);
+        default Object eval(RLanguage expr, REnvironment envir, int depth) throws PutException {
+            return eval(null, expr, envir, null, depth);
         }
 
         /**

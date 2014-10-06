@@ -352,6 +352,10 @@ public final class RArguments {
         getArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC] = callSrc;
     }
 
+    public static void setDepth(Frame frame, int depth) {
+        getArgumentsWithEvalCheck(frame)[INDEX_DEPTH] = depth;
+    }
+
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
         Object[] arguments = getArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;
