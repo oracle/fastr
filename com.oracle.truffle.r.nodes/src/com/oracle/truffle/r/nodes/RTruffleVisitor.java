@@ -155,7 +155,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             RNode[] defaultValues = new RNode[argumentsList.size()];
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size() + 1];
-                EnvProvider envProvider = new EnvProvider();
                 int index = 0;
                 for (ArgNode arg : argumentsList) {
                     // Parse argument's default value
@@ -168,7 +167,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     }
 
                     // Create an initialization statement
-                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index, envProvider), true, false);
+                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index), true, false);
 
                     // Store formal arguments
                     argumentNames[index] = RRuntime.toString(arg.getName());

@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index (
@@ -40,16 +39,7 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 // Fully qualified type name to circumvent compiler bug..
 @NodeChild(value = "readArgNode", type = com.oracle.truffle.r.nodes.access.AccessArgumentNode.ReadArgumentNode.class)
-@NodeField(name = "envProvider", type = EnvProvider.class)
 public abstract class AccessArgumentNode extends RNode {
-
-    /**
-     * The {@link EnvProvider} is used to provide all arguments of with the same, lazily create
-     * {@link REnvironment}.
-     *
-     * @return This arguments' {@link EnvProvider}
-     */
-    public abstract EnvProvider getEnvProvider();
 
     /**
      * @return The {@link ReadArgumentNode} that does the actual extraction from
@@ -75,17 +65,15 @@ public abstract class AccessArgumentNode extends RNode {
 
     /**
      * @param index {@link #getIndex()}
-     * @param envProvider
-     * @return A fresh {@link AccessArgumentNode} for the given index, in the {@link REnvironment}
-     *         specified by given {@link EnvProvider}
+     * @return A fresh {@link AccessArgumentNode} for the given index
      */
-    public static AccessArgumentNode create(Integer index, EnvProvider envProvider) {
-        return AccessArgumentNodeFactory.create(new ReadArgumentNode(index), envProvider);
+    public static AccessArgumentNode create(Integer index) {
+        return AccessArgumentNodeFactory.create(new ReadArgumentNode(index));
     }
 
     @Specialization
     public Object doArgument(VirtualFrame frame, RPromise promise) {
-        return handlePromise(frame, promise, getEnvProvider(), true);
+        return handlePromise(frame, promise, true);
     }
 
     @Specialization
@@ -94,7 +82,7 @@ public abstract class AccessArgumentNode extends RNode {
         for (int i = 0; i < varArgsContainer.length(); i++) {
             // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
             // "..." is a different expression
-            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i], getEnvProvider(), false) : varArgs[i];
+            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i], false) : varArgs[i];
         }
         return varArgsContainer;
     }
@@ -112,7 +100,7 @@ public abstract class AccessArgumentNode extends RNode {
         return obj instanceof RArgsValuesAndNames;
     }
 
-    private Object handlePromise(VirtualFrame frame, RPromise promise, EnvProvider envProvider, boolean useExprExecNode) {
+    private Object handlePromise(VirtualFrame frame, RPromise promise, boolean useExprExecNode) {
         assert !promise.isNonArgument();
         CompilerAsserts.compilationConstant(useExprExecNode);
 
