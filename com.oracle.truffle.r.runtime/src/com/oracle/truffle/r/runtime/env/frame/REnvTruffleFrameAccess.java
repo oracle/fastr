@@ -78,6 +78,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
             }
             // Overwrites former FrameSlotKind
             frame.setObject(slot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(slot);
             return;
         }
 
@@ -109,6 +110,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
             default:
                 throw new PutException(Message.GENERIC, "frame slot exception");
         }
+        FrameSlotChangeMonitor.checkAndUpdate(slot);
     }
 
     private static FrameSlot addFrameSlot(FrameDescriptor fd, String key, FrameSlotKind kind) {

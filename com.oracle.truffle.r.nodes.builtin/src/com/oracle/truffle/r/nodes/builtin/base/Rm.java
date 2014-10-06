@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 @RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"name", "list", "pos", "envir", "inherits"})
 // TODO remove should be INTERNAL and rm is in R
@@ -113,6 +114,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
         } else {
             frm.setObject(fs, null); // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.checkAndUpdate(fs);
         }
     }
 

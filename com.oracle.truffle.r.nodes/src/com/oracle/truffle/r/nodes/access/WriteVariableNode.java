@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVari
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeField(name = "argWrite", type = boolean.class)
@@ -184,8 +185,17 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerAsserts.neverPartOfCompilation();
-            FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getName(), initialKind);
+            FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, getMode())).execute(frame, value);
+        }
+
+        // TODO FINDORADDFRAMESLOT
+        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, String name, FrameSlotKind kind) {
+            FrameSlot slot = fd.findFrameSlot(name);
+            if (slot != null) {
+                return slot;
+            }
+            return fd.addFrameSlot(name, new FrameSlotChangeMonitor(), kind);
         }
     }
 
@@ -202,6 +212,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
             frame.setByte(frameSlot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -209,6 +220,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
             frame.setInt(frameSlot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -216,6 +228,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
             frame.setDouble(frameSlot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -223,6 +236,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
             writeObjectValue(frame, frameSlot, value, getMode(), false);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -321,13 +335,26 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 // we've reached the global scope, do unconditional write
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
-                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)), this.isArgWrite(),
-                                mode);
+                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), symbol)),
+                                this.isArgWrite(), mode);
             } else {
                 WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), mode);
                 writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
+        }
+
+        // TODO FINDORADDFRAMESLOT
+        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
+            return findOrAddFrameSlot(fd, identifier, FrameSlotKind.Illegal);
+        }
+
+        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
+            FrameSlot slot = fd.findFrameSlot(identifier);
+            if (slot != null) {
+                return slot;
+            }
+            return fd.addFrameSlot(identifier, new FrameSlotChangeMonitor(), kind);
         }
 
         @Override
@@ -361,6 +388,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setByte(frameSlot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -368,6 +396,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setInt(frameSlot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -375,6 +404,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setDouble(frameSlot, value);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 
@@ -382,6 +412,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             writeObjectValue(enclosingFrame, frameSlot, value, getMode(), true);
+            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
             return value;
         }
 

@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
@@ -85,6 +86,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
         } else {
             // initialize the list of exit handlers
             frame.setObject(slot, current = new ArrayList<>());
+            FrameSlotChangeMonitor.checkAndUpdate(slot);
         }
         if (!empty) {
             current.add(expr.getRep());

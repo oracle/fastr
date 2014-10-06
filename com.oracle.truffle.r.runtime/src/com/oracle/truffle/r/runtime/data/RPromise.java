@@ -430,6 +430,7 @@ public class RPromise extends RLanguageRep {
 
         private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, EagerFeedback feedback) {
             super(EvalPolicy.PROMISED, type, null, closure);
+            assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.assumption = assumption;
             this.feedback = feedback;
