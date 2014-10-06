@@ -232,29 +232,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             return obj;
         }
 
-        /**
-         * Called by {@code Substitute} to get the (possible) promise. There are three cases:
-         * <ul>
-         * <li>symbol is bound to a promise, return it.</li>
-         * <li>symbol is bound to another value, return null</li>
-         * <li>symbol is not bound at all, return null</li>
-         * </ul>
-         *
-         * @param frame
-         * @return the {@link RPromise} value or {@code null} if name is not bound or not bound to a
-         *         promise.
-         */
-        public final Object getPromise(VirtualFrame frame) {
-            boolean prev = RError.ignoreError(true);
-            try {
-                Object result = getReadNode().execute(frame);
-                return isPromise(result) ? result : null;
-            } finally {
-                RError.ignoreError(prev);
-                return null;
-            }
-        }
-
         @Specialization(guards = "!isPromise")
         public Object doValue(Object obj) {
             return obj;
