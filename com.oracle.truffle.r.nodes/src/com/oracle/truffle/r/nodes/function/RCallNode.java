@@ -435,7 +435,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -465,7 +465,7 @@ public abstract class RCallNode extends RNode {
 
             if (lastCallTarget == currentFunction.getTarget() && lastMatchedArgs != null) {
                 // poor man's caching succeeded - same function: no re-match needed
-                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
+                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
 
@@ -473,7 +473,7 @@ public abstract class RCallNode extends RNode {
             this.lastMatchedArgs = matchedArgs;
             this.lastCallTarget = currentFunction.getTarget();
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -589,7 +589,7 @@ public abstract class RCallNode extends RNode {
             }
 
             // Our cached function and matched arguments do match, simply execute!
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.executeArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -619,7 +619,7 @@ public abstract class RCallNode extends RNode {
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -648,7 +648,7 @@ public abstract class RCallNode extends RNode {
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }

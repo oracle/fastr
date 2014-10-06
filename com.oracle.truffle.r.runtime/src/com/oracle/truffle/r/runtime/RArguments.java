@@ -48,6 +48,8 @@ import com.oracle.truffle.r.runtime.env.*;
  *                            +-------------------+
  * INDEX_N_ARGS            -> | nArgs             |
  *                            +-------------------+
+ * INDEX_DEPTH             -> | depth             |
+ *                            +-------------------+
  * INDEX_N_NAMES           -> | nNames            |
  *                            +-------------------+
  * INDEX_ARGUMENTS         -> | arg_0             |
@@ -81,10 +83,11 @@ public final class RArguments {
     private static final int INDEX_CALL_SRC = 2;
     private static final int INDEX_ENCLOSING_FRAME = 3;
     private static final int INDEX_N_ARGS = 4;
-    private static final int INDEX_N_NAMES = 5;
-    private static final int INDEX_ARGUMENTS = 6;
+    private static final int INDEX_DEPTH = 5;
+    private static final int INDEX_N_NAMES = 6;
+    private static final int INDEX_ARGUMENTS = 7;
 
-    private static final int S3_VAR_COUNT = 7;
+    private static final int S3_VAR_COUNT = 8;
     /*
      * These indices are relative to INDEX_ARGUMENTS + nArgs+ nNames
      */
@@ -99,7 +102,7 @@ public final class RArguments {
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
      * names.
      */
-    public static final int MINIMAL_ARRAY_LENGTH = 6;
+    public static final int MINIMAL_ARRAY_LENGTH = INDEX_N_NAMES + 1;
 
     private static final ValueProfile materializedFrameProfile = ValueProfile.createClassProfile();
 
@@ -133,11 +136,12 @@ public final class RArguments {
         return INDEX_ARGUMENTS + (int) args[INDEX_N_ARGS] + (int) args[INDEX_N_NAMES];
     }
 
-    private static void createHelper(Object[] a, REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
+    private static void createHelper(Object[] a, REnvironment env, RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
         a[INDEX_ENVIRONMENT] = env;
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_CALL_SRC] = callSrc;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
+        a[INDEX_DEPTH] = depth;
         a[INDEX_N_ARGS] = evaluatedArgs.length;
         a[INDEX_N_NAMES] = names.length;
         copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
@@ -169,38 +173,39 @@ public final class RArguments {
      */
     public static Object[] createUnitialized() {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
+        a[INDEX_DEPTH] = 0;
         return a;
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc) {
-        return create(functionObj, callSrc, EMPTY_OBJECT_ARRAY);
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth) {
+        return create(functionObj, callSrc, depth, EMPTY_OBJECT_ARRAY);
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, Object[] evaluatedArgs) {
-        return create(functionObj, callSrc, functionObj.getEnclosingFrame(), evaluatedArgs);
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs) {
+        return create(functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs);
     }
 
-    public static Object[] createS3Args(RFunction functionObj, SourceSection callSrc, Object[] evaluatedArgs, String[] names) {
-        return createS3Args(null, functionObj, callSrc, functionObj.getEnclosingFrame(), evaluatedArgs, names);
+    public static Object[] createS3Args(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs, String[] names) {
+        return createS3Args(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, names);
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, Object[] evaluatedArgs, String[] names) {
-        return create(null, functionObj, callSrc, functionObj.getEnclosingFrame(), evaluatedArgs, names);
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs, String[] names) {
+        return create(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, names);
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
-        return create(null, functionObj, callSrc, enclosingFrame, evaluatedArgs, EMPTY_STRING_ARRAY);
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
+        return create(null, functionObj, callSrc, depth, enclosingFrame, evaluatedArgs, EMPTY_STRING_ARRAY);
     }
 
-    public static Object[] create(REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
+    public static Object[] create(REnvironment env, RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + names.length];
-        createHelper(a, env, functionObj, callSrc, enclosingFrame, evaluatedArgs, names);
+        createHelper(a, env, functionObj, callSrc, depth, enclosingFrame, evaluatedArgs, names);
         return a;
     }
 
-    public static Object[] createS3Args(REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
+    public static Object[] createS3Args(REnvironment env, RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + names.length + S3_VAR_COUNT];
-        createHelper(a, env, functionObj, callSrc, enclosingFrame, evaluatedArgs, names);
+        createHelper(a, env, functionObj, callSrc, depth, enclosingFrame, evaluatedArgs, names);
         return a;
     }
 
@@ -298,6 +303,10 @@ public final class RArguments {
 
     public static SourceSection getCallSourceSection(Frame frame) {
         return (SourceSection) getArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC];
+    }
+
+    public static int getDepth(Frame frame) {
+        return (Integer) getArgumentsWithEvalCheck(frame)[INDEX_DEPTH];
     }
 
     public static void copyArgumentsInto(Frame frame, Object[] target) {

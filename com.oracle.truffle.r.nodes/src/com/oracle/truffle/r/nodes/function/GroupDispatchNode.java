@@ -91,9 +91,9 @@ public class GroupDispatchNode extends S3DispatchNode {
         }
     }
 
-    private void setEnvironment() {
+    private void setEnvironment(VirtualFrame frame) {
         // TODO Where to get the SourceSection of the call from??
-        final VirtualFrame newFrame = RRuntime.createFunctionFrame(targetFunction, null);
+        final VirtualFrame newFrame = RRuntime.createFunctionFrame(targetFunction, null, RArguments.getDepth(frame) + 1);
         defineVars(newFrame);
         wvnMethod.execute(newFrame, dotMethod);
         if (writeGroup) {
@@ -165,7 +165,7 @@ public class GroupDispatchNode extends S3DispatchNode {
     }
 
     protected Object executeHelper(VirtualFrame frame) {
-        setEnvironment();
+        setEnvironment(frame);
         this.typeLast = this.type;
         initFunCall(frame, targetFunction);
         return this.funCall;

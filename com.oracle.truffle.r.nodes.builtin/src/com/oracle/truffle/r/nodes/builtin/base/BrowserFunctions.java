@@ -102,14 +102,14 @@ public class BrowserFunctions {
                             throw RError.nyi(null, notImplemented(input));
 
                         case "where": {
-                            int ix = 1;
+                            int ix = RArguments.getDepth(frame);
                             Frame stackFrame;
-                            while ((stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
+                            while (ix >= 0 && (stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
                                 RFunction fun = RArguments.getFunction(stackFrame);
                                 if (fun != null) {
                                     ch.printf("where %d: %s%n", ix, fun.getTarget());
                                 }
-                                ix++;
+                                ix--;
                             }
                             ch.println("");
                             break;
