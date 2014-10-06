@@ -230,13 +230,13 @@ public final class RContext extends ExecutionContext {
          * Evaluate a promise in the given frame, where we can use the {@link MaterializedFrame}) of
          * the caller directly). This should <b>only</b> be called by the {@link RPromise} class.
          */
-        Object evalPromise(RPromise expr, MaterializedFrame frame) throws RError;
+        Object evalPromise(RPromise expr, MaterializedFrame frame);
 
         /**
          * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should
          * <b>only</b> be called by the {@link RPromise} class.
          */
-        Object evalPromise(RPromise expr, SourceSection callSrc) throws RError;
+        Object evalPromise(RPromise expr, SourceSection callSrc);
 
         /**
          * Wraps the Truffle AST in {@code body} in an anonymous function and returns a

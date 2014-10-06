@@ -60,7 +60,7 @@ public class GrepFunctions {
             }
         }
 
-        protected void valueCheck(byte value) throws RError {
+        protected void valueCheck(byte value) {
             if (RRuntime.fromLogical(value)) {
                 throw RError.nyi(getEncapsulatingSourceSection(), "value == true is not implemented");
             }
