@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -47,7 +46,7 @@ public final class FunctionDefinitionNode extends RRootNode {
     private final String description;
 
     @Child private FrameSlotNode onExitSlot;
-    @Child private ExpressionExecutorNode onExitExecutor = ExpressionExecutorNode.create();
+    @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
     /**
@@ -105,7 +104,7 @@ public final class FunctionDefinitionNode extends RRootNode {
                         RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
                     }
                     RNode node = (RNode) expr;
-                    onExitExecutor.execute(vf, node);
+                    onExitExpressionCache.execute(vf, node);
                 }
             }
         }

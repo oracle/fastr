@@ -29,7 +29,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -127,7 +126,7 @@ public class PromiseNode extends RNode {
      */
     private final static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
         public InlinedSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
@@ -145,7 +144,7 @@ public class PromiseNode extends RNode {
                     return RMissing.instance;
                 }
                 RPromise promise = factory.createPromiseDefault();
-                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
+                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             } else if (obj instanceof RArgsValuesAndNames) {
                 return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
             } else {

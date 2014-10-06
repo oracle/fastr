@@ -27,21 +27,20 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 /**
  * Temporary substitutions that just evaluate the expression for package loading and assume no
- * errors or finallys.
+ * errors or finally statements.
  */
 public class TryFunctions {
     @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "silent"}, nonEvalArgs = {0})
     public abstract static class Try extends RBuiltinNode {
 
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
 
@@ -53,7 +52,7 @@ public class TryFunctions {
         @Specialization
         protected Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
-            return PromiseHelper.evaluate(frame, exprExecNode, expr, promiseProfile);
+            return PromiseHelper.evaluate(frame, promiseExpressionCache, expr, promiseProfile);
         }
     }
 
@@ -61,7 +60,7 @@ public class TryFunctions {
     @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "..."}, nonEvalArgs = {-1})
     public abstract static class TryCatch extends RBuiltinNode {
 
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
 
@@ -79,7 +78,7 @@ public class TryFunctions {
         @Specialization
         protected Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
             controlVisibility();
-            return PromiseHelper.evaluate(frame, exprExecNode, expr, promiseProfile);
+            return PromiseHelper.evaluate(frame, promiseExpressionCache, expr, promiseProfile);
         }
     }
 }

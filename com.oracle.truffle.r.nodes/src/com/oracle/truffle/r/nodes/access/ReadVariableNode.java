@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariab
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -190,12 +189,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         public abstract ReadVariableNode getReadNode();
 
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
             if (!promise.isEvaluated(promiseProfile) && promise.isInOriginFrame(frame, promiseProfile)) {
-                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
+                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             }
             return promise.evaluate(frame, promiseProfile);
         }

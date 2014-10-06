@@ -27,11 +27,10 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -68,7 +67,7 @@ public abstract class AccessArgumentNode extends RNode {
     /**
      * Used to cache {@link RPromise} evaluations.
      */
-    @Child public ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
     private final BranchProfile needsCalleeFrame = new BranchProfile();
     private final BranchProfile strictEvaluation = new BranchProfile();
@@ -128,7 +127,7 @@ public abstract class AccessArgumentNode extends RNode {
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promise.isInlined(promiseProfile)) {
             if (useExprExecNode) {
-                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
+                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             } else {
                 strictEvaluation.enter();
                 return promise.evaluate(frame, promiseProfile);
