@@ -250,7 +250,7 @@ public final class REngine implements RContext.Engine {
     public Object evalPromise(RPromise promise, SourceSection callSrc) throws RError {
         // have to do the full out eval
         try {
-            REnvironment env = promise.getEnv();
+            REnvironment env = REnvironment.frameToEnvironment(promise.getFrame().materialize());
             assert env != null;
             Closure closure = promise.getClosure();
             return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null);

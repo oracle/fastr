@@ -115,7 +115,7 @@ public class PromiseNode extends RNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        return factory.createPromise(factory.getType() == PromiseType.ARG_DEFAULT ? null : envProvider.getREnvironmentFor(frame));
+        return factory.createPromise(factory.getType() == PromiseType.ARG_DEFAULT ? null : frame.materialize());
     }
 
     /**
@@ -262,7 +262,7 @@ public class PromiseNode extends RNode {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
-                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, envProvider.getREnvironmentFor(frame), closure);
+                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
             }
             return new RArgsValuesAndNames(promises, names);
         }

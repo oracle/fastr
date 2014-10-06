@@ -121,7 +121,7 @@ public abstract class AccessArgumentNode extends RNode {
             needsCalleeFrame.enter();
             // In this case the promise might lack the proper REnvironment, as it was created before
             // the environment was
-            promise.updateEnv(envProvider.getREnvironmentFor(frame), promiseProfile);
+            promise.updateFrame(frame.materialize(), promiseProfile);
         }
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
