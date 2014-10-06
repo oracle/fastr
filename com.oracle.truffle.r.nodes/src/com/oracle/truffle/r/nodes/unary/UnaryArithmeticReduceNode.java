@@ -22,9 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeFactory.MultiElemStringHandlerFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
@@ -33,6 +37,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @NodeChild(value = "naRm", type = RNode.class)
 public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
+    @Child private MultiElemStringHandler stringHandler;
+
     private final BinaryArithmeticFactory factory;
 
     @Child private BinaryArithmetic arithmetic;
@@ -40,6 +46,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     private final ReduceSemantics semantics;
 
     private final NACheck na = NACheck.create();
+
+    final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
     public UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
@@ -51,6 +59,14 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         // we recreate the arithmetic each time this specialization specializes
         // it also makes sense for polymorphic variations of this node
         this(op.semantics, op.factory);
+    }
+
+    private String handleString(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
+        if (stringHandler == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            stringHandler = insert(MultiElemStringHandlerFactory.create(semantics, factory, na, null, null, null));
+        }
+        return stringHandler.executeString(frame, operand, naRm, offset);
     }
 
     protected boolean isNullInt() {
@@ -77,8 +93,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected int doInt(int operand, byte naRm) {
+        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(operand);
-        if (naRm == RRuntime.LOGICAL_TRUE) {
+        if (profiledNaRm) {
             if (na.check(operand)) {
                 if (semantics.getEmptyWarning() != null) {
                     RError.warning(semantics.emptyWarning);
@@ -94,8 +111,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected double doDouble(double operand, byte naRm) {
+        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(operand);
-        if (naRm == RRuntime.LOGICAL_TRUE) {
+        if (profiledNaRm) {
             if (na.check(operand)) {
                 if (semantics.getEmptyWarning() != null) {
                     RError.warning(semantics.emptyWarning);
@@ -111,8 +129,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected int doLogical(byte operand, byte naRm) {
+        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(operand);
-        if (naRm == RRuntime.LOGICAL_TRUE) {
+        if (profiledNaRm) {
             if (na.check(operand)) {
                 if (semantics.getEmptyWarning() != null) {
                     RError.warning(semantics.emptyWarning);
@@ -129,8 +148,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization
     protected RComplex doComplex(RComplex operand, byte naRm) {
         if (semantics.supportComplex) {
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             na.enable(operand);
-            if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (profiledNaRm) {
                 if (na.check(operand)) {
                     if (semantics.getEmptyWarning() != null) {
                         RError.warning(semantics.emptyWarning);
@@ -150,8 +170,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization
     protected String doString(String operand, byte naRm) {
         if (semantics.supportString) {
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             na.enable(operand);
-            if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (profiledNaRm) {
                 if (na.check(operand)) {
                     if (semantics.getEmptyWarning() != null) {
                         RError.warning(semantics.emptyWarning);
@@ -176,6 +197,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected int doIntVector(RIntVector operand, byte naRm) {
+        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
@@ -183,7 +205,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             int d = operand.getDataAt(i);
             na.enable(d);
             if (na.check(d)) {
-                if (naRm == RRuntime.LOGICAL_TRUE) {
+                if (profiledNaRm) {
                     continue;
                 } else {
                     return RRuntime.INT_NA;
@@ -201,6 +223,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected double doDoubleVector(RDoubleVector operand, byte naRm) {
+        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         double result = semantics.getDoubleStart();
         na.enable(operand);
         int opCount = 0;
@@ -208,7 +231,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             double d = operand.getDataAt(i);
             na.enable(d);
             if (na.check(d)) {
-                if (naRm == RRuntime.LOGICAL_TRUE) {
+                if (profiledNaRm) {
                     continue;
                 } else {
                     return RRuntime.DOUBLE_NA;
@@ -226,6 +249,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected int doLogicalVector(RLogicalVector operand, byte naRm) {
+        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
@@ -233,7 +257,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             byte d = operand.getDataAt(i);
             na.enable(d);
             if (na.check(d)) {
-                if (naRm == RRuntime.LOGICAL_TRUE) {
+                if (profiledNaRm) {
                     continue;
                 } else {
                     return RRuntime.INT_NA;
@@ -282,13 +306,14 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization
     protected RComplex doComplexVector(RComplexVector operand, byte naRm) {
         if (semantics.supportComplex) {
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
             int opCount = 0;
             for (int i = 0; i < operand.getLength(); ++i) {
                 RComplex current = operand.getDataAt(i);
                 na.enable(current);
                 if (na.check(current)) {
-                    if (naRm == RRuntime.LOGICAL_TRUE) {
+                    if (profiledNaRm) {
                         continue;
                     } else {
                         return RRuntime.createComplexNA();
@@ -313,23 +338,28 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     // "largest" String for the implementation of max function
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "empty")
-    protected String doStringVectorEmpty(RStringVector operand, byte naRm) {
+    protected static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
                 RError.warning(semantics.emptyWarning);
             }
             return semantics.getStringStart();
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw RError.error(sourceSection, RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
+    }
+
+    @Specialization(guards = "empty")
+    protected String doStringVectorEmpty(RStringVector operand, byte naRm) {
+        return doStringVectorEmptyInternal(operand, naRm, semantics, getEncapsulatingSourceSection());
     }
 
     @Specialization(guards = "lengthOne")
     protected String doStringVectorOneElem(RStringVector operand, byte naRm) {
         if (semantics.supportString) {
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             String result = operand.getDataAt(0);
-            if (naRm == RRuntime.LOGICAL_TRUE) {
+            if (profiledNaRm) {
                 na.enable(result);
                 if (na.check(result)) {
                     return doStringVectorEmpty(operand, naRm);
@@ -341,48 +371,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         }
     }
 
-    @SlowPath
-    private String doStringVectorMultiElem(RStringVector operand, byte naRm, int offset) {
-        String result = operand.getDataAt(0);
-        na.enable(result);
-        if (naRm == RRuntime.LOGICAL_TRUE) {
-            if (na.check(result)) {
-                // the following is meant to eliminate leading NA-s
-                if (offset == operand.getLength() - 1) {
-                    // last element - all other are NAs
-                    return doStringVectorEmpty(operand, naRm);
-                } else {
-                    return doStringVectorMultiElem(operand, naRm, offset + 1);
-                }
-            }
-        } else {
-            if (na.check(result)) {
-                return result;
-            }
-        }
-        // when we reach here, it means that we have already seen one non-NA element
-        assert !RRuntime.isNA(result);
-        for (int i = 1; i < operand.getLength(); ++i) {
-            String current = operand.getDataAt(i);
-            na.enable(current);
-            if (na.check(current)) {
-                if (naRm == RRuntime.LOGICAL_TRUE) {
-                    // skip NA-s
-                    continue;
-                } else {
-                    return RRuntime.STRING_NA;
-                }
-            } else {
-                result = arithmetic.op(result, current);
-            }
-        }
-        return result;
-    }
-
     @Specialization(guards = "longerThanOne")
-    protected String doStringVector(RStringVector operand, byte naRm) {
+    protected String doStringVector(VirtualFrame frame, RStringVector operand, byte naRm) {
         if (semantics.supportString) {
-            return doStringVectorMultiElem(operand, naRm, 0);
+            return handleString(frame, operand, naRm, 0);
         } else {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -451,6 +443,78 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
         public boolean supportsString() {
             return supportString;
+        }
+
+    }
+
+    @NodeChildren({@NodeChild("operand"), @NodeChild("naRm"), @NodeChild("offset")})
+    protected abstract static class MultiElemStringHandler extends RNode {
+
+        public abstract String executeString(VirtualFrame frame, RStringVector operand, byte naRm, int offset);
+
+        @Child private MultiElemStringHandler recursiveStringHandler;
+        private final ReduceSemantics semantics;
+        private final BinaryArithmeticFactory factory;
+        @Child private BinaryArithmetic arithmetic;
+        private final NACheck na;
+        final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+
+        public MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
+            this.semantics = semantics;
+            this.factory = factory;
+            this.arithmetic = factory.create();
+            this.na = na;
+        }
+
+        public MultiElemStringHandler(MultiElemStringHandler other) {
+            this(other.semantics, other.factory, other.na);
+        }
+
+        private String handleString(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
+            if (recursiveStringHandler == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                recursiveStringHandler = insert(MultiElemStringHandlerFactory.create(semantics, factory, na, null, null, null));
+            }
+            return recursiveStringHandler.executeString(frame, operand, naRm, offset);
+        }
+
+        @Specialization
+        protected String doStringVectorMultiElem(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            String result = operand.getDataAt(offset);
+            na.enable(result);
+            if (profiledNaRm) {
+                if (na.check(result)) {
+                    // the following is meant to eliminate leading NA-s
+                    if (offset == operand.getLength() - 1) {
+                        // last element - all other are NAs
+                        return doStringVectorEmptyInternal(operand, naRm, semantics, getEncapsulatingSourceSection());
+                    } else {
+                        return handleString(frame, operand, naRm, offset + 1);
+                    }
+                }
+            } else {
+                if (na.check(result)) {
+                    return result;
+                }
+            }
+            // when we reach here, it means that we have already seen one non-NA element
+            assert !RRuntime.isNA(result);
+            for (int i = offset + 1; i < operand.getLength(); ++i) {
+                String current = operand.getDataAt(i);
+                na.enable(current);
+                if (na.check(current)) {
+                    if (profiledNaRm) {
+                        // skip NA-s
+                        continue;
+                    } else {
+                        return RRuntime.STRING_NA;
+                    }
+                } else {
+                    result = arithmetic.op(result, current);
+                }
+            }
+            return result;
         }
 
     }

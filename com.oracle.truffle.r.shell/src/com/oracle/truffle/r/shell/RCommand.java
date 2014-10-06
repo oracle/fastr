@@ -155,7 +155,7 @@ public class RCommand {
             String content = new String(bytes);
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(filePath, content, frame, REnvironment.globalEnv(), false, false);
+            REngine.getInstance().parseAndEval(filePath, content, frame.materialize(), REnvironment.globalEnv(), false, false);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
         }
@@ -180,7 +180,7 @@ public class RCommand {
                     continue;
                 }
 
-                while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
                     console.setPrompt(SLAVE.getValue() ? "" : "+ ");
                     String additionalInput = console.readLine();
                     if (additionalInput == null) {

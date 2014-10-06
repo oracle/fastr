@@ -113,7 +113,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.TYPE_ANY)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName())};
     }
 
     @Specialization
@@ -220,27 +220,27 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean castToInt(RAbstractVector x, String mode) {
-        return x.getElementClass() != RInt.class && RRuntime.TYPE_INTEGER.equals(mode);
+        return x.getElementClass() != RInt.class && RType.Integer.getName().equals(mode);
     }
 
     protected boolean castToDouble(RAbstractVector x, String mode) {
-        return x.getElementClass() != RDouble.class && (RRuntime.TYPE_NUMERIC.equals(mode) || RRuntime.TYPE_DOUBLE.equals(mode));
+        return x.getElementClass() != RDouble.class && (RType.Numeric.getName().equals(mode) || RType.Double.getName().equals(mode));
     }
 
     protected boolean castToComplex(RAbstractVector x, String mode) {
-        return x.getElementClass() != RComplex.class && RRuntime.TYPE_COMPLEX.equals(mode);
+        return x.getElementClass() != RComplex.class && RType.Complex.getName().equals(mode);
     }
 
     protected boolean castToLogical(RAbstractVector x, String mode) {
-        return x.getElementClass() != RLogical.class && RRuntime.TYPE_LOGICAL.equals(mode);
+        return x.getElementClass() != RLogical.class && RType.Logical.getName().equals(mode);
     }
 
     protected boolean castToString(RAbstractVector x, String mode) {
-        return x.getElementClass() != RString.class && RRuntime.TYPE_CHARACTER.equals(mode);
+        return x.getElementClass() != RString.class && RType.Character.getName().equals(mode);
     }
 
     protected boolean castToRaw(RAbstractVector x, String mode) {
-        return x.getElementClass() != RRaw.class && RRuntime.TYPE_RAW.equals(mode);
+        return x.getElementClass() != RRaw.class && RType.Raw.getName().equals(mode);
     }
 
     protected boolean castToList(RAbstractVector x, String mode) {
@@ -264,13 +264,31 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-        return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode);
+        return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class &&
+                        RType.Double.getName().equals(mode);
     }
 
     protected boolean invalidMode(@SuppressWarnings("unused") RAbstractVector x, String mode) {
-        return !RRuntime.TYPE_ANY.equals(mode) && !RRuntime.TYPE_ARRAY.equals(mode) && !RRuntime.TYPE_CHARACTER.equals(mode) && !RRuntime.TYPE_COMPLEX.equals(mode) &&
-                        !RRuntime.TYPE_DOUBLE.equals(mode) && !RRuntime.TYPE_INTEGER.equals(mode) && !RRuntime.TYPE_LIST.equals(mode) && !RRuntime.TYPE_LOGICAL.equals(mode) &&
-                        !RRuntime.TYPE_MATRIX.equals(mode) && !RRuntime.TYPE_NUMERIC.equals(mode) && !RRuntime.TYPE_RAW.equals(mode) && !RRuntime.TYPE_SYMBOL.equals(mode);
+        RType modeType = RType.fromString(mode);
+        if (modeType == null) {
+            return true;
+        }
+        switch (modeType) {
+            case Any:
+            case Array:
+            case Character:
+            case Complex:
+            case Double:
+            case Integer:
+            case List:
+            case Logical:
+            case Matrix:
+            case Numeric:
+            case Raw:
+            case Symbol:
+                return false;
+            default:
+                return true;
+        }
     }
-
 }

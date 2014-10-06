@@ -134,6 +134,7 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RNGInitAdapter
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mt/MersenneTwister.java,hiroshima.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mm/MarsagliaMulticarry.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RRuntime.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RType.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RAccuracyInfo.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RGroupGenerics.java,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright

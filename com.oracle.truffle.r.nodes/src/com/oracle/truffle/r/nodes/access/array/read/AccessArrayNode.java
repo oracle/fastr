@@ -1205,7 +1205,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization(guards = "isPositionZero")
     protected RRawVector accessPosZero(RRawVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyRawVector();

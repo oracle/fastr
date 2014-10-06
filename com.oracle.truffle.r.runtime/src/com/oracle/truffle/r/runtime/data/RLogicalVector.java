@@ -33,7 +33,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     private byte[] data;
 
-    private static final String[] implicitClassHrDyn = new String[]{"", RRuntime.TYPE_LOGICAL};
+    private static final String[] implicitClassHrDyn = new String[]{"", RType.Logical.getName()};
 
     RLogicalVector(byte[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length, dims, names);
@@ -199,6 +199,6 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     @Override
     protected RStringVector getImplicitClassHr() {
-        return getClassHierarchyHelper(new String[]{RRuntime.TYPE_LOGICAL}, implicitClassHrDyn);
+        return getClassHierarchyHelper(new String[]{RType.Logical.getName()}, implicitClassHrDyn);
     }
 }

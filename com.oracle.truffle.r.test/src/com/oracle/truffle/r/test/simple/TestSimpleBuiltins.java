@@ -32,6 +32,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ pmax(c(1, 7), c(42, as.double(NA))) }");
         assertEval("{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
 
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmax(c(\"1\", \"7\"), character()) }");
+        assertEvalWarning("{ pmax(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
+        assertEval("{ pmax(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+        assertEval("{ pmax(c(\"1\", as.character(NA)), c(as.character(NA), as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+
         assertEval("{ pmax(c(FALSE, TRUE), c(TRUE, FALSE)) }");
         assertEval("{ pmax(c(FALSE, TRUE), logical()) }");
         assertEval("{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }");
@@ -53,6 +61,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalWarning("{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
         assertEval("{ pmin(c(1, 7), c(42, as.double(NA))) }");
         assertEval("{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmin(c(\"1\", \"7\"), character()) }");
+        assertEvalWarning("{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
+        assertEval("{ pmin(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+        assertEval("{ pmin(c(\"1\", as.character(NA)), c(as.character(NA), as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
 
         assertEval("{ pmin(c(FALSE, TRUE), c(TRUE, FALSE)) }");
         assertEval("{ pmin(c(FALSE, TRUE), logical()) }");
@@ -262,6 +278,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ max(42, as.double(NA), 7, na.rm=FALSE) }");
         assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
         assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+
+        assertEval("{ max(as.character(NA), as.character(NA), \"42\", na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), as.character(NA), \"42\", \"7\", na.rm=TRUE) }");
 
         assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=TRUE) }");
         assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=FALSE) }");

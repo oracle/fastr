@@ -109,9 +109,9 @@ public class EvalFunctions {
             Object expr = checkConvertSymbol(exprArg);
 
             if (expr instanceof RExpression) {
-                return RContext.getEngine().eval((RExpression) exprArg, frame);
+                return RContext.getEngine().eval((RExpression) exprArg, frame.materialize());
             } else if (expr instanceof RLanguage) {
-                return RContext.getEngine().eval((RLanguage) exprArg, frame);
+                return RContext.getEngine().eval((RLanguage) exprArg, frame.materialize());
             } else {
                 // just return value
                 return expr;

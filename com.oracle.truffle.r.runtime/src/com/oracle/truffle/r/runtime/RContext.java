@@ -152,7 +152,7 @@ public final class RContext extends ExecutionContext {
          * @param frame for evaluating any associated R code
          * @param envForFrame the namespace environment associated with the package.
          */
-        void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame);
+        void loadDefaultPackage(String name, MaterializedFrame frame, REnvironment envForFrame);
 
         /**
          * Return the {@link RFunction} for the builtin {@code name}.
@@ -173,7 +173,7 @@ public final class RContext extends ExecutionContext {
          * @param envForFrame the environment that {@code frame} is bound to.
          * @return the object returned by the evaluation or {@code null} if an error occurred.
          */
-        Object parseAndEval(String sourceDesc, String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
+        Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
 
         static final Object INCOMPLETE_SOURCE = new Object();
 
@@ -219,18 +219,18 @@ public final class RContext extends ExecutionContext {
         /**
          * Evaluate {@code expr} in {@code frame}.
          */
-        Object eval(RExpression expr, VirtualFrame frame);
+        Object eval(RExpression expr, MaterializedFrame frame);
 
         /**
-         * Variant of {@link #eval(RExpression, VirtualFrame)} for a single language element.
+         * Variant of {@link #eval(RExpression, MaterializedFrame)} for a single language element.
          */
-        Object eval(RLanguage expr, VirtualFrame frame);
+        Object eval(RLanguage expr, MaterializedFrame frame);
 
         /**
-         * Evaluate a promise in the given frame, where we can use the {@link VirtualFrame}) of the
-         * caller directly). This should <b>only</b> be called by the {@link RPromise} class.
+         * Evaluate a promise in the given frame, where we can use the {@link MaterializedFrame}) of
+         * the caller directly). This should <b>only</b> be called by the {@link RPromise} class.
          */
-        Object evalPromise(RPromise expr, VirtualFrame frame) throws RError;
+        Object evalPromise(RPromise expr, MaterializedFrame frame) throws RError;
 
         /**
          * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should

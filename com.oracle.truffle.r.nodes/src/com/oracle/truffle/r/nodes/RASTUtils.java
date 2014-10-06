@@ -52,7 +52,7 @@ public class RASTUtils {
      */
     @SlowPath
     public static ReadVariableNode createReadVariableNode(String name) {
-        return ReadVariableNode.create(name, RRuntime.TYPE_ANY, false, true, false, true);
+        return ReadVariableNode.create(name, RType.Any, false, true, false, true);
     }
 
     /**

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,126 +35,126 @@ import com.oracle.truffle.r.runtime.env.*;
 @SuppressWarnings("unused")
 public abstract class TypeofNode extends UnaryNode {
 
-    public abstract String execute(VirtualFrame frame, Object x);
+    public abstract RType execute(VirtualFrame frame, Object x);
 
     @Specialization
-    protected String typeof(RNull vector) {
-        return "NULL";
+    protected RType typeof(RNull vector) {
+        return RType.Null;
     }
 
     @Specialization
-    protected String typeof(byte x) {
-        return "logical";
+    protected RType typeof(byte x) {
+        return RType.Logical;
     }
 
     @Specialization
-    protected String typeof(int s) {
-        return "integer";
+    protected RType typeof(int s) {
+        return RType.Integer;
     }
 
     @Specialization
-    protected String typeof(double x) {
-        return "double";
+    protected RType typeof(double x) {
+        return RType.Double;
     }
 
     @Specialization
-    protected String typeof(RComplex x) {
-        return "complex";
+    protected RType typeof(RComplex x) {
+        return RType.Complex;
     }
 
     @Specialization
-    protected String typeof(RRaw x) {
-        return "raw";
+    protected RType typeof(RRaw x) {
+        return RType.Raw;
     }
 
     @Specialization
-    protected String typeof(String x) {
-        return "character";
+    protected RType typeof(String x) {
+        return RType.Character;
     }
 
     @Specialization
-    protected String typeof(RIntSequence vector) {
-        return "integer";
+    protected RType typeof(RIntSequence vector) {
+        return RType.Integer;
     }
 
     @Specialization
-    protected String typeof(RLogicalVector vector) {
-        return "logical";
+    protected RType typeof(RLogicalVector vector) {
+        return RType.Logical;
     }
 
     @Specialization
-    protected String typeof(RIntVector vector) {
-        return "integer";
+    protected RType typeof(RIntVector vector) {
+        return RType.Integer;
     }
 
     @Specialization
-    protected String typeof(RDoubleVector vector) {
-        return "double";
+    protected RType typeof(RDoubleVector vector) {
+        return RType.Double;
     }
 
     @Specialization
-    protected String typeof(RStringVector vector) {
-        return "character";
+    protected RType typeof(RStringVector vector) {
+        return RType.Character;
     }
 
     @Specialization
-    protected String typeof(RComplexVector vector) {
-        return "complex";
+    protected RType typeof(RComplexVector vector) {
+        return RType.Complex;
     }
 
     @Specialization
-    protected String typeof(RRawVector vector) {
-        return "raw";
+    protected RType typeof(RRawVector vector) {
+        return RType.Raw;
     }
 
     @Specialization
-    protected String typeof(RList list) {
-        return "list";
+    protected RType typeof(RList list) {
+        return RType.List;
     }
 
     @Specialization
-    protected String typeof(REnvironment env) {
-        return RRuntime.TYPE_ENVIRONMENT;
+    protected RType typeof(REnvironment env) {
+        return RType.Environment;
     }
 
     @Specialization
-    protected String typeof(RSymbol symbol) {
-        return "symbol";
+    protected RType typeof(RSymbol symbol) {
+        return RType.Symbol;
     }
 
     @Specialization
-    protected String typeof(RLanguage language) {
-        return "language";
+    protected RType typeof(RLanguage language) {
+        return RType.Language;
     }
 
     @Specialization
-    protected String typeof(RPromise promise) {
-        return "promise";
+    protected RType typeof(RPromise promise) {
+        return RType.Promise;
     }
 
     @Specialization
-    protected String typeof(RExpression symbol) {
-        return "expression";
+    protected RType typeof(RExpression symbol) {
+        return RType.Expression;
     }
 
     @Specialization
-    protected String typeof(RPairList pairlist) {
-        return RRuntime.TYPE_PAIR_LIST;
+    protected RType typeof(RPairList pairlist) {
+        return RType.PairList;
     }
 
     @Specialization(guards = "isFunctionBuiltin")
-    protected String typeofBuiltin(RFunction obj) {
-        return "builtin";
+    protected RType typeofBuiltin(RFunction obj) {
+        return RType.Builtin;
     }
 
     @Specialization(guards = "!isFunctionBuiltin")
-    protected String typeofClosure(RFunction obj) {
-        return "closure";
+    protected RType typeofClosure(RFunction obj) {
+        return RType.Closure;
     }
 
     @Specialization
-    protected String typeofFormula(RFormula f) {
-        return "language";
+    protected RType typeofFormula(RFormula f) {
+        return RType.Language;
     }
 
     public static boolean isFunctionBuiltin(RFunction fun) {

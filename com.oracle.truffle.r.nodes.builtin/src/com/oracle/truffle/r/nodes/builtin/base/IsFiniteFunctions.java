@@ -85,7 +85,7 @@ public class IsFiniteFunctions {
             if (typeofNode == null) {
                 typeofNode = insert(TypeofNodeFactory.create(null));
             }
-            String type = typeofNode.execute(frame, x);
+            String type = typeofNode.execute(frame, x).getName();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);
         }
 

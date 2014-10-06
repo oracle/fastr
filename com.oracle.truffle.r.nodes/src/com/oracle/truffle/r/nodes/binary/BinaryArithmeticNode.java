@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class BinaryArithmeticNode extends BinaryNode {
+public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Child private BinaryArithmetic arithmetic;
     @Child private UnaryArithmeticNode unaryNode;
