@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
@@ -231,6 +232,8 @@ public final class RContext extends ExecutionContext {
          * the caller directly). This should <b>only</b> be called by the {@link RPromise} class.
          */
         Object evalPromise(RPromise expr, MaterializedFrame frame);
+
+        Object evalPromise(Closure closure, MaterializedFrame frame);
 
         /**
          * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should

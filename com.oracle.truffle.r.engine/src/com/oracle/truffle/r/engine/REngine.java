@@ -241,6 +241,10 @@ public final class REngine implements RContext.Engine {
         return runCall(promise.getClosure().getCallTarget(), frame, false, false);
     }
 
+    public Object evalPromise(Closure closure, MaterializedFrame frame) {
+        return runCall(closure.getCallTarget(), frame, false, false);
+    }
+
     public Object evalPromise(RPromise promise, SourceSection callSrc) {
         // have to do the full out eval
         try {
