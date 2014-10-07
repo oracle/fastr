@@ -9,6 +9,26 @@ import com.oracle.truffle.r.test.*;
 //Checkstyle: stop
 public class AllTests extends TestBase {
     @Test
+    public void TestConnections_testTextReadConnection_d61f16f8b553065174bc69e879308230() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con) }");
+    }
+
+    @Test
+    public void TestConnections_testTextReadConnection_7f9a1867afa461805ce8e2f819b40460() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testTextReadConnection_7f4ab83f4b2f9d736100d1e0b428b58a() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testTextReadConnection_dc19b2220ba560eec444032f971cff2f() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testArithmeticUpdate_53dd62f0f4ee11cdf35cbec8ec41f7c8() {
         assertEval("{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- x + 1L ; x } ; f(FALSE) }");
     }
@@ -13646,6 +13666,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSubstituteIgnore_9d646fcf10648fbae8e8087bb65a9bd6() {
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstituteIgnore_c46aeeda682d7d02536ec492e776a43a() {
+        assertEval("{ substitute(x <- x + 1, list(x = 1) }");
     }
 
     @Test

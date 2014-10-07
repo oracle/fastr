@@ -20,6 +20,22 @@
 #{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }
 [1] "A vanilla R package"
 
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con) }
+[1] "1" "2" "3" "4"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2) }
+[1] "1" "2"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2) }
+[1] "3" "4"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }
+character(0)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testArithmeticUpdate
 #{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- 1L + x ; x } ; f(FALSE) }
 [1] 4

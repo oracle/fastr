@@ -1629,6 +1629,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testSubstituteIgnore_c46aeeda682d7d02536ec492e776a43a() {
+        assertEval("{ substitute(x <- x + 1, list(x = 1) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testSweepBroken_922919324a346071a3eb17872bd65bfd() {
         assertEval("{ sweep(array(1:24, dim = 4:2), 1:2, 5) }");
     }

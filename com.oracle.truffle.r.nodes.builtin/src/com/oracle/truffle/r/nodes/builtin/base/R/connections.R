@@ -122,11 +122,7 @@ textConnection <- function(object, open = "r", local = FALSE,
 		encoding = c("", "bytes", "UTF-8"))
 {
 	env <- if (local) parent.frame() else .GlobalEnv
-#	type <- match(match.arg(encoding), c("", "bytes", "UTF-8"))
-	# workaround for stack frame bug in above code
-	ma <- match.arg(encoding)
-	type <- match(ma, c("", "bytes", "UTF-8"))
-	# end workaround
+	type <- match(match.arg(encoding), c("", "bytes", "UTF-8"))
 	nm <- deparse(substitute(object))
 	if(length(nm) != 1)
 		stop("argument 'object' must deparse to a single character string")
