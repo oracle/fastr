@@ -51,9 +51,8 @@ public class TestRPackages extends TestBase {
         private final Path rpackagesLibs;
 
         private PackagePaths() {
-            Path cwd = Paths.get(System.getProperty("user.dir"));
             Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
-            rpackagesLibs = cwd.relativize(rpackages.resolve("testrlibs_user"));
+            rpackagesLibs = TestBase.relativize(rpackages.resolve("testrlibs_user"));
             if (!rpackagesLibs.toFile().exists()) {
                 rpackagesLibs.toFile().mkdir();
             }

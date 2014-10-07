@@ -20,6 +20,19 @@
 #{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }
 [1] "A vanilla R package"
 
+##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
+#{ print(.Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/list2.rds"), NULL))) }
+$one
+[1] "1"
+
+$two
+[1] "2"
+
+
+##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
+#{ print(.Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/vector1.rds"), NULL))) }
+[1] "1" "2" "3"
+
 ##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
 #{ con <- textConnection(c("1", "2", "3","4")); readLines(con) }
 [1] "1" "2" "3" "4"
