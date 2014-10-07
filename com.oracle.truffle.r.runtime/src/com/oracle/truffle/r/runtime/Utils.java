@@ -68,6 +68,10 @@ public final class Utils {
         return c >= '\u0030' && c <= '\u0039';
     }
 
+    public static boolean isRomanLetter(char c) {
+        return (/* lower case */c >= '\u00DF' && c <= '\u00FF') || (/* upper case */c >= '\u00C0' && c <= '\u00DE');
+    }
+
     public static int incMod(int value, int mod) {
         int result = (value + 1);
         if (result == mod) {

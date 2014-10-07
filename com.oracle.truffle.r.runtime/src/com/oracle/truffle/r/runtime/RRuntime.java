@@ -374,6 +374,15 @@ public class RRuntime {
         return isNA(v) ? createComplexNA() : string2complexNoCheck(v);
     }
 
+    @SlowPath
+    public static RRaw string2raw(String v) {
+        if (v.length() == 2 && (Utils.isIsoLatinDigit(v.charAt(0)) || Utils.isRomanLetter(v.charAt(0))) && (Utils.isIsoLatinDigit(v.charAt(1)) || Utils.isRomanLetter(v.charAt(1)))) {
+            return RDataFactory.createRaw(Byte.parseByte(v, 16));
+        } else {
+            return RDataFactory.createRaw((byte) 0);
+        }
+    }
+
     // conversions from int
 
     public static double int2doubleNoCheck(int i) {
