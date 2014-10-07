@@ -92,7 +92,6 @@ public class FrameFunctions {
         @Specialization
         protected RLanguage sysCall(VirtualFrame frame, int which) {
             controlVisibility();
-            System.out.println("which: " + which);
             Frame cframe = getFrame(frame, which);
             Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
             RArguments.copyArgumentsInto(cframe, values);
