@@ -86,7 +86,7 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public RAbstractVector copyResized(int size, boolean fillNA) {
+    public RVector copyResized(int size, boolean fillNA) {
         return vector.copyResized(size, fillNA);
     }
 
@@ -119,6 +119,11 @@ public abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public RShareable materializeToShareable() {
         return vector.materialize();
+    }
+
+    @Override
+    public RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return vector.createEmptySameType(newLength, newIsComplete);
     }
 
 }

@@ -101,8 +101,11 @@ public abstract class ConnectionFunctions {
                     break;
                 }
             }
-            String[] result = new String[lines.size()];
-            lines.toArray(result);
+            String[] result = null;
+            if (lines.size() > 0) {
+                result = new String[lines.size()];
+                lines.toArray(result);
+            }
             return result;
         }
 

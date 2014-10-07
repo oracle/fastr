@@ -138,6 +138,12 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return this;
     }
 
+    @Override
+    public RComplexVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, (RComplex) o, naCheck);
+
+    }
+
     private double[] copyResizedData(int size, boolean fillNA) {
         int csize = size << 1;
         double[] newData = Arrays.copyOf(data, csize);

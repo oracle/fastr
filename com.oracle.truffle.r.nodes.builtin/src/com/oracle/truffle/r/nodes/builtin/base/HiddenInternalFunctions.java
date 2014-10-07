@@ -19,6 +19,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -142,7 +143,7 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        protected Object lazyLoadDBFetch(RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -175,7 +176,7 @@ public class HiddenInternalFunctions {
                     throw RError.error(Message.GENERIC, "zlib uncompress error");
                 }
                 try {
-                    Object result = RSerialize.unserialize(udata, envhook);
+                    Object result = RSerialize.unserialize(udata, envhook, RArguments.getDepth(frame));
                     return result;
                 } catch (IOException ex) {
                     // unexpected
@@ -187,9 +188,9 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
-        protected Object lazyLoadDBFetch(RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
             initCast();
-            return lazyLoadDBFetch(key, datafile, castIntNode.doLogicalVector(compressed), envhook);
+            return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
         }
     }
 

@@ -118,6 +118,12 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return this;
     }
 
+    @Override
+    public RStringVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, (String) o, naCheck);
+
+    }
+
     private String[] copyResizedData(int size, String fill) {
         String[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {

@@ -103,6 +103,12 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return this;
     }
 
+    @Override
+    public RLogicalVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, (Byte) o, naCheck);
+
+    }
+
     private byte[] copyResizedData(int size, boolean fillNA) {
         byte[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {

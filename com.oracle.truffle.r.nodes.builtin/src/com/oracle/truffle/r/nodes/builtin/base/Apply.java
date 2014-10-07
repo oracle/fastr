@@ -138,7 +138,7 @@ public abstract class Apply extends RBuiltinNode {
                 Utils.nyi();
             }
         }
-        Object[] args = RArguments.create(fun, funCall.getSourceSection(), evaluatedArgs);
+        Object[] args = RArguments.create(fun, funCall.getSourceSection(), RArguments.getDepth(frame) + 1, evaluatedArgs);
         return funCall.call(frame, fun.getTarget(), args);
     }
 }

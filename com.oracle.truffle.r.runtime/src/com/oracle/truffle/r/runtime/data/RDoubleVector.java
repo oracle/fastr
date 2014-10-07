@@ -168,6 +168,12 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return this;
     }
 
+    @Override
+    public RDoubleVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, (Double) o, naCheck);
+
+    }
+
     public static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {

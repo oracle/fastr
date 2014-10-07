@@ -29,6 +29,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 import edu.umd.cs.findbugs.annotations.*;
 
@@ -461,6 +462,17 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     protected abstract boolean internalVerify();
 
+    /**
+     * Update a data item in the vector. Possibly not as efficient as type-specific methods, but in
+     * some cases it likely does not matter (e.g. if used alongside I/O operations).
+     *
+     * @param i index of the vector item to be updated
+     * @param o updated value
+     * @param naCheck NA check used to change vector's mode in case value is NA
+     * @return updated vector
+     */
+    public abstract RVector updateDataAtAsObject(int i, Object o, NACheck naCheck);
+
     public final RStringVector toStringVector() {
         String[] values = new String[getLength()];
         for (int i = 0; i < getLength(); ++i) {
@@ -468,8 +480,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
         return RDataFactory.createStringVector(values, this.isComplete());
     }
-
-    public abstract RVector createEmptySameType(int newLength, boolean newIsComplete);
 
     public abstract void transferElementSameType(int toIndex, RVector fromVector, int fromIndex);
 

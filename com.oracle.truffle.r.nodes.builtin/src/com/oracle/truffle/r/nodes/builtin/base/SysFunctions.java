@@ -147,7 +147,7 @@ public class SysFunctions {
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private void validateArgNames(String[] argNames) throws RError {
+        private void validateArgNames(String[] argNames) {
             boolean ok = argNames != null;
             if (argNames != null) {
                 for (int i = 0; i < argNames.length; i++) {
@@ -210,7 +210,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
+        protected Object sysSleep(@SuppressWarnings("unused") Object arg) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
         }

@@ -58,7 +58,7 @@ public interface RASTHelper {
     void deparse(RDeparse.State state, RFunction f);
 
     /**
-     * Finds a namespacxe during unserialization.
+     * Finds a namespace during unserialization.
      */
-    REnvironment findNamespace(RStringVector name);
+    REnvironment findNamespace(RStringVector name, int depth);
 }
