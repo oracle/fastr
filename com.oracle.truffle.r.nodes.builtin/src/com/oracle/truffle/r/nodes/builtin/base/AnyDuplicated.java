@@ -17,6 +17,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.binary.*;
@@ -28,6 +29,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"})
 public abstract class AnyDuplicated extends RBuiltinNode {
+
+    private final ConditionProfile fromLastProfile = ConditionProfile.createBinaryProfile();
 
     @Child private CastTypeNode castTypeNode;
     @Child private TypeofNode typeof;
@@ -44,54 +47,41 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isIncomparable", "!isFromLast", "!empty"})
+    @Specialization(guards = {"!isIncomparable", "!empty"})
     protected int anyDuplicatedFalseIncomparablesFromStart(RAbstractVector x, byte incomparables, byte fromLast) {
-        return getIndexFromStart(x);
+        if (fromLastProfile.profile(fromLast == RRuntime.LOGICAL_TRUE)) {
+            return getIndexFromLast(x);
+        } else {
+            return getIndexFromStart(x);
+        }
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isIncomparable", "isFromLast", "!empty"})
-    protected int anyDuplicatedFalseIncomparablesFromLast(RAbstractVector x, byte incomparables, byte fromLast) {
-        return getIndexFromLast(x);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"isIncomparable", "!isFromLast", "!empty"})
+    @Specialization(guards = {"isIncomparable", "!empty"})
     protected int anyDuplicatedTrueIncomparablesFromStart(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
-        initTypeof();
-        initCastTypeNode();
+        initChildren();
         RType xType = typeof.execute(frame, x);
-        return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+        RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType));
+        if (fromLastProfile.profile(fromLast == RRuntime.LOGICAL_TRUE)) {
+            return getIndexFromLast(x, vector);
+        } else {
+            return getIndexFromStart(x, vector);
+        }
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"isIncomparable", "isFromLast", "!empty"})
-    protected int anyDuplicatedTrueIncomparablesFromLast(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
-        initTypeof();
-        initCastTypeNode();
+    @Specialization(guards = {"!empty"})
+    protected int anyDuplicatedFromStart(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
+        initChildren();
         RType xType = typeof.execute(frame, x);
-        return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
-    }
-
-    @Specialization(guards = {"!isFromLast", "!empty"})
-    protected int anyDuplicatedFromStart(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, @SuppressWarnings("unused") byte fromLast) {
-        initTypeof();
-        initCastTypeNode();
-        RType xType = typeof.execute(frame, x);
-        return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
-    }
-
-    @Specialization(guards = {"isFromLast", "!empty"})
-    protected int anyDuplicatedFromLast(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, @SuppressWarnings("unused") byte fromLast) {
-        initTypeof();
-        initCastTypeNode();
-        RType xType = typeof.execute(frame, x);
-        return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+        if (fromLastProfile.profile(fromLast == RRuntime.LOGICAL_TRUE)) {
+            return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+        } else {
+            return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+        }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "empty")
-    protected int anyDuplicatedEmpty(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
+    protected int anyDuplicatedEmpty(RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
         return 0;
     }
 
@@ -158,41 +148,24 @@ public abstract class AnyDuplicated extends RBuiltinNode {
                 return i + 1;
             } else {
                 vectorContents.add(x.getDataAtAsObject(i));
-
             }
         }
         return 0;
     }
 
     @SuppressWarnings("unused")
-    protected boolean isIncomparable(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
+    protected boolean isIncomparable(RAbstractVector x, byte incomparables, byte fromLast) {
         return incomparables == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isFromLast(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
-        return fromLast == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isFromLast(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
-        return fromLast == RRuntime.LOGICAL_TRUE;
     }
 
     protected boolean empty(RAbstractVector x) {
         return x.getLength() == 0;
     }
 
-    private void initCastTypeNode() {
+    private void initChildren() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castTypeNode = insert(CastTypeNodeFactory.create(null, null));
-        }
-    }
-
-    private void initTypeof() {
-        if (typeof == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             typeof = insert(TypeofNodeFactory.create(null));
         }
     }
