@@ -136,6 +136,12 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
+    public RList updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, o, naCheck);
+
+    }
+
+    @Override
     public RList createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(new Object[newLength]);
     }

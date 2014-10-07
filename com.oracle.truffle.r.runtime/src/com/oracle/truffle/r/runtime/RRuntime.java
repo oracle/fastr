@@ -138,8 +138,8 @@ public class RRuntime {
     /**
      * Create a {@link VirtualFrame} for {@link RFunction} {@code function}.
      */
-    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc) {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc), new FrameDescriptor());
+    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc, int depth) {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc, depth), new FrameDescriptor());
     }
 
     public static RComplex createComplexNA() {
@@ -372,6 +372,15 @@ public class RRuntime {
     @SlowPath
     public static RComplex string2complex(String v) {
         return isNA(v) ? createComplexNA() : string2complexNoCheck(v);
+    }
+
+    @SlowPath
+    public static RRaw string2raw(String v) {
+        if (v.length() == 2 && (Utils.isIsoLatinDigit(v.charAt(0)) || Utils.isRomanLetter(v.charAt(0))) && (Utils.isIsoLatinDigit(v.charAt(1)) || Utils.isRomanLetter(v.charAt(1)))) {
+            return RDataFactory.createRaw(Byte.parseByte(v, 16));
+        } else {
+            return RDataFactory.createRaw((byte) 0);
+        }
     }
 
     // conversions from int

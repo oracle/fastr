@@ -102,10 +102,15 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public RAbstractVector copyResized(int size, boolean fillNA) {
+    public RDoubleVector copyResized(int size, boolean fillNA) {
         double[] data = new double[size];
         populateVectorData(data);
         RDoubleVector.resizeData(data, data, getLength(), fillNA);
         return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()));
+    }
+
+    @Override
+    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 }

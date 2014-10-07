@@ -271,6 +271,7 @@ public final class RError extends RuntimeException {
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         INVALID_SEP("invalid 'sep' specification"),
+        INVALID_LENGTH("invalid '%s' length"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("argument is not a function, character or symbol"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
@@ -459,6 +460,9 @@ public final class RError extends RuntimeException {
         INCORRECT_NUM_PROB("incorrect number of probabilities"),
         NA_IN_PROB_VECTOR("NA in probability vector"),
         NEGATIVE_PROBABILITY("non-positive probability"),
+        MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
+        INVALID_DECIMAL_SEP("invalid decimal separator"),
+        INVALID_QUOTE_SYMBOL("invalid quote symbol set"),
         // below: not exactly GNU-R message
         TOO_FEW_POSITIVE_PROBABILITY("too few positive probabilities"),
         DOTS_BOUNDS("The ... list does not contain %s elements"),

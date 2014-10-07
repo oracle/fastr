@@ -95,11 +95,7 @@ public final class RPromise extends RLanguageRep {
      */
     protected final PromiseType type;
 
-    /**
-     * The {@link REnvironment} {@link #getRep()} should be evaluated in. For promises associated
-     * with environments (frames) that are not top-level. May be <code>null</code>.
-     */
-    protected REnvironment env;
+    protected MaterializedFrame execFrame;
 
     /**
      * Might not be <code>null</code>
@@ -127,27 +123,25 @@ public final class RPromise extends RLanguageRep {
      * This creates a new tuple (env, expr), which may later be evaluated.
      *
      * @param evalPolicy {@link EvalPolicy}
-     * @param env {@link #env}
      * @param closure {@link #getClosure()}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Closure closure) {
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
         this.evalPolicy = evalPolicy;
         this.type = type;
-        this.env = env;
+        this.execFrame = execFrame;
         this.closure = closure;
     }
 
     /**
      * @param evalPolicy {@link EvalPolicy}
-     * @param env {@link #env}
      * @param closure {@link #getClosure()}
-     * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Closure)}
+     * @return see {@link #RPromise(EvalPolicy, PromiseType, MaterializedFrame, Closure)}
      */
-    public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Closure closure) {
+    public static RPromise create(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
         assert closure != null;
         assert closure.getExpr() != null;
-        return new RPromise(evalPolicy, type, env, closure);
+        return new RPromise(evalPolicy, type, execFrame, closure);
     }
 
     /**
@@ -160,7 +154,7 @@ public final class RPromise extends RLanguageRep {
     public static final class PromiseProfile {
         private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile underEvaluationProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isNullEnvProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isFrameEnvProfile = ConditionProfile.createBinaryProfile();
 
         private final ConditionProfile isInlinedProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
@@ -182,8 +176,8 @@ public final class RPromise extends RLanguageRep {
         return type == PromiseType.NO_ARG;
     }
 
-    public boolean isNullEnv(PromiseProfile profile) {
-        return profile.isNullEnvProfile.profile(env == null);
+    public boolean isNullFrame(PromiseProfile profile) {
+        return profile.isFrameEnvProfile.profile(execFrame == null);
     }
 
     public boolean isEvaluated(PromiseProfile profile) {
@@ -215,7 +209,7 @@ public final class RPromise extends RLanguageRep {
 
             // Evaluate this promise's value!
             // Performance: We can use frame directly
-            if (!isNullEnv(profile) && !isInOriginFrame(frame, profile)) {
+            if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
                 SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
                 newValue = doEvalArgument(callSrc);
             } else {
@@ -227,7 +221,7 @@ public final class RPromise extends RLanguageRep {
         } finally {
             underEvaluation = false;
         }
-        return value;
+        return newValue;
     }
 
     /**
@@ -238,32 +232,18 @@ public final class RPromise extends RLanguageRep {
     public void setValue(Object newValue) {
         this.value = newValue;
         this.isEvaluated = true;
-        this.env = null; // REnvironment and associated frame are no longer needed after execution
+        this.execFrame = null; // the frame is no longer needed after execution
         // TODO set NAMED = 2
     }
 
     @SlowPath
     protected Object doEvalArgument(SourceSection callSrc) {
-        Object result = null;
-        assert env != null;
-        try {
-            result = RContext.getEngine().evalPromise(this, callSrc);
-        } catch (RError e) {
-            result = e;
-            throw e;
-        }
-        return result;
+        assert execFrame != null;
+        return RContext.getEngine().evalPromise(this, callSrc);
     }
 
     protected Object doEvalArgument(MaterializedFrame frame) {
-        Object result = null;
-        try {
-            result = RContext.getEngine().evalPromise(this, frame);
-        } catch (RError e) {
-            result = e;
-            throw e;
-        }
-        return result;
+        return RContext.getEngine().evalPromise(this, frame);
     }
 
     /**
@@ -273,12 +253,12 @@ public final class RPromise extends RLanguageRep {
      * environment for the function. Whether a {@link RPromise} needs one is determined by
      * {@link #needsCalleeFrame(PromiseProfile)}!
      *
-     * @param newEnv The REnvironment this promise is to be evaluated in
+     * @param newFrame The REnvironment this promise is to be evaluated in
      */
-    public void updateEnv(REnvironment newEnv, PromiseProfile profile) {
+    public void updateFrame(MaterializedFrame newFrame, PromiseProfile profile) {
         assert type == PromiseType.ARG_DEFAULT;
-        if (isNullEnv(profile) && !isEvaluated(profile)) {
-            env = newEnv;
+        if (isNullFrame(profile) && !isEvaluated(profile)) {
+            execFrame = newFrame;
         }
     }
 
@@ -296,13 +276,13 @@ public final class RPromise extends RLanguageRep {
 
     /**
      * Only to be called from AccessArgumentNode, and in combination with
-     * {@link #updateEnv(REnvironment,PromiseProfile)}!
+     * {@link #updateFrame(MaterializedFrame,PromiseProfile)}!
      *
      * @return Whether this promise needs a callee environment set (see
-     *         {@link #updateEnv(REnvironment,PromiseProfile)})
+     *         {@link #updateFrame(MaterializedFrame,PromiseProfile)})
      */
     public boolean needsCalleeFrame(PromiseProfile profile) {
-        return !isInlined(profile) && isDefault(profile) && isNullEnv(profile) && !isEvaluated(profile);
+        return !isInlined(profile) && isDefault(profile) && isNullFrame(profile) && !isEvaluated(profile);
     }
 
     /**
@@ -316,14 +296,14 @@ public final class RPromise extends RLanguageRep {
             return true;
         }
 
-        if (isDefault(profile) && isNullEnv(profile)) {
+        if (isDefault(profile) && isNullFrame(profile)) {
             return true;
         }
 
         if (frame == null) {
             return false;
         }
-        return profile.isFrameForEnvProfile.profile(REnvironment.isFrameForEnv(frame, env));
+        return profile.isFrameForEnvProfile.profile(frame == execFrame);
     }
 
     /**
@@ -343,10 +323,10 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
-     * @return {@link #env}
+     * @return {@link #execFrame}
      */
-    public REnvironment getEnv() {
-        return env;
+    public MaterializedFrame getFrame() {
+        return execFrame;
     }
 
     /**
@@ -383,13 +363,13 @@ public final class RPromise extends RLanguageRep {
     @Override
     @SlowPath
     public String toString() {
-        return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + evalPolicy + ", " + type + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
     /**
      * A factory which produces instances of {@link RPromise}.
      *
-     * @see RPromiseFactory#createPromise(REnvironment)
+     * @see RPromiseFactory#createPromise(MaterializedFrame)
      * @see RPromiseFactory#createPromiseDefault()
      * @see RPromiseFactory#createPromiseArgEvaluated(Object)
      */
@@ -422,8 +402,8 @@ public final class RPromise extends RLanguageRep {
         /**
          * @return A {@link RPromise} from the given parameters
          */
-        public RPromise createPromise(REnvironment env) {
-            return RPromise.create(evalPolicy, type, env, exprClosure);
+        public RPromise createPromise(MaterializedFrame frame) {
+            return RPromise.create(evalPolicy, type, frame, exprClosure);
         }
 
         /**

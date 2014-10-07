@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RRawVector extends RVector implements RAbstractRawVector {
 
@@ -130,6 +131,11 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         assert !this.isShared();
         data[i] = right.getValue();
         return this;
+    }
+
+    @Override
+    public RRawVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, (RRaw) o);
     }
 
     private byte[] copyResizedData(int size, boolean fillNA) {

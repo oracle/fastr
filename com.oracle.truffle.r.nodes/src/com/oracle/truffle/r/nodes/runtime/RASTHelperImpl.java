@@ -143,7 +143,7 @@ public class RASTHelperImpl implements RASTHelper {
     /**
      * A rather obscure piece of code used in package loading for lazy loading.
      */
-    public REnvironment findNamespace(RStringVector name) {
+    public REnvironment findNamespace(RStringVector name, int depth) {
         if (getNamespaceCall == null) {
             try {
                 getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse("..getNamespace(name)").getDataAt(0)).getRep();
@@ -154,7 +154,7 @@ public class RASTHelperImpl implements RASTHelper {
         }
         RCallNode call = RCallNode.createCloneReplacingFirstArg(getNamespaceCall, ConstantNode.create(name));
         try {
-            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
+            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
         } catch (PutException ex) {
             throw RError.error((SourceSection) null, ex);
         }

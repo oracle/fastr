@@ -558,8 +558,6 @@ public class ArgumentMatcher {
         RootNode rootNode = function.getTarget().getRootNode();
         final RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
 
-        // Insert promises here!
-        EnvProvider envProvider = new EnvProvider();
         // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
         // take "..." as one), we don't need a logicalIndex
         for (int fi = 0; fi < arguments.length; fi++) {
@@ -585,7 +583,7 @@ public class ArgumentMatcher {
                 if (newLength == 0) {
                     // Corner case: "f <- function(...) g(...); g <- function(...)"
                     // Insert correct "missing"!
-                    resArgs[fi] = wrap(promiseWrapper, function, formals, builtinRootNode, envProvider, closureCache, null, null, fi);
+                    resArgs[fi] = wrap(promiseWrapper, function, formals, builtinRootNode, closureCache, null, null, fi);
                     continue;
                 }
                 if (newNames.length > newLength) {
@@ -594,11 +592,11 @@ public class ArgumentMatcher {
                 }
 
                 EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, fi);
-                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, newVarArgs, newNames, closureCache, callSrc);
+                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, newVarArgs, newNames, closureCache, callSrc);
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-                resArgs[fi] = wrap(promiseWrapper, function, formals, builtinRootNode, envProvider, closureCache, arg, defaultArg, fi);
+                resArgs[fi] = wrap(promiseWrapper, function, formals, builtinRootNode, closureCache, arg, defaultArg, fi);
             }
         }
         return resArgs;
@@ -609,7 +607,6 @@ public class ArgumentMatcher {
      * @param function The function this argument is wrapped for
      * @param formals {@link FormalArguments} as {@link ClosureCache}
      * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-     * @param envProvider {@link EnvProvider}
      * @param closureCache {@link ClosureCache}
      * @param suppliedArg The argument supplied for this parameter
      * @param defaultValue The default value for this argument
@@ -619,8 +616,8 @@ public class ArgumentMatcher {
      *         {@link RMissing} in case neither is present!
      */
     @SlowPath
-    private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, EnvProvider envProvider, ClosureCache closureCache,
-                    RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+    private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg,
+                    RNode defaultValue, int logicalIndex) {
         // Determine whether to choose supplied argument or default value
         RNode expr = null;
         PromiseType promiseType = null;
@@ -643,7 +640,7 @@ public class ArgumentMatcher {
         EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, logicalIndex);
         Closure closure = closureCache.getOrCreateClosure(expr);
         Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-        return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), envProvider);
+        return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
     }
 
     /**
