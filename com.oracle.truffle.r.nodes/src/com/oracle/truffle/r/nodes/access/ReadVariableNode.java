@@ -418,6 +418,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final boolean readMissing;
         private final boolean forcePromise;
 
+        private final BranchProfile hasValueProfile = new BranchProfile();
+
         ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode, RType mode, boolean readMissing, boolean forcePromise) {
             this.readNode = readNode;
             this.nextNode = nextNode;
@@ -430,6 +432,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             if (readNode.getFrameSlotNode().hasValue(frame)) {
+                hasValueProfile.enter();
                 Object result = readNode.execute(frame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
                     return result;
@@ -543,6 +546,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final boolean forcePromise;
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
+        private final BranchProfile hasValueProfile = new BranchProfile();
 
         ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, boolean readMissing, boolean forcePromise, RType mode) {
             this.readNode = readNode;
@@ -563,6 +567,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             controlVisibility();
             MaterializedFrame typedEnclosingFrame = frameTypeProfile.profile(enclosingFrame);
             if (readNode.getFrameSlotNode().hasValue(typedEnclosingFrame)) {
+                hasValueProfile.enter();
                 Object result = readNode.execute(frame, typedEnclosingFrame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
                     return result;
