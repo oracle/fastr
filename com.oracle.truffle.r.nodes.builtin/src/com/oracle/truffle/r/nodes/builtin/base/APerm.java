@@ -12,9 +12,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -27,6 +27,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"})
 public abstract class APerm extends RBuiltinNode {
 
+    private final BranchProfile errorProfile = new BranchProfile();
+
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
@@ -34,8 +36,8 @@ public abstract class APerm extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] createCastPermute(RNode[] arguments) {
-        RNode permVector = CastToVectorNodeFactory.create(arguments[1], false, false, false, false);
-        return new RNode[]{arguments[0], CastIntegerNodeFactory.create(permVector, false, false, false), arguments[2]};
+        arguments[1] = CastIntegerNodeFactory.create(CastToVectorNodeFactory.create(arguments[1], false, false, false, false), false, false, false);
+        return arguments;
     }
 
     @Specialization
@@ -43,10 +45,11 @@ public abstract class APerm extends RBuiltinNode {
         controlVisibility();
 
         if (!vector.isArray()) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
 
-        int[] dim = getDimensions(vector);
+        int[] dim = vector.getDimensions();
         int[] perm = getPermute(dim, permVector);
 
         int[] posV = new int[dim.length];
@@ -56,12 +59,11 @@ public abstract class APerm extends RBuiltinNode {
         RVector result = realVector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         if (resize == RRuntime.LOGICAL_NA) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
-        } else if (resize == RRuntime.LOGICAL_TRUE) {
-            result.setDimensions(pDim);
-        } else {
-            result.setDimensions(vector.getDimensions());
         }
+
+        result.setDimensions(resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
         // Move along the old array using stride
         for (int i = 0; i < result.getLength(); i++) {
@@ -81,44 +83,35 @@ public abstract class APerm extends RBuiltinNode {
                 arrayPerm[i] = dim.length - 1 - i;
             }
         } else if (perm.getLength() == dim.length) {
-            for (int i = 0; i < perm.getLength(); i++) {
-                if (perm.getDataAt(i) > perm.getLength() || perm.getDataAt(i) < 1) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.VALUE_OUT_OF_RANGE, "perm");
-                }
-                arrayPerm[i] = perm.getDataAt(i) - 1; // Adjust to zero based permute.
-            }
             // Check for valid permute
             boolean[] visited = new boolean[arrayPerm.length];
-            Arrays.fill(visited, false);
-            for (int i = 0; i < arrayPerm.length; i++) {
-                if (!visited[arrayPerm[i]]) {
-                    visited[arrayPerm[i]] = true;
-                } else {
+            for (int i = 0; i < perm.getLength(); i++) {
+                int pos = perm.getDataAt(i) - 1; // Adjust to zero based permute.
+                if (pos >= perm.getLength() || pos < 0) {
+                    errorProfile.enter();
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.VALUE_OUT_OF_RANGE, "perm");
+                }
+                arrayPerm[i] = pos;
+                if (visited[pos]) {
                     // Duplicate dimension mapping in permute
+                    errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "perm");
                 }
+                visited[pos] = true;
             }
         } else {
             // perm size error
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
 
         return arrayPerm;
     }
 
-    private static int[] getDimensions(RAbstractVector v) {
-        // Get dimensions move to int array
-        RIntVector dimV = RDataFactory.createIntVector(v.getDimensions(), RDataFactory.COMPLETE_VECTOR);
-        int[] dim = new int[dimV.getLength()];
-        for (int i = 0; i < dimV.getLength(); i++) {
-            dim[i] = dimV.getDataAt(i);
-        }
-        return dim;
-    }
-
     /**
      * Apply permute to an equal sized array.
      */
+    @SlowPath
     private static int[] applyPermute(int[] a, int[] perm, boolean reverse) {
         int[] newA = a.clone();
         if (reverse) {
@@ -127,7 +120,6 @@ public abstract class APerm extends RBuiltinNode {
             }
         } else {
             for (int i = 0; i < newA.length; i++) {
-                // System.out.println("perm:" + i + ": " + perm[i] + "   a.length" + a.length);
                 newA[i] = a[perm[i]];
             }
         }
@@ -137,6 +129,7 @@ public abstract class APerm extends RBuiltinNode {
     /**
      * Increment a stride array.
      */
+    @SlowPath
     private static int[] incArray(int[] a, int[] dim) {
         int[] newA = a.clone();
         for (int i = 0; i < newA.length; i++) {
@@ -152,6 +145,7 @@ public abstract class APerm extends RBuiltinNode {
     /**
      * Stride array to a linear position.
      */
+    @SlowPath
     private static int toPos(int[] a, int[] dim) {
         int pos = a[0];
         for (int i = 1; i < a.length; i++) {
