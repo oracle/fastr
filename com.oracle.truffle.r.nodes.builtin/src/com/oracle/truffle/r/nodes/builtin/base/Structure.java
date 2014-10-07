@@ -64,7 +64,7 @@ public abstract class Structure extends RBuiltinNode {
         return value;
     }
 
-    private void validateArgNames(String[] argNames) throws RError {
+    private void validateArgNames(String[] argNames) {
         // first "name" is the container
         boolean ok = argNames != null;
         if (argNames != null) {

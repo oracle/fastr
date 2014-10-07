@@ -38,16 +38,18 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariab
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
 
     protected final PromiseProfile promiseProfile = new PromiseProfile();
+
+    protected final BranchProfile unexpectedMissingProfile = new BranchProfile();
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
@@ -147,6 +149,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     protected boolean checkType(VirtualFrame frame, Object objArg, RType type, boolean readMissing, boolean forcePromise) {
         Object obj = objArg;
         if (obj == RMissing.instance && !readMissing && !getSymbol().isVarArg()) {
+            unexpectedMissingProfile.enter();
             SourceSection callSrc = RArguments.getCallSourceSection(frame);
             throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getSymbol());
         }
@@ -190,14 +193,41 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         public abstract ReadVariableNode getReadNode();
 
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+        @Child private InlineCacheNode<Frame, Closure> promiseClosureCache = InlineCacheNode.createPromise(3);
 
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
-            if (!promise.isEvaluated(promiseProfile) && promise.isInOriginFrame(frame, promiseProfile)) {
-                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
+            if (promise.isEvaluated(promiseProfile)) {
+                return promise.getValue();
             }
-            return promise.evaluate(frame, promiseProfile);
+
+            if (promise.isInOriginFrame(frame, promiseProfile)) {
+                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
+            }
+
+            // Check for dependency cycle
+            if (promise.isUnderEvaluation(promiseProfile)) {
+                SourceSection callSrc = RArguments.getCallSourceSection(frame);
+                throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
+            }
+
+            Frame promiseFrame = promise.getFrame();
+            assert promiseFrame != null;
+            SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
+            Object newValue;
+            try {
+                promise.setUnderEvaluation(true);
+                RArguments.setCallSourceSection(promiseFrame, RArguments.getCallSourceSection(frame));
+
+                newValue = promiseClosureCache.execute(promiseFrame, promise.getClosure());
+
+                promise.setValue(newValue);
+            } finally {
+                RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                promise.setUnderEvaluation(false);
+            }
+            return newValue;
         }
 
         @Specialization
@@ -651,7 +681,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     @NodeFields(value = {@NodeField(name = "function", type = RFunction.class), @NodeField(name = "symbol", type = Symbol.class)})
     public abstract static class BuiltinFunctionVariableNode extends ReadVariableNode {
 
-        protected abstract RFunction getFunction();
+        public abstract RFunction getFunction();
 
         @Override
         public abstract Symbol getSymbol();

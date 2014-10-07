@@ -34,9 +34,9 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
@@ -87,7 +87,7 @@ public final class REngine implements RContext.Engine {
         RPerfAnalysis.initialize();
         singleton.crashOnFatalError = crashOnFatalErrorArg;
         singleton.builtinLookup = RBuiltinPackages.getInstance();
-        singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, headless);
+        singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
         VirtualFrame globalFrame = RRuntime.createNonFunctionFrame();
         VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
         REnvironment.baseInitialize(globalFrame, baseFrame);
@@ -167,7 +167,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
+    public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
         Object result = null;
         RFunction ffunction = function;
         if (ffunction == null) {
@@ -175,17 +175,17 @@ public final class REngine implements RContext.Engine {
         }
         for (int i = 0; i < expr.getLength(); i++) {
             RLanguage lang = (RLanguage) expr.getDataAt(i);
-            result = eval(ffunction, (RNode) lang.getRep(), envir, enclos);
+            result = eval(ffunction, (RNode) lang.getRep(), envir, enclos, depth);
         }
         return result;
     }
 
-    public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
+    public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
         RFunction ffunction = function;
         if (ffunction == null) {
             ffunction = evalFunction;
         }
-        return eval(ffunction, (RNode) expr.getRep(), envir, enclos);
+        return eval(ffunction, (RNode) expr.getRep(), envir, enclos, depth);
     }
 
     public Object eval(RExpression expr, MaterializedFrame frame) {
@@ -203,67 +203,19 @@ public final class REngine implements RContext.Engine {
     private static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
 
     public Object eval(RLanguage expr, MaterializedFrame frame) {
-        RNode n = expr.getType() == RLanguage.Type.RNODE ? (RNode) expr.getRep() : makeCallNode(expr);
+        RNode n = (RNode) expr.getRep();
         RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
     }
 
-    @SlowPath
-    private RCallNode makeCallNode(RLanguage expr) {
-        RStringVector names = expr.getList().getNames() == RNull.instance ? null : (RStringVector) expr.getList().getNames();
-
-        int argLength = expr.getLength() - 1;
-        RNode[] args = new RNode[argLength];
-        String[] argNames = new String[argLength];
-
-        for (int i = 0; i < argLength; i++) {
-            Object a = expr.getDataAt(i + 1);
-            if (a instanceof RSymbol) {
-                args[i] = ReadVariableNode.create(((RSymbol) a).getName(), RType.Any, false, true, false, true);
-            } else if (a instanceof RLanguage) {
-                RLanguage l = (RLanguage) a;
-                if (l.getType() == RLanguage.Type.RNODE) {
-                    args[i] = (RNode) l.getRep();
-                } else {
-                    args[i] = makeCallNode(l);
-                }
-            } else if (a instanceof RPromise) {
-                // TODO: flatten nested promises?
-                args[i] = ((WrapArgumentNode) ((RPromise) a).getRep()).getOperand();
-            } else {
-                args[i] = ConstantNode.create(a);
-            }
-            if (names != null && !names.getDataAt(i + 1).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                argNames[i] = names.getDataAt(i + 1);
-            }
-        }
-
-        // TODO: handle replacement calls
-        boolean isReplacement = false;
-        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, argNames);
-
-        if (expr.getDataAt(0) instanceof RSymbol) {
-            RSymbol funcName = (RSymbol) expr.getDataAt(0);
-            // TODO: source section?
-            return RCallNode.createCall(null, ReadVariableNode.create(funcName.getName(), RType.Function, false, true, false, true), callArgsNode);
-        } else {
-            return RCallNode.createStaticCall(null, (RFunction) expr.getDataAt(0), callArgsNode);
-        }
-    }
-
     /**
-     * @param function
-     * @param exprRep
-     * @param envir
-     * @param enclos
      * @return @see
-     *         {@link #eval(RFunction, RootCallTarget, SourceSection, REnvironment, REnvironment)}
-     * @throws PutException
+     *         {@link #eval(RFunction, RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
      */
-    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos) throws PutException {
+    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos, int depth) throws PutException {
         RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
         SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
-        return eval(function, callTarget, callSrc, envir, enclos);
+        return eval(function, callTarget, callSrc, envir, enclos, depth);
     }
 
     /**
@@ -275,28 +227,32 @@ public final class REngine implements RContext.Engine {
      * N.B. The implementation should do its utmost to avoid calling this method as it is inherently
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
-     *
      */
     @SuppressWarnings("unused")
-    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, REnvironment enclos) throws PutException {
+    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, REnvironment enclos, int depth) throws PutException {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc, depth);
         return runCall(callTarget, vFrame, false, false);
     }
 
-    public Object evalPromise(RPromise promise, MaterializedFrame frame) throws RError {
+    public Object evalPromise(RPromise promise, MaterializedFrame frame) {
         return runCall(promise.getClosure().getCallTarget(), frame, false, false);
     }
 
-    public Object evalPromise(RPromise promise, SourceSection callSrc) throws RError {
+    public Object evalPromise(Closure closure, MaterializedFrame frame) {
+        return runCall(closure.getCallTarget(), frame, false, false);
+    }
+
+    public Object evalPromise(RPromise promise, SourceSection callSrc) {
         // have to do the full out eval
         try {
-            REnvironment env = promise.getEnv();
+            MaterializedFrame frame = promise.getFrame().materialize();
+            REnvironment env = REnvironment.frameToEnvironment(frame);
             assert env != null;
             Closure closure = promise.getClosure();
-            return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null);
+            return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
         } catch (PutException ex) {
             // TODO a new, rather unlikely, error
             assert false;
@@ -426,7 +382,7 @@ public final class REngine implements RContext.Engine {
             // TODO cache this
             Object resultValue = RPromise.checkEvaluate(null, result, globalPromiseProfile);
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
-            function.getTarget().call(RArguments.create(function, null, new Object[]{resultValue, RMissing.instance}));
+            function.getTarget().call(RArguments.create(function, null, 1, new Object[]{resultValue, RMissing.instance}));
         }
     }
 

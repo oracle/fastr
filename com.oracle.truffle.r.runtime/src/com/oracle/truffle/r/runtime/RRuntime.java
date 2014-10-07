@@ -138,8 +138,8 @@ public class RRuntime {
     /**
      * Create a {@link VirtualFrame} for {@link RFunction} {@code function}.
      */
-    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc) {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc), new FrameDescriptor());
+    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc, int depth) {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc, depth), new FrameDescriptor());
     }
 
     public static RComplex createComplexNA() {

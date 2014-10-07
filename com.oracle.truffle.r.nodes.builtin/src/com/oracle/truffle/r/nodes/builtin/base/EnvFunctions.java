@@ -51,22 +51,21 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected REnvironment asEnvironment(double dpos) {
+        protected REnvironment asEnvironment(VirtualFrame frame, double dpos) {
             controlVisibility();
-            return asEnvironmentInt((int) dpos);
+            return asEnvironmentInt(frame, (int) dpos);
         }
 
         @Specialization
-        protected REnvironment asEnvironmentInt(int pos) {
+        protected REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
             controlVisibility();
             if (pos == -1) {
-                Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+                Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
                     return REnvironment.frameToEnvironment(callerFrame.materialize());
                 }
-
             }
             String[] searchPath = REnvironment.searchPath();
             if (pos == searchPath.length + 1) {
@@ -180,9 +179,9 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected Object environment(@SuppressWarnings("unused") RNull x) {
+        protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
             controlVisibility();
-            Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+            Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             return REnvironment.frameToEnvironment(callerFrame.materialize());
         }
 

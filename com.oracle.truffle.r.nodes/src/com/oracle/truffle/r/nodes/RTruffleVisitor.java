@@ -155,7 +155,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             RNode[] defaultValues = new RNode[argumentsList.size()];
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size() + 1];
-                EnvProvider envProvider = new EnvProvider();
                 int index = 0;
                 for (ArgNode arg : argumentsList) {
                     // Parse argument's default value
@@ -168,7 +167,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     }
 
                     // Create an initialization statement
-                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index, envProvider), true, false);
+                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index), true, false);
 
                     // Store formal arguments
                     argumentNames[index] = RRuntime.toString(arg.getName());
@@ -408,8 +407,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String vSymbol = RRuntime.toString(varAST.getVariable());
 
             RNode[] seq = createReplacementSequence();
-            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol,
-                            RType.Any, varAST.shouldCopyValue());
+            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                            varAST.shouldCopyValue());
             final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
             String rhsSymbolString = RRuntime.toString(rhsSymbol);
             RNode rhsAccess = ReadVariableNode.create(null, rhsSymbolString, RType.Any, false);
@@ -430,8 +429,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String vSymbol = RRuntime.toString(varAST.getVariable());
             RNode[] seq = new RNode[3];
 
-            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol,
-                            RType.Any, varAST.shouldCopyValue());
+            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                            varAST.shouldCopyValue());
             final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
 
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
@@ -447,8 +446,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
             String vSymbol = RRuntime.toString(varAST.getVariable());
             RNode[] seq = createReplacementSequence();
-            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol,
-                            RType.Any, varAST.shouldCopyValue());
+            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                            varAST.shouldCopyValue());
             final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
             String rhsSymbolString = RRuntime.toString(rhsSymbol);
             RNode rhsAccess = ReadVariableNode.create(null, rhsSymbolString, RType.Any, false);
@@ -639,8 +638,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         String vSymbol = RRuntime.toString(varAST.getVariable());
 
         RNode[] seq = createReplacementSequence();
-        ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol,
-                        RType.Any, varAST.shouldCopyValue());
+        ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                        varAST.shouldCopyValue());
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
         String rhsSymbolString = RRuntime.toString(rhsSymbol);
         RNode rhsAccess = ReadVariableNode.create(null, rhsSymbolString, RType.Any, false);

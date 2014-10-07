@@ -23,65 +23,58 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
- * Denotes an (unevaluated) element of, e.g. an {@link RExpression}.
+ * Denotes an (unevaluated) R language element. It is equivalent to a LANGSXP value in GnuR. It
+ * would be more correct to be named {@code RCall} since all LANGSXP values in (Gnu)R are in fact
+ * function calls (although not currently in FastR). Therefore a {@code call} is represented by an
+ * instance of this type, and an {@code expression} ({@link RExpression}) is a list of such
+ * instances. R allows a language element to be treated as a list, hence the support for
+ * {@link RAbstractContainer}, which is implemented via AST walk operations.
+ *
+ * The representation is inherited from {@link RLanguageRep}. This is a Truffle AST ({@code RNode}),
+ * although that type is not statically used here due to project circularities. A related
+ * consequence is the the implementation of the {@link RAbstractContainer} methods are delegated to
+ * a helper class from a project that can access {@code RNode}.
+ *
+ *
  */
 @ValueType
-public class RLanguage implements RShareable, RAbstractContainer {
+public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable {
 
-    public static enum Type {
-        RNODE,
-        FUNCALL;
-    }
-
-    private final RList data;
-
-    private final Type type;
-
-    public RLanguage(RList data, Type type) {
-        this.data = data;
-        this.type = type;
-    }
+    private RAttributes attributes;
+    /**
+     * Lazily computed value.
+     */
+    private int length = -1;
 
     public RLanguage(Object rep) {
-        this.data = RDataFactory.createList(new Object[]{rep});
-        this.type = Type.RNODE;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public Object getRep() {
-        // this is meant to be used only for language objects that contain one RNode
-        assert type == Type.RNODE && data.getLength() == 1;
-        return data.getDataAt(0);
-    }
-
-    public RList getList() {
-        return data;
-    }
-
-    public Object getDataAt(int index) {
-        return data.getDataAt(index);
-    }
-
-    public RAttributes initAttributes() {
-        return data.initAttributes();
+        super(rep);
     }
 
     public RAttributes getAttributes() {
-        return data.getAttributes();
+        return attributes;
+    }
+
+    public RAttributes initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributes.create();
+        }
+        return attributes;
     }
 
     public int getLength() {
-        return data.getLength();
+        if (length < 0) {
+            length = RContext.getRASTHelper().getLength(this);
+        }
+        return length;
     }
 
     public int[] getDimensions() {
-        return data.getDimensions();
+        // TODO
+        return null;
     }
 
     public Class<?> getElementClass() {
@@ -89,61 +82,44 @@ public class RLanguage implements RShareable, RAbstractContainer {
     }
 
     public RVector materializeNonSharedVector() {
-        return data.materializeNonSharedVector();
+        assert false;
+        return null;
+    }
+
+    public RShareable materializeToShareable() {
+        assert false;
+        return null;
     }
 
     public Object getDataAtAsObject(int index) {
-        return data.getDataAtAsObject(index);
+        return RContext.getRASTHelper().getDataAtAsObject(this, index);
     }
 
     public Object getNames() {
-        return data.getNames();
+        // TODO
+        return null;
     }
 
     public RList getDimNames() {
-        return data.getDimNames();
+        // TODO
+        return null;
     }
 
     public Object getRowNames() {
-        return data.getRowNames();
+        // TODO
+        return null;
     }
 
     public RStringVector getClassHierarchy() {
-        return data.getClassHierarchy();
+        return null;
     }
 
     public boolean isObject() {
         return false;
     }
 
-    @Override
-    public void markNonTemporary() {
-        data.markNonTemporary();
-    }
-
-    @Override
-    public boolean isTemporary() {
-        return data.isTemporary();
-    }
-
-    @Override
-    public boolean isShared() {
-        return data.isShared();
-    }
-
-    @Override
-    public RVector makeShared() {
-        return data.makeShared();
-    }
-
-    @Override
-    public RExpression copy() {
-        return RDataFactory.createExpression((RList) data.copy());
-    }
-
-    @Override
-    public RShareable materializeToShareable() {
-        return this;
+    public RList asList() {
+        return RContext.getRASTHelper().asList(this);
     }
 
 }

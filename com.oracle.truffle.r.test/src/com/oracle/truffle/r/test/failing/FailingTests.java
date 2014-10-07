@@ -609,11 +609,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDeparseIgnore_1dc435ef27d6d10df26ec2271cb67316() {
-        assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testDeparseIgnore_9e5a5fc2f13f5ca564f74ada29302b9d() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
     }
@@ -696,16 +691,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testExpressionIgnore_7c253346f21d07a5774aff62ade64454() {
-        assertEval("{ x<-expression(1); typeof(x[[1]]) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testExpressionIgnore_e583a43a1422cdc087574d462a1e517b() {
-        assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[1]]) }");
     }
 
     @Ignore
@@ -1624,78 +1609,13 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_4d6f07ded5992a096c046ebead59dfd0() {
-        assertEval("{ substitute(x + y, list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_69aeec67da0ee58f71a5a4244df69a7c() {
-        assertEval("{ f <- function(expr) { substitute(expr) } ; f(a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_4c1a0e897f6f8dcba279129803430c82() {
-        assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(expr) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_f82a54616cf2b4be6f752e5c66c635c9() {
-        assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(dummy) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_587cbbd25dcab3e16f1b360e583c7db5() {
-        assertEval("{ delayedAssign(\"expr\", a * b) ; substitute(expr) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_dc45366e3a931d33e1c7ea987435cdd1() {
-        assertEval("{ f <- function(expr) { expr ; substitute(expr) } ; a <- 10; b <- 2; f(a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_61078b0c4da1266fe57918a4361362dd() {
-        assertEval("{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_d84d47dddb7bd0bf96bf16437eadd619() {
         assertEval("{ f <- function(y) { substitute(y) } ; f() }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_5f9847b1be03c329f3c41d8883684dc2() {
-        assertEval("{ f <- function(y) { substitute(y) } ; typeof(f()) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_8308ab3830982170f12169a348ea89e8() {
         assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_a8173ff3145e5caeadfe0a38e28a2a09() {
-        assertEval("{ f <- function(x) { g <- function() { substitute(x) } ; g() } ;  f(a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_89798b3d8963d8d31c6b22ed6bc05491() {
-        assertEval("{ substitute(a, list(a = quote(x + y), x = 1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_3e4cc116e9a592c28b2159c6e8365bfa() {
-        assertEval("{ f <- function(x = y, y = x) { substitute(x) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_1bcbef75639b8b543cc72a07279a2203() {
-        assertEval("{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_b728de23a3c96c7d1c7e179ba0cf22c8() {
-        assertEval("{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }");
     }
 
     @Ignore
@@ -1706,46 +1626,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSubstituteIgnore_9d646fcf10648fbae8e8087bb65a9bd6() {
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_844fb1f54ddd6fb3cb03e5a9d632edda() {
-        assertEval("{ f <- function(x) { substitute(x, list(a=1,b=2)) } ; f(a + b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_0083a2f370b2d901d6617b52259cd8ef() {
-        assertEval("{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_ba8b61c2d3fa9c76a2c14d5e96138f4b() {
-        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; substitute(var, env=env) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_91aaa32f72b8dab4c7856c1e7e89ed54() {
-        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_8b21e0ecb7d6143dab8b63c68608f906() {
-        assertEval("{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_6da555da9a31bfb212efe33b45c838d7() {
-        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_fc2154960706a9f7207993aa89aaca50() {
-        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f(x + z, a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstituteIgnore_b6449119b833609315c063f2a2c5a363() {
-        assertEval("{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }");
     }
 
     @Ignore

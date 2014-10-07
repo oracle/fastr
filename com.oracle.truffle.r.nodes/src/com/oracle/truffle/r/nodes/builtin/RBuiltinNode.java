@@ -102,9 +102,8 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {
         int total = builtin.getRBuiltin().parameterNames().length;
         RNode[] args = new RNode[total];
-        EnvProvider envProvider = new EnvProvider();
         for (int i = 0; i < total; i++) {
-            args[i] = AccessArgumentNode.create(i, envProvider);
+            args[i] = AccessArgumentNode.create(i);
         }
         return args;
     }

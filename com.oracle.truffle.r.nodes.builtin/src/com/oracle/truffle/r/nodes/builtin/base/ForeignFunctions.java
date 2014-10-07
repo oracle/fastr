@@ -58,7 +58,7 @@ public class ForeignFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        protected int[] checkNAs(int argIndex, int[] data) throws RError {
+        protected int[] checkNAs(int argIndex, int[] data) {
             for (int i = 0; i < data.length; i++) {
                 if (RRuntime.isNA(data[i])) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
@@ -67,7 +67,7 @@ public class ForeignFunctions {
             return data;
         }
 
-        protected double[] checkNAs(int argIndex, double[] data) throws RError {
+        protected double[] checkNAs(int argIndex, double[] data) {
             for (int i = 0; i < data.length; i++) {
                 if (!RRuntime.isFinite(data[i])) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);

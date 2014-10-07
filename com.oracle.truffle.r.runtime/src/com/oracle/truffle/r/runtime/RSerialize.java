@@ -9,16 +9,10 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
@@ -27,7 +21,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
 // Code loosely transcribed from GnuR serialize.c.
 
 /**
- * Serialize/unserialize.
+ * Serialize/unserialize. Only unserialize is implemented currently to support package loading.
  *
  */
 public class RSerialize {
@@ -93,13 +87,15 @@ public class RSerialize {
     private int refTableIndex;
     @SuppressWarnings("unused") private final RFunction hook;
     private static boolean trace;
+    private final int depth;
 
-    private RSerialize(RConnection conn) throws IOException {
-        this(conn.getInputStream(), null);
+    private RSerialize(RConnection conn, int depth) throws IOException {
+        this(conn.getInputStream(), null, depth);
     }
 
-    private RSerialize(InputStream is, RFunction hook) throws IOException {
+    private RSerialize(InputStream is, RFunction hook, int depth) throws IOException {
         this.hook = hook;
+        this.depth = depth;
         byte[] buf = new byte[2];
         is.read(buf);
         switch (buf[0]) {
@@ -142,14 +138,14 @@ public class RSerialize {
         return refTable[index - 1];
     }
 
-    public static Object unserialize(RConnection conn) throws IOException {
-        RSerialize instance = trace ? new TracingRSerialize(conn) : new RSerialize(conn);
+    public static Object unserialize(RConnection conn, int depth) throws IOException {
+        RSerialize instance = trace ? new TracingRSerialize(conn, depth) : new RSerialize(conn, depth);
         return instance.unserialize();
     }
 
-    public static Object unserialize(byte[] data, RFunction hook) throws IOException {
+    public static Object unserialize(byte[] data, RFunction hook, int depth) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        RSerialize instance = trace ? new TracingRSerialize(is, hook) : new RSerialize(is, hook);
+        RSerialize instance = trace ? new TracingRSerialize(is, hook, depth) : new RSerialize(is, hook, depth);
         return instance.unserialize();
     }
 
@@ -195,7 +191,7 @@ public class RSerialize {
 
             case NAMESPACESXP: {
                 RStringVector s = inStringVec(false);
-                return addReadRef(findNamespace(s));
+                return addReadRef(RContext.getRASTHelper().findNamespace(s, depth));
             }
 
             case VECSXP: {
@@ -311,7 +307,7 @@ public class RSerialize {
                          * (and overwrite the promise), so we fix the enclosing frame up on return.
                          */
                         RExpression expr = RContext.getEngine().parse(deparse);
-                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.emptyEnv(), 0));
+                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.emptyEnv(), 0), depth + 1);
                         func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                         result = func;
                     } catch (RContext.Engine.ParseException | PutException ex) {
@@ -399,26 +395,6 @@ public class RSerialize {
             data[i] = item;
         }
         return RDataFactory.createStringVector(data, complete);
-    }
-
-    private static RCallNode getNamespaceCall;
-
-    private static REnvironment findNamespace(RStringVector name) {
-        if (getNamespaceCall == null) {
-            try {
-                getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse("..getNamespace(name)").getDataAt(0)).getRep();
-            } catch (ParseException ex) {
-                // most unexpected
-                Utils.fail("findNameSpace");
-            }
-        }
-        RCallNode call = RCallNode.createCloneReplacingFirstArg(getNamespaceCall, ConstantNode.create(name));
-        try {
-            // TODO: should we distinguish a different RLanguage type for calls?
-            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
-        } catch (PutException ex) {
-            throw RError.error((SourceSection) null, ex);
-        }
     }
 
     private abstract static class PStream {
@@ -685,12 +661,12 @@ public class RSerialize {
     private static final class TracingRSerialize extends RSerialize {
         private int depth;
 
-        private TracingRSerialize(RConnection conn) throws IOException {
-            this(conn.getInputStream(), null);
+        private TracingRSerialize(RConnection conn, int depth) throws IOException {
+            this(conn.getInputStream(), null, depth);
         }
 
-        private TracingRSerialize(InputStream is, RFunction hook) throws IOException {
-            super(is, hook);
+        private TracingRSerialize(InputStream is, RFunction hook, int depth) throws IOException {
+            super(is, hook, depth);
         }
 
         @Override

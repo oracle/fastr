@@ -20,32 +20,45 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
-@RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class IsFinite extends RBuiltinNode {
+/**
+ * A collection of methods that need access to the AST types, needed by code that resides in the
+ * runtime project, which does not have direct access, as it would introduce project circularities.
+ *
+ */
+public interface RASTHelper {
+    /**
+     * Computes the "length" of the language element as per the R specification.
+     */
+    int getLength(RLanguage rl);
 
-    @Specialization
-    protected RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
-        controlVisibility();
-        byte[] b = new byte[vec.getLength()];
-        for (int i = 0; i < b.length; i++) {
-            b[i] = RRuntime.isFinite(vec.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-        }
-        return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
-    }
+    /**
+     * Returns the object ({@link RSymbol}, {@link RLanguage} or scalar value (e.g. {@link Double})
+     * at index {@code index}.
+     */
+    Object getDataAtAsObject(RLanguage rl, int index);
 
-    @Specialization
-    protected Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
-        controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARGUMENT_TYPE);
-    }
+    /**
+     * Converts {@code rl} to a {@link RList}.
+     */
+    RList asList(RLanguage rl);
+
+    /**
+     * Deparse {@code rl}.
+     */
+    void deparse(RDeparse.State state, RLanguage rl);
+
+    /**
+     * Deparse non-builtin function.
+     */
+    void deparse(RDeparse.State state, RFunction f);
+
+    /**
+     * Finds a namespace during unserialization.
+     */
+    REnvironment findNamespace(RStringVector name, int depth);
 }

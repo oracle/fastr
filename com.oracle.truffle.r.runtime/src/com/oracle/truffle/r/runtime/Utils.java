@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -33,8 +32,8 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 public final class Utils {
 
@@ -54,10 +53,8 @@ public final class Utils {
         return Boolean.parseBoolean(getProperty(key, dfltValue ? "true" : "false"));
     }
 
-    public static final boolean DEBUG = true;
-
     public static void debug(String msg) {
-        if (DEBUG) {
+        if (FastROptions.Debug.getValue()) {
             // CheckStyle: stop system..print check
             System.err.println(msg);
             // CheckStyle: resume system..print check
@@ -223,48 +220,12 @@ public final class Utils {
      * @param depth identifies which frame is required
      * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
      */
+    @SlowPath
     public static Frame getStackFrame(FrameAccess fa, int depth) {
-        if (depth == 0) {
-            return Truffle.getRuntime().getCurrentFrame().getFrame(fa, true);
-        }
-
-        LongAdder i = new LongAdder();
         return Truffle.getRuntime().iterateFrames(frameInstance -> {
-            Frame f = null;
-            i.increment();
-            if (i.intValue() == depth) {
-                f = frameInstance.getFrame(fa, false);
-            }
-            return f;
+            Frame f = frameInstance.getFrame(fa, false);
+            return RArguments.getDepth(f) == depth ? f : null;
         });
-    }
-
-    /**
-     * Return the depth of the stack. The "R depth" of the stack is determined by those frames that
-     * contribute to actual R function execution, hence, FastR-internal frames that are used to,
-     * e.g., evaluate promises must be left out. The same is true for substituted frames (see
-     * {@code FunctionDefinitionNode#substituteFrame}).
-     */
-    public static int stackDepth() {
-        LongAdder n = new LongAdder();
-        Object depth = Truffle.getRuntime().iterateFrames(frameInstance -> {
-            Frame frame = frameInstance.getFrame(FrameAccess.READ_ONLY, false);
-            if (REnvironment.isGlobalEnvFrame(frame)) {
-                return n.intValue();
-            }
-            boolean promise = isPromiseEvaluationFrame(frameInstance);
-            boolean substituted = isSubstitutedFrame(frame);
-            if (!promise) {
-                n.increment();
-            } else if (!substituted) {
-                n.decrement();
-            }
-            if (substituted) {
-                n.decrement();
-            }
-            return null;
-        });
-        return depth == null ? 0 : (int) depth;
     }
 
     /**
@@ -288,9 +249,8 @@ public final class Utils {
     /**
      * Retrieve the caller frame of the current frame.
      */
-    @SlowPath
-    public static Frame getCallerFrame(FrameAccess fa) {
-        return getStackFrame(fa, 1);
+    public static Frame getCallerFrame(VirtualFrame frame, FrameAccess fa) {
+        return getStackFrame(fa, RArguments.getDepth(frame) - 1);
     }
 
     /**

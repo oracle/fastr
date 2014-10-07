@@ -2535,12 +2535,9 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[2]]) }");
         assertEval("{ class(expression(1)) }");
-    }
 
-    @Test
-    @Ignore
-    public void testExpressionIgnore() {
         assertEval("{ x<-expression(1); typeof(x[[1]]) }");
+        assertEval("{ x<-expression(a); typeof(x[[1]]) }");
         assertEval("{ x<-expression(1); y<-c(x,2); typeof(y[[1]]) }");
     }
 
@@ -2570,53 +2567,57 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testSubstitute() {
-        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(1,2))) }");
-        // language is a list (of sorts)
-        assertEval("{ f<-function(...) { substitute(list(...)) }; length(f(c(1,2))) }");
-        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[1]]) }");
-        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(x=1,2))[[2]]) }");
-        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[2]][[1]]) }");
-        assertEval("{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }");
-
-        assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
-        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
-        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1,2)) }");
-
-        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }");
-    }
-
-    @Test
-    @Ignore
-    public void testSubstituteIgnore() {
-        assertEval("{ substitute(x + y, list(x=1)) }");
         assertEval("{ f <- function(expr) { substitute(expr) } ; f(a * b) }");
         assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(expr) } ; f() }");
         assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(dummy) } ; f() }");
         assertEval("{ delayedAssign(\"expr\", a * b) ; substitute(expr) }");
         assertEval("{ f <- function(expr) { expr ; substitute(expr) } ; a <- 10; b <- 2; f(a * b) }");
-        assertEval("{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }");
-        assertEval("{ f <- function(y) { substitute(y) } ; f() }");
         assertEval("{ f <- function(y) { substitute(y) } ; typeof(f()) }");
-        assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
+        assertEval("{ f <- function(y) { as.character(substitute(y)) } ; f(\"a\") }");
         assertEval("{ f <- function(x) { g <- function() { substitute(x) } ; g() } ;  f(a * b) }");
         assertEval("{ substitute(a, list(a = quote(x + y), x = 1)) }");
         assertEval("{ f <- function(x = y, y = x) { substitute(x) } ; f() }");
         assertEval("{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }");
-        assertEval("{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }"); // specific
-        // to fastr output format
-        assertEval("{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }"); // specific
-        // to fastr output format
-        assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");  // specific
-        // to fastr output format
         assertEval("{ f <- function(x) { substitute(x, list(a=1,b=2)) } ; f(a + b) }");
-        assertEval("{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }"); // specific
-        // to fastr output format
-        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; substitute(var, env=env) }");
-        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }");
-        assertEval("{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
-        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
+
         assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f(x + z, a * b) }");
         assertEval("{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(1,2))) }");
+        // language is a list (of sorts)
+        assertEval("{ f<-function(...) { substitute(list(...)) }; length(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[1]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.language(f(c(x=1,2))[[2]]) }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }");
+
+        assertEval("{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[2]][[1]]) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }");
+
+        assertEval("{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
+        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
+
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2)) }");
+        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; substitute(var, env=env) }");
+        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }");
+
+        assertEval("{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }");
+        assertEval("{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }");
+        assertEval("{ substitute(x + y, list(x=1)) }");
+        assertEval("{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSubstituteIgnore() {
+        assertEval("{ f <- function(y) { substitute(y) } ; f() }");
+        assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
+        assertEval("{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
+        assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+
     }
 
     @Test
@@ -2702,12 +2703,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-expression(1); deparse(x) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
+        assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
     }
 
     @Test
     @Ignore
     public void testDeparseIgnore() {
-        assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
         assertEval("{ f <- function() 23 ; deparse(f) }");
         assertEval("{ deparse(nrow) }");
     }

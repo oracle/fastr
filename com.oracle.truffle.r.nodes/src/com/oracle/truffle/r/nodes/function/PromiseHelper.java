@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
@@ -39,13 +38,12 @@ public class PromiseHelper {
      * Guarded by {@link RPromise#isInOriginFrame(VirtualFrame,PromiseProfile)}.
      *
      * @param frame The current {@link VirtualFrame}
-     * @param exprExecNode The {@link ExpressionExecutorNode}
+     * @param expressionInlineCache An inline cache that will be used to quickly execute expression
      * @param promise The {@link RPromise} to evaluate
      * @param profile the profile for the site that operates on the promise
-     * @return Evaluates the given {@link RPromise} in the given frame using the
-     *         {@link ExpressionExecutorNode}
+     * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
-    public static Object evaluate(VirtualFrame frame, ExpressionExecutorNode exprExecNode, RPromise promise, PromiseProfile profile) {
+    public static Object evaluate(VirtualFrame frame, InlineCacheNode<VirtualFrame, RNode> expressionInlineCache, RPromise promise, PromiseProfile profile) {
         if (promise.isEvaluated(profile) || !promise.isInOriginFrame(frame, profile)) {
             return promise.evaluate(frame, profile);
         }
@@ -60,7 +58,7 @@ public class PromiseHelper {
         try {
             promise.setUnderEvaluation(true);
 
-            Object obj = exprExecNode.execute(frame, (RNode) promise.getRep());
+            Object obj = expressionInlineCache.execute(frame, (RNode) promise.getRep());
             promise.setValue(obj);
             return obj;
         } finally {
