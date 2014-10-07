@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -33,8 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "recursive"})
 public abstract class AnyNA extends RBuiltinNode {
 
-    @Child private IsNA isna;
-    @Child private Any any;
+    @Child private IsNA isna = IsNAFactory.create(new RNode[1], null, null);
+    @Child private Any any = AnyFactory.create(new RNode[1], null, null);
 
     @Override
     public RNode[] getParameterValues() {
@@ -45,19 +46,9 @@ public abstract class AnyNA extends RBuiltinNode {
     // TODO recursive == TRUE
     protected Object anyNA(VirtualFrame frame, Object x, byte recursive) {
         if (RRuntime.fromLogical(recursive)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.nyi(getEncapsulatingSourceSection(), "recursive = TRUE not implemented");
         }
-        if (x == RNull.instance) {
-            return RRuntime.LOGICAL_FALSE;
-        }
-        if (isna == null) {
-            isna = insert(IsNAFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
-            any = insert(AnyFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
-        }
-        Object val = isna.execute(frame, x);
-        if (!(val instanceof Byte)) {
-            val = any.execute(frame, val);
-        }
-        return val;
+        return any.execute(frame, isna.execute(frame, x));
     }
 }
