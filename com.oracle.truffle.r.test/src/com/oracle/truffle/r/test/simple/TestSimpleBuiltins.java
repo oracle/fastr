@@ -2617,6 +2617,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
         assertEval("{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+        assertEval(("{ substitute(x <- x + 1, list(x = 1) }"));
 
     }
 

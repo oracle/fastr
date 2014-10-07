@@ -87,6 +87,12 @@ public abstract class GetClass extends RBuiltinNode {
         return RRuntime.CLASS_EXPRESSION;
     }
 
+    @Specialization
+    protected Object getClass(RConnection arg) {
+        controlVisibility();
+        return arg.getClassHierarchy();
+    }
+
     protected boolean isExpression(RAbstractContainer arg) {
         return arg.getElementClass() == RExpression.class;
     }
