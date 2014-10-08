@@ -27,12 +27,13 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RRawVector extends RVector implements RAbstractRawVector {
 
     private byte[] data;
 
-    private static final String[] implicitClassHrDyn = new String[]{"", RRuntime.TYPE_RAW};
+    private static final String[] implicitClassHrDyn = new String[]{"", RType.Raw.getName()};
 
     RRawVector(byte[] data, int[] dims, Object names) {
         super(true, data.length, dims, names);
@@ -132,6 +133,11 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return this;
     }
 
+    @Override
+    public RRawVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, (RRaw) o);
+    }
+
     private byte[] copyResizedData(int size, boolean fillNA) {
         byte[] newData = Arrays.copyOf(data, size);
         if (!fillNA) {
@@ -181,6 +187,6 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
 
     @Override
     protected RStringVector getImplicitClassHr() {
-        return getClassHierarchyHelper(new String[]{RRuntime.TYPE_RAW}, implicitClassHrDyn);
+        return getClassHierarchyHelper(new String[]{RType.Raw.getName()}, implicitClassHrDyn);
     }
 }

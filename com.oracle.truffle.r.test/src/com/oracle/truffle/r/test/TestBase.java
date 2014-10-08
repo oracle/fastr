@@ -12,6 +12,7 @@ package com.oracle.truffle.r.test;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.*;
 
 import static org.junit.Assert.fail;
 
@@ -465,6 +466,18 @@ public class TestBase {
         if (microTestFailed) {
             fail("one or more micro-tests failed");
         }
+    }
+
+    private static Path cwd;
+
+    /**
+     * Return a path that is relative to the cwd when running tests.
+     */
+    public static Path relativize(Path path) {
+        if (cwd == null) {
+            cwd = Paths.get(System.getProperty("user.dir"));
+        }
+        return cwd.relativize(path);
     }
 
     /**

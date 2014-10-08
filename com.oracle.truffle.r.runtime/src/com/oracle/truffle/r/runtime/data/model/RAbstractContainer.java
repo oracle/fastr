@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractContainer extends RAttributable {
+public interface RAbstractContainer extends RAttributable, RClassHierarchy {
 
     int getLength();
 
@@ -44,7 +44,9 @@ public interface RAbstractContainer extends RAttributable {
 
     Object getRowNames();
 
-    RStringVector getClassHierarchy();
-
+    /**
+     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
+     * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
+     */
     boolean isObject();
 }

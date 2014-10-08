@@ -72,12 +72,12 @@ public final class RError extends RuntimeException {
      * in a {@code try finally} block, e.g:
      *
      * <pre>
-     * boolean prev = RError.ignore(true);
+     * boolean prev = RError.ignoreError(true);
      * try {
      *     // do something that might throw an RError
      *     ...
      * } finally {
-     *     RError.ignore(prev);
+     *     RError.ignoreError(prev);
      * }
      * </pre>
      *
@@ -141,9 +141,9 @@ public final class RError extends RuntimeException {
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                 VirtualFrame frame = Utils.getActualCurrentFrame();
                 if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                    RContext.getEngine().eval((RLanguage) errorExpr, frame.materialize());
                 } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                    RContext.getEngine().eval((RExpression) errorExpr, frame.materialize());
                 }
             } else {
                 // GnuR checks this earlier when the option is set
@@ -271,6 +271,7 @@ public final class RError extends RuntimeException {
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         INVALID_SEP("invalid 'sep' specification"),
+        INVALID_LENGTH("invalid '%s' length"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("argument is not a function, character or symbol"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
@@ -459,6 +460,9 @@ public final class RError extends RuntimeException {
         INCORRECT_NUM_PROB("incorrect number of probabilities"),
         NA_IN_PROB_VECTOR("NA in probability vector"),
         NEGATIVE_PROBABILITY("non-positive probability"),
+        MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
+        INVALID_DECIMAL_SEP("invalid decimal separator"),
+        INVALID_QUOTE_SYMBOL("invalid quote symbol set"),
         // below: not exactly GNU-R message
         TOO_FEW_POSITIVE_PROBABILITY("too few positive probabilities"),
         DOTS_BOUNDS("The ... list does not contain %s elements"),
@@ -493,8 +497,7 @@ public final class RError extends RuntimeException {
         RBIND_COLUMNS_NOT_MULTIPLE("number of columns of result is not a multiple of vector length (arg 1)"),
         DATA_FRAMES_SUBSET_ACCESS("data frames subset access not supported"),
         CANNOT_ASSIGN_IN_EMPTY_ENV("cannot assign values in the empty environment"),
-        UNIMPLEMENTED_OPEN_MODE("unimplemented open mode: %s"),
-        CANNOT_OPEN_CONNECTION("cannot open connection"),
+        CANNOT_OPEN_CONNECTION("cannot open the connection"),
         ERROR_READING_CONNECTION("error reading connection: %s"),
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
@@ -545,7 +548,8 @@ public final class RError extends RuntimeException {
         QUOTE_G_ONE("only the first character of 'quote' will be used"),
         UNEXPECTED("unexpected '%s' in \"%s\""),
         FIRST_ELEMENT_USED("first element used of '%s' argument"),
-        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer");
+        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer"),
+        DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'");
 
         public final String message;
         private final boolean hasArgs;

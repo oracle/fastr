@@ -52,7 +52,7 @@ public abstract class Order extends RBuiltinNode {
     @Child private BooleanOperation ge = BinaryCompare.GREATER_EQUAL.create();
     @Child private BooleanOperation gt = BinaryCompare.GREATER_THAN.create();
 
-    // specialisations for one parameter
+    // specializations for one parameter
 
     @SuppressWarnings("unused")
     @Specialization(guards = "empty")

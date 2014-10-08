@@ -37,15 +37,16 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
     private final MaterializedFrame originalFrame;
     private final Object[] arguments;
 
-    private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc) {
+    private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
         this.originalFrame = originalFrame;
         this.arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
+        RArguments.setDepth(this, depth);
         RArguments.setFunction(this, function);
         RArguments.setCallSourceSection(this, callSrc);
     }
 
-    protected static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc) {
-        return new VirtualEvalFrame(originalFrame, function, callSrc);
+    protected static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
+        return new VirtualEvalFrame(originalFrame, function, callSrc, depth);
     }
 
     public FrameDescriptor getFrameDescriptor() {

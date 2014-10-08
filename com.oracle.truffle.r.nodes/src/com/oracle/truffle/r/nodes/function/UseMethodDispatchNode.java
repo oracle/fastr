@@ -32,7 +32,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
         // S3 method can be dispatched from top-level where there is no caller frame
         if (funFrame == null) {
             funFrame = frame;
@@ -46,7 +46,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
-        Frame funFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
         // S3 method can be dispatched from top-level where there is no caller frame
         if (funFrame == null) {
             funFrame = frame;
@@ -154,7 +154,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @SlowPath
     private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, funCallNode.getSourceSection(), arguments, argNames);
+        Object[] argObject = RArguments.createS3Args(targetFunction, funCallNode.getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);

@@ -46,7 +46,7 @@ public abstract class Exists extends RBuiltinNode {
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance),
-                        ConstantNode.create(RRuntime.TYPE_ANY), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+                        ConstantNode.create(RType.Any.getName()), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
     @Specialization(guards = "noEnv")

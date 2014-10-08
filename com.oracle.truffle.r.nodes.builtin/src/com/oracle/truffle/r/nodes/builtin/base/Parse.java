@@ -41,11 +41,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * </pre>
  */
 @RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"})
-public abstract class Parse extends RInvisibleBuiltinNode {
+public abstract class Parse extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object parse(RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
+    protected Object parse(RConnection conn, RNull n, RNull text, String prompt, Object srcFile, String encoding) {
         controlVisibility();
         try {
             String[] lines = conn.readLines(0);
@@ -57,7 +57,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object parse(RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
+    protected Object parse(RConnection conn, double n, RNull text, String prompt, Object srcFile, String encoding) {
         controlVisibility();
         try {
             String[] lines = conn.readLines((int) n);
@@ -68,19 +68,17 @@ public abstract class Parse extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isText")
-    protected Object parse(RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
+    @Specialization
+    protected Object parse(RConnection conn, RNull n, String text, String prompt, Object srcFile, String encoding) {
         controlVisibility();
+        if (text.length() == 0) {
+            return RDataFactory.createExpression(RDataFactory.createList());
+        }
         try {
             return doParse(text);
         } catch (ParseException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isText(RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
-        return text.length() > 0;
     }
 
     @SlowPath

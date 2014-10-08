@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -48,11 +49,13 @@ public abstract class Get extends RBuiltinNode {
     @Child private ReadVariableNode lookUpNoInherit;
 
     @CompilationFinal private String lastX;
-    @CompilationFinal private String lastMode;
+    @CompilationFinal private RType lastMode;
+
+    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.TYPE_ANY),
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName()),
                         ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
@@ -64,10 +67,11 @@ public abstract class Get extends RBuiltinNode {
         controlVisibility();
         boolean doesInherit = inherits == RRuntime.LOGICAL_TRUE;
         ReadVariableNode lookup = null;
+        RType modeType = RType.fromString(modeProfile.profile(mode));
         if (doesInherit) {
-            lookup = lookUpInherit = setLookUp(lookUpInherit, x, mode, doesInherit);
+            lookup = lookUpInherit = setLookUp(lookUpInherit, x, modeType, doesInherit);
         } else {
-            lookup = lookUpNoInherit = setLookUp(lookUpNoInherit, x, mode, doesInherit);
+            lookup = lookUpNoInherit = setLookUp(lookUpNoInherit, x, modeType, doesInherit);
         }
         try {
             // FIXME: this will not compile, since lookup is not compilation final
@@ -77,7 +81,7 @@ public abstract class Get extends RBuiltinNode {
         }
     }
 
-    private ReadVariableNode setLookUp(ReadVariableNode lookup, final String x, final String mode, boolean inherits) {
+    private ReadVariableNode setLookUp(ReadVariableNode lookup, String x, RType mode, boolean inherits) {
         if (lookup == null || !lastX.equals(x) || !lastMode.equals(mode)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastX = x;

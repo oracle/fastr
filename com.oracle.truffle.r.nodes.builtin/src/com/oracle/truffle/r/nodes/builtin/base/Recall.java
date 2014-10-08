@@ -59,7 +59,7 @@ public class Recall extends RCustomBuiltinNode {
         }
 
         // Use arguments in "..." as arguments for RECALL call
-        Object[] argsObject = RArguments.create(function, callNode.getSourceSection(), createArgs(frame, arguments[0]));
+        Object[] argsObject = RArguments.create(function, callNode.getSourceSection(), RArguments.getDepth(frame) + 1, createArgs(frame, arguments[0]));
         return callNode.call(frame, argsObject);
     }
 

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -47,6 +48,8 @@ public class ForeignFunctions {
     public abstract static class FortranCAdapter extends RBuiltinNode {
         protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
+        protected final BranchProfile errorProfile = new BranchProfile();
+
         @Override
         public String[] getParameterNames() {
             return PARAMETER_NAMES;
@@ -58,18 +61,20 @@ public class ForeignFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        protected int[] checkNAs(int argIndex, int[] data) throws RError {
+        protected int[] checkNAs(int argIndex, int[] data) {
             for (int i = 0; i < data.length; i++) {
                 if (RRuntime.isNA(data[i])) {
+                    errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
         }
 
-        protected double[] checkNAs(int argIndex, double[] data) throws RError {
+        protected double[] checkNAs(int argIndex, double[] data) {
             for (int i = 0; i < data.length; i++) {
                 if (!RRuntime.isFinite(data[i])) {
+                    errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
@@ -117,6 +122,7 @@ public class ForeignFunctions {
                 // @formatter:on
                 return RDataFactory.createList(data, DQRDC2_NAMES);
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
             }
         }
@@ -129,10 +135,9 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrcf")
-        protected RList fortranDqrcf(String f, Object args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrcf(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
-            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
-            Object[] argValues = ((RArgsValuesAndNames) args).getValues();
+            Object[] argValues = args.getValues();
             try {
                 RDoubleVector xVec = (RDoubleVector) argValues[0];
                 int n = (int) argValues[1];
@@ -161,10 +166,11 @@ public class ForeignFunctions {
                             coef,
                             RDataFactory.createIntVector(info, RDataFactory.COMPLETE_VECTOR),
                 };
-            // @formatter:on
+                // @formatter:on
                 return RDataFactory.createList(data, DQRCF_NAMES);
 
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
             }
         }
@@ -189,12 +195,12 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RList c(String f, Object args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
-            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
-            Object[] argValues = ((RArgsValuesAndNames) args).getValues();
+            Object[] argValues = args.getValues();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
             }
             boolean dupArgs = RRuntime.fromLogical(dup);
@@ -230,12 +236,14 @@ public class ForeignFunctions {
                     argTypes[i] = SCALAR_LOGICAL;
                     nativeArgs[i] = checkNAs(i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
                 } else {
+                    errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
             try {
                 RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
             } catch (Throwable t) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
@@ -290,6 +298,10 @@ public class ForeignFunctions {
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class DotCall extends RBuiltinNode {
 
+        private final BranchProfile errorProfile = new BranchProfile();
+        private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
+
         @Child private CastComplexNode castComplex;
         @Child private CastLogicalNode castLogical;
         @Child private CastToVectorNode castVector;
@@ -326,22 +338,22 @@ public class ForeignFunctions {
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
         @Specialization(guards = "fft")
-        protected RComplexVector callFFT(VirtualFrame frame, RList f, Object args, RMissing packageName) {
+        protected RComplexVector callFFT(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
-            Object[] argValues = ((RArgsValuesAndNames) args).getValues();
+            Object[] argValues = args.getValues();
             RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, argValues[0]));
             double[] z = zVec.getDataTemp();
             RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, argValues[1]));
             int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;
-            if (zVec.getLength() > 1) {
+            if (zVecLgt1.profile(zVec.getLength() > 1)) {
                 int[] maxf = new int[1];
                 int[] maxp = new int[1];
-                if (zVec.getDimensions() == null) {
+                if (noDims.profile(zVec.getDimensions() == null)) {
                     int n = zVec.getLength();
                     RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
                     if (maxf[0] == 0) {
+                        errorProfile.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                     }
                     double[] work = new double[4 * maxf[0]];
@@ -357,6 +369,7 @@ public class ForeignFunctions {
                         if (d[i] > 1) {
                             RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(d[i], maxf, maxp);
                             if (maxf[0] == 0) {
+                                errorProfile.enter();
                                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                             }
                             if (maxf[0] > maxmaxf) {
@@ -388,6 +401,11 @@ public class ForeignFunctions {
             return RDataFactory.createComplexVector(z, zVec.isComplete(), zVec.getDimensions());
         }
 
+        /**
+         * This is an inefficient guard but it matters little unless there are many different calls
+         * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a
+         * more efficient basis.
+         */
         private static boolean matchName(RList f, String name) {
             if (f.getNames() == RNull.instance) {
                 return false;
@@ -436,11 +454,13 @@ public class ForeignFunctions {
         public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             try {
                 return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getValues());
             } catch (Throwable t) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
         }

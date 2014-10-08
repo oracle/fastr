@@ -28,6 +28,7 @@ import java.util.regex.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RPackages.RPackage;
@@ -231,7 +232,7 @@ public abstract class REnvironment implements RAttributable {
         initSearchList();
 
         // load base package first
-        RContext.getEngine().loadDefaultPackage("base", baseFrame, baseEnv);
+        RContext.getEngine().loadDefaultPackage("base", baseFrame.materialize(), baseEnv);
     }
 
     public static void packagesInitialize(ArrayList<RPackage> rPackages) {
@@ -240,7 +241,7 @@ public abstract class REnvironment implements RAttributable {
         for (RPackage rPackage : rPackages) {
             VirtualFrame pkgFrame = RRuntime.createNonFunctionFrame();
             Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
-            RContext.getEngine().loadDefaultPackage(rPackage.name, pkgFrame, pkgEnv);
+            RContext.getEngine().loadDefaultPackage(rPackage.name, pkgFrame.materialize(), pkgEnv);
             attach(2, pkgEnv);
             pkgParent = pkgEnv;
         }
@@ -452,6 +453,23 @@ public abstract class REnvironment implements RAttributable {
             env = REnvironment.Function.create(createEnclosingEnvironments(RArguments.getEnclosingFrame(frame)), frame);
         }
         return env;
+    }
+
+    /**
+     * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins,
+     * e.g. {@code substitute}.
+     */
+    public static REnvironment createFromList(RList list, REnvironment parent) {
+        REnvironment result = new NewEnv(parent, 0);
+        RStringVector names = (RStringVector) list.getNames();
+        for (int i = 0; i < list.getLength(); i++) {
+            try {
+                result.put(names.getDataAt(i), list.getDataAt(i));
+            } catch (PutException ex) {
+                throw RError.error((SourceSection) null, ex);
+            }
+        }
+        return result;
     }
 
     // END of static methods

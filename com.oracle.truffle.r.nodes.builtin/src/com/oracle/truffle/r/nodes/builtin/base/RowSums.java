@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -21,7 +22,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-// Implements .rowSums
 @RBuiltin(name = "rowSums", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
 public abstract class RowSums extends RBuiltinNode {
 
@@ -32,7 +32,10 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+
     private final NACheck na = NACheck.create();
+
+    private final BinaryConditionProfile removeNA = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
@@ -41,124 +44,91 @@ public abstract class RowSums extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "!isNaRm")
-    protected RDoubleVector rowSumsNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization
+    protected RDoubleVector rowSums(RDoubleVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         boolean isComplete = true;
+        final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
         nextRow: for (int i = 0; i < rowNum; ++i) {
             double sum = 0;
             for (int c = 0; c < colNum; ++c) {
                 double el = x.getDataAt(c * rowNum + i);
-                if (na.check(el)) {
-                    result[i] = RRuntime.DOUBLE_NA;
-                    continue nextRow;
+                if (rna) {
+                    if (!na.check(el) && !Double.isNaN(el)) {
+                        sum = add.op(sum, el);
+                    }
+                } else {
+                    if (na.check(el)) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                        continue nextRow;
+                    }
+                    if (Double.isNaN(el)) {
+                        result[i] = Double.NaN;
+                        isComplete = false;
+                        continue nextRow;
+                    }
+                    sum = add.op(sum, el);
                 }
-                if (Double.isNaN(el)) {
-                    result[i] = Double.NaN;
-                    isComplete = false;
-                    continue nextRow;
-                }
-                sum = add.op(sum, el);
             }
             result[i] = sum;
         }
         return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
-    @Specialization(guards = "isNaRm")
-    protected RDoubleVector rowSumsNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization
+    protected RDoubleVector rowSums(RLogicalVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
-        na.enable(x);
-        for (int i = 0; i < rowNum; ++i) {
-            double sum = 0;
-            for (int c = 0; c < colNum; ++c) {
-                double el = x.getDataAt(c * rowNum + i);
-                if (!na.check(el) && !Double.isNaN(el)) {
-                    sum = add.op(sum, el);
-                }
-            }
-            result[i] = sum;
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization(guards = "!isNaRm")
-    protected RDoubleVector rowSumsNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
-        controlVisibility();
-        double[] result = new double[rowNum];
+        final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
         nextRow: for (int i = 0; i < rowNum; ++i) {
             double sum = 0;
             for (int c = 0; c < colNum; ++c) {
                 byte el = x.getDataAt(c * rowNum + i);
-                if (na.check(el)) {
-                    result[i] = RRuntime.DOUBLE_NA;
-                    continue nextRow;
+                if (rna) {
+                    if (!na.check(el)) {
+                        sum = add.op(sum, el);
+                    }
+                } else {
+                    if (na.check(el)) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                        continue nextRow;
+                    }
+                    sum = add.op(sum, el);
                 }
-                sum = add.op(sum, el);
             }
             result[i] = sum;
         }
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm")
-    protected RDoubleVector rowSumsNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    @Specialization
+    protected RDoubleVector rowSums(RIntVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
-        na.enable(x);
-        for (int i = 0; i < rowNum; ++i) {
-            double sum = 0;
-            for (int c = 0; c < colNum; ++c) {
-                byte el = x.getDataAt(c * rowNum + i);
-                if (!na.check(el)) {
-                    sum = add.op(sum, el);
-                }
-            }
-            result[i] = sum;
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization(guards = "!isNaRm")
-    protected RDoubleVector rowSumsNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
-        controlVisibility();
-        double[] result = new double[rowNum];
+        final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
         nextRow: for (int i = 0; i < rowNum; ++i) {
             double sum = 0;
             for (int c = 0; c < colNum; ++c) {
                 int el = x.getDataAt(c * rowNum + i);
-                if (na.check(el)) {
-                    result[i] = RRuntime.DOUBLE_NA;
-                    continue nextRow;
-                }
-                sum = add.op(sum, el);
-            }
-            result[i] = sum;
-        }
-        return RDataFactory.createDoubleVector(result, na.neverSeenNA());
-    }
-
-    @Specialization(guards = "isNaRm")
-    protected RDoubleVector rowSumsNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
-        controlVisibility();
-        double[] result = new double[rowNum];
-        na.enable(x);
-        for (int i = 0; i < rowNum; ++i) {
-            double sum = 0;
-            for (int c = 0; c < colNum; ++c) {
-                int el = x.getDataAt(c * rowNum + i);
-                if (!na.check(el)) {
+                if (rna) {
+                    if (!na.check(el)) {
+                        sum = add.op(sum, el);
+                    }
+                } else {
+                    if (na.check(el)) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                        continue nextRow;
+                    }
                     sum = add.op(sum, el);
                 }
             }
             result[i] = sum;
         }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
@@ -168,18 +138,4 @@ public abstract class RowSums extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isNaRm(RDoubleVector x, int rowNum, int colNum, byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isNaRm(RIntVector x, int rowNum, int colNum, byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isNaRm(RLogicalVector x, int rowNum, int colNum, byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
 }

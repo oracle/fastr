@@ -300,6 +300,16 @@ public abstract class CastLogicalNode extends CastNode {
         throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "logical");
     }
 
+    @Specialization
+    protected RArgsValuesAndNames doArgsValueAndNames(RArgsValuesAndNames values) {
+        return values;
+    }
+
+    @Specialization
+    protected RMissing doMissing(RMissing missing) {
+        return missing;
+    }
+
     @Fallback
     @SlowPath
     public int doOther(Object operand) {

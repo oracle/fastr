@@ -33,8 +33,8 @@ public abstract class GetClass extends RBuiltinNode {
     protected Object getClass(RAbstractContainer arg) {
         controlVisibility();
         final String klass = arg.getClassHierarchy().getDataAt(0);
-        if (klass.equals(RRuntime.TYPE_DOUBLE)) {
-            return RRuntime.TYPE_NUMERIC;
+        if (klass.equals(RType.Double.getName())) {
+            return RType.Numeric.getName();
         }
         return klass;
     }
@@ -42,19 +42,19 @@ public abstract class GetClass extends RBuiltinNode {
     @Specialization
     protected Object getClass(@SuppressWarnings("unused") RFunction arg) {
         controlVisibility();
-        return RRuntime.TYPE_FUNCTION;
+        return RType.Function.getName();
     }
 
     @Specialization
     protected Object getClass(@SuppressWarnings("unused") RFormula arg) {
         controlVisibility();
-        return RRuntime.TYPE_FORMULA;
+        return RType.Formula.getName();
     }
 
     @Specialization
     protected Object getClass(@SuppressWarnings("unused") RNull arg) {
         controlVisibility();
-        return RRuntime.NULL;
+        return RType.Null.getName();
     }
 
     @Specialization
@@ -66,13 +66,13 @@ public abstract class GetClass extends RBuiltinNode {
     @Specialization
     protected Object getClass(@SuppressWarnings("unused") REnvironment arg) {
         controlVisibility();
-        return RRuntime.TYPE_ENVIRONMENT;
+        return RType.Environment.getName();
     }
 
     @Specialization
     protected Object getClass(@SuppressWarnings("unused") RPairList arg) {
         controlVisibility();
-        return RRuntime.TYPE_PAIR_LIST;
+        return RType.PairList.getName();
     }
 
     @Specialization
@@ -85,6 +85,12 @@ public abstract class GetClass extends RBuiltinNode {
     protected Object getClass(@SuppressWarnings("unused") RExpression arg) {
         controlVisibility();
         return RRuntime.CLASS_EXPRESSION;
+    }
+
+    @Specialization
+    protected Object getClass(RConnection arg) {
+        controlVisibility();
+        return arg.getClassHierarchy();
     }
 
     protected boolean isExpression(RAbstractContainer arg) {

@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,29 +35,18 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "any", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
-@SuppressWarnings("unused")
 public abstract class Any extends RBuiltinNode {
 
-    private final NACheck check = NACheck.create();
+    private final NACheck naCheck = NACheck.create();
 
     @Child private CastLogicalNode castLogicalNode;
 
     public abstract Object execute(VirtualFrame frame, Object o);
 
-    private byte castLogical(VirtualFrame frame, Object o) {
-        if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
-        }
-        return (byte) castLogicalNode.executeByte(frame, o);
-    }
-
-    private RLogicalVector castLogicalVector(VirtualFrame frame, Object o) {
-        if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
-        }
-        return (RLogicalVector) castLogicalNode.executeLogical(frame, o);
+    @CreateCast("arguments")
+    public RNode[] castArguments(RNode[] arguments) {
+        arguments[0] = CastLogicalNodeFactory.create(arguments[0], true, false, false);
+        return arguments;
     }
 
     @Specialization
@@ -66,118 +56,56 @@ public abstract class Any extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte any(int value) {
-        controlVisibility();
-        check.enable(value);
-        return check.convertIntToLogical(value);
-    }
-
-    @Specialization
-    protected byte any(double value) {
-        controlVisibility();
-        check.enable(value);
-        return check.convertDoubleToLogical(value);
-    }
-
-    @Specialization
-    protected byte any(RComplex value) {
-        controlVisibility();
-        check.enable(value);
-        return check.convertComplexToLogical(value);
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, String value) {
-        controlVisibility();
-        check.enable(value);
-        return check.convertStringToLogical(value);
-    }
-
-    @Specialization
-    protected byte any(RNull vector) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
-    protected byte any(RMissing vector) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
     protected byte any(RLogicalVector vector) {
         controlVisibility();
-        check.enable(vector);
+        return accumulate(vector);
+    }
+
+    @Specialization
+    protected byte any(@SuppressWarnings("unused") RNull vector) {
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte any(@SuppressWarnings("unused") RMissing vector) {
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte any(VirtualFrame frame, RArgsValuesAndNames args) {
+        if (castLogicalNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
+        }
+        controlVisibility();
         boolean seenNA = false;
-        for (int i = 0; i < vector.getLength(); i++) {
-            byte b = vector.getDataAt(i);
-            if (check.check(b)) {
+        Object[] argValues = args.getValues();
+        for (Object argValue : argValues) {
+            byte result;
+            if (argValue instanceof RVector || argValue instanceof RSequence) {
+                result = accumulate((RLogicalVector) castLogicalNode.executeLogical(frame, argValue));
+            } else {
+                result = (byte) castLogicalNode.executeByte(frame, argValue);
+            }
+            if (RRuntime.isNA(result)) {
                 seenNA = true;
-            } else if (b == RRuntime.LOGICAL_TRUE) {
+            } else if (result == RRuntime.LOGICAL_TRUE) {
                 return RRuntime.LOGICAL_TRUE;
             }
         }
         return seenNA ? RRuntime.LOGICAL_NA : RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization
-    protected byte any(VirtualFrame frame, RIntVector vector) {
-        controlVisibility();
-        return any(castLogicalVector(frame, vector));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RStringVector vector) {
-        controlVisibility();
-        return any(castLogicalVector(frame, vector));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RDoubleVector vector) {
-        controlVisibility();
-        return any(castLogicalVector(frame, vector));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RComplexVector vector) {
-        controlVisibility();
-        return any(castLogicalVector(frame, vector));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RDoubleSequence sequence) {
-        controlVisibility();
-        return any(castLogicalVector(frame, sequence));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RIntSequence sequence) {
-        controlVisibility();
-        return any(castLogicalVector(frame, sequence));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RRawVector vector) {
-        controlVisibility();
-        return any(castLogicalVector(frame, vector));
-    }
-
-    @Specialization
-    protected byte any(VirtualFrame frame, RArgsValuesAndNames args) {
-        controlVisibility();
+    private byte accumulate(RLogicalVector vector) {
+        naCheck.enable(vector);
         boolean seenNA = false;
-        Object[] argValues = args.getValues();
-        for (int i = 0; i < argValues.length; i++) {
-            byte result;
-            if (argValues[i] instanceof RVector || argValues[i] instanceof RSequence) {
-                result = any(castLogicalVector(frame, argValues[i]));
-            } else {
-                result = any(castLogical(frame, argValues[i]));
-            }
-            if (RRuntime.isNA(result)) {
+        for (int i = 0; i < vector.getLength(); i++) {
+            byte b = vector.getDataAt(i);
+            if (naCheck.check(b)) {
                 seenNA = true;
-            } else if (result == RRuntime.LOGICAL_TRUE) {
+            } else if (b == RRuntime.LOGICAL_TRUE) {
                 return RRuntime.LOGICAL_TRUE;
             }
         }

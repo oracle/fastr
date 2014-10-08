@@ -2,39 +2,47 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
- * This is meant to monitor updates performed on its associated {@link FrameSlot}. For those who are
- * interested (e.g., Promises optimizations), it provides an {@link Assumption} on whether a value
- * has changed since they last checked.
+ * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot} holds an
+ * {@link Assumption} in it's "info" field. This assumption is valid as long as no non-local update
+ * has ever taken place. interested (e.g., Promises optimizations), it provides an
+ * {@link Assumption} on whether a value has changed since they last checked.
  *
- * @see #observeSlot()
- * @see #invalidate()
+ * @see #invalidate(Object)
  */
-public class FrameSlotChangeMonitor {
-    private static final String ASSUMPTION_NAME = new String("slot change monitor");
-
-    private Assumption slotNotChanged = null;
+public final class FrameSlotChangeMonitor {
+    private static final String ASSUMPTION_NAME = "slot change monitor";
 
     /**
-     * @return An {@link Assumption} that can tell whether the associated {@link FrameSlot} had
-     *         changed since the call to this method.
+     * @return TODO
      */
-    public Assumption observeSlot() {
-        if (slotNotChanged == null) {
-            slotNotChanged = Truffle.getRuntime().createAssumption(ASSUMPTION_NAME);
-        }
-        return slotNotChanged;
+    public static Assumption createMonitor() {
+        return Truffle.getRuntime().createAssumption(ASSUMPTION_NAME);
     }
 
     /**
-     * Has to be called on every update of the {@link FrameSlot} this {@link FrameSlotChangeMonitor}
-     * belongs to.
+     * @see #invalidate(Object)
      */
-    public void invalidate() {
-        if (slotNotChanged != null) {
-            slotNotChanged.invalidate();
-            slotNotChanged = null;
+    public static void invalidate(FrameSlot slot) {
+        invalidate(slot.getInfo());
+    }
+
+    public static void checkAndUpdate(FrameSlot slot) {
+        invalidate(slot);
+    }
+
+    /**
+     * Assumes info to be an {@link Assumption} attached to a {@link FrameSlot} and invalidates it
+     *
+     * @param info Assumed to be an Assumption, throws an {@link RInternalError} otherwise
+     */
+    public static void invalidate(Object info) {
+        if (!(info instanceof Assumption)) {
+            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold an Assumption in it's info field!");
         }
+        Assumption notChangedLocally = (Assumption) info;
+        notChangedLocally.invalidate();
     }
 }

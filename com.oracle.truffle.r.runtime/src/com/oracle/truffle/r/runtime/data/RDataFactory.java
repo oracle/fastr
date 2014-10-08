@@ -329,19 +329,11 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RLanguage createLanguage(RList list, RLanguage.Type type) {
-        return traceDataCreated(new RLanguage(list, type));
-    }
-
     @SlowPath
     public static RPromise createPromise(Object rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?
         Closure closure = Closure.create(rep);
-        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env, closure));
-    }
-
-    public static RPromise createPromise(Object rep) {
-        return createPromise(rep, null);
+        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env.getFrame(), closure));
     }
 
 }

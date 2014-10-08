@@ -73,42 +73,9 @@ public class RRuntime {
     public static final byte LOGICAL_FALSE = 0;
     public static final byte LOGICAL_NA = -1;
 
-    public static final String TYPE_ANY = new String("any");
-    public static final String TYPE_NUMERIC = new String("numeric");
-    public static final String TYPE_DOUBLE = new String("double");
-    public static final String TYPE_INTEGER = new String("integer");
-    public static final String TYPE_COMPLEX = new String("complex");
-    public static final String TYPE_CHARACTER = new String("character");
-    public static final String TYPE_LOGICAL = new String("logical");
-    public static final String TYPE_RAW = new String("raw");
-    public static final String TYPE_LIST = new String("list");
-    public static final String TYPE_FORMULA = new String("formula");
-    public static final String TYPE_FUNCTION = new String("function");
-    public static final String TYPE_MATRIX = new String("matrix");
-    public static final String TYPE_ARRAY = new String("array");
-    public static final String TYPE_CLOSURE = new String("closure");
-    public static final String TYPE_BUILTIN = new String("builtin");
-    public static final String TYPE_SPECIAL = new String("special");
-    public static final String TYPE_DATA_FRAME = new String("data.frame");
-    public static final String TYPE_FACTOR = new String("factor");
-    public static final String TYPE_SYMBOL = new String("symbol");
     public static final String CLASS_SYMBOL = new String("name");
-    public static final String TYPE_ENVIRONMENT = new String("environment");
-    public static final String TYPE_PAIR_LIST = new String("pairlist");
     public static final String CLASS_LANGUAGE = new String("call");
     public static final String CLASS_EXPRESSION = new String("expression");
-    public static final String TYPE_CALL = new String("call");
-
-    // Defunct types
-    public static final String REAL = new String("real");
-    public static final String SINGLE = new String("single");
-
-    public static final String TYPE_NUMERIC_CAP = new String("Numeric");
-    public static final String TYPE_INTEGER_CAP = new String("Integer");
-    public static final String TYPE_COMPLEX_CAP = new String("Complex");
-    public static final String TYPE_CHARACTER_CAP = new String("Character");
-    public static final String TYPE_LOGICAL_CAP = new String("Logical");
-    public static final String TYPE_RAW_CAP = new String("Raw");
 
     public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
@@ -129,8 +96,8 @@ public class RRuntime {
     public static final String PREVIOUS_ATTR_KEY = "previous";
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
-    public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
-    public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};
+    public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
+    public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
 
     public static final String WHICH = "which";
 
@@ -171,8 +138,8 @@ public class RRuntime {
     /**
      * Create a {@link VirtualFrame} for {@link RFunction} {@code function}.
      */
-    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc) {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc), new FrameDescriptor());
+    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc, int depth) {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc, depth), new FrameDescriptor());
     }
 
     public static RComplex createComplexNA() {
@@ -186,17 +153,17 @@ public class RRuntime {
     @SlowPath
     public static String classToString(Class<?> c, boolean numeric) {
         if (c == RLogical.class) {
-            return TYPE_LOGICAL;
+            return RType.Logical.getName();
         } else if (c == RInt.class) {
-            return TYPE_INTEGER;
+            return RType.Integer.getName();
         } else if (c == RDouble.class) {
-            return numeric ? TYPE_NUMERIC : TYPE_DOUBLE;
+            return numeric ? RType.Numeric.getName() : RType.Double.getName();
         } else if (c == RComplex.class) {
-            return TYPE_COMPLEX;
+            return RType.Complex.getName();
         } else if (c == RRaw.class) {
-            return TYPE_RAW;
+            return RType.Raw.getName();
         } else if (c == RString.class) {
-            return TYPE_CHARACTER;
+            return RType.Character.getName();
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
@@ -210,17 +177,17 @@ public class RRuntime {
     @SlowPath
     public static String classToStringCap(Class<?> c) {
         if (c == RLogical.class) {
-            return TYPE_LOGICAL_CAP;
+            return "Logical";
         } else if (c == RInt.class) {
-            return TYPE_INTEGER_CAP;
+            return "Integer";
         } else if (c == RDouble.class) {
-            return TYPE_NUMERIC_CAP;
+            return "Numeric";
         } else if (c == RComplex.class) {
-            return TYPE_COMPLEX_CAP;
+            return "Complex";
         } else if (c == RRaw.class) {
-            return TYPE_RAW_CAP;
+            return "Raw";
         } else if (c == RString.class) {
-            return TYPE_CHARACTER_CAP;
+            return "Character";
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
@@ -405,6 +372,15 @@ public class RRuntime {
     @SlowPath
     public static RComplex string2complex(String v) {
         return isNA(v) ? createComplexNA() : string2complexNoCheck(v);
+    }
+
+    @SlowPath
+    public static RRaw string2raw(String v) {
+        if (v.length() == 2 && (Utils.isIsoLatinDigit(v.charAt(0)) || Utils.isRomanLetter(v.charAt(0))) && (Utils.isIsoLatinDigit(v.charAt(1)) || Utils.isRomanLetter(v.charAt(1)))) {
+            return RDataFactory.createRaw(Byte.parseByte(v, 16));
+        } else {
+            return RDataFactory.createRaw((byte) 0);
+        }
     }
 
     // conversions from int

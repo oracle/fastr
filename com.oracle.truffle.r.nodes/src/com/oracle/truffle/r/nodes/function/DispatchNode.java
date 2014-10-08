@@ -42,4 +42,8 @@ public abstract class DispatchNode extends RNode {
     public Object executeInternal(VirtualFrame frame, Object[] args) {
         throw new AssertionError();
     }
+
+    public String getGenericName() {
+        return genericName;
+    }
 }

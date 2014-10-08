@@ -29,6 +29,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -60,6 +61,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected Object libPathsVec(RAbstractStringVector pathVec) {
         controlVisibility();
         ArrayList<String> resultsList = new ArrayList<>(pathVec.getLength());
@@ -93,8 +95,8 @@ public abstract class DotLibpaths extends RBuiltinNode {
         return array;
     }
 
-    @Specialization
-    protected Object libPathsGeneric(@SuppressWarnings("unused") Object x) {
+    @Fallback
+    protected Object libPathsError(@SuppressWarnings("unused") Object x) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
     }

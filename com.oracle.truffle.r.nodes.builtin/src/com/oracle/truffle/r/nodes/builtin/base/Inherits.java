@@ -40,7 +40,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     private InheritsNode initInheritsNode() {
         if (inheritsNode == null) {
-            inheritsNode = insert(InheritsNodeFactory.create(new RNode[3], getBuiltin(), getSuppliedArgsNames()));
+            inheritsNode = insert(InheritsNodeFactory.create(null, null));
         }
         return inheritsNode;
     }
@@ -83,5 +83,4 @@ public abstract class Inherits extends RBuiltinNode {
         }
         return RDataFactory.createIntVector(result, true);
     }
-
 }

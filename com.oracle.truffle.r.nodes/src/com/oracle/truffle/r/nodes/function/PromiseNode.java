@@ -31,7 +31,6 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
-import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
@@ -56,38 +54,29 @@ public abstract class PromiseNode extends RNode {
     protected final RPromiseFactory factory;
 
     /**
-     * {@link EnvProvider} needed to construct a proper {@link REnvironment} for the promises being
-     * created here.
-     */
-    protected final EnvProvider envProvider;
-
-    /**
      * @param factory {@link #factory}
-     * @param envProvider {@link #envProvider}
      */
-    protected PromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
+    protected PromiseNode(RPromiseFactory factory) {
         this.factory = factory;
-        this.envProvider = envProvider;
     }
 
     /**
      * @param src The {@link SourceSection} of the argument for debugging purposes
      * @param factory {@link #factory}
-     * @param envProvider {@link #envProvider}
      * @return Depending on {@link RPromiseFactory#getEvalPolicy()} and
      *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
      */
     @SlowPath
-    public static PromiseNode create(SourceSection src, RPromiseFactory factory, EnvProvider envProvider) {
+    public static PromiseNode create(SourceSection src, RPromiseFactory factory) {
         assert factory.getType() != PromiseType.NO_ARG;
 
         PromiseNode pn = null;
         switch (factory.getEvalPolicy()) {
             case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    pn = new InlinedSuppliedPromiseNode(factory, envProvider);
+                    pn = new InlinedSuppliedPromiseNode(factory);
                 } else {
-                    pn = new InlinedPromiseNode(factory, envProvider);
+                    pn = new InlinedPromiseNode(factory);
                 }
                 break;
 
@@ -99,7 +88,7 @@ public abstract class PromiseNode extends RNode {
                     } else if (isVariableArgument(expr)) {
                         pn = null;
                     } else {
-                        pn = new SuppliedPromiseNode(factory, envProvider);
+                        pn = new SuppliedPromiseNode(factory);
                     }
                 } else {
                     RNode defaultExpr = unfold(factory.getDefaultExpr());
@@ -109,7 +98,7 @@ public abstract class PromiseNode extends RNode {
                     } else if (isVariableArgument(defaultExpr)) {
                         pn = null;  // TODO
                     } else {
-                        pn = new DefaultPromiseNode(factory, envProvider);
+                        pn = new DefaultPromiseNode(factory);
                     }
                 }
                 break;
@@ -181,7 +170,7 @@ public abstract class PromiseNode extends RNode {
         @CompilationFinal private Object constant = null;
 
         private ConstantDefaultPromiseNode(RPromiseFactory factory) {
-            super(factory, null);
+            super(factory);
             this.constantExpr = (RNode) factory.getDefaultExpr();
         }
 
@@ -209,7 +198,7 @@ public abstract class PromiseNode extends RNode {
         @CompilationFinal private Object constant = null;
 
         private ConstantSuppliedPromiseNode(RPromiseFactory factory) {
-            super(factory, null);
+            super(factory);
             this.constantExpr = (RNode) factory.getExpr();
         }
 
@@ -230,7 +219,7 @@ public abstract class PromiseNode extends RNode {
 
     private static final class VariableSuppliedPromiseNode extends PromiseNode {
         public VariableSuppliedPromiseNode(RPromiseFactory factory) {
-            super(factory, null);
+            super(factory);
         }
 
         @Override
@@ -247,13 +236,13 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class SuppliedPromiseNode extends PromiseNode {
 
-        private SuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
-            super(factory, envProvider);
+        private SuppliedPromiseNode(RPromiseFactory factory) {
+            super(factory);
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return factory.createPromise(envProvider.getREnvironmentFor(frame));
+            return factory.createPromise(frame.materialize());
         }
     }
 
@@ -262,8 +251,8 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class DefaultPromiseNode extends PromiseNode {
 
-        private DefaultPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
-            super(factory, envProvider);
+        private DefaultPromiseNode(RPromiseFactory factory) {
+            super(factory);
         }
 
         @Override
@@ -280,11 +269,11 @@ public abstract class PromiseNode extends RNode {
      */
     private final static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
-        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
         private final PromiseProfile promiseProfile = new PromiseProfile();
 
-        public InlinedSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
-            super(factory, envProvider);
+        public InlinedSuppliedPromiseNode(RPromiseFactory factory) {
+            super(factory);
             this.expr = (RNode) factory.getExpr();
         }
 
@@ -299,7 +288,7 @@ public abstract class PromiseNode extends RNode {
                     return RMissing.instance;
                 }
                 RPromise promise = factory.createPromiseDefault();
-                return PromiseHelper.evaluate(frame, exprExecNode, promise, promiseProfile);
+                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             } else if (obj instanceof RArgsValuesAndNames) {
                 return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
             } else {
@@ -317,8 +306,8 @@ public abstract class PromiseNode extends RNode {
     private final static class InlinedPromiseNode extends PromiseNode {
         @Child private RNode defaultExpr;
 
-        public InlinedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
-            super(factory, envProvider);
+        public InlinedPromiseNode(RPromiseFactory factory) {
+            super(factory);
             // defaultExpr and expr are identical here!
             this.defaultExpr = (RNode) factory.getDefaultExpr();
         }
@@ -368,7 +357,6 @@ public abstract class PromiseNode extends RNode {
     /**
      * @param src
      * @param evalPolicy {@link EvalPolicy}
-     * @param envProvider {@link EnvProvider}
      * @param nodes The argument {@link RNode}s that got wrapped into this "..."
      * @param names The argument's names
      * @param callSrc The {@link SourceSection} of the call this "..." belongs to
@@ -376,7 +364,7 @@ public abstract class PromiseNode extends RNode {
      *         depending on the {@link EvalPolicy}
      */
     @SlowPath
-    public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
+    public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
         RNode node;
         switch (evalPolicy) {
             case INLINED:
@@ -384,7 +372,7 @@ public abstract class PromiseNode extends RNode {
                 break;
 
             case PROMISED:
-                node = new VarArgsPromiseNode(envProvider, nodes, names, closureCache);
+                node = new VarArgsPromiseNode(nodes, names, closureCache);
                 break;
 
             default:
@@ -401,11 +389,9 @@ public abstract class PromiseNode extends RNode {
     private final static class VarArgsPromiseNode extends RNode {
         protected final RNode[] nodes;
         protected final String[] names;
-        protected final EnvProvider envProvider;
         protected final ClosureCache closureCache;
 
-        public VarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names, ClosureCache closureCache) {
-            this.envProvider = envProvider;
+        public VarArgsPromiseNode(RNode[] nodes, String[] names, ClosureCache closureCache) {
             this.nodes = nodes;
             this.names = names;
             this.closureCache = closureCache;
@@ -417,7 +403,7 @@ public abstract class PromiseNode extends RNode {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
-                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, envProvider.getREnvironmentFor(frame), closure);
+                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
             }
             return new RArgsValuesAndNames(promises, names);
         }

@@ -265,7 +265,21 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     private static String prettyPrintLanguageInternal(RLanguage language) {
-        return RDeparse.deparse(language, 60, false, -1)[0];
+        String[] lines = RDeparse.deparse(language, 60, false, -1);
+        if (lines.length == 1) {
+            return lines[0];
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < lines.length; i++) {
+                sb.append(lines[i]);
+                if (i == lines.length - 1) {
+                    continue;
+                }
+                sb.append('\n');
+            }
+            return sb.toString();
+
+        }
     }
 
     private static String prettyPrintPromise(RPromise promise) {

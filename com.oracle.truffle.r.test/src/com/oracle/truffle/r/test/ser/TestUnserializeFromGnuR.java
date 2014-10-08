@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.ser;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.*;
 import java.util.*;
 
 import org.junit.*;
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.test.*;
 
 public class TestUnserializeFromGnuR extends TestBase {
 
-    private static Map<String, String> paths = new HashMap<>();
+    private static Map<String, Path> paths = new HashMap<>();
 
     /**
      * Somewhat roundabout way to get an absolute file path that we can pass to the {@code readRDS}
@@ -50,7 +51,7 @@ public class TestUnserializeFromGnuR extends TestBase {
                         String key = line.trim();
                         final String rResource = "data/" + key;
                         URL url = ResourceHandlerFactory.getHandler().getResource(getClass(), rResource);
-                        paths.put(key, url.getPath());
+                        paths.put(key, TestBase.relativize(Paths.get(url.getPath())));
                     }
                 }
             }
@@ -64,10 +65,9 @@ public class TestUnserializeFromGnuR extends TestBase {
     public void testVectors() {
         runUnserializeFromConn("vector1.rds");
         runUnserializeFromConn("list2.rds");
-        runUnserializeFromConn("listd.rds");
     }
 
     private static void runUnserializeFromConn(String fileName) {
-        assertEval("{ print(.Internal(unserializeFromConn(gzfile(\"" + paths.get(fileName) + "\"), NULL))) }");
+        assertTemplateEval(TestBase.template("{ print(.Internal(unserializeFromConn(gzfile(\"%0\"), NULL))) }", new String[]{paths.get(fileName).toString()}));
     }
 }

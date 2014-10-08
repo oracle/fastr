@@ -44,5 +44,4 @@ public abstract class CastNode extends UnaryNode {
     protected boolean preserveDimensions() {
         return isDimensionsPreservation();
     }
-
 }

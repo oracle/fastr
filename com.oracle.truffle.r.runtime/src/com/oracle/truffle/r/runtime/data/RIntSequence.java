@@ -103,10 +103,16 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     }
 
     @Override
-    public RAbstractVector copyResized(int size, boolean fillNA) {
+    public RIntVector copyResized(int size, boolean fillNA) {
         int[] data = new int[size];
         populateVectorData(data);
         RIntVector.resizeData(data, data, getLength(), fillNA);
         return RDataFactory.createIntVector(data, !(fillNA && size > getLength()));
     }
+
+    @Override
+    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    }
+
 }

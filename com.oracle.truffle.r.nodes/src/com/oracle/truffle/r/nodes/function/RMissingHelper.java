@@ -158,7 +158,7 @@ public class RMissingHelper {
                 }
                 try {
                     promise.setUnderEvaluation(true);
-                    result = isMissingArgument(promise.getEnv().getFrame(), symbol);
+                    result = isMissingArgument(promise.getFrame(), symbol);
                 } finally {
                     promise.setUnderEvaluation(false);
                 }

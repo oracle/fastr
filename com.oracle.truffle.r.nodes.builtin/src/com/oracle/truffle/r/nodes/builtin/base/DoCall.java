@@ -53,14 +53,14 @@ public abstract class DoCall extends RBuiltinNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin(), getSuppliedArgsNames()));
             }
-            func = (RFunction) getNode.execute(frame, fname.getDataAt(0), 0, RMissing.instance, RRuntime.TYPE_FUNCTION, RRuntime.LOGICAL_TRUE);
+            func = (RFunction) getNode.execute(frame, fname.getDataAt(0), 0, RMissing.instance, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         }
         Object[] argValues = argsAsList.getDataNonShared();
         Object n = argsAsList.getNames();
         String[] argNames = n == RNull.instance ? null : ((RStringVector) n).getDataNonShared();
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseProfile);
-        Object[] callArgs = RArguments.create(func, funCall.getSourceSection(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        Object[] callArgs = RArguments.create(func, funCall.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         return funCall.call(frame, func.getTarget(), callArgs);
     }
 

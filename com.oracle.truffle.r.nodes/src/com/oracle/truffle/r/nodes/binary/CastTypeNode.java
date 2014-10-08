@@ -14,13 +14,13 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class CastTypeNode extends RInvisibleBuiltinNode {
+public abstract class CastTypeNode extends BinaryNode {
+
     @Child private CastStringNode castStringNode;
     @Child private CastComplexNode castComplexNode;
     @Child private CastDoubleNode castDoubleNode;
@@ -31,108 +31,108 @@ public abstract class CastTypeNode extends RInvisibleBuiltinNode {
     @Child private CastToVectorNode castToVectorNode;
     @Child private TypeofNode typeof;
 
-    public abstract Object execute(VirtualFrame frame, final Object value, final String type);
+    public abstract Object execute(VirtualFrame frame, Object value, RType type);
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isSameType")
-    protected RAbstractVector doCast(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected RAbstractVector doCast(VirtualFrame frame, RAbstractVector value, RType type) {
         return value;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isString"})
-    protected Object doCastString(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastString(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastString();
         return castStringNode.executeString(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isComplex"})
-    protected Object doCastComplex(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastComplex(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastComplex();
         return castComplexNode.executeComplex(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isDouble"})
-    protected Object doCastDouble(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastDouble(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastDouble();
         return castDoubleNode.executeDouble(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isInteger"})
-    protected Object doCastInteger(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastInteger(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastInteger();
         return castIntegerNode.executeInt(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isLogical"})
-    protected Object doCastLogical(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastLogical(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastLogical();
         return castLogicalNode.executeLogical(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isRaw"})
-    protected Object doCastRaw(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastRaw(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastRaw();
         return castRawNode.executeRaw(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isSameType", "isList"})
-    protected RList doCastList(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected RList doCastList(VirtualFrame frame, RAbstractVector value, RType type) {
         initCastList();
         return castListNode.executeList(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object doCastUnknown(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected Object doCastUnknown(RAbstractVector value, RType type) {
         return null;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isString(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_CHARACTER);
+    protected static boolean isString(RAbstractVector value, RType type) {
+        return type == RType.Character;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isComplex(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_COMPLEX);
+    protected static boolean isComplex(RAbstractVector value, RType type) {
+        return type == RType.Complex;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isDouble(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_DOUBLE) || type.equals(RRuntime.TYPE_NUMERIC);
+    protected static boolean isDouble(final RAbstractVector value, RType type) {
+        return type == RType.Double || type == RType.Numeric;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isInteger(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_INTEGER);
+    protected static boolean isInteger(RAbstractVector value, RType type) {
+        return type == RType.Integer;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isLogical(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_LOGICAL);
+    protected static boolean isLogical(RAbstractVector value, RType type) {
+        return type == RType.Logical;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isRaw(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_RAW);
+    protected static boolean isRaw(RAbstractVector value, RType type) {
+        return type == RType.Raw;
     }
 
     @SuppressWarnings("unused")
-    protected static boolean isList(VirtualFrame frame, final RAbstractVector value, final String type) {
-        return type.equals(RRuntime.TYPE_LIST);
+    protected static boolean isList(RAbstractVector value, RType type) {
+        return type == RType.List;
     }
 
-    protected boolean isSameType(VirtualFrame frame, final RAbstractVector value, final String type) {
+    protected boolean isSameType(VirtualFrame frame, RAbstractVector value, RType type) {
         initTypeof();
-        String givenType = typeof.execute(frame, value);
-        return givenType.equals(type);
+        RType givenType = typeof.execute(frame, value);
+        return givenType.getName().equals(type);
     }
 
     private void initTypeof() {

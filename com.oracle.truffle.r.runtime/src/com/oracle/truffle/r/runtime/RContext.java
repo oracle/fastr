@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
@@ -152,7 +153,7 @@ public final class RContext extends ExecutionContext {
          * @param frame for evaluating any associated R code
          * @param envForFrame the namespace environment associated with the package.
          */
-        void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame);
+        void loadDefaultPackage(String name, MaterializedFrame frame, REnvironment envForFrame);
 
         /**
          * Return the {@link RFunction} for the builtin {@code name}.
@@ -173,7 +174,7 @@ public final class RContext extends ExecutionContext {
          * @param envForFrame the environment that {@code frame} is bound to.
          * @return the object returned by the evaluation or {@code null} if an error occurred.
          */
-        Object parseAndEval(String sourceDesc, String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
+        Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
 
         static final Object INCOMPLETE_SOURCE = new Object();
 
@@ -194,49 +195,51 @@ public final class RContext extends ExecutionContext {
          *            href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/eval.html">here
          *            for details</a>.
          */
-        Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
+        Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
 
         /**
          * Convenience method for common case.
          */
-        default Object eval(RExpression expr, REnvironment envir) throws PutException {
-            return eval(null, expr, envir, null);
+        default Object eval(RExpression expr, REnvironment envir, int depth) throws PutException {
+            return eval(null, expr, envir, null, depth);
         }
 
         /**
-         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} for a single
-         * language element.
+         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment, int)} for a
+         * single language element.
          */
-        Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+        Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
 
         /**
          * Convenience method for common case.
          */
-        default Object eval(RLanguage expr, REnvironment envir) throws PutException {
-            return eval(null, expr, envir, null);
+        default Object eval(RLanguage expr, REnvironment envir, int depth) throws PutException {
+            return eval(null, expr, envir, null, depth);
         }
 
         /**
          * Evaluate {@code expr} in {@code frame}.
          */
-        Object eval(RExpression expr, VirtualFrame frame);
+        Object eval(RExpression expr, MaterializedFrame frame);
 
         /**
-         * Variant of {@link #eval(RExpression, VirtualFrame)} for a single language element.
+         * Variant of {@link #eval(RExpression, MaterializedFrame)} for a single language element.
          */
-        Object eval(RLanguage expr, VirtualFrame frame);
+        Object eval(RLanguage expr, MaterializedFrame frame);
 
         /**
-         * Evaluate a promise in the given frame, where we can use the {@link VirtualFrame}) of the
-         * caller directly). This should <b>only</b> be called by the {@link RPromise} class.
+         * Evaluate a promise in the given frame, where we can use the {@link MaterializedFrame}) of
+         * the caller directly). This should <b>only</b> be called by the {@link RPromise} class.
          */
-        Object evalPromise(RPromise expr, VirtualFrame frame) throws RError;
+        Object evalPromise(RPromise expr, MaterializedFrame frame);
+
+        Object evalPromise(Closure closure, MaterializedFrame frame);
 
         /**
          * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should
          * <b>only</b> be called by the {@link RPromise} class.
          */
-        Object evalPromise(RPromise expr, SourceSection callSrc) throws RError;
+        Object evalPromise(RPromise expr, SourceSection callSrc);
 
         /**
          * Wraps the Truffle AST in {@code body} in an anonymous function and returns a
@@ -280,6 +283,7 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private ConsoleHandler consoleHandler;
     @CompilationFinal private String[] commandArgs;
     @CompilationFinal private Engine engine;
+    @CompilationFinal private RASTHelper rASTHelper;
 
     private static final RContext singleton = new RContext();
 
@@ -301,14 +305,12 @@ public final class RContext extends ExecutionContext {
     /**
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
-     *
-     * @param commandArgs
-     * @param consoleHandler
      */
-    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
+    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean headless) {
         singleton.engine = engine;
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
+        singleton.rASTHelper = rLanguageHelper;
         singleton.headless = headless;
         return singleton;
     }
@@ -330,6 +332,10 @@ public final class RContext extends ExecutionContext {
             Utils.fail("no console handler set");
         }
         return consoleHandler;
+    }
+
+    public static RASTHelper getRASTHelper() {
+        return singleton.rASTHelper;
     }
 
     public RFunction putCachedFunction(Object key, RFunction function) {

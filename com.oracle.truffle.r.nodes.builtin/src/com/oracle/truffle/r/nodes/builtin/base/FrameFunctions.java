@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -45,9 +46,11 @@ public class FrameFunctions {
 
     public abstract static class FrameHelper extends RBuiltinNode {
 
+        private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
+
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
-         * only use the frame internally should not materialise it, i.e., they should use
+         * only use the frame internally should not materialize it, i.e., they should use
          * {@link FrameAccess#READ_ONLY} or {@link FrameAccess#READ_WRITE}.
          */
         protected abstract FrameAccess frameAccess();
@@ -55,22 +58,26 @@ public class FrameFunctions {
         /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
-        protected Frame getFrame(int nn) {
-            int n = nn;
+        protected Frame getFrame(VirtualFrame frame, int n) {
+            int actualFrame;
+            int depth = RArguments.getDepth(frame);
             if (n > 0) {
-                int d = Utils.stackDepth();
-                if (n > d) {
+                if (n > depth) {
                     throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
-                n = d - n + 1; // add one to skip internal evaluation frame
+                actualFrame = n;
             } else {
-                n = -n + 1;
+                actualFrame = depth + n - 1;
             }
-            Frame callerFrame = Utils.getStackFrame(frameAccess(), n);
-            if (callerFrame == null) {
-                throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+            if (currentFrameProfile.profile(actualFrame == depth)) {
+                return frame;
+            } else {
+                Frame callerFrame = Utils.getStackFrame(frameAccess(), actualFrame);
+                if (callerFrame == null) {
+                    throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                }
+                return callerFrame;
             }
-            return callerFrame;
         }
     }
 
@@ -83,9 +90,9 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected RLanguage sysCall(int which) {
+        protected RLanguage sysCall(VirtualFrame frame, int which) {
             controlVisibility();
-            Frame cframe = getFrame(which);
+            Frame cframe = getFrame(frame, which);
             Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
             RArguments.copyArgumentsInto(cframe, values);
             int namesLength = RArguments.getNamesLength(cframe);
@@ -99,8 +106,8 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected RLanguage sysCall(double which) {
-            return sysCall((int) which);
+        protected RLanguage sysCall(VirtualFrame frame, double which) {
+            return sysCall(frame, (int) which);
         }
 
         @SlowPath
@@ -124,9 +131,9 @@ public class FrameFunctions {
 
         @Specialization
         // TODO support expand.dots argument
-        protected RLanguage matchCall(@SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, @SuppressWarnings("unused") byte expandDots) {
+        protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, @SuppressWarnings("unused") byte expandDots) {
             controlVisibility();
-            Frame cframe = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+            Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
             Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
             RArguments.copyArgumentsInto(cframe, values);
             int namesLength = RArguments.getNamesLength(cframe);
@@ -155,9 +162,9 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
     public abstract static class SysNFrame extends RBuiltinNode {
         @Specialization
-        protected int sysNFrame() {
+        protected int sysNFrame(VirtualFrame frame) {
             controlVisibility();
-            return Utils.stackDepth();
+            return RArguments.getDepth(frame) - 1;
         }
     }
 
@@ -170,22 +177,21 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected REnvironment sysFrame(int nd) {
+        protected REnvironment sysFrame(VirtualFrame frame, int which) {
             controlVisibility();
-            int n = nd;
-            if (n == 0) {
+            if (which == 0) {
                 // TODO Strictly this should be the value of .GlobalEnv
                 // (which may differ from globalenv() during startup)
                 return REnvironment.globalEnv();
             } else {
-                Frame callerFrame = getFrame(n);
+                Frame callerFrame = getFrame(frame, which);
                 return REnvironment.frameToEnvironment(callerFrame.materialize());
             }
         }
 
         @Specialization
-        protected REnvironment sysFrame(double nd) {
-            return sysFrame((int) nd);
+        protected REnvironment sysFrame(VirtualFrame frame, double which) {
+            return sysFrame(frame, (int) which);
         }
     }
 
@@ -193,15 +199,15 @@ public class FrameFunctions {
     public abstract static class SysParent extends RBuiltinNode {
 
         @Specialization
-        protected int sysParent(int nd) {
+        protected int sysParent(VirtualFrame frame, int n) {
             controlVisibility();
-            int p = Utils.stackDepth() - nd;
+            int p = RArguments.getDepth(frame) - n - 1;
             return p < 0 ? 0 : p;
         }
 
         @Specialization
-        protected int sysParent(double nd) {
-            return sysParent((int) nd);
+        protected int sysParent(VirtualFrame frame, double n) {
+            return sysParent(frame, (int) n);
         }
 
     }
@@ -215,11 +221,10 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected Object sysFunction(int nd) {
+        protected Object sysFunction(VirtualFrame frame, int which) {
             controlVisibility();
-            int n = nd;
             // N.B. Despite the spec, n==0 is treated as the current function
-            Frame callerFrame = getFrame(n);
+            Frame callerFrame = getFrame(frame, which);
             RFunction func = RArguments.getFunction(callerFrame);
             if (func == null) {
                 return RNull.instance;
@@ -229,8 +234,8 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected Object sysFunction(double nd) {
-            return sysFunction((int) nd);
+        protected Object sysFunction(VirtualFrame frame, double which) {
+            return sysFunction(frame, (int) which);
         }
     }
 
@@ -243,9 +248,9 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected RIntVector sysParents() {
+        protected RIntVector sysParents(VirtualFrame frame) {
             controlVisibility();
-            int d = Utils.stackDepth();
+            int d = RArguments.getDepth(frame) - 1;
             int[] data = new int[d];
             for (int i = 0; i < d; i++) {
                 data[i] = i;
@@ -267,7 +272,6 @@ public class FrameFunctions {
         protected Object sysFrames() {
             throw RError.nyi(null, "sys.frames is not implemented");
         }
-
     }
 
     /**
@@ -282,18 +286,23 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected REnvironment parentFrame(double nd) {
+        protected REnvironment parentFrame(VirtualFrame frame, int n) {
             controlVisibility();
-            int n = (int) nd;
             if (n == 0) {
                 throw RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
             }
-            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n + 1);
+            int p = RArguments.getDepth(frame) - n - 1;
+            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, p);
             if (callerFrame == null) {
                 return REnvironment.globalEnv();
             } else {
                 return REnvironment.frameToEnvironment(callerFrame.materialize());
             }
+        }
+
+        @Specialization
+        protected REnvironment parentFrame(VirtualFrame frame, double n) {
+            return parentFrame(frame, (int) n);
         }
     }
 

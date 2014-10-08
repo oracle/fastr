@@ -186,6 +186,10 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRArgsValuesAndNames(execute(frame));
     }
 
+    public RType executeType(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRType(execute(frame));
+    }
+
     public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
         return a.getLength() == b.getLength();
     }

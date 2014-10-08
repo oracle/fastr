@@ -22,21 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class BinaryNode extends RBuiltinNode {
+@NodeChildren({@NodeChild(value = "left", type = RNode.class), @NodeChild(value = "right", type = RNode.class)})
+public abstract class BinaryNode extends RNode {
 
-    public final RNode getLeft() {
-        return getArguments()[0];
-    }
+    protected abstract RNode getLeft();
 
-    public final RNode getRight() {
-        return getArguments()[1];
-    }
+    protected abstract RNode getRight();
 
     public static boolean isEmpty(RAbstractVector left, @SuppressWarnings("unused") Object right) {
         return left.getLength() == 0;
