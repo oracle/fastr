@@ -12829,6 +12829,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testScan_d797ae7c9d316b0e407c0192790da03b() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_a990cb0285fdcb5edcc64519b5a6673b() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, quiet=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_7cdf357f0dd6e86ad8f7f92579bea613() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, nlines = 1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSd_a7e5475bbc1990b7bf61f291042c9dc4() {
         assertEval("{ round(100*sd(c(1,2))^2) }");
     }
