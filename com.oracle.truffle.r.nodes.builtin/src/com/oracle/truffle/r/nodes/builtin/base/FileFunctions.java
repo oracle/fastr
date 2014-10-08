@@ -30,17 +30,14 @@ import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.nodes.builtin.base.FileFunctionsFactory.FileExistsFactory;
 
 public class FileFunctions {
 
@@ -171,7 +168,7 @@ public class FileFunctions {
             return doFileLink(vecFrom, vecTo, false);
         }
 
-        @Specialization
+        @Fallback
         @SlowPath
         protected Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
@@ -188,7 +185,7 @@ public class FileFunctions {
             return doFileLink(vecFrom, vecTo, true);
         }
 
-        @Specialization
+        @Fallback
         @SlowPath
         protected Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
@@ -220,7 +217,7 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization
+        @Fallback
         @SlowPath
         protected Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
@@ -257,7 +254,7 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization
+        @Fallback
         @SlowPath
         protected Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
@@ -265,31 +262,8 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"..."})
+    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"vec"})
     public abstract static class FileExists extends RBuiltinNode {
-
-        public abstract Object executeObject(VirtualFrame frame, Object args);
-
-        @Child private FileExists fileExistsRecursive;
-
-        @Specialization(guards = "oneArg")
-        @SlowPath
-        protected Object doFileExistsOneArg(VirtualFrame frame, RArgsValuesAndNames args) {
-            controlVisibility();
-            if (fileExistsRecursive == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                fileExistsRecursive = insert(FileExistsFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
-            }
-            return executeObject(frame, args.getValues()[0]);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!oneArg")
-        @SlowPath
-        protected Object doFileExists(VirtualFrame frame, RArgsValuesAndNames args) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
-        }
 
         @Specialization
         @SlowPath
@@ -309,16 +283,12 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization
-        @SlowPath
+        @Fallback
         protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
 
-        protected boolean oneArg(RArgsValuesAndNames args) {
-            return args.length() == 1;
-        }
     }
 
     @RBuiltin(name = "list.files", kind = INTERNAL, parameterNames = {"path", "pattern", "all.files", "full.names", "recursive", "ignore.case", "include.dirs", "no.."})
