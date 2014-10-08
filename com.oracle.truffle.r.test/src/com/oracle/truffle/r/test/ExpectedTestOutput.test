@@ -11542,6 +11542,20 @@ NULL
 #{ sapply(list(1,2,3),function(x){x*2}) }
 [1] 2 4 6
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1) }
+Read 6 items
+[1]  7  2  3  4  5 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1, nlines = 1) }
+Read 3 items
+[1] 7 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1, quiet=TRUE) }
+[1]  7  2  3  4  5 42
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSd
 #{ round(100*sd(c(1,2))^2) }
 [1] 50
