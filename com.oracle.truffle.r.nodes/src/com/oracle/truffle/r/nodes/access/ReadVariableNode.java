@@ -48,8 +48,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
 
     protected final PromiseProfile promiseProfile = new PromiseProfile();
-
-    protected final BranchProfile unexpectedMissingProfile = new BranchProfile();
+    private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile unexpectedMissingProfile = new BranchProfile();
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
@@ -156,7 +156,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         if (type == RType.Any) {
             return true;
         }
-        if (obj instanceof RPromise) {
+        if (isPromiseProfile.profile(obj instanceof RPromise)) {
             RPromise promise = (RPromise) obj;
             if (!promise.isEvaluated(promiseProfile)) {
                 if (!forcePromise) {
