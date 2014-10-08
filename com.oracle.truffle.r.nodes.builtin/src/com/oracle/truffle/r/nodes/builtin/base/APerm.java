@@ -18,36 +18,83 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 //TODO: Implement permuting with DimNames
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"})
 public abstract class APerm extends RBuiltinNode {
 
     private final BranchProfile errorProfile = new BranchProfile();
+    private final BranchProfile emptyPermVector = new BranchProfile();
+    private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();
+
+    private final NACheck na = new NACheck();
 
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @CreateCast("arguments")
-    public RNode[] createCastPermute(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeFactory.create(CastToVectorNodeFactory.create(arguments[1], false, false, false, false), false, false, false);
-        return arguments;
+    private void checkErrorConditions(RAbstractVector vector, byte resize) {
+        if (!vector.isArray()) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
+        }
+        if (resize == RRuntime.LOGICAL_NA) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
+        }
+    }
+
+    @Specialization
+    protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize) {
+        controlVisibility();
+        checkErrorConditions(vector, resize);
+
+        int[] dim = vector.getDimensions();
+        final int diml = dim.length;
+
+        RVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+
+        if (mustResize.profile(resize == RRuntime.LOGICAL_TRUE)) {
+            int[] pDim = new int[diml];
+            for (int i = 0; i < diml; i++) {
+                pDim[i] = dim[diml - 1 - i];
+            }
+            result.setDimensions(pDim);
+        } else {
+            result.setDimensions(dim);
+        }
+
+        // Move along the old array using stride
+        int[] posV = new int[diml];
+        int[] ap = new int[diml];
+        for (int i = 0; i < result.getLength(); i++) {
+            for (int j = 0; j < ap.length; j++) {
+                ap[diml - 1 - j] = posV[j];
+            }
+            int pos = toPos(ap, dim);
+            result.transferElementSameType(i, vector, pos);
+            for (int j = 0; j < diml; j++) {
+                posV[j]++;
+                if (posV[j] < dim[diml - 1 - j]) {
+                    break;
+                }
+                posV[j] = 0;
+            }
+        }
+
+        return result;
     }
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
         controlVisibility();
-
-        if (!vector.isArray()) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
-        }
+        checkErrorConditions(vector, resize);
 
         int[] dim = vector.getDimensions();
         int[] perm = getPermute(dim, permVector);
@@ -55,35 +102,48 @@ public abstract class APerm extends RBuiltinNode {
         int[] posV = new int[dim.length];
         int[] pDim = applyPermute(dim, perm, false);
 
-        RVector realVector = vector.materialize();
-        RVector result = realVector.createEmptySameType(vector.getLength(), vector.isComplete());
-
-        if (resize == RRuntime.LOGICAL_NA) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
-        }
+        RVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         result.setDimensions(resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
         // Move along the old array using stride
         for (int i = 0; i < result.getLength(); i++) {
             int pos = toPos(applyPermute(posV, perm, true), dim);
-            result.transferElementSameType(i, realVector, pos);
+            result.transferElementSameType(i, vector, pos);
             posV = incArray(posV, pDim);
         }
 
         return result;
     }
 
-    private int[] getPermute(int[] dim, RAbstractIntVector perm) {
+    @Specialization
+    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractDoubleVector permVector, byte resize) {
+        na.enable(permVector);
+        return aPerm(vector, RClosures.createDoubleToIntVector(permVector, na), resize);
+    }
+
+    @Specialization
+    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractComplexVector permVector, byte resize) {
+        na.enable(permVector);
+        return aPerm(vector, RClosures.createComplexToIntVectorDiscardImaginary(permVector, na), resize);
+    }
+
+    private static int[] getReverse(int[] dim) {
         int[] arrayPerm = new int[dim.length];
+        for (int i = 0; i < dim.length; i++) {
+            arrayPerm[i] = dim.length - 1 - i;
+        }
+        return arrayPerm;
+    }
+
+    private int[] getPermute(int[] dim, RAbstractIntVector perm) {
         if (perm.getLength() == 0) {
             // If perm missing, the default is a reverse of the dim.
-            for (int i = 0; i < dim.length; i++) {
-                arrayPerm[i] = dim.length - 1 - i;
-            }
+            emptyPermVector.enter();
+            return getReverse(dim);
         } else if (perm.getLength() == dim.length) {
             // Check for valid permute
+            int[] arrayPerm = new int[dim.length];
             boolean[] visited = new boolean[arrayPerm.length];
             for (int i = 0; i < perm.getLength(); i++) {
                 int pos = perm.getDataAt(i) - 1; // Adjust to zero based permute.
@@ -99,13 +159,12 @@ public abstract class APerm extends RBuiltinNode {
                 }
                 visited[pos] = true;
             }
+            return arrayPerm;
         } else {
             // perm size error
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
-
-        return arrayPerm;
     }
 
     /**
