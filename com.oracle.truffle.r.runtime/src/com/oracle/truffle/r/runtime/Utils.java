@@ -37,11 +37,22 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public final class Utils {
 
+    /**
+     * Not yet implemented
+     *
+     * @return Throws an error
+     */
     public static Error nyi() {
         CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Not yet implemented
+     *
+     * @param reason
+     * @return Throws an error
+     */
     public static Error nyi(String reason) {
         CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException(reason);

@@ -65,16 +65,18 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         this.resultNACheck = op.resultNACheck;
     }
 
-    private Object doUnaryOp(VirtualFrame frame, Object operand) {
+    private UnaryArithmeticNode specializeToUnaryOp() {
         if (unaryNode == null) {
             if (unaryFactory == null) {
+                // No profile needed, as this is only needed on 1. execution and thus cannot get
+                // compiled
                 throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 unaryNode = insert(UnaryArithmeticNodeFactory.create(unaryFactory, null));
             }
         }
-        return unaryNode.execute(frame, operand);
+        return unaryNode;
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory arithmetic) {
@@ -83,7 +85,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Specialization
     protected Object doUnary(VirtualFrame frame, Object left, @SuppressWarnings("unused") RMissing right) {
-        return doUnaryOp(frame, left);
+        return specializeToUnaryOp().execute(frame, left);
     }
 
     @Specialization

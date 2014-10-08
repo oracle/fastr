@@ -48,10 +48,11 @@ public abstract class UpdateFieldNode extends RNode {
 
     @Specialization
     protected Object updateField(RList object, Object value) {
-        int index = object.getElementIndexByName(getField());
+        String field = getField();
+        int index = object.getElementIndexByName(field);
         if (index == -1) {
             inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(getField());
+            index = object.getElementIndexByNameInexact(field);
         }
 
         int newLength = object.getLength() + (index == -1 ? 1 : 0);
@@ -73,7 +74,7 @@ public abstract class UpdateFieldNode extends RNode {
         }
 
         resultData[index] = value;
-        resultNames[index] = getField();
+        resultNames[index] = field;
 
         RList result = RDataFactory.createList(resultData);
         result.copyAttributesFrom(object);

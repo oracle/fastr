@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +41,7 @@ public class ReadVariadicComponentNode extends RNode {
     private final int index;
 
     private final PromiseProfile promiseProfile = new PromiseProfile();
+    private final BranchProfile errorProfile = new BranchProfile();
 
     public ReadVariadicComponentNode(int index) {
         this.index = index;
@@ -51,15 +53,18 @@ public class ReadVariadicComponentNode extends RNode {
         try {
             args = lookup.execute(frame);
         } catch (RError e) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_DOT_DOT, index + 1);
         }
         RArgsValuesAndNames argsValuesAndNames = null;
         if (args == RMissing.instance) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_LIST_FOR_CDR);
-        } else {
-            argsValuesAndNames = (RArgsValuesAndNames) args;
         }
+
+        argsValuesAndNames = (RArgsValuesAndNames) args;
         if (argsValuesAndNames.length() <= index) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DOT_DOT_SHORT, index + 1);
         }
         Object ret = argsValuesAndNames.getValues()[index];

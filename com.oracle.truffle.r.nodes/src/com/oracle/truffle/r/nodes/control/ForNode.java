@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,6 +37,8 @@ public abstract class ForNode extends LoopNode {
 
     @Child private WriteVariableNode cvar;
     @Child private RNode body;
+
+    private final ValueProfile seqTypeProfile = ValueProfile.createClassProfile();
 
     protected ForNode(WriteVariableNode cvar, RNode body) {
         this.cvar = cvar;
@@ -56,53 +59,11 @@ public abstract class ForNode extends LoopNode {
         return fn;
     }
 
-    @Specialization
-    protected Object doSequence(VirtualFrame frame, int x) {
+    @Fallback
+    public Object doSequence(VirtualFrame frame, Object x) {
         int count = 0;
         try {
-            cvar.execute(frame, x);
-            try {
-                body.execute(frame);
-                if (CompilerDirectives.inInterpreter()) {
-                    count++;
-                }
-            } catch (NextException e) {
-            }
-        } catch (BreakException e) {
-        } finally {
-            if (CompilerDirectives.inInterpreter()) {
-                reportLoopCount(count);
-            }
-        }
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected Object doSequence(VirtualFrame frame, double x) {
-        int count = 0;
-        try {
-            cvar.execute(frame, x);
-            try {
-                body.execute(frame);
-                if (CompilerDirectives.inInterpreter()) {
-                    count++;
-                }
-            } catch (NextException e) {
-            }
-        } catch (BreakException e) {
-        } finally {
-            if (CompilerDirectives.inInterpreter()) {
-                reportLoopCount(count);
-            }
-        }
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected Object doSequence(VirtualFrame frame, String x) {
-        int count = 0;
-        try {
-            cvar.execute(frame, x);
+            cvar.execute(frame, seqTypeProfile.profile(x));
             try {
                 body.execute(frame);
                 if (CompilerDirectives.inInterpreter()) {
@@ -169,5 +130,4 @@ public abstract class ForNode extends LoopNode {
     protected Object doSequence(VirtualFrame frame, RExpression expr) {
         return doSequence(frame, expr.getList());
     }
-
 }

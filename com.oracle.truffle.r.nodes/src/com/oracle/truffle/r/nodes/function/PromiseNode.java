@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -51,6 +52,7 @@ public class PromiseNode extends RNode {
     protected final RPromiseFactory factory;
 
     protected final PromiseProfile promiseProfile = new PromiseProfile();
+    protected final ConditionProfile isDefaultArgProfile = ConditionProfile.createBinaryProfile();
 
     /**
      * @param factory {@link #factory}
@@ -105,7 +107,8 @@ public class PromiseNode extends RNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        return factory.createPromise(factory.getType() == PromiseType.ARG_DEFAULT ? null : frame.materialize());
+        MaterializedFrame matFrame = isDefaultArgProfile.profile(factory.getType() == PromiseType.ARG_DEFAULT) ? null : frame.materialize();
+        return factory.createPromise(matFrame);
     }
 
     /**
@@ -117,6 +120,10 @@ public class PromiseNode extends RNode {
     private final static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+
+        private final BranchProfile isMissingProfile = new BranchProfile();
+        private final BranchProfile isVarArgProfile = new BranchProfile();
+        private final BranchProfile checkPromiseProfile = new BranchProfile();
 
         public InlinedSuppliedPromiseNode(RPromiseFactory factory) {
             super(factory);
@@ -130,14 +137,17 @@ public class PromiseNode extends RNode {
             // builtin implementations)
             Object obj = expr.execute(frame);
             if (obj == RMissing.instance) {
+                isMissingProfile.enter();
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
                 }
                 RPromise promise = factory.createPromiseDefault();
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             } else if (obj instanceof RArgsValuesAndNames) {
+                isVarArgProfile.enter();
                 return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
             } else {
+                checkPromiseProfile.enter();
                 return RPromise.checkEvaluate(frame, obj, promiseProfile);
             }
         }

@@ -39,9 +39,9 @@ public abstract class GetMissingValueNode extends RNode {
 
     private static final class UninitializedGetMissingValueNode extends GetMissingValueNode {
 
-        final Symbol sym;
+        private final Symbol sym;
 
-        UninitializedGetMissingValueNode(Symbol sym) {
+        private UninitializedGetMissingValueNode(Symbol sym) {
             this.sym = sym;
         }
 
@@ -57,9 +57,9 @@ public abstract class GetMissingValueNode extends RNode {
 
     private static final class ResolvedGetMissingValueNode extends GetMissingValueNode {
 
-        final FrameSlot slot;
+        private final FrameSlot slot;
 
-        ResolvedGetMissingValueNode(FrameSlot slot) {
+        private ResolvedGetMissingValueNode(FrameSlot slot) {
             this.slot = slot;
         }
 
@@ -74,7 +74,5 @@ public abstract class GetMissingValueNode extends RNode {
                 return null;
             }
         }
-
     }
-
 }

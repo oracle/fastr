@@ -183,7 +183,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
 
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
-            CompilerAsserts.neverPartOfCompilation();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getName(), initialKind);
             replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, getMode())).execute(frame, value);
         }
@@ -385,31 +385,38 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return value;
         }
 
+        @SlowPath
         protected static boolean isFrameBooleanKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isBooleanKind(frameSlot);
         }
 
+        @SlowPath
         protected static boolean isFrameIntegerKind(int arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isIntegerKind(frameSlot);
         }
 
+        @SlowPath
         protected static boolean isFrameDoubleKind(double arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isDoubleKind(frameSlot);
         }
     }
 
+    @SlowPath
     protected static boolean isBooleanKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Boolean);
     }
 
+    @SlowPath
     protected static boolean isIntegerKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Int);
     }
 
+    @SlowPath
     protected static boolean isDoubleKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 
+    @SlowPath
     private static boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
         return frameSlot.getKind() == kind || initialSetKind(frameSlot, kind);
     }

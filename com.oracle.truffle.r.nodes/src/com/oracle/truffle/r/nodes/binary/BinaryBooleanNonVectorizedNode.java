@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.*;
@@ -231,14 +232,17 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
+    @SlowPath
     protected boolean isZeroLength(byte left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
+    @SlowPath
     protected boolean isZeroLength(Object left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
+    @SlowPath
     protected boolean needsRightOperand(Object left, boolean needsRightOperand, Object right) {
         return needsRightOperand;
     }
