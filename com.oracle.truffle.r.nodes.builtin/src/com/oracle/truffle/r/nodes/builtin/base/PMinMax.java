@@ -146,6 +146,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 int result = semantics.getIntStart();
                 for (int j = 0; j < argValues.length; j++) {
                     RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
+                    na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
                         RError.warning(RError.Message.ARG_RECYCYLED);
                         warningAdded = true;
@@ -197,6 +198,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 double result = semantics.getDoubleStart();
                 for (int j = 0; j < argValues.length; j++) {
                     RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
+                    na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
                         RError.warning(RError.Message.ARG_RECYCYLED);
                         warningAdded = true;
