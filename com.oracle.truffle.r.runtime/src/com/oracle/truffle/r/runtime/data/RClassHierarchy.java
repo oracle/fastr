@@ -20,33 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.data.*;
-
-public interface RAbstractContainer extends RAttributable, RClassHierarchy {
-
-    int getLength();
-
-    int[] getDimensions();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    RShareable materializeToShareable();
-
-    Object getDataAtAsObject(int index);
-
-    Object getNames();
-
-    RList getDimNames();
-
-    Object getRowNames();
-
+public interface RClassHierarchy {
     /**
-     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
+     * Returns the value of the {@code class} attribute.
      */
-    boolean isObject();
+    RStringVector getClassHierarchy();
+
 }

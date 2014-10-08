@@ -9,6 +9,26 @@ import com.oracle.truffle.r.test.*;
 //Checkstyle: stop
 public class AllTests extends TestBase {
     @Test
+    public void TestConnections_testTextReadConnection_d61f16f8b553065174bc69e879308230() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con) }");
+    }
+
+    @Test
+    public void TestConnections_testTextReadConnection_7f9a1867afa461805ce8e2f819b40460() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testTextReadConnection_7f4ab83f4b2f9d736100d1e0b428b58a() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testTextReadConnection_dc19b2220ba560eec444032f971cff2f() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testArithmeticUpdate_53dd62f0f4ee11cdf35cbec8ec41f7c8() {
         assertEval("{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- x + 1L ; x } ; f(FALSE) }");
     }
@@ -12809,6 +12829,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testScan_d797ae7c9d316b0e407c0192790da03b() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_a990cb0285fdcb5edcc64519b5a6673b() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, quiet=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_7cdf357f0dd6e86ad8f7f92579bea613() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, nlines = 1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSd_a7e5475bbc1990b7bf61f291042c9dc4() {
         assertEval("{ round(100*sd(c(1,2))^2) }");
     }
@@ -13646,6 +13681,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSubstituteIgnore_9d646fcf10648fbae8e8087bb65a9bd6() {
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstituteIgnore_c46aeeda682d7d02536ec492e776a43a() {
+        assertEval("{ substitute(x <- x + 1, list(x = 1) }");
     }
 
     @Test

@@ -30,6 +30,12 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+/**
+ * The specification is not quite what you might expect. Several builtin types, e.g.,
+ * {@code expression} respond to {@code class(e)} but return {@code FALSE} to {@code is.object}.
+ * Essentially, this method should only return {@code TRUE} if a {@code class} attribute has been
+ * added explicitly to the object. If the attribute is removed, it shoukld return {@code FALSE}.
+ */
 @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsObject extends RBuiltinNode {
 
@@ -41,8 +47,14 @@ public abstract class IsObject extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isObject(RAbstractVector arg) {
+    protected byte isObject(RAbstractContainer arg) {
         controlVisibility();
         return arg.isObject() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isObject(@SuppressWarnings("unused") RConnection conn) {
+        // No need to enquire, connections always have a class attribute.
+        return RRuntime.LOGICAL_TRUE;
     }
 }

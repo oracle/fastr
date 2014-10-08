@@ -157,6 +157,11 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.Language;
     }
 
+    @Specialization
+    protected RType typeof(RConnection conn) {
+        return RType.Integer;
+    }
+
     public static boolean isFunctionBuiltin(RFunction fun) {
         return fun.isBuiltin();
     }

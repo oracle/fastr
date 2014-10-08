@@ -24,20 +24,30 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 
+import com.oracle.truffle.r.runtime.data.*;
+
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
  */
-public abstract class RConnection {
+public abstract class RConnection implements RClassHierarchy {
     /**
      * Read (n > 0 up to n else unlimited) lines on the connection.
      */
     public abstract String[] readLines(int n) throws IOException;
 
     /**
-     * Return the underlying input stream.
+     * Return the underlying input stream (for internal use).
      */
     public abstract InputStream getInputStream() throws IOException;
 
+    /**
+     * Close the connection.
+     */
     public abstract void close() throws IOException;
+
+    /**
+     * Implements {@link RClassHierarchy}.
+     */
+    public abstract RStringVector getClassHierarchy();
 
 }

@@ -246,20 +246,29 @@ def junit_default(args):
 def junit_gate(args):
     return junit(['--tests', _gate_unit_tests()] + args)
 
+def _test_package():
+    return 'com.oracle.truffle.r.test'
+
+def _test_subpackage(name):
+    return '.'.join((_test_package(), name))
+
 def _simple_unit_tests():
-    return 'com.oracle.truffle.r.test.simple'
+    return _test_subpackage('simple')
 
 def _testrgen_unit_tests():
-    return 'com.oracle.truffle.r.test.testrgen'
+    return _test_subpackage('testrgen')
 
 def _rffi_unit_tests():
-    return 'com.oracle.truffle.r.test.rffi'
+    return _test_subpackage('rffi')
 
 def _rpackages_unit_tests():
-    return 'com.oracle.truffle.r.test.rpackages'
+    return _test_subpackage('rpackages')
+
+def _ser_unit_tests():
+    return _test_subpackage('ser')
 
 def _gate_unit_tests():
-    return _simple_unit_tests() + ',' + _rffi_unit_tests() + ',' + _rpackages_unit_tests() + ',' + _testrgen_unit_tests()
+    return ','.join((_simple_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()

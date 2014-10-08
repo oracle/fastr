@@ -25,10 +25,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 @RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = {-1})
 public abstract class Expression extends RBuiltinNode {
@@ -36,8 +38,10 @@ public abstract class Expression extends RBuiltinNode {
      * Owing to the nonEvalArgs, all arguments are RPromise, but an expression may contain
      * non-RLanguage elements.
      */
+    private final PromiseProfile promiseProfile = new PromiseProfile();
 
     @Specialization
+    @ExplodeLoop
     protected Object doExpression(RArgsValuesAndNames args) {
         Object[] argValues = args.getValues();
         Object[] data = new Object[argValues.length];
@@ -54,8 +58,8 @@ public abstract class Expression extends RBuiltinNode {
         return RDataFactory.createExpression(list);
     }
 
-    private static Object convert(RPromise promise) {
-        if (promise.isEvaluated()) {
+    private Object convert(RPromise promise) {
+        if ((promise.isEvaluated(promiseProfile))) {
             return promise.getValue();
         } else {
             return RASTUtils.createLanguageElement(RASTUtils.unwrap(promise.getRep()));

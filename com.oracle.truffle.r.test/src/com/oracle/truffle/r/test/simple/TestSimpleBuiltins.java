@@ -19,6 +19,13 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testScan() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1) }");
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, quiet=TRUE) }");
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, nlines = 1) }");
+    }
+
+    @Test
     public void testPMax() {
         assertEval("{ pmax(c(1L, 7L), c(42L, 1L)) }");
         assertEval("{ pmax(c(1L, 7L), integer()) }");
@@ -2617,6 +2624,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
         assertEval("{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+        assertEval("{ substitute(x <- x + 1, list(x = 1) }");
 
     }
 

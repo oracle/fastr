@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.test.simple;
 
-import com.oracle.truffle.r.runtime.data.*;
+import org.junit.*;
 
-public interface RAbstractContainer extends RAttributable, RClassHierarchy {
+import com.oracle.truffle.r.test.*;
 
-    int getLength();
+public class TestConnections extends TestBase {
+    @Test
+    public void testTextReadConnection() {
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con) }");
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2) }");
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2) }");
+        assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }");
+    }
 
-    int[] getDimensions();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    RShareable materializeToShareable();
-
-    Object getDataAtAsObject(int index);
-
-    Object getNames();
-
-    RList getDimNames();
-
-    Object getRowNames();
-
-    /**
-     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
-     */
-    boolean isObject();
 }

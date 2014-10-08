@@ -18,6 +18,7 @@ import java.nio.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -62,6 +63,7 @@ public class HiddenInternalFunctions {
          * modified call in the {@code eenv} environment.
          */
         @Specialization
+        @SlowPath
         protected RNull doMakeLazy(RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
             controlVisibility();
             initEval();
@@ -93,6 +95,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"})
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Specialization
+        @SlowPath
         protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
             controlVisibility();
             int length = impNames.getLength();
@@ -143,6 +146,7 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
+        @SlowPath
         protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
@@ -188,6 +192,7 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
             initCast();
             return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);

@@ -130,7 +130,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
         private final class GenericInlineCacheNode extends InlineCacheNode<F, T> {
 
             @Override
-            public Object execute(F frame, T value) {
+            public final Object execute(F frame, T value) {
                 return generic.apply(frame, value);
             }
         }

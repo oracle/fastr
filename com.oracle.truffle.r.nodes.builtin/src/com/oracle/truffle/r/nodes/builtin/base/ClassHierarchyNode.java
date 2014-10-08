@@ -98,6 +98,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
+    protected RStringVector getClassHr(RConnection arg) {
+        return arg.getClassHierarchy();
+    }
+
+    @Specialization
     protected RStringVector getClassHr(RAbstractContainer arg) {
         return arg.getClassHierarchy();
     }

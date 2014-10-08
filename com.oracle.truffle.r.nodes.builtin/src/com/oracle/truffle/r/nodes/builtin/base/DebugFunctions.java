@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -36,6 +37,7 @@ public class DebugFunctions {
     public abstract static class Debug extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected RNull debug(RFunction fun, RAbstractStringVector text, RNull condition) {
             // TODO implement
             controlVisibility();
@@ -47,6 +49,7 @@ public class DebugFunctions {
     public abstract static class DebugOnce extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected RNull debugonce(RFunction fun, RAbstractStringVector text, RNull condition) {
             // TODO implement
             controlVisibility();
@@ -58,6 +61,7 @@ public class DebugFunctions {
     public abstract static class UnDebug extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected RNull undebug(RFunction fun) {
             // TODO implement
             controlVisibility();
@@ -69,6 +73,7 @@ public class DebugFunctions {
     public abstract static class IsDebugged extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected byte isDebugged(RFunction fun) {
             // TODO implement
             controlVisibility();

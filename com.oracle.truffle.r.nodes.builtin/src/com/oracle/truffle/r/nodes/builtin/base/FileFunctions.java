@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -52,6 +53,7 @@ public class FileFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileCreate(RAbstractStringVector vec, byte showWarnings) {
             controlVisibility();
             byte[] status = new byte[vec.getLength()];
@@ -75,7 +77,8 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization
+        @Fallback
+        @SlowPath
         protected Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -89,6 +92,7 @@ public class FileFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected RList doFileInfo(RAbstractStringVector vec) {
             // TODO fill out all fields, create data frame, handle multiple files
             controlVisibility();
@@ -161,12 +165,14 @@ public class FileFunctions {
     @RBuiltin(name = "file.link", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileLink extends FileLinkAdaptor {
         @Specialization
+        @SlowPath
         protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
             return doFileLink(vecFrom, vecTo, false);
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -176,12 +182,14 @@ public class FileFunctions {
     @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileSymLink extends FileLinkAdaptor {
         @Specialization
+        @SlowPath
         protected Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
             return doFileLink(vecFrom, vecTo, true);
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -192,6 +200,7 @@ public class FileFunctions {
     public abstract static class FileRemove extends RBuiltinNode {
 
         @Specialization
+        @SlowPath
         protected Object doFileRemove(RAbstractStringVector vec) {
             controlVisibility();
             byte[] status = new byte[vec.getLength()];
@@ -212,6 +221,7 @@ public class FileFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -221,6 +231,7 @@ public class FileFunctions {
     @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
+        @SlowPath
         protected Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
             int len = vecFrom.getLength();
@@ -247,6 +258,7 @@ public class FileFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -261,6 +273,7 @@ public class FileFunctions {
         @Child private FileExists fileExistsRecursive;
 
         @Specialization(guards = "oneArg")
+        @SlowPath
         protected Object doFileExistsOneArg(VirtualFrame frame, RArgsValuesAndNames args) {
             controlVisibility();
             if (fileExistsRecursive == null) {
@@ -272,12 +285,14 @@ public class FileFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!oneArg")
+        @SlowPath
         protected Object doFileExists(VirtualFrame frame, RArgsValuesAndNames args) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileExists(RAbstractStringVector vec) {
             controlVisibility();
             byte[] status = new byte[vec.getLength()];
@@ -295,6 +310,7 @@ public class FileFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -317,6 +333,7 @@ public class FileFunctions {
         // @formatter:off
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive,
                         byte ignoreCase, byte includeDirs, byte noDotDot) {
             // pattern in first element of vector, remaining elements are ignored (as per GnuR).
@@ -369,16 +386,19 @@ public class FileFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "lengthZero")
+        @SlowPath
         protected RStringVector doFilePathZero(RAbstractStringVector vec, String fsep) {
             return RDataFactory.createEmptyStringVector();
         }
 
         @Specialization(guards = "!lengthZero")
+        @SlowPath
         protected RStringVector doFilePath(RAbstractStringVector vec, String fsep) {
             return doFilePath(new RArgsValuesAndNames(new Object[]{vec}, null), fsep);
         }
 
         @Specialization(guards = "simpleArgs")
+        @SlowPath
         protected RStringVector doFilePath(RArgsValuesAndNames args, String fsep) {
             Object[] argValues = args.getValues();
             StringBuffer sb = new StringBuffer();
@@ -471,6 +491,7 @@ public class FileFunctions {
         private static final ParentPathFunction parentPathFunction = new ParentPathFunction();
 
         @Specialization
+        @SlowPath
         protected RStringVector doDirName(RAbstractStringVector vec) {
             return doXyzName(vec, parentPathFunction);
         }
@@ -491,6 +512,7 @@ public class FileFunctions {
         private static final BasePathFunction basePathFunction = new BasePathFunction();
 
         @Specialization
+        @SlowPath
         protected RStringVector doDirName(RAbstractStringVector vec) {
             return doXyzName(vec, basePathFunction);
         }

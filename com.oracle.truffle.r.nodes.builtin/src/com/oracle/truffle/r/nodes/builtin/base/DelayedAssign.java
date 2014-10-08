@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -36,6 +37,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 @RBuiltin(name = "delayedAssign", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"x", "value", "eval.env", "assign.env"}, nonEvalArgs = {1})
 // TODO kind==INTERNAL when promises generally available
 public abstract class DelayedAssign extends RInvisibleBuiltinNode {
+
+    protected final BranchProfile errorProfile = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -66,6 +69,7 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
             assignEnv.put(name, RDataFactory.createPromise(value.getRep(), evalEnv));
             return RNull.instance;
         } catch (PutException ex) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), ex);
         }
     }

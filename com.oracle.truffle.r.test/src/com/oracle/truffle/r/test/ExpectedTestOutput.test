@@ -20,6 +20,35 @@
 #{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }
 [1] "A vanilla R package"
 
+##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
+#{ print(.Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/list2.rds"), NULL))) }
+$one
+[1] "1"
+
+$two
+[1] "2"
+
+
+##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
+#{ print(.Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/vector1.rds"), NULL))) }
+[1] "1" "2" "3"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con) }
+[1] "1" "2" "3" "4"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2) }
+[1] "1" "2"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2) }
+[1] "3" "4"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testTextReadConnection
+#{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }
+character(0)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testArithmeticUpdate
 #{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- 1L + x ; x } ; f(FALSE) }
 [1] 4
@@ -11512,6 +11541,20 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSapply
 #{ sapply(list(1,2,3),function(x){x*2}) }
 [1] 2 4 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1) }
+Read 6 items
+[1]  7  2  3  4  5 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1, nlines = 1) }
+Read 3 items
+[1] 7 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1, quiet=TRUE) }
+[1]  7  2  3  4  5 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSd
 #{ round(100*sd(c(1,2))^2) }
