@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -124,6 +125,11 @@ public abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return vector.createEmptySameType(newLength, newIsComplete);
+    }
+
+    @Override
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
+        throw RInternalError.shouldNotReachHere();
     }
 
 }

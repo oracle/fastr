@@ -481,8 +481,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return RDataFactory.createStringVector(values, this.isComplete());
     }
 
-    public abstract void transferElementSameType(int toIndex, RVector fromVector, int fromIndex);
-
     public final boolean isInBounds(int firstPosition, int secondPosition) {
         assert isMatrix();
         return firstPosition >= 1 && firstPosition <= matrixDimension && (convertToIndex(secondPosition) * matrixDimension + firstPosition) <= getLength();

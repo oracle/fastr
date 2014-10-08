@@ -147,7 +147,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RVector fromVector, int fromIndex) {
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RList other = (RList) fromVector;
         data[toIndex] = other.data[fromIndex];
     }
