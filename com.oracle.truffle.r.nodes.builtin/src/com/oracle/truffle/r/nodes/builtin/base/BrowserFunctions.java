@@ -61,6 +61,7 @@ public class BrowserFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
+        @SlowPath
         protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
             controlVisibility();
             if (RRuntime.fromLogical(expr)) {
@@ -125,12 +126,10 @@ public class BrowserFunctions {
             }
         }
 
-        @SlowPath
         private static String browserPrompt() {
             return "Browse[" + (helperState.size()) + "]> ";
         }
 
-        @SlowPath
         private static String notImplemented(String command) {
             return "browser command: '" + command + "'";
         }
@@ -161,12 +160,14 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
+        @SlowPath
         protected String browserText(int n) {
             controlVisibility();
             return getHelperState(n).text;
         }
 
         @Specialization
+        @SlowPath
         protected String browserText(double n) {
             controlVisibility();
             return getHelperState((int) n).text;
@@ -176,12 +177,14 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
+        @SlowPath
         protected Object browserCondition(int n) {
             controlVisibility();
             return getHelperState(n).condition;
         }
 
         @Specialization
+        @SlowPath
         protected Object browserCondition(double n) {
             controlVisibility();
             return getHelperState((int) n).condition;
@@ -191,6 +194,7 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
         @Specialization
+        @SlowPath
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
             controlVisibility();
