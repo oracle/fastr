@@ -198,7 +198,7 @@ public abstract class AsVector extends RBuiltinNode {
         return mode.equals("symbol");
     }
 
-    @Specialization
+    @Specialization(guards = "modeIsAny")
     protected RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         RList result = x.copyWithNewDimensions(null);
@@ -264,8 +264,11 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-        return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class &&
-                        RType.Double.getName().equals(mode);
+        return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode);
+    }
+
+    protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+        return RType.Any.getName().equals(mode);
     }
 
     protected boolean invalidMode(@SuppressWarnings("unused") RAbstractVector x, String mode) {

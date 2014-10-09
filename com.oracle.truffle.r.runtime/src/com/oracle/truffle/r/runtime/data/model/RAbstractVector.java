@@ -45,6 +45,8 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
+    RVector copyResizedWithDimensions(int[] newDimensions);
+
     RAbstractVector copyDropAttributes();
 
     RVector createEmptySameType(int newLength, boolean newIsComplete);

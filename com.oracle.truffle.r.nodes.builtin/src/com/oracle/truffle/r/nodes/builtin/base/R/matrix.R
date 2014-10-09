@@ -16,16 +16,15 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# currently disabled as the fastR builtin needs modifying
-#matrix <- function(data=NA, nrow=1, ncol=1, byrow=FALSE, dimnames=NULL)
-#{
-#    ## avoid copying to strip attributes in simple cases
-#    if (is.object(data) || !is.atomic(data)) data <- as.vector(data)
+matrix <- function(data=NA, nrow=1, ncol=1, byrow=FALSE, dimnames=NULL)
+{
+    ## avoid copying to strip attributes in simple cases
+    if (is.object(data) || !is.atomic(data)) data <- as.vector(data)
     ## NB: the defaults are not really nrow=1, ncol=1: missing values
     ## are treated differently, using length(data).
-#    .Internal(matrix(data, nrow, ncol, byrow, dimnames,
-#                     missing(nrow), missing(ncol)))
-#}
+    .Internal(matrix(data, nrow, ncol, byrow, dimnames,
+                     missing(nrow), missing(ncol)))
+}
 
 nrow <- function(x) dim(x)[1L]
 ncol <- function(x) dim(x)[2L]
