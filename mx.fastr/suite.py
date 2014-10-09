@@ -110,21 +110,6 @@ suite = {
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
     },
 
-    "ASM" : {
-      "path" : "lib/asm-5.0.3.jar",
-      "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
-        "http://central.maven.org/maven2/org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
-      ],
-      "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
-      "sourcePath" : "lib/asm-5.0.3-sources.jar",
-      "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
-      "sourceUrls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
-        "http://central.maven.org/maven2/org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
-      ],
-    },
-
     "ASM_ANALYSIS" : {
       "path" : "lib/asm-analysis-4.0.jar",
       "urls" : [
