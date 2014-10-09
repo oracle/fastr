@@ -61,13 +61,12 @@ public class BrowserFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        @SlowPath
         protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
             controlVisibility();
             if (RRuntime.fromLogical(expr)) {
                 try {
                     helperState.add(new HelperState(text, condition));
-                    doBrowser(frame);
+                    doBrowser(frame.materialize());
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }
@@ -75,7 +74,7 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
-        private static void doBrowser(VirtualFrame frame) {
+        private static void doBrowser(MaterializedFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             REnvironment callerEnv = REnvironment.frameToEnvironment(frame.materialize());
             ch.printf("Called from: %s%n", callerEnv == REnvironment.globalEnv() ? "top level" : RArguments.getFunction(frame).getTarget());

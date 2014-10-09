@@ -147,7 +147,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RVector fromVector, int fromIndex) {
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RLogicalVector other = (RLogicalVector) fromVector;
         data[toIndex] = other.data[fromIndex];
     }

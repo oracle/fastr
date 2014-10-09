@@ -114,5 +114,4 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
-
 }

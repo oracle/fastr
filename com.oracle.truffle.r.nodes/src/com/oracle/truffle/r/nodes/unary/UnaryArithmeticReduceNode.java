@@ -203,7 +203,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         int opCount = 0;
         for (int i = 0; i < operand.getLength(); i++) {
             int d = operand.getDataAt(i);
-            na.enable(d);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -229,7 +228,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         int opCount = 0;
         for (int i = 0; i < operand.getLength(); i++) {
             double d = operand.getDataAt(i);
-            na.enable(d);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -255,7 +253,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         int opCount = 0;
         for (int i = 0; i < operand.getLength(); i++) {
             byte d = operand.getDataAt(i);
-            na.enable(d);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -309,9 +306,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
             int opCount = 0;
+            na.enable(operand);
             for (int i = 0; i < operand.getLength(); ++i) {
                 RComplex current = operand.getDataAt(i);
-                na.enable(current);
                 if (na.check(current)) {
                     if (profiledNaRm) {
                         continue;
@@ -481,8 +478,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         @Specialization
         protected String doStringVectorMultiElem(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            na.enable(operand);
             String result = operand.getDataAt(offset);
-            na.enable(result);
             if (profiledNaRm) {
                 if (na.check(result)) {
                     // the following is meant to eliminate leading NA-s
@@ -502,7 +499,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             assert !RRuntime.isNA(result);
             for (int i = offset + 1; i < operand.getLength(); ++i) {
                 String current = operand.getDataAt(i);
-                na.enable(current);
                 if (na.check(current)) {
                     if (profiledNaRm) {
                         // skip NA-s

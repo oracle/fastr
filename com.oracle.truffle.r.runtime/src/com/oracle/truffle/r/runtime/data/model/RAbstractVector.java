@@ -49,6 +49,8 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RVector createEmptySameType(int newLength, boolean newIsComplete);
 
+    void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex);
+
     /**
      * May throw errors, so needs a {@link VirtualFrame}.
      */

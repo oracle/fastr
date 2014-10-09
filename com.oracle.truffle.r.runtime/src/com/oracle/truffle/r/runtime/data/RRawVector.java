@@ -171,7 +171,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RVector fromVector, int fromIndex) {
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RRawVector other = (RRawVector) fromVector;
         data[toIndex] = other.data[fromIndex];
     }
