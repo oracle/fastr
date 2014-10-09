@@ -34,11 +34,8 @@ import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
-import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
@@ -81,21 +78,21 @@ public abstract class PromiseNode extends RNode {
                 break;
 
             case PROMISED:
+                RNode expr = unfold(factory.getExpr());
+                if (isConstantArgument(expr)) {
+                    pn = new ConstantPromiseNode(factory);
+                    break;
+                }
+
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    RNode expr = unfold(factory.getExpr());
-                    if (isConstantArgument(expr)) {
-                        pn = new ConstantSuppliedPromiseNode(factory);
-                    } else if (isVariableArgument(expr)) {
-                        pn = null;
+                    if (isVariableArgument(expr)) {
+                        pn = new VariableSuppliedPromiseNode(factory, ((ReadVariableNode) expr).getSymbol());
                     } else {
                         pn = new SuppliedPromiseNode(factory);
                     }
                 } else {
-                    RNode defaultExpr = unfold(factory.getDefaultExpr());
-                    if (isConstantArgument(defaultExpr)) {
-                        // As this is a constant, we can easily execute it here!
-                        pn = new ConstantDefaultPromiseNode(factory);
-                    } else if (isVariableArgument(defaultExpr)) {
+                    // For ARG_DEFAULT, expr == defaultExpr!
+                    if (isVariableArgument(expr)) {
                         pn = null;  // TODO
                     } else {
                         pn = new DefaultPromiseNode(factory);
@@ -164,12 +161,12 @@ public abstract class PromiseNode extends RNode {
     /**
      * A optimizing {@link PromiseNode}: It evaluates a constant directly.
      */
-    private static final class ConstantDefaultPromiseNode extends PromiseNode {
+    private static final class ConstantPromiseNode extends PromiseNode {
 
         @Child private RNode constantExpr;
         @CompilationFinal private Object constant = null;
 
-        private ConstantDefaultPromiseNode(RPromiseFactory factory) {
+        private ConstantPromiseNode(RPromiseFactory factory) {
             super(factory);
             this.constantExpr = (RNode) factory.getDefaultExpr();
         }
@@ -185,49 +182,47 @@ public abstract class PromiseNode extends RNode {
                 constant = constantExpr.execute(frame);
             }
 
-            return factory.createDefaultArgEvaluated(constant);
+            return factory.createArgEvaluated(constant);
         }
     }
 
-    /**
-     * A optimizing {@link PromiseNode}: It evaluates a constant directly.
-     */
-    private static final class ConstantSuppliedPromiseNode extends PromiseNode {
+    private static final class VariableSuppliedPromiseNode extends PromiseNode implements EagerFeedback {
+        private final FrameSlotNode frameSlotNode;
 
-        @Child private RNode constantExpr;
-        @CompilationFinal private Object constant = null;
-
-        private ConstantSuppliedPromiseNode(RPromiseFactory factory) {
+        public VariableSuppliedPromiseNode(RPromiseFactory factory, Symbol symbol) {
             super(factory);
-            this.constantExpr = (RNode) factory.getExpr();
+            this.frameSlotNode = FrameSlotNode.create(symbol.getName(), false);
         }
 
-        /**
-         * Creates a new {@link RPromise} every time.
-         */
         @Override
         public Object execute(VirtualFrame frame) {
-            if (constant == null) {
-                // Eval constant on first time
+            FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
+
+            // Check if we may apply eager evaluation on this frame slot
+            Assumption notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
+            if (!notChangedNonLocally.isValid()) {
+                // Cannot apply optimizations, as it (may) get invalidated!
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                constant = constantExpr.execute(frame);
+                return replace(new SuppliedPromiseNode(factory)).execute(frame);
             }
 
-            return factory.createSuppliedArgEvaluated(constant);
-        }
-    }
-
-    private static final class VariableSuppliedPromiseNode extends PromiseNode {
-        public VariableSuppliedPromiseNode(RPromiseFactory factory) {
-            super(factory);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
             // TODO Eager Promises
             // Execute
-            // Get assumption
-            return null;
+            Object result = null;
+
+            // Create EagerPromise with the eagerly evaluated value under the assumption that the
+            // value won't be altered until 1. read
+            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, this);
+        }
+
+        public void onFailure() {
+            // TODO Auto-generated method stub
+
+        }
+
+        public void onSuccess() {
+            // TODO Auto-generated method stub
+
         }
     }
 

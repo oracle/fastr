@@ -94,7 +94,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
             controlVisibility();
             Object result = frame.getValue(slot);
             frame.setObject(slot, null); // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.checkAndUpdate(slot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, slot);
             return result;
         }
 

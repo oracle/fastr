@@ -77,7 +77,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     }
 
     private FrameSlot addFrameSlot(String name, FrameSlotKind kind) {
-        return descriptor.addFrameSlot(name, new FrameSlotChangeMonitor(), kind);
+        return descriptor.addFrameSlot(name, FrameSlotChangeMonitor.createMonitor(), kind);
     }
 
     /**

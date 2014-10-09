@@ -136,8 +136,7 @@ public class RPromise extends RLanguageRep {
 
     /**
      * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
-     * evaluated. Meant to be called via {@link RPromiseFactory#createSuppliedArgEvaluated(Object)}
-     * only!
+     * evaluated. Meant to be called via {@link RPromiseFactory#createArgEvaluated(Object)} only!
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param expr
@@ -425,11 +424,11 @@ public class RPromise extends RLanguageRep {
             // Check if assumption is still true
             if (assumption.isValid()) {
                 // If yes: return value and notify success!
-                feedback.notifySuccess();
+                feedback.onSuccess();
                 setValue(eagerValue);
             } else {
                 // Fallback: eager evaluation failed,
-                feedback.notifyFailure();
+                feedback.onFailure();
                 this.execFrame = null; // TODO Magically produce Frame!
 
                 // Call
@@ -451,9 +450,9 @@ public class RPromise extends RLanguageRep {
     }
 
     public interface EagerFeedback {
-        void notifySuccess();
+        void onSuccess();
 
-        void notifyFailure();
+        void onFailure();
     }
 
     /**
@@ -461,7 +460,7 @@ public class RPromise extends RLanguageRep {
      *
      * @see RPromiseFactory#createPromise(MaterializedFrame)
      * @see RPromiseFactory#createPromiseDefault()
-     * @see RPromiseFactory#createSuppliedArgEvaluated(Object)
+     * @see RPromiseFactory#createArgEvaluated(Object)
      */
     public static final class RPromiseFactory {
         private final Closure exprClosure;
@@ -510,22 +509,13 @@ public class RPromise extends RLanguageRep {
         }
 
         /**
-         * @param argumentValue The already evaluated value of the supplied argument.
+         * @param argumentValue The already evaluated value of the argument.
          *            <code>RMissing.instance</code> denotes 'argument not supplied', aka.
          *            'missing'.
-         * @return A {@link RPromise} whose supplied argument has already been evaluated
+         * @return A {@link RPromise} whose argument has already been evaluated
          */
-        public RPromise createSuppliedArgEvaluated(Object argumentValue) {
+        public RPromise createArgEvaluated(Object argumentValue) {
             return new RPromise(evalPolicy, type, exprClosure.getExpr(), argumentValue);
-        }
-
-        /**
-         * @param argumentValue The already evaluated value of the default argument. Only applicable
-         *            to eager evaluated constants!!
-         * @return A {@link RPromise} whose default argument has already been evaluated
-         */
-        public RPromise createDefaultArgEvaluated(Object argumentValue) {
-            return new RPromise(evalPolicy, type, defaultClosure.getExpr(), argumentValue);
         }
 
         /**

@@ -57,7 +57,11 @@ public abstract class FrameSlotNode extends Node {
     }
 
     public static FrameSlotNode create(String name) {
-        return new UnresolvedFrameSlotNode(name, false);
+        return create(name, false);
+    }
+
+    public static FrameSlotNode create(String name, boolean createIfAbsent) {
+        return new UnresolvedFrameSlotNode(name, createIfAbsent);
     }
 
     public static FrameSlotNode create(InternalFrameSlot slot, boolean createIfAbsent) {
@@ -117,7 +121,7 @@ public abstract class FrameSlotNode extends Node {
             if (slot != null) {
                 return slot;
             }
-            return fd.addFrameSlot(identifier, new FrameSlotChangeMonitor(), kind);
+            return fd.addFrameSlot(identifier, FrameSlotChangeMonitor.createMonitor(), kind);
         }
     }
 

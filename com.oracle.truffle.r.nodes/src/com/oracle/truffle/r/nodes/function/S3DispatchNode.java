@@ -129,7 +129,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (slot != null) {
             return slot;
         }
-        return fd.addFrameSlot(identifier, new FrameSlotChangeMonitor(), kind);
+        return fd.addFrameSlot(identifier, FrameSlotChangeMonitor.createMonitor(), kind);
     }
 
     protected void removeVars(VirtualFrame frame) {

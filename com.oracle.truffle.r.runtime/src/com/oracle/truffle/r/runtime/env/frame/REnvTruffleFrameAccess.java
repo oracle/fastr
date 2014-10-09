@@ -78,7 +78,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
             }
             // Overwrites former FrameSlotKind
             frame.setObject(slot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(slot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, slot);
             return;
         }
 
@@ -110,11 +110,11 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
             default:
                 throw new PutException(Message.GENERIC, "frame slot exception");
         }
-        FrameSlotChangeMonitor.checkAndUpdate(slot);
+        FrameSlotChangeMonitor.checkAndUpdate(frame, slot);
     }
 
     private static FrameSlot addFrameSlot(FrameDescriptor fd, String key, FrameSlotKind kind) {
-        return fd.addFrameSlot(key, new FrameSlotChangeMonitor(), kind);
+        return fd.addFrameSlot(key, FrameSlotChangeMonitor.createMonitor(), kind);
     }
 
     @Override

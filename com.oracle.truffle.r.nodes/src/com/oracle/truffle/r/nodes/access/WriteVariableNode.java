@@ -195,7 +195,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             if (slot != null) {
                 return slot;
             }
-            return fd.addFrameSlot(name, new FrameSlotChangeMonitor(), kind);
+            return fd.addFrameSlot(name, FrameSlotChangeMonitor.createMonitor(), kind);
         }
     }
 
@@ -212,7 +212,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
             frame.setByte(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -220,7 +220,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
             frame.setInt(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -228,7 +228,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
             frame.setDouble(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -236,7 +236,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
             writeObjectValue(frame, frameSlot, value, getMode(), false);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -354,7 +354,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             if (slot != null) {
                 return slot;
             }
-            return fd.addFrameSlot(identifier, new FrameSlotChangeMonitor(), kind);
+            return fd.addFrameSlot(identifier, FrameSlotChangeMonitor.createMonitor(), kind);
         }
 
         @Override
@@ -388,7 +388,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setByte(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -396,7 +396,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setInt(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -404,7 +404,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setDouble(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 
@@ -412,7 +412,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             writeObjectValue(enclosingFrame, frameSlot, value, getMode(), true);
-            FrameSlotChangeMonitor.checkAndUpdate(frameSlot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
             return value;
         }
 

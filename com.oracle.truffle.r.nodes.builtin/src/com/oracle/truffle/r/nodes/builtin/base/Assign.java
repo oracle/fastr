@@ -113,10 +113,10 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     private static void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
         FrameSlot fs = frameSlot;
         if (fs == null) {
-            fs = frame.getFrameDescriptor().addFrameSlot(variableName, new FrameSlotChangeMonitor(), FrameSlotKind.Illegal);
+            fs = frame.getFrameDescriptor().addFrameSlot(variableName, FrameSlotChangeMonitor.createMonitor(), FrameSlotKind.Illegal);
         }
         frame.setObject(fs, variableValue);
-        FrameSlotChangeMonitor.checkAndUpdate(fs);
+        FrameSlotChangeMonitor.checkAndUpdate(frame, fs);
     }
 
     private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {

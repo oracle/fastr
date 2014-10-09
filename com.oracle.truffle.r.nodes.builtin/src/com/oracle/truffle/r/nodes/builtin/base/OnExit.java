@@ -86,7 +86,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
         } else {
             // initialize the list of exit handlers
             frame.setObject(slot, current = new ArrayList<>());
-            FrameSlotChangeMonitor.checkAndUpdate(slot);
+            FrameSlotChangeMonitor.checkAndUpdate(frame, slot);
         }
         if (!empty) {
             current.add(expr.getRep());

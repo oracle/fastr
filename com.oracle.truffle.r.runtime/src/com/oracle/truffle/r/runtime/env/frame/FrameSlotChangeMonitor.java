@@ -7,10 +7,12 @@ import com.oracle.truffle.r.runtime.*;
 /**
  * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot} holds an
  * {@link Assumption} in it's "info" field. This assumption is valid as long as no non-local update
- * has ever taken place. interested (e.g., Promises optimizations), it provides an
- * {@link Assumption} on whether a value has changed since they last checked.
+ * has ever taken place. TODO Extend
  *
- * @see #invalidate(Object)
+ * @see #createMonitor()
+ * @see #invalidate(Frame, FrameSlot)
+ * @see #getMonitor(FrameSlot)
+ * @see #isMonitorValid(FrameSlot)
  */
 public final class FrameSlotChangeMonitor {
     private static final String ASSUMPTION_NAME = "slot change monitor";
@@ -23,26 +25,50 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * @see #invalidate(Object)
+     * TODO
+     *
+     * @param slot
+     * @return The "not changed locally" assumption of the given {@link FrameSlot}
+     *
+     * @see FrameSlotChangeMonitor
      */
-    public static void invalidate(FrameSlot slot) {
-        invalidate(slot.getInfo());
+    public static Assumption getMonitor(FrameSlot slot) {
+        Object info = slot.getInfo();
+        if (!(info instanceof Assumption)) {
+            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold an Assumption in it's info field!");
+        }
+        return (Assumption) info;
     }
 
-    public static void checkAndUpdate(FrameSlot slot) {
-        invalidate(slot);
+    /**
+     * Convenience method for {@link #getMonitor(FrameSlot)} and {@link Assumption#isValid()}
+     *
+     * @param slot
+     * @return Directly returns whether a {@link FrameSlot} has ever been updated from a non-local
+     *         frame.
+     */
+    public static boolean isMonitorValid(FrameSlot slot) {
+        return getMonitor(slot).isValid();
     }
 
     /**
      * Assumes info to be an {@link Assumption} attached to a {@link FrameSlot} and invalidates it
      *
-     * @param info Assumed to be an Assumption, throws an {@link RInternalError} otherwise
+     * @param frame
+     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
+     *            {@link RInternalError} otherwise
      */
-    public static void invalidate(Object info) {
-        if (!(info instanceof Assumption)) {
-            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold an Assumption in it's info field!");
+    public static void invalidate(Frame frame, FrameSlot slot) {
+        if (RArguments.getDepth(frame) == RArguments.getDepth(Utils.getActualCurrentFrame())) {
+            return;
         }
-        Assumption notChangedLocally = (Assumption) info;
+
+        Assumption notChangedLocally = getMonitor(slot);
         notChangedLocally.invalidate();
+        System.err.println("Invalidated " + RRuntime.toString(slot.getIdentifier()));
+    }
+
+    public static void checkAndUpdate(Frame frame, FrameSlot slot) {
+        invalidate(frame, slot);
     }
 }
