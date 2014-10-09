@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -56,6 +55,8 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     private final BranchProfile everSeenNonShared = new BranchProfile();
     private final BranchProfile everSeenShared = new BranchProfile();
     private final BranchProfile everSeenTemporary = new BranchProfile();
+
+    private final BranchProfile initialSetKindProfile = new BranchProfile();
 
     @Override
     public final boolean getVisibility() {
@@ -226,15 +227,15 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return value;
         }
 
-        protected static boolean isFrameBooleanKind(FrameSlot frameSlot, @SuppressWarnings("unused") byte value) {
+        protected boolean isFrameBooleanKind(FrameSlot frameSlot, @SuppressWarnings("unused") byte value) {
             return isBooleanKind(frameSlot);
         }
 
-        protected static boolean isFrameIntegerKind(FrameSlot frameSlot, @SuppressWarnings("unused") int value) {
+        protected boolean isFrameIntegerKind(FrameSlot frameSlot, @SuppressWarnings("unused") int value) {
             return isIntegerKind(frameSlot);
         }
 
-        protected static boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
+        protected boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
             return isDoubleKind(frameSlot);
         }
     }
@@ -385,43 +386,40 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return value;
         }
 
-        @SlowPath
-        protected static boolean isFrameBooleanKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected boolean isFrameBooleanKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isBooleanKind(frameSlot);
         }
 
-        @SlowPath
-        protected static boolean isFrameIntegerKind(int arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected boolean isFrameIntegerKind(int arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isIntegerKind(frameSlot);
         }
 
-        @SlowPath
-        protected static boolean isFrameDoubleKind(double arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected boolean isFrameDoubleKind(double arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isDoubleKind(frameSlot);
         }
     }
 
-    @SlowPath
-    protected static boolean isBooleanKind(FrameSlot frameSlot) {
+    protected boolean isBooleanKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Boolean);
     }
 
-    @SlowPath
-    protected static boolean isIntegerKind(FrameSlot frameSlot) {
+    protected boolean isIntegerKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Int);
     }
 
-    @SlowPath
-    protected static boolean isDoubleKind(FrameSlot frameSlot) {
+    protected boolean isDoubleKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 
-    @SlowPath
-    private static boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
-        return frameSlot.getKind() == kind || initialSetKind(frameSlot, kind);
+    private boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
+        if (frameSlot.getKind() == kind) {
+            return true;
+        } else {
+            initialSetKindProfile.enter();
+            return initialSetKind(frameSlot, kind);
+        }
     }
 
-    @SlowPath
     private static boolean initialSetKind(FrameSlot frameSlot, FrameSlotKind kind) {
         if (frameSlot.getKind() == FrameSlotKind.Illegal) {
             frameSlot.setKind(kind);

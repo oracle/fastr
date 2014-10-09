@@ -232,17 +232,14 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @SlowPath
     protected boolean isZeroLength(byte left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
-    @SlowPath
     protected boolean isZeroLength(Object left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
-    @SlowPath
     protected boolean needsRightOperand(Object left, boolean needsRightOperand, Object right) {
         return needsRightOperand;
     }

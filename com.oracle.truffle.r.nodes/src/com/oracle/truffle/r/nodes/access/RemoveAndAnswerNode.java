@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.parser.ast.*;
@@ -63,7 +62,6 @@ public abstract class RemoveAndAnswerNode extends RNode {
             return specialize(fs).execute(frame);
         }
 
-        @SlowPath
         private RemoveAndAnswerNode specialize(FrameSlot fs) {
             if (fs == null) {
                 RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, name);

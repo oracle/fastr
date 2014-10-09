@@ -68,8 +68,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     private UnaryArithmeticNode specializeToUnaryOp() {
         if (unaryNode == null) {
             if (unaryFactory == null) {
-                // No profile needed, as this is only needed on 1. execution and thus cannot get
-                // compiled
+                // No profile needed, as all conditions are (Truffle/Graal) compile time constant
                 throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
