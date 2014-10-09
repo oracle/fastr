@@ -232,7 +232,6 @@ public final class RPromise extends RLanguageRep {
     public void setValue(Object newValue) {
         this.value = newValue;
         this.isEvaluated = true;
-        this.execFrame = null; // the frame is no longer needed after execution
 
         // TODO Does this apply to other values, too?
         if (newValue instanceof RShareable) {
