@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -45,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  */
 public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
-    @Child private ReadVariableNode varArgsSlotNode = ReadVariableNode.create(ArgumentsTrait.VARARG_NAME, RType.Any, false, false, true, false);
+    @Child private ReadVariableNode varArgsSlotNode;
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
@@ -77,6 +78,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
+        this.varArgsSlotNode = !containsVarArgsSymbol() ? null : ReadVariableNode.create(ArgumentsTrait.VARARG_NAME, RType.Any, false, false, true, false);
         ArgumentsTrait.internalize(names);
     }
 
@@ -222,11 +224,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                         // RMissing.instance. Both need to be wrapped into ConstantNodes, so
                         // they might get wrapped into new promises later on
                         Object varArgValue = varArgInfo.getValues()[j];
-                        if (varArgValue instanceof RPromise) {
-                            values[index] = PromiseNode.createVarArg((RPromise) varArgValue);
-                        } else {
-                            values[index] = ConstantNode.create(varArgValue);
-                        }
+                        values[index] = wrapVarArgValue(varArgValue);
                         String newName = varArgInfo.getNames()[j];
                         newNames[index] = newName;
                         index++;
@@ -240,6 +238,15 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
             }
 
             return UnrolledVariadicArguments.create(values, newNames, this);
+        }
+    }
+
+    @SlowPath
+    private static RNode wrapVarArgValue(Object varArgValue) {
+        if (varArgValue instanceof RPromise) {
+            return PromiseNode.createVarArg((RPromise) varArgValue);
+        } else {
+            return ConstantNode.create(varArgValue);
         }
     }
 

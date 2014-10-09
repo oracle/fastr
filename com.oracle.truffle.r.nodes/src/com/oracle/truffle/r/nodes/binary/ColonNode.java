@@ -33,6 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
 public abstract class ColonNode extends RNode implements VisibilityController {
 
+    private final BranchProfile naCheckErrorProfile = new BranchProfile();
+
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {
         ColonCastNode ccn = ColonCastNodeFactory.create(child);
@@ -42,6 +44,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
     private void naCheck(boolean na) {
         if (na) {
+            naCheckErrorProfile.enter();
             throw RError.error(getSourceSection(), RError.Message.NA_OR_NAN);
         }
     }

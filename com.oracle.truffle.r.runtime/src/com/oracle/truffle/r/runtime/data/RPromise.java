@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -232,8 +232,12 @@ public final class RPromise extends RLanguageRep {
     public void setValue(Object newValue) {
         this.value = newValue;
         this.isEvaluated = true;
-        this.execFrame = null; // the frame is no longer needed after execution
-        // TODO set NAMED = 2
+
+        // TODO Does this apply to other values, too?
+        if (newValue instanceof RShareable) {
+            // set NAMED = 2
+            ((RShareable) newValue).makeShared();
+        }
     }
 
     @SlowPath

@@ -92,6 +92,15 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
+    public RVector copyResizedWithDimensions(int[] newDimensions) {
+        // TODO support for higher dimensions
+        assert newDimensions.length == 2;
+        RVector result = copyResized(newDimensions[0] * newDimensions[1], false);
+        result.setDimensions(newDimensions);
+        return result;
+    }
+
+    @Override
     public RAbstractVector copyDropAttributes() {
         return vector.copyDropAttributes();
     }

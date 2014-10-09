@@ -42,7 +42,7 @@ public abstract class DispatchedCallNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        throw new UnsupportedOperationException();
+        throw RInternalError.shouldNotReachHere();
     }
 
     public abstract Object execute(VirtualFrame frame, RStringVector type);
@@ -103,7 +103,7 @@ public abstract class DispatchedCallNode extends RNode {
             if (this.dispatchType == RRuntime.NEXT_METHOD) {
                 return new NextMethodDispatchNode(this.genericName, type, this.args);
             }
-            throw new AssertionError();
+            throw RInternalError.shouldNotReachHere();
         }
     }
 
@@ -200,6 +200,7 @@ public abstract class DispatchedCallNode extends RNode {
             return Utils.nyi();
         }
 
+        // TODO Insert PIC!
         private Object executeHelper(VirtualFrame frame, DispatchNode.FunctionCall aFuncCall) {
             if (aCallNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

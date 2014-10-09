@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
@@ -36,6 +37,7 @@ public interface ClosureCache {
      * @return A {@link Closure} representing the given {@link RNode}. If expr is <code>null</code>
      *         <code>null</code> is returned.
      */
+    @SlowPath
     default Closure getOrCreateClosure(RNode expr) {
         if (expr == null) {
             return null;

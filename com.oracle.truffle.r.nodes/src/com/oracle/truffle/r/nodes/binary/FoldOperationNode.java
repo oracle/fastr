@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * See {@code com.oracle.truffle.r.nodes.builtin.base.Combine}
@@ -46,6 +47,6 @@ public abstract class FoldOperationNode extends RNode {
 
     @Override
     public final Object execute(VirtualFrame frame) {
-        throw new UnsupportedOperationException();
+        throw RInternalError.shouldNotReachHere();
     }
 }

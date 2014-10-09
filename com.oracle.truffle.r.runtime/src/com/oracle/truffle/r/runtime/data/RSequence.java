@@ -126,4 +126,14 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         throw RInternalError.shouldNotReachHere();
     }
+
+    @Override
+    public RVector copyResizedWithDimensions(int[] newDimensions) {
+        // TODO support for higher dimensions
+        assert newDimensions.length == 2;
+        RVector result = copyResized(newDimensions[0] * newDimensions[1], false);
+        result.setDimensions(newDimensions);
+        return result;
+    }
+
 }
