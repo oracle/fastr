@@ -92,7 +92,7 @@ public abstract class PromiseNode extends RNode {
                     }
                 } else {
                     // For ARG_DEFAULT, expr == defaultExpr!
-                    if (isVariableArgument(expr)) {
+                    if (isVariableArgument(expr) && false) {
                         pn = null;  // TODO
                     } else {
                         pn = new DefaultPromiseNode(factory);
@@ -168,7 +168,7 @@ public abstract class PromiseNode extends RNode {
 
         private ConstantPromiseNode(RPromiseFactory factory) {
             super(factory);
-            this.constantExpr = (RNode) factory.getDefaultExpr();
+            this.constantExpr = (RNode) factory.getExpr();
         }
 
         /**
@@ -187,10 +187,12 @@ public abstract class PromiseNode extends RNode {
     }
 
     private static final class VariableSuppliedPromiseNode extends PromiseNode implements EagerFeedback {
-        private final FrameSlotNode frameSlotNode;
+        private final Symbol symbol;
+        @Child private FrameSlotNode frameSlotNode;
 
         public VariableSuppliedPromiseNode(RPromiseFactory factory, Symbol symbol) {
             super(factory);
+            this.symbol = symbol;
             this.frameSlotNode = FrameSlotNode.create(symbol.getName(), false);
         }
 
@@ -206,13 +208,21 @@ public abstract class PromiseNode extends RNode {
                 return replace(new SuppliedPromiseNode(factory)).execute(frame);
             }
 
-            // TODO Eager Promises
-            // Execute
+            // Execute eagerly
+            RNode variableExpr = (RNode) factory.getExpr(); // TODO Handle RShareable and
+            // WrapArgumentNode correctly!
             Object result = null;
+            try {
+                result = variableExpr.execute(frame);
+            } catch (Throwable t) {
+                // Errors are also side effects
+                // TODO Create EagerErrorPromise
+                throw RInternalError.unimplemented();
+            }
 
             // Create EagerPromise with the eagerly evaluated value under the assumption that the
             // value won't be altered until 1. read
-            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, this);
+            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, RArguments.getDepth(frame), this);
         }
 
         public void onFailure() {
@@ -220,9 +230,10 @@ public abstract class PromiseNode extends RNode {
 
         }
 
+        @SlowPath
         public void onSuccess() {
             // TODO Auto-generated method stub
-
+            System.out.println("Successfully optimized read from '" + symbol.getName() + "'");
         }
     }
 

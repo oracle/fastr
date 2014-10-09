@@ -202,6 +202,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 return promise.getValue();
             }
 
+            if (promise.isEagerPromise(promiseProfile)) {
+                return promise.evaluate(frame, promiseProfile);
+            }
+
             if (promise.isInOriginFrame(frame, promiseProfile)) {
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             }

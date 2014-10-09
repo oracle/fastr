@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -404,14 +405,15 @@ public class RPromise extends RLanguageRep {
         private final Object eagerValue;
 
         private final Assumption assumption;
-        // TODO sth to resolve the correct REnvironment! Maybe envprovider useful here?
+        private final int nFrameId;
         private final EagerFeedback feedback;
 
-        private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, EagerFeedback feedback) {
+        private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
             super(EvalPolicy.PROMISED, type, null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.assumption = assumption;
+            this.nFrameId = nFrameId;
             this.feedback = feedback;
         }
 
@@ -424,15 +426,15 @@ public class RPromise extends RLanguageRep {
             // Check if assumption is still true
             if (assumption.isValid()) {
                 // If yes: return value and notify success!
-                feedback.onSuccess();
                 setValue(eagerValue);
+                feedback.onSuccess();
             } else {
-                // Fallback: eager evaluation failed,
-                feedback.onFailure();
-                this.execFrame = null; // TODO Magically produce Frame!
+                // Fallback: eager evaluation failed, now take the slow path
+                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, nFrameId);
 
                 // Call
                 super.evaluate(null, profile);
+                feedback.onFailure();
             }
             return value;
         }
@@ -525,8 +527,8 @@ public class RPromise extends RLanguageRep {
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption assumption, EagerFeedback feedback) {
-            return new EagerPromise(type, exprClosure, eagerValue, assumption, feedback);
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            return new EagerPromise(type, exprClosure, eagerValue, assumption, nFrameId, feedback);
         }
 
         /**
@@ -534,9 +536,9 @@ public class RPromise extends RLanguageRep {
          *            until evaluation
          * @return An {@link EagerPromise} (which needs to be fully fixed after the call!)
          */
-        public RPromise createEagerDefaultPromise(EagerFeedback feedback) {
+        public RPromise createEagerDefaultPromise(int nFrameId, EagerFeedback feedback) {
             // TODO Does this work??
-            return new EagerPromise(type, defaultClosure, null, null, feedback);
+            return new EagerPromise(type, defaultClosure, null, null, nFrameId, feedback);
         }
 
         public Object getExpr() {

@@ -1,6 +1,7 @@
 package com.oracle.truffle.r.runtime.env.frame;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -59,7 +60,13 @@ public final class FrameSlotChangeMonitor {
      *            {@link RInternalError} otherwise
      */
     public static void invalidate(Frame frame, FrameSlot slot) {
-        if (RArguments.getDepth(frame) == RArguments.getDepth(Utils.getActualCurrentFrame())) {
+        doInvalidate(RArguments.getDepth(frame), slot);
+    }
+
+    @SlowPath
+    private static void doInvalidate(int depth, FrameSlot slot) {
+        VirtualFrame frame = Utils.getActualCurrentFrame();
+        if (frame == null || depth == RArguments.getDepth(frame)) {
             return;
         }
 
