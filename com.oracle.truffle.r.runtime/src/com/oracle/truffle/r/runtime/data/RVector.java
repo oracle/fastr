@@ -361,7 +361,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public final int[] getDimensions() {
         if (hasDimensions()) {
-            return Arrays.copyOf(dimensions, dimensions.length);
+            return dimensions;
         } else {
             return null;
         }
