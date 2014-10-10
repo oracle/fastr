@@ -46,6 +46,16 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
+    protected byte doInternalIdentical(Object x, @SuppressWarnings("unused") RNull y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
+                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        return x == RNull.instance ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
     protected byte doInternalIdentical(byte x, byte y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,

@@ -1286,6 +1286,7 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testIsTRUE() {
+        assertEval("{ isTRUE(NULL) }");
         assertEval("{ isTRUE(TRUE) }");
         assertEval("{ isTRUE(FALSE) }");
         assertEval("{ isTRUE(NA) }");

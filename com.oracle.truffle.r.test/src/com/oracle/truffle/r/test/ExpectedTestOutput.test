@@ -7716,6 +7716,10 @@ Error: object 'f' not found
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
 #{ isTRUE(TRUE) }
 [1] TRUE
 

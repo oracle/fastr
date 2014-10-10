@@ -8564,6 +8564,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsTRUE_a8473f969e4f8b207e5f677194e23c40() {
+        assertEval("{ isTRUE(NULL) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsTRUE_acbc975cbce8f2d6a8b5422c52a423d3() {
         assertEval("{ isTRUE(TRUE) }");
     }
