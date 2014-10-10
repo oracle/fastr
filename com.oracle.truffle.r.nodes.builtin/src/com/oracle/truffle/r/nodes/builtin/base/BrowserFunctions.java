@@ -74,6 +74,7 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
+        @SlowPath
         private static void doBrowser(MaterializedFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             REnvironment callerEnv = REnvironment.frameToEnvironment(frame.materialize());
