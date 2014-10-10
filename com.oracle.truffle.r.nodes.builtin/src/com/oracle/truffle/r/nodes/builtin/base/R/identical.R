@@ -22,5 +22,4 @@ identical <- function(x, y, num.eq = TRUE, single.NA = TRUE,
     .Internal(identical(x,y, num.eq, single.NA, attrib.as.set,
                         ignore.bytecode, ignore.environment))
 
-# implemented directly as a builtin
-# isTRUE <- function(x) identical(TRUE, x)
+isTRUE <- function(x) identical(TRUE, x)

@@ -14734,7 +14734,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTypeCheckIgnore_7f8323b03018432a0d32c10f362ec5d7() {
+    public void TestSimpleBuiltins_testTypeCheck_7f8323b03018432a0d32c10f362ec5d7() {
         assertEval("{ is.list(NULL) }");
     }
 

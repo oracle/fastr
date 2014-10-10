@@ -12893,6 +12893,10 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.list(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
 #{ is.logical(1L) }
 [1] FALSE
 

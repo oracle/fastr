@@ -14,13 +14,14 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class IsArray extends RBuiltinNode {
+/**
+ * {@link IsArray} does not subclass {@link IsTypeNode} because it needs to specialize on {@link RAbstractVector}.
+ */
+public abstract class IsArray extends IsTypeNodeMissingAdapter {
 
     @Specialization
     protected byte isType(RAbstractVector vector) {
@@ -28,15 +29,10 @@ public abstract class IsArray extends RBuiltinNode {
         return RRuntime.asLogical(vector.isArray());
     }
 
-    @Specialization
-    protected byte isType(@SuppressWarnings("unused") RNull arg) {
+    @Fallback
+    protected byte isType(@SuppressWarnings("unused") Object arg) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization
-    protected byte isType(@SuppressWarnings("unused") RFunction arg) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
 }

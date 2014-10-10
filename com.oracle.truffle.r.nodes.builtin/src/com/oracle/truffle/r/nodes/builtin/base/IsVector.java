@@ -41,16 +41,10 @@ public abstract class IsVector extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName())};
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected byte isNull(RNull operand, Object mode) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected byte isNull(RDataFrame operand, Object mode) {
-        return RRuntime.LOGICAL_FALSE;
+    protected byte isType(@SuppressWarnings("unused") RMissing value, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, "x");
     }
 
     @SuppressWarnings("unused")
@@ -88,6 +82,12 @@ public abstract class IsVector extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
+    @Fallback
+    protected byte isVector(Object x, Object mode) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
     protected static boolean namesOnlyOrNoAttrInternal(RAbstractVector x, @SuppressWarnings("unused") Object mode) {
         // there should be no attributes other than names
         if (x.getNames() == RNull.instance) {
@@ -108,8 +108,8 @@ public abstract class IsVector extends RBuiltinNode {
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-        return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) ||
-                        (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) || (x.getElementClass() == Object.class && mode.equals("list"));
+        return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
+                        (x.getElementClass() == Object.class && mode.equals("list"));
     }
 
 }

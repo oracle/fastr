@@ -22,44 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Arguably unnecessary when {@code identical} is implemented, as {@code isTRUE(x)} is defined to be
- * {@code identical(TRUE, x}.
+ * A convenience class for {@code IsXXX} variants that cannot subclass {@link IsTypeNode} but need
+ * the support for {@link RMissing}.
  */
-@RBuiltin(name = "isTRUE", kind = SUBSTITUTE, parameterNames = {"x"})
-// TODO revert to R
-public abstract class IsTRUE extends RBuiltinNode {
-
+public abstract class IsTypeNodeMissingAdapter extends RBuiltinNode {
     @Specialization
-    protected RLogicalVector isTRUE(byte x) {
+    protected byte isType(@SuppressWarnings("unused") RMissing value) {
         controlVisibility();
-        byte xx = x;
-        if (x == RRuntime.LOGICAL_NA) {
-            xx = RRuntime.LOGICAL_FALSE;
-        }
-        return RDataFactory.createLogicalVectorFromScalar(xx);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
-    @Specialization(guards = "exactlyTrue")
-    protected RLogicalVector isTRUE(@SuppressWarnings("unused") RLogicalVector x) {
-        controlVisibility();
-        return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
-    }
-
-    @Specialization
-    protected RLogicalVector isTRUEGeneric(@SuppressWarnings("unused") Object x) {
-        controlVisibility();
-        return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE);
-    }
-
-    public static boolean exactlyTrue(RLogicalVector v) {
-        return v.getLength() == 1 && v.getDataAt(0) == RRuntime.LOGICAL_TRUE && (v.getAttributes() == null || v.getAttributes().isEmpty());
-    }
 }

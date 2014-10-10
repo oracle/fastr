@@ -1714,11 +1714,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testTypeCheckIgnore_7f8323b03018432a0d32c10f362ec5d7() {
-        assertEval("{ is.list(NULL) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testTypeOfIgnore_847d333bfb40729281acd0b949d4c097() {
         assertEval("{ f <- function(...) typeof(...); f()}");
     }
