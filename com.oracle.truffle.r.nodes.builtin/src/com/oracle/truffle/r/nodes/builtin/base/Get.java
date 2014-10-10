@@ -52,6 +52,8 @@ public abstract class Get extends RBuiltinNode {
     @CompilationFinal private RType lastMode;
 
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+    private final BranchProfile errorProfile = new BranchProfile();
+    private final BranchProfile inheritsProfile = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -77,6 +79,7 @@ public abstract class Get extends RBuiltinNode {
             // FIXME: this will not compile, since lookup is not compilation final
             return lookup.execute(frame);
         } catch (RError e) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
         }
     }
@@ -101,6 +104,7 @@ public abstract class Get extends RBuiltinNode {
         REnvironment env = pos;
         Object r = env.get(sx);
         if (r == null && inherits == RRuntime.LOGICAL_TRUE) {
+            inheritsProfile.enter();
             while (r == null && env != null) {
                 env = env.getParent();
                 if (env != null) {
@@ -109,10 +113,10 @@ public abstract class Get extends RBuiltinNode {
             }
         }
         if (r == null) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, sx);
-        } else {
-            return r;
         }
+        return r;
     }
 
     @Specialization

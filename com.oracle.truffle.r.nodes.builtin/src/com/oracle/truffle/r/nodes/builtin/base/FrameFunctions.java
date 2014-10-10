@@ -47,6 +47,7 @@ public class FrameFunctions {
     public abstract static class FrameHelper extends RBuiltinNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
+        protected final BranchProfile errorProfile = new BranchProfile();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -63,6 +64,7 @@ public class FrameFunctions {
             int depth = RArguments.getDepth(frame);
             if (n > 0) {
                 if (n > depth) {
+                    errorProfile.enter();
                     throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 actualFrame = n;
@@ -74,6 +76,7 @@ public class FrameFunctions {
             } else {
                 Frame callerFrame = Utils.getStackFrame(frameAccess(), actualFrame);
                 if (callerFrame == null) {
+                    errorProfile.enter();
                     throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 return callerFrame;
@@ -171,6 +174,8 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"})
     public abstract static class SysFrame extends FrameHelper {
 
+        private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
+
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.MATERIALIZE;
@@ -179,7 +184,7 @@ public class FrameFunctions {
         @Specialization
         protected REnvironment sysFrame(VirtualFrame frame, int which) {
             controlVisibility();
-            if (which == 0) {
+            if (zeroProfile.profile(which == 0)) {
                 // TODO Strictly this should be the value of .GlobalEnv
                 // (which may differ from globalenv() during startup)
                 return REnvironment.globalEnv();
@@ -270,6 +275,7 @@ public class FrameFunctions {
 
         @Specialization
         protected Object sysFrames() {
+            errorProfile.enter();
             throw RError.nyi(null, "sys.frames is not implemented");
         }
     }
@@ -280,6 +286,8 @@ public class FrameFunctions {
     @RBuiltin(name = "parent.frame", kind = INTERNAL, parameterNames = {"n"})
     public abstract static class ParentFrame extends FrameHelper {
 
+        private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
+
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.MATERIALIZE;
@@ -289,11 +297,12 @@ public class FrameFunctions {
         protected REnvironment parentFrame(VirtualFrame frame, int n) {
             controlVisibility();
             if (n == 0) {
+                errorProfile.enter();
                 throw RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
             }
             int p = RArguments.getDepth(frame) - n - 1;
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, p);
-            if (callerFrame == null) {
+            if (nullProfile.profile(callerFrame == null)) {
                 return REnvironment.globalEnv();
             } else {
                 return REnvironment.frameToEnvironment(callerFrame.materialize());
