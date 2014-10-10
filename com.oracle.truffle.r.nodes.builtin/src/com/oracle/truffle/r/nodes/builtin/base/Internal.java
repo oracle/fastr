@@ -47,6 +47,17 @@ public abstract class Internal extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = new BranchProfile();
 
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    }
+
+    @Specialization
+    protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
+        errorProfile.enter();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    }
+
     @Specialization
     protected Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
