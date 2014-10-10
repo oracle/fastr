@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -36,9 +37,14 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * Internal part of {@code identical}. The default values for args after {@code x} and {@code y} are
  * all set to {@code TRUE/FALSE} by the R wrapper.
+ *
+ * TODO Implement the full set of types.
  */
 @RBuiltin(name = "identical", kind = INTERNAL, parameterNames = {"x", "y", "num.eq", "single.NA", "attrib.as.set", "ignore.bytecode", "ignore.environment"})
 public abstract class Identical extends RBuiltinNode {
+
+    private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
+
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE),
@@ -104,12 +110,13 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        if (x.getLength() != y.getLength()) {
+        if (vecLengthProfile.profile(x.getLength() != y.getLength())) {
             return RRuntime.LOGICAL_FALSE;
-        }
-        for (int i = 0; i < x.getLength(); i++) {
-            if (!x.getDataAtAsObject(i).equals(y.getDataAtAsObject(i))) {
-                return RRuntime.LOGICAL_FALSE;
+        } else {
+            for (int i = 0; i < x.getLength(); i++) {
+                if (!x.getDataAtAsObject(i).equals(y.getDataAtAsObject(i))) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
             }
         }
         return RRuntime.LOGICAL_TRUE;
