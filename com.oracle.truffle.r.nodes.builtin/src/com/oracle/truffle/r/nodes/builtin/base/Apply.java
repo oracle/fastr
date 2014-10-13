@@ -96,7 +96,6 @@ public abstract class Apply extends RBuiltinNode {
             }
         }
         Object[] args = RArguments.create(fun, getSourceSection(), RArguments.getDepth(frame) + 1, evaluatedArgs);
-        System.out.println("call " + fun.getTarget());
         return callCache.execute(frame, fun.getTarget(), args);
     }
 }
