@@ -274,12 +274,11 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") byte naRm) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
-        int opCount = 0;
         for (int i = 0; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
-        if (opCount == 0 && semantics.getEmptyWarning() != null) {
+        if (operand.getLength() == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
@@ -289,12 +288,11 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") byte naRm) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
-        int opCount = 0;
         for (int i = 0; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
-        if (opCount == 0 && semantics.getEmptyWarning() != null) {
+        if (operand.getLength() == 0 && semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
         return result;
