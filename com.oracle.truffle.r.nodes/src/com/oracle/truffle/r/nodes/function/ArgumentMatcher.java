@@ -628,7 +628,7 @@ public class ArgumentMatcher {
         } else {
             // Default value
             if (defaultValue != null) {
-                expr = defaultValue;
+                expr = null;
                 promiseType = PromiseType.ARG_DEFAULT;
             } else {
                 // In this case, we simply return RMissing (like R)
@@ -638,9 +638,17 @@ public class ArgumentMatcher {
 
         // Create promise
         EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, logicalIndex);
-        Closure closure = closureCache.getOrCreateClosure(expr);
         Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-        return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
+        Closure closure;
+        SourceSection exprSrc;
+        if (expr == null) {
+            closure = defaultClosure;
+            exprSrc = defaultValue.getSourceSection();
+        } else {
+            closure = closureCache.getOrCreateClosure(expr);
+            exprSrc = expr.getSourceSection();
+        }
+        return PromiseNode.create(exprSrc, RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
     }
 
     /**

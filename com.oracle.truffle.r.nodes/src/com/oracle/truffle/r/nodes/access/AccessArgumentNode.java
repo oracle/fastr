@@ -104,11 +104,11 @@ public abstract class AccessArgumentNode extends RNode {
         assert !promise.isNonArgument();
         CompilerAsserts.compilationConstant(useExprExecNode);
 
-        // Check whether it is necessary to create a callee REnvironment for the promise
+        // Check whether it is necessary to stuff the Promise with the current frame
         if (promise.needsCalleeFrame(promiseProfile)) {
             needsCalleeFrame.enter();
-            // In this case the promise might lack the proper REnvironment, as it was created before
-            // the environment was
+            // In this case the Promise lacks a frame, because it is a ARG_DEFAULT and was created
+            // on call site
             promise.updateFrame(frame.materialize(), promiseProfile);
         }
 

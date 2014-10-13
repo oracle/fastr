@@ -28,13 +28,19 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
@@ -78,26 +84,28 @@ public abstract class PromiseNode extends RNode {
                 break;
 
             case PROMISED:
+                // For ARG_DEFAULT, expr == defaultExpr!
                 RNode expr = unfold(factory.getExpr());
-                if (isConstantArgument(expr)) {
-                    pn = new ConstantPromiseNode(factory);
+                if (FastROptions.EagerEvalConstants.getValue() && isConstantArgument(expr)) {
+                    // As Constants don't care where they are evaluated, we don't need to
+                    // distinguish between ARG_DEFAULT and ARG_SUPPLIED
+                    pn = new OptConstantPromiseNode(factory);
                     break;
                 }
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    if (isVariableArgument(expr)) {
-                        pn = new VariableSuppliedPromiseNode(factory, ((ReadVariableNode) expr).getSymbol());
-                    } else {
-                        pn = new SuppliedPromiseNode(factory);
+                    if (FastROptions.EagerEvalVariables.getValue() && isVariableArgument(expr)) {
+                        pn = new OptVariablePromiseNode(factory, ((ReadVariableNode) expr).getSymbol());
+                        break;
                     }
-                } else {
-                    // For ARG_DEFAULT, expr == defaultExpr!
-                    if (isVariableArgument(expr) && false) {
-                        pn = null;  // TODO
-                    } else {
-                        pn = new DefaultPromiseNode(factory);
+
+                    if (isVararg(expr)) {
+                        pn = new VarargPromiseNode(factory, (VarArgNode) expr);
+                        break;
                     }
                 }
+
+                pn = new PromisedNode(factory);
                 break;
 
             default:
@@ -119,54 +127,74 @@ public abstract class PromiseNode extends RNode {
     /**
      * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
      * does not need to handle "..." as special case (which might result in a
-     * {@link ConstantMissingNode} if empty).
+     * {@link ConstantMissingNode} if empty), see {@link #isVararg(RNode)} for that.
      *
      * @param expr
-     * @return Whether the given {@link RNode} is a {@link ConstantNode} (or a {@link ConstantNode}
-     *         wrapped into a {@link WrapArgumentNode})
-     * @see FastROptions#EagerEvalConstants
+     * @return Whether the given {@link RNode} is a {@link ConstantNode}
      */
     private static boolean isConstantArgument(RNode expr) {
-        if (!FastROptions.EagerEvalConstants.getValue()) {
-            return false;
-        }
         return expr instanceof ConstantNode;
     }
 
     /**
-     * This methods checks if an argument is a {@link ReadVariableNode}.
-     *
      * @param expr
-     * @return Whether the given {@link RNode} is a {@link ConstantNode} (or a {@link ConstantNode}
-     *         wrapped into a {@link WrapArgumentNode})
-     * @see FastROptions#EagerEvalConstants
+     * @return Whether the given {@link RNode} is a {@link ReadVariableNode}
+     *
+     * @see FastROptions#EagerEvalVariables
      */
     private static boolean isVariableArgument(RNode expr) {
-        if (!FastROptions.EagerEvalVariables.getValue()) {
-            return false;
-        }
         return expr instanceof ReadVariableNode;
     }
 
     /**
-     * @param promise
-     * @return Creates a {@link VarArgPromiseNode} for the given {@link RPromise}
+     * This method checks whether to apply optimizations to RNodes created for single "..."
+     * elements.
+     *
+     * @param expr
+     * @return Whether the given {@link RNode} is a {@link VarArgNode}
      */
-    public static VarArgPromiseNode createVarArg(RPromise promise) {
-        VarArgPromiseNode result = new VarArgPromiseNode(promise);
+    private static boolean isVararg(RNode expr) {
+        return expr instanceof VarArgNode;
+    }
+
+    /**
+     * @param promise
+     * @return Creates a {@link VarArgNode} for the given {@link RPromise}
+     */
+    public static VarArgNode createVarArg(RPromise promise) {
+        VarArgNode result = new VarArgNode(promise);
         result.assignSourceSection(((RNode) promise.getRep()).getSourceSection());
         return result;
     }
 
     /**
+     * A {@link PromiseNode} for supplied arguments
+     */
+    private static final class PromisedNode extends PromiseNode {
+
+        private final ConditionProfile isSuppliedArgProfile = ConditionProfile.createBinaryProfile();
+
+        private PromisedNode(RPromiseFactory factory) {
+            super(factory);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            MaterializedFrame execFrame = isSuppliedArgProfile.profile(factory.getType() == PromiseType.ARG_SUPPLIED) ? frame.materialize() : null;
+            return factory.createPromise(execFrame);
+        }
+    }
+
+    /**
      * A optimizing {@link PromiseNode}: It evaluates a constant directly.
      */
-    private static final class ConstantPromiseNode extends PromiseNode {
+    private static final class OptConstantPromiseNode extends PromiseNode {
 
         @Child private RNode constantExpr;
+        @CompilationFinal private boolean isEvaluated = false;
         @CompilationFinal private Object constant = null;
 
-        private ConstantPromiseNode(RPromiseFactory factory) {
+        private OptConstantPromiseNode(RPromiseFactory factory) {
             super(factory);
             this.constantExpr = (RNode) factory.getExpr();
         }
@@ -176,46 +204,62 @@ public abstract class PromiseNode extends RNode {
          */
         @Override
         public Object execute(VirtualFrame frame) {
-            if (constant == null) {
-                // Eval constant on first time
+            if (!isEvaluated) {
+                // Eval constant on first time and make it compile time constant afterwards
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 constant = constantExpr.execute(frame);
+                isEvaluated = true;
             }
 
             return factory.createArgEvaluated(constant);
         }
     }
 
-    private static final class VariableSuppliedPromiseNode extends PromiseNode implements EagerFeedback {
-        private final Symbol symbol;
+    /**
+     * TODO Expand!
+     */
+    private static final class OptVariablePromiseNode extends PromiseNode implements EagerFeedback {
+        @SuppressWarnings("unused") private final Symbol symbol;
         @Child private FrameSlotNode frameSlotNode;
+        @Child private PromisedNode fallback = null;
+        @Child private InlineCacheNode<VirtualFrame, RNode> inlineCache;
 
-        public VariableSuppliedPromiseNode(RPromiseFactory factory, Symbol symbol) {
+        public OptVariablePromiseNode(RPromiseFactory factory, Symbol symbol) {
             super(factory);
             this.symbol = symbol;
             this.frameSlotNode = FrameSlotNode.create(symbol.getName(), false);
+            this.inlineCache = InlineCacheNode.createExpression(1); // As all PromiseNodes get
+            // created for exactly one expr, 1 is sufficient
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            // If the frame slot we're looking for is not present yet, wait for it!
+            if (!frameSlotNode.hasValue(frame)) {
+                // We don't want to rewrite, as the the frame slot might show up later on
+                return checkFallback().execute(frame);
+            }
             FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
 
             // Check if we may apply eager evaluation on this frame slot
             Assumption notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
             if (!notChangedNonLocally.isValid()) {
-                // Cannot apply optimizations, as it (may) get invalidated!
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new SuppliedPromiseNode(factory)).execute(frame);
+                // Cannot apply optimizations, as the value to it got invalidated
+                return rewriteToPromiseNode().execute(frame);
             }
 
             // Execute eagerly
-            RNode variableExpr = (RNode) factory.getExpr(); // TODO Handle RShareable and
-            // WrapArgumentNode correctly!
+            // The unfold is necessary to avoid the (fortunately only) side effect of
+            // WrapArgumentNode that make vectors shared when read inside a Promise.
+            // This works, as vectors are set to be "shared()" anyway once the EagerPromise gets
+            // "really" evaluated
+            RNode variableExpr = unfold(factory.getExpr());
+
             Object result = null;
             try {
-                result = variableExpr.execute(frame);
+                result = inlineCache.execute(frame, variableExpr);
             } catch (Throwable t) {
-                // Errors are also side effects
+                // Errors are also side effects!
                 // TODO Create EagerErrorPromise
                 throw RInternalError.unimplemented();
             }
@@ -225,45 +269,44 @@ public abstract class PromiseNode extends RNode {
             return factory.createEagerSuppliedPromise(result, notChangedNonLocally, RArguments.getDepth(frame), this);
         }
 
-        public void onFailure() {
-            // TODO Auto-generated method stub
+        private PromisedNode checkFallback() {
+            if (fallback == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                insert(fallback = new PromisedNode(factory));
+            }
+            return fallback;
+        }
 
+        private PromiseNode rewriteToPromiseNode() {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            checkFallback();
+            return replace(fallback);
         }
 
         @SlowPath
         public void onSuccess() {
-            // TODO Auto-generated method stub
-            System.out.println("Successfully optimized read from '" + symbol.getName() + "'");
+// System.out.println("Successfully optimized read from '" + symbol.getName() + "'");
+        }
+
+        public void onFailure() {
+
         }
     }
 
     /**
-     * A {@link PromiseNode} for supplied arguments
+     * TODO Expand!
      */
-    private static final class SuppliedPromiseNode extends PromiseNode {
+    private static final class VarargPromiseNode extends PromiseNode {
+        @Child private VarArgNode varargNode;
 
-        private SuppliedPromiseNode(RPromiseFactory factory) {
+        public VarargPromiseNode(RPromiseFactory factory, VarArgNode varargNode) {
             super(factory);
+            this.varargNode = varargNode;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return factory.createPromise(frame.materialize());
-        }
-    }
-
-    /**
-     * A {@link PromiseNode} for defaulted arguments
-     */
-    private static final class DefaultPromiseNode extends PromiseNode {
-
-        private DefaultPromiseNode(RPromiseFactory factory) {
-            super(factory);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return factory.createPromise(null);
+            return factory.createVarargPromise(varargNode.getPromise());
         }
     }
 
@@ -328,15 +371,18 @@ public abstract class PromiseNode extends RNode {
 
     /**
      * This {@link RNode} is used to evaluate the expression given in a {@link RPromise} formerly
-     * wrapped into a "..." after unrolling.
+     * wrapped into a "..." after unrolling.<br/>
+     * In a certain sense this is the class corresponding class for GNU R's PROMSXP (AST equivalent
+     * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
+     * other varargs classes)
      */
-    public final static class VarArgPromiseNode extends RNode {
+    public final static class VarArgNode extends RNode {
         private final RPromise promise;
         @CompilationFinal private boolean isEvaluated = false;
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
 
-        private VarArgPromiseNode(RPromise promise) {
+        private VarArgNode(RPromise promise) {
             this.promise = promise;
         }
 
@@ -351,7 +397,7 @@ public abstract class PromiseNode extends RNode {
                 return result;
             }
 
-            // Should be easily compile to constant
+            // Should easily compile to constant
             return promise.getValue();
         }
 

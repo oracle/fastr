@@ -125,6 +125,8 @@ public class RPromise extends RLanguageRep {
      * be evaluated.
      *
      * @param evalPolicy {@link EvalPolicy}
+     * @param type {@link #type}
+     * @param execFrame {@link #execFrame}
      * @param closure {@link #getClosure()}
      */
     private RPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
@@ -139,8 +141,11 @@ public class RPromise extends RLanguageRep {
      * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
      * evaluated. Meant to be called via {@link RPromiseFactory#createArgEvaluated(Object)} only!
      *
+     *
      * @param evalPolicy {@link EvalPolicy}
-     * @param expr
+     * @param type {@link #type}
+     * @param expr {@link #getRep()}
+     * @param value {@link #value}
      */
     private RPromise(EvalPolicy evalPolicy, PromiseType type, Object expr, Object value) {
         super(expr);
@@ -148,6 +153,24 @@ public class RPromise extends RLanguageRep {
         this.type = type;
         this.value = value;
         this.isEvaluated = true;
+        // Not needed as already evaluated:
+        this.execFrame = null;
+        this.closure = null;
+
+    }
+
+    /**
+     * This creates a new tuple (isEvaluated=false, expr, null, null, value=null). Meant to be
+     * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
+     *
+     * @param evalPolicy {@link EvalPolicy}
+     * @param type {@link #type}
+     * @param expr {@link #getRep()}
+     */
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, Object expr) {
+        super(expr);
+        this.evalPolicy = evalPolicy;
+        this.type = type;
         // Not needed as already evaluated:
         this.execFrame = null;
         this.closure = null;
@@ -229,15 +252,7 @@ public class RPromise extends RLanguageRep {
         try {
             underEvaluation = true;
 
-            // Evaluate this promise's value!
-            // Performance: We can use frame directly
-            if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
-                SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
-                newValue = doEvalArgument(callSrc);
-            } else {
-                assert isInOriginFrame(frame, profile);
-                newValue = doEvalArgument(frame.materialize());
-            }
+            newValue = generateValue(frame, profile);
 
             setValue(newValue);
         } finally {
@@ -263,6 +278,26 @@ public class RPromise extends RLanguageRep {
         }
     }
 
+    /**
+     * This method allows subclasses to override the evaluation method easily while maintaining
+     * {@link #isEvaluated()} and {@link #underEvaluation} semantics.
+     *
+     * @param frame The {@link VirtualFrame} of the environment the Promise is forced in
+     * @param profile
+     * @return The value this Promise represents
+     */
+    protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
+        // Evaluate this promise's value!
+        // Performance: We can use frame directly
+        if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
+            SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
+            return doEvalArgument(callSrc);
+        } else {
+            assert isInOriginFrame(frame, profile);
+            return doEvalArgument(frame.materialize());
+        }
+    }
+
     @SlowPath
     protected Object doEvalArgument(SourceSection callSrc) {
         assert execFrame != null;
@@ -271,6 +306,18 @@ public class RPromise extends RLanguageRep {
 
     protected Object doEvalArgument(MaterializedFrame frame) {
         return RContext.getEngine().evalPromise(this, frame);
+    }
+
+    /**
+     * @param obj
+     * @param profile
+     * @return If obj is a {@link RPromise}, it is evaluated and its result returned
+     */
+    public static Object checkEvaluate(VirtualFrame frame, Object obj, PromiseProfile profile) {
+        if (obj instanceof RPromise) {
+            return ((RPromise) obj).evaluate(frame, profile);
+        }
+        return obj;
     }
 
     /**
@@ -287,18 +334,6 @@ public class RPromise extends RLanguageRep {
         if (isNullFrame(profile) && !isEvaluated(profile)) {
             execFrame = newFrame;
         }
-    }
-
-    /**
-     * @param obj
-     * @param profile
-     * @return If obj is a {@link RPromise}, it is evaluated and its result returned
-     */
-    public static Object checkEvaluate(VirtualFrame frame, Object obj, PromiseProfile profile) {
-        if (obj instanceof RPromise) {
-            return ((RPromise) obj).evaluate(frame, profile);
-        }
-        return obj;
     }
 
     /**
@@ -418,25 +453,60 @@ public class RPromise extends RLanguageRep {
         }
 
         @Override
-        public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
-            if (profile.isEvaluatedProfile.profile(isEvaluated)) {
-                return value;
-            }
-
-            // Check if assumption is still true
+        protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
             if (assumption.isValid()) {
-                // If yes: return value and notify success!
-                setValue(eagerValue);
                 feedback.onSuccess();
+                return eagerValue;
             } else {
+                feedback.onFailure();
+
                 // Fallback: eager evaluation failed, now take the slow path
                 this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, nFrameId);
 
                 // Call
-                super.evaluate(null, profile);
-                feedback.onFailure();
+                return super.generateValue(frame, profile);
             }
-            return value;
+        }
+
+// @Override
+// public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
+// if (profile.isEvaluatedProfile.profile(isEvaluated)) {
+// return value;
+// }
+//
+// // Check if assumption is still true
+// if (assumption.isValid()) {
+// // If yes: return value and notify success!
+// setValue(eagerValue);
+// feedback.onSuccess();
+// } else {
+// }
+// return value;
+// }
+
+        @Override
+        public boolean needsCalleeFrame(PromiseProfile profile) {
+            // In case it is default: We certainly do not need the frame
+            return false;
+        }
+
+        @Override
+        public boolean isEagerPromise(PromiseProfile profile) {
+            return profile.isEagerPromise.profile(true);
+        }
+    }
+
+    private static final class VarargPromise extends RPromise {
+        private final RPromise vararg;
+
+        private VarargPromise(PromiseType type, RPromise vararg, Closure exprClosure) {
+            super(EvalPolicy.PROMISED, type, exprClosure.getExpr());
+            this.vararg = vararg;
+        }
+
+        @Override
+        protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
+            return vararg.evaluate(frame, profile);
         }
 
         @Override
@@ -539,6 +609,10 @@ public class RPromise extends RLanguageRep {
         public RPromise createEagerDefaultPromise(int nFrameId, EagerFeedback feedback) {
             // TODO Does this work??
             return new EagerPromise(type, defaultClosure, null, null, nFrameId, feedback);
+        }
+
+        public RPromise createVarargPromise(RPromise vararg) {
+            return new VarargPromise(type, vararg, exprClosure);
         }
 
         public Object getExpr() {
