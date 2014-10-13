@@ -224,7 +224,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
                 newValue = promiseClosureCache.execute(promiseFrame, promise.getClosure());
 
-                promise.setValue(newValue);
+                promise.setValue(newValue, promiseProfile);
             } finally {
                 RArguments.setCallSourceSection(promiseFrame, oldCallSource);
                 promise.setUnderEvaluation(false);

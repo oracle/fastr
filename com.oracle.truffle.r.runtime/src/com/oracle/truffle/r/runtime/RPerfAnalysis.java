@@ -30,38 +30,40 @@ import java.util.*;
 public class RPerfAnalysis {
 
     public interface Handler {
-        void initialize();
 
         String getName();
 
         void report();
-
     }
 
-    public static void initialize() {
+    private static final ArrayList<Handler> handlers = new ArrayList<>();
+    private static final String[] enabledNames; // null == all analyses enabled
+
+    static {
         // Currently we use a system property to enable the perf analysis
         String prop = System.getProperty("fastr.perf");
         if (prop == null) {
-            return;
-        }
-        boolean all = prop.length() == 0;
-        String[] names = all ? null : prop.split(",");
-        try {
-            for (Class<? extends Handler> perfClass : RPerfClasses.CLASSES) {
-                Handler handler = perfClass.newInstance();
-                String name = handler.getName();
-                if (all || enabled(names, name)) {
-                    handlers.add(handler);
-                    handler.initialize();
-                }
-            }
-        } catch (Exception ex) {
-            Utils.fail("failed to instantiate RPerf class: " + ex);
+            enabledNames = new String[0];
+        } else {
+            boolean all = prop.length() == 0;
+            enabledNames = all ? null : prop.split(",");
         }
     }
 
-    private static boolean enabled(String[] names, String name) {
-        for (String hname : names) {
+    public static boolean register(Handler handler) {
+        if (enabled(handler.getName())) {
+            handlers.add(handler);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean enabled(String name) {
+        if (enabledNames == null) {
+            return true;
+        }
+        for (String hname : enabledNames) {
             if (hname.equals(name)) {
                 return true;
             }
@@ -80,11 +82,5 @@ public class RPerfAnalysis {
         for (Handler handler : handlers) {
             handler.report();
         }
-    }
-
-    private static ArrayList<Handler> handlers = new ArrayList<>();
-
-    public static void registerHandler(Handler handler) {
-        handlers.add(handler);
     }
 }

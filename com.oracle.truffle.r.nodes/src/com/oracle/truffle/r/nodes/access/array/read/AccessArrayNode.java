@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.*;
@@ -47,6 +48,9 @@ public abstract class AccessArrayNode extends RNode {
     private final NACheck elementNACheck = NACheck.create();
     private final NACheck posNACheck = NACheck.create();
     private final NACheck namesNACheck = NACheck.create();
+
+    private final ConditionProfile dimNamesIsNullProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile dimensionsIsNullProfile = ConditionProfile.createBinaryProfile();
 
     @Child private AccessArrayNode accessRecursive;
     @Child private CastToVectorNode castVector;
@@ -358,10 +362,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createList(data, dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createList(data, dimensions, names);
@@ -614,10 +618,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions, names);
@@ -718,10 +722,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions, names);
@@ -822,10 +826,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions, names);
@@ -926,10 +930,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions, names);
@@ -1030,10 +1034,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions, names);
@@ -1138,10 +1142,10 @@ public abstract class AccessArrayNode extends RNode {
             }
         }
         RList dimNames = vector.getDimNames();
-        if (dimNames == null) {
+        if (dimNamesIsNullProfile.profile(dimNames == null)) {
             return RDataFactory.createRawVector(data, dimensions);
         } else {
-            if (dimensions == null) {
+            if (dimensionsIsNullProfile.profile(dimensions == null)) {
                 // construct names
                 RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
                 return RDataFactory.createRawVector(data, dimensions, names);

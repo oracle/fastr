@@ -131,7 +131,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
         // Setup
         RBuiltinRootNode root = new RBuiltinRootNode(node, formals, new FrameDescriptor());
-        node.onCreate();
         return Truffle.getRuntime().createCallTarget(root);
     }
 
@@ -139,7 +138,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         // static number of arguments
         RNode[] builtinArguments = inlineStaticArguments(args);
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
-        builtin.onCreate();
         return builtin;
     }
 
@@ -194,18 +192,13 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
      */
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
-        @Child private RNode delegate;
+        @Child private RNode delegate = createDelegate();
 
         public RWrapperBuiltinNode(RBuiltinNode prev) {
             super(prev);
         }
 
         protected abstract RNode createDelegate();
-
-        @Override
-        protected void onCreate() {
-            delegate = insert(createDelegate());
-        }
 
         @Override
         public Object execute(VirtualFrame frame) {
