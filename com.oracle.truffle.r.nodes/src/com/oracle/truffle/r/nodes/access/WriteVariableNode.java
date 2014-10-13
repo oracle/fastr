@@ -193,6 +193,8 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
     public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
 
+        private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
+
         public abstract Mode getMode();
 
         public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, FrameSlot frameSlot, Mode mode) {
@@ -223,7 +225,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
-            writeObjectValue(frame, frameSlot, value, getMode(), false);
+            writeObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
             return value;
         }
 
@@ -354,6 +356,8 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     @NodeField(name = "mode", type = Mode.class)
     public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
+        private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
+
         protected abstract FrameSlotNode getFrameSlotNode();
 
         public abstract Mode getMode();
@@ -382,7 +386,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization
         protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            writeObjectValue(enclosingFrame, frameSlot, value, getMode(), true);
+            writeObjectValue(enclosingFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
             return value;
         }
 
