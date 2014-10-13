@@ -160,10 +160,6 @@ public abstract class RCallNode extends RNode {
         throw new AssertionError();
     }
 
-    protected void onCreate() {
-        // intended for subclasses to be used to implement special inlining semantics.
-    }
-
     public abstract Object execute(VirtualFrame frame, RFunction function);
 
     public int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
@@ -355,7 +351,6 @@ public abstract class RCallNode extends RNode {
             RCallNode current = createCacheNode(frame, function);
             RootCallNode next = createNextNode();
             RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
-            next.onCreate();
             this.replace(cachedNode);
             return cachedNode;
         }
@@ -400,7 +395,6 @@ public abstract class RCallNode extends RNode {
                     MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, callSrc, argsSrc);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
-                callNode.onCreate();
             }
 
             callNode.assignSourceSection(callSrc);
