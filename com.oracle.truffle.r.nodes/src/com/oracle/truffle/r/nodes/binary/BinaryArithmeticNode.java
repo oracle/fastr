@@ -48,6 +48,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     private final NACheck resultNACheck;
 
     private final ConditionProfile emptyVector = ConditionProfile.createBinaryProfile();
+    private final BranchProfile hasAttributesProfile = new BranchProfile();
 
     public BinaryArithmeticNode(BinaryArithmeticFactory factory, UnaryArithmeticFactory unaryFactory) {
         this.arithmetic = factory.create();
@@ -491,18 +492,35 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     // implementation
 
-    @SlowPath
     private void copyAttributes(RVector ret, RAbstractVector left, RAbstractVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         int length = Math.max(leftLength, rightLength);
-        ret.copyRegAttributesFrom(leftLength == length ? left : right);
-        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
-        ret.copyNamesFrom(leftLength == length ? left : right);
+        RAbstractVector attributeSource = leftLength == length ? left : right;
+
+        if (attributeSource.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || attributeSource.getNames() != RNull.instance || attributeSource.getDimNames() != null) {
+            hasAttributesProfile.enter();
+            copyAttributesInternal(ret, attributeSource, left, right);
+        }
     }
 
     @SlowPath
+    private void copyAttributesInternal(RVector ret, RAbstractVector attributeSource, RAbstractVector left, RAbstractVector right) {
+        ret.copyRegAttributesFrom(attributeSource);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getSourceSection());
+        ret.copyNamesFrom(attributeSource);
+    }
+
     private void copyAttributesSameLength(RVector ret, RAbstractVector left, RAbstractVector right) {
+        if (left.getAttributes() != null || right.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || left.getNames() != RNull.instance || right.getNames() != RNull.instance ||
+                        left.getDimNames() != null || right.getDimNames() != null) {
+            hasAttributesProfile.enter();
+            copyAttributesSameLengthInternal(ret, left, right);
+        }
+    }
+
+    @SlowPath
+    private void copyAttributesSameLengthInternal(RVector ret, RAbstractVector left, RAbstractVector right) {
         ret.copyRegAttributesFrom(right);
         ret.copyRegAttributesFrom(left);
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
@@ -517,8 +535,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyComplexVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int length = Math.max(leftLength, rightLength);
         double[] result = new double[length << 1];
         int j = 0;
@@ -549,8 +567,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         double[] result = new double[length];
         int j = 0;
         int k = 0;
@@ -576,8 +594,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyIntVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int length = Math.max(leftLength, rightLength);
         int[] result = new int[length];
         int j = 0;
@@ -604,8 +622,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int length = Math.max(leftLength, rightLength);
         double[] result = new double[length];
         int j = 0;
@@ -632,8 +650,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyComplexVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         double[] result = new double[length << 1];
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
@@ -673,8 +691,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyIntVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int[] result = new int[length];
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
@@ -692,8 +710,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
