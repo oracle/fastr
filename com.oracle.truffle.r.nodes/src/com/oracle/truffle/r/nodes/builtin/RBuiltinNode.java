@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class RBuiltinNode extends RCallNode implements VisibilityController {
 
     public String getSourceCode() {
-        return "<builtin>";
+        throw RInternalError.shouldNotReachHere();
     }
 
     /**
@@ -283,9 +283,5 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
             return suppliedArgsNames;
         }
 
-        @Override
-        public String getSourceCode() {
-            return "<custom builtin>";
-        }
     }
 }

@@ -73,7 +73,7 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public String getSourceCode() {
-        return builtin.getSourceCode();
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override

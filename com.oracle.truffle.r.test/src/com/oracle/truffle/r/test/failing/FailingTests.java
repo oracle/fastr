@@ -1949,6 +1949,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleFunctions_testFunctionPrintingIgnore_ce0b9f76f47f6752297f2228240d69f9() {
+        assertEval("{ exists }");
+    }
+
+    @Ignore
     public void TestSimpleFunctions_testReturnIgnore_ea86042d5ec0a9de6c14aabc98049cf0() {
         assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
     }
