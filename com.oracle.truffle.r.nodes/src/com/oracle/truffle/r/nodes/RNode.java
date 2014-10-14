@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RNode extends Node {
+public abstract class RNode extends Node implements RSyntaxNode {
 
     public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
     protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];

@@ -33,9 +33,10 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.*;
 
-public final class FunctionDefinitionNode extends RRootNode {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
     /**
      * Identifies the lexical scope where this function is defined, through the "parent" field.
@@ -124,6 +125,10 @@ public final class FunctionDefinitionNode extends RRootNode {
         return description;
     }
 
+    public String parentToString() {
+        return super.toString();
+    }
+
     @Override
     public boolean isSplittable() {
         // don't bother splitting library-loading nodes
@@ -133,6 +138,33 @@ public final class FunctionDefinitionNode extends RRootNode {
     @Override
     public RootNode split() {
         return new FunctionDefinitionNode(getSourceSection(), funcEnv, NodeUtil.cloneNode(uninitializedBody), getFormalArguments(), description, false);
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    public void deparse(State state) {
+        // TODO linebreaks
+        state.append("function (");
+        FormalArguments formals = getFormalArguments();
+        String[] formalNames = formals.getNames();
+        RNode[] defaultArgs = formals.getDefaultArgs();
+        for (int i = 0; i < formalNames.length; i++) {
+            RNode defaultArg = defaultArgs[i];
+            state.append(formalNames[i]);
+            if (defaultArg != null) {
+                state.append(" = ");
+                defaultArg.deparse(state);
+            }
+            if (i != formalNames.length - 1) {
+                state.append(", ");
+            }
+        }
+        state.append(") ");
+        state.writeline();
+        body.deparse(state);
     }
 
 }

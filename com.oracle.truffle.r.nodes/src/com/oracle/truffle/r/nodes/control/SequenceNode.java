@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 
 public final class SequenceNode extends RNode {
 
@@ -48,6 +49,13 @@ public final class SequenceNode extends RNode {
             lastResult = sequence[i].execute(frame);
         }
         return lastResult;
+    }
+
+    @Override
+    public void deparse(State state) {
+        for (int i = 0; i < sequence.length; i++) {
+            sequence[i].deparse(state);
+        }
     }
 
 }

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -34,6 +35,12 @@ public abstract class ConstantNode extends RNode implements VisibilityController
 
     public final Object getValue() {
         return execute(null);
+    }
+
+    @Override
+    public void deparse(State state) {
+        // TODO don't rely on source
+        state.append(getSourceSection().getCode());
     }
 
     public static ConstantNode create(Object value) {
@@ -76,6 +83,11 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         ConstantNode cn = create(value);
         cn.assignSourceSection(src);
         return cn;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
     }
 
     private static final class ConstantDoubleScalarNode extends ConstantNode {

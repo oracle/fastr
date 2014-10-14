@@ -29,6 +29,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -57,6 +58,21 @@ public abstract class ForNode extends LoopNode {
         ForNode fn = create(cvar, range, body);
         fn.assignSourceSection(src);
         return fn;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        state.append("for (");
+        cvar.deparse(state);
+        state.append(" in ");
+        // range?
+        state.append(") ");
+        body.deparse(state);
     }
 
     @Fallback

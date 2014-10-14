@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChild(value = "operand", type = RNode.class)
@@ -80,5 +81,10 @@ public abstract class WrapArgumentNode extends RProxyNode {
             wan.assignSourceSection(operand.getSourceSection());
             return wan;
         }
+    }
+
+    @Override
+    public void deparse(State state) {
+        getOperand().deparse(state);
     }
 }

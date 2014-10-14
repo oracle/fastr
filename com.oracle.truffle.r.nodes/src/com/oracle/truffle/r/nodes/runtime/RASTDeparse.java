@@ -119,8 +119,8 @@ public class RASTDeparse {
             deparseNodeOrValue(state, RASTUtils.getChild(node, 1));
         } else if (node instanceof ColonCastNode) {
             deparseNodeOrValue(state, RASTUtils.getChild(node, 0));
-// } else if (node instanceof FunctionDefinitionNode) {
-// deparseFunctionDefinition(state, (FunctionDefinitionNode) node);
+        } else if (node instanceof FunctionDefinitionNode) {
+            ((RSyntaxNode) node).deparse(state);
         } else {
             if (FastROptions.Debug.getValue()) {
                 Utils.debug("deparse: node type " + node.getClass().getSimpleName() + " unhandled, using source");
@@ -133,11 +133,6 @@ public class RASTDeparse {
             }
 
         }
-    }
-
-    @SuppressWarnings("unused")
-    private static void deparseFunctionDefinition(State state, FunctionDefinitionNode node) {
-        // TODO
     }
 
     private static void deparseNodeOrValue(State state, Node arg) {

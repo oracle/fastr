@@ -49,6 +49,11 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
 
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
         private final int depth;
         private final String genericName;

@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseN
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
@@ -272,6 +273,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public boolean isPromise(Object obj) {
             return obj instanceof RPromise;
         }
+
+        @Override
+        public void deparse(State state) {
+            getReadNode().deparse(state);
+        }
     }
 
     private interface HasMode {
@@ -294,6 +300,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
          * frame.
          */
         @CompilationFinal private boolean copyValue;
+
+        @Override
+        public boolean isSyntax() {
+            return true;
+        }
 
         public void setCopyValue(boolean c) {
             copyValue = c;
@@ -369,6 +380,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public RType getMode() {
             return mode;
+        }
+
+        @Override
+        public void deparse(State state) {
+            state.append(symbol.getName());
         }
     }
 

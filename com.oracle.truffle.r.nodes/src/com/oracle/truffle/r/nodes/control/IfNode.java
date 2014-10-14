@@ -30,6 +30,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class IfNode extends RNode implements VisibilityController {
@@ -71,6 +72,11 @@ public class IfNode extends RNode implements VisibilityController {
     @Override
     public boolean getVisibility() {
         return isVisible;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
     }
 
     @CreateCast({"condition"})
@@ -115,5 +121,32 @@ public class IfNode extends RNode implements VisibilityController {
 
     public RNode getElsePart() {
         return elsePart;
+    }
+
+    @Override
+    public void deparse(State state) {
+        /*
+         * We have a problem with { }, since they do not exist as AST nodes (functions), so we
+         * insert them routinely
+         */
+        state.append("if (");
+        condition.deparse(state);
+        state.append(") {");
+        state.writeline();
+        state.incIndent();
+        thenPart.deparse(state);
+        state.writeline();
+        state.decIndent();
+        state.append('}');
+        if (elsePart != null) {
+            state.append(" else {");
+            state.writeline();
+            state.incIndent();
+            elsePart.deparse(state);
+            state.writeline();
+            state.decIndent();
+            state.append('}');
+        }
+
     }
 }

@@ -111,6 +111,11 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         return cn;
     }
 
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
     public static boolean isSmaller(double left, double right) {
         return left <= right;
     }

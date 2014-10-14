@@ -30,6 +30,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
@@ -51,6 +52,19 @@ public final class WhileNode extends LoopNode {
         WhileNode wn = create(condition, body);
         wn.assignSourceSection(src);
         return wn;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        state.append("while (");
+        condition.deparse(state);
+        state.append(") ");
+        body.deparse(state);
     }
 
     @Override

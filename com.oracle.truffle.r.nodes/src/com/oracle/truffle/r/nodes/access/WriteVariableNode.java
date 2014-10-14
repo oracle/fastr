@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteL
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeFactory;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -61,6 +62,18 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     @Override
     public final boolean getVisibility() {
         return false;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return !isArgWrite();
+    }
+
+    @Override
+    public void deparse(State state) {
+        if (!isArgWrite()) {
+            getRhs().deparse(state);
+        }
     }
 
     // setting value of the mode parameter to COPY is meant to induce creation of a copy
