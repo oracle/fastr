@@ -163,6 +163,10 @@ public abstract class RCallNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, RFunction function);
 
+    public abstract RNode getFunctionNode();
+
+    public abstract CallArgumentsNode getArgumentsNode();
+
     @Override
     public boolean isSyntax() {
         return true;
@@ -233,19 +237,28 @@ public abstract class RCallNode extends RNode {
         return null;
     }
 
+    @SlowPath
+    protected RCallNode getParentCallNode() {
+        RNode parent = (RNode) getParent();
+        if (!(parent instanceof RCallNode)) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        return (RCallNode) parent;
+    }
+
     /**
-     * Base class for classes that denote a call site/a call to a function.
+     * Base class for classes that are on the top of the cache hierarchy.
+     *
+     * @see LeafCallNode
      */
     public abstract static class RootCallNode extends RCallNode {
 
-        @Child RNode functionNode;
+        @Child protected RNode functionNode;
+        @Child protected CallArgumentsNode args;
 
-        public RootCallNode(RNode function) {
+        public RootCallNode(RNode function, CallArgumentsNode args) {
             this.functionNode = function;
-        }
-
-        public RNode getFunctionNode() {
-            return functionNode;
+            this.args = args;
         }
 
         private RFunction executeFunctionNode(VirtualFrame frame) {
@@ -271,6 +284,46 @@ public abstract class RCallNode extends RNode {
         public final double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
             return executeDouble(frame, executeFunctionNode(frame));
         }
+
+        @Override
+        public RNode getFunctionNode() {
+            if (functionNode != null) {
+                // Only the very 1. RootCallNode on the top level contains the one-and-only function
+                // node
+                return functionNode;
+            }
+            return getParentCallNode().getFunctionNode();
+        }
+
+        @Override
+        public CallArgumentsNode getArgumentsNode() {
+            return args;
+        }
+    }
+
+    /**
+     * This is the counterpart of {@link RootCallNode}: While that is the base class for all
+     * top-level nodes (C, G, U and GV), this is the base class for all nodes not on the top level
+     * of the PIC (and thus don't need all information, but can rely on their parents to have them).
+     *
+     * @see RootCallNode
+     */
+    public static class LeafCallNode extends RCallNode {
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction function) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public RNode getFunctionNode() {
+            return getParentCallNode().getFunctionNode();
+        }
+
+        @Override
+        public CallArgumentsNode getArgumentsNode() {
+            return getParentCallNode().getArgumentsNode();
+        }
     }
 
     /**
@@ -285,7 +338,7 @@ public abstract class RCallNode extends RNode {
         private final CallTarget cachedCallTarget;
 
         public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
-            super(function);
+            super(function, null);  // Relies on the getArguments redirect below
             this.currentNode = current;
             this.nextNode = next;
             this.cachedCallTarget = cachedFunction.getTarget();
@@ -314,6 +367,11 @@ public abstract class RCallNode extends RNode {
             }
             return nextNode.executeDouble(frame, f);
         }
+
+        @Override
+        public CallArgumentsNode getArgumentsNode() {
+            return currentNode.getArgumentsNode();
+        }
     }
 
     /**
@@ -323,7 +381,6 @@ public abstract class RCallNode extends RNode {
      */
     public static final class UninitializedCallNode extends RootCallNode {
 
-        @Child private CallArgumentsNode args;
         private final int depth;
 
         protected UninitializedCallNode(RNode function, CallArgumentsNode args) {
@@ -331,8 +388,7 @@ public abstract class RCallNode extends RNode {
         }
 
         private UninitializedCallNode(RNode function, CallArgumentsNode args, int depth) {
-            super(function);
-            this.args = args;
+            super(function, args);
             this.depth = depth;
         }
 
@@ -341,8 +397,7 @@ public abstract class RCallNode extends RNode {
         }
 
         private UninitializedCallNode(UninitializedCallNode org, int depth) {
-            super(null);
-            this.args = org.args;
+            super(null, org.args);
             this.depth = depth;
             this.assignSourceSection(org.getSourceSection());
         }
@@ -439,7 +494,7 @@ public abstract class RCallNode extends RNode {
      *
      * @see RCallNode
      */
-    private static final class DispatchedCallNode extends RCallNode {
+    private static final class DispatchedCallNode extends LeafCallNode {
 
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
@@ -464,14 +519,12 @@ public abstract class RCallNode extends RNode {
     private static final class GenericCallNode extends RootCallNode {
 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-        @Child private CallArgumentsNode args;
 
         private CallTarget lastCallTarget = null;
         private MatchedArguments lastMatchedArgs = null;
 
         GenericCallNode(RNode functionNode, CallArgumentsNode args) {
-            super(functionNode);
-            this.args = args;
+            super(functionNode, args);
         }
 
         @Override
@@ -502,7 +555,7 @@ public abstract class RCallNode extends RNode {
      *
      * @see RCallNode
      */
-    private abstract static class VarArgsCacheCallNode extends RCallNode {
+    private abstract static class VarArgsCacheCallNode extends LeafCallNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
@@ -645,12 +698,10 @@ public abstract class RCallNode extends RNode {
      */
     private static final class GenericVarArgsCallNode extends RootCallNode {
 
-        @Child private CallArgumentsNode suppliedArgs;
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
-        GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
-            super(functionNode);
-            this.suppliedArgs = suppliedArgs;
+        GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode args) {
+            super(functionNode, args);
         }
 
         @Override
@@ -658,7 +709,7 @@ public abstract class RCallNode extends RNode {
             CompilerDirectives.transferToInterpreter();
 
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
-            UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
+            UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
