@@ -51,7 +51,7 @@ suite = {
       "path" : "lib/jline-2.11.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jline-2.11.jar",
-        "http://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
+        "https://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
       ],
       "sha1" : "9504d5e2da5d78237239c5226e8200ec21182040",
     },
@@ -60,7 +60,7 @@ suite = {
       "path" : "lib/jnr-posix-3.0.1.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-posix-3.0.1.jar",
-        "http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.1/jnr-posix-3.0.1.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.1/jnr-posix-3.0.1.jar",
       ],
       "sha1" : "5ac18caed12108123c959c8acedef76ca4f28cb3",
     },
@@ -69,7 +69,7 @@ suite = {
       "path" : "lib/jnr-constants-0.8.5.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-constants-0.8.5.jar",
-        "http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.8.5/jnr-constants-0.8.5.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.8.5/jnr-constants-0.8.5.jar",
       ],
       "sha1" : "f84cca9e21f1f763a9eaf33de3d6a66a20ed7af0",
     },
@@ -78,7 +78,7 @@ suite = {
       "path" : "lib/jnr-ffi-1.0.10.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-ffi-1.0.10.jar",
-        "http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/1.0.10/jnr-ffi-1.0.10.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/1.0.10/jnr-ffi-1.0.10.jar",
       ],
       "sha1" : "646428e83a0e2ab4743091781ea98e3164c6d707",
     },
@@ -87,7 +87,7 @@ suite = {
       "path" : "lib/jffi-1.2.7.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.7.jar",
-        "http://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7.jar",
       ],
       "sha1" : "acda5c46140404e08b3526f39db1504874b34b4c",
     },
@@ -96,7 +96,7 @@ suite = {
       "path" : "lib/jffi-1.2.7-native.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.7-native.jar",
-        "http://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7-native.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7-native.jar",
       ],
       "sha1" : "4e8c876383acb37da4347902a0a775aefd51de09",
     },
@@ -303,6 +303,7 @@ suite = {
         "com.oracle.truffle.r.runtime",
         "com.oracle.nfi",
         "com.oracle.graal.compiler.common",
+        "ASM",
         "ASM_ANALYSIS",
         "JNR_POSIX",
         "ASM_UTIL",
@@ -347,6 +348,7 @@ suite = {
         "JDK_TOOLS",
         "FINDBUGS",
         "NETLIB",
+         "ASM",
         "ASM_UTIL",
         "ASM_TREE",
         "ASM_COMMONS",
