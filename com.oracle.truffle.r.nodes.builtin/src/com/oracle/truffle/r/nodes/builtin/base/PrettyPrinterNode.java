@@ -30,12 +30,14 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleVectorElementNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintDimNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVector2DimNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVectorMultiDimNodeFactory;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -208,7 +210,41 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization
     protected String prettyPrint(RFunction operand, Object listElementName, byte quote, byte right) {
-        return ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
+        if (operand.isBuiltin()) {
+            RBuiltin rBuiltin = operand.getRBuiltin();
+            RRootNode node = (RRootNode) operand.getTarget().getRootNode();
+            FormalArguments formals = node.getFormalArguments();
+            String[] formalNames = formals.getNames();
+            RNode[] defaultArgs = formals.getDefaultArgs();
+            StringBuffer sb = new StringBuffer();
+            sb.append("function (");
+            for (int i = 0; i < formalNames.length; i++) {
+                String name = formalNames[i];
+                RNode defaultArg = defaultArgs[i];
+                sb.append(formalNames[i]);
+                if (defaultArg != null) {
+                    sb.append(" = ");
+                    Object value = ((ConstantNode) defaultArg).getValue();
+                    String printValue = prettyPrintRecursive(value, listElementName, quote, right);
+                    // remove the "[1] "
+                    sb.append(printValue.substring(4));
+                }
+                if (i != formalNames.length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append(")  .Primitive(\"");
+            sb.append(rBuiltin.name());
+            sb.append("\")");
+            return sb.toString();
+        } else {
+            String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
+            REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());
+            if (env != null && env.isNamespaceEnv()) {
+                source += "\n" + env.getPrintName();
+            }
+            return source;
+        }
     }
 
     @SlowPath

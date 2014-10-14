@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
-
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
@@ -361,7 +359,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public final int[] getDimensions() {
         if (hasDimensions()) {
-            return Arrays.copyOf(dimensions, dimensions.length);
+            return dimensions;
         } else {
             return null;
         }
@@ -450,6 +448,15 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return internalCopy();
     }
 
+    @Override
+    public RVector copyResizedWithDimensions(int[] newDimensions) {
+        // TODO support for higher dimensions
+        assert newDimensions.length == 2;
+        RVector result = copyResized(newDimensions[0] * newDimensions[1], false);
+        result.setDimensions(newDimensions);
+        return result;
+    }
+
     public final boolean verify() {
         return internalVerify();
     }
@@ -480,8 +487,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
         return RDataFactory.createStringVector(values, this.isComplete());
     }
-
-    public abstract void transferElementSameType(int toIndex, RVector fromVector, int fromIndex);
 
     public final boolean isInBounds(int firstPosition, int secondPosition) {
         assert isMatrix();

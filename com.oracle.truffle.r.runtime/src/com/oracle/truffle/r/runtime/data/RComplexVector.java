@@ -188,7 +188,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RVector fromVector, int fromIndex) {
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RComplexVector other = (RComplexVector) fromVector;
         int toIndex2 = toIndex << 1;
         int fromIndex2 = fromIndex << 1;

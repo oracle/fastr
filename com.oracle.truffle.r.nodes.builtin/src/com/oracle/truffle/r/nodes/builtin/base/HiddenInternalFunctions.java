@@ -146,8 +146,12 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        @SlowPath
         protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+            return lazyLoadDBFetch(RArguments.getDepth(frame), key, datafile, compressed, envhook);
+        }
+
+        @SlowPath
+        private static Object lazyLoadDBFetch(int depth, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -180,7 +184,7 @@ public class HiddenInternalFunctions {
                     throw RError.error(Message.GENERIC, "zlib uncompress error");
                 }
                 try {
-                    Object result = RSerialize.unserialize(udata, envhook, RArguments.getDepth(frame));
+                    Object result = RSerialize.unserialize(udata, envhook, depth);
                     return result;
                 } catch (IOException ex) {
                     // unexpected

@@ -20,22 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime.data.closures;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
-@RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class IsNull extends IsTypeNode {
+    private final RAbstractDoubleVector vector;
 
-    @Specialization
-    @Override
-    protected byte isType(RNull value) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
+    public RDoubleToIntVectorClosure(RAbstractDoubleVector vector, NACheck naCheck) {
+        super(vector, naCheck);
+        this.vector = vector;
     }
 
+    public int getDataAt(int index) {
+        return naCheck.convertDoubleToInt(vector.getDataAt(index));
+    }
 }

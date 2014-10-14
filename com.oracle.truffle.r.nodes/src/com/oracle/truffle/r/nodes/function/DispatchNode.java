@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchNode extends RNode {
@@ -35,12 +36,12 @@ public abstract class DispatchNode extends RNode {
 
     @SuppressWarnings("unused")
     public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
-        throw new AssertionError();
+        throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
     public Object executeInternal(VirtualFrame frame, Object[] args) {
-        throw new AssertionError();
+        throw RInternalError.shouldNotReachHere();
     }
 
     public String getGenericName() {

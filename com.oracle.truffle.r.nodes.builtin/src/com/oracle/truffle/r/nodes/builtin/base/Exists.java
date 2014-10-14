@@ -24,55 +24,34 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@RBuiltin(name = "exists", kind = SUBSTITUTE, parameterNames = {"x", "where", "envir", "frame", "mode", "inherits"})
-// TODO INTERNAL, interpret mode parameter
+@RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
+// TODO interpret mode parameter
+// TODO Is it worth optimizing this via ReadVariableNode?
 public abstract class Exists extends RBuiltinNode {
-
-    @Child private Get getNode;
-    @CompilationFinal private String lastName;
-    @CompilationFinal private boolean lastLookup;
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance),
-                        ConstantNode.create(RType.Any.getName()), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-    }
-
-    @Specialization(guards = "noEnv")
-    @SuppressWarnings("unused")
-    protected byte existsString(VirtualFrame frm, String name, int where, RMissing envir, Object frame, String mode, byte inherits) {
-        controlVisibility();
-        if (getNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin(), getSuppliedArgsNames()));
-        }
-        try {
-            getNode.execute(frm, name, where, envir, mode, inherits);
-        } catch (RError e) {
-            return inherits == RRuntime.LOGICAL_TRUE ? (packageLookup(name) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE) : RRuntime.LOGICAL_FALSE;
-        }
-        return RRuntime.LOGICAL_TRUE;
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName()), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected byte existsStringEnv(String name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
+    protected byte existsStringEnv(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits) {
+        final String name = nameVec.getDataAt(0);
         controlVisibility();
         if (inherits == RRuntime.LOGICAL_FALSE) {
-            return RRuntime.asLogical(where.get(name) != null);
+            return RRuntime.asLogical(env.get(name) != null);
         }
-        for (REnvironment e = where; e != null; e = e.getParent()) {
+        for (REnvironment e = env; e != null; e = e.getParent()) {
             if (e.get(name) != null) {
                 return RRuntime.LOGICAL_TRUE;
             }
@@ -80,36 +59,4 @@ public abstract class Exists extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization
-    protected byte existsStringEnv(RStringVector name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
-        controlVisibility();
-        return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
-    }
-
-    @Specialization
-    protected byte existsStringEnv(String name, @SuppressWarnings("unused") int where, REnvironment envir, Object frame, String mode, byte inherits) {
-        controlVisibility();
-        return existsStringEnv(name, envir, RMissing.instance, frame, mode, inherits);
-    }
-
-    @Specialization
-    protected byte existsStringEnv(RStringVector name, int where, REnvironment envir, Object frame, String mode, byte inherits) {
-        controlVisibility();
-        return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
-    }
-
-    private boolean packageLookup(String name) {
-        if (!name.equals(lastName)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lastName = name;
-            lastLookup = RContext.getEngine().lookupBuiltin(name) != null;
-        }
-        // FIXME deal with changes in packages due to deleting symbols
-        return lastLookup;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean noEnv(String name, Object where, RMissing envir, Object frame, String mode, byte inherits) {
-        return !(where instanceof REnvironment);
-    }
 }

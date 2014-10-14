@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,11 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.runtime.data.closures;
+
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
- * The set of classes that can provide performance analysis.
+ * In converting complex numbers to integers, this closure discards the imaginary parts.
  */
-class RPerfClasses {
-    @SuppressWarnings("unchecked") public static final Class<? extends RPerfAnalysis.Handler>[] CLASSES = new Class[]{com.oracle.truffle.r.runtime.data.RAttributes.PerfHandler.class};
+public class RComplexToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+
+    private final RAbstractComplexVector vector;
+
+    public RComplexToIntVectorClosure(RAbstractComplexVector vector, NACheck naCheck) {
+        super(vector, naCheck);
+        this.vector = vector;
+    }
+
+    public int getDataAt(int index) {
+        return naCheck.convertComplexToInt(vector.getDataAt(index));
+    }
 }

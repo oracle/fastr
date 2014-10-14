@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -35,6 +37,8 @@ public class IfNode extends RNode implements VisibilityController {
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
     @Child private RNode elsePart;
+
+    private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
     protected IfNode(RNode condition, RNode thenPart, RNode elsePart) {
         this.condition = ConvertBooleanNode.create(condition);
@@ -81,17 +85,24 @@ public class IfNode extends RNode implements VisibilityController {
             isVisible = cond == RRuntime.LOGICAL_TRUE || elsePart != null;
         }
         controlVisibility();
-        if (cond == RRuntime.LOGICAL_TRUE) {
+
+        if (cond == RRuntime.LOGICAL_NA) {
+            // NA is the only remaining option
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(getSourceSection(), RError.Message.NA_UNEXP);
+        }
+
+        if (conditionProfile.profile(cond == RRuntime.LOGICAL_TRUE)) {
             return thenPart.execute(frame);
-        } else if (cond == RRuntime.LOGICAL_FALSE) {
+        } else {
+            assert cond == RRuntime.LOGICAL_FALSE : "logical value none of TRUE|FALSE|NA";
+
             if (elsePart != null) {
                 return elsePart.execute(frame);
             } else {
                 return RNull.instance;
             }
         }
-        // NA is the only remaining option
-        throw RError.error(getSourceSection(), RError.Message.NA_UNEXP);
     }
 
     public ConvertBooleanNode getCondition() {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.*;
 
 public final class CbindFoldOperationNode extends FoldOperationNode {
 
@@ -68,7 +69,7 @@ public final class CbindFoldOperationNode extends FoldOperationNode {
 
     @Override
     public Object executeList(VirtualFrame frame, Object left, Object right) {
-        throw new IllegalStateException("NYI");
+        throw RInternalError.unimplemented();
     }
 
 }

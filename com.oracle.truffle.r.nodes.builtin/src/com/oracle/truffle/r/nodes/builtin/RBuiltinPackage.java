@@ -125,16 +125,14 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
+    void setEnv(REnvironment env) {
+        this.env = env;
+    }
+
     /**
      * Runtime component of the package initialization process.
      */
     public void loadSources(MaterializedFrame frame, REnvironment envForFrame) {
-        this.env = envForFrame;
-        for (RBuiltinFactory factory : builtins.values()) {
-            if (factory.getPackage() == this) {
-                factory.setEnv(env);
-            }
-        }
         ArrayList<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {

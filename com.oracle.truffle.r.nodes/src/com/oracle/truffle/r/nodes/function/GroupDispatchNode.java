@@ -127,7 +127,7 @@ public class GroupDispatchNode extends S3DispatchNode {
 
     @Override
     public Object execute(VirtualFrame frame, final RStringVector aType) {
-        throw new UnsupportedOperationException();
+        throw RInternalError.shouldNotReachHere();
     }
 
     protected static boolean isEqualType(final RStringVector currentType, final RStringVector lastType) {

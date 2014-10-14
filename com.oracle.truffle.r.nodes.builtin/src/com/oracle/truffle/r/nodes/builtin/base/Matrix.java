@@ -27,216 +27,123 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.MatrixFactory.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-/**
- * <pre>
- * matrix &lt; -function(data = NA, nrow = 1, ncol = 1, byrow = FALSE, dimnames = NULL)
- * </pre>
- *
- * TODO rework as {@code .Internal} to use the wrapper in {@code matrix.R}.
- */
-@RBuiltin(name = "matrix", kind = SUBSTITUTE, parameterNames = {"data", "nrow", "ncol", "byrow", "dimnames", "missingNrow", "missingNcol"})
-// TODO INTERNAL
+@RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "byrow", "dimnames", "missingNrow", "missingNcol"})
 public abstract class Matrix extends RBuiltinNode {
 
-    @Child private Transpose transpose = TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
-    @Child private IsNumeric isNumeric = IsNumericFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
-    @Child private CastIntegerNode castIntNode;
+    @Child private Transpose transpose;
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_NA), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                        ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+    private final BinaryConditionProfile nrowMissingNcolGiven = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+    private final BinaryConditionProfile nrowGivenNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+    private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+
+    @NodeChild("argument")
+    protected static abstract class FirstIntNode extends RNode {
+
+        @Specialization
+        protected int firstScalar(int argument) {
+            return argument;
+        }
+
+        @Specialization(contains = "firstScalar")
+        protected int firstVector(RAbstractIntVector argument) {
+            return argument.getDataAt(0);
+        }
+
     }
 
     @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[3] = CastLogicalNodeFactory.create(arguments[3], true, false, false);
-        return arguments;
+    protected RNode[] castArguments(RNode[] args) {
+        // nrow/ncol, at positions 1/2, are cast to int
+        // from nrow/ncol, if they are vectors, the first element must be extracted
+        // byrow, at position 3, is cast to logical
+        args[1] = FirstIntNodeFactory.create(CastIntegerNodeFactory.create(args[1], false, false, false));
+        args[2] = FirstIntNodeFactory.create(CastIntegerNodeFactory.create(args[2], false, false, false));
+        args[3] = CastLogicalNodeFactory.create(args[3], false, false, false);
+        return args;
     }
 
-    @Specialization(guards = "isByRow")
+    @Specialization(guards = "!byRow")
     @SuppressWarnings("unused")
-    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
-        return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
+        int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
+        return data.copyResizedWithDimensions(dim);
     }
 
-    @Specialization(guards = "isByRow")
+    @Specialization(guards = "byRow")
     @SuppressWarnings("unused")
-    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
-        return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
-    }
-
-    @Specialization(guards = "isByRow")
-    @SuppressWarnings("unused")
-    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
-        RVector vdata = data.materialize();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
-        return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
-    }
-
-    @Specialization(guards = "isByRow")
-    @SuppressWarnings("unused")
-    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
-        return transpose.execute(frame, data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
-    }
-
-    @Specialization(guards = "!isByRow")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
-    }
-
-    @Specialization(guards = "!isByRow")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
-    }
-
-    @Specialization(guards = "!isByRow")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
-    }
-
-    @Specialization(guards = "!isByRow")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
-        int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isByRow(RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        return byrow == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isByRow(RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        return byrow == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isByRow(RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        return byrow == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isByRow(RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        return byrow == RRuntime.LOGICAL_TRUE;
-    }
-
-    private int getValue(VirtualFrame frame, RAbstractVector arg) {
-        if (isNumeric.execute(frame, arg) == RRuntime.LOGICAL_FALSE) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATRIX_EXTENT);
-        }
-        if (castIntNode == null) {
+        int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
+        if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntNode = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            transpose = insert(TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
-        Object value = castIntNode.executeCast(frame, arg);
-        if (value instanceof Integer) {
-            return (Integer) value;
-        }
-        if (value instanceof RIntVector) {
-            return ((RIntVector) value).getDataAt(0);
-        }
-        if (value instanceof RIntSequence) {
-            return ((RIntSequence) value).getDataAt(0);
-        }
-        return RRuntime.INT_NA;
+        return (RAbstractVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
     }
 
-    private int getNrow(VirtualFrame frame, RAbstractVector vecRow) {
-        int nRow = getValue(frame, vecRow);
-        if (nRow == RRuntime.INT_NA) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_NROW);
-        }
-        if (nRow < 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NROW);
-        }
-        return nRow;
-    }
+    //
+    // Auxiliary methods.
+    //
 
-    private int getNcol(VirtualFrame frame, RAbstractVector vecCol) {
-        int nCol = getValue(frame, vecCol);
-        if (nCol == RRuntime.INT_NA) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_NCOL);
-        }
-        if (nCol < 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NCOL);
-        }
-        return nCol;
-    }
-
-    @SuppressWarnings("unused")
-    private int[] computeNrowNcol(VirtualFrame frame, RAbstractVector x, RMissing nrowp, RAbstractVector ncolp) {
-        int xLen = x.getLength();
-        int nRow = 0;
-        int nCol = getNcol(frame, ncolp);
-        if (nCol == 0) {
-            if (xLen > 0) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
-            } else {
-                nRow = 0;
-            }
-        } else {
-            nRow = 1 + ((xLen - 1) / nCol); // nRow = ceiling(xLen/nCol)
-        }
-        return new int[]{nRow, nCol};
-    }
-
-    @SuppressWarnings("unused")
-    private int[] computeNrowNcol(VirtualFrame frame, RAbstractVector x, RAbstractVector nrowp, RMissing ncolp) {
-        int xLen = x.getLength();
-        int nCol = 0;
-        int nRow = getNrow(frame, nrowp);
-        if (nRow == 0) {
-            if (xLen > 0) {
+    private int[] computeDimByCol(int size, int nrow, int ncol, byte missingNr, byte missingNc) {
+        final boolean mnr = missingNr == RRuntime.LOGICAL_TRUE;
+        final boolean mnc = missingNc == RRuntime.LOGICAL_TRUE;
+        if (bothNrowNcolMissing.profile(mnr && mnc)) {
+            return new int[]{size, 1};
+        } else if (nrowGivenNcolMissing.profile(!mnr && mnc)) {
+            if (nrow == 0 && size > 0) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
-            } else {
-                nCol = 0;
             }
+            return new int[]{nrow, 1 + ((size - 1) / nrow)};
+        } else if (nrowMissingNcolGiven.profile(mnr && !mnc)) {
+            if (ncol == 0 && size > 0) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
+            }
+            return new int[]{1 + ((size - 1) / ncol), ncol};
         } else {
-            nCol = 1 + ((xLen - 1) / nRow);
+            // only missing case: both nrow and ncol were given
+            return new int[]{nrow, ncol};
         }
-        return new int[]{nRow, nCol};
     }
 
-    @SuppressWarnings("unused")
-    private static int[] computeNrowNcol(VirtualFrame frame, RAbstractVector x, RMissing nrowp, RMissing ncolp) {
-        return new int[]{x.getLength(), 1};
+    private int[] computeDimByRow(int size, int nrow, int ncol, byte missingNr, byte missingNc) {
+        final boolean mnr = missingNr == RRuntime.LOGICAL_TRUE;
+        final boolean mnc = missingNc == RRuntime.LOGICAL_TRUE;
+        if (bothNrowNcolMissing.profile(mnr && mnc)) {
+            return new int[]{1, size};
+        } else if (nrowGivenNcolMissing.profile(!mnr && mnc)) {
+            if (nrow == 0 && size > 0) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
+            }
+            return new int[]{1 + ((size - 1) / nrow), nrow};
+        } else if (nrowMissingNcolGiven.profile(mnr && !mnc)) {
+            if (ncol == 0 && size > 0) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
+            }
+            return new int[]{ncol, 1 + ((size - 1) / ncol)};
+        } else {
+            // only missing case: both nrow and ncol were given
+            return new int[]{ncol, nrow};
+        }
     }
 
+    //
+    // Guards.
+    //
+
     @SuppressWarnings("unused")
-    private int[] computeNrowNcol(VirtualFrame frame, RAbstractVector x, RAbstractVector nrowp, RAbstractVector ncolp) {
-        return new int[]{getValue(frame, nrowp), getValue(frame, ncolp)};
+    protected static boolean byRow(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+        return byrow == RRuntime.LOGICAL_TRUE;
     }
+
 }

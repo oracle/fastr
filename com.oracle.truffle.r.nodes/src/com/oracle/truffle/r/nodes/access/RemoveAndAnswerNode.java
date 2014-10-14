@@ -58,18 +58,17 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            CompilerAsserts.neverPartOfCompilation();
-            return specialize(frame).execute(frame);
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(name);
+            return specialize(fs).execute(frame);
         }
 
-        private RemoveAndAnswerNode specialize(VirtualFrame frame) {
-            FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(name);
+        private RemoveAndAnswerNode specialize(FrameSlot fs) {
             if (fs == null) {
                 RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, name);
             }
             return replace(new RemoveAndAnswerResolvedNode(fs));
         }
-
     }
 
     protected static final class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode implements VisibilityController {

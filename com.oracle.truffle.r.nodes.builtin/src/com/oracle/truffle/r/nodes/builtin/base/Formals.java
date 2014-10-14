@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -29,39 +30,36 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "formals", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"fun"})
-// TODO revert to INTERNAL when promises are lazy
+@RBuiltin(name = "formals", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
 public abstract class Formals extends RBuiltinNode {
     @Specialization
-    protected Object formals(Object funObj) {
+    @SlowPath
+    protected Object formals(@SuppressWarnings("unused") RMissing fun) {
+        throw RError.error(RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    }
+
+    @Specialization
+    @SlowPath
+    protected Object formals(RFunction fun) {
         controlVisibility();
-        if (funObj instanceof RFunction) {
-            RFunction fun = (RFunction) funObj;
-            if (fun.isBuiltin()) {
-                return RNull.instance;
-            }
-            FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
-            if (fdNode.getParameterCount() == 0) {
-                return RNull.instance;
-            }
-            FormalArguments formalArgs = fdNode.getFormalArguments();
-            String[] names = formalArgs.getNames();
-            RNode[] defaults = formalArgs.getDefaultArgs();
-            Object succ = null;
-            for (int i = names.length - 1; i >= 0; i--) {
-                RNode def = defaults[i];
-                Object defValue = def == null ? RMissing.instance : RDataFactory.createLanguage(def);
-                RPairList pl = new RPairList(defValue, succ, names[i]);
-                succ = pl;
-            }
-            return succ;
-        } else {
-            if (funObj instanceof String || funObj instanceof RStringVector) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "formals(string)");
-            } else {
-                return RNull.instance;
-            }
+        if (fun.isBuiltin()) {
+            return RNull.instance;
         }
+        FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
+        if (fdNode.getParameterCount() == 0) {
+            return RNull.instance;
+        }
+        FormalArguments formalArgs = fdNode.getFormalArguments();
+        String[] names = formalArgs.getNames();
+        RNode[] defaults = formalArgs.getDefaultArgs();
+        Object succ = null;
+        for (int i = names.length - 1; i >= 0; i--) {
+            RNode def = defaults[i];
+            Object defValue = def == null ? RMissing.instance : RDataFactory.createLanguage(def);
+            RPairList pl = new RPairList(defValue, succ, names[i]);
+            succ = pl;
+        }
+        return succ;
     }
 
 }

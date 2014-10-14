@@ -25,77 +25,40 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 public class IsListFunctions {
+    /**
+     * {@link IsList} does not override {@link IsTypeNode} because it needs to specialize on
+     * {@link RAbstractVector}.
+     */
     @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"})
-    @SuppressWarnings("unused")
-    // TODO ideally this would inherit from isTypeNode,
-    // but issues around subclassing would need to be resolved
-    public abstract static class IsList extends RBuiltinNode {
+    public abstract static class IsList extends IsTypeNodeMissingAdapter {
 
-        private static final String[] PARAMETER_NAMES = new String[]{"x"};
-
-        @Override
-        public String[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
-        }
+        private final ConditionProfile dataFrameIsListProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isAbsVectorListProfile = ConditionProfile.createBinaryProfile();
 
         @Specialization
-        protected byte isType(RMissing value) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
-        }
-
-        @Specialization
-        protected byte isType(RList value) {
+        protected byte isType(@SuppressWarnings("unused") RList value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isList")
-        protected byte isType(RAbstractVector value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
-        }
-
         @Specialization
-        protected byte isType(RNull value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
-        }
-
-        @Specialization(guards = "isList")
-        protected byte isTypeFrame(RDataFrame value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization(guards = "!isList")
         protected byte isType(RDataFrame value) {
             controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
+            if (dataFrameIsListProfile.profile(isList(value))) {
+                return RRuntime.LOGICAL_TRUE;
+            } else {
+                return RRuntime.LOGICAL_FALSE;
+            }
         }
 
         @Specialization
-        protected byte isType(REnvironment env) {
-            controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
-        }
-
-        @Specialization
-        protected byte isType(RPairList pl) {
+        protected byte isType(@SuppressWarnings("unused") RPairList pl) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
@@ -106,6 +69,25 @@ public class IsListFunctions {
 
         protected boolean isList(RDataFrame frame) {
             return isList(frame.getVector());
+        }
+
+        /**
+         * All the subclasses of {@link RAbstractVector} are lists iff the class of the vector
+         * element is {@code Object}.
+         */
+        @Specialization
+        protected byte isType(RAbstractVector value) {
+            controlVisibility();
+            if (isAbsVectorListProfile.profile(isList(value))) {
+                return RRuntime.LOGICAL_TRUE;
+            } else {
+                return RRuntime.LOGICAL_FALSE;
+            }
+        }
+
+        @Fallback
+        protected byte isType(@SuppressWarnings("unused") Object value) {
+            return RRuntime.LOGICAL_FALSE;
         }
 
     }

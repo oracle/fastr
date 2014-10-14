@@ -56,6 +56,8 @@ public abstract class PromiseNode extends RNode {
      */
     protected final RPromiseFactory factory;
 
+    protected final PromiseProfile promiseProfile = new PromiseProfile();
+
     /**
      * @param factory {@link #factory}
      */
@@ -321,6 +323,10 @@ public abstract class PromiseNode extends RNode {
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
         private final PromiseProfile promiseProfile = new PromiseProfile();
 
+        private final BranchProfile isMissingProfile = new BranchProfile();
+        private final BranchProfile isVarArgProfile = new BranchProfile();
+        private final BranchProfile checkPromiseProfile = new BranchProfile();
+
         public InlinedSuppliedPromiseNode(RPromiseFactory factory) {
             super(factory);
             this.expr = (RNode) factory.getExpr();
@@ -333,14 +339,17 @@ public abstract class PromiseNode extends RNode {
             // builtin implementations)
             Object obj = expr.execute(frame);
             if (obj == RMissing.instance) {
+                isMissingProfile.enter();
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
                 }
                 RPromise promise = factory.createPromiseDefault();
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             } else if (obj instanceof RArgsValuesAndNames) {
+                isVarArgProfile.enter();
                 return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
             } else {
+                checkPromiseProfile.enter();
                 return RPromise.checkEvaluate(frame, obj, promiseProfile);
             }
         }

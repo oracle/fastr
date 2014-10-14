@@ -30,15 +30,16 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedArgsNames", type = String[].class)})
 @NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends RCallNode implements VisibilityController {
+public abstract class RBuiltinNode extends LeafCallNode implements VisibilityController {
 
     public String getSourceCode() {
-        return "<builtin>";
+        throw RInternalError.shouldNotReachHere();
     }
 
     /**
@@ -131,7 +132,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
         // Setup
         RBuiltinRootNode root = new RBuiltinRootNode(node, formals, new FrameDescriptor());
-        node.onCreate();
         return Truffle.getRuntime().createCallTarget(root);
     }
 
@@ -139,7 +139,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         // static number of arguments
         RNode[] builtinArguments = inlineStaticArguments(args);
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
-        builtin.onCreate();
         return builtin;
     }
 
@@ -194,18 +193,13 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
      */
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
-        @Child private RNode delegate;
+        @Child private RNode delegate = createDelegate();
 
         public RWrapperBuiltinNode(RBuiltinNode prev) {
             super(prev);
         }
 
         protected abstract RNode createDelegate();
-
-        @Override
-        protected void onCreate() {
-            delegate = insert(createDelegate());
-        }
 
         @Override
         public Object execute(VirtualFrame frame) {
@@ -290,9 +284,5 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
             return suppliedArgsNames;
         }
 
-        @Override
-        public String getSourceCode() {
-            return "<custom builtin>";
-        }
     }
 }

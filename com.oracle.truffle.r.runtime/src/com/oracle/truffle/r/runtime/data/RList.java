@@ -147,7 +147,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RVector fromVector, int fromIndex) {
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RList other = (RList) fromVector;
         data[toIndex] = other.data[fromIndex];
     }
@@ -191,15 +191,23 @@ public final class RList extends RVector implements RAbstractVector {
 
     private Object[] createResizedData(int size, boolean fillNA) {
         assert !this.isShared();
+        return copyResizedData(size, fillNA);
+    }
+
+    private Object[] copyResizedData(int size, boolean fillNA) {
         Object[] newData = Arrays.copyOf(data, size);
-        if (size > this.getLength()) {
+        return resizeData(newData, this.data, this.getLength(), fillNA);
+    }
+
+    private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = data.length; i < size; ++i) {
-                    newData[i] = RRuntime.INT_NA;
+                for (int i = oldDataLength; i < newData.length; ++i) {
+                    newData[i] = RRuntime.LOGICAL_NA;
                 }
             } else {
-                for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
-                    newData[i] = data[j];
+                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                    newData[i] = oldData[j];
                 }
             }
         }
@@ -208,7 +216,7 @@ public final class RList extends RVector implements RAbstractVector {
 
     @Override
     public RList copyResized(int size, boolean fillNA) {
-        return RDataFactory.createList(createResizedData(size, fillNA));
+        return RDataFactory.createList(copyResizedData(size, fillNA));
     }
 
     @Override

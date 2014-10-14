@@ -69,6 +69,14 @@ public class RClosures {
         return new RDoubleToStringVectorClosure(vector, check);
     }
 
+    public static RAbstractIntVector createDoubleToIntVector(RAbstractDoubleVector vector, NACheck check) {
+        return new RDoubleToIntVectorClosure(vector, check);
+    }
+
+    public static RAbstractIntVector createComplexToIntVectorDiscardImaginary(RAbstractComplexVector vector, NACheck check) {
+        return new RComplexToIntVectorClosure(vector, check);
+    }
+
     // Raw to ...
 
     public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector, NACheck check) {

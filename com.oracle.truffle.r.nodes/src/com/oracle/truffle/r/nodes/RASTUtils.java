@@ -137,6 +137,9 @@ public class RASTUtils {
      * Find the {@link CallArgumentsNode} that is the child of {@code node}. N.B. Does not copy.
      */
     public static CallArgumentsNode findCallArgumentsNode(Node node) {
+        if (node instanceof RCallNode) {
+            return ((RCallNode) node).getArgumentsNode();
+        }
         node.accept(callArgsNodeFinder);
         assert callArgsNodeFinder.callArgumentsNode != null;
         return callArgsNodeFinder.callArgumentsNode;
@@ -177,13 +180,7 @@ public class RASTUtils {
      */
     public static RNode findFunctionNode(Node node) {
         if (node instanceof RCallNode) {
-            for (Node child : node.getChildren()) {
-                if (child != null) {
-                    if (child instanceof ReadVariableNode) {
-                        return (RNode) child;
-                    }
-                }
-            }
+            return ((RCallNode) node).getFunctionNode();
         } else if (node instanceof DispatchedCallNode) {
             for (Node child : node.getChildren()) {
                 if (child != null) {

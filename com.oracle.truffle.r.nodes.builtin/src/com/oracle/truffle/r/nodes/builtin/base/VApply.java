@@ -24,10 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"x", "fun", "..."})
 public abstract class VApply extends RBuiltinNode {
 
-    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
     // TODO complete the implementation so that it works for all types of x and fun
     @Specialization
@@ -51,7 +50,7 @@ public abstract class VApply extends RBuiltinNode {
         RVector xMat = x.materialize();
         Object[] applyResult;
         if (x.getLength() > 0) {
-            applyResult = Lapply.applyHelper(frame, funCall, xMat, fun, combinedArgs);
+            applyResult = Lapply.applyHelper(frame, callCache, xMat, fun, combinedArgs);
         } else {
             applyResult = new Object[0];
         }

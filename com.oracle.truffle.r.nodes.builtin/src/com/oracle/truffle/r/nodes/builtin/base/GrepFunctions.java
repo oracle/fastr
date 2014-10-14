@@ -29,6 +29,7 @@ import java.util.regex.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -42,33 +43,30 @@ public class GrepFunctions {
      * implement.
      */
     public abstract static class ExtraArgsChecker extends RBuiltinNode {
+
+        private final BranchProfile errorProfile = new BranchProfile();
+
         protected void checkExtraArgs(byte ignoreCase, byte perl, byte fixed, byte useBytes, byte invert) {
-            if (RRuntime.fromLogical(ignoreCase)) {
-                notImplemented("ignoreCase", true);
-            }
-            if (RRuntime.fromLogical(perl)) {
-                notImplemented("perl", true);
-            }
-            if (RRuntime.fromLogical(fixed)) {
-                notImplemented("fixed", true);
-            }
-            if (RRuntime.fromLogical(useBytes)) {
-                notImplemented("useBytes", true);
-            }
-            if (RRuntime.fromLogical(invert)) {
-                notImplemented("invert", true);
-            }
+            checkNotImplemented(RRuntime.fromLogical(ignoreCase), "ignoreCase", true);
+            checkNotImplemented(RRuntime.fromLogical(perl), "perl", true);
+            checkNotImplemented(RRuntime.fromLogical(fixed), "fixed", true);
+            checkNotImplemented(RRuntime.fromLogical(useBytes), "useBytes", true);
+            checkNotImplemented(RRuntime.fromLogical(invert), "invert", true);
         }
 
         protected void valueCheck(byte value) {
             if (RRuntime.fromLogical(value)) {
+                errorProfile.enter();
                 throw RError.nyi(getEncapsulatingSourceSection(), "value == true is not implemented");
             }
         }
 
         @SlowPath
-        protected void notImplemented(String arg, boolean b) {
-            throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
+        protected void checkNotImplemented(boolean condition, String arg, boolean b) {
+            if (condition) {
+                errorProfile.enter();
+                throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
+            }
         }
 
         protected int[] trimResult(int[] tmp, int numMatches, int vecLength) {
@@ -92,8 +90,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, x, ignore.case = FALSE, perl = FALSE, value = FALSE, fixed = FALSE, useBytes
-            // = FALSE, invert = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
@@ -142,7 +138,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),};
@@ -167,8 +162,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, replacement, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes =
-// FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
@@ -227,8 +220,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, replacement, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes =
-// FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
@@ -263,7 +254,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, text, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
@@ -280,6 +270,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
+        @SlowPath
         protected static List<Integer> findIndex(String pattern, String text) {
             Matcher m = getPatternMatcher(pattern, text);
             List<Integer> list = new ArrayList<>();
@@ -305,7 +296,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, text, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
@@ -338,8 +328,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, x, max.distance = 0.1, costs = NULL, ignore.case = FALSE, value = FALSE,
-            // fixed = TRUE, useBytes = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(0.1d), ConstantNode.create(RNull.instance),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE)};
@@ -352,9 +340,7 @@ public class GrepFunctions {
             controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             valueCheck(value);
-            if (!RRuntime.fromLogical(fixed)) {
-                notImplemented("fixed", false);
-            }
+            checkNotImplemented(!RRuntime.fromLogical(fixed), "fixed", false);
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
             String pattern = patternArg.getDataAt(0);
@@ -378,8 +364,6 @@ public class GrepFunctions {
 
         @Override
         public RNode[] getParameterValues() {
-            // pattern, x, max.distance = 0.1, costs = NULL, ignore.case = FALSE, fixed = TRUE,
-// useBytes = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(0.1d), ConstantNode.create(RNull.instance),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }

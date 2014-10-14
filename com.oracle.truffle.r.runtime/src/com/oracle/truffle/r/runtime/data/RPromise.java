@@ -204,6 +204,8 @@ public class RPromise extends RLanguageRep {
         private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isEagerPromise = ConditionProfile.createBinaryProfile();
+
+        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
     }
 
     public boolean isInlined(PromiseProfile profile) {
@@ -254,7 +256,7 @@ public class RPromise extends RLanguageRep {
 
             newValue = generateValue(frame, profile);
 
-            setValue(newValue);
+            setValue(newValue, profile);
         } finally {
             underEvaluation = false;
         }
@@ -266,15 +268,16 @@ public class RPromise extends RLanguageRep {
      *
      * @param newValue
      */
-    public void setValue(Object newValue) {
-        this.value = newValue;
+    public void setValue(Object newValue, PromiseProfile profile) {
+        Object profiledValue = profile.valueProfile.profile(newValue);
+        this.value = profiledValue;
         this.isEvaluated = true;
         this.execFrame = null; // the frame is no longer needed after execution
 
         // TODO Does this apply to other values, too?
-        if (newValue instanceof RShareable) {
+        if (profiledValue instanceof RShareable) {
             // set NAMED = 2
-            ((RShareable) newValue).makeShared();
+            ((RShareable) profiledValue).makeShared();
         }
     }
 

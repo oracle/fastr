@@ -24,99 +24,56 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "apply", kind = SUBSTITUTE, parameterNames = {"X", "MARGIN", "FUN", "..."})
 // TODO Rewrite to accept any vector type but ideally not by simply repeating the code
 public abstract class Apply extends RBuiltinNode {
 
-    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    private final ConditionProfile rowMarginProfile = ConditionProfile.createBinaryProfile();
+
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(guards = "rowMargin")
-    @SuppressWarnings("unused")
-    protected Object applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
+    @Specialization
+    protected Object applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, @SuppressWarnings("unused") Object args) {
         controlVisibility();
         int[] xdim = x.getDimensions();
         final int rows = xdim == null ? x.getLength() : xdim[0];
         final int cols = xdim == null ? 1 : xdim[1];
-        Object[] result = new Object[rows];
-        for (int row = 0; row < rows; ++row) {
-            double[] rowData = new double[cols];
-            for (int i = 0; i < cols; ++i) {
-                rowData[i] = x.getDataAt(i * rows + row);
+        Object[] result;
+        if (rowMarginProfile.profile(margin == 1.0)) {
+            result = new Object[rows];
+            for (int row = 0; row < rows; ++row) {
+                double[] rowData = new double[cols];
+                for (int i = 0; i < cols; ++i) {
+                    rowData[i] = x.getDataAt(i * rows + row);
+                }
+                result[row] = callFunction(frame, fun, RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR));
             }
-            RDoubleVector rowVec = RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR);
-            result[row] = callFunction(frame, fun, RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR));
+        } else {
+            result = new Object[cols];
+            for (int col = 0; col < cols; ++col) {
+                double[] colData = new double[rows];
+                for (int i = 0; i < rows; ++i) {
+                    colData[i] = x.getDataAt(col * rows + i);
+                }
+                result[col] = callFunction(frame, fun, RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR));
+            }
         }
         return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization(guards = "colMargin")
-    @SuppressWarnings("unused")
-    protected Object applyCols(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
-        controlVisibility();
-        int[] xdim = x.getDimensions();
-        final int rows = xdim == null ? x.getLength() : xdim[0];
-        final int cols = xdim == null ? 1 : xdim[1];
-        Object[] result = new Object[cols];
-        for (int col = 0; col < cols; ++col) {
-            double[] colData = new double[rows];
-            for (int i = 0; i < rows; ++i) {
-                colData[i] = x.getDataAt(col * rows + i);
-            }
-            RDoubleVector colVec = RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR);
-            result[col] = callFunction(frame, fun, RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR));
-        }
-        return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization(guards = "rowMarginInt")
-    @SuppressWarnings("unused")
-    protected Object applyRows(VirtualFrame frame, RLogicalVector x, int margin, RFunction fun, Object args) {
-        controlVisibility();
-        int[] xdim = x.getDimensions();
-        final int rows = xdim == null ? x.getLength() : xdim[0];
-        final int cols = xdim == null ? 1 : xdim[1];
-        Object[] result = new Object[rows];
-        for (int row = 0; row < rows; ++row) {
-            byte[] rowData = new byte[cols];
-            for (int i = 0; i < cols; ++i) {
-                rowData[i] = x.getDataAt(i * rows + row);
-            }
-            RLogicalVector rowVec = RDataFactory.createLogicalVector(rowData, RDataFactory.COMPLETE_VECTOR);
-            result[row] = callFunction(frame, fun, RDataFactory.createLogicalVector(rowData, RDataFactory.COMPLETE_VECTOR));
-        }
-        return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean rowMargin(RAbstractVector x, double margin, RFunction fun, Object args) {
-        return margin == 1.0;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean rowMarginInt(RAbstractVector x, int margin, RFunction fun, Object args) {
-        return margin == 1;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean colMargin(RAbstractVector x, double margin, RFunction fun, Object args) {
-        return margin == 2.0;
     }
 
     private Object callFunction(VirtualFrame frame, RFunction fun, Object input) {
@@ -138,7 +95,7 @@ public abstract class Apply extends RBuiltinNode {
                 Utils.nyi();
             }
         }
-        Object[] args = RArguments.create(fun, funCall.getSourceSection(), RArguments.getDepth(frame) + 1, evaluatedArgs);
-        return funCall.call(frame, fun.getTarget(), args);
+        Object[] args = RArguments.create(fun, getSourceSection(), RArguments.getDepth(frame) + 1, evaluatedArgs);
+        return callCache.execute(frame, fun.getTarget(), args);
     }
 }

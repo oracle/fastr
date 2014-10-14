@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,6 +42,8 @@ abstract class GetMultiDimDataNode extends RNode {
 
     private final NACheck posNACheck;
     private final NACheck elementNACheck;
+
+    private final ConditionProfile dimLevelOneProfile = ConditionProfile.createBinaryProfile();
 
     @Child private GetMultiDimDataNode getMultiDimDataRecursive;
 
@@ -72,7 +75,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
@@ -102,7 +105,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
@@ -133,7 +136,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
@@ -164,7 +167,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
@@ -195,7 +198,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
@@ -226,7 +229,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = (dstArrayBase + newAccDstDimensions * i) << 1;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
@@ -259,7 +262,7 @@ abstract class GetMultiDimDataNode extends RNode {
         int newAccSrcDimensions = accSrcDimensions / srcDimSize;
         int newAccDstDimensions = accDstDimensions / p.getLength();
         elementNACheck.enable(p);
-        if (currentDimLevel == 1) {
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);

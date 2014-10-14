@@ -61,7 +61,7 @@ public class PromiseHelper {
             promise.setUnderEvaluation(true);
 
             Object obj = expressionInlineCache.execute(frame, (RNode) promise.getRep());
-            promise.setValue(obj);
+            promise.setValue(obj, profile);
             return obj;
         } finally {
             promise.setUnderEvaluation(false);

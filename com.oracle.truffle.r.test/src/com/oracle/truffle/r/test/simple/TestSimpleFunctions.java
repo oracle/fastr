@@ -277,4 +277,18 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ foo <- function(x) x; foo(1, 2, 3) }");
         assertEval("{ foo <- function(x) x; foo() }");
     }
+
+    @Test
+    public void testFunctionPrinting() {
+        assertEval("{ foo <- function(x) x; foo }");
+        assertEval("{ sum }");
+    }
+
+    @Test
+    @Ignore
+    public void testFunctionPrintingIgnore() {
+        // mismatch on <bytecode> and formatting
+        assertEval("{ exists }");
+    }
+
 }

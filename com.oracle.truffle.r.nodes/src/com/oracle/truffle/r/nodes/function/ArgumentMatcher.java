@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -391,6 +392,7 @@ public class ArgumentMatcher {
     private static <T> void throwUnusedArgumentError(int leftoverCount, UnmatchedSuppliedIterator<T> si, ArrayFactory<T> arrFactory, SourceSection callSrc) {
         // UNUSED_ARGUMENT(S)?
         if (leftoverCount == 1) {
+            CompilerDirectives.transferToInterpreter();
             String argStr = arrFactory.debugString(si.next());
             throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, argStr);
         }
@@ -402,6 +404,7 @@ public class ArgumentMatcher {
             debugArgs[pos++] = si.next();
         }
 
+        CompilerDirectives.transferToInterpreter();
         String argStr = arrFactory.debugString(debugArgs);
         throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENTS, argStr);
     }

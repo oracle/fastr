@@ -166,7 +166,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RVector fromVector, int fromIndex) {
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RStringVector other = (RStringVector) fromVector;
         data[toIndex] = other.data[fromIndex];
     }
