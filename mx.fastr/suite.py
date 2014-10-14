@@ -101,11 +101,26 @@ suite = {
       "sha1" : "4e8c876383acb37da4347902a0a775aefd51de09",
     },
 
+    "ASM" : {
+      "path" : "lib/asm-5.0.3.jar",
+      "urls" : [
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
+      ],
+      "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
+      "sourcePath" : "lib/asm-5.0.3-sources.jar",
+      "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
+      "sourceUrls" : [
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
+      ],
+    },
+
     "JNR_X86ASM" : {
       "path" : "lib/jnr-x86asm-1.0.2.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-x86asm-1.0.2.jar",
-        "http://repo1.maven.org/maven2/com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
       ],
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
     },
@@ -114,7 +129,7 @@ suite = {
       "path" : "lib/asm-analysis-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
-        "http://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
       ],
       "sha1" : "1c45d52b6f6c638db13cf3ac12adeb56b254cdd7",
     },
@@ -123,7 +138,7 @@ suite = {
       "path" : "lib/asm-commons-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
-        "http://repo1.maven.org/maven2/org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
       ],
       "sha1" : "a839ec6737d2b5ba7d1878e1a596b8f58aa545d9",
     },
@@ -132,7 +147,7 @@ suite = {
       "path" : "lib/asm-tree-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
-        "http://repo1.maven.org/maven2/org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
       ],
       "sha1" : "67bd266cd17adcee486b76952ece4cc85fe248b8",
     },
@@ -141,20 +156,20 @@ suite = {
       "path" : "lib/asm-util-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
-        "http://repo1.maven.org/maven2/org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
       ],
       "sha1" : "d7a65f54cda284f9706a750c23d64830bb740c39",
     },
 
     "JNR_INVOKE" : {
       "path" : "lib/jnr-invoke-0.1.jar",
-      "urls" : ["http://repo1.maven.org/maven2/com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar"],
+      "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar"],
       "sha1" : "d0f846c3d3cb98dfd5e2bbd3cca236337fb0afa1",
     },
 
     "JNR_UDIS86" : {
       "path" : "lib/jnr-udis86-0.1.jar",
-      "urls" : ["http://repo1.maven.org/maven2/com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
+      "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
       "sha1" : "88accfa82203ea74a4a82237061c28ac8b4224af",
     }
   },
