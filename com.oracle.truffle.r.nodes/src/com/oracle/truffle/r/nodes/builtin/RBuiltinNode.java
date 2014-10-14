@@ -30,12 +30,13 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedArgsNames", type = String[].class)})
 @NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends RCallNode implements VisibilityController {
+public abstract class RBuiltinNode extends LeafCallNode implements VisibilityController {
 
     public String getSourceCode() {
         throw RInternalError.shouldNotReachHere();
