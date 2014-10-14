@@ -40,8 +40,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow"})
 public abstract class MakeNames extends RBuiltinNode {
 
-    private final BranchProfile empty = new BranchProfile();
-    private final BranchProfile nonEmpty = new BranchProfile();
+    private final BranchProfile empty = BranchProfile.create();
+    private final BranchProfile nonEmpty = BranchProfile.create();
     private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
 
     @CreateCast({"arguments"})

@@ -59,8 +59,8 @@ public abstract class AccessArgumentNode extends RNode {
      */
     @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
-    private final BranchProfile needsCalleeFrame = new BranchProfile();
-    private final BranchProfile strictEvaluation = new BranchProfile();
+    private final BranchProfile needsCalleeFrame = BranchProfile.create();
+    private final BranchProfile strictEvaluation = BranchProfile.create();
     private final PromiseProfile promiseProfile = new PromiseProfile();
 
     /**

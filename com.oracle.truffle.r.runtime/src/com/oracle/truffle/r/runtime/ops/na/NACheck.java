@@ -38,7 +38,7 @@ public final class NACheck {
     private static final int CHECK_DEOPT = 1;
     private static final int CHECK = 2;
 
-    private final BranchProfile conversionOverflowReached = new BranchProfile();
+    private final BranchProfile conversionOverflowReached = BranchProfile.create();
 
     @CompilationFinal int state;
     @CompilationFinal boolean seenNaN;

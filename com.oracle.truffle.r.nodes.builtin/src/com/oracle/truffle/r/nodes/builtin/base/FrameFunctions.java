@@ -47,7 +47,7 @@ public class FrameFunctions {
     public abstract static class FrameHelper extends RBuiltinNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
-        protected final BranchProfile errorProfile = new BranchProfile();
+        protected final BranchProfile errorProfile = BranchProfile.create();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that

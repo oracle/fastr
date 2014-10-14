@@ -44,7 +44,7 @@ public class GrepFunctions {
      */
     public abstract static class ExtraArgsChecker extends RBuiltinNode {
 
-        private final BranchProfile errorProfile = new BranchProfile();
+        private final BranchProfile errorProfile = BranchProfile.create();
 
         protected void checkExtraArgs(byte ignoreCase, byte perl, byte fixed, byte useBytes, byte invert) {
             checkNotImplemented(RRuntime.fromLogical(ignoreCase), "ignoreCase", true);

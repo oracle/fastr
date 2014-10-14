@@ -28,8 +28,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"})
 public abstract class APerm extends RBuiltinNode {
 
-    private final BranchProfile errorProfile = new BranchProfile();
-    private final BranchProfile emptyPermVector = new BranchProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile emptyPermVector = BranchProfile.create();
     private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();
 
     private final NACheck na = new NACheck();

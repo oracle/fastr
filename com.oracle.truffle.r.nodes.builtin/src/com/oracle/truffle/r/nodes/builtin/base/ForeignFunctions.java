@@ -48,7 +48,7 @@ public class ForeignFunctions {
     public abstract static class FortranCAdapter extends RBuiltinNode {
         protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
-        protected final BranchProfile errorProfile = new BranchProfile();
+        protected final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
         public String[] getParameterNames() {
@@ -298,7 +298,7 @@ public class ForeignFunctions {
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class DotCall extends RBuiltinNode {
 
-        private final BranchProfile errorProfile = new BranchProfile();
+        private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
         private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
 
