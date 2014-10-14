@@ -45,9 +45,4 @@ public abstract class IsCharacter extends IsTypeNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization
-    protected byte isType(Object value) {
-        controlVisibility();
-        return RRuntime.asLogical(value instanceof String || value instanceof RStringVector);
-    }
 }

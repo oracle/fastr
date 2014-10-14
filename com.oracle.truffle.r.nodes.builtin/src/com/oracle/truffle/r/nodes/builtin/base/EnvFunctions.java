@@ -41,8 +41,12 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public class EnvFunctions {
 
+    protected abstract static class Adapter extends RBuiltinNode {
+        protected final BranchProfile errorProfile = new BranchProfile();
+    }
+
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"})
-    public abstract static class AsEnvironment extends RBuiltinNode {
+    public abstract static class AsEnvironment extends Adapter {
 
         @Specialization
         protected REnvironment asEnvironment(REnvironment env) {
@@ -62,6 +66,7 @@ public class EnvFunctions {
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
+                    errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
                     return REnvironment.frameToEnvironment(callerFrame.materialize());
@@ -73,6 +78,7 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
@@ -89,6 +95,7 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
         }
 
@@ -128,12 +135,13 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"})
-    public abstract static class ParentEnv extends RBuiltinNode {
+    public abstract static class ParentEnv extends Adapter {
 
         @Specialization
         protected REnvironment parentenv(REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
@@ -143,12 +151,13 @@ public class EnvFunctions {
 
     @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", ""})
     // 2nd parameter is "value", but should not be matched to so it's empty
-    public abstract static class SetParentEnv extends RBuiltinNode {
+    public abstract static class SetParentEnv extends Adapter {
 
         @Specialization
         protected REnvironment setParentenv(REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);

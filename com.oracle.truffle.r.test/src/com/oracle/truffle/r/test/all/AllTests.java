@@ -8564,6 +8564,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsTRUE_a8473f969e4f8b207e5f677194e23c40() {
+        assertEval("{ isTRUE(NULL) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsTRUE_acbc975cbce8f2d6a8b5422c52a423d3() {
         assertEval("{ isTRUE(TRUE) }");
     }
@@ -14734,7 +14739,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTypeCheckIgnore_7f8323b03018432a0d32c10f362ec5d7() {
+    public void TestSimpleBuiltins_testTypeCheck_7f8323b03018432a0d32c10f362ec5d7() {
         assertEval("{ is.list(NULL) }");
     }
 
@@ -17651,6 +17656,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testErrors_bf29c1dae99e04f8cd11a340f54e1287() {
         assertEvalError("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testFunctionPrinting_728ef0b1b46d1cef1d301cb8ac4ac8b0() {
+        assertEval("{ foo <- function(x) x; foo }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testFunctionPrinting_58dab500ef1398af5301dd59ee700728() {
+        assertEval("{ sum }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testFunctionPrintingIgnore_ce0b9f76f47f6752297f2228240d69f9() {
+        assertEval("{ exists }");
     }
 
     @Test

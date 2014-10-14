@@ -1,4 +1,4 @@
-#  File src/library/base/R/identical.R
+#  File src/library/base/R/exists.R
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
@@ -16,10 +16,8 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-identical <- function(x, y, num.eq = TRUE, single.NA = TRUE,
-                      attrib.as.set = TRUE, ignore.bytecode = TRUE,
-                      ignore.environment = FALSE)
-    .Internal(identical(x,y, num.eq, single.NA, attrib.as.set,
-                        ignore.bytecode, ignore.environment))
-
-isTRUE <- function(x) identical(TRUE, x)
+exists <-
+		function (x, where = -1,
+				envir = if(missing(frame)) as.environment(where) else sys.frame(frame),
+				frame, mode = "any", inherits = TRUE)
+	.Internal(exists(x, envir, mode, inherits))

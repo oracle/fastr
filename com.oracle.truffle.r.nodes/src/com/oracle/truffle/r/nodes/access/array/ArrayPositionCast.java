@@ -28,7 +28,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
@@ -39,70 +38,64 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@SuppressWarnings("unused")
-@NodeChildren({@NodeChild(value = "op", type = RNode.class), @NodeChild(value = "vector", type = RNode.class),
-                @NodeChild(value = "operand", type = OperatorConverterNode.class, executeWith = {"vector", "op"})})
-public abstract class ArrayPositionCast extends RNode {
+abstract class ArrayPositionsCastBase extends RNode {
 
-    public abstract Object executeArg(VirtualFrame frame, Object op, Object vector, Object operand);
+    protected final int dimension;
+    protected final int numDimensions;
+    protected final boolean assignment;
+    protected final boolean isSubset;
 
-    protected abstract RNode getVector();
+    private final BranchProfile errorProfile = new BranchProfile();
 
-    private final int dimension;
-
-    private final int numDimensions;
-
-    private final boolean assignment;
-
-    private final boolean isSubset;
-
-    private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile tooManyDimensions = new BranchProfile();
-
-    protected ArrayPositionCast(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
+    protected ArrayPositionsCastBase(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
         this.dimension = dimension;
         this.numDimensions = numDimensions;
         this.assignment = assignment;
         this.isSubset = isSubset;
     }
 
-    protected ArrayPositionCast(ArrayPositionCast other) {
+    protected ArrayPositionsCastBase(ArrayPositionsCastBase other) {
         this.dimension = other.dimension;
         this.numDimensions = other.numDimensions;
         this.assignment = other.assignment;
         this.isSubset = other.isSubset;
     }
 
-    protected static void verifyDimensionsInternal(final int dimension, final int numDimensions, final boolean assignment, final boolean isSubset, SourceSection sourceSection) {
-        if (assignment) {
-            if (isSubset) {
-                if (numDimensions == 2) {
-                    throw RError.error(sourceSection, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
+    protected void verifyDimensions(RAbstractContainer container) {
+        if ((container.getDimensions() == null && (dimension != 0 || numDimensions > 1)) || (container.getDimensions() != null && dimension >= container.getDimensions().length)) {
+            errorProfile.enter();
+            if (assignment) {
+                if (isSubset) {
+                    if (numDimensions == 2) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
+                    } else {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
+                    }
                 } else {
-                    throw RError.error(sourceSection, RError.Message.INCORRECT_SUBSCRIPTS);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
                 }
             } else {
-                throw RError.error(sourceSection, RError.Message.IMPROPER_SUBSCRIPT);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
             }
-        } else {
-            throw RError.error(sourceSection, RError.Message.INCORRECT_DIMENSIONS);
         }
+    }
+}
 
+@SuppressWarnings("unused")
+@NodeChildren({@NodeChild(value = "op", type = RNode.class), @NodeChild(value = "vector", type = RNode.class),
+                @NodeChild(value = "operand", type = OperatorConverterNode.class, executeWith = {"vector", "op"})})
+public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
+
+    public abstract Object executeArg(VirtualFrame frame, Object op, Object vector, Object operand);
+
+    protected abstract RNode getVector();
+
+    protected ArrayPositionCast(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
+        super(dimension, numDimensions, assignment, isSubset);
     }
 
-    protected static void verifyDimensions(RAbstractContainer container, final ConditionProfile nullDimensionsProfile, final BranchProfile tooManyDimensions, final int dimension,
-                    final int numDimensions, final boolean assignment, final boolean isSubset, SourceSection sourceSection) {
-        boolean nullDimensions = nullDimensionsProfile.profile(container.getDimensions() == null);
-        if (nullDimensionsProfile.profile(container.getDimensions() == null)) {
-            if (dimension != 0 || numDimensions > 1) {
-                verifyDimensionsInternal(dimension, numDimensions, assignment, isSubset, sourceSection);
-            }
-        } else {
-            if (dimension >= container.getDimensions().length) {
-                tooManyDimensions.enter();
-                verifyDimensionsInternal(dimension, numDimensions, assignment, isSubset, sourceSection);
-            }
-        }
+    protected ArrayPositionCast(ArrayPositionCast other) {
+        super(other);
     }
 
     @Specialization
@@ -117,7 +110,7 @@ public abstract class ArrayPositionCast extends RNode {
 
     @Specialization
     protected RIntVector doMissingVector(Object op, RAbstractContainer container, RMissing operand) {
-        verifyDimensions(container, nullDimensionsProfile, tooManyDimensions, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
+        verifyDimensions(container);
         int[] data = new int[numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension]];
         for (int i = 0; i < data.length; i++) {
             data[i] = i + 1;
@@ -207,13 +200,9 @@ public abstract class ArrayPositionCast extends RNode {
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
-    public abstract static class OperatorConverterNode extends RNode {
-        public abstract Object executeConvert(VirtualFrame frame, Object vector, Object operand);
+    public abstract static class OperatorConverterNode extends ArrayPositionsCastBase {
 
-        private final int dimension;
-        private final int numDimensions;
-        private final boolean assignment;
-        private final boolean isSubset;
+        public abstract Object executeConvert(VirtualFrame frame, Object vector, Object operand);
 
         @Child private OperatorConverterNode operatorConvertRecursive;
         @Child private CastIntegerNode castInteger;
@@ -231,17 +220,11 @@ public abstract class ArrayPositionCast extends RNode {
         private final ConditionProfile elementsCountProfile = ConditionProfile.createBinaryProfile();
 
         protected OperatorConverterNode(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
-            this.dimension = dimension;
-            this.numDimensions = numDimensions;
-            this.assignment = assignment;
-            this.isSubset = isSubset;
+            super(dimension, numDimensions, assignment, isSubset);
         }
 
         protected OperatorConverterNode(OperatorConverterNode other) {
-            this.dimension = other.dimension;
-            this.numDimensions = other.numDimensions;
-            this.assignment = other.assignment;
-            this.isSubset = other.isSubset;
+            super(other);
         }
 
         private void initConvertCast() {
@@ -1048,7 +1031,7 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         private int getDimensionSize(RAbstractContainer container) {
-            verifyDimensions(container, nullDimensionsProfile, tooManyDimensions, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
+            verifyDimensions(container);
             return numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension];
         }
 

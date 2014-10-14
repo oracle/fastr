@@ -33,20 +33,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "is.data.frame", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO revert to R
 @SuppressWarnings("unused")
-public abstract class IsDataFrame extends RBuiltinNode {
+public abstract class IsDataFrame extends IsTypeNode {
 
+    @Override
     @Specialization
     protected byte isType(RDataFrame operand) {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization
-    protected byte isTypeFrame(RAbstractVector operand) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
-    protected byte isType(RNull operand) {
-        return RRuntime.LOGICAL_FALSE;
-    }
 }

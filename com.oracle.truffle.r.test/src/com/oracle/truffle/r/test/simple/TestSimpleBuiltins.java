@@ -1286,6 +1286,7 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testIsTRUE() {
+        assertEval("{ isTRUE(NULL) }");
         assertEval("{ isTRUE(TRUE) }");
         assertEval("{ isTRUE(FALSE) }");
         assertEval("{ isTRUE(NA) }");
@@ -2024,11 +2025,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ is.array(NULL) }");
         assertEval("{ is.array(matrix(1:6, nrow=2)) }");
         assertEval("{ is.array(1:6) }");
-    }
-
-    @Test
-    @Ignore
-    public void testTypeCheckIgnore() {
         assertEval("{ is.list(NULL) }");
     }
 

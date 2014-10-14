@@ -27,20 +27,20 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"name", "args", "env"})
 public abstract class DoCall extends RBuiltinNode {
-    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
     @Child private Get getNode;
 
     private final PromiseProfile promiseProfile = new PromiseProfile();
@@ -60,8 +60,8 @@ public abstract class DoCall extends RBuiltinNode {
         String[] argNames = n == RNull.instance ? null : ((RStringVector) n).getDataNonShared();
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseProfile);
-        Object[] callArgs = RArguments.create(func, funCall.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
-        return funCall.call(frame, func.getTarget(), callArgs);
+        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return callCache.execute(frame, func.getTarget(), callArgs);
     }
 
     public static boolean lengthOne(RAbstractStringVector vec) {

@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"})
@@ -39,8 +38,8 @@ public abstract class IsMatrix extends RBuiltinNode {
         return RRuntime.asLogical(vector.isMatrix());
     }
 
-    @Specialization
-    protected byte isType(@SuppressWarnings("unused") RNull arg) {
+    @Fallback
+    protected byte isType(@SuppressWarnings("unused") Object arg) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }

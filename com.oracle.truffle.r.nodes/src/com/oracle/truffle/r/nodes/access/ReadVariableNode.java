@@ -191,6 +191,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     @NodeField(name = "symbol", type = Symbol.class)
     public abstract static class ResolvePromiseNode extends ReadVariableNode {
 
+        private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
+
         public abstract ReadVariableNode getReadNode();
 
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
@@ -212,7 +214,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
             }
 
-            Frame promiseFrame = promise.getFrame();
+            Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
             assert promiseFrame != null;
             SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
             Object newValue;
@@ -222,7 +224,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
                 newValue = promiseClosureCache.execute(promiseFrame, promise.getClosure());
 
-                promise.setValue(newValue);
+                promise.setValue(newValue, promiseProfile);
             } finally {
                 RArguments.setCallSourceSection(promiseFrame, oldCallSource);
                 promise.setUnderEvaluation(false);
@@ -591,6 +593,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     @NodeField(name = "symbol", type = Symbol.class)
     public abstract static class ReadLocalVariableNode extends ReadVariableNode {
 
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+
         protected abstract FrameSlotNode getFrameSlotNode();
 
         @Override
@@ -599,26 +603,26 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
-            return frame.getByte(frameSlot);
+            return frameProfile.profile(frame).getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
-            return frame.getInt(frameSlot);
+            return frameProfile.profile(frame).getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
-            return frame.getDouble(frameSlot);
+            return frameProfile.profile(frame).getDouble(frameSlot);
         }
 
         @Specialization
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
             try {
-                return frame.getObject(frameSlot);
+                return frameProfile.profile(frame).getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
                 throw new IllegalStateException();
             }

@@ -29,9 +29,27 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
+/**
+ * All FastR concrete types must be given a specialization here that returns {@code FALSE}, so that
+ * specific subclasses need only override the types that should return {@code TRUE}. The
+ * {@link #isType(Object)} method that is tagged with {@link Fallback} method effectively checks for
+ * a missing specialization.
+ *
+ * N.B. Do not include the "abstract" types, e.g. {@link RAbstractVector} here.
+ *
+ * Be careful overriding this class for the case where you want to specialize an abstract type like
+ * {@link RAbstractVector}. You cannot use a simple specialization with argument, say,
+ * {@link RAbstractVector}, because the concrete type specializations here will be found first. Nor
+ * can you override the {@link Fallback} method for the same reason. You must override all the
+ * subclasses of the abstract type in the subclass. Since this is onerous, the alternative is to
+ * subclass {@link RBuiltinNode} and provide a specialization for the abstract class plus a
+ * {@link Fallback} that returns {@link RRuntime#LOGICAL_FALSE} for everything else.
+ */
 @SuppressWarnings("unused")
-public abstract class IsTypeNode extends RBuiltinNode {
+public abstract class IsTypeNode extends IsTypeNodeMissingAdapter {
     private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
     @Override
@@ -44,10 +62,9 @@ public abstract class IsTypeNode extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
-    protected byte isType(RMissing value) {
-        controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    @Fallback
+    protected byte isType(Object value) {
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Specialization
@@ -172,4 +189,20 @@ public abstract class IsTypeNode extends RBuiltinNode {
     protected byte isType(RPairList value) {
         return RRuntime.LOGICAL_FALSE;
     }
+
+    @Specialization
+    protected byte isType(RConnection value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isType(RDataFrame value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isType(REnvironment value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
 }

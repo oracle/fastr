@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * The {@code .Internal} builtin. In {@code .InternalX(func(args))} we have an AST where the
+ * The {@code .Internal} builtin. In {@code .Internal(func(args))} we have an AST where the
  * RCallNode.Uninitialized and the function child should be a {@link ReadVariableNode} node with
  * symbol {@code func}. We could just eval this, but eval has a lot of unnecessary overhead given
  * that we know that {@code func} is either a builtin or it's an error. We want to rewrite the AST
@@ -44,30 +45,36 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = {0})
 public abstract class Internal extends RBuiltinNode {
 
+    protected final BranchProfile errorProfile = new BranchProfile();
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    }
+
+    @Specialization
+    protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
+        errorProfile.enter();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    }
+
     @Specialization
     protected Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
         RNode call = (RNode) x.getRep();
-        Symbol symbol = null;
-        RootCallNode callNode = null;
-        assert call instanceof WrapArgumentNode;
         RNode operand = ((WrapArgumentNode) call).getOperand();
-        if (operand instanceof RootCallNode) {
-            callNode = (RootCallNode) operand;
-            RNode func = callNode.getFunctionNode();
-            if (func instanceof ReadVariableNode) {
-                symbol = ((ReadVariableNode) func).getSymbol();
-            } else {
-                // is anything else possible?
-            }
-        }
 
-        if (symbol == null) {
+        if (!(operand instanceof RootCallNode)) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
         }
-        // TODO remove prefix for real use
+
+        RootCallNode callNode = (RootCallNode) operand;
+        RNode func = callNode.getFunctionNode();
+        Symbol symbol = ((ReadVariableNode) func).getSymbol();
         RFunction function = RContext.getEngine().lookupBuiltin(symbol.getName());
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
         }
 
@@ -80,4 +87,5 @@ public abstract class Internal extends RBuiltinNode {
         Object result = internalCallNode.execute(frame);
         return result;
     }
+
 }

@@ -1714,11 +1714,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testTypeCheckIgnore_7f8323b03018432a0d32c10f362ec5d7() {
-        assertEval("{ is.list(NULL) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testTypeOfIgnore_847d333bfb40729281acd0b949d4c097() {
         assertEval("{ f <- function(...) typeof(...); f()}");
     }
@@ -1951,6 +1946,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testErrors_bf29c1dae99e04f8cd11a340f54e1287() {
         assertEvalError("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testFunctionPrintingIgnore_ce0b9f76f47f6752297f2228240d69f9() {
+        assertEval("{ exists }");
     }
 
     @Ignore

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,40 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "logical", kind = SUBSTITUTE, parameterNames = {"length"})
-// TODO Implement in R
-public abstract class LogicalBuiltin extends RBuiltinNode {
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(0)};
-    }
-
+/**
+ * A convenience class for {@code IsXXX} variants that cannot subclass {@link IsTypeNode} but need
+ * the support for {@link RMissing}.
+ */
+public abstract class IsTypeNodeMissingAdapter extends RBuiltinNode {
     @Specialization
-    protected Object createLogicalVector(int length) {
+    protected byte isType(@SuppressWarnings("unused") RMissing value) {
         controlVisibility();
-        return RDataFactory.createLogicalVector(length);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
-    @Specialization
-    protected Object createLogicalVector(double length) {
-        controlVisibility();
-        return RDataFactory.createLogicalVector((int) length);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object createLogicalVector(RMissing length) {
-        controlVisibility();
-        return RDataFactory.createLogicalVector(0);
-    }
 }

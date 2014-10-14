@@ -19,11 +19,10 @@
 # Commented out functions currently implemented directly.
 
 vector <- function(mode = "logical", length = 0L) .Internal(vector(mode, length))
-# logical <- function(length = 0L) .Internal(vector("logical", length))
-# character <- function(length = 0L) .Internal(vector("character", length))
-# integer <- function(length = 0L) .Internal(vector("integer", length))
-# numeric <- double <-
-numeric <-
+logical <- function(length = 0L) .Internal(vector("logical", length))
+character <- function(length = 0L) .Internal(vector("character", length))
+integer <- function(length = 0L) .Internal(vector("integer", length))
+numeric <- double <-
     function(length = 0L) .Internal(vector("double", length))
 
 #complex <- function(length.out = 0L,

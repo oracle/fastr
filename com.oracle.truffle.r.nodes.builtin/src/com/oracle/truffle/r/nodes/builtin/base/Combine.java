@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -58,6 +59,8 @@ public abstract class Combine extends RBuiltinNode {
     @Child private Combine combineRecursive;
 
     @Child private UnwrapExpression unwrapExpression;
+
+    private final ConditionProfile noAttributesAndNamesProfile = ConditionProfile.createBinaryProfile();
 
     public abstract Object executeCombine(VirtualFrame frame, Object value);
 
@@ -105,76 +108,64 @@ public abstract class Combine extends RBuiltinNode {
         return RNull.instance;
     }
 
+    private RVector passVector(RVector vector) {
+        controlVisibility();
+        if (noAttributesAndNamesProfile.profile(vector.getAttributes() == null && vector.getNames() == RNull.instance && vector.getDimNames() == null)) {
+            return vector;
+        } else {
+            RVector result = vector.copyDropAttributes();
+            result.copyNamesFrom(vector);
+            return result;
+        }
+    }
+
     @Specialization
     protected RIntVector pass(RIntVector vector) {
-        controlVisibility();
-        RIntVector result = (RIntVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
+        return (RIntVector) passVector(vector);
     }
 
     @Specialization
     protected RDoubleVector pass(RDoubleVector vector) {
-        controlVisibility();
-        RDoubleVector result = (RDoubleVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
+        return (RDoubleVector) passVector(vector);
     }
 
     @Specialization
     protected RComplexVector pass(RComplexVector vector) {
-        controlVisibility();
-        RComplexVector result = (RComplexVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
+        return (RComplexVector) passVector(vector);
     }
 
     @Specialization
     protected RStringVector pass(RStringVector vector) {
-        controlVisibility();
-        RStringVector result = (RStringVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
+        return (RStringVector) passVector(vector);
     }
 
     @Specialization
     protected RRawVector pass(RRawVector vector) {
-        controlVisibility();
-        RRawVector result = (RRawVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
+        return (RRawVector) passVector(vector);
     }
 
     @Specialization
     protected RLogicalVector pass(RLogicalVector vector) {
-        controlVisibility();
-        RLogicalVector result = (RLogicalVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
-    }
-
-    @Specialization
-    protected RIntVector pass(RIntSequence vector) {
-        controlVisibility();
-        RIntVector result = (RIntVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
-    }
-
-    @Specialization
-    protected RDoubleVector pass(RDoubleSequence vector) {
-        controlVisibility();
-        RDoubleVector result = (RDoubleVector) vector.copyDropAttributes();
-        result.copyNamesFrom(vector);
-        return result;
+        return (RLogicalVector) passVector(vector);
     }
 
     @Specialization
     protected RList pass(RList list) {
+        return (RList) passVector(list);
+    }
+
+    @Specialization
+    protected RIntSequence pass(RIntSequence sequence) {
         controlVisibility();
-        RList result = (RList) list.copyDropAttributes();
-        result.copyNamesFrom(list);
-        return result;
+        // sequences are immutable anyway
+        return sequence;
+    }
+
+    @Specialization
+    protected RDoubleSequence pass(RDoubleSequence sequence) {
+        controlVisibility();
+        // sequences are immutable anyway
+        return sequence;
     }
 
     @Specialization

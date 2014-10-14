@@ -7716,6 +7716,10 @@ Error: object 'f' not found
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
 #{ isTRUE(TRUE) }
 [1] TRUE
 
@@ -12893,6 +12897,10 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.list(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
 #{ is.logical(1L) }
 [1] FALSE
 
@@ -15538,6 +15546,14 @@ y
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }
 [1] "language"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testFunctionPrinting
+#{ foo <- function(x) x; foo }
+function(x) x
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testFunctionPrinting
+#{ sum }
+function (..., na.rm = FALSE)  .Primitive("sum")
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testInvokeIndirectly
 #{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[1]](1) }

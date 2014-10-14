@@ -13,10 +13,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -27,7 +25,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN", "..."})
 public abstract class Lapply extends RBuiltinNode {
 
-    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
     @Override
     public RNode[] getParameterValues() {
@@ -57,19 +55,19 @@ public abstract class Lapply extends RBuiltinNode {
     private Object lapplyHelper(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] combinedArgs) {
         controlVisibility();
         RVector xMat = x.materialize();
-        Object[] callResult = applyHelper(frame, funCall, xMat, fun, combinedArgs);
+        Object[] callResult = applyHelper(frame, callCache, xMat, fun, combinedArgs);
         return RDataFactory.createList(callResult, xMat.getNames());
     }
 
-    static Object[] applyHelper(VirtualFrame frame, IndirectCallNode funCall, RVector xMat, RFunction fun, Object[] combinedArgs) {
+    static Object[] applyHelper(VirtualFrame frame, CallInlineCacheNode callCache, RVector xMat, RFunction fun, Object[] combinedArgs) {
         /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
         Object[] result = new Object[xMat.getLength()];
-        Object[] arguments = RArguments.create(fun, funCall.getSourceSection(), RArguments.getDepth(frame) + 1, combinedArgs);
+        Object[] arguments = RArguments.create(fun, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, combinedArgs);
         int firstArgOffset = arguments.length - combinedArgs.length;
         for (int i = 0; i < result.length; ++i) {
             // FIXME breaks encapsulation.
             arguments[firstArgOffset] = xMat.getDataAtAsObject(i);
-            result[i] = funCall.call(frame, fun.getTarget(), arguments);
+            result[i] = callCache.execute(frame, fun.getTarget(), arguments);
         }
         return result;
     }
