@@ -318,6 +318,18 @@ public final class RArguments {
         return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
     }
 
+    /**
+     * <b>Only to be called from AccessArgumentNode!</b>
+     *
+     * @param frame
+     * @param argIndex
+     * @param newValue
+     */
+    public static void setArgument(Frame frame, int argIndex, Object newValue) {
+        assert (argIndex >= 0 && argIndex < getNArgs(frame));
+        getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex] = newValue;
+    }
+
     public static int getArgumentsLength(Frame frame) {
         return getNArgs(frame);
     }

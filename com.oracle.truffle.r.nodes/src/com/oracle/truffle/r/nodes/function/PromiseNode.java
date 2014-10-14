@@ -97,7 +97,7 @@ public abstract class PromiseNode extends RNode {
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
                     if (FastROptions.EagerEvalVariables.getValue() && isVariableArgument(expr)) {
-                        pn = new OptVariablePromiseNode(factory, ((ReadVariableNode) expr).getSymbol());
+                        pn = new OptVariablePromiseNode(factory, (ReadVariableNode) expr);
                         break;
                     }
 
@@ -221,16 +221,21 @@ public abstract class PromiseNode extends RNode {
      * TODO Expand!
      */
     private static final class OptVariablePromiseNode extends PromiseNode implements EagerFeedback {
-        @SuppressWarnings("unused") private final Symbol symbol;
+        @SuppressWarnings("unused") private final ReadVariableNode originalRvn;
         @Child private FrameSlotNode frameSlotNode;
         @Child private PromisedNode fallback = null;
-        @Child private InlineCacheNode<VirtualFrame, RNode> inlineCache;
+        @Child private ReadVariableNode readNode;
 
-        public OptVariablePromiseNode(RPromiseFactory factory, Symbol symbol) {
+// @Child private InlineCacheNode<VirtualFrame, RNode> inlineCache;
+
+        public OptVariablePromiseNode(RPromiseFactory factory, ReadVariableNode originalRvn) {
             super(factory);
-            this.symbol = symbol;
+            this.originalRvn = originalRvn;
+            Symbol symbol = originalRvn.getSymbol();
             this.frameSlotNode = FrameSlotNode.create(symbol.getName(), false);
-            this.inlineCache = InlineCacheNode.createExpression(1); // As all PromiseNodes get
+ this.readNode = ReadVariableNode.create(symbol.getName(), originalRvn.get, shouldCopyValue,
+ isSuper, readMissing, forcePromise)
+// this.inlineCache = InlineCacheNode.createExpression(1); // As all PromiseNodes get
             // created for exactly one expr, 1 is sufficient
         }
 
@@ -247,7 +252,7 @@ public abstract class PromiseNode extends RNode {
             Assumption notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
             if (!notChangedNonLocally.isValid()) {
                 // Cannot apply optimizations, as the value to it got invalidated
-                return rewriteToPromiseNode().execute(frame);
+                return rewriteToPromisedNode().execute(frame);
             }
 
             // Execute eagerly
@@ -263,7 +268,7 @@ public abstract class PromiseNode extends RNode {
             } catch (Throwable t) {
                 // Errors are also side effects!
                 // TODO Create EagerErrorPromise
-                throw RInternalError.unimplemented();
+                return rewriteToPromisedNode().execute(frame);
             }
 
             // Create EagerPromise with the eagerly evaluated value under the assumption that the
@@ -279,7 +284,7 @@ public abstract class PromiseNode extends RNode {
             return fallback;
         }
 
-        private PromiseNode rewriteToPromiseNode() {
+        private PromiseNode rewriteToPromisedNode() {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             checkFallback();
             return replace(fallback);

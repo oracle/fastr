@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -30,7 +31,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index (
@@ -38,37 +42,37 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
  * function call and before the function's actual body is executed.
  */
 // Fully qualified type name to circumvent compiler bug..
-@NodeChild(value = "readArgNode", type = com.oracle.truffle.r.nodes.access.AccessArgumentNode.ReadArgumentNode.class)
+@NodeChild(value = "readArgNode", type = ReadArgumentNode.class)
 public abstract class AccessArgumentNode extends RNode {
 
     /**
-     * @return The {@link ReadArgumentNode} that does the actual extraction from
-     *         {@link RArguments#getArgument(Frame, int)}
+     * The formal index of this argument
      */
-    public abstract ReadArgumentNode getReadArgNode();
-
-    /**
-     * @return Formal, 0-based index of the argument to read
-     */
-    public Integer getIndex() {
-        return getReadArgNode().getIndex();
-    }
+    private final int index;
 
     /**
      * Used to cache {@link RPromise} evaluations.
      */
     @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+    @CompilationFinal private FormalArguments formals = null;
 
-    private final BranchProfile needsCalleeFrame = new BranchProfile();
     private final BranchProfile strictEvaluation = new BranchProfile();
     private final PromiseProfile promiseProfile = new PromiseProfile();
+
+    public AccessArgumentNode(int index) {
+        this.index = index;
+    }
+
+    public AccessArgumentNode(AccessArgumentNode prev) {
+        this.index = prev.index;
+    }
 
     /**
      * @param index {@link #getIndex()}
      * @return A fresh {@link AccessArgumentNode} for the given index
      */
     public static AccessArgumentNode create(Integer index) {
-        return AccessArgumentNodeFactory.create(new ReadArgumentNode(index));
+        return AccessArgumentNodeFactory.create(index, new ReadArgumentNode(index));
     }
 
     @Specialization
@@ -87,30 +91,9 @@ public abstract class AccessArgumentNode extends RNode {
         return varArgsContainer;
     }
 
-    @Specialization(guards = {"!isPromise", "!isRArgsValuesAndNames"})
-    public Object doArgument(Object obj) {
-        return obj;
-    }
-
-    public static boolean isPromise(Object obj) {
-        return obj instanceof RPromise;
-    }
-
-    public static boolean isRArgsValuesAndNames(Object obj) {
-        return obj instanceof RArgsValuesAndNames;
-    }
-
     private Object handlePromise(VirtualFrame frame, RPromise promise, boolean useExprExecNode) {
         assert !promise.isNonArgument();
         CompilerAsserts.compilationConstant(useExprExecNode);
-
-        // Check whether it is necessary to stuff the Promise with the current frame
-        if (promise.needsCalleeFrame(promiseProfile)) {
-            needsCalleeFrame.enter();
-            // In this case the Promise lacks a frame, because it is a ARG_DEFAULT and was created
-            // on call site
-            promise.updateFrame(frame.materialize(), promiseProfile);
-        }
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promise.isInlined(promiseProfile)) {
@@ -124,20 +107,67 @@ public abstract class AccessArgumentNode extends RNode {
         return promise;
     }
 
-    public static final class ReadArgumentNode extends RNode {
-        private final int index;
+    @Specialization(guards = {"!hasDefaultArg", "!isVarArgIndex"})
+    public Object doArgumentNoDefaultArg(RMissing argMissing) {
+        // Simply return missing if there's no default arg OR it represents an empty "..."
+        // (Empty "..." defaults to missing anyway, this way we don't have to rely on )
+        return argMissing;
+    }
 
-        private ReadArgumentNode(int index) {
-            this.index = index;
-        }
+    @Specialization(guards = "hasDefaultArg")
+    public Object doArgumentHasDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
+        // Insert default value
+        checkFormals();
+        RNode defaultArg = formals.getDefaultArg(getIndex());
+        assert defaultArg != null;  // Assured by guard
+        Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
+        RPromise result = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_DEFAULT, frame.materialize(), defaultClosure);
+        RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
+        return result;
+    }
 
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return RArguments.getArgument(frame, index);
-        }
+    @SuppressWarnings("unused")
+    protected boolean hasDefaultArg(RMissing argMissing) {
+        checkFormals();
+        return formals.getDefaultArg(getIndex()) != null;
+    }
 
-        public int getIndex() {
-            return index;
+    @SuppressWarnings("unused")
+    protected boolean isVarArgIndex(RMissing argMissing) {
+        checkFormals();
+        return formals.getVarArgIndex() == getIndex();
+    }
+
+    private void checkFormals() {
+        if (formals == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            formals = ((RRootNode) getRootNode()).getFormalArguments();
         }
     }
+
+    @Fallback
+    public Object doArgument(Object obj) {
+        return obj;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+// public static final class ReadArgumentNode extends RNode {
+// private final int index;
+//
+// private ReadArgumentNode(int index) {
+// this.index = index;
+// }
+//
+// @Override
+// public Object execute(VirtualFrame frame) {
+// return RArguments.getArgument(frame, index);
+// }
+//
+// public int getIndex() {
+// return index;
+// }
+// }
 }

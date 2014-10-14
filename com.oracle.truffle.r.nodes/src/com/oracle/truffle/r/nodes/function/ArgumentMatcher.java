@@ -586,7 +586,7 @@ public class ArgumentMatcher {
                 if (newLength == 0) {
                     // Corner case: "f <- function(...) g(...); g <- function(...)"
                     // Insert correct "missing"!
-                    resArgs[fi] = wrap(promiseWrapper, function, formals, builtinRootNode, closureCache, null, null, fi);
+                    resArgs[fi] = promiseWrapper.wrap(function, formals, builtinRootNode, closureCache, null, null, fi);
                     continue;
                 }
                 if (newNames.length > newLength) {
@@ -599,59 +599,10 @@ public class ArgumentMatcher {
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-                resArgs[fi] = wrap(promiseWrapper, function, formals, builtinRootNode, closureCache, arg, defaultArg, fi);
+                resArgs[fi] = promiseWrapper.wrap(function, formals, builtinRootNode, closureCache, arg, defaultArg, fi);
             }
         }
         return resArgs;
-    }
-
-    /**
-     * @param promiseWrapper {@link PromiseWrapper}
-     * @param function The function this argument is wrapped for
-     * @param formals {@link FormalArguments} as {@link ClosureCache}
-     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-     * @param closureCache {@link ClosureCache}
-     * @param suppliedArg The argument supplied for this parameter
-     * @param defaultValue The default value for this argument
-     * @param logicalIndex The logicalIndex of this argument, also counting individual arguments in
-     *            varargs
-     * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
-     *         {@link RMissing} in case neither is present!
-     */
-    @SlowPath
-    private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg,
-                    RNode defaultValue, int logicalIndex) {
-        // Determine whether to choose supplied argument or default value
-        RNode expr = null;
-        PromiseType promiseType = null;
-        if (suppliedArg != null) {
-            // Supplied arg
-            expr = suppliedArg;
-            promiseType = PromiseType.ARG_SUPPLIED;
-        } else {
-            // Default value
-            if (defaultValue != null) {
-                expr = null;
-                promiseType = PromiseType.ARG_DEFAULT;
-            } else {
-                // In this case, we simply return RMissing (like R)
-                return ConstantNode.create(RMissing.instance);
-            }
-        }
-
-        // Create promise
-        EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, logicalIndex);
-        Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-        Closure closure;
-        SourceSection exprSrc;
-        if (expr == null) {
-            closure = defaultClosure;
-            exprSrc = defaultValue.getSourceSection();
-        } else {
-            closure = closureCache.getOrCreateClosure(expr);
-            exprSrc = expr.getSourceSection();
-        }
-        return PromiseNode.create(exprSrc, RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
     }
 
     /**
@@ -755,6 +706,20 @@ public class ArgumentMatcher {
          *         {@link PromiseNode}
          */
         EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex);
+
+        /**
+         * @param function The function this argument is wrapped for
+         * @param formals {@link FormalArguments} as {@link ClosureCache}
+         * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+         * @param closureCache {@link ClosureCache}
+         * @param suppliedArg The argument supplied for this parameter
+         * @param defaultValue The default value for this argument
+         * @param logicalIndex The logicalIndex of this argument, also counting individual arguments
+         *            in varargs
+         * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
+         *         {@link RMissing} in case neither is present!
+         */
+        RNode wrap(RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int logicalIndex);
     }
 
     /**
@@ -765,6 +730,27 @@ public class ArgumentMatcher {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
             return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
+        }
+
+        @SlowPath
+        public RNode wrap(RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+            // Determine whether to choose supplied argument or default value
+            RNode expr = null;
+            PromiseType promiseType = null;
+            if (suppliedArg != null) {
+                // Supplied arg
+                expr = suppliedArg;
+                promiseType = PromiseType.ARG_SUPPLIED;
+            } else {
+                // No default? Okay, let AccessArgumentNode handle the rest if it wants!
+                return ConstantNode.create(RMissing.instance);
+            }
+
+            // Create promise
+            EvalPolicy evalPolicy = getEvalPolicy(function, builtinRootNode, logicalIndex);
+            Closure closure = closureCache.getOrCreateClosure(expr);
+            Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
+            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
         }
     }
 
@@ -778,6 +764,45 @@ public class ArgumentMatcher {
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
             return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.INLINED;
+        }
+
+        /**
+         * @param function The function this argument is wrapped for
+         * @param formals {@link FormalArguments} as {@link ClosureCache}
+         * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+         * @param closureCache {@link ClosureCache}
+         * @param suppliedArg The argument supplied for this parameter
+         * @param defaultValue The default value for this argument
+         * @param logicalIndex The logicalIndex of this argument, also counting individual arguments
+         *            in varargs
+         * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
+         *         {@link RMissing} in case neither is present!
+         */
+        @SlowPath
+        public RNode wrap(RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+            // Determine whether to choose supplied argument or default value
+            RNode expr = null;
+            PromiseType promiseType = null;
+            if (suppliedArg != null) {
+                // Supplied arg
+                expr = suppliedArg;
+                promiseType = PromiseType.ARG_SUPPLIED;
+            } else {
+                // Default value
+                if (defaultValue != null) {
+                    expr = defaultValue;
+                    promiseType = PromiseType.ARG_DEFAULT;
+                } else {
+                    // In this case, we simply return RMissing (like R)
+                    return ConstantNode.create(RMissing.instance);
+                }
+            }
+
+            // Create promise
+            EvalPolicy evalPolicy = getEvalPolicy(function, builtinRootNode, logicalIndex);
+            Closure closure = closureCache.getOrCreateClosure(expr);
+            Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
+            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
         }
     }
 

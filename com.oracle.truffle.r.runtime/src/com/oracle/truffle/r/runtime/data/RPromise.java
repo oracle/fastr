@@ -272,7 +272,6 @@ public class RPromise extends RLanguageRep {
         Object profiledValue = profile.valueProfile.profile(newValue);
         this.value = profiledValue;
         this.isEvaluated = true;
-        this.execFrame = null; // the frame is no longer needed after execution
 
         // TODO Does this apply to other values, too?
         if (profiledValue instanceof RShareable) {
@@ -321,33 +320,6 @@ public class RPromise extends RLanguageRep {
             return ((RPromise) obj).evaluate(frame, profile);
         }
         return obj;
-    }
-
-    /**
-     * This method is necessary, as we have to create {@link RPromise}s before the actual function
-     * call, but the callee frame and environment get created _after_ the call happened. This update
-     * has to take place in AccessArgumentNode, just before arguments get stuffed into the fresh
-     * environment for the function. Whether a {@link RPromise} needs one is determined by
-     * {@link #needsCalleeFrame(PromiseProfile)}!
-     *
-     * @param newFrame The REnvironment this promise is to be evaluated in
-     */
-    public void updateFrame(MaterializedFrame newFrame, PromiseProfile profile) {
-        assert type == PromiseType.ARG_DEFAULT;
-        if (isNullFrame(profile) && !isEvaluated(profile)) {
-            execFrame = newFrame;
-        }
-    }
-
-    /**
-     * Only to be called from AccessArgumentNode, and in combination with
-     * {@link #updateFrame(MaterializedFrame,PromiseProfile)}!
-     *
-     * @return Whether this promise needs a callee environment set (see
-     *         {@link #updateFrame(MaterializedFrame,PromiseProfile)})
-     */
-    public boolean needsCalleeFrame(PromiseProfile profile) {
-        return !isInlined(profile) && isDefault(profile) && isNullFrame(profile) && !isEvaluated(profile);
     }
 
     /**
@@ -488,12 +460,6 @@ public class RPromise extends RLanguageRep {
 // }
 
         @Override
-        public boolean needsCalleeFrame(PromiseProfile profile) {
-            // In case it is default: We certainly do not need the frame
-            return false;
-        }
-
-        @Override
         public boolean isEagerPromise(PromiseProfile profile) {
             return profile.isEagerPromise.profile(true);
         }
@@ -510,12 +476,6 @@ public class RPromise extends RLanguageRep {
         @Override
         protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
             return vararg.evaluate(frame, profile);
-        }
-
-        @Override
-        public boolean needsCalleeFrame(PromiseProfile profile) {
-            // In case it is default: We certainly do not need the frame
-            return false;
         }
 
         @Override
