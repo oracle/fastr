@@ -64,7 +64,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     /**
      * Profiling for catching {@link ReturnException}s.
      */
-    private final BranchProfile returnProfile = new BranchProfile();
+    private final BranchProfile returnProfile = BranchProfile.create();
 
     public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
         this(src, funcEnv, body, formals, description, substituteFrame, false);

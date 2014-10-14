@@ -121,9 +121,9 @@ public class PromiseNode extends RNode {
         @Child private RNode expr;
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
 
-        private final BranchProfile isMissingProfile = new BranchProfile();
-        private final BranchProfile isVarArgProfile = new BranchProfile();
-        private final BranchProfile checkPromiseProfile = new BranchProfile();
+        private final BranchProfile isMissingProfile = BranchProfile.create();
+        private final BranchProfile isVarArgProfile = BranchProfile.create();
+        private final BranchProfile checkPromiseProfile = BranchProfile.create();
 
         public InlinedSuppliedPromiseNode(RPromiseFactory factory) {
             super(factory);

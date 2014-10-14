@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class EnvFunctions {
 
     protected abstract static class Adapter extends RBuiltinNode {
-        protected final BranchProfile errorProfile = new BranchProfile();
+        protected final BranchProfile errorProfile = BranchProfile.create();
     }
 
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"})

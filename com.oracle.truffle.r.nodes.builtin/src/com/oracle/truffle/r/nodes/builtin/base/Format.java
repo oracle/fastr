@@ -30,7 +30,7 @@ public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
 
-    protected final BranchProfile errorProfile = new BranchProfile();
+    protected final BranchProfile errorProfile = BranchProfile.create();
 
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;

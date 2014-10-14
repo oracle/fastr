@@ -544,9 +544,9 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static class Pow extends BinaryArithmetic {
 
-        BranchProfile everSeenExponentOtherThanTwo = new BranchProfile();
-        BranchProfile everSeenNonIntegralExponent = new BranchProfile();
-        BranchProfile everSeenNegativeExponent = new BranchProfile();
+        BranchProfile everSeenExponentOtherThanTwo = BranchProfile.create();
+        BranchProfile everSeenNonIntegralExponent = BranchProfile.create();
+        BranchProfile everSeenNegativeExponent = BranchProfile.create();
 
         public Pow() {
             super(false, false, false);

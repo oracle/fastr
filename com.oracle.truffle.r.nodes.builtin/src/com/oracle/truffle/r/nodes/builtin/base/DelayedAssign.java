@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 // TODO kind==INTERNAL when promises generally available
 public abstract class DelayedAssign extends RInvisibleBuiltinNode {
 
-    protected final BranchProfile errorProfile = new BranchProfile();
+    protected final BranchProfile errorProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {

@@ -48,7 +48,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     private final NACheck resultNACheck;
 
     private final ConditionProfile emptyVector = ConditionProfile.createBinaryProfile();
-    private final BranchProfile hasAttributesProfile = new BranchProfile();
+    private final BranchProfile hasAttributesProfile = BranchProfile.create();
 
     public BinaryArithmeticNode(BinaryArithmeticFactory factory, UnaryArithmeticFactory unaryFactory) {
         this.arithmetic = factory.create();

@@ -51,13 +51,13 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public abstract RNode getRhs();
 
-    private final BranchProfile everSeenNonEqual = new BranchProfile();
-    private final BranchProfile everSeenVector = new BranchProfile();
-    private final BranchProfile everSeenNonShared = new BranchProfile();
-    private final BranchProfile everSeenShared = new BranchProfile();
-    private final BranchProfile everSeenTemporary = new BranchProfile();
+    private final BranchProfile everSeenNonEqual = BranchProfile.create();
+    private final BranchProfile everSeenVector = BranchProfile.create();
+    private final BranchProfile everSeenNonShared = BranchProfile.create();
+    private final BranchProfile everSeenShared = BranchProfile.create();
+    private final BranchProfile everSeenTemporary = BranchProfile.create();
 
-    private final BranchProfile initialSetKindProfile = new BranchProfile();
+    private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
     @Override
     public final boolean getVisibility() {

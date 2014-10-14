@@ -39,7 +39,7 @@ public abstract class AccessFieldNode extends RNode {
 
     public abstract String getField();
 
-    private final BranchProfile inexactMatch = new BranchProfile();
+    private final BranchProfile inexactMatch = BranchProfile.create();
 
     @Specialization(guards = "hasNames")
     protected Object accessField(RList object) {

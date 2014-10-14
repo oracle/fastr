@@ -627,7 +627,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
         public abstract RNode getOperand();
 
-        private final BranchProfile seenShared = new BranchProfile();
+        private final BranchProfile seenShared = BranchProfile.create();
 
         @Specialization
         protected RNull doNull(RNull operand) {
