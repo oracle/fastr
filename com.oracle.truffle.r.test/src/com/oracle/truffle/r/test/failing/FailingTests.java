@@ -909,6 +909,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testLookupIgnore_48d8f6c2d2586ee471cfa0421ea5b4ae() {
+        assertEval("{ exists(\"sum\") }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testLowerTriangular_d0f253a7c6e1e06bb5cf39dbff9f01da() {
         assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=TRUE) }");
     }

@@ -9524,11 +9524,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testLookup_48d8f6c2d2586ee471cfa0421ea5b4ae() {
-        assertEval("{ exists(\"sum\") }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testLookup_2b36458da0b28ae1a46b3e3404e77bb2() {
         assertEval("{ exists(\"sum\", inherits = FALSE) }");
     }
@@ -9591,6 +9586,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLookupIgnore_2deae78feff592acd7d61159c8e39ea7() {
         assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_48d8f6c2d2586ee471cfa0421ea5b4ae() {
+        assertEval("{ exists(\"sum\") }");
     }
 
     @Test

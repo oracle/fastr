@@ -8127,10 +8127,6 @@ $z
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
-#{ exists("sum") }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
 #{ exists("sum", inherits = FALSE) }
 [1] FALSE
 
