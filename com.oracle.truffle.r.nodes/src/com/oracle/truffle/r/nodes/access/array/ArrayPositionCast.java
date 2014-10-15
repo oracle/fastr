@@ -207,6 +207,8 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private final BranchProfile opLengthOne = BranchProfile.create();
         private final BranchProfile opLong = BranchProfile.create();
 
+        private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
+
         protected OperatorConverterNode(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
             super(dimension, numDimensions, assignment, isSubset);
         }
@@ -316,7 +318,6 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @SlowPath
-        // retrieving vector components by name is likely OK on the slow path
         @Specialization
         protected Object doStringVectorOneDimAssignment(VirtualFrame frame, RNull vector, RAbstractStringVector operand) {
             if (assignment && numDimensions == 1 && isSubset && operand.getLength() > 1) {
@@ -790,8 +791,6 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, resNames);
         }
 
-        @SlowPath
-        // retrieving vector components by name is likely OK on the slow path
         @Specialization
         protected Object doString(VirtualFrame frame, RAbstractContainer container, RAbstractStringVector operand) {
             if (emptyOperandProfile.profile(operand.getLength() == 0)) {
@@ -805,7 +804,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (numDimensions == 1) {
                         if (assignment) {
                             return findPositionsWithNames(container, container.getNames(), operand, assignment);
-                        } else if (container.getNames() != RNull.instance) {
+                        } else if (namesProfile.profile(container.getNames() != RNull.instance)) {
                             return findPositions(container, container.getNames(), operand, assignment);
                         } else {
                             int[] data = new int[operand.getLength()];
@@ -813,7 +812,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                             return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
                         }
                     } else {
-                        if (container.getDimNames() != null) {
+                        if (namesProfile.profile(container.getDimNames() != null)) {
                             if (assignment) {
                                 return findPositionsWithNames(container, container.getDimNames().getDataAt(dimension), operand, assignment);
                             } else {
@@ -824,12 +823,13 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                         }
                     }
                 } else {
-                    if (numDimensions == 1 && container.getElementClass() == Object.class) {
-                        // for recursive access
-                        return operand;
+                    if (numDimensions != 1 || container.getElementClass() != Object.class) {
+                        error.enter();
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
                     }
 
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                    // for recursive access
+                    return operand;
                 }
             }
         }
