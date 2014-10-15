@@ -18879,8 +18879,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleValues_testFunctionLookupFailure_e8b4104d29ef2cf2fa36109e2b8627fc() {
+    public void TestSimpleValues_testFunctionLookup_e8b4104d29ef2cf2fa36109e2b8627fc() {
         assertEval("{ f<-1; f() }");
+    }
+
+    @Test
+    public void TestSimpleValues_testFunctionLookup_0d1be9fb2e00cf791b7253965e44463c() {
+        assertEval("{ abs }");
     }
 
     @Test

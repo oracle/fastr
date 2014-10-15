@@ -36378,7 +36378,11 @@ Error in c(as.raw(10), as.raw(10), as.raw(10))^c(as.raw(10), as.raw(10),  :
 #f <- function(x) { x[1] = 2; }; x <- c(1L, 2L, 3L); f(x); x[1]
 [1] 1
 
-##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookupFailure
+##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookup
+#{ abs }
+function (x)  .Primitive("abs")
+
+##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookup
 #{ f<-1; f() }
 Error: could not find function "f"
 
