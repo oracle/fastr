@@ -193,7 +193,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile tooManyDimensions = BranchProfile.create();
         private final ConditionProfile indNAProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile dimSizeProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile dimSizeOneProfile = ConditionProfile.createBinaryProfile();
 
         private final BranchProfile error = BranchProfile.create();
         private final BranchProfile outOfBoundsPositive = BranchProfile.create();
@@ -285,7 +285,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
                 }
             }
-            if (dimSizeProfile.profile(getDimensionSize(container) == 1)) {
+            if (dimSizeOneProfile.profile(getDimensionSize(container) == 1)) {
                 return 1;
             } else {
                 return operand;
@@ -369,7 +369,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 }
             } else if (operand < 0 && -operand > dimSize) {
                 outOfBoundsNegative.enter();
-                if (dimSizeProfile.profile(dimSize == 1)) {
+                if (dimSizeOneProfile.profile(dimSize == 1)) {
                     // e.g. c(7)[-2] vs c(7)[[-2]]
                     return isSubset ? /* only one element to be picked */1 : /* ultimately an error */operand;
                 } else {
@@ -378,7 +378,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 }
             } else if (operand < 0) {
                 negative.enter();
-                if (dimSizeProfile.profile(dimSize == 1)) {
+                if (dimSizeOneProfile.profile(dimSize == 1)) {
                     // it's negative, but not out of bounds and dimension has length one - result is
                     // no dimensions left
                     return 0;
