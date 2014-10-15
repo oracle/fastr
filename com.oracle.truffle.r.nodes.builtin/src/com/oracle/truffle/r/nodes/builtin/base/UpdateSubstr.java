@@ -39,7 +39,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
 
-    private final BranchProfile everSeenIllegalRange = new BranchProfile();
+    private final BranchProfile everSeenIllegalRange = BranchProfile.create();
 
     protected static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();

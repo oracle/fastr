@@ -45,7 +45,7 @@ abstract class ArrayPositionsCastBase extends RNode {
     protected final boolean assignment;
     protected final boolean isSubset;
 
-    private final BranchProfile errorProfile = new BranchProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     protected ArrayPositionsCastBase(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
         this.dimension = dimension;
@@ -191,21 +191,21 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private final NACheck naCheck = NACheck.create();
 
         private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
-        private final BranchProfile tooManyDimensions = new BranchProfile();
+        private final BranchProfile tooManyDimensions = BranchProfile.create();
         private final ConditionProfile indNAProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile dimSizeProfile = ConditionProfile.createBinaryProfile();
 
-        private final BranchProfile error = new BranchProfile();
-        private final BranchProfile outOfBoundsPositive = new BranchProfile();
-        private final BranchProfile outOfBoundsNegative = new BranchProfile();
-        private final BranchProfile nonNegative = new BranchProfile();
-        private final BranchProfile negative = new BranchProfile();
+        private final BranchProfile error = BranchProfile.create();
+        private final BranchProfile outOfBoundsPositive = BranchProfile.create();
+        private final BranchProfile outOfBoundsNegative = BranchProfile.create();
+        private final BranchProfile nonNegative = BranchProfile.create();
+        private final BranchProfile negative = BranchProfile.create();
         private final ConditionProfile elementsCountProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile listProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile emptyOperandProfile = ConditionProfile.createBinaryProfile();
 
-        private final BranchProfile opLengthOne = new BranchProfile();
-        private final BranchProfile opLong = new BranchProfile();
+        private final BranchProfile opLengthOne = BranchProfile.create();
+        private final BranchProfile opLong = BranchProfile.create();
 
         protected OperatorConverterNode(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
             super(dimension, numDimensions, assignment, isSubset);
@@ -857,10 +857,10 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return data;
         }
 
-        private final BranchProfile seenPositive = new BranchProfile();
-        private final BranchProfile seenZero = new BranchProfile();
-        private final BranchProfile seenNegative = new BranchProfile();
-        private final BranchProfile seenNA = new BranchProfile();
+        private final BranchProfile seenPositive = BranchProfile.create();
+        private final BranchProfile seenZero = BranchProfile.create();
+        private final BranchProfile seenNegative = BranchProfile.create();
+        private final BranchProfile seenNA = BranchProfile.create();
 
         private RAbstractIntVector transformIntoPositive(RAbstractContainer container, RAbstractIntVector positions) {
             boolean hasSeenPositive = false;

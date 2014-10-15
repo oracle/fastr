@@ -41,7 +41,7 @@ public class ReadVariadicComponentNode extends RNode {
     private final int index;
 
     private final PromiseProfile promiseProfile = new PromiseProfile();
-    private final BranchProfile errorProfile = new BranchProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     public ReadVariadicComponentNode(int index) {
         this.index = index;

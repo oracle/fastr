@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
 public abstract class ColonNode extends RNode implements VisibilityController {
 
-    private final BranchProfile naCheckErrorProfile = new BranchProfile();
+    private final BranchProfile naCheckErrorProfile = BranchProfile.create();
 
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {

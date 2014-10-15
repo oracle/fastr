@@ -49,7 +49,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     protected final PromiseProfile promiseProfile = new PromiseProfile();
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile unexpectedMissingProfile = new BranchProfile();
+    private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
@@ -420,7 +420,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final boolean readMissing;
         private final boolean forcePromise;
 
-        private final BranchProfile hasValueProfile = new BranchProfile();
+        private final BranchProfile hasValueProfile = BranchProfile.create();
 
         ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode, RType mode, boolean readMissing, boolean forcePromise) {
             this.readNode = readNode;
@@ -548,7 +548,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final boolean forcePromise;
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
-        private final BranchProfile hasValueProfile = new BranchProfile();
+        private final BranchProfile hasValueProfile = BranchProfile.create();
 
         ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, boolean readMissing, boolean forcePromise, RType mode) {
             this.readNode = readNode;

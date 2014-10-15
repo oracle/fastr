@@ -42,7 +42,7 @@ public abstract class MatMult extends RBuiltinNode {
     @Child private BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
     @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
 
-    private final BranchProfile errorProfile = new BranchProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     private final ConditionProfile notOneRow = ConditionProfile.createBinaryProfile();
     private final ConditionProfile notOneColumn = ConditionProfile.createBinaryProfile();

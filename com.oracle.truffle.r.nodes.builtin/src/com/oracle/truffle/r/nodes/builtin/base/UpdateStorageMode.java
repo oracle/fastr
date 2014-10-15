@@ -33,7 +33,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Child private IsFactorNode isFactor;
 
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
-    private final BranchProfile errorProfile = new BranchProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
     protected Object update(VirtualFrame frame, Object x, String value) {
