@@ -106,7 +106,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     // int
 
     @Specialization
-    protected byte doInt(int left, int right) {
+    public byte doInt(int left, int right) {
         return logic.op(left, right);
     }
 
@@ -237,7 +237,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     // string
 
     @Specialization
-    protected byte doString(String left, String right) {
+    public byte doString(String left, String right) {
         return logic.op(left, right);
     }
 

@@ -151,17 +151,17 @@ drop <- function(x) .Internal(drop(x))
 #gctorture <- function(on = TRUE) .Internal(gctorture(on))
 #gctorture2 <- function(step, wait = step, inhibit_release = FALSE)
 #  .Internal(gctorture2(step, wait, inhibit_release))
-#
-#is.unsorted <- function(x, na.rm = FALSE, strictly = FALSE)
-#{
-#  if(length(x) <= 1L) return(FALSE)
-#  if(!na.rm && anyNA(x))
-#    return(NA)
-#  ## else
-#  if(na.rm && any(ii <- is.na(x)))
-#    x <- x[!ii]
-#  .Internal(is.unsorted(x, strictly))
-#}
+
+is.unsorted <- function(x, na.rm = FALSE, strictly = FALSE)
+{
+  if(length(x) <= 1L) return(FALSE)
+  if(!na.rm && anyNA(x))
+    return(NA)
+  ## else
+  if(na.rm && any(ii <- is.na(x)))
+    x <- x[!ii]
+  .Internal(is.unsorted(x, strictly))
+}
 
 nchar <- function(x, type = "chars", allowNA = FALSE)
   .Internal(nchar(x, type, allowNA))
