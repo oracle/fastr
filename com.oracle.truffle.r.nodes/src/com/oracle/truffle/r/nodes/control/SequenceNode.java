@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.*;
 
 public final class SequenceNode extends RNode {
 
@@ -52,10 +56,63 @@ public final class SequenceNode extends RNode {
     }
 
     @Override
+    @SlowPath
     public void deparse(State state) {
-        for (int i = 0; i < sequence.length; i++) {
-            sequence[i].deparse(state);
+        int i = 0;
+        while (i < sequence.length) {
+            state.mark();
+            if (tmpAssignDeparse(state, i)) {
+                i += 2;
+            } else {
+                sequence[i].deparse(state);
+            }
+            i++;
+            if (state.changed()) {
+                // not all nodes will produce output
+                state.writeline();
+            }
         }
+    }
+
+    /**
+     * This is a workaround for the eager transformation that introduces {@code *tmp*} in the
+     * initial AST.
+     */
+    private boolean tmpAssignDeparse(State state, int i) {
+        RNode node1 = sequence[i];
+        if (node1 instanceof WriteVariableNode.HasName) {
+            WriteVariableNode.HasName node1Name = (WriteVariableNode.HasName) node1;
+            if (node1Name.getName().startsWith("java.lang.Object")) {
+                // @formatter:off
+                /*
+                 * Ok, here we go. The sequence is:
+                 *   java.lang.Object@N <- rhs
+                 *   *tmp* <- vec
+                 *   vec$foo <- *tmp*foo <- java.lang.Object@N
+                 *
+                 * which we want to deparse as:
+                 *   vec$foo <- rhs
+                 */
+                // @formatter:on
+                WriteVariableNode node2 = (WriteVariableNode) sequence[i + 1];
+                WriteVariableNode node3 = (WriteVariableNode) sequence[i + 2];
+                state.append(((WriteVariableNode.HasName) node3).getName());
+                RNode node3Rhs = node3.getRhs();
+                if (node3Rhs instanceof UpdateFieldNode) {
+                    UpdateFieldNode ufn = (UpdateFieldNode) node3Rhs;
+                    state.append('$');
+                    state.append(ufn.getField());
+                } else if (node3Rhs instanceof RCallNode) {
+                    node3Rhs.deparse(state);
+                } else {
+                    RInternalError.shouldNotReachHere();
+                }
+                state.append(" <- ");
+                ((WriteVariableNode) node1).getRhs().deparse(state);
+                return true;
+            }
+        }
+        return false;
     }
 
 }

@@ -131,21 +131,16 @@ public class IfNode extends RNode implements VisibilityController {
          */
         state.append("if (");
         condition.deparse(state);
-        state.append(") {");
-        state.writeline();
-        state.incIndent();
+        state.append(") ");
+        state.writeOpenCurlyNLIncIndent();
         thenPart.deparse(state);
-        state.writeline();
-        state.decIndent();
-        state.append('}');
+        state.writeNLDecIndentCloseCurly();
         if (elsePart != null) {
-            state.append(" else {");
             state.writeline();
-            state.incIndent();
+            state.append(" else ");
+            state.writeOpenCurlyNLIncIndent();
             elsePart.deparse(state);
-            state.writeline();
-            state.decIndent();
-            state.append('}');
+            state.writeNLDecIndentCloseCurly();
         }
 
     }

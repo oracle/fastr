@@ -179,6 +179,7 @@ public class RDeparse {
         private final int maxlines;
         private boolean active = true;
         @SuppressWarnings("unused") private int isS4;
+        private boolean changed;
 
         private State(int widthCutOff, boolean backtick, int maxlines, boolean needVector) {
             this.cutoff = widthCutOff;
@@ -204,6 +205,14 @@ public class RDeparse {
             }
         }
 
+        public void mark() {
+            changed = false;
+        }
+
+        public boolean changed() {
+            return changed;
+        }
+
         public void incIndent() {
             indent++;
         }
@@ -216,12 +225,14 @@ public class RDeparse {
             preAppend();
             sb.append(s);
             len += s.length();
+            changed = true;
         }
 
         public void append(char ch) {
             preAppend();
             sb.append(ch);
             len++;
+            changed = true;
         }
 
         private boolean linebreak(boolean lbreak) {
@@ -252,6 +263,25 @@ public class RDeparse {
             /* reset */
             len = 0;
             startline = true;
+            changed = true;
+        }
+
+        public void writeOpenCurlyNLIncIndent() {
+            append('{');
+            writeline();
+            incIndent();
+        }
+
+        public void writeNLOpenCurlyIncIndent() {
+            writeline();
+            append('{');
+            incIndent();
+        }
+
+        public void writeNLDecIndentCloseCurly() {
+            writeline();
+            decIndent();
+            append('}');
         }
     }
 
@@ -752,6 +782,10 @@ public class RDeparse {
                 double d = (double) element;
                 String rep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
                 state.append(rep);
+                break;
+            case INTSXP:
+                int i = (int) element;
+                state.append(Integer.toString(i));
                 break;
             default:
                 assert false;

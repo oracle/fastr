@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
@@ -74,5 +75,24 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
      */
     public int getNameCount() {
         return nameCount;
+    }
+
+    @Override
+    public void deparse(State state) {
+        state.append('(');
+        for (int i = 0; i < arguments.length; i++) {
+            RNode argument = arguments[i];
+            String name = names[i];
+            if (name != null) {
+                state.append(name);
+                state.append(" = ");
+            }
+            argument.deparse(state);
+            if (i != arguments.length - 1) {
+                state.append(", ");
+            }
+        }
+        state.append(')');
+
     }
 }

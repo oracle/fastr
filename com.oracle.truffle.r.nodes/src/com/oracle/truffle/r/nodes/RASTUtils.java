@@ -94,7 +94,7 @@ public class RASTUtils {
      * <li>{@link ConstantFunctioNode}</li>
      * <li>{@link ConstantStringNode}</li>
      * <li>{@link ReadVariableNode}</li>
-     * <li>OpsGroupDispatchNode</li>
+     * <li>GroupDispatchNode</li>
      * </ul>
      */
     public static RNode createCall(Object fna, CallArgumentsNode callArgsNode) {
@@ -106,9 +106,9 @@ public class RASTUtils {
             return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
         } else if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
-        } else if (fn instanceof OpsGroupDispatchNode) {
-            OpsGroupDispatchNode ogdn = (OpsGroupDispatchNode) fn;
-            return DispatchedCallNode.create(ogdn.getGenericName(), RGroupGenerics.RDotGroup, null, callArgsNode);
+        } else if (fn instanceof GroupDispatchNode) {
+            GroupDispatchNode gdn = (GroupDispatchNode) fn;
+            return DispatchedCallNode.create(gdn.getGenericName(), RGroupGenerics.RDotGroup, null, callArgsNode);
         } else {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createStaticCall(null, rfn, callArgsNode);
@@ -162,9 +162,9 @@ public class RASTUtils {
             } else {
                 return createRSymbol(child);
             }
-        } else if (child instanceof OpsGroupDispatchNode) {
-            OpsGroupDispatchNode opsGroupDispatchNode = (OpsGroupDispatchNode) child;
-            String gname = opsGroupDispatchNode.getGenericName();
+        } else if (child instanceof GroupDispatchNode) {
+            GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
+            String gname = groupDispatchNode.getGenericName();
             if (quote) {
                 gname = "`" + gname + "`";
             }
@@ -176,7 +176,7 @@ public class RASTUtils {
 
     /**
      * Returns the {@link ReadVariableNode} associated with a {@link RCallNode} or the
-     * {@link OpsGroupDispatchNode} associated with a {@link DispatchedCallNode}.
+     * {@link GroupDispatchNode} associated with a {@link DispatchedCallNode}.
      */
     public static RNode findFunctionNode(Node node) {
         if (node instanceof RCallNode) {
@@ -184,7 +184,7 @@ public class RASTUtils {
         } else if (node instanceof DispatchedCallNode) {
             for (Node child : node.getChildren()) {
                 if (child != null) {
-                    if (child instanceof OpsGroupDispatchNode) {
+                    if (child instanceof GroupDispatchNode) {
                         return (RNode) child;
                     }
                 }

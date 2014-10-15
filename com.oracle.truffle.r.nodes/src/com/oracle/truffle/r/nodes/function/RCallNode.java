@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariabl
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -469,22 +470,7 @@ public abstract class RCallNode extends RNode {
         @Override
         public void deparse(State state) {
             getFunctionNode().deparse(state);
-            state.append('(');
-            RNode[] arguments = args.getArguments();
-            String[] names = args.getNames();
-            for (int i = 0; i < arguments.length; i++) {
-                RNode argument = arguments[i];
-                String name = names[i];
-                if (name != null) {
-                    state.append(name);
-                    state.append(" = ");
-                }
-                argument.deparse(state);
-                if (i != arguments.length - 1) {
-                    state.append(", ");
-                }
-            }
-            state.append(')');
+            args.deparse(state);
         }
     }
 

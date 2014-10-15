@@ -31,6 +31,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -39,6 +40,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 @NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})
 @NodeField(name = "field", type = String.class)
 public abstract class UpdateFieldNode extends RNode {
+
+    public abstract RNode getObject();
+
+    public abstract RNode getValue();
 
     public abstract String getField();
 
@@ -102,6 +107,21 @@ public abstract class UpdateFieldNode extends RNode {
         }
         RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
         return updateField(castList.executeList(frame, object), value);
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        // This is rather strange as it effectively includes an assignment
+        getObject().deparse(state);
+        state.append('$');
+        state.append(getField());
+        state.append(" <- ");
+        getValue().deparse(state);
     }
 
 }

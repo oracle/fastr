@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 
 @NodeChild(value = "vector", type = RNode.class)
 public class PositionsArrayNode extends RNode {
@@ -36,6 +37,16 @@ public class PositionsArrayNode extends RNode {
     @Children private final RNode[] positions;
     @Children private final OperatorConverterNode[] operatorConverters;
     @Children private final MultiDimPosConverterNode[] multiDimOperatorConverters;
+
+    @Override
+    public void deparse(State state) {
+        for (int i = 0; i < positions.length; i++) {
+            positions[i].deparse(state);
+            if (i != positions.length - 1) {
+                state.append(", ");
+            }
+        }
+    }
 
     @ExplodeLoop
     public Object executeEval(VirtualFrame frame, Object vector) {

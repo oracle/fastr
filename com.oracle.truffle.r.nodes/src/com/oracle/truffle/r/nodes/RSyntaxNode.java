@@ -13,7 +13,9 @@ import com.oracle.truffle.r.runtime.*;
  */
 public interface RSyntaxNode {
     /**
-     * Support for the {@code deparse} builtin function. Assert: {this.isSyntax() == true}.
+     * Support for the {@code deparse} builtin function. N.B. {@link #isSyntax()} does not have to
+     * return {@code true} for a node to override this method. Whether to override is an
+     * implementation convenience.
      */
     default void deparse(@SuppressWarnings("unused") State state) {
         throw RInternalError.unimplemented();

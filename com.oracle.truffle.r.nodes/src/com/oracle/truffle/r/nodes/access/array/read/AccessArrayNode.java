@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConvert
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -62,9 +63,24 @@ public abstract class AccessArrayNode extends RNode {
 
     protected abstract RNode getVector();
 
+    protected abstract RNode getPositions();
+
     public abstract Object executeAccess(VirtualFrame frame, Object vector, int recLevel, Object operand, RAbstractLogicalVector dropDim);
 
     public abstract Object executeAccess(VirtualFrame frame, Object vector, int recLevel, int operand, RAbstractLogicalVector dropDim);
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        getVector().deparse(state);
+        state.append(isSubset ? "[" : "[[");
+        getPositions().deparse(state);
+        state.append(']');
+    }
 
     public AccessArrayNode(boolean isSubset) {
         this.isSubset = isSubset;

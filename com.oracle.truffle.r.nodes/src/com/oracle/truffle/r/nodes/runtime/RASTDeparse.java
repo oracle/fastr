@@ -92,22 +92,16 @@ public class RASTDeparse {
             IfNode ifNode = (IfNode) node;
             state.append("if (");
             deparseNodeOrValue(state, ifNode.getCondition());
-            state.append(") {");
-            state.writeline();
-            state.incIndent();
+            state.append(") ");
+            state.writeOpenCurlyNLIncIndent();
             deparseNodeOrValue(state, ifNode.getThenPart());
-            state.writeline();
-            state.decIndent();
-            state.append('}');
+            state.decIndentCloseCurly();
             RNode elsePart = ifNode.getElsePart();
             if (elsePart != null) {
-                state.append(" else {");
-                state.writeline();
-                state.incIndent();
+                state.append(" else ");
+                state.writeOpenCurlyNLIncIndent();
                 deparseNodeOrValue(state, elsePart);
-                state.writeline();
-                state.decIndent();
-                state.append('}');
+                state.decIndentCloseCurly();
             }
         } else if (node instanceof ConvertBooleanNode) {
             // if condition
@@ -160,7 +154,7 @@ public class RASTDeparse {
         }
     }
 
-    private static void deparseInfixOperator(RDeparse.State state, Node node, RDeparse.Func func) {
+    public static void deparseInfixOperator(RDeparse.State state, Node node, RDeparse.Func func) {
         CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
         RNode[] argValues = args.getArguments();
         PP kind = func.info.kind;
@@ -192,6 +186,48 @@ public class RASTDeparse {
                     state.append('(');
                 }
                 deparseNodeOrValue(state, argValues[1]);
+                if (parens) {
+                    state.append(')');
+                }
+                break;
+
+            default:
+                assert false;
+        }
+    }
+
+    public static void deparseInfixOperator2(RDeparse.State state, Node node, RDeparse.Func func) {
+        CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+        RNode[] argValues = args.getArguments();
+        PP kind = func.info.kind;
+        if (kind == PP.BINARY && argValues.length == 1) {
+            kind = PP.UNARY;
+        }
+        switch (kind) {
+            case UNARY:
+                state.append(func.op);
+                argValues[0].deparse(state);
+                break;
+
+            case BINARY:
+            case BINARY2:
+                // TODO lbreak
+                boolean parens = needsParens(func.info, argValues[0], true);
+                if (parens) {
+                    state.append('(');
+                }
+                argValues[0].deparse(state);
+                if (parens) {
+                    state.append(')');
+                }
+                state.append(' ');
+                state.append(func.op);
+                state.append(' ');
+                parens = needsParens(func.info, argValues[1], false);
+                if (parens) {
+                    state.append('(');
+                }
+                argValues[1].deparse(state);
                 if (parens) {
                     state.append(')');
                 }

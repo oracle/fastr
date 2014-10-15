@@ -163,8 +163,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
         }
         state.append(") ");
+        state.writeNLOpenCurlyIncIndent();
         state.writeline();
         body.deparse(state);
+        state.writeNLDecIndentCloseCurly();
+
     }
 
 }

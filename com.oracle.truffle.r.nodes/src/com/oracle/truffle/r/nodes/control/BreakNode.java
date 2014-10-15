@@ -44,7 +44,6 @@ public final class BreakNode extends RNode {
     @Override
     public void deparse(State state) {
         state.append("break");
-        state.writeline();
     }
 
     @Override
