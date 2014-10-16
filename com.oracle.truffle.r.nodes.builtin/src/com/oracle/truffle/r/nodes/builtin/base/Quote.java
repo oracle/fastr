@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -41,6 +42,9 @@ public abstract class Quote extends RBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, RPromise expr);
 
+    private final ConditionProfile rvn = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile cn = ConditionProfile.createBinaryProfile();
+
     @Specialization
     protected RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
@@ -53,9 +57,9 @@ public abstract class Quote extends RBuiltinNode {
         RNode node = (RNode) expr.getRep();
         RNode unode = ((WrapArgumentNode) node).getOperand();
         SourceSection ss = node.getSourceSection();
-        if (unode instanceof ReadVariableNode) {
+        if (rvn.profile(unode instanceof ReadVariableNode)) {
             return RDataFactory.createSymbol(ss.toString());
-        } else if (unode instanceof ConstantNode) {
+        } else if (cn.profile(unode instanceof ConstantNode)) {
             ConstantNode cnode = (ConstantNode) unode;
             return cnode.getValue();
         } else {

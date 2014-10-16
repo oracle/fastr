@@ -40,8 +40,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow"})
 public abstract class MakeNames extends RBuiltinNode {
 
-    private final BranchProfile empty = BranchProfile.create();
-    private final BranchProfile nonEmpty = BranchProfile.create();
+    private final ConditionProfile namesLengthZero = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
 
     @CreateCast({"arguments"})
@@ -145,11 +144,9 @@ public abstract class MakeNames extends RBuiltinNode {
 
     @Specialization
     protected RAbstractStringVector makeNames(RAbstractStringVector names, byte allow_) {
-        if (names.getLength() == 0) {
-            empty.enter();
+        if (namesLengthZero.profile(names.getLength() == 0)) {
             return names;
         } else {
-            nonEmpty.enter();
             boolean allowUnderscore = allow_ == RRuntime.LOGICAL_TRUE;
             RStringVector newNames = null;
             for (int i = 0; i < names.getLength(); i++) {

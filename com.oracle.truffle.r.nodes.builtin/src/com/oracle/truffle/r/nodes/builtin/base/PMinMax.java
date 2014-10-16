@@ -343,7 +343,6 @@ public abstract class PMinMax extends RBuiltinNode {
 
         @Specialization
         protected byte doStringVectorMultiElem(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object d) {
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             String[] data = (String[]) d;
             byte warningAdded = warning;
             RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
@@ -353,7 +352,7 @@ public abstract class PMinMax extends RBuiltinNode {
             }
             String result = vec.getDataAt(ind % vec.getLength());
             na.enable(result);
-            if (profiledNaRm) {
+            if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(result)) {
                     // the following is meant to eliminate leading NA-s
                     if (offset == argValues.length - 1) {
@@ -382,7 +381,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 String current = vec.getDataAt(ind % vec.getLength());
                 na.enable(current);
                 if (na.check(current)) {
-                    if (profiledNaRm) {
+                    if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                         // skip NA-s
                         continue;
                     } else {

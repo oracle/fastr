@@ -24,12 +24,14 @@ package com.oracle.truffle.r.engine;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.*;
 
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -276,6 +278,11 @@ public final class REngine implements RContext.Engine {
         } catch (RError e) {
             singleton.context.getConsoleHandler().println(e.getMessage());
             return null;
+        } catch (UnsupportedSpecializationException use) {
+            ConsoleHandler ch = singleton.context.getConsoleHandler();
+            ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
+            return null;
         } catch (RecognitionException | RuntimeException e) {
             singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -367,6 +374,8 @@ public final class REngine implements RContext.Engine {
             } else {
                 throw e;
             }
+        } catch (UnsupportedSpecializationException use) {
+            throw use;
         } catch (Throwable e) {
             reportImplementationError(e);
         }

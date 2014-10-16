@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.vector", kind = PRIMITIVE, parameterNames = {"x", "mode"})
+@RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
 public abstract class IsVector extends RBuiltinNode {
 
     @Override
@@ -42,44 +42,20 @@ public abstract class IsVector extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isType(@SuppressWarnings("unused") RMissing value, @SuppressWarnings("unused") String mode) {
+    @SuppressWarnings("unused")
+    protected byte isVector(RMissing value, String mode) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, "x");
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"namesOnlyOrNoAttr", "modeIsAnyOrMatches"})
-    protected byte isList(RAbstractVector x, String mode) {
+    @Specialization
+    protected byte isVector(RAbstractVector x, String mode) {
         controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"namesOnlyOrNoAttr", "!modeIsAnyOrMatches"})
-    protected byte isNotVector(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!namesOnlyOrNoAttr")
-    protected byte isVectorAttr(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "namesOnlyOrNoAttr")
-    protected byte isVector(RAbstractVector x, RMissing mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!namesOnlyOrNoAttr")
-    protected byte isVectorAttr(RAbstractVector x, RMissing mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
+        if (!namesOnlyOrNoAttr(x) || !modeIsAnyOrMatches(x, mode)) {
+            return RRuntime.LOGICAL_FALSE;
+        } else {
+            return RRuntime.LOGICAL_TRUE;
+        }
     }
 
     @SuppressWarnings("unused")
@@ -88,7 +64,7 @@ public abstract class IsVector extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    protected static boolean namesOnlyOrNoAttrInternal(RAbstractVector x, @SuppressWarnings("unused") Object mode) {
+    protected static boolean namesOnlyOrNoAttr(RAbstractVector x) {
         // there should be no attributes other than names
         if (x.getNames() == RNull.instance) {
             assert x.getAttributes() == null || x.getAttributes().size() > 0;
@@ -97,14 +73,6 @@ public abstract class IsVector extends RBuiltinNode {
             assert x.getAttributes() != null;
             return x.getAttributes().size() == 1 ? true : false;
         }
-    }
-
-    protected boolean namesOnlyOrNoAttr(RAbstractVector x, String mode) {
-        return namesOnlyOrNoAttrInternal(x, mode);
-    }
-
-    protected boolean namesOnlyOrNoAttr(RAbstractVector x, RMissing mode) {
-        return namesOnlyOrNoAttrInternal(x, mode);
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {

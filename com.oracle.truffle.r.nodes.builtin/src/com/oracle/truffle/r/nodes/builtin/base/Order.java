@@ -174,7 +174,6 @@ public abstract class Order extends RBuiltinNode {
 
     // sorting
 
-    @SlowPath
     protected void stringSort(String[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -205,7 +204,6 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
-    @SlowPath
     protected void doubleSort(double[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -236,7 +234,6 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
-    @SlowPath
     protected void intSort(int[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -267,7 +264,6 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
-    @SlowPath
     protected void complexSort(double[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -305,7 +301,6 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
-    @SlowPath
     protected void byteSort(byte[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -399,6 +394,7 @@ public abstract class Order extends RBuiltinNode {
 
     // helpers
 
+    @SlowPath
     protected static int[] ordArray(int length) {
         int[] r = new int[length];
         for (int i = 0; i < length; ++i) {
@@ -407,6 +403,7 @@ public abstract class Order extends RBuiltinNode {
         return r;
     }
 
+    @SlowPath
     private static void swaps(int[] a, int[] b, int i, int j) {
         int t;
         t = a[i];

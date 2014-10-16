@@ -102,14 +102,28 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
     }
 
     /**
-     * This works as a direct accessor to on of the {@link #getDefaultArgs()}.
+     * This works as a direct accessor to one of the {@link #getDefaultArgs()}.
      *
      * @param index
-     * @return The default arguments for the given index, or <code>null</code> if there is none.
+     * @return The default argument for the given index.
      */
     public RNode getDefaultArg(int index) {
         assert index >= 0 && index < arguments.length;
         return arguments[index];
+    }
+
+    /**
+     * Retrieve one of the {@link #getDefaultArgs()}. If it does not exist, return {@code null}.
+     *
+     * @param index
+     * @return The default argument for the given index, or <code>null</code> if there is none.
+     */
+    public RNode getDefaultArgOrNull(int index) {
+        if (index < 0 || index >= arguments.length) {
+            return null;
+        } else {
+            return arguments[index];
+        }
     }
 
     /**

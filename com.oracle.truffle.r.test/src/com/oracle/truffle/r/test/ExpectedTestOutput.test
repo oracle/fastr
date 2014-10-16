@@ -8127,10 +8127,6 @@ $z
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
-#{ exists("sum") }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
 #{ exists("sum", inherits = FALSE) }
 [1] FALSE
 
@@ -15578,6 +15574,14 @@ function (..., na.rm = FALSE)  .Primitive("sum")
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testInvokeIndirectly
 #{ f <- function(x) x+1 ; g <- function(x) x+2 ; v <- 2 ; (if (v==1) f else g)(1) }
 [1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testIsPrimitive
+#{ is.primitive(is.function) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testIsPrimitive
+#{ is.primitive(is.primitive) }
+[1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ f <- function(a) { a } ; f(1,2) }
@@ -36378,7 +36382,11 @@ Error in c(as.raw(10), as.raw(10), as.raw(10))^c(as.raw(10), as.raw(10),  :
 #f <- function(x) { x[1] = 2; }; x <- c(1L, 2L, 3L); f(x); x[1]
 [1] 1
 
-##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookupFailure
+##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookup
+#{ abs }
+function (x)  .Primitive("abs")
+
+##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookup
 #{ f<-1; f() }
 Error: could not find function "f"
 
@@ -61929,6 +61937,78 @@ logical(0)
 [16] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 [31] TRUE TRUE
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction1
+#argv <- list(function (x, y) {    c(x, y)});is.function(argv[[1]]);
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction10
+#argv <- list(structure(c(FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(5L, 5L)));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction11
+#argv <- list(c(0.2853725+0.3927816i, -0.07283992154231+0.224178134292i, -0.10883955678256+0.035364093700981i, -0.0449501817243521-0.0326582354266614i, 8.2299281e-09-2.69753665872767e-02i, 0.0105954299973322-0.0076980245688633i, 0.00604728675391113+0.00196488543076221i, 0.00095395849586903+0.00293598723445021i, -0.00088096824266454+0.00121254736140417i, -7.27670402517897e-04-4.44010655e-10i, -2.07656947543323e-04-2.85815671682054e-04i, 5.3003554565545e-05-1.6312776087427e-04i, 7.9199339795869e-05-2.57333559721505e-05i, 3.27089023280074e-05+2.37644512768026e-05i, -1.79660253e-11+1.96291758626278e-05i, -7.70998422901389e-06+5.60161993213361e-06i, -4.4004307139296e-06-1.42979165736404e-06i, -6.9416605906477e-07-2.13643143624753e-06i, 6.4105505412914e-07-8.82334435385704e-07i, 5.29504214700362e-07+6.46186824e-13i));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction12
+#argv <- list(structure(c(9, 13, 13, 18, 23, 28, 31, 34, 45, 48, 161, 5, 5, 8, 8, 12, 16, 23, 27, 30, 33, 43, 45, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1), .Dim = c(23L, 2L), .Dimnames = list(NULL, c('time', 'status')), type = 'right', class = 'Surv'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction13
+#argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction14
+#argv <- list(structure(list(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1), y = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), fac = structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c('A', 'B', 'C'), class = 'factor')), .Names = c('x', 'y', 'fac'), row.names = c(NA, -10L), class = 'data.frame'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction17
+#argv <- list(structure(c(2L, 1L, 3L), .Label = c('1', '2', NA), class = c('ordered', 'factor')));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction18
+#argv <- list(structure(list(usr = c(0.568, 1.432, -1.08, 1.08), xaxp = c(0.6, 1.4, 4), yaxp = c(-1, 1, 4)), .Names = c('usr', 'xaxp', 'yaxp')));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction19
+#argv <- list(structure(list(double.eps = 2.22044604925031e-16, double.neg.eps = 1.11022302462516e-16, double.xmin = 2.2250738585072e-308, double.xmax = 1.79769313486232e+308, double.base = 2L, double.digits = 53L, double.rounding = 5L, double.guard = 0L, double.ulp.digits = -52L, double.neg.ulp.digits = -53L, double.exponent = 11L, double.min.exp = -1022L, double.max.exp = 1024L, integer.max = 2147483647L, sizeof.long = 8L, sizeof.longlong = 8L, sizeof.longdouble = 16L, sizeof.pointer = 8L), .Names = c('double.eps', 'double.neg.eps', 'double.xmin', 'double.xmax', 'double.base', 'double.digits', 'double.rounding', 'double.guard', 'double.ulp.digits', 'double.neg.ulp.digits', 'double.exponent', 'double.min.exp', 'double.max.exp', 'integer.max', 'sizeof.long', 'sizeof.longlong', 'sizeof.longdouble', 'sizeof.pointer')));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction2
+#argv <- list(c('a', 'b', NA, NA, NA, 'f', 'g', 'h', 'i', 'j', 'k', 'l'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction20
+#argv <- list(structure(list(extra = c(0.7, -1.6, -0.2, -1.2, -0.1, 3.4, 3.7, 0.8, 0, 2, 1.9, 0.8, 1.1, 0.1, -0.1, 4.4, 5.5, 1.6, 4.6, 3.4), group = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('1', '2'), class = 'factor'), ID = structure(c(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L), .Label = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'), class = 'factor')), .Names = c('extra', 'group', 'ID'), row.names = c(NA, -20L), class = 'data.frame'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction3
+#argv <- list(c(0, 0, 0, 0, 0, 1.75368801162502e-134, 0, 0, 0, 2.60477585273833e-251, 1.16485035372295e-260, 0, 1.53160350210786e-322, 0.333331382328728, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.44161262707711e-123, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.968811545398e-173, 0, 8.2359965384697e-150, 0, 0, 0, 0, 6.51733217171341e-10, 0, 2.36840184577368e-67, 0, 9.4348408357524e-307, 0, 1.59959906013771e-89, 0, 8.73836857865034e-286, 7.09716190970992e-54, 0, 0, 0, 1.530425353017e-274, 8.57590058044551e-14, 0.333333106397154, 0, 0, 1.36895217898448e-199, 2.0226102635783e-177, 5.50445388209462e-42, 0, 0, 0, 0, 1.07846402051283e-44, 1.88605464411243e-186, 1.09156111051203e-26, 0, 3.0702877273237e-124, 0.333333209689785, 0, 0, 0, 0, 0, 0, 3.09816093866831e-94, 0, 0, 4.7522727332095e-272, 0, 0, 2.30093251441394e-06, 0, 0, 1.27082826644707e-274, 0, 0, 0, 0, 0, 0, 0, 4.5662025456054e-65, 0, 2.77995853978268e-149, 0, 0, 0));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction4
+#argv <- list(structure(c(1, 0.341108926893721, 7.03552967282433, 0.0827010685995216, 2.31431632448833, 2.09774421189194, 17.4719768806091, 0.00710660186854106, 0.341108926893721, 6.24415190746514, 0.0686360870302571, 2.93161486304804, 1, 20.6254633582673, 0.242447681896313, 6.78468413466471, 6.14977811045541, 51.2211071100253, 0.02083381966358, 1, 18.3054485390546, 0.201214572879361, 0.142135709250525, 0.0484837592557245, 1, 0.0117547750411693, 0.328946992211217, 0.298164361383444, 2.48339182593415, 0.00101010189694619, 0.0484837592557245, 0.887516960035576, 0.00975563891022635, 12.0917421858535, 4.12460120129202, 85.071810944714, 1, 27.984116332225, 25.3653821820638, 211.266639917518, 0.0859311976119033, 4.12460120129202, 75.5026750343739, 0.829929869015672, 0.432093050296869, 0.147390796704999, 3.04000347678479, 0.0357345569939779, 1, 0.906420695258988, 7.54951978505874, 0.00307071327862333, 0.147390796704999, 2.69805464421362, 0.0296571762053451, 0.476702542822467, 0.16260749282968, 3.35385488513828, 0.0394238096955273, 1.10324047677913, 1, 8.32893580712171, 0.00338773518156042, 0.16260749282968, 2.97660309205839, 0.0327189972167077, 0.0572345079685763, 0.0195232015944512, 0.402675079122419, 0.00473335496976909, 0.132458756115733, 0.120063357811564, 1, 0.000406742861274512, 0.0195232015944512, 0.357380962104814, 0.00392835267006514, 140.714228614202, 47.998879521268, 989.999130803802, 11.6372170735519, 325.65723636963, 295.182458606281, 2458.55574912007, 1, 47.998879521268, 878.641019008853, 9.65807404155984, 2.93161486304804, 1, 20.6254633582673, 0.242447681896313, 6.78468413466471, 6.14977811045541, 51.2211071100253, 0.02083381966358, 1, 18.3054485390546, 0.201214572879361, 0.160149851384054, 0.0546285439478035, 1.12673903151092, 0.0132445638455158, 0.370637415422497, 0.335953423776254, 2.79813450081517, 0.00113812123309249, 0.0546285439478035, 1, 0.0109920591374787, 14.5695951396408, 4.96981896335886, 102.50481892598, 1.20492108711069, 33.7186518728567, 30.5632838737905, 254.559629439639, 0.103540312043258, 4.96981896335886, 90.9747652821832, 1), .Dim = c(11L, 11L), .Dimnames = list(c('ATS', 'BEF', 'DEM', 'ESP', 'FIM', 'FRF', 'IEP', 'ITL', 'LUF', 'NLG', 'PTE'), c('ATS', 'BEF', 'DEM', 'ESP', 'FIM', 'FRF', 'IEP', 'ITL', 'LUF', 'NLG', 'PTE'))));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction5
+#argv <- list(structure(c(1+0i, 5+0i, 9+0i, 13+0i, 17+0i, 21+0i, 2+0i, 6+0i, 10+0i, 14+0i, 18+0i, 22+0i, 3+0i, 7+0i, 11+0i, 15+0i, 19+0i, 23+0i, 4+0i, 8+0i, 12+0i, 16+0i, 20+0i, 24+0i), .Dim = c(6L, 4L)));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction6
+#argv <- list(structure(list(Df = c(1L, 7L), `Sum Sq` = c(158.407612694902, 204.202165082876), `Mean Sq` = c(158.407612694902, 29.1717378689823), `F value` = c(5.43017400630538, NA), `Pr(>F)` = c(0.052592726218915, NA)), .Names = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), row.names = c('depression', 'Residuals'), class = c('anova', 'data.frame'), heading = c('Analysis of Variance Table\n', 'Response: weight')));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction7
+#argv <- list(structure(list(GNP.deflator = c(83, 88.5, 88.2, 89.5, 96.2, 98.1, 99, 100, 101.2, 104.6, 108.4, 110.8, 112.6, 114.2, 115.7, 116.9), GNP = c(234.289, 259.426, 258.054, 284.599, 328.975, 346.999, 365.385, 363.112, 397.469, 419.18, 442.769, 444.546, 482.704, 502.601, 518.173, 554.894), Unemployed = c(235.6, 232.5, 368.2, 335.1, 209.9, 193.2, 187, 357.8, 290.4, 282.2, 293.6, 468.1, 381.3, 393.1, 480.6, 400.7), Armed.Forces = c(159, 145.6, 161.6, 165, 309.9, 359.4, 354.7, 335, 304.8, 285.7, 279.8, 263.7, 255.2, 251.4, 257.2, 282.7), Population = c(107.608, 108.632, 109.773, 110.929, 112.075, 113.27, 115.094, 116.219, 117.388, 118.734, 120.445, 121.95, 123.366, 125.368, 127.852, 130.081), Year = 1947:1962, Employed = c(60.323, 61.122, 60.171, 61.187, 63.221, 63.639, 64.989, 63.761, 66.019, 67.857, 68.169, 66.513, 68.655, 69.564, 69.331, 70.551)), .Names = c('GNP.deflator', 'GNP', 'Unemployed', 'Armed.Forces', 'Population', 'Year', 'Employed'), row.names = 1947:1962, class = 'data.frame'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction8
+#argv <- list(structure(c(112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118, 115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140, 145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166, 171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194, 196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201, 204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229, 242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278, 284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306, 315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336, 340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337, 360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405, 417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432), .Tsp = c(1949, 1960.91666666667, 12), class = 'ts'));is.function(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisfunction.testisfunction9
+#argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.function(argv[[1]]);
+[1] FALSE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisinteger.testisinteger1
 #argv <- list(2.74035772634541);is.integer(argv[[1]]);
 [1] FALSE
@@ -62587,6 +62667,142 @@ logical(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinissymbol.testissymbol4
 #argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.symbol(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted1
+#argv <- list(c(1L, 2L, 4L), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted2
+#argv <- list(c(10.7041467781967, 11.5754756379084, 12.524991240374, 13.5975143137056, 14.4688431734172, 15.4183587758829, 16.4908818492144, 17.7566218541999, 19.1425780866377, 20.5285343190754, 22.0685075746448, 23.9825281292691, 26.4455166737415, 29.7592803351446, 34.4380365011698, 41.4254228764895, 44.7391865378926, 49.4179427039178, 56.4053290792375), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted3
+#argv <- list(c(-19, -12.21, -7.07, -6.14, -4.56, -4.09, -3.8, -2.22, -1.97, -1.95, -1.83, -1.82, -1.77, -1.56, -1.48, -1.42, -1.19, -1.12, -1.09, -1.04, -0.96, -0.89, -0.87, -0.87, -0.78, -0.77, -0.77, -0.74, -0.71, -0.63, -0.61, -0.59, -0.54, -0.51, -0.5, -0.5, -0.44, -0.4, -0.4, -0.37, -0.33, -0.28, -0.21, -0.2, -0.16, -0.16, -0.12, -0.1, -0.05, -0.01, -0.01, 0.04, 0.11, 0.13, 0.14, 0.15, 0.15, 0.25, 0.25, 0.26, 0.34, 0.42, 0.44, 0.46, 0.48, 0.48, 0.49, 0.49, 0.51, 0.57, 0.58, 0.64, 0.66, 0.7, 0.74, 0.8, 0.83, 0.94, 0.94, 1.02, 1.09, 1.12, 1.15, 1.18, 1.19, 1.63, 1.86, 1.92, 2.11, 2.17, 2.21, 2.22, 2.25, 2.64, 2.75, 4.18, 4.6, 5.74, 22.42, 44.32), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted4
+#argv <- list(c('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted5
+#argv <- list(c(8, 6, 9, 4, 3, 7, 1, 5, 2), TRUE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted6
+#argv <- list(c(1, 2, 3, 2), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted8
+#argv <- list(c(2L, 1L, 0L, 3L), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisunsorted.testisunsorted9
+#argv <- list(c(1L, 3L, 2L, 4L), TRUE); .Internal(is.unsorted(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector1
+#argv <- list(list(structure(0, class = c('POSIXct', 'POSIXt'), tzone = 'GMT'), 1262304000), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector11
+#argv <- list(list(structure(list(srcfile = c('/home/lzhao/hg/r-instrumented/library/methods/R/methods', '/home/lzhao/hg/r-instrumented/library/methods/R/methods'), frow = c(6030L, 6032L), lrow = c(6031L, 6063L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = 1:2, class = 'data.frame'), structure(list(srcfile = '/home/lzhao/hg/r-instrumented/library/methods/R/methods', frow = 6036L, lrow = 6055L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame')), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector12
+#argv <- list(structure(list(B = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L), .Label = c('I', 'II', 'III', 'IV', 'V', 'VI'), class = 'factor'), V = structure(c(3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L), .Label = c('Golden.rain', 'Marvellous', 'Victory'), class = 'factor'), N = structure(c(2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L), .Label = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt'), class = 'factor')), .Names = c('B', 'V', 'N'), class = 'data.frame', row.names = 2:72), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector13
+#argv <- list(list('‘FUN’ is found by a call to ‘match.fun’ and typically   is specified as a function or a symbol (e.g. a backquoted name) or a   character string specifying a function to be searched for from the   environment of the call to ‘lapply’.'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector14
+#argv <- list(list(c(35, 232, 232, 355, 1041, 1510, 1525, 1548, 1560, 1560, 1563, 1641, 1648, 1652, 1654, 1654, 1690, 1690, 1710, 1710, 1710, 1710, 1779, 1779, 1779, 1779, 1787, 1804, 1812, 1836, 1854, 1864, 1899, 1919, 1920, 1958, 1963, 2007, 2011, 2024, 2024, 2024, 2028, 2061, 2061, 2061, 2062, 2062, 2075, 2085, 2103, 2156, 2227, 2264, 2339, 2339, 2361, 2361, 2387, 2387, 2388, 2426, 2431, 2460, 2493, 2493, 2542, 2559, 2559, 2570, 2676, 2738, 2782, 2984, 3067, 3144, 3154, 3199, 3228, 3297, 3328, 3328, 3330, 3383, 3384, 3384, 3402, 3402, 3441, 3458, 3459, 3459, 3476, 3476, 3695, 3695, 3776, 3776, 3776, 3830, 3856, 3909, 3909, 3968, 3968, 4001, 4119, 4124, 4207, 4207, 4310, 4390, 4479, 4479, 4688), c(0, 0, 0, 0, -1, 0, 0, -1, -1, -1, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector15
+#argv <- list(structure(c(1+2i, 5+0i, 3-4i, -6+0i), .Dim = c(2L, 2L)), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector17
+#argv <- list(structure(c(315.42, 316.32, 316.49, 317.56, 318.13, 318, 316.39, 314.66, 313.68, 313.18, 314.66, 315.43, 316.27, 316.81, 317.42, 318.87, 319.87, 319.43, 318.01, 315.75, 314, 313.68, 314.84, 316.03, 316.73, 317.54, 318.38, 319.31, 320.42, 319.61, 318.42, 316.64, 314.83, 315.15, 315.95, 316.85, 317.78, 318.4, 319.53, 320.41, 320.85, 320.45, 319.44, 317.25, 316.12, 315.27, 316.53, 317.53, 318.58, 318.92, 319.7, 321.22, 322.08, 321.31, 319.58, 317.61, 316.05, 315.83, 316.91, 318.2, 319.41, 320.07, 320.74, 321.4, 322.06, 321.73, 320.27, 318.54, 316.54, 316.71, 317.53, 318.55, 319.27, 320.28, 320.73, 321.97, 322, 321.71, 321.05, 318.71, 317.65, 317.14, 318.71, 319.25, 320.46, 321.43, 322.22, 323.54, 323.91, 323.59, 322.26, 320.21, 318.48, 317.94, 319.63, 320.87, 322.17, 322.34, 322.88, 324.25, 324.83, 323.93, 322.39, 320.76, 319.1, 319.23, 320.56, 321.8, 322.4, 322.99, 323.73, 324.86, 325.41, 325.19, 323.97, 321.92, 320.1, 319.96, 320.97, 322.48, 323.52, 323.89, 325.04, 326.01, 326.67, 325.96, 325.13, 322.9, 321.61, 321.01, 322.08, 323.37, 324.34, 325.3, 326.29, 327.54, 327.54, 327.21, 325.98, 324.42, 322.91, 322.9, 323.85, 324.96, 326.01, 326.51, 327.01, 327.62, 328.76, 328.4, 327.2, 325.28, 323.2, 323.4, 324.64, 325.85, 326.6, 327.47, 327.58, 329.56, 329.9, 328.92, 327.89, 326.17, 324.68, 325.04, 326.34, 327.39, 328.37, 329.4, 330.14, 331.33, 332.31, 331.9, 330.7, 329.15, 327.34, 327.02, 327.99, 328.48, 329.18, 330.55, 331.32, 332.48, 332.92, 332.08, 331.02, 329.24, 327.28, 327.21, 328.29, 329.41, 330.23, 331.24, 331.87, 333.14, 333.8, 333.42, 331.73, 329.9, 328.4, 328.17, 329.32, 330.59, 331.58, 332.39, 333.33, 334.41, 334.71, 334.17, 332.88, 330.77, 329.14, 328.77, 330.14, 331.52, 332.75, 333.25, 334.53, 335.9, 336.57, 336.1, 334.76, 332.59, 331.41, 330.98, 332.24, 333.68, 334.8, 335.22, 336.47, 337.59, 337.84, 337.72, 336.37, 334.51, 332.6, 332.37, 333.75, 334.79, 336.05, 336.59, 337.79, 338.71, 339.3, 339.12, 337.56, 335.92, 333.74, 333.7, 335.13, 336.56, 337.84, 338.19, 339.9, 340.6, 341.29, 341, 339.39, 337.43, 335.72, 335.84, 336.93, 338.04, 339.06, 340.3, 341.21, 342.33, 342.74, 342.07, 340.32, 338.27, 336.52, 336.68, 338.19, 339.44, 340.57, 341.44, 342.53, 343.39, 343.96, 343.18, 341.88, 339.65, 337.8, 337.69, 339.09, 340.32, 341.2, 342.35, 342.93, 344.77, 345.58, 345.14, 343.81, 342.22, 339.69, 339.82, 340.98, 342.82, 343.52, 344.33, 345.11, 346.88, 347.25, 346.61, 345.22, 343.11, 340.9, 341.17, 342.8, 344.04, 344.79, 345.82, 347.25, 348.17, 348.75, 348.07, 346.38, 344.52, 342.92, 342.63, 344.06, 345.38, 346.12, 346.79, 347.69, 349.38, 350.04, 349.38, 347.78, 345.75, 344.7, 344.01, 345.5, 346.75, 347.86, 348.32, 349.26, 350.84, 351.7, 351.11, 349.37, 347.97, 346.31, 346.22, 347.68, 348.82, 350.29, 351.58, 352.08, 353.45, 354.08, 353.66, 352.25, 350.3, 348.58, 348.74, 349.93, 351.21, 352.62, 352.93, 353.54, 355.27, 355.52, 354.97, 353.74, 351.51, 349.63, 349.82, 351.12, 352.35, 353.47, 354.51, 355.18, 355.98, 356.94, 355.99, 354.58, 352.68, 350.72, 350.92, 352.55, 353.91), .Tsp = c(1959, 1990.91666666667, 12), class = 'ts'), 'symbol'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector18
+#argv <- list(structure(list(age = 60), .Names = 'age', row.names = c(NA, -1L), class = 'data.frame'), 'numeric'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector19
+#argv <- list(c(1.00000001+1.00000001i, 1.00000002+1.00000002i, 1.00000003+1.00000003i, 1.00000004+1.00000004i, 1.00000005+1.00000005i, 1.00000006+1.00000006i, 1.00000007+1.00000007i, 1.00000008+1.00000008i, 1.00000009+1.00000009i, 1.0000001+1.0000001i), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector2
+#argv <- list(list(c(' 1', 'NA', ' 1'), c('1.1', ' NA', '2.0'), c('1.1+0i', '    NA', '3.0+0i'), c('NA', 'NA', 'NA'), c('FALSE', '   NA', ' TRUE'), c('abc', NA, 'def')), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector22
+#argv <- list(structure(list(Subject = structure(c(40L, 40L, 40L, 40L, 40L, 40L, 40L, 40L), .Label = c('42', '28', '30', '56', '46', '5', '55', '32', '43', '29', '3', '11', '45', '22', '40', '47', '31', '14', '7', '41', '33', '44', '23', '57', '34', '18', '36', '21', '15', '38', '10', '1', '58', '51', '4', '6', '19', '2', '27', '53', '37', '20', '12', '9', '17', '26', '8', '49', '39', '54', '25', '35', '52', '13', '16', '59', '48', '24', '50'), class = c('ordered', 'factor')), Wt = c(1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7), Apgar = structure(c(8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L), .Label = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'), class = c('ordered', 'factor')), ApgarInd = structure(c(2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('< 5', '>= 5'), class = 'factor'), time = c(0, 4, 6, 23.8, 27, 28, 39.5, 47), dose = c(17, 17, NA, 4, 7.5, 4, 4, NA), conc = c(NA, NA, 19.1, NA, NA, NA, NA, 33.3)), .Names = c('Subject', 'Wt', 'Apgar', 'ApgarInd', 'time', 'dose', 'conc'), row.names = c('669', '670', '671', '672', '673', '674', '675', '676'), class = 'data.frame'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector23
+#argv <- list(list(structure(c(0.445983387275159, 0.0291424961297979, 0.305722673636889, 0.0640910333172597, 6.1841587262516e-05, 0.000608774190997193, 0.00533346072966287, 1.87468589092225, 0.00776943250876635, 0.00695873604736988), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10')), 0), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector24
+#argv <- list(structure(list(`1` = structure(list(stats = c(-9.90250128905181, -7.70852699427806, -5.13496062122677, -3.95948091921295, 1.46970778502994), n = 29L, conf = c(-6.23492561965266, -4.03499562280088), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `2` = structure(list(stats = c(-11.1332994435188, -6.39592651878103, -4.21825647639093, -2.4710346135438, 0.142332232638518), n = 27L, conf = c(-5.41170283935282, -3.02481011342905), out = c(5.49660997093232, 3.55716552721441)), .Names = c('stats', 'n', 'conf', 'out')), `3` = structure(list(stats = c(-6.21825647639093, -4.89504044270307, -3.50339002906768, -2.12460329098075, 1.68674122392151), n = 27L, conf = c(-4.34580001700278, -2.66098004113257), out = 3.49961675599928), .Names = c('stats', 'n', 'conf', 'out')), `4` = structure(list(stats = c(-5.85766776736148, -2.17391966458661, -1.21825647639093, 0.620760276498144, 4.06758688195534), n = 27L, conf = c(-2.06803799696724, -0.368474955814626), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `5` = structure(list(stats = c(-7.47307099543129, -3.31679346391683, -0.571500134198763, 0.883997101871453, 5.68320653608317), n = 29L, conf = c(-1.8040063492643, 0.661006080866776), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `6` = structure(list(stats = c(-5.74371144541934, -1.32005454439779, -0.0691719185754582, 1.68918858100201, 5.88399710187145), n = 25L, conf = c(-1.02009274620179, 0.881748909050878), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `7` = structure(list(    stats = c(-0.959725366614089, 1.04051908078705, 2.68320653608317, 4.68320653608317, 6.86503937877323), n = 29L, conf = c(1.61444701144563, 3.7519660607207), out = c(10.4020441274641, 11.9338597320297)), .Names = c('stats', 'n', 'conf', 'out')), `8` = structure(list(stats = c(-4.31872184443094, -0.341901367712618, 2.09749871094819, 4.42849305489153, 9.86504029478776), n = 29L, conf = c(0.69787150218962, 3.49712591970676), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `9` = structure(list(    stats = c(-4.47307099543129, 1.46970778502994, 3.27573063223268, 6.09749871094819, 8.5266833961141), n = 29L, conf = c(1.91794309465097, 4.63351816981439), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `10` = structure(list(stats = c(-5.31679346391683, -1.04725655125673, 2.61440793064106, 7.68320653608317, 14.5985362650564), n = 26L, conf = c(-0.0908438616349159, 5.31965972291703), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out')), `11` = structure(list(stats = c(-4.26322883423527, -1.27884444060771, 1.37070166144218, 5.85051662661329, 10.1854674121229), n = 31L, conf = c(-0.65244259398095, 3.39384591686531), out = numeric(0)), .Names = c('stats', 'n', 'conf', 'out'))), .Dim = 11L, .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'))), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector25
+#argv <- list(structure(list(A = c(1L, NA, 1L), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA, NA, NA), E = c(FALSE, NA, TRUE), F = structure(c(1L, NA, 2L), .Label = c('abc', 'def'), class = 'factor')), .Names = c('A', 'B', 'C', 'D', 'E', 'F'), class = 'data.frame', row.names = c('1', '2', '3')), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector26
+#argv <- list(list(structure(list(srcfile = c(NA, '/home/lzhao/hg/r-instrumented/library/graphics/R/graphics'), frow = c(NA, 3990L), lrow = c(NA, 3991L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = 1:2, class = 'data.frame'), structure(list(srcfile = '/home/lzhao/hg/r-instrumented/library/graphics/R/graphics', frow = 3998L, lrow = 4009L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame')), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector27
+#argv <- list(structure(list(y = c(-0.0561287395290008, -0.155795506705329, -1.47075238389927, -0.47815005510862, 0.417941560199702, 1.35867955152904, -0.102787727342996, 0.387671611559369, -0.0538050405829051, -1.37705955682861), x = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE), z = 1:10), .Names = c('y', 'x', 'z'), terms = quote(y ~ x * z), row.names = c(NA, 10L), class = 'data.frame'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector28
+#argv <- list(list(structure(c(-1L, -2L, -3L, -4L, -5L, -6L, -7L, -8L, -9L, -10L), .Dim = c(2L, 5L)), structure(list(V1 = 1:5, V2 = 6:10, V3 = 11:15, V4 = 16:20, V5 = 21:25), .Names = c('V1', 'V2', 'V3', 'V4', 'V5'), row.names = c(NA, -5L), class = 'data.frame')), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector29
+#argv <- list(structure(list(group = structure(c(1L, 1L), .Label = c('Ctl', 'Trt'), class = 'factor', contrasts = 'contr.treatment')), .Names = 'group', class = 'data.frame', row.names = 1:2), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector3
+#argv <- list(structure(list(A = c(1, NA, 1), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA_integer_, NA_integer_, NA_integer_), E = c(FALSE, NA, TRUE), F = c('abc', NA, 'def')), .Names = c('A', 'B', 'C', 'D', 'E', 'F'), class = 'data.frame', row.names = c('1', '2', '3')), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector30
+#argv <- list(structure(c(12L, 120L, 116L), .Dim = 3L, .Dimnames = structure(list(c('0-5yrs', '6-11yrs', '12+ yrs')), .Names = ''), class = 'table'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector31
+#argv <- list(structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c('A', 'B', 'C'), class = 'factor'), 'symbol'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector32
+#argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c('Df', 'Deviance', 'Resid. Df', 'Resid. Dev'), row.names = c('NULL', 'x'), class = c('anova', 'data.frame'), heading = 'Analysis of Deviance Table\n\nModel: gaussian, link: identity\n\nResponse: y\n\nTerms added sequentially (first to last)\n\n'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector5
+#argv <- list(structure(list(group = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('Ctl', 'Trt'), class = 'factor')), .Names = 'group', class = 'data.frame', row.names = c(NA, 20L)), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector6
+#argv <- list(structure(list(y = c(1.08728092481538, 0.0420572471552261, 0.787502161306819, 0.512717751544676, 3.35376639535311, 0.204341510750309, -0.334930602487435, 0.80049208412789, -0.416177803375218, -0.777970346246018, 0.934996808181635, -0.678786709127108, 1.52621589791412, 0.5895781228122, -0.744496121210548, -1.99065153885627, 1.51286447692396, -0.750182409847851), A = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1), U = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L), .Label = c('a', 'b', 'c'), class = 'factor'), V = structure(c(1L, 1L, 2L, 2L, 3L, 3L, 1L, 1L, 2L, 2L, 3L, 3L, 1L, 1L, 2L, 2L, 3L, 3L), .Label = c('a', 'b', 'c'), class = 'factor')), .Names = c('y', 'A', 'U', 'V'), terms = quote(y ~ A:U + A:V - 1), row.names = c(NA, 18L), class = 'data.frame'), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector7
+#argv <- list(list(integer(0)), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
+[1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector9
+#argv <- list(structure(list(Plant = structure(c(5L, 5L, 5L, 5L, 5L, 5L, 5L), .Label = c('Qn1', 'Qn2', 'Qn3', 'Qc1', 'Qc3', 'Qc2', 'Mn3', 'Mn2', 'Mn1', 'Mc2', 'Mc3', 'Mc1'), class = c('ordered', 'factor')), Type = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L), .Label = c('Quebec', 'Mississippi'), class = 'factor'), Treatment = structure(c(2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('nonchilled', 'chilled'), class = 'factor')), .Names = c('Plant', 'Type', 'Treatment'), class = 'data.frame', row.names = 36:42), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
 [1] FALSE
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlength.testlength1

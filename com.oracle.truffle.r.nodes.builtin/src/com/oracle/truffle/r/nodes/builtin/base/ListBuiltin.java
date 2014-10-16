@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -37,6 +38,8 @@ import com.oracle.truffle.r.runtime.env.*;
 // for *every* type
 // and the code is essentially equivalent for each one?
 public abstract class ListBuiltin extends RBuiltinNode {
+
+    private final ConditionProfile namesNull = ConditionProfile.createBinaryProfile();
 
     protected abstract Object executeObject(VirtualFrame frame, Object arg);
 
@@ -122,9 +125,9 @@ public abstract class ListBuiltin extends RBuiltinNode {
         return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
     }
 
-    private static RStringVector argNameVector(String[] suppliedArgs) {
+    private RStringVector argNameVector(String[] suppliedArgs) {
         String[] argNames = suppliedArgs;
-        if (argNames == null) {
+        if (namesNull.profile(argNames == null)) {
             return null;
         }
         String[] names = new String[argNames.length];

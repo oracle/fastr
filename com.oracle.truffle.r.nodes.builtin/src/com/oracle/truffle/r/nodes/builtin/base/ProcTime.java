@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.lang.management.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +41,7 @@ public abstract class ProcTime extends RBuiltinNode {
     private static RStringVector RNAMES;
 
     @Specialization
+    @SlowPath
     protected RDoubleVector procTime() {
         controlVisibility();
         double[] data = new double[5];

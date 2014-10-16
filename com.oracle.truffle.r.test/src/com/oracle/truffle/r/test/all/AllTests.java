@@ -9524,11 +9524,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testLookup_48d8f6c2d2586ee471cfa0421ea5b4ae() {
-        assertEval("{ exists(\"sum\") }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testLookup_2b36458da0b28ae1a46b3e3404e77bb2() {
         assertEval("{ exists(\"sum\", inherits = FALSE) }");
     }
@@ -9591,6 +9586,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLookupIgnore_2deae78feff592acd7d61159c8e39ea7() {
         assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_48d8f6c2d2586ee471cfa0421ea5b4ae() {
+        assertEval("{ exists(\"sum\") }");
     }
 
     @Test
@@ -17704,6 +17704,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testIsPrimitive_3cf4ca3ad9258e033b55b8f6c1da7f07() {
+        assertEval("{ is.primitive(is.primitive) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testIsPrimitive_b1b1f9f533e9a2493ada5e42f6dd53b6() {
+        assertEval("{ is.primitive(is.function) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testMatching_c272d90b4e2480f9f6fc9b6bfcc79e74() {
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }");
     }
@@ -18879,8 +18889,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleValues_testFunctionLookupFailure_e8b4104d29ef2cf2fa36109e2b8627fc() {
+    public void TestSimpleValues_testFunctionLookup_e8b4104d29ef2cf2fa36109e2b8627fc() {
         assertEval("{ f<-1; f() }");
+    }
+
+    @Test
+    public void TestSimpleValues_testFunctionLookup_0d1be9fb2e00cf791b7253965e44463c() {
+        assertEval("{ abs }");
     }
 
     @Test

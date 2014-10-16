@@ -574,11 +574,20 @@ public class ArgumentMatcher {
                 RNode[] newVarArgs = Utils.resizeArray(varArgs.getArgumentNodes(), varArgsLen);
                 int index = 0;
                 for (int i = 0; i < varArgs.getArgumentNodes().length; i++) {
-                    if (varArgs.getArgumentNodes()[i] != null) {
-                        newNames[index] = varArgs.getNames() == null ? null : varArgs.getNames()[i];
-                        newVarArgs[index] = varArgs.getArgumentNodes()[i];
-                        index++;
+                    RNode varArg = varArgs.getArgumentNodes()[i];
+                    if (varArg == null) {
+                        if (newNames[i] == null) {
+                            // Skip all missing values (important for detection of emtpy "...",
+                            // which consequently collapse
+                            continue;
+                        } else {
+                            // But do not skip parameters ala "[...], builtins =, [...]"
+                            varArg = ConstantNode.create(RMissing.instance);
+                        }
                     }
+                    newNames[index] = varArgs.getNames() == null ? null : varArgs.getNames()[i];
+                    newVarArgs[index] = varArg;
+                    index++;
                 }
 
                 // "Delete and shrink": Shrink only if necessary

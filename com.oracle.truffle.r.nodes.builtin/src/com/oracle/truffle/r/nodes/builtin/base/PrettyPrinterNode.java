@@ -215,12 +215,11 @@ public abstract class PrettyPrinterNode extends RNode {
             RRootNode node = (RRootNode) operand.getTarget().getRootNode();
             FormalArguments formals = node.getFormalArguments();
             String[] formalNames = formals.getNames();
-            RNode[] defaultArgs = formals.getDefaultArgs();
             StringBuffer sb = new StringBuffer();
             sb.append("function (");
             for (int i = 0; i < formalNames.length; i++) {
                 String name = formalNames[i];
-                RNode defaultArg = defaultArgs[i];
+                RNode defaultArg = formals.getDefaultArgOrNull(i);
                 sb.append(formalNames[i]);
                 if (defaultArg != null) {
                     sb.append(" = ");
