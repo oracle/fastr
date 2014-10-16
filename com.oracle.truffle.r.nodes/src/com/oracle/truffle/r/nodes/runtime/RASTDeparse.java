@@ -95,13 +95,13 @@ public class RASTDeparse {
             state.append(") ");
             state.writeOpenCurlyNLIncIndent();
             deparseNodeOrValue(state, ifNode.getThenPart());
-            state.decIndentCloseCurly();
+            state.writeNLDecIndentCloseCurly();
             RNode elsePart = ifNode.getElsePart();
             if (elsePart != null) {
                 state.append(" else ");
                 state.writeOpenCurlyNLIncIndent();
                 deparseNodeOrValue(state, elsePart);
-                state.decIndentCloseCurly();
+                state.writeNLDecIndentCloseCurly();
             }
         } else if (node instanceof ConvertBooleanNode) {
             // if condition
