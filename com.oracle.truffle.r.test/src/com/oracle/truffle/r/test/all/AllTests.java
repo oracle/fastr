@@ -17704,6 +17704,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testIsPrimitive_3cf4ca3ad9258e033b55b8f6c1da7f07() {
+        assertEval("{ is.primitive(is.primitive) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testIsPrimitive_b1b1f9f533e9a2493ada5e42f6dd53b6() {
+        assertEval("{ is.primitive(is.function) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testMatching_c272d90b4e2480f9f6fc9b6bfcc79e74() {
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }");
     }
