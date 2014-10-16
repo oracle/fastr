@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -37,6 +38,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "rep.int", kind = SUBSTITUTE, parameterNames = {"x", "times"})
 // TODO INTERNAL
 public abstract class RepeatInternal extends RBuiltinNode {
+
+    private final ConditionProfile timesOne = ConditionProfile.createBinaryProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -143,10 +147,11 @@ public abstract class RepeatInternal extends RBuiltinNode {
         int valueLength = value.getLength();
         int times = timesVec.getLength();
         if (!(times == 1 || times == valueLength)) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
         }
         String[] array;
-        if (times == 1) {
+        if (timesOne.profile(times == 1)) {
             int length = value.getLength() * times;
             array = new String[length];
             for (int i = 0; i < times; i++) {
@@ -188,6 +193,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     protected boolean isTimesValid(RAbstractVector value, RIntVector times) {
         if (value.getLength() != times.getLength()) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "times");
         }
         return true;
