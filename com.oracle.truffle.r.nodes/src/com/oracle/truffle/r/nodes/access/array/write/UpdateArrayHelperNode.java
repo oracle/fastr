@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
@@ -66,6 +67,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Child private ArrayPositionCast castPosition;
     @Child private OperatorConverterNode operatorConverter;
     @Child private SetMultiDimDataNode setMultiDimData;
+
+    private final BranchProfile error = BranchProfile.create();
 
     public UpdateArrayHelperNode(boolean isSubset) {
         this.isSubset = isSubset;
@@ -619,7 +622,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else if (!lastPos && position > vector.getLength()) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
         } else if (position < 0) {
-            return AccessArrayNode.getPositionFromNegative(vector, position, getEncapsulatingSourceSection());
+            return AccessArrayNode.getPositionFromNegative(vector, position, getEncapsulatingSourceSection(), error);
         } else if (position == 0) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
@@ -678,7 +681,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     private Object updateListRecursive(VirtualFrame frame, Object v, Object value, RList vector, int recLevel, RStringVector p) {
-        int position = AccessArrayNode.getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
+        int position = AccessArrayNode.getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error);
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message

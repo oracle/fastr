@@ -76,7 +76,7 @@ abstract class GetNamesNode extends RNode {
         if (numPositions > 0) {
             if (numPositions == 1 && p.getDataAt(0) == 0) {
                 return null;
-            } else {
+            } else if (srcNames != RNull.instance) {
                 newNames = AccessArrayNode.getNamesVector(srcNames, p, numPositions, namesNACheck);
             }
         }
