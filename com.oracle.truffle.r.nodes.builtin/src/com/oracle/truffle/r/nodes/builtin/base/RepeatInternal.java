@@ -35,8 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "rep.int", kind = SUBSTITUTE, parameterNames = {"x", "times"})
-// TODO INTERNAL
+@RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"})
 public abstract class RepeatInternal extends RBuiltinNode {
 
     private final ConditionProfile timesOne = ConditionProfile.createBinaryProfile();
