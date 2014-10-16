@@ -16,6 +16,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -33,6 +34,8 @@ public abstract class NextMethod extends RBuiltinNode {
     @Child private ReadVariableNode rvnGeneric;
     @CompilationFinal private String lastGenericName;
 
+    private final BranchProfile errorProfile = BranchProfile.create();
+
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
@@ -44,6 +47,7 @@ public abstract class NextMethod extends RBuiltinNode {
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
         if (genericName == null) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
@@ -69,10 +73,12 @@ public abstract class NextMethod extends RBuiltinNode {
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         return enclosingArg.getClassHierarchy();
