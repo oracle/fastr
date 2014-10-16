@@ -453,7 +453,8 @@ public abstract class AccessArrayNode extends RNode {
         if (i == names.getLength()) {
             error.enter();
             throw RError.error(sourceSection, RError.Message.NO_SUCH_INDEX, recLevel + 1);
-        } else {
+        }
+        else {
             return i + 1;
         }
     }
