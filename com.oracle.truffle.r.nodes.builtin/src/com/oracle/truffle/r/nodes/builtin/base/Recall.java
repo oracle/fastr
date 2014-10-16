@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
@@ -41,6 +42,8 @@ import com.oracle.truffle.r.runtime.data.*;
 public class Recall extends RCustomBuiltinNode {
     @Child private DirectCallNode callNode;
     @CompilationFinal private RFunction function;
+
+    private final ConditionProfile argsPromise = ConditionProfile.createBinaryProfile();
 
     public Recall(RBuiltinNode prev) {
         super(prev);
@@ -63,9 +66,9 @@ public class Recall extends RCustomBuiltinNode {
         return callNode.call(frame, argsObject);
     }
 
-    private static Object[] createArgs(VirtualFrame frame, RNode argNode) {
+    private Object[] createArgs(VirtualFrame frame, RNode argNode) {
         RNode actualArgNode = argNode instanceof WrapArgumentNode ? ((WrapArgumentNode) argNode).getOperand() : argNode;
-        if (actualArgNode instanceof InlineVarArgsPromiseNode) {
+        if (argsPromise.profile(actualArgNode instanceof InlineVarArgsPromiseNode)) {
             RArgsValuesAndNames varArgs = (RArgsValuesAndNames) actualArgNode.execute(frame);
             return varArgs.getValues();
         } else {
