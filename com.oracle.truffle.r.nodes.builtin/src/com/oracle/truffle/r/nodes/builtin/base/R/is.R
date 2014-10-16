@@ -25,6 +25,6 @@ is.vector <- function(x, mode="any") .Internal(is.vector(x,mode))
 #    x[value] <- NA
 #    x
 #}
-#
-#is.primitive <- function(x)
-#    switch(typeof(x), "special" = , "builtin" = TRUE, FALSE)
+
+is.primitive <- function(x)
+    switch(typeof(x), "special" = , "builtin" = TRUE, FALSE)

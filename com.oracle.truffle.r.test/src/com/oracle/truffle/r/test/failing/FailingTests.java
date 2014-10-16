@@ -1959,16 +1959,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleFunctions_testIsPrimitive_3cf4ca3ad9258e033b55b8f6c1da7f07() {
-        assertEval("{ is.primitive(is.primitive) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testIsPrimitive_b1b1f9f533e9a2493ada5e42f6dd53b6() {
-        assertEval("{ is.primitive(is.function) }");
-    }
-
-    @Ignore
     public void TestSimpleFunctions_testReturnIgnore_ea86042d5ec0a9de6c14aabc98049cf0() {
         assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
     }

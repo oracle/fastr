@@ -15575,6 +15575,14 @@ function (..., na.rm = FALSE)  .Primitive("sum")
 #{ f <- function(x) x+1 ; g <- function(x) x+2 ; v <- 2 ; (if (v==1) f else g)(1) }
 [1] 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testIsPrimitive
+#{ is.primitive(is.function) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testIsPrimitive
+#{ is.primitive(is.primitive) }
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ f <- function(a) { a } ; f(1,2) }
 Error in f(1, 2) : unused argument (2)
