@@ -25,23 +25,16 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "is.function", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class IsFunction extends RBuiltinNode {
+public abstract class IsFunction extends IsTypeNode {
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected byte isFunction(RFunction x) {
+    @Override
+    protected byte isType(RFunction value) {
         return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Fallback
-    @SuppressWarnings("unused")
-    protected byte isFunction(Object x) {
-        return RRuntime.LOGICAL_FALSE;
     }
 
 }
