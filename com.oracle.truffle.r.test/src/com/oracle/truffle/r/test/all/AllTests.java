@@ -4574,6 +4574,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testArrayTypeCheck_6252aa167e83b0d09402ffe99c021238() {
+        assertEval("{ is.array(as.array(1)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsCall_a146c9552ca6af629baeecad4f1a8280() {
         assertEval("{ l <- list(f) ; as.call(l) }");
     }
@@ -5146,6 +5151,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testAsVector_73bc292dddea0adb6832fc9f79b8d507() {
         assertEvalWarning("{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAtomicTypeCheck_76125284e6e9a5c57652540a885ee844() {
+        assertEval("{ is.atomic(integer()) }");
     }
 
     @Test
@@ -6721,6 +6731,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCumulativeSumBroken_598bb2dd748d2cd878a7312e7a0935c9() {
         assertEval("{ cumsum((1:6)*(1+1i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDataFrameTypeCheck_4ad1a2b80cb3587837ab3d0eccd188e8() {
+        assertEval("{ is.data.frame(as.data.frame(1)) }");
     }
 
     @Test
@@ -9999,6 +10014,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatrixTypeCheck_4fd07ac0cbdac7dacc769f299c704ef6() {
+        assertEval("{ is.matrix(as.matrix(1)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMaximum_6bbb1dbae8964defa9b0e785d0ac9cd5() {
         assertEval("{ max((-1):100) }");
     }
@@ -10771,6 +10791,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testNgettext_ce3ce2ba3594588e16cd0812ff6bcdd5() {
         assertEvalWarning("{ ngettext(1+1i, \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNumericTypeCheck_e995598058224a724580da7326908239() {
+        assertEval("{ is.numeric(1:6) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testObjectTypeCheck_dce6b262887cd8e546eeebc607cac329() {
+        assertEval("{ e <- expression(x + 1); class(e) <- \"foo\"; is.object(e) }");
     }
 
     @Test
@@ -14631,116 +14661,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testTrigExp_c21e1bbe274eb5d2f64ce8c7350fd2a6() {
         assertEvalError("{ expm1() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_4ad2fc9014b639c9865b3f87a754d86b() {
-        assertEval("{ is.double(10L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_a09943eec69c0f9e6c5108055eec119a() {
-        assertEval("{ is.double(10) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_8a62928742d9328c0d2b62ebb0aaa3eb() {
-        assertEval("{ is.double(\"10\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_73b039879ab6c5b42795c2d117043aa9() {
-        assertEval("{ is.numeric(10L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_0b260831340c6db5b75b5343f4d81141() {
-        assertEval("{ is.numeric(10) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_5fb1f85fd979e797ae381ddc6aa28d81() {
-        assertEval("{ is.numeric(TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_918eddac7eccb3a1f6e6db8ef40e5e88() {
-        assertEval("{ is.character(\"hi\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_1d50db654ed0e3b39436f75f170da0eb() {
-        assertEval("{ is.logical(1L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_8ef21fca19da63ee364eaead6eec8dff() {
-        assertEval("{ is.integer(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_b3240109e17bef22adb2244c9588ecd1() {
-        assertEval("{ is.integer(1L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_119fa91e62811491da293d9888681f22() {
-        assertEval("{ is.complex(1i) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_28a1fd268cf649ed4571a85d1fea88fd() {
-        assertEval("{ is.complex(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_3ab2e42a3bbdf4c825bbb035a00e6a29() {
-        assertEval("{ is.raw(raw()) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_ed27de3be242606ea27d2246faaf0ae7() {
-        assertEval("{ is.logical(NA) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_05ed427ea5ed1e2a96e61f007cbd5cd7() {
-        assertEval("{ is.matrix(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_aea25d02a08b3d0682a3cc768137582c() {
-        assertEval("{ is.matrix(NULL) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_5d58ab660464a607a098cd9272d211a9() {
-        assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_c5ae72c4471fe269e025837002cf6b4f() {
-        assertEval("{ is.array(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_9fd110693bdcf0f4f6c80bdbb70502cf() {
-        assertEval("{ is.array(NULL) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_1255c1431b609d712fe80ec07f61dfca() {
-        assertEval("{ is.array(matrix(1:6, nrow=2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_d57496c27c1d770f9553513344aaffe8() {
-        assertEval("{ is.array(1:6) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_7f8323b03018432a0d32c10f362ec5d7() {
-        assertEval("{ is.list(NULL) }");
     }
 
     @Test

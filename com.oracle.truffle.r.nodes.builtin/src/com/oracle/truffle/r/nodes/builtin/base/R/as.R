@@ -66,16 +66,16 @@ if (is.matrix(x)) x
 #as.function.default <- function (x, envir = parent.frame(), ...)
 #  if (is.function(x)) x else .Internal(as.function.default(x, envir))
 #
-#as.array <- function(x, ...) UseMethod("as.array")
-#as.array.default <- function(x, ...)
-#{
-#  if(is.array(x)) return(x)
-#  n <- names(x)
-#  dim(x) <- length(x)
-#  if(length(n)) dimnames(x) <- list(n)
-#  return(x)
-#}
-#
+as.array <- function(x, ...) UseMethod("as.array")
+as.array.default <- function(x, ...)
+{
+  if(is.array(x)) return(x)
+  n <- names(x)
+  dim(x) <- length(x)
+  if(length(n)) dimnames(x) <- list(n)
+  return(x)
+}
+
 #as.symbol <- function(x) .Internal(as.vector(x, "symbol"))
 as.symbol <- function(x) as.vector(x, "symbol")
 as.name <- as.symbol
