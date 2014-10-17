@@ -2003,22 +2003,72 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ t(t(matrix(1:4, nrow=2))) }");
     }
 
+    //@formatter:off
+    private static final String[] BASIC_TYPES = new String[]{
+        "call", "character", "complex", "double", "expression", "function", "integer", "list",
+        "logical", "name", "symbol", "null", "pairlist", "raw",
+    };
+
+    private static final String[] BASIC_TYPE_VALUES = new String[]{
+        "call(\"foo\")", "\"1\"", "1i", "1", "expression(x + 1)", "function() { }",
+        "1L", "list()", "TRUE", "quote(x)", "NULL", "pairlist()", "raw()"
+    };
+
+    //@formatter:on
+
+    @Test
+    public void testBasicTypes() {
+        // cross-product of all basic types and values
+        assertTemplateEval(template("is.%0(%1)", BASIC_TYPES, BASIC_TYPE_VALUES));
+    }
+
+    @Test
+    public void testArrayTypeCheck() {
+        assertTemplateEval(template("is.array(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.array(as.array(1)) }");
+    }
+
+    @Test
+    public void testAtomicTypeCheck() {
+        assertTemplateEval(template("is.atomic(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.atomic(integer()) }");
+    }
+
+    @Test
+    public void testDataFrameTypeCheck() {
+        assertTemplateEval(template("is.data.frame(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.data.frame(as.data.frame(1)) }");
+    }
+
+    @Test
+    public void testLanguageTypeCheck() {
+        assertTemplateEval(template("is.language(%0)", BASIC_TYPE_VALUES));
+    }
+
+    @Test
+    public void testMatrixTypeCheck() {
+        assertTemplateEval(template("is.matrix(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.matrix(as.matrix(1)) }");
+    }
+
+    @Test
+    public void testObjectTypeCheck() {
+        assertTemplateEval(template("is.object(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ e <- expression(x + 1); class(e) <- \"foo\"; is.object(e) }");
+    }
+
+    @Test
+    public void testNumericTypeCheck() {
+        assertTemplateEval(template("is.numeric(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.numeric(1:6) }");
+    }
+
     @Test
     public void testTypeCheck() {
-        assertEval("{ is.double(10L) }");
-        assertEval("{ is.double(10) }");
-        assertEval("{ is.double(\"10\") }");
+        // test the complex (multi-basic-type) types
         assertEval("{ is.numeric(10L) }");
         assertEval("{ is.numeric(10) }");
         assertEval("{ is.numeric(TRUE) }");
-        assertEval("{ is.character(\"hi\") }");
-        assertEval("{ is.logical(1L) }");
-        assertEval("{ is.integer(1) }");
-        assertEval("{ is.integer(1L) }");
-        assertEval("{ is.complex(1i) }");
-        assertEval("{ is.complex(1) }");
-        assertEval("{ is.raw(raw()) }");
-        assertEval("{ is.logical(NA) }");
         assertEval("{ is.matrix(1) }");
         assertEval("{ is.matrix(NULL) }");
         assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
@@ -2026,7 +2076,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ is.array(NULL) }");
         assertEval("{ is.array(matrix(1:6, nrow=2)) }");
         assertEval("{ is.array(1:6) }");
-        assertEval("{ is.list(NULL) }");
     }
 
     @Test
