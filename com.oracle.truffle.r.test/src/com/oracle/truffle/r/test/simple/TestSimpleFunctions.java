@@ -291,4 +291,10 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ exists }");
     }
 
+    @Test
+    public void testIsPrimitive() {
+        assertEval("{ is.primitive(is.primitive) }");
+        assertEval("{ is.primitive(is.function) }");
+    }
+
 }

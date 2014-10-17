@@ -180,8 +180,9 @@ public class TestSimpleValues extends TestBase {
     }
 
     @Test
-    public void testFunctionLookupFailure() {
+    public void testFunctionLookup() {
         assertEval("{ f<-1; f() }");
+        assertEval("{ abs }");
     }
 
 }

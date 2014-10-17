@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -43,8 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
 public abstract class Repeat extends RBuiltinNode {
 
-    private final BranchProfile withNames = BranchProfile.create();
-    private final BranchProfile noNames = BranchProfile.create();
+    private final ConditionProfile noNames = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -210,6 +210,7 @@ public abstract class Repeat extends RBuiltinNode {
     // * single length.out argument (supersedes times)
     //
 
+    @SlowPath
     private static RStringVector getNamesTimes(RAbstractVector value, int times) {
         int oldLength = value.getLength();
         int length = oldLength * times;
@@ -223,6 +224,7 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createStringVector(names, oldNames.isComplete());
     }
 
+    @SlowPath
     private static RStringVector getNamesLength(RAbstractVector value, int lengthOut) {
         String[] names = new String[lengthOut];
         RStringVector oldNames = (RStringVector) value.getNames();
@@ -244,11 +246,9 @@ public abstract class Repeat extends RBuiltinNode {
                 array[i * oldLength + j] = value.getDataAt(j);
             }
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createIntVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createIntVector(array, value.isComplete(), getNamesTimes(value, times));
         }
     }
@@ -267,11 +267,9 @@ public abstract class Repeat extends RBuiltinNode {
         for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j);
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createIntVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createIntVector(array, value.isComplete(), getNamesLength(value, lengthOut));
         }
     }
@@ -288,11 +286,9 @@ public abstract class Repeat extends RBuiltinNode {
                 array[i * oldLength + j] = value.getDataAt(j);
             }
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createDoubleVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createDoubleVector(array, value.isComplete(), getNamesTimes(value, times));
         }
     }
@@ -311,11 +307,9 @@ public abstract class Repeat extends RBuiltinNode {
         for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j);
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createDoubleVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createDoubleVector(array, value.isComplete(), getNamesLength(value, lengthOut));
         }
     }
@@ -332,11 +326,9 @@ public abstract class Repeat extends RBuiltinNode {
                 array[i * oldLength + j] = value.getDataAt(j).getValue();
             }
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createRawVector(array);
         } else {
-            withNames.enter();
             return RDataFactory.createRawVector(array, getNamesTimes(value, times));
         }
     }
@@ -355,11 +347,9 @@ public abstract class Repeat extends RBuiltinNode {
         for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j).getValue();
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createRawVector(array);
         } else {
-            withNames.enter();
             return RDataFactory.createRawVector(array, getNamesLength(value, lengthOut));
         }
     }
@@ -379,11 +369,9 @@ public abstract class Repeat extends RBuiltinNode {
                 array[index + 1] = complex.getImaginaryPart();
             }
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createComplexVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createComplexVector(array, value.isComplete(), getNamesTimes(value, times));
         }
     }
@@ -405,11 +393,9 @@ public abstract class Repeat extends RBuiltinNode {
             array[i] = complex.getRealPart();
             array[i + 1] = complex.getImaginaryPart();
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createComplexVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createComplexVector(array, value.isComplete(), getNamesLength(value, lengthOut));
         }
     }
@@ -426,11 +412,9 @@ public abstract class Repeat extends RBuiltinNode {
                 array[i * oldLength + j] = value.getDataAt(j);
             }
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createLogicalVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createLogicalVector(array, value.isComplete(), getNamesTimes(value, times));
         }
     }
@@ -449,11 +433,9 @@ public abstract class Repeat extends RBuiltinNode {
         for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j);
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createLogicalVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createLogicalVector(array, value.isComplete(), getNamesLength(value, lengthOut));
         }
     }
@@ -470,11 +452,9 @@ public abstract class Repeat extends RBuiltinNode {
                 array[i * oldLength + j] = value.getDataAt(j);
             }
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createStringVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createStringVector(array, value.isComplete(), getNamesTimes(value, times));
         }
     }
@@ -493,11 +473,9 @@ public abstract class Repeat extends RBuiltinNode {
         for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j);
         }
-        if (value.getNames() == RNull.instance) {
-            noNames.enter();
+        if (noNames.profile(value.getNames() == RNull.instance)) {
             return RDataFactory.createStringVector(array, value.isComplete());
         } else {
-            withNames.enter();
             return RDataFactory.createStringVector(array, value.isComplete(), getNamesLength(value, lengthOut));
         }
     }
@@ -534,8 +512,7 @@ public abstract class Repeat extends RBuiltinNode {
                 result.transferElementSameType(w++, valueMaterialized, r);
             }
         }
-        if (value.getNames() != RNull.instance) {
-            withNames.enter();
+        if (!noNames.profile(value.getNames() == RNull.instance)) {
             result.setNames(getNamesTimes(value, times, result.getLength()));
         }
 

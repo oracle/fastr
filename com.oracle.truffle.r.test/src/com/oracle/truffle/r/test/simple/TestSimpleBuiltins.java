@@ -1839,7 +1839,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ assign(\"z\", 10, inherits=TRUE) ; z }");
 
         // top-level lookups
-        assertEval("{ exists(\"sum\") }");
         assertEval("{ exists(\"sum\", inherits = FALSE) }");
         assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
 
@@ -1857,6 +1856,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
         assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
 
+        // top-level lookups
+        assertEval("{ exists(\"sum\") }");
     }
 
     @Test

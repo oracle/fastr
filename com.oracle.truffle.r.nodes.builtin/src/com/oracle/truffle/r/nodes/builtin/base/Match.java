@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -295,9 +297,7 @@ public abstract class Match extends RBuiltinNode {
 
     private static int[] initResult(int length, int nomatch) {
         int[] result = new int[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = nomatch;
-        }
+        Arrays.fill(result, nomatch);
         return result;
     }
 
