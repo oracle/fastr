@@ -69,7 +69,18 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Child private SetMultiDimDataNode setMultiDimData;
 
     private final BranchProfile error = BranchProfile.create();
-    private final ConditionProfile posNaProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile warning = BranchProfile.create();
+    private final ConditionProfile negativePosProfile = ConditionProfile.createBinaryProfile();
+
+    private final BranchProfile vectorShared = BranchProfile.create();
+    private final BranchProfile vectorTooShort = BranchProfile.create();
+    private final BranchProfile vectorNoDims = BranchProfile.create();
+
+    private final ConditionProfile noResultNames = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
+
+    private final BranchProfile recLevelZero = BranchProfile.create();
+    private final ConditionProfile twoPosProfile = ConditionProfile.createBinaryProfile();
 
     public UpdateArrayHelperNode(boolean isSubset) {
         this.isSubset = isSubset;
@@ -282,16 +293,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-// @Specialization(guards = "isPosZero")
-// RAbstractVector updateZero(VirtualFrame frame, Object v, RNull value, int recLevel, int position,
-// RAbstractVector vector) {
-// if (!isSubset) {
-// throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-// } else {
-// return vector;
-// }
-// }
-
     private int getSrcArrayBase(int pos, int accSrcDimensions) {
         if (posNACheck.check(pos)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
@@ -299,6 +300,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return accSrcDimensions * (pos - 1);
         }
     }
+
+    private final BranchProfile handleNa = BranchProfile.create();
 
     private int getReplacementLength(Object[] positions, RAbstractContainer value, boolean isList) {
         int valueLength = value.getLength();
@@ -322,15 +325,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     }
                 }
             }
-            if (allZeros) {
-                length = 0;
-            } else {
-                length *= p.getLength();
-            }
+            length = allZeros ? 0 : length * p.getLength();
         }
         if (valueLength != 0 && length != 0 && length % valueLength != 0) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else if (seenNA) {
+            handleNa.enter();
             handleNaMultiDim(value, isList, isSubset, getEncapsulatingSourceSection());
         }
         return length;
@@ -354,15 +355,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 highestPos = pos;
             }
         }
-        if (numNAs == positions.getLength()) {
-            return numNAs;
-        } else {
-            return highestPos;
-        }
+        return numNAs == positions.getLength() ? numNAs : highestPos;
     }
 
-    private static RStringVector getNamesVector(RVector resultVector) {
-        if (resultVector.getNames() == RNull.instance) {
+    private RStringVector getNamesVector(RVector resultVector) {
+        if (noResultNames.profile(resultVector.getNames() == RNull.instance)) {
             String[] namesData = new String[resultVector.getLength()];
             Arrays.fill(namesData, RRuntime.NAMES_ATTR_EMPTY_VALUE);
             RStringVector names = RDataFactory.createStringVector(namesData, RDataFactory.COMPLETE_VECTOR);
@@ -373,8 +370,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
+    private final BranchProfile posNames = BranchProfile.create();
+
     private void updateNames(RVector resultVector, RIntVector positions) {
         if (positions.getNames() != RNull.instance) {
+            posNames.enter();
             RStringVector names = getNamesVector(resultVector);
             RStringVector newNames = (RStringVector) positions.getNames();
             namesNACheck.enable(newNames);
@@ -423,7 +423,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     protected RIntVector update(Object v, RAbstractIntVector value, int recLevel, int position, RNull vector) {
-        if (position > 1) {
+        if (multiPosProfile.profile(position > 1)) {
             int[] data = new int[position];
             Arrays.fill(data, RRuntime.INT_NA);
             return updateSingleDim(value, RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR), position);
@@ -442,7 +442,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     protected RDoubleVector update(Object v, RAbstractDoubleVector value, int recLevel, int position, RNull vector) {
-        if (position > 1) {
+        if (multiPosProfile.profile(position > 1)) {
             double[] data = new double[position];
             Arrays.fill(data, RRuntime.DOUBLE_NA);
             return updateSingleDim(value, RDataFactory.createDoubleVector(data, RDataFactory.INCOMPLETE_VECTOR), position);
@@ -461,7 +461,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     protected RLogicalVector update(Object v, RAbstractLogicalVector value, int recLevel, int position, RNull vector) {
-        if (position > 1) {
+        if (multiPosProfile.profile(position > 1)) {
             byte[] data = new byte[position];
             Arrays.fill(data, RRuntime.LOGICAL_NA);
             return updateSingleDim(value, RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR), position);
@@ -480,7 +480,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     protected RStringVector update(Object v, RAbstractStringVector value, int recLevel, int position, RNull vector) {
-        if (position > 1) {
+        if (multiPosProfile.profile(position > 1)) {
             String[] data = new String[position];
             Arrays.fill(data, RRuntime.STRING_NA);
             return updateSingleDim(value, RDataFactory.createStringVector(data, RDataFactory.INCOMPLETE_VECTOR), position);
@@ -503,7 +503,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, int recLevel, int position, RNull vector) {
-        if (position > 1) {
+        if (multiPosProfile.profile(position > 1)) {
             double[] data = new double[position << 1];
             int ind = 0;
             for (int i = 0; i < position; i++) {
@@ -570,6 +570,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RList) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -593,19 +594,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RList getResultVector(RList vector, int highestPos, boolean resetDims) {
+    private RList getResultVector(RList vector, int highestPos, boolean resetDims) {
         RList resultVector = vector;
         if (resultVector.isShared()) {
+            vectorShared.enter();
             resultVector = (RList) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             int orgLength = resultVector.getLength();
             resultVector.resizeWithNames(highestPos);
             for (int i = orgLength; i < highestPos; i++) {
                 resultVector.updateDataAt(i, RNull.instance, null);
             }
         } else if (resetDims) {
+            vectorNoDims.enter();
             resultVector.setDimensions(null);
             resultVector.setDimNames(null);
         }
@@ -614,6 +618,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private int getPositionInRecursion(RList vector, int position, int recLevel, boolean lastPos) {
         if (RRuntime.isNA(position)) {
+            error.enter();
             if (lastPos && recLevel > 0) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (recLevel == 0) {
@@ -622,10 +627,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
             }
         } else if (!lastPos && position > vector.getLength()) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
         } else if (position < 0) {
+            error.enter();
             return AccessArrayNode.getPositionFromNegative(vector, position, getEncapsulatingSourceSection(), error);
         } else if (position == 0) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         return position;
@@ -636,15 +644,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
+    private final BranchProfile valShared = BranchProfile.create();
+    private final BranchProfile valNonTmp = BranchProfile.create();
+    private final BranchProfile valTmp = BranchProfile.create();
+
     // this is similar to what happens on "regular" (non-vector) assignment - the state has to
     // change to avoid erroneous sharing
-    private static RShareable adjustRhsStateOnAssignment(RAbstractContainer value) {
+    private RShareable adjustRhsStateOnAssignment(RAbstractContainer value) {
         RShareable val = value.materializeToShareable();
         if (val.isShared()) {
+            valShared.enter();
             val = val.copy();
         } else if (!val.isTemporary()) {
+            valNonTmp.enter();
             val.makeShared();
         } else if (val.isTemporary()) {
+            valTmp.enter();
             val.markNonTemporary();
         }
         return val;
@@ -659,23 +674,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RList updateSingleDimVector(RAbstractContainer value, int orgVectorLength, RList resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RNull.instance, null);
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RNull.instance, null);
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAtAsObject(i % value.getLength()), null);
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -687,15 +701,17 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         Object el;
         RList resultList = vector;
         if (recLevel == 0) {
+            recLevelZero.enter();
             // TODO: does it matter to make it smarter (mark nested lists as shared during copy?)
             resultList = (RList) vector.deepCopy();
         }
-        if (p.getLength() == 2) {
+        if (twoPosProfile.profile(p.getLength() == 2)) {
             Object finalVector = coerceVector(frame, resultList.getDataAt(position - 1), value, p);
             Object lastPosition = castPosition(frame, finalVector, convertOperand(frame, finalVector, p.getDataAt(1)));
             el = updateRecursive(frame, v, value, finalVector, lastPosition, recLevel + 1);
@@ -768,6 +784,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RList removeElement(RList vector, int position, boolean inRecursion, boolean resetDims) {
         if (position > vector.getLength()) {
+            vectorTooShort.enter();
             if (inRecursion || !isSubset) {
                 // simply return the vector unchanged
                 return vector;
@@ -776,35 +793,29 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 // removing the last element
                 return getResultVector(vector, position - 1, resetDims);
             }
-        } else {
-            Object[] data = new Object[vector.getLength() - 1];
-            RStringVector orgNames = null;
-            String[] namesData = null;
-            if (vector.getNames() != RNull.instance) {
-                namesData = new String[vector.getLength() - 1];
-                orgNames = (RStringVector) vector.getNames();
-            }
-
-            int ind = 0;
-            for (int i = 0; i < vector.getLength(); i++) {
-                if (i != (position - 1)) {
-                    data[ind] = vector.getDataAt(i);
-                    if (orgNames != null) {
-                        namesData[ind] = orgNames.getDataAt(i);
-                    }
-                    ind++;
-                }
-            }
-
-            RList result;
-            if (orgNames == null) {
-                result = RDataFactory.createList(data);
-            } else {
-                result = RDataFactory.createList(data, RDataFactory.createStringVector(namesData, vector.isComplete()));
-            }
-            result.copyRegAttributesFrom(vector);
-            return result;
         }
+        Object[] data = new Object[vector.getLength() - 1];
+        RStringVector orgNames = null;
+        String[] namesData = null;
+        if (vector.getNames() != RNull.instance) {
+            namesData = new String[vector.getLength() - 1];
+            orgNames = (RStringVector) vector.getNames();
+        }
+
+        int ind = 0;
+        for (int i = 0; i < vector.getLength(); i++) {
+            if (i != (position - 1)) {
+                data[ind] = vector.getDataAt(i);
+                if (orgNames != null) {
+                    namesData[ind] = orgNames.getDataAt(i);
+                }
+                ind++;
+            }
+        }
+
+        RList result = RDataFactory.createList(data, orgNames == null ? null : RDataFactory.createStringVector(namesData, vector.isComplete()));
+        result.copyRegAttributesFrom(vector);
+        return result;
     }
 
     @Specialization(guards = {"!isPosZero", "!emptyList", "!isPosNA", "!isPositionNegative"})
@@ -827,11 +838,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         RList list = vector;
         if (list.isShared()) {
+            vectorShared.enter();
             list = (RList) vector.copy();
             list.markNonTemporary();
         }
         int highestPos = getHighestPos(positions);
         if (list.getLength() < highestPos) {
+            vectorTooShort.enter();
             // to mark duplicate deleted elements with positions > vector length
             list = list.copyResized(highestPos, false);
         }
@@ -849,34 +862,33 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         int resultVectorLength = highestPos > list.getLength() ? highestPos - posDeleted : list.getLength() - posDeleted;
         Object[] data = new Object[resultVectorLength];
-        RStringVector orgNames = null;
-        String[] namesData = null;
-        if (vector.getNames() != RNull.instance) {
-            namesData = new String[resultVectorLength];
-            orgNames = (RStringVector) vector.getNames();
-        }
 
-        int ind = 0;
-        for (int i = 0; i < vector.getLength(); i++) {
-            Object el = list.getDataAt(i);
-            if (el != DELETE_MARKER) {
-                data[ind] = el;
-                if (orgNames != null) {
-                    namesData[ind] = orgNames.getDataAt(i);
-                }
-                ind++;
-            }
-        }
-        for (; ind < data.length; ind++) {
-            data[ind] = RNull.instance;
-            if (orgNames != null) {
-                namesData[ind] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-            }
-        }
         RList result;
-        if (orgNames == null) {
-            result = RDataFactory.createList(data);
+        if (noResultNames.profile(vector.getNames() == RNull.instance)) {
+            int ind = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                Object el = list.getDataAt(i);
+                if (el != DELETE_MARKER) {
+                    data[ind] = el;
+                    ind++;
+                }
+            }
+            Arrays.fill(data, ind, data.length, RNull.instance);
+            result = RDataFactory.createList(data, null);
         } else {
+            String[] namesData = new String[resultVectorLength];
+            RStringVector orgNames = (RStringVector) vector.getNames();
+            int ind = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                Object el = list.getDataAt(i);
+                if (el != DELETE_MARKER) {
+                    data[ind] = el;
+                    namesData[ind] = orgNames.getDataAt(i);
+                    ind++;
+                }
+            }
+            Arrays.fill(data, ind, data.length, RNull.instance);
+            Arrays.fill(namesData, ind, data.length, RRuntime.NAMES_ATTR_EMPTY_VALUE);
             result = RDataFactory.createList(data, RDataFactory.createStringVector(namesData, orgNames.isComplete()));
         }
         result.copyRegAttributesFrom(vector);
@@ -888,15 +900,17 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         RList resultList = vector;
         if (recLevel == 0) {
             // TODO: does it matter to make it smarter (mark nested lists as shared during copy?)
+            recLevelZero.enter();
             resultList = (RList) vector.deepCopy();
         }
         Object el;
-        if (p.getLength() == 2) {
+        if (twoPosProfile.profile(p.getLength() == 2)) {
             Object finalVector = coerceVector(frame, resultList.getDataAt(position - 1), value, p);
             Object lastPosition = castPosition(frame, finalVector, convertOperand(frame, finalVector, p.getDataAt(1)));
             el = updateRecursive(frame, v, value, finalVector, lastPosition, recLevel + 1);
@@ -1016,6 +1030,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (resultVector.isShared()) {
+            vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -1040,13 +1055,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RIntVector getResultVector(RAbstractIntVector vector, int highestPos) {
+    private RIntVector getResultVector(RAbstractIntVector vector, int highestPos) {
         RIntVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
+            vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
@@ -1058,8 +1075,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private boolean seenNA(int p, RAbstractContainer value) {
-        if (posNACheck.check(p) || p < 0) {
+    private ConditionProfile naOrNegativeProfile = ConditionProfile.createBinaryProfile();
+
+    private boolean seenNaOrNegative(int p, RAbstractContainer value) {
+        if (naOrNegativeProfile.profile(posNACheck.check(p) || p < 0)) {
             if (value.getLength() == 1) {
                 return true;
             } else {
@@ -1070,12 +1089,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    protected static boolean handleNaMultiDim(RAbstractContainer value, boolean isList, boolean isSubset, SourceSection sourceSection) {
+    protected static void handleNaMultiDim(RAbstractContainer value, boolean isList, boolean isSubset, SourceSection sourceSection) {
         if (value.getLength() == 1) {
             if (!isSubset) {
                 throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
-            } else {
-                return true;
             }
         } else {
             if (!isSubset) {
@@ -1092,24 +1109,23 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RIntVector updateSingleDimVector(RAbstractIntVector value, int orgVectorLength, RIntVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RRuntime.INT_NA, elementNACheck);
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RRuntime.INT_NA, elementNACheck);
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAt(i % value.getLength()), elementNACheck);
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -1212,6 +1228,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (resultVector.isShared()) {
+            vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -1236,13 +1253,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RDoubleVector getResultVector(RAbstractDoubleVector vector, int highestPos) {
+    private RDoubleVector getResultVector(RAbstractDoubleVector vector, int highestPos) {
         RDoubleVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
+            vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
@@ -1256,18 +1275,16 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RDoubleVector updateSingleDimVector(RAbstractDoubleVector value, int orgVectorLength, RDoubleVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RRuntime.DOUBLE_NA, elementNACheck);
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RRuntime.DOUBLE_NA, elementNACheck);
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAt(i % value.getLength()), elementNACheck);
             }
@@ -1276,6 +1293,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             Utils.nyi();
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -1399,6 +1417,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -1423,13 +1442,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RLogicalVector getResultVector(RLogicalVector vector, int highestPos) {
+    private RLogicalVector getResultVector(RLogicalVector vector, int highestPos) {
         RLogicalVector resultVector = vector;
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
@@ -1443,23 +1464,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RLogicalVector updateSingleDimVector(RAbstractLogicalVector value, int orgVectorLength, RLogicalVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RRuntime.LOGICAL_NA, elementNACheck);
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RRuntime.LOGICAL_NA, elementNACheck);
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAt(i % value.getLength()), elementNACheck);
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -1511,6 +1531,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -1535,13 +1556,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RStringVector getResultVector(RStringVector vector, int highestPos) {
+    private RStringVector getResultVector(RStringVector vector, int highestPos) {
         RStringVector resultVector = vector;
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
@@ -1555,23 +1578,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RStringVector updateSingleDimVector(RAbstractStringVector value, int orgVectorLength, RStringVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RRuntime.STRING_NA, elementNACheck);
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RRuntime.STRING_NA, elementNACheck);
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAt(i % value.getLength()), elementNACheck);
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -1659,6 +1681,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -1683,13 +1706,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RComplexVector getResultVector(RComplexVector vector, int highestPos) {
+    private RComplexVector getResultVector(RComplexVector vector, int highestPos) {
         RComplexVector resultVector = vector;
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
@@ -1703,23 +1728,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RComplexVector updateSingleDimVector(RAbstractComplexVector value, int orgVectorLength, RComplexVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RRuntime.createComplexNA(), elementNACheck);
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RRuntime.createComplexNA(), elementNACheck);
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAt(i % value.getLength()), elementNACheck);
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -1879,6 +1903,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return resultVector;
         }
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
             resultVector.markNonTemporary();
         }
@@ -1902,13 +1927,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private static RRawVector getResultVector(RRawVector vector, int highestPos) {
+    private RRawVector getResultVector(RRawVector vector, int highestPos) {
         RRawVector resultVector = vector;
         if (vector.isShared()) {
+            vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
             resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
             resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
@@ -1921,23 +1948,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RRawVector updateSingleDimVector(RAbstractRawVector value, int orgVectorLength, RRawVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
-            if (seenNA(p, value)) {
+            if (seenNaOrNegative(p, value)) {
                 continue;
             }
-            if (p < 0) {
-                int pos = -(p + 1);
-                if (pos >= orgVectorLength) {
-                    resultVector.updateDataAt(pos, RDataFactory.createRaw((byte) 0));
-                }
+            if (negativePosProfile.profile(p < 0 && -(p + 1) >= orgVectorLength)) {
+                resultVector.updateDataAt(-(p + 1), RDataFactory.createRaw((byte) 0));
             } else {
                 resultVector.updateDataAt(p - 1, value.getDataAt(i % value.getLength()));
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
+            warning.enter();
             RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
@@ -2287,6 +2313,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
+            error.enter();
             if (isSubset) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
             } else {
@@ -2298,6 +2325,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length == 2) {
+            error.enter();
             if (isSubset) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
             } else {
@@ -2309,6 +2337,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
+            error.enter();
             if (isSubset) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
             } else {
@@ -2320,6 +2349,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
+            error.enter();
             if (isSubset) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
             } else {
@@ -2331,6 +2361,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length > 2) {
+            error.enter();
             if (isSubset) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
             } else {
@@ -2342,6 +2373,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
+            error.enter();
             if (isSubset) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
             } else {
