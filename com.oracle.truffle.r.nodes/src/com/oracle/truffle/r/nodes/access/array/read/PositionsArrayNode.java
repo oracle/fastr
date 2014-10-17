@@ -28,24 +28,14 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 
 @NodeChild(value = "vector", type = RNode.class)
-public class PositionsArrayNode extends RNode {
-    @Children private final ArrayPositionCast[] elements;
-    @Children private final RNode[] positions;
-    @Children private final OperatorConverterNode[] operatorConverters;
-    @Children private final MultiDimPosConverterNode[] multiDimOperatorConverters;
+public class PositionsArrayNode extends PositionsArrayNodeAdapter {
+    @Children protected final MultiDimPosConverterNode[] multiDimOperatorConverters;
 
-    @Override
-    public void deparse(State state) {
-        for (int i = 0; i < positions.length; i++) {
-            positions[i].deparse(state);
-            if (i != positions.length - 1) {
-                state.append(", ");
-            }
-        }
+    public PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
+        super(elements, positions, operatorConverters);
+        this.multiDimOperatorConverters = multiDimOperatorConverters;
     }
 
     @ExplodeLoop
@@ -62,18 +52,4 @@ public class PositionsArrayNode extends RNode {
         return elements.length == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        // this node is meant to be used only for evaluation by "executeWith" that uses
-        // executeEvaluated method above
-        Utils.fail("should never be executed");
-        return null;
-    }
-
-    public PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
-        this.elements = elements;
-        this.positions = positions;
-        this.operatorConverters = operatorConverters;
-        this.multiDimOperatorConverters = multiDimOperatorConverters;
-    }
 }

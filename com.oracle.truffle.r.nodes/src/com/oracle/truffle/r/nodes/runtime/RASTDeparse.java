@@ -138,9 +138,14 @@ public class RASTDeparse {
         }
     }
 
-    private static Func isInfixOperator(Object fname) {
+    public static Func isInfixOperator(Object fname) {
         if (fname instanceof RSymbol) {
-            return RDeparse.getFunc(((RSymbol) fname).getName());
+            Func func = RDeparse.getFunc(((RSymbol) fname).getName());
+            if (func == null) {
+                return null;
+            } else {
+                return func.info.kind == PP.RETURN ? null : func;
+            }
         }
         return null;
     }

@@ -363,7 +363,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         seq[2] = assignFromTemp;
         seq[3] = rmVar;
         seq[4] = rmRhs;
-        SequenceNode replacement = new SequenceNode(seq);
+        SequenceNode replacement = new SequenceNode.Replacement(seq);
         replacement.assignSourceSection(source);
         return replacement;
     }

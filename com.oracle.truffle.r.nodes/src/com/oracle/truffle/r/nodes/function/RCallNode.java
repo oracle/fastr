@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -469,8 +469,27 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public void deparse(State state) {
-            getFunctionNode().deparse(state);
-            args.deparse(state);
+            Object fname = RASTUtils.findFunctionName(this, false);
+            if (fname instanceof RSymbol) {
+                String sfname = ((RSymbol) fname).getName();
+                if (sfname.equals(":::") || sfname.equals("::")) {
+                    // special infix
+                    RCallNode colonCall = (RCallNode) getFunctionNode();
+                    RNode[] argValues = colonCall.getArgumentsNode().getArguments();
+                    argValues[0].deparse(state);
+                    state.append(sfname);
+                    argValues[1].deparse(state);
+                    args.deparse(state);
+                    return;
+                }
+            }
+            Func func = RASTDeparse.isInfixOperator(fname);
+            if (func != null) {
+                RASTDeparse.deparseInfixOperator2(state, this, func);
+            } else {
+                getFunctionNode().deparse(state);
+                args.deparse(state);
+            }
         }
     }
 

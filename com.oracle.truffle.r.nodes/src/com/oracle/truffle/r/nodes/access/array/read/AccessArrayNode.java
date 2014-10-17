@@ -79,7 +79,7 @@ public abstract class AccessArrayNode extends RNode {
         getVector().deparse(state);
         state.append(isSubset ? "[" : "[[");
         getPositions().deparse(state);
-        state.append(']');
+        state.append(isSubset ? "]" : "]]");
     }
 
     public AccessArrayNode(boolean isSubset) {

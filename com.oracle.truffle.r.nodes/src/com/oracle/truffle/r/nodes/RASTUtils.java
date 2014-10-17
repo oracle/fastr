@@ -169,6 +169,8 @@ public class RASTUtils {
                 gname = "`" + gname + "`";
             }
             return RDataFactory.createSymbol(gname);
+        } else if (child instanceof RCallNode) {
+            return findFunctionName(child, quote);
         }
         assert false;
         return null;

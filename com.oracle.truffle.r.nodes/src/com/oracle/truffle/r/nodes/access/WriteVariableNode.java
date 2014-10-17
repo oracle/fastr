@@ -173,8 +173,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public void deparse(State state) {
             if (!isArgWrite()) {
                 state.append(getName());
-                state.append(" <- ");
-                getRhs().deparse(state);
+                RNode rhs = getRhs();
+                if (rhs != null) {
+                    state.append(" <- ");
+                    getRhs().deparse(state);
+                }
             }
         }
 

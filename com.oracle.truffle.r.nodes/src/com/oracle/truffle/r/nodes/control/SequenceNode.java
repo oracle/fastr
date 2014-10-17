@@ -28,13 +28,15 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-public final class SequenceNode extends RNode {
+public class SequenceNode extends RNode {
 
-    @Children private final RNode[] sequence;
+    @Children protected final RNode[] sequence;
 
     public SequenceNode(RNode[] sequence) {
         this.sequence = sequence;
@@ -58,15 +60,9 @@ public final class SequenceNode extends RNode {
     @Override
     @SlowPath
     public void deparse(State state) {
-        int i = 0;
-        while (i < sequence.length) {
+        for (int i = 0; i < sequence.length; i++) {
             state.mark();
-            if (tmpAssignDeparse(state, i)) {
-                i += 2;
-            } else {
-                sequence[i].deparse(state);
-            }
-            i++;
+            sequence[i].deparse(state);
             if (state.changed()) {
                 // not all nodes will produce output
                 state.writeline();
@@ -75,44 +71,53 @@ public final class SequenceNode extends RNode {
     }
 
     /**
-     * This is a workaround for the eager transformation that introduces {@code *tmp*} in the
-     * initial AST.
+     * Denotes the sequence of nodes generated to handle the "replacement" semantics of R. Made
+     * explicit to allow deparse to recreate the text from the unreplaced form. See
+     * {@link RTruffleVisitor#visit(com.oracle.truffle.r.parser.ast.Replacement)} for details.
      */
-    private boolean tmpAssignDeparse(State state, int i) {
-        RNode node1 = sequence[i];
-        if (node1 instanceof WriteVariableNode.HasName) {
-            WriteVariableNode.HasName node1Name = (WriteVariableNode.HasName) node1;
-            if (node1Name.getName().startsWith("java.lang.Object")) {
-                // @formatter:off
-                /*
-                 * Ok, here we go. The sequence is:
-                 *   java.lang.Object@N <- rhs
-                 *   *tmp* <- vec
-                 *   vec$foo <- *tmp*foo <- java.lang.Object@N
-                 *
-                 * which we want to deparse as:
-                 *   vec$foo <- rhs
-                 */
-                // @formatter:on
-                WriteVariableNode node2 = (WriteVariableNode) sequence[i + 1];
-                WriteVariableNode node3 = (WriteVariableNode) sequence[i + 2];
-                state.append(((WriteVariableNode.HasName) node3).getName());
-                RNode node3Rhs = node3.getRhs();
-                if (node3Rhs instanceof UpdateFieldNode) {
-                    UpdateFieldNode ufn = (UpdateFieldNode) node3Rhs;
-                    state.append('$');
-                    state.append(ufn.getField());
-                } else if (node3Rhs instanceof RCallNode) {
-                    node3Rhs.deparse(state);
-                } else {
-                    RInternalError.shouldNotReachHere();
-                }
+    public static final class Replacement extends SequenceNode {
+        public Replacement(RNode[] seq) {
+            super(seq);
+        }
+
+        @Override
+        public void deparse(State state) {
+            WriteVariableNode valueStoreNode = (WriteVariableNode) sequence[0];
+            /*
+             * The rhs of valueStoreNode is the rhs of our result. sequence[1] is the copy of the
+             * object being updated. sequence[2] is the interesting part and varies depending on the
+             * type of update.
+             */
+            WriteVariableNode tmpAssignNode = (WriteVariableNode) sequence[1];
+            WriteVariableNode updateNode = (WriteVariableNode) sequence[2];
+            RNode updateNodeRhs = updateNode.getRhs();
+            if (updateNodeRhs instanceof UpdateFieldNode) {
+                UpdateFieldNode ufn = (UpdateFieldNode) updateNodeRhs;
+                tmpAssignNode.getRhs().deparse(state);
+                state.append('$');
+                state.append(ufn.getField());
                 state.append(" <- ");
-                ((WriteVariableNode) node1).getRhs().deparse(state);
-                return true;
+                valueStoreNode.getRhs().deparse(state);
+            } else if (updateNodeRhs instanceof RCallNode) {
+                // E.g `class<-`
+                RSymbol funcSymbol = (RSymbol) RASTUtils.findFunctionName(updateNodeRhs, false);
+                String funcName = funcSymbol.getName();
+                funcName = funcName.substring(0, funcName.length() - 2);
+                state.append(funcName);
+                state.append('(');
+                tmpAssignNode.getRhs().deparse(state);
+                state.append(") <- ");
+                valueStoreNode.getRhs().deparse(state);
+            } else if (updateNodeRhs instanceof UpdateArrayHelperNode) {
+                UpdateArrayHelperNode uan = (UpdateArrayHelperNode) updateNodeRhs;
+                tmpAssignNode.getRhs().deparse(state);
+                uan.deparse(state);
+                state.append(" <- ");
+                valueStoreNode.getRhs().deparse(state);
+            } else {
+                RInternalError.shouldNotReachHere();
             }
         }
-        return false;
     }
 
 }
