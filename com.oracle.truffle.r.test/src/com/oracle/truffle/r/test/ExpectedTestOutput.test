@@ -4208,6 +4208,62 @@ logical(0)
 #{ raw() }
 raw(0)
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#is.array(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayTypeCheck
+#{ is.array(as.array(1)) }
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
 #{ f <- function() 23 ; l <- list(f) ; cl <- as.call(l) ; eval(cl) }
 [1] 23
@@ -4713,6 +4769,62 @@ $names
 [1] "a" "b"
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic("1")
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(1)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(1L)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(1i)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(NULL)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(TRUE)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(pairlist())
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#is.atomic(raw())
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
+#{ is.atomic(integer()) }
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
 #{ attach(.Platform, 2); file.sep }
 [1] "/"
@@ -4867,6 +4979,734 @@ attr(,"a")
 [1] 1
 attr(,"c")
 [1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(call("foo"))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.call(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character("1")
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.character(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(1i)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.complex(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(1)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.double(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(expression(x + 1))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.expression(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(function() { })
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.function(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(1L)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.integer(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(list())
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.list(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(TRUE)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.logical(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(quote(x))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.name(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(NULL)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(pairlist())
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.null(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(NULL)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(pairlist())
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.pairlist(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.raw(raw())
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(quote(x))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testBasicTypes
+#is.symbol(raw())
+[1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
 #{ call("f") }
@@ -6235,6 +7075,62 @@ In cor(cbind(c(1, 1, 1), c(1, 1, 1))) : the standard deviation is zero
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeSum
 #{ cumsum(c(TRUE,FALSE,TRUE)) }
 [1] 1 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#is.data.frame(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDataFrameTypeCheck
+#{ is.data.frame(as.data.frame(1)) }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDefaultArgs
 #{ array(dim=c(-2,-2)); }
@@ -7802,6 +8698,58 @@ Error: object 'f' not found
 #{x<-1;names(x)<-"a";is.vector(x);}
 [1] TRUE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(call("foo"))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(expression(x + 1))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(quote(x))
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLanguageTypeCheck
+#is.language(raw())
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
 #{ f <- function() { lapply(c(X="a",Y="b"), function(x) { c(a=x) })  } ; f() }
 $X
@@ -8952,6 +9900,62 @@ attr(,"class")
 [1,]   NA   NA
 [2,]   NA   NA
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#is.matrix(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrixTypeCheck
+#{ is.matrix(as.matrix(1)) }
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ is.logical(max(TRUE)) }
 [1] FALSE
@@ -9660,6 +10664,118 @@ Error in ngettext(1, c(1), "b") : 'msg1' must be a character string
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
 #{ ngettext(c(1,2), "a", "b") }
 [1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(1)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(1L)
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#is.numeric(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNumericTypeCheck
+#{ is.numeric(1:6) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object("1")
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(1)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(1L)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(1i)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(NULL)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(TRUE)
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(call("foo"))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(expression(x + 1))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(function() { })
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(list())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(pairlist())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(quote(x))
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#is.object(raw())
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testObjectTypeCheck
+#{ e <- expression(x + 1); class(e) <- "foo"; is.object(e) }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
 #n = function() { on.exit() }; n()
@@ -12843,94 +13959,6 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
 #{ tan(c(0.3,0.6,0.9)) }
 [1] 0.3093362 0.6841368 1.2601582
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(1) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(1:6) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(NULL) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(matrix(1:6, nrow=2)) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.character("hi") }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.complex(1) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.complex(1i) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.double("10") }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.double(10) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.double(10L) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.integer(1) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.integer(1L) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.list(NULL) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.logical(1L) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.logical(NA) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.matrix(1) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.matrix(NULL) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.matrix(matrix(1:6, nrow=2)) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.numeric(10) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.numeric(10L) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.numeric(TRUE) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.raw(raw()) }
-[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
 #{ f <- function(...) typeof(...); f(1)}

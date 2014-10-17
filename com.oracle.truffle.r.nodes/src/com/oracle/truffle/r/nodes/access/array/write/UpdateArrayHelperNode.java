@@ -72,6 +72,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Child private SetMultiDimDataNode setMultiDimData;
 
     private final BranchProfile error = BranchProfile.create();
+    private final ConditionProfile posNaProfile = ConditionProfile.createBinaryProfile();
 
     public UpdateArrayHelperNode(boolean isSubset) {
         this.isSubset = isSubset;
@@ -317,7 +318,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     allZeros = false;
                     if (posNACheck.check(pos)) {
                         if (len == 1) {
-                            seenNAMultiDim(true, value, isList, isSubset, getEncapsulatingSourceSection());
+                            handleNaMultiDim(value, isList, isSubset, getEncapsulatingSourceSection());
                         } else {
                             seenNA = true;
                         }
@@ -333,7 +334,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (valueLength != 0 && length != 0 && length % valueLength != 0) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else if (seenNA) {
-            seenNAMultiDim(true, value, isList, isSubset, getEncapsulatingSourceSection());
+            handleNaMultiDim(value, isList, isSubset, getEncapsulatingSourceSection());
         }
         return length;
     }
@@ -585,7 +586,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, true, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1031,7 +1033,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1070,29 +1073,24 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    protected static boolean seenNAMultiDim(boolean isPosNA, RAbstractContainer value, boolean isList, boolean isSubset, SourceSection sourceSection) {
-        if (isPosNA) {
-            if (value.getLength() == 1) {
-                if (!isSubset) {
-                    throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
-                } else {
-                    return true;
-                }
+    protected static boolean handleNaMultiDim(RAbstractContainer value, boolean isList, boolean isSubset, SourceSection sourceSection) {
+        if (value.getLength() == 1) {
+            if (!isSubset) {
+                throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
             } else {
-                if (!isSubset) {
-                    if (isList) {
-                        throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
-                    } else {
-                        throw RError.error(sourceSection, RError.Message.MORE_SUPPLIED_REPLACE);
-                    }
-                } else {
-                    throw RError.error(sourceSection, RError.Message.NA_SUBSCRIPTED);
-                }
+                return true;
             }
         } else {
-            return false;
+            if (!isSubset) {
+                if (isList) {
+                    throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
+                } else {
+                    throw RError.error(sourceSection, RError.Message.MORE_SUPPLIED_REPLACE);
+                }
+            } else {
+                throw RError.error(sourceSection, RError.Message.NA_SUBSCRIPTED);
+            }
         }
-
     }
 
     private RIntVector updateSingleDimVector(RAbstractIntVector value, int orgVectorLength, RIntVector resultVector, RIntVector positions) {
@@ -1231,7 +1229,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1417,7 +1416,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1528,7 +1528,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1675,7 +1676,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1893,7 +1895,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+            if (posNACheck.check(pos)) {
+                handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);

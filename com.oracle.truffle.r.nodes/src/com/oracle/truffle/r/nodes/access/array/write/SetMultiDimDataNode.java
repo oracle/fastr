@@ -78,7 +78,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, true, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -88,7 +89,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, true, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -111,7 +113,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -121,7 +124,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -144,7 +148,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -154,7 +159,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -177,7 +183,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -187,7 +194,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -210,7 +218,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -220,7 +229,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -243,7 +253,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -253,7 +264,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -276,7 +288,8 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -286,7 +299,8 @@ abstract class SetMultiDimDataNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
