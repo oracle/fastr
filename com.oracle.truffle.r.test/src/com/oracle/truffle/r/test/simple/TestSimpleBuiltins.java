@@ -2064,21 +2064,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testTypeCheck() {
-        // test the complex (multi-basic-type) types
-        assertEval("{ is.numeric(10L) }");
-        assertEval("{ is.numeric(10) }");
-        assertEval("{ is.numeric(TRUE) }");
-        assertEval("{ is.matrix(1) }");
-        assertEval("{ is.matrix(NULL) }");
-        assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
-        assertEval("{ is.array(1) }");
-        assertEval("{ is.array(NULL) }");
-        assertEval("{ is.array(matrix(1:6, nrow=2)) }");
-        assertEval("{ is.array(1:6) }");
-    }
-
-    @Test
     public void testOverride() {
         assertEval("{ sub <- function(x,y) { x - y }; sub(10,5) }");
     }

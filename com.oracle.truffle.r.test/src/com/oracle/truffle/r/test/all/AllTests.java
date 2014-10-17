@@ -14664,56 +14664,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTypeCheck_73b039879ab6c5b42795c2d117043aa9() {
-        assertEval("{ is.numeric(10L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_0b260831340c6db5b75b5343f4d81141() {
-        assertEval("{ is.numeric(10) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_5fb1f85fd979e797ae381ddc6aa28d81() {
-        assertEval("{ is.numeric(TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_05ed427ea5ed1e2a96e61f007cbd5cd7() {
-        assertEval("{ is.matrix(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_aea25d02a08b3d0682a3cc768137582c() {
-        assertEval("{ is.matrix(NULL) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_5d58ab660464a607a098cd9272d211a9() {
-        assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_c5ae72c4471fe269e025837002cf6b4f() {
-        assertEval("{ is.array(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_9fd110693bdcf0f4f6c80bdbb70502cf() {
-        assertEval("{ is.array(NULL) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_1255c1431b609d712fe80ec07f61dfca() {
-        assertEval("{ is.array(matrix(1:6, nrow=2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testTypeCheck_d57496c27c1d770f9553513344aaffe8() {
-        assertEval("{ is.array(1:6) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testTypeOf_f23b57132b2f7a3dd4b957c584b7746b() {
         assertEval("{ typeof(1) }");
     }

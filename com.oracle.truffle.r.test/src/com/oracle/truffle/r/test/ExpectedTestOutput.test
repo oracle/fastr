@@ -13960,46 +13960,6 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 #{ tan(c(0.3,0.6,0.9)) }
 [1] 0.3093362 0.6841368 1.2601582
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(1) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(1:6) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(NULL) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.array(matrix(1:6, nrow=2)) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.matrix(1) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.matrix(NULL) }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.matrix(matrix(1:6, nrow=2)) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.numeric(10) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.numeric(10L) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
-#{ is.numeric(TRUE) }
-[1] FALSE
-
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
 #{ f <- function(...) typeof(...); f(1)}
 [1] "double"
