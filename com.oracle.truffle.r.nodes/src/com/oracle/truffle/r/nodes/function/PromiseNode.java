@@ -32,6 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.UnResolvedReadLocalVariableNode;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -55,8 +56,6 @@ public abstract class PromiseNode extends RNode {
      * {@link RPromise} for every case that might occur.
      */
     protected final RPromiseFactory factory;
-
-    protected final PromiseProfile promiseProfile = new PromiseProfile();
 
     /**
      * @param factory {@link #factory}
@@ -145,7 +144,9 @@ public abstract class PromiseNode extends RNode {
      * @see FastROptions#EagerEvalVariables
      */
     private static boolean isVariableArgument(RNode expr) {
-        return expr instanceof ReadVariableNode;
+        // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
+        // complex (time and space)!
+        return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).getForcePromise();
     }
 
     /**
@@ -226,24 +227,20 @@ public abstract class PromiseNode extends RNode {
         @Child private PromisedNode fallback = null;
         @Child private ReadVariableNode readNode;
 
-// @Child private InlineCacheNode<VirtualFrame, RNode> inlineCache;
-
-        public OptVariablePromiseNode(RPromiseFactory factory, ReadVariableNode originalRvn) {
+        public OptVariablePromiseNode(RPromiseFactory factory, ReadVariableNode rvn) {
             super(factory);
-            this.originalRvn = originalRvn;
-            Symbol symbol = originalRvn.getSymbol();
-            this.frameSlotNode = FrameSlotNode.create(symbol.getName(), false);
- this.readNode = ReadVariableNode.create(symbol.getName(), originalRvn.get, shouldCopyValue,
- isSuper, readMissing, forcePromise)
-// this.inlineCache = InlineCacheNode.createExpression(1); // As all PromiseNodes get
-            // created for exactly one expr, 1 is sufficient
+            assert rvn.getForcePromise() == false;  // Should be caught by optimization check
+            this.originalRvn = rvn;
+            this.frameSlotNode = FrameSlotNode.create(rvn.getSymbolName(), false);
+            this.readNode = UnResolvedReadLocalVariableNode.create(rvn.getSymbol(), rvn.getMode(), rvn.getCopyValue(), rvn.getReadMissing());
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             // If the frame slot we're looking for is not present yet, wait for it!
             if (!frameSlotNode.hasValue(frame)) {
-                // We don't want to rewrite, as the the frame slot might show up later on
+                // We don't want to rewrite, as the the frame slot might show up later on (after 1.
+                // execution), which might still be worth to optimize
                 return checkFallback().execute(frame);
             }
             FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
@@ -256,24 +253,25 @@ public abstract class PromiseNode extends RNode {
             }
 
             // Execute eagerly
-            // The unfold is necessary to avoid the (fortunately only) side effect of
-            // WrapArgumentNode that make vectors shared when read inside a Promise.
-            // This works, as vectors are set to be "shared()" anyway once the EagerPromise gets
-            // "really" evaluated
-            RNode variableExpr = unfold(factory.getExpr());
-
             Object result = null;
             try {
-                result = inlineCache.execute(frame, variableExpr);
+                // This reads only locally, and frameSlotNode.hasValue that there is the proper
+                // frameSlot there.
+                result = readNode.execute(frame);
             } catch (Throwable t) {
-                // Errors are also side effects!
-                // TODO Create EagerErrorPromise
+                // If any error occurred, we cannot be sure what to do. Instead of trying to be
+                // clever, we conservatively rewrite to default PromisedNode.
                 return rewriteToPromisedNode().execute(frame);
             }
 
             // Create EagerPromise with the eagerly evaluated value under the assumption that the
             // value won't be altered until 1. read
-            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, RArguments.getDepth(frame), this);
+            int frameId = RArguments.getDepth(frame);
+            if (result instanceof RPromise) {
+                return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, frameId, this);
+            } else {
+                return factory.createEagerSuppliedPromise(result, notChangedNonLocally, frameId, this);
+            }
         }
 
         private PromisedNode checkFallback() {
@@ -313,6 +311,9 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            // At this point we simply circumvent VarArgNode (by directly passing the contained
+            // Promise); BUT we have to respect the RPromise! Thus we use a RPromise class which
+            // knows that it contains a RPromise..
             return factory.createVarargPromise(varargNode.getPromise());
         }
     }

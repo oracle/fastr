@@ -25,8 +25,8 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -300,6 +300,27 @@ public class RPromise extends RLanguageRep {
         }
     }
 
+    /**
+     * This method should be called whenever a {@link RPromise} may not be executed in it's
+     * optimized versions anymore, because the assumption, that the Promise is executed in the same
+     * stack it has been created in, does not hold anymore. This might be the case in the following
+     * situations:
+     * <ul>
+     * <li>Promise leaves stack via substitute, assign or delayedAssign</li>
+     * <li>Promise leaves stack via a frame that is either:
+     * <ul>
+     * <li>returned</li>
+     * <li>super-assigned</li>
+     * </ul>
+     * </li>
+     * <li>Promise leaves stack via a function that contains a frame (see above)</li>
+     * <li>Promise leaves stack via frame or function that is passed to assign or delayedAssign</li>
+     * </ul>
+     */
+    public void deoptimize() {
+        // Nothing to do here; already the generic and slow RPromise
+    }
+
     @SlowPath
     protected Object doEvalArgument(SourceSection callSrc) {
         assert execFrame != null;
@@ -411,53 +432,56 @@ public class RPromise extends RLanguageRep {
     }
 
     // TODO @ValueType annotation necessary here?
-    private static final class EagerPromise extends RPromise {
-        private final Object eagerValue;
+    private static class EagerPromise extends RPromise {
+        protected final Object eagerValue;
 
         private final Assumption assumption;
-        private final int nFrameId;
+        private final int frameId;
         private final EagerFeedback feedback;
+
+        private boolean deoptimized = false;
 
         private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
             super(EvalPolicy.PROMISED, type, null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.assumption = assumption;
-            this.nFrameId = nFrameId;
+            this.frameId = nFrameId;
             this.feedback = feedback;
         }
 
         @Override
         protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
-            if (assumption.isValid()) {
+            if (deoptimized) {
+                // execFrame already materialized, feedback already given. Now we're a
+                // plain'n'simple RPromise
+                return super.generateValue(frame, profile);
+            } else if (assumption.isValid()) {
                 feedback.onSuccess();
-                return eagerValue;
+
+                return genEagerValue(frame, profile);
             } else {
                 feedback.onFailure();
 
                 // Fallback: eager evaluation failed, now take the slow path
-                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, nFrameId);
+                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
 
                 // Call
                 return super.generateValue(frame, profile);
             }
         }
 
-// @Override
-// public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
-// if (profile.isEvaluatedProfile.profile(isEvaluated)) {
-// return value;
-// }
-//
-// // Check if assumption is still true
-// if (assumption.isValid()) {
-// // If yes: return value and notify success!
-// setValue(eagerValue);
-// feedback.onSuccess();
-// } else {
-// }
-// return value;
-// }
+        @Override
+        public void deoptimize() {
+            deoptimized = true;
+            feedback.onFailure();
+            this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
+        }
+
+        @SuppressWarnings("unused")
+        protected Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
+            return eagerValue;
+        }
 
         @Override
         public boolean isEagerPromise(PromiseProfile profile) {
@@ -465,6 +489,10 @@ public class RPromise extends RLanguageRep {
         }
     }
 
+    /**
+     * A {@link RPromise} implementation that knows that it holds a Promise itself (that it has to
+     * respect by evaluating it on {@link #evaluate(VirtualFrame, PromiseProfile)}).
+     */
     private static final class VarargPromise extends RPromise {
         private final RPromise vararg;
 
@@ -476,6 +504,27 @@ public class RPromise extends RLanguageRep {
         @Override
         protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
             return vararg.evaluate(frame, profile);
+        }
+
+        @Override
+        public boolean isEagerPromise(PromiseProfile profile) {
+            return profile.isEagerPromise.profile(true);
+        }
+    }
+
+    /**
+     * TODO Gero comment!
+     */
+    private static final class PromisedPromise extends EagerPromise {
+
+        public PromisedPromise(PromiseType type, Closure closure, RPromise eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            super(type, closure, eagerValue, assumption, nFrameId, feedback);
+        }
+
+        @Override
+        protected Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
+            RPromise promisedPromise = (RPromise) eagerValue;
+            return promisedPromise.evaluate(frame, profile);
         }
 
         @Override
@@ -564,6 +613,10 @@ public class RPromise extends RLanguageRep {
             return new EagerPromise(type, exprClosure, eagerValue, assumption, nFrameId, feedback);
         }
 
+        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            return new PromisedPromise(type, exprClosure, promisedPromise, assumption, nFrameId, feedback);
+        }
+
         /**
          * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
          *            until evaluation
@@ -574,8 +627,8 @@ public class RPromise extends RLanguageRep {
             return new EagerPromise(type, defaultClosure, null, null, nFrameId, feedback);
         }
 
-        public RPromise createVarargPromise(RPromise vararg) {
-            return new VarargPromise(type, vararg, exprClosure);
+        public RPromise createVarargPromise(RPromise promisedVararg) {
+            return new VarargPromise(type, promisedVararg, exprClosure);
         }
 
         public Object getExpr() {

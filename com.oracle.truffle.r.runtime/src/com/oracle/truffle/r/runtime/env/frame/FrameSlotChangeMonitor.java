@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.*;
  * has ever taken place. TODO Extend
  *
  * @see #createMonitor()
- * @see #invalidate(Frame, FrameSlot)
+ * @see #checkAndInvalidate(Frame, FrameSlot)
  * @see #getMonitor(FrameSlot)
  * @see #isMonitorValid(FrameSlot)
  */
@@ -52,6 +52,10 @@ public final class FrameSlotChangeMonitor {
         return getMonitor(slot).isValid();
     }
 
+    public static void invalidate(FrameSlot slot) {
+        doInvalidate(slot);
+    }
+
     /**
      * Assumes info to be an {@link Assumption} attached to a {@link FrameSlot} and invalidates it
      *
@@ -59,23 +63,28 @@ public final class FrameSlotChangeMonitor {
      * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
      *            {@link RInternalError} otherwise
      */
-    public static void invalidate(Frame frame, FrameSlot slot) {
-        doInvalidate(RArguments.getDepth(frame), slot);
+    public static void checkAndInvalidate(Frame frame, FrameSlot slot) {
+        doCheckAndInvalidate(RArguments.getDepth(frame), slot);
     }
 
     @SlowPath
-    private static void doInvalidate(int depth, FrameSlot slot) {
+    private static void doCheckAndInvalidate(int depth, FrameSlot slot) {
         VirtualFrame frame = Utils.getActualCurrentFrame();
         if (frame == null || depth == RArguments.getDepth(frame)) {
             return;
         }
 
+        doInvalidate(slot);
+    }
+
+    @SlowPath
+    private static void doInvalidate(FrameSlot slot) {
         Assumption notChangedLocally = getMonitor(slot);
         notChangedLocally.invalidate();
         System.err.println("Invalidated " + RRuntime.toString(slot.getIdentifier()));
     }
 
     public static void checkAndUpdate(Frame frame, FrameSlot slot) {
-        invalidate(frame, slot);
+        checkAndInvalidate(frame, slot);
     }
 }

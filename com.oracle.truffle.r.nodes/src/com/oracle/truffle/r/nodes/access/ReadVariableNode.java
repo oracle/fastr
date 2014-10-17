@@ -533,6 +533,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             super(props);
         }
 
+        public static ReadVariableNode create(Symbol symbol, RType mode, boolean shouldCopyValue, boolean readMissing) {
+            ReadProperties props = new ReadProperties(symbol, mode, shouldCopyValue, false, readMissing, false);
+            return new UnResolvedReadLocalVariableNode(props);
+        }
+
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
