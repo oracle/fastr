@@ -96,6 +96,10 @@ public class RPromise extends RLanguageRep {
      */
     protected final PromiseType type;
 
+    /**
+     * @see #getFrame()
+     * @see #materialize()
+     */
     protected MaterializedFrame execFrame;
 
     /**
@@ -300,6 +304,16 @@ public class RPromise extends RLanguageRep {
         }
     }
 
+    @SlowPath
+    protected Object doEvalArgument(SourceSection callSrc) {
+        assert execFrame != null;
+        return RContext.getEngine().evalPromise(this, callSrc);
+    }
+
+    protected Object doEvalArgument(MaterializedFrame frame) {
+        return RContext.getEngine().evalPromise(this, frame);
+    }
+
     /**
      * This method should be called whenever a {@link RPromise} may not be executed in it's
      * optimized versions anymore, because the assumption, that the Promise is executed in the same
@@ -316,19 +330,56 @@ public class RPromise extends RLanguageRep {
      * <li>Promise leaves stack via a function that contains a frame (see above)</li>
      * <li>Promise leaves stack via frame or function that is passed to assign or delayedAssign</li>
      * </ul>
+     *
+     * @return <code>true</code> if this was deoptimized before
      */
-    public void deoptimize() {
+    public boolean deoptimize() {
         // Nothing to do here; already the generic and slow RPromise
+        return true;
     }
 
+    /**
+     * Guarantees, that all {@link RPromise}s in frame are {@link #deoptimize()}d and thus are safe
+     * to leave it's stack-branch.
+     *
+     * @param frame The frame to check for {@link RPromise}s to {@link #deoptimize()}
+     * @return Whether there was at least on {@link RPromise} which needed to be
+     *         {@link #deoptimize()}d.
+     */
     @SlowPath
-    protected Object doEvalArgument(SourceSection callSrc) {
-        assert execFrame != null;
-        return RContext.getEngine().evalPromise(this, callSrc);
+    public static boolean deoptimizeFrame(MaterializedFrame frame) {
+        boolean deoptOne = false;
+        for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+            // We're only interested in RPromises
+            if (slot.getKind() != FrameSlotKind.Object) {
+                continue;
+            }
+
+            // Try to read it...
+            try {
+                Object value = frame.getObject(slot);
+
+                // If it's a promise, deoptimize it!
+                if (value instanceof RPromise) {
+                    deoptOne |= ((RPromise) value).deoptimize();
+                }
+            } catch (FrameSlotTypeException err) {
+                // Should not happen after former check on FrameSlotKind!
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+        return deoptOne;
     }
 
-    protected Object doEvalArgument(MaterializedFrame frame) {
-        return RContext.getEngine().evalPromise(this, frame);
+    /**
+     * Materializes {@link #execFrame}. After execution, it is guaranteed to be != <code>null</code>
+     *
+     * @return Whether it was materialized before
+     * @see #execFrame
+     * @see #getFrame()
+     */
+    public boolean materialize() {
+        return true;
     }
 
     /**
@@ -381,7 +432,12 @@ public class RPromise extends RLanguageRep {
     }
 
     /**
-     * @return {@link #execFrame}
+     * @return {@link #execFrame}. This might be <code>null</code> if
+     *         {@link #isEagerPromise(PromiseProfile)} == <code>true</code>!!! Materialize with
+     *         {@link #materialize()}.
+     *
+     * @see #materialize()
+     * @see #execFrame
      */
     public MaterializedFrame getFrame() {
         return execFrame;
@@ -439,6 +495,10 @@ public class RPromise extends RLanguageRep {
         private final int frameId;
         private final EagerFeedback feedback;
 
+        /**
+         * Set to <code>true</code> by {@link #deoptimize()}. If this is true, the
+         * {@link RPromise#execFrame} is guaranteed to be set.
+         */
         private boolean deoptimized = false;
 
         private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
@@ -464,23 +524,36 @@ public class RPromise extends RLanguageRep {
                 feedback.onFailure();
 
                 // Fallback: eager evaluation failed, now take the slow path
-                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
+                materialize();
 
                 // Call
                 return super.generateValue(frame, profile);
             }
         }
 
-        @Override
-        public void deoptimize() {
-            deoptimized = true;
-            feedback.onFailure();
-            this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
-        }
-
         @SuppressWarnings("unused")
         protected Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
             return eagerValue;
+        }
+
+        @Override
+        public boolean deoptimize() {
+            if (!deoptimized) {
+                deoptimized = true;
+                feedback.onFailure();
+                materialize();
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean materialize() {
+            if (execFrame == null) {
+                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
+                return false;
+            }
+            return true;
         }
 
         @Override

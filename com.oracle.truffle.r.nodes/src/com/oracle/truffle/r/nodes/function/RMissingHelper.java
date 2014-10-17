@@ -138,7 +138,7 @@ public class RMissingHelper {
     public static boolean isMissingSymbol(RPromise promise) {
         boolean result = false;
         // Missing RPromises throw an error on evaluation, so this might only be checked if it has
-        // not been evaluated yet. (My guess, true?)
+        // not been evaluated yet.
         if (!promise.isEvaluated()) {
             Object exprObj = promise.getRep();
 
@@ -156,7 +156,9 @@ public class RMissingHelper {
                 if (promise.isUnderEvaluation(globalMissingPromiseProfile)) {
                     return true;
                 }
+
                 try {
+                    promise.materialize();
                     promise.setUnderEvaluation(true);
                     result = isMissingArgument(promise.getFrame(), symbol);
                 } finally {
