@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
@@ -45,8 +46,10 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
  *
  */
 public class TrigExpFunctions {
+    public static abstract class AdapterCall1 extends RBuiltinNode {
+        private static final BranchProfile notCompleteIntValueMet = BranchProfile.create();
+        private static final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
 
-    public static abstract class Adapter extends RBuiltinNode {
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
@@ -55,44 +58,52 @@ public class TrigExpFunctions {
         @Specialization
         protected byte isType(@SuppressWarnings("unused") RMissing value) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
-
-    }
-
-    public static abstract class AdapterCall1 extends Adapter {
 
         protected interface MathCall1 {
             double call(double x);
         }
 
         private static double doFunInt(int value, MathCall1 fun) {
-            double result = RRuntime.DOUBLE_NA;
-            if (RRuntime.isComplete(value)) {
-                result = fun.call(value);
+            if (!RRuntime.isComplete(value)) {
+                notCompleteIntValueMet.enter();
+                return RRuntime.DOUBLE_NA;
             }
-            return result;
+            return fun.call(value);
         }
 
         private static double doFunDouble(double value, MathCall1 fun) {
-            double result = value;
-            if (RRuntime.isComplete(value)) {
-                result = fun.call(value);
+            if (!RRuntime.isComplete(value)) {
+                notCompleteDoubleValueMet.enter();
+                return value;
             }
-            return result;
+            return fun.call(value);
         }
 
-        protected RDoubleVector doFun(RAbstractVector x, MathCall1 fun) {
-            boolean isDouble = x instanceof RDoubleVector;
-            RDoubleVector dx = isDouble ? (RDoubleVector) x : null;
-            RIntVector ix = !isDouble ? (RIntVector) x : null;
-            double[] resultVector = new double[x.getLength()];
-            for (int i = 0; i < x.getLength(); i++) {
-                resultVector[i] = isDouble ? doFunDouble(dx.getDataAt(i), fun) : doFunInt(ix.getDataAt(i), fun);
+        protected RDoubleVector doFunForDoubleVector(RDoubleVector vector, MathCall1 mathCall) {
+            final int length = vector.getLength();
+            final double[] resultVector = new double[length];
+            for (int i = 0; i < length; i++) {
+                resultVector[i] = doFunDouble(vector.getDataAt(i), mathCall);
             }
-            RDoubleVector ret = RDataFactory.createDoubleVector(resultVector, x.isComplete());
-            ret.copyAttributesFrom(x);
-            return ret;
+            return createDoubleVectorBasedOnOrigin(resultVector, vector);
+        }
+
+        protected RDoubleVector doFunForIntVector(RIntVector vector, MathCall1 mathCall) {
+            final int length = vector.getLength();
+            final double[] resultVector = new double[length];
+            for (int i = 0; i < length; i++) {
+                resultVector[i] = doFunInt(vector.getDataAt(i), mathCall);
+            }
+            return createDoubleVectorBasedOnOrigin(resultVector, vector);
+        }
+
+        private static RDoubleVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector){
+            RDoubleVector result = RDataFactory.createDoubleVector(values, originVector.isComplete());
+            result.copyAttributesFrom(originVector);
+            return result;
         }
     }
 
@@ -101,7 +112,7 @@ public class TrigExpFunctions {
             RComplex call(RComplex rComplex);
         }
 
-        protected static RComplexVector callFunction(RAbstractComplexVector arguments, ComplexArgumentFunctionCall functionCall) {
+        protected static RComplexVector doFunForComplexVector(RAbstractComplexVector arguments, ComplexArgumentFunctionCall functionCall) {
             int argumentsLength = arguments.getLength();
             double[] result = new double[argumentsLength * 2];
             for (int i = 0; i < argumentsLength; i++) {
@@ -132,7 +143,7 @@ public class TrigExpFunctions {
         };
 
         protected RComplexVector calculateExpUsing(RAbstractComplexVector powersVector) {
-            return callFunction(powersVector, expFunctionCall);
+            return doFunForComplexVector(powersVector, expFunctionCall);
         }
 
         protected RComplex calculateExpUsing(RComplex power) {
@@ -157,13 +168,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector exp(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::exp);
+            return doFunForIntVector(x, Math::exp);
         }
 
         @Specialization
         protected RDoubleVector exp(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::exp);
+            return doFunForDoubleVector(x, Math::exp);
         }
 
         @Specialization
@@ -196,13 +207,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector expm1(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::expm1);
+            return doFunForIntVector(x, Math::expm1);
         }
 
         @Specialization
         protected RDoubleVector expm1(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::expm1);
+            return doFunForDoubleVector(x, Math::expm1);
         }
 
         @Specialization
@@ -220,7 +231,7 @@ public class TrigExpFunctions {
         protected RComplexVector exp(RComplexVector powersVector) {
             controlVisibility();
             RComplexVector exponents = calculateExpUsing(powersVector);
-            return callFunction(exponents, ExpM1::substract1From);
+            return doFunForComplexVector(exponents, ExpM1::substract1From);
         }
     }
 
@@ -241,13 +252,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector sin(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::sin);
+            return doFunForIntVector(x, Math::sin);
         }
 
         @Specialization
         protected RDoubleVector sin(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::sin);
+            return doFunForDoubleVector(x, Math::sin);
         }
     }
 
@@ -269,13 +280,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector cos(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::cos);
+            return doFunForIntVector(x, Math::cos);
         }
 
         @Specialization
         protected RDoubleVector cos(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::cos);
+            return doFunForDoubleVector(x, Math::cos);
         }
     }
 
@@ -297,13 +308,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector tan(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::tan);
+            return doFunForIntVector(x, Math::tan);
         }
 
         @Specialization
         protected RDoubleVector tan(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::tan);
+            return doFunForDoubleVector(x, Math::tan);
         }
     }
 
@@ -324,13 +335,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector asin(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::asin);
+            return doFunForIntVector(x, Math::asin);
         }
 
         @Specialization
         protected RDoubleVector asin(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::asin);
+            return doFunForDoubleVector(x, Math::asin);
         }
     }
 
@@ -351,13 +362,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector acos(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::acos);
+            return doFunForIntVector(x, Math::acos);
         }
 
         @Specialization
         protected RDoubleVector acos(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::acos);
+            return doFunForDoubleVector(x, Math::acos);
         }
     }
 
@@ -378,13 +389,13 @@ public class TrigExpFunctions {
         @Specialization
         protected RDoubleVector atan(RIntVector x) {
             controlVisibility();
-            return doFun(x, Math::atan);
+            return doFunForIntVector(x, Math::atan);
         }
 
         @Specialization
         protected RDoubleVector atan(RDoubleVector x) {
             controlVisibility();
-            return doFun(x, Math::atan);
+            return doFunForDoubleVector(x, Math::atan);
         }
     }
 
