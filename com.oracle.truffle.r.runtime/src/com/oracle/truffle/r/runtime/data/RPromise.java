@@ -84,6 +84,13 @@ public class RPromise extends RLanguageRep {
         NO_ARG;
     }
 
+    private enum OptType {
+        DEFAULT,
+        EAGER,
+        VARARG,
+        PROMISED
+    }
+
     public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
     /**
@@ -95,6 +102,8 @@ public class RPromise extends RLanguageRep {
      * @see PromiseType
      */
     protected final PromiseType type;
+
+    protected final OptType optType;
 
     /**
      * @see #getFrame()
@@ -130,13 +139,15 @@ public class RPromise extends RLanguageRep {
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param type {@link #type}
+     * @param optType {@link #optType}
      * @param execFrame {@link #execFrame}
      * @param closure {@link #getClosure()}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
         this.evalPolicy = evalPolicy;
         this.type = type;
+        this.optType = optType;
         this.execFrame = execFrame;
         this.closure = closure;
     }
@@ -148,13 +159,15 @@ public class RPromise extends RLanguageRep {
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param type {@link #type}
+     * @param optType {@link #optType}
      * @param expr {@link #getRep()}
      * @param value {@link #value}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, Object expr, Object value) {
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, Object expr, Object value) {
         super(expr);
         this.evalPolicy = evalPolicy;
         this.type = type;
+        this.optType = optType;
         this.value = value;
         this.isEvaluated = true;
         // Not needed as already evaluated:
@@ -171,10 +184,11 @@ public class RPromise extends RLanguageRep {
      * @param type {@link #type}
      * @param expr {@link #getRep()}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, Object expr) {
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, Object expr) {
         super(expr);
         this.evalPolicy = evalPolicy;
         this.type = type;
+        this.optType = optType;
         // Not needed as already evaluated:
         this.execFrame = null;
         this.closure = null;
@@ -184,12 +198,12 @@ public class RPromise extends RLanguageRep {
     /**
      * @param evalPolicy {@link EvalPolicy}
      * @param closure {@link #getClosure()}
-     * @return see {@link #RPromise(EvalPolicy, PromiseType, MaterializedFrame, Closure)}
+     * @return see {@link #RPromise(EvalPolicy, PromiseType, OptType, MaterializedFrame, Closure)}
      */
     public static RPromise create(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
         assert closure != null;
         assert closure.getExpr() != null;
-        return new RPromise(evalPolicy, type, execFrame, closure);
+        return new RPromise(evalPolicy, type, OptType.DEFAULT, execFrame, closure);
     }
 
     /**
@@ -292,7 +306,26 @@ public class RPromise extends RLanguageRep {
      * @param profile
      * @return The value this Promise represents
      */
-    protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
+    protected final Object generateValue(VirtualFrame frame, PromiseProfile profile) {
+        switch (optType) {
+            case DEFAULT:
+                return defaultGenerateValue(frame, profile);
+
+            case PROMISED:
+            case EAGER:
+                EagerPromise eager = (EagerPromise) this;
+                return eager.eagerGenerateValue(frame, profile);
+
+            case VARARG:
+                VarargPromise var = (VarargPromise) this;
+                return var.varargGenerateValue(profile);
+
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    protected final Object defaultGenerateValue(VirtualFrame frame, PromiseProfile profile) {
         // Evaluate this promise's value!
         // Performance: We can use frame directly
         if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
@@ -310,6 +343,7 @@ public class RPromise extends RLanguageRep {
         return RContext.getEngine().evalPromise(this, callSrc);
     }
 
+    @SlowPath
     protected Object doEvalArgument(MaterializedFrame frame) {
         return RContext.getEngine().evalPromise(this, frame);
     }
@@ -501,8 +535,8 @@ public class RPromise extends RLanguageRep {
          */
         private boolean deoptimized = false;
 
-        private EagerPromise(PromiseType type, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-            super(EvalPolicy.PROMISED, type, null, closure);
+        private EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            super(EvalPolicy.PROMISED, type, optType, (MaterializedFrame) null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.assumption = assumption;
@@ -510,12 +544,11 @@ public class RPromise extends RLanguageRep {
             this.feedback = feedback;
         }
 
-        @Override
-        protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
+        protected Object eagerGenerateValue(VirtualFrame frame, PromiseProfile profile) {
             if (deoptimized) {
                 // execFrame already materialized, feedback already given. Now we're a
                 // plain'n'simple RPromise
-                return super.generateValue(frame, profile);
+                return super.defaultGenerateValue(frame, profile);
             } else if (assumption.isValid()) {
                 feedback.onSuccess();
 
@@ -527,12 +560,26 @@ public class RPromise extends RLanguageRep {
                 materialize();
 
                 // Call
-                return super.generateValue(frame, profile);
+                return super.defaultGenerateValue(frame, profile);
+            }
+        }
+
+        private Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
+            switch (optType) {
+                case EAGER:
+                    return eagerGenEagerValue(frame, profile);
+
+                case PROMISED:
+                    PromisedPromise p = (PromisedPromise) this;
+                    return p.promisedGenEagerValue(profile);
+
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
         }
 
         @SuppressWarnings("unused")
-        protected Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
+        protected Object eagerGenEagerValue(VirtualFrame frame, PromiseProfile profile) {
             return eagerValue;
         }
 
@@ -570,13 +617,13 @@ public class RPromise extends RLanguageRep {
         private final RPromise vararg;
 
         private VarargPromise(PromiseType type, RPromise vararg, Closure exprClosure) {
-            super(EvalPolicy.PROMISED, type, exprClosure.getExpr());
+            super(EvalPolicy.PROMISED, type, OptType.VARARG, exprClosure.getExpr());
             this.vararg = vararg;
         }
 
-        @Override
-        protected Object generateValue(VirtualFrame frame, PromiseProfile profile) {
-            return vararg.evaluate(frame, profile);
+        @SlowPath
+        protected Object varargGenerateValue(PromiseProfile profile) {
+            return vararg.evaluate((VirtualFrame) null, profile);
         }
 
         @Override
@@ -591,13 +638,13 @@ public class RPromise extends RLanguageRep {
     private static final class PromisedPromise extends EagerPromise {
 
         public PromisedPromise(PromiseType type, Closure closure, RPromise eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-            super(type, closure, eagerValue, assumption, nFrameId, feedback);
+            super(type, OptType.PROMISED, closure, eagerValue, assumption, nFrameId, feedback);
         }
 
-        @Override
-        protected Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
+        @SlowPath
+        protected Object promisedGenEagerValue(PromiseProfile profile) {
             RPromise promisedPromise = (RPromise) eagerValue;
-            return promisedPromise.evaluate(frame, profile);
+            return promisedPromise.evaluate((VirtualFrame) null, profile);
         }
 
         @Override
@@ -672,7 +719,7 @@ public class RPromise extends RLanguageRep {
          * @return A {@link RPromise} whose argument has already been evaluated
          */
         public RPromise createArgEvaluated(Object argumentValue) {
-            return new RPromise(evalPolicy, type, exprClosure.getExpr(), argumentValue);
+            return new RPromise(evalPolicy, type, OptType.DEFAULT, exprClosure.getExpr(), argumentValue);
         }
 
         /**
@@ -683,7 +730,7 @@ public class RPromise extends RLanguageRep {
          * @return An {@link EagerPromise}
          */
         public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-            return new EagerPromise(type, exprClosure, eagerValue, assumption, nFrameId, feedback);
+            return new EagerPromise(type, OptType.EAGER, exprClosure, eagerValue, assumption, nFrameId, feedback);
         }
 
         public RPromise createPromisedPromise(RPromise promisedPromise, Assumption assumption, int nFrameId, EagerFeedback feedback) {
@@ -697,7 +744,7 @@ public class RPromise extends RLanguageRep {
          */
         public RPromise createEagerDefaultPromise(int nFrameId, EagerFeedback feedback) {
             // TODO Does this work??
-            return new EagerPromise(type, defaultClosure, null, null, nFrameId, feedback);
+            return new EagerPromise(type, OptType.EAGER, defaultClosure, (Object) null, (Assumption) null, nFrameId, feedback);
         }
 
         public RPromise createVarargPromise(RPromise promisedVararg) {

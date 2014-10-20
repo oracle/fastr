@@ -50,6 +50,7 @@ public abstract class FunctionExpressionNode extends RNode {
         private final RFunction function;
 
         public StaticFunctionExpressionNode(RFunction function) {
+            // TODO DEOPT needed here?
             this.function = function;
         }
 
@@ -73,7 +74,10 @@ public abstract class FunctionExpressionNode extends RNode {
 
         @Override
         public RFunction executeFunction(VirtualFrame frame) {
-            return new RFunction("", callTarget, frame.materialize());
+            // Deoptimize every promise which is now in this frame, as it might leave it's stack
+            MaterializedFrame matFrame = frame.materialize();
+            RPromise.deoptimizeFrame(matFrame);
+            return new RFunction("", callTarget, matFrame);
         }
 
         public RootCallTarget getCallTarget() {

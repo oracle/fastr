@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -139,7 +140,7 @@ public final class RError extends RuntimeException {
                 errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                VirtualFrame frame = Utils.getActualCurrentFrame();
+                VirtualFrame frame = Utils.getActualCurrentFrame(FrameAccess.MATERIALIZE);
                 if (errorExpr instanceof RLanguage) {
                     RContext.getEngine().eval((RLanguage) errorExpr, frame.materialize());
                 } else if (errorExpr instanceof RExpression) {

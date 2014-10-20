@@ -29,6 +29,56 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestPromiseOptimizations_testDeoptimization_78a373f06df48fb5d5c96a3d4827ae94() {
+        assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f( a ) ; a <- 10 ; b() }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_408f8c53258b625ff792f6b700ec8ea1() {
+        assertEval("{ f <- function(x) { sys.frame(sys.nframe()) } ; a <- 1 ; e <- f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_53aabac8c266fb89b248ef98598fff26() {
+        assertEval("{ f <- function(x) { b <<- function() {x} } ; a <- 1 ; f( a ) ; a <- 10 ; b() }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_e479123f7bce7f09761f299b67ddc3cd() {
+        assertEval("{ f <- function(x) { e <<- sys.frame(sys.nframe()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_c88ab79e9badae2bc6aad0584ab063fa() {
+        assertEval("{ f <- function(x) { assign('e', sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_abbad1226b2a5a2f8f6f2f272c640d8e() {
+        assertEval("{ f <- function(x) { assign('e', function() {x}, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e() }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_d08a8714d10a0c1729ad451682f8ecf3() {
+        assertEval("{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_7b22a501f5c6c40061a45835dcf1bc5f() {
+        assertEval("{ f <- function(x) { le <- sys.frame(sys.nframe()); delayedAssign('e', le, le, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_7545bd99d4d31c925654f905bc267cf7() {
+        assertEval("{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_6e7e192f8d14c229a95c7105fb8f3f37() {
+        assertEval("{ f <- function(x) { delayedAssign('b', function() {x}, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; f( a ) ; a <- 10 ; b() }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testArithmeticUpdate_53dd62f0f4ee11cdf35cbec8ec41f7c8() {
         assertEval("{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- x + 1L ; x } ; f(FALSE) }");
     }
