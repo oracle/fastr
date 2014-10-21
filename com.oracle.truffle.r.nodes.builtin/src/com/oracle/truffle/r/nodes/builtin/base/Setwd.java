@@ -22,21 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "setwd", kind = INTERNAL, parameterNames = "path")
 public abstract class Setwd extends RInvisibleBuiltinNode {
+    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization
+    @SlowPath
     protected Object setwd(String dir) {
         controlVisibility();
         int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);
-        if (rc != 0) {
+        if (conditionProfile.profile(rc != 0)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
             return RFFIFactory.getRFFI().getBaseRFFI().getwd();

@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,9 +38,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 @RBuiltin(name = "structure", kind = SUBSTITUTE, parameterNames = {".Data", "..."})
 public abstract class Structure extends RBuiltinNode {
+    private final ConditionProfile instanceOfStringProfile = ConditionProfile.createBinaryProfile();
+
     @SuppressWarnings("unused")
     @Specialization
     protected Object structure(RMissing obj, RMissing args) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
     }
 
@@ -47,6 +53,7 @@ public abstract class Structure extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
         Object[] values = args.getValues();
         String[] argNames = getSuppliedArgsNames();
@@ -57,25 +64,29 @@ public abstract class Structure extends RBuiltinNode {
         return obj;
     }
 
-    private static Object fixupValue(Object value) {
-        if (value instanceof String) {
+    private Object fixupValue(Object value) {
+        if (instanceOfStringProfile.profile(value instanceof String)) {
             return RDataFactory.createStringVectorFromScalar((String) value);
+        } else {
+            return value;
         }
-        return value;
     }
 
+    @SlowPath
     private void validateArgNames(String[] argNames) {
-        // first "name" is the container
-        boolean ok = argNames != null;
-        if (argNames != null) {
-            for (int i = 1; i < argNames.length; i++) {
-                if (argNames[i] == null) {
-                    ok = false;
-                }
-            }
-        }
-        if (!ok) {
+        int containerIndex = 0;
+        if (argNames == null || findNullIn(argNames, containerIndex + 1)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
+    }
+
+    @SlowPath
+    private boolean findNullIn(String[] strings, int startIndex) {
+        for (int i = startIndex; i < strings.length; i++) {
+            if (strings[i] == null) {
+                return false;
+            }
+        }
+        return true;
     }
 }
