@@ -84,9 +84,9 @@ public abstract class Structure extends RBuiltinNode {
     private boolean findNullIn(String[] strings, int startIndex) {
         for (int i = startIndex; i < strings.length; i++) {
             if (strings[i] == null) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }

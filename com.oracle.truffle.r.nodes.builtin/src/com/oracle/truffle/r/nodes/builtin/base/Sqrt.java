@@ -75,11 +75,9 @@ public abstract class Sqrt extends RBuiltinNode {
         controlVisibility();
         double[] res = new double[xs.getLength()];
         int current = xs.getStart();
-        na.enable(xs);
         for (int i = 0; i < xs.getLength(); ++i) {
             double sqrt = Math.sqrt(current);
             res[i] = sqrt;
-            na.check(sqrt);
             current += xs.getStride();
         }
         RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames());
