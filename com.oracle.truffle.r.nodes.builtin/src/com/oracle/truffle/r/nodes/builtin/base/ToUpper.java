@@ -41,6 +41,7 @@ public abstract class ToUpper extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected RStringVector toUpper(RStringVector vector) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
@@ -54,6 +55,7 @@ public abstract class ToUpper extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RStringVector toupper(RNull empty) {
         controlVisibility();
         return RDataFactory.createStringVector(0);
