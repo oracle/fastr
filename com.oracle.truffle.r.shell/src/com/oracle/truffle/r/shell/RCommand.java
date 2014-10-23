@@ -53,15 +53,20 @@ public class RCommand {
 // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
-        RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
-        if (HELP.getValue()) {
-            RCmdOptionsParser.printHelp(RCmdOptions.Client.R, 0);
-        } else if (VERSION.getValue()) {
-            printVersionAndExit();
-        } else if (RHOME.getValue()) {
-            printRHomeAndExit();
+        try {
+            RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
+            if (HELP.getValue()) {
+                RCmdOptionsParser.printHelp(RCmdOptions.Client.R, 0);
+            } else if (VERSION.getValue()) {
+                printVersionAndExit();
+            } else if (RHOME.getValue()) {
+                printRHomeAndExit();
+            }
+            subMain(result.args);
+        } catch (Utils.DebugExitException ex) {
+            // running under in-process debugger, just return
+            return;
         }
-        subMain(result.args);
     }
 
     /**
@@ -95,10 +100,14 @@ public class RCommand {
                 fileArg = null;
             }
         }
+        
+        if (DEBUGGER.getValue() != null) {
+            REngine.setInstrumentAll(true);
+        }
 
         REnvVars.initialize();
 
-        // Whether the input is from stdin, a file or an expression on the command line (-e)
+            // Whether the input is from stdin, a file or an expression on the command line (-e)
         // it goes through the console. However, we cannot (yet) do incremental parsing, so file
         // input has to be treated specially.
         if (fileArg != null) {
