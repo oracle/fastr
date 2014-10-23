@@ -24,8 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -35,6 +38,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"})
 public abstract class ShortRowNames extends RBuiltinNode {
+    private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile typeConditionProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile naValueMet = BranchProfile.create();
+    private final BranchProfile intVectorMet = BranchProfile.create();
 
     public abstract Object executeObject(VirtualFrame frame, Object operand, Object type);
 
@@ -54,6 +61,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
     @Specialization(guards = "invalidType")
     protected RNull getNamesInvalidType(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
     }
 
@@ -68,15 +76,29 @@ public abstract class ShortRowNames extends RBuiltinNode {
     protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         int t = type.getDataAt(0);
-        Object a = operand.getRowNames();
-        if (a == RNull.instance) {
+        Object rowNames = operand.getRowNames();
+        if (nameConditionProfile.profile(rowNames == RNull.instance)) {
             return 0;
         } else {
-            RAbstractVector rowNames = (RAbstractVector) a;
-            int n = rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? ((RAbstractIntVector) rowNames).getDataAt(1)
-                            : rowNames.getLength();
-            return t == 1 ? n : Math.abs(n);
+            int n = calculateN((RAbstractVector) rowNames);
+            if (typeConditionProfile.profile(t == 1)) {
+                return n;
+            } else {
+                return Math.abs(n);
+            }
         }
+    }
+
+    private int calculateN(RAbstractVector rowNames) {
+        if (rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2) {
+            RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
+            intVectorMet.enter();
+            if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {
+                naValueMet.enter();
+                return rowNamesIntVector.getDataAt(1);
+            }
+        }
+        return rowNames.getLength();
     }
 
     protected boolean invalidType(@SuppressWarnings("unused") RAbstractContainer operand, RAbstractIntVector type) {

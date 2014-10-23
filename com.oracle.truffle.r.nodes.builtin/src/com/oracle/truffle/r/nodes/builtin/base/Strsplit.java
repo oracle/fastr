@@ -48,6 +48,7 @@ public abstract class Strsplit extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RList split(RAbstractStringVector x, String split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
         RStringVector[] result = new RStringVector[x.getLength()];
@@ -60,6 +61,7 @@ public abstract class Strsplit extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RList split(RAbstractStringVector x, RAbstractStringVector split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
         RStringVector[] result = new RStringVector[x.getLength()];

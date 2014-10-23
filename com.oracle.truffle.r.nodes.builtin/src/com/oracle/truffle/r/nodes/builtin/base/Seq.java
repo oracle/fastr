@@ -22,22 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 @RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
 // Implement in R, but seq.int is PRIMITIVE (and may have to contain most, if not all, of the code
 // below)
 @SuppressWarnings("unused")
 public abstract class Seq extends RBuiltinNode {
+    private final ConditionProfile lengthProfile1 = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile lengthProfile2 = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -45,11 +54,12 @@ public abstract class Seq extends RBuiltinNode {
                         ConstantNode.create(RMissing.instance)};
     }
 
-    private static RDoubleVector getVectorWithComputedStride(double start, double to, double lengthOut, boolean ascending) {
+    @SlowPath
+    private RDoubleVector getVectorWithComputedStride(double start, double to, double lengthOut, boolean ascending) {
         int length = (int) Math.ceil(lengthOut);
-        if (length == 1) {
+        if (lengthProfile1.profile(length == 1)) {
             return RDataFactory.createDoubleVector(new double[]{start}, RDataFactory.COMPLETE_VECTOR);
-        } else if (length == 2) {
+        } else if (lengthProfile2.profile(length == 2)) {
             return RDataFactory.createDoubleVector(new double[]{start, to}, RDataFactory.COMPLETE_VECTOR);
         } else {
             double[] data = new double[length];
