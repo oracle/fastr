@@ -52,7 +52,7 @@ public class RASTDeparse {
     /**
      * Deparse an AST node.
      */
-    private static void deparseNode(State state, Node fnode) {
+    public static void deparseNode(State state, Node fnode) {
         // This would me much easier if everything really was a function
         Node node = RASTUtils.unwrap(fnode);
         if (node instanceof UnresolvedWriteLocalVariableNode) {
@@ -284,7 +284,7 @@ public class RASTDeparse {
         if (unode instanceof ConstantNode) {
             return ((ConstantNode) unode).getValue();
         } else if (unode instanceof ReadVariableNode) {
-            return RDataFactory.createSymbol(((ReadVariableNode) unode).getSymbol().getName());
+            return RDataFactory.createSymbol(((ReadVariableNode) unode).getName());
         } else {
             return unode;
         }

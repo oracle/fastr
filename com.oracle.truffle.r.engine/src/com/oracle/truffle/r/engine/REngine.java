@@ -38,12 +38,14 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
+import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
@@ -66,6 +68,28 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
     @CompilationFinal private RFunction evalFunction;
+    
+    /**
+     * Controls whether ASTs are instrumented after parse. The default value controlled
+     * by {@link FastROptions#DisableInstrumentation}, but can be overridden by
+     * calling {@link #setInstrumentAll().
+     */
+    private static boolean instrumentingEnabled;
+    
+   /**
+     * Only relevant if {@link #instrumentingEnabled} is {@code true}.
+     * Used to control whether AST instrumenting is enabled.
+     * By default none of the code in the base packages nor the system profile 
+     * is instrumented, so this value is {@code false} during that phase.
+     * TODO relax this?
+     */
+    private static boolean instrumentingOn;
+    
+    /**
+     * Only of relevance for in-process debugging, prevents most
+     * re-initialization on repeat calls to {@link #initialize}.
+     */
+    private static boolean initialized;
 
     private REngine() {
     }
@@ -83,31 +107,42 @@ public final class REngine implements RContext.Engine {
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         singleton.startTime = System.nanoTime();
         singleton.childTimes = new long[]{0, 0};
-        Locale.setDefault(Locale.ROOT);
-        FastROptions.initialize();
-        Load_RFFIFactory.initialize();
-        singleton.crashOnFatalError = crashOnFatalErrorArg;
-        singleton.builtinLookup = RBuiltinPackages.getInstance();
-        singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
         VirtualFrame globalFrame = RRuntime.createNonFunctionFrame();
-        VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
-        REnvironment.baseInitialize(globalFrame, baseFrame);
-        singleton.evalFunction = singleton.lookupBuiltin("eval");
-        RPackageVariables.initializeBase();
-        RVersionInfo.initialize();
-        RAccuracyInfo.initialize();
-        RRNG.initialize();
-        TempDirPath.initialize();
-        LibPaths.initialize();
-        ROptions.initialize();
-        RProfile.initialize();
-        // eval the system profile
-        singleton.parseAndEval("<system_profile>", RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
-        REnvironment.packagesInitialize(RPackages.initialize());
-        RPackageVariables.initialize(); // TODO replace with R code
-        String siteProfile = RProfile.siteProfile();
-        if (siteProfile != null) {
-            singleton.parseAndEval("<site_profile>", siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+        if (initialized) {
+            REnvironment.resetForTest(globalFrame);
+        } else {
+            FastROptions.initialize();
+            instrumentingEnabled = !FastROptions.DisableInstrumentation.getValue();
+            if (instrumentingEnabled) {
+                RInstrument.initialize();
+                instrumentingOn = FastROptions.InstrumentDefaultPackages.getValue();
+            }
+            Locale.setDefault(Locale.ROOT);
+            Load_RFFIFactory.initialize();
+            singleton.crashOnFatalError = crashOnFatalErrorArg;
+            singleton.builtinLookup = RBuiltinPackages.getInstance();
+            singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
+            VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
+            REnvironment.baseInitialize(globalFrame, baseFrame);
+            singleton.evalFunction = singleton.lookupBuiltin("eval");
+            RPackageVariables.initializeBase();
+            RVersionInfo.initialize();
+            RAccuracyInfo.initialize();
+            RRNG.initialize();
+            TempDirPath.initialize();
+            LibPaths.initialize();
+            ROptions.initialize();
+            RProfile.initialize();
+            // eval the system profile
+            singleton.parseAndEval("<system_profile>", RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+            REnvironment.packagesInitialize(RPackages.initialize());
+            RPackageVariables.initialize(); // TODO replace with R code
+            String siteProfile = RProfile.siteProfile();
+            if (siteProfile != null) {
+                singleton.parseAndEval("<site_profile>", siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+            }
+            instrumentingOn = true;
+            initialized = true;
         }
         String userProfile = RProfile.userProfile();
         if (userProfile != null) {
@@ -134,6 +169,14 @@ public final class REngine implements RContext.Engine {
 
     public long[] childTimesInNanos() {
         return childTimes;
+    }
+    
+    public boolean instrumentingEnabled() {
+        return instrumentingEnabled && instrumentingOn;
+    }
+    
+    public static void setInstrumentAll(boolean value) {
+        instrumentingEnabled = value;
     }
 
     public Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
@@ -283,6 +326,8 @@ public final class REngine implements RContext.Engine {
             ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
                             Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
             return null;
+        } catch (DebugExitException e) {
+            throw e;
         } catch (RecognitionException | RuntimeException e) {
             singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -336,13 +381,15 @@ public final class REngine implements RContext.Engine {
     }
 
     /**
+     * Creates an anonymous function, with no arguments, whose {@link #FunctionStatementsNode} is {@code body}.
      * @param body
      * @return {@link #makeCallTarget(Object, String)}
      */
     @SlowPath
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
+        FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, fbn, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }
@@ -376,6 +423,8 @@ public final class REngine implements RContext.Engine {
             }
         } catch (UnsupportedSpecializationException use) {
             throw use;
+        } catch (DebugExitException e) {
+            throw e;
         } catch (Throwable e) {
             reportImplementationError(e);
         }

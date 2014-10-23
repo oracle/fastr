@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.RNodeWrapper;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -41,10 +43,23 @@ public class RASTUtils {
     @SlowPath
     public static Node unwrap(Object node) {
         if (node instanceof WrapArgumentNode) {
-            return ((WrapArgumentNode) node).getOperand();
+            return unwrap(((WrapArgumentNode) node).getOperand());
+        } else if (node instanceof RNodeWrapper) {
+            return ((RNodeWrapper) node).getChild();
         } else {
             return (Node) node;
         }
+    }
+    
+    @SlowPath
+    public static Node unwrapParent(Node node) {
+        Node parent = node.getParent();
+        if (parent instanceof WrapperNode) {
+            return parent.getParent();
+        } else {
+            return parent;
+        }
+        
     }
 
     /**
@@ -83,7 +98,7 @@ public class RASTUtils {
      */
     @SlowPath
     public static RSymbol createRSymbol(Node readVariableNode) {
-        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getSymbol().getName());
+        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getName());
     }
 
     @SlowPath
@@ -154,7 +169,7 @@ public class RASTUtils {
      * @param quote TODO
      */
     public static Object findFunctionName(Node node, boolean quote) {
-        RNode child = findFunctionNode(node);
+        RNode child = (RNode) unwrap(findFunctionNode(node));
         if (child instanceof ReadVariableNode) {
             if (child instanceof BuiltinFunctionVariableNode) {
                 BuiltinFunctionVariableNode bvn = (BuiltinFunctionVariableNode) child;
@@ -171,9 +186,12 @@ public class RASTUtils {
             return RDataFactory.createSymbol(gname);
         } else if (child instanceof RCallNode) {
             return findFunctionName(child, quote);
+        } else {
+            // some more complicated expression, just deparse it
+            RDeparse.State state = RDeparse.State.createPrintableState();
+            ((RNode) child).deparse(state);
+            return RDataFactory.createSymbol(state.toString());
         }
-        assert false;
-        return null;
     }
 
     /**

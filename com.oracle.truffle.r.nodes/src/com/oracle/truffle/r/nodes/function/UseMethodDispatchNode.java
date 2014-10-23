@@ -145,7 +145,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private static void addArg(Object[] values, Object value, int index) {
-        if (value == RMissing.instance || (value instanceof RPromise && RMissingHelper.isMissingSymbol((RPromise) value))) {
+        if (value == RMissing.instance || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value))) {
             values[index] = null;
         } else {
             values[index] = value;

@@ -130,24 +130,24 @@ public class ArgumentMatcher {
 
     /**
      * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
-     * denote symbols
+     * denote name's
      *
      * @param frame {@link VirtualFrame}
      * @param arg {@link RNode}
-     * @return Whether the given argument denotes a 'missing' symbol in the context of the given
+     * @return Whether the given argument denotes a 'missing' name in the context of the given
      *         frame
      */
-    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
+    private static boolean isMissingName(VirtualFrame frame, RNode arg) {
         if (arg instanceof ConstantMissingNode) {
             return true;
         }
 
-        Symbol symbol = RMissingHelper.unwrapSymbol(arg);
+        String name = RMissingHelper.unwrapName(arg);
         // Unused "..." are not 'missing' for inlined functions
-        if (symbol != null && symbol.isVarArg()) {
-            Object obj = RMissingHelper.getMissingValue(frame, symbol);
+        if (name != null && ArgumentsTrait.isVarArg(name)) {
+            Object obj = RMissingHelper.getMissingValue(frame, name);
 
-            // Symbol == missingArgument?
+            // name == missingArgument?
             if (obj == RMissing.instance) {
                 return true;
             }
@@ -259,11 +259,11 @@ public class ArgumentMatcher {
                         // Check for 'missing' arguments: mark them 'missing' by replacing with
                         // 'null'
                         RNode varArg = varArgs.getArgumentNodes()[j];
-                        varArgs.getArgumentNodes()[j] = isMissingSymbol(frame, varArg) ? null : varArg;
+                        varArgs.getArgumentNodes()[j] = isMissingName(frame, varArg) ? null : varArg;
                     }
                 } else {
                     // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-                    argsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+                    argsChecked[i] = isMissingName(frame, arg) ? null : arg;
                 }
             }
         }
@@ -708,9 +708,9 @@ public class ArgumentMatcher {
         @Override
         public boolean isVararg(RNode arg) {
             // Empty varargs get passed in as "...", and not unrolled. Thus we only have to check
-            // the RVNs symbol
-            Symbol symbol = RMissingHelper.unwrapSymbol(arg);
-            return symbol != null && symbol.isVarArg();
+            // the RVNs name
+            String name = RMissingHelper.unwrapName(arg);
+            return name != null && ArgumentsTrait.isVarArg(name);
         }
 
         @SlowPath

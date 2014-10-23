@@ -48,7 +48,7 @@ public abstract class AsCall extends RBuiltinNode {
             f = ((RSymbol) x.getDataAt(0)).getName();
         } else {
             RLanguage l = (RLanguage) x.getDataAt(0);
-            f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getSymbol().getName();
+            f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getName();
         }
         return Call.makeCall(f, makeNamesAndValues(x.getList()));
     }

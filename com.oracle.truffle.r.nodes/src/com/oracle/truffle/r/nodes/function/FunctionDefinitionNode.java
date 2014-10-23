@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -32,6 +35,11 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.instrument.RASTDebugProber;
+import com.oracle.truffle.r.nodes.instrument.REntryCounters;
+import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
+import com.oracle.truffle.r.nodes.instrument.RNodeWrapper;
+import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.*;
@@ -39,25 +47,30 @@ import com.oracle.truffle.r.runtime.env.*;
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
     /**
-     * Identifies the lexical scope where this function is defined, through the "parent" field.
+     * Identifies the lexical scope where this function is defined, through the
+     * "parent" field.
      */
     private final REnvironment.FunctionDefinition funcEnv;
-    private final RNode uninitializedBody;
-    @Child private RNode body;
+    private RNode uninitializedBody;
+    @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     private final String description;
+    private final UUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
     /**
-     * An instance of this node may be called from with the intention to have its execution leave a
-     * footprint behind in a specific frame/environment, e.g., during library loading, commands from
-     * the shell, or R's {@code eval} and its friends. In that case, {@code substituteFrame} is
-     * {@code true}, and the {@link #execute(VirtualFrame)} method must be invoked with one
-     * argument, namely the {@link VirtualFrame} to be side-effected. Execution will then proceed in
-     * the context of that frame. Note that passing only this one frame argument, strictly spoken,
-     * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
+     * An instance of this node may be called from with the intention to have
+     * its execution leave a footprint behind in a specific frame/environment,
+     * e.g., during library loading, commands from the shell, or R's
+     * {@code eval} and its friends. In that case, {@code substituteFrame} is
+     * {@code true}, and the {@link #execute(VirtualFrame)} method must be
+     * invoked with one argument, namely the {@link VirtualFrame} to be
+     * side-effected. Execution will then proceed in the context of that frame.
+     * Note that passing only this one frame argument, strictly spoken, violates
+     * the frame layout as set forth in {@link RArguments}. This is for internal
+     * use only.
      */
     private final boolean substituteFrame;
 
@@ -67,23 +80,46 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final BranchProfile returnProfile = BranchProfile.create();
 
     public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
-        this(src, funcEnv, body, formals, description, substituteFrame, false);
+        this(src, funcEnv, body, formals, description, substituteFrame, true, false);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
     public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit) {
+        this(src, funcEnv, body, formals, description, substituteFrame, true, skipExit);
+    }
+
+    /**
+     * Version for {@link #split}.
+     * @param splitter the node being split
+     */
+    private FunctionDefinitionNode(FunctionDefinitionNode splitter) {
+        this(splitter.getSourceSection(), splitter.funcEnv, NodeUtil.cloneNode(splitter.uninitializedBody), splitter.getFormalArguments(), splitter.description, false, false, splitter.onExitSlot == null);
+    }
+
+    private FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, 
+            FormalArguments formals, String description, boolean substituteFrame, boolean applyInstrumentation, boolean skipExit) {
         super(src, formals, funcEnv.getDescriptor());
         this.funcEnv = funcEnv;
-        this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
+        this.uninitializedBody = NodeUtil.cloneNode(body);
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.create(InternalFrameSlot.OnExit, false);
+        this.instrumentationApplied = substituteFrame || !applyInstrumentation;
+        this.uuid = substituteFrame ? null : UUID.randomUUID();
+    }
+    
+    public UUID getUUID() {
+        return uuid;
     }
 
     public REnvironment.FunctionDefinition getEnv() {
         return funcEnv;
+    }
+    
+    public FunctionBodyNode getBody() {
+        return (FunctionBodyNode) RASTUtils.unwrap(body);
     }
 
     /**
@@ -137,7 +173,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public RootNode split() {
-        return new FunctionDefinitionNode(getSourceSection(), funcEnv, NodeUtil.cloneNode(uninitializedBody), getFormalArguments(), description, false);
+        return new FunctionDefinitionNode(this);
     }
 
     @Override
@@ -167,7 +203,19 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.writeline();
         body.deparse(state);
         state.writeNLDecIndentCloseCurly();
-
     }
+
+    private boolean instrumentationApplied = false;
+
+    @Override
+    public void applyInstrumentation() {
+        if (RContext.getEngine().instrumentingEnabled() && !instrumentationApplied) {
+            Probe.applyASTProbers(body);
+            // keep uninitializedBody isomorphic
+            uninitializedBody = NodeUtil.cloneNode(body);
+            instrumentationApplied = true;
+        }
+    }
+
 
 }

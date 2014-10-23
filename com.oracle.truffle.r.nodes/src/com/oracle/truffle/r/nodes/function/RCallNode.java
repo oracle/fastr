@@ -186,8 +186,7 @@ public abstract class RCallNode extends RNode {
     }
 
     public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
-        Symbol symbol = Symbol.create(function.getName());
-        return RCallNode.createCall(src, BuiltinFunctionVariableNodeFactory.create(function, symbol), arguments);
+        return RCallNode.createCall(src, BuiltinFunctionVariableNodeFactory.create(function, function.getName()), arguments);
     }
 
     /**
@@ -201,9 +200,9 @@ public abstract class RCallNode extends RNode {
      * @param function the resolved {@link RFunction}.
      * @param symbol The name of the function
      */
-    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, Symbol symbol) {
+    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerDirectives.transferToInterpreter();
-        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, symbol);
+        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, name);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
         current.assignSourceSection(src);
@@ -474,7 +473,7 @@ public abstract class RCallNode extends RNode {
                 String sfname = ((RSymbol) fname).getName();
                 if (sfname.equals(":::") || sfname.equals("::")) {
                     // special infix
-                    RCallNode colonCall = (RCallNode) getFunctionNode();
+                    RCallNode colonCall = (RCallNode) getFunctionNode().unwrap();
                     RNode[] argValues = colonCall.getArgumentsNode().getArguments();
                     argValues[0].deparse(state);
                     state.append(sfname);

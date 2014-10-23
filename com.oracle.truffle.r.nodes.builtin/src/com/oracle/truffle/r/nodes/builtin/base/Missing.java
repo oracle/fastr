@@ -47,19 +47,19 @@ public abstract class Missing extends RBuiltinNode {
         controlVisibility();
         // Unwrap current promise, as it's irrelevant for 'missing'
         RNode argExpr = (RNode) promise.getRep();
-        Symbol symbol = RMissingHelper.unwrapSymbol(argExpr);
-        if (symbol == null) {
+        String name = RMissingHelper.unwrapName(argExpr);
+        if (name == null) {
             return RRuntime.asLogical(false);
         }
 
-        // Read symbols value directly
+        // Read name's value directly
         if (getMissingValue == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getMissingValue = insert(GetMissingValueNode.create(symbol));
+            getMissingValue = insert(GetMissingValueNode.create(name));
         }
         Object obj = getMissingValue.execute(frame);
         if (obj == null) {
-            // In case we are not able to read the symbol in current frame: This is not an argument
+            // In case we are not able to read the name in current frame: This is not an argument
             // and thus return false
             return RRuntime.asLogical(false);
         }

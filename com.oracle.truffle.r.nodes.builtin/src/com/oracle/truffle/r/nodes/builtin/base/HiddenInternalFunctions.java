@@ -73,7 +73,7 @@ public class HiddenInternalFunctions {
                 // GnuR does an eval but we short cut since intVec evaluates to itself.
                 // What happens next a pretty gross - we replace the "key" argument variable read
                 // in expr with a constant that is the value of intVec
-                RCallNode callNode = (RCallNode) ((WrapArgumentNode) expr.getRep()).getOperand();
+                RCallNode callNode = (RCallNode) RASTUtils.unwrap(expr.getRep());
                 ConstantNode vecNode = ConstantNode.create(intVec);
                 RCallNode expr0 = RCallNode.createCloneReplacingFirstArg(callNode, vecNode);
                 try {

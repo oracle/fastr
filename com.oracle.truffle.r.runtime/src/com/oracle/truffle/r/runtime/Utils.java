@@ -178,13 +178,25 @@ public final class Utils {
         System.err.println("FastR warning: " + msg);
         // CheckStyle: resume system..print check
     }
+    
+    /**
+     * When running in "debug" mode, this exception is thrown rather than
+     * a call to System.exit, so that control can return to an in-process debugger.
+     */
+    public static class DebugExitException extends RuntimeException {
+    
+    }
 
     /**
      * All terminations should go through this method.
      */
     public static void exit(int status) {
         RPerfAnalysis.report();
-        System.exit(status);
+        if (RCmdOptions.DEBUGGER.getValue() != null) {
+            throw new DebugExitException();
+        } else {
+            System.exit(status);
+        }
     }
 
     public static void fail(String msg) {

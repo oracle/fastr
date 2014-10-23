@@ -41,6 +41,12 @@ import com.oracle.truffle.r.runtime.data.*;
  * symbol {@code func}. We could just eval this, but eval has a lot of unnecessary overhead given
  * that we know that {@code func} is either a builtin or it's an error. We want to rewrite the AST
  * as if the {@code func} had been called directly.
+ * 
+ * A note on {@link RInstrumentableNode}. Since both the {@code .Internal} and the argument
+ * are {@link RCallNode}s both may have been wrapped. The call to {@link RASTUtils#unwrap} will
+ * go through any {@link RWrapperNode} and the rewrite will remove one level of wrapping. However the
+ * parent of the the {@code .Internal}, which will be an {@link RWrapperNode}, will remain so any
+ * instrumentation at that level will remain in place.
  */
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = {0})
 public abstract class Internal extends RBuiltinNode {
@@ -62,7 +68,7 @@ public abstract class Internal extends RBuiltinNode {
     protected Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
         RNode call = (RNode) x.getRep();
-        RNode operand = ((WrapArgumentNode) call).getOperand();
+        RNode operand = (RNode) RASTUtils.unwrap(call);
 
         if (!(operand instanceof RootCallNode)) {
             errorProfile.enter();
@@ -71,17 +77,17 @@ public abstract class Internal extends RBuiltinNode {
 
         RootCallNode callNode = (RootCallNode) operand;
         RNode func = callNode.getFunctionNode();
-        Symbol symbol = ((ReadVariableNode) func).getSymbol();
-        RFunction function = RContext.getEngine().lookupBuiltin(symbol.getName());
+        String name = ((ReadVariableNode) func).getName();
+        RFunction function = RContext.getEngine().lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, name);
         }
 
         // .Internal function is validated
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // Replace the original call; we can't just use callNode as that will cause recursion!
-        RCallNode internalCallNode = RCallNode.createInternalCall(frame, call.getSourceSection(), callNode, function, symbol);
+        RCallNode internalCallNode = RCallNode.createInternalCall(frame, call.getSourceSection(), callNode, function, name);
         this.getParent().replace(internalCallNode);
         // evaluate the actual builtin this time, next time we won't get here!
         Object result = internalCallNode.execute(frame);

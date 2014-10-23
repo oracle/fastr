@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode.DynamicFunctionExpressionNode;
+import com.oracle.truffle.r.nodes.instrument.RNodeWrapper;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
@@ -187,6 +188,8 @@ public abstract class Substitute extends RBuiltinNode {
             } else {
                 return node;
             }
+        } else if (node instanceof RNodeWrapper) {
+            return substituteAST(RASTUtils.unwrap(node), env);
         } else if (node instanceof WriteVariableNode) {
             // nothing to do, formals do not get substituted, so neither do these (artificial) nodes
             return node;
@@ -196,7 +199,7 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     private static Node substituteVariable(ReadVariableNode node, REnvironment env) {
-        String name = node.getSymbol().getName();
+        String name = node.getName();
         Object val = env.get(name);
         if (val == null) {
             // not bound in env,

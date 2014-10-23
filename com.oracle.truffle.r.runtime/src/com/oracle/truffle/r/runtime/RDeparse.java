@@ -187,6 +187,10 @@ public class RDeparse {
             this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
             lines = needVector ? new ArrayList<>() : null;
         }
+        
+        public static State createPrintableState() {
+            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, false);
+        }
 
         private void preAppend() {
             if (startline) {
@@ -282,6 +286,12 @@ public class RDeparse {
             writeline();
             decIndent();
             append('}');
+        }
+        
+        @Override
+        public String toString() {
+            // assumes needVector == false
+            return sb.toString();
         }
     }
 

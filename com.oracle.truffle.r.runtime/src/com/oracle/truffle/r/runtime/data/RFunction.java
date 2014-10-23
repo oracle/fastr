@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -70,6 +71,10 @@ public final class RFunction extends RScalar {
 
     public RootCallTarget getTarget() {
         return target;
+    }
+    
+    public RootNode getRootNode() {
+        return target.getRootNode();
     }
 
     public MaterializedFrame getEnclosingFrame() {

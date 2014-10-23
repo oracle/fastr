@@ -46,6 +46,33 @@ public class SequenceNode extends RNode {
         this(sequence);
         assignSourceSection(src);
     }
+    
+    /**
+     * Similar to {@link #ensureSequence} but for subclasses, where we 
+     * have to extract any existing array.
+     * @param node 
+     */
+    protected SequenceNode(RNode node) {
+        this(convert(node));
+    }
+    
+    /**
+     * Ensures that {@code node} is a {@link SequenceNode} by converting
+     * any other node to a single length sequence.
+     */
+    public static RNode ensureSequence(RNode node) {
+        if (node == null || node instanceof SequenceNode) {
+            return node;
+        } else {
+            return new SequenceNode(new RNode[]{node}); 
+        }    
+    }
+
+    private static RNode[] convert(RNode node) {
+        if (node instanceof SequenceNode) {
+            return ((SequenceNode) node).sequence;
+        } else return new RNode[]{node};      
+    }
 
     @Override
     @ExplodeLoop
@@ -57,6 +84,10 @@ public class SequenceNode extends RNode {
         return lastResult;
     }
 
+    public RNode[] getSequence() {
+        return sequence;
+    }
+    
     @Override
     @SlowPath
     public void deparse(State state) {
@@ -90,7 +121,7 @@ public class SequenceNode extends RNode {
              */
             WriteVariableNode tmpAssignNode = (WriteVariableNode) sequence[1];
             WriteVariableNode updateNode = (WriteVariableNode) sequence[2];
-            RNode updateNodeRhs = updateNode.getRhs();
+            RNode updateNodeRhs = (RNode) RASTUtils.unwrap(updateNode.getRhs());
             if (updateNodeRhs instanceof UpdateFieldNode) {
                 UpdateFieldNode ufn = (UpdateFieldNode) updateNodeRhs;
                 tmpAssignNode.getRhs().deparse(state);

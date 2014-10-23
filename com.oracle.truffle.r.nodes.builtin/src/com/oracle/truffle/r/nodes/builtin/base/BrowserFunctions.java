@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class BrowserFunctions {
 
     private static final class HelperState {
+
         private final String text;
         private final Object condition;
 
@@ -66,7 +67,9 @@ public class BrowserFunctions {
             if (RRuntime.fromLogical(expr)) {
                 try {
                     helperState.add(new HelperState(text, condition));
-                    doBrowser(frame.materialize());
+                    MaterializedFrame mFrame = frame.materialize();
+                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", REnvironment.isGlobalEnvFrame(frame) ? "top level" : RArguments.getFunction(frame).getTarget());
+                    doBrowser(mFrame);
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }
@@ -75,14 +78,14 @@ public class BrowserFunctions {
         }
 
         @SlowPath
-        private static void doBrowser(MaterializedFrame frame) {
+        public static void doBrowser(MaterializedFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-            REnvironment callerEnv = REnvironment.frameToEnvironment(frame.materialize());
-            ch.printf("Called from: %s%n", callerEnv == REnvironment.globalEnv() ? "top level" : RArguments.getFunction(frame).getTarget());
+            REnvironment callerEnv = REnvironment.frameToEnvironment(frame);
             String savedPrompt = ch.getPrompt();
             ch.setPrompt(browserPrompt());
             try {
-                LW: while (true) {
+                LW:
+                while (true) {
                     String input = ch.readLine();
                     if (input.length() == 0) {
                         RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");
@@ -95,11 +98,11 @@ public class BrowserFunctions {
                     switch (input) {
                         case "c":
                         case "cont":
+                        case "n":
                             break LW;
 
                         case "s":
                         case "f":
-                        case "n":
                             throw RError.nyi(null, notImplemented(input));
 
                         case "where": {
@@ -136,13 +139,15 @@ public class BrowserFunctions {
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(1)};
         }
 
         /**
-         * GnuR objects to indices <= 0 but allows positive indices that are out of range.
+         * GnuR objects to indices <= 0 but allows positive indices that are out
+         * of range.
          */
         protected HelperState getHelperState(int n) {
             if (n <= 0) {
@@ -159,6 +164,7 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
+
         @Specialization
         @SlowPath
         protected String browserText(int n) {
@@ -176,6 +182,7 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
+
         @Specialization
         @SlowPath
         protected Object browserCondition(int n) {
@@ -193,6 +200,7 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
+
         @Specialization
         @SlowPath
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {

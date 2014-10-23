@@ -25,22 +25,27 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeFactory;
+import com.oracle.truffle.r.nodes.instrument.WriteVariableNodeWrapper;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @NodeChild(value = "rhs", type = RNode.class)
-@NodeField(name = "argWrite", type = boolean.class)
+@NodeFields({
+    @NodeField(name = "argWrite", type = boolean.class),
+    @NodeField(name = "name", type = String.class)})
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
     public enum Mode {
+
         REGULAR,
         COPY,
         INVISIBLE,
@@ -48,6 +53,8 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     }
 
     public abstract boolean isArgWrite();
+    
+    public abstract String getName();
 
     public abstract RNode getRhs();
 
@@ -60,6 +67,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
     @Override
+    public boolean isSyntax() {
+        return !isArgWrite();
+    }
+
+    @Override
     public final boolean getVisibility() {
         return false;
     }
@@ -70,11 +82,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     // "dimnames(x)<-list(1)", the assigned value list(1) must become list("1"), with the latter
     // value returned as a result of the call;
     // TODO: is there a better way than to eagerly create a copy of RHS?
-
     // the above, however, is not necessary for vector updates, which never coerces RHS to a
     // different type; in this case we set the mode parameter to INVISIBLE is meant to prevent
     // changing state altogether
-
     // setting value of the mode parameter to TEMP is meant to modify how the state is changed; this
     // is needed for the replacement forms of vector updates where a vector is assigned to a
     // temporary (visible) variable and then, again, to the original variable (which would cause the
@@ -123,9 +133,16 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         frame.setObject(frameSlot, newValue);
     }
-
-    public interface HasName {
-        String getName();
+    
+    protected void deparseHelper(State state, String op) {
+         if (!isArgWrite()) {
+            state.append(getName());
+            RNode rhs = getRhs();
+            if (rhs != null) {
+                state.append(op);
+                getRhs().deparse(state);
+            }
+        }       
     }
 
     private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
@@ -136,50 +153,33 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
     }
 
-    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
+    public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(symbol), mode);
+            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(name), mode);
         } else {
             assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(symbol), mode);
+            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(name), mode);
         }
     }
 
-    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        return create(symbol, rhs, isArgWrite, isSuper, Mode.REGULAR);
+    public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
+        return create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
     }
 
-    public static WriteVariableNode create(SourceSection src, Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        WriteVariableNode wvn = create(symbol, rhs, isArgWrite, isSuper, Mode.REGULAR);
+    public static WriteVariableNode create(SourceSection src, String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
+        WriteVariableNode wvn = create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
         wvn.assignSourceSection(src);
         return wvn;
     }
 
     public abstract void execute(VirtualFrame frame, Object value);
 
-    @NodeFields({@NodeField(name = "name", type = String.class), @NodeField(name = "mode", type = Mode.class)})
-    public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode implements HasName {
+    @NodeField(name = "mode", type = Mode.class)
+    public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
         public abstract String getName();
 
         public abstract Mode getMode();
-
-        @Override
-        public boolean isSyntax() {
-            return !isArgWrite();
-        }
-
-        @Override
-        public void deparse(State state) {
-            if (!isArgWrite()) {
-                state.append(getName());
-                RNode rhs = getRhs();
-                if (rhs != null) {
-                    state.append(" <- ");
-                    getRhs().deparse(state);
-                }
-            }
-        }
 
         @Specialization
         protected byte doLogical(VirtualFrame frame, byte value) {
@@ -208,19 +208,26 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getName(), initialKind);
-            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, getMode())).execute(frame, value);
+            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), getName(), frameSlot, getMode())).execute(frame, value);
+        }
+        
+        @Override
+        public void deparse(State state) {
+            deparseHelper(state, " <- ");
         }
     }
 
-    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
+    @NodeFields({
+        @NodeField(name = "frameSlot", type = FrameSlot.class),
+        @NodeField(name = "mode", type = Mode.class)})
     public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
-
+        
         public abstract Mode getMode();
 
-        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, FrameSlot frameSlot, Mode mode) {
-            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, frameSlot, mode);
+        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, String name, FrameSlot frameSlot, Mode mode) {
+            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, name, frameSlot, mode);
         }
 
         @Specialization(guards = "isFrameBooleanKind")
@@ -262,6 +269,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
             return isDoubleKind(frameSlot);
         }
+        
+        @Override
+        public void deparse(State state) {
+            deparseHelper(state, " <- ");
+        }
     }
 
     public abstract static class AbstractWriteSuperVariableNode extends WriteVariableNode {
@@ -274,18 +286,32 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             execute(frame, value);
             return value;
         }
+ 
+        @Override
+        public void deparse(State state) {
+            deparseHelper(state, " <<- ");
+        }
+
     }
 
     public static final class WriteSuperVariableConditionalNode extends AbstractWriteSuperVariableNode {
 
-        @Child private WriteSuperVariableNode writeNode;
-        @Child private AbstractWriteSuperVariableNode nextNode;
-        @Child private RNode rhs;
+        @Child
+        private WriteSuperVariableNode writeNode;
+        @Child
+        private AbstractWriteSuperVariableNode nextNode;
+        @Child
+        private RNode rhs;
 
         WriteSuperVariableConditionalNode(WriteSuperVariableNode writeNode, AbstractWriteSuperVariableNode nextNode, RNode rhs) {
             this.writeNode = writeNode;
             this.nextNode = nextNode;
             this.rhs = rhs;
+        }
+        
+        @Override
+        public String getName() {
+            return writeNode.getName();
         }
 
         @Override
@@ -321,9 +347,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
     }
 
-    public static final class UnresolvedWriteSuperVariableNode extends AbstractWriteSuperVariableNode implements HasName {
+    public static final class UnresolvedWriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
-        @Child private RNode rhs;
+        @Child
+        private RNode rhs;
         private final String symbol;
         private final WriteVariableNode.Mode mode;
 
@@ -343,20 +370,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
 
         @Override
-        public boolean isSyntax() {
-            return true;
-        }
-
-        @Override
-        public void deparse(State state) {
-            if (!isArgWrite()) {
-                state.append(symbol);
-                state.append(" <<- ");
-                getRhs().deparse(state);
-            }
-        }
-
-        @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractWriteSuperVariableNode writeNode;
@@ -364,10 +377,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 // we've reached the global scope, do unconditional write
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
-                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)), this.isArgWrite(),
-                                mode);
+                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, 
+                        FrameSlotNode.create(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)), this.isArgWrite(),
+                        getName(), mode);
             } else {
-                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), mode);
+                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), this.getName(), mode);
                 writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
@@ -393,7 +407,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     }
 
     @SuppressWarnings("unused")
-    @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
+    @NodeChildren({
+        @NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class),
+        @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
     @NodeField(name = "mode", type = Mode.class)
     public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
@@ -472,4 +488,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
         return false;
     }
+
+    @Override
+    public ProbeNode.WrapperNode createWrapperNode(RNode child) {
+        return new WriteVariableNodeWrapper((WriteVariableNode) child);
+    }
+
 }

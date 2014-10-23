@@ -29,26 +29,26 @@ import com.oracle.truffle.r.nodes.access.*;
 
 /**
  * This is a node abstraction for the functionality defined in
- * {@link RMissingHelper#getMissingValue(Frame,Symbol)}.
+ * {@link RMissingHelper#getMissingValue(Frame,String)}.
  */
 public abstract class GetMissingValueNode extends RNode {
 
-    public static GetMissingValueNode create(Symbol sym) {
-        return new UninitializedGetMissingValueNode(sym);
+    public static GetMissingValueNode create(String name) {
+        return new UninitializedGetMissingValueNode(name);
     }
 
     private static final class UninitializedGetMissingValueNode extends GetMissingValueNode {
 
-        private final Symbol sym;
+        private final String name;
 
-        private UninitializedGetMissingValueNode(Symbol sym) {
-            this.sym = sym;
+        private UninitializedGetMissingValueNode(String sym) {
+            this.name = sym;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(sym.getName());
+            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
             GetMissingValueNode gmvn = new ResolvedGetMissingValueNode(slot);
             return replace(gmvn).execute(frame);
         }

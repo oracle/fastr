@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -262,6 +261,11 @@ public final class RContext extends ExecutionContext {
          * @param e
          */
         void printRError(RError e);
+        
+        /**
+         * Returns {@code} iff AST instrumentation is enabled.
+        */
+        boolean instrumentingEnabled();
 
     }
 
@@ -372,8 +376,4 @@ public final class RContext extends ExecutionContext {
         return "R";
     }
 
-    @Override
-    protected void setSourceCallback(SourceCallback sourceCallback) {
-        // TODO Auto-generated method stub
-    }
 }

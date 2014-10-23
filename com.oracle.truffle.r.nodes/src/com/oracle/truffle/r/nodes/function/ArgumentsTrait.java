@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-interface ArgumentsTrait {
+public interface ArgumentsTrait {
 
     public static final String VARARG_NAME = "...";
+    public static final String VARARG_GETTER_PREFIX = "..";
     public static final int NO_VARARG = -1;
 
     String[] getNames();
@@ -92,4 +93,16 @@ interface ArgumentsTrait {
             names[i] = name != null ? name.intern() : null;
         }
     }
+
+    static boolean isVarArg(String name) {
+        return name.equals(VARARG_NAME);
+    }
+
+    static boolean isVarArgGetter(String name) {
+        if (name.startsWith(VARARG_GETTER_PREFIX)) {
+            return !name.equals(VARARG_NAME);
+        }
+        return false;
+    }
+
 }
