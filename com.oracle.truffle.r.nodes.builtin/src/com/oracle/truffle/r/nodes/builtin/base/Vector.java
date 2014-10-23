@@ -22,28 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.CreateCast;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.ValueProfile;
-import com.oracle.truffle.r.nodes.RNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.ConvertIntFactory;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.Arrays;
+import java.util.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
 public abstract class Vector extends RBuiltinNode {
-    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -59,10 +52,9 @@ public abstract class Vector extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
     protected RAbstractVector vector(String mode, int length) {
         controlVisibility();
-        switch (modeProfile.profile(mode)) {
+        switch (mode) {
             case "character":
                 return RDataFactory.createStringVector(length);
             case "logical":

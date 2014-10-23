@@ -22,15 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.ExactClassValueProfile;
-import com.oracle.truffle.api.utilities.ValueProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -49,8 +46,6 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;
-
-    private final ExactClassValueProfile containerClassProfile = (ExactClassValueProfile)ValueProfile.createClassProfile();
 
     private RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
@@ -110,11 +105,9 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             resultVector.getAttributes().remove(name);
         }
         // return frame if it's one, otherwise return the vector
-        containerClassProfile.profile(container.getElementClass());
-        return containerClassProfile.getCachedClass() == RVector.class ? container : resultVector;
+        return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
-    @SlowPath
     public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
         if (value instanceof RStringVector) {
             return RVector.setClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RVector.class ? container : null);
@@ -148,8 +141,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             resultVector.setAttr(name, value);
         }
         // return frame if it's one, otherwise return the vector
-        containerClassProfile.profile(container.getElementClass());
-        return containerClassProfile.getCachedClass() == RVector.class ? container : resultVector;
+        return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
     @Specialization(guards = "!nullValue")
