@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
@@ -30,6 +31,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -45,6 +47,7 @@ public class SysFunctions {
     public abstract static class SysGetpid extends RBuiltinNode {
 
         @Specialization
+        @TruffleBoundary
         protected Object sysGetPid() {
             controlVisibility();
             int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
@@ -54,6 +57,7 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.getenv", kind = INTERNAL, parameterNames = {"x", "unset", "names"})
     public abstract static class SysGetenv extends RBuiltinNode {
+        private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
         @Override
         public RNode[] getParameterValues() {
@@ -61,12 +65,13 @@ public class SysFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object sysGetEnv(RAbstractStringVector x, String unset) {
             controlVisibility();
             Map<String, String> envMap = REnvVars.getMap();
             int len = x.getLength();
-            String[] data = new String[len == 0 ? envMap.size() : len];
-            if (len == 0) {
+            if (zeroLengthProfile.profile(len == 0)) {
+                String[] data = new String[envMap.size()];
                 // all
                 int i = 0;
                 for (Map.Entry<String, String> entry : envMap.entrySet()) {
@@ -74,6 +79,7 @@ public class SysFunctions {
                 }
                 return RDataFactory.createStringVector(data, true);
             } else {
+                String[] data = new String[len];
                 // just those in 'x' without the 'name=' which is handled in the R snippet
                 boolean complete = RDataFactory.COMPLETE_VECTOR;
                 for (int i = 0; i < len; i++) {
@@ -95,6 +101,7 @@ public class SysFunctions {
         @Specialization
         protected Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
         }
 
@@ -114,6 +121,7 @@ public class SysFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
             return doSysSetEnv(new Object[]{argVec.getDataAt(0)});
         }
@@ -130,6 +138,7 @@ public class SysFunctions {
         }
 
         @Specialization(guards = "!oneElement")
+        @TruffleBoundary
         protected RLogicalVector doSysSetEnv(RArgsValuesAndNames args) {
             Object[] argValues = args.getValues();
             return doSysSetEnv(argValues);
@@ -148,17 +157,18 @@ public class SysFunctions {
         }
 
         private void validateArgNames(String[] argNames) {
-            boolean ok = argNames != null;
-            if (argNames != null) {
-                for (int i = 0; i < argNames.length; i++) {
-                    if (argNames[i] == null) {
-                        ok = false;
-                    }
-                }
-            }
-            if (!ok) {
+            if (argNames == null || checkIfContainsNull(argNames)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
             }
+        }
+
+        private static boolean checkIfContainsNull(String[] strings) {
+            for (String string : strings) {
+                if (string == null) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         protected boolean oneElement(RArgsValuesAndNames args) {
@@ -170,6 +180,7 @@ public class SysFunctions {
     public abstract static class SysUnSetEnv extends RInvisibleBuiltinNode {
 
         @Specialization
+        @TruffleBoundary
         protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
             byte[] data = new byte[argVec.getLength()];
             for (int i = 0; i < data.length; i++) {
@@ -183,6 +194,7 @@ public class SysFunctions {
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
         @Specialization
+        @TruffleBoundary
         protected Object sysSleep(double seconds) {
             controlVisibility();
             sleep(convertToMillis(seconds));
@@ -190,6 +202,7 @@ public class SysFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object sysSleep(String secondsString) {
             controlVisibility();
             long millis = convertToMillis(checkValidString(secondsString));
@@ -198,6 +211,7 @@ public class SysFunctions {
         }
 
         @Specialization(guards = "lengthOne")
+        @TruffleBoundary
         protected Object sysSleep(RStringVector secondsVector) {
             controlVisibility();
             long millis = convertToMillis(checkValidString(secondsVector.getDataAt(0)));
@@ -210,6 +224,7 @@ public class SysFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object sysSleep(@SuppressWarnings("unused") Object arg) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
@@ -243,12 +258,14 @@ public class SysFunctions {
     public abstract static class SysReadlink extends RBuiltinNode {
 
         @Specialization
+        @TruffleBoundary
         protected Object sysReadLink(String path) {
             controlVisibility();
             return RDataFactory.createStringVector(doSysReadLink(path));
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object sysReadlink(RStringVector vector) {
             controlVisibility();
             String[] paths = new String[vector.getLength()];
@@ -267,6 +284,7 @@ public class SysFunctions {
             return RDataFactory.createStringVector(paths, complete);
         }
 
+        @TruffleBoundary
         private static String doSysReadLink(String path) {
             String s;
             try {
@@ -283,6 +301,7 @@ public class SysFunctions {
         @Specialization
         protected Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
         }
     }
