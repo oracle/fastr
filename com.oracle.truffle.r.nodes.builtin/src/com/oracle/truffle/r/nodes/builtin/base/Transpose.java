@@ -22,17 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 @RBuiltin(name = "t.default", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO INTERNAL
@@ -49,30 +53,35 @@ public abstract class Transpose extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object o);
 
     @Specialization
+    @SlowPath
     protected RNull transpose(RNull value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
+    @SlowPath
     protected int transpose(int value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
+    @SlowPath
     protected double transpose(double value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
+    @SlowPath
     protected byte transpose(byte value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "isEmpty2D")
+    @SlowPath
     protected RAbstractVector transpose(RAbstractVector vector) {
         controlVisibility();
         int[] dim = vector.getDimensions();
@@ -80,6 +89,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
+    @SlowPath
     protected RIntVector transpose(RAbstractIntVector vector) {
         controlVisibility();
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
@@ -107,6 +117,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
+    @SlowPath
     protected RDoubleVector transpose(RAbstractDoubleVector vector) {
         controlVisibility();
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
@@ -134,6 +145,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
+    @SlowPath
     protected RStringVector transpose(RAbstractStringVector vector) {
         controlVisibility();
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
