@@ -22,27 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
+import java.util.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.RNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-
-import java.util.Locale;
-
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "sprintf", kind = SUBSTITUTE, parameterNames = {"fmt", "..."})
 // TODO INTERNAL
