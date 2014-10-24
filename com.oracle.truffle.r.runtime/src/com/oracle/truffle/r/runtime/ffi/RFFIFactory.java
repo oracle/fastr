@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -81,7 +81,7 @@ public abstract class RFFIFactory {
         return null;
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected static IOException ioex() throws IOException {
         throw new IOException();
     }

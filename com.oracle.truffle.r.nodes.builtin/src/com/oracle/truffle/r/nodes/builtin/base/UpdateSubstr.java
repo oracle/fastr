@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -45,7 +45,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String replaceSubstring(String x, String value, int actualStart, int replacementLength, int actualStop) {
         return x.substring(0, actualStart - 1) + value.substring(0, replacementLength) + x.substring(actualStop, x.length());
     }

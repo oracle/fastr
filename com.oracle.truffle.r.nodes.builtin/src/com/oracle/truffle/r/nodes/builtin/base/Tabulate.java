@@ -20,7 +20,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 @RBuiltin(name = "tabulate", kind = RBuiltinKind.INTERNAL, parameterNames = {"bin", "nbins"})
 public abstract class Tabulate extends RBuiltinNode {
@@ -37,7 +37,7 @@ public abstract class Tabulate extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isValidNBin"})
-    @SlowPath
+    @TruffleBoundary
     public RIntVector tabulate(RAbstractIntVector bin, int nBins) {
         controlVisibility();
         int[] ans = new int[nBins];

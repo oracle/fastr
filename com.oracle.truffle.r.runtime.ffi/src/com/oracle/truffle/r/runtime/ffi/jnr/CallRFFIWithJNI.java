@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.nio.file.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
@@ -53,7 +53,7 @@ public class CallRFFIWithJNI implements CallRFFI {
      * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
      * so we have to do an additional {@code System.load} to achieve that.
      */
-    @SlowPath
+    @TruffleBoundary
     private static void loadLibrary() {
         String rHome = REnvVars.rHome();
         String packageName = "com.oracle.truffle.r.native";

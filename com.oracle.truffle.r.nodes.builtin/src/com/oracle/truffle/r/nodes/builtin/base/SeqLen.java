@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"})
@@ -48,7 +48,7 @@ public abstract class SeqLen extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RIntSequence seqLen(RAbstractIntVector length) {
         boolean zeroLength = length.getLength() == 0;
         if (zeroLength || length.getLength() > 1) {

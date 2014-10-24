@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
@@ -129,7 +129,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.logicalToString(operand);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(RIntVector vector) {
         int length = vector.getLength();
@@ -146,7 +146,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.toString(b);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(RDoubleVector vector) {
         int length = vector.getLength();
@@ -163,7 +163,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.toString(b);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(RStringVector vector) {
         int length = vector.getLength();
@@ -180,7 +180,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.toString(b);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(RLogicalVector vector) {
         int length = vector.getLength();
@@ -197,7 +197,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.toString(b);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(RRawVector vector) {
         int length = vector.getLength();
@@ -214,7 +214,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.toString(b);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(RComplexVector vector) {
         int length = vector.getLength();
@@ -231,7 +231,7 @@ public abstract class ToStringNode extends UnaryNode {
         return RRuntime.toString(b);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String toString(VirtualFrame frame, RList vector) {
         int length = vector.getLength();

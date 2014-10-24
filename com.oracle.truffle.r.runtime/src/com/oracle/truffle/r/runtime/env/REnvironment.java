@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
@@ -411,7 +411,7 @@ public abstract class REnvironment implements RAttributable {
         return envToRemove;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void detachException(RError.Message message) throws DetachException {
         throw new DetachException(message);
     }
@@ -445,7 +445,7 @@ public abstract class REnvironment implements RAttributable {
      * this method is to create an analogous lexical parent chain of {@link Function} instances with
      * the correct {@link MaterializedFrame}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
         REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
@@ -512,7 +512,7 @@ public abstract class REnvironment implements RAttributable {
         return null;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String packageQualName(PackageKind packageKind, String packageName) {
         StringBuffer sb = new StringBuffer();
         sb.append(packageKind.name().toLowerCase());
@@ -583,7 +583,7 @@ public abstract class REnvironment implements RAttributable {
     /**
      * The "print" name of an environment, i.e. what is output for {@code print(env)}.
      */
-    @SlowPath
+    @TruffleBoundary
     public String getPrintName() {
         return new StringBuilder("<environment: ").append(getPrintNameHelper()).append('>').toString();
     }
@@ -635,7 +635,7 @@ public abstract class REnvironment implements RAttributable {
      * Ensures that {@code env} and all its parents have a {@link MaterializedFrame}. Used for
      * {@link NewEnv} environments that only need frames when they are used in {@code eval} etc.
      */
-    @SlowPath
+    @TruffleBoundary
     private static MaterializedFrame getMaterializedFrame(REnvironment env) {
         MaterializedFrame envFrame = env.frameAccess.getFrame();
         if (envFrame == null && env.parent != null) {

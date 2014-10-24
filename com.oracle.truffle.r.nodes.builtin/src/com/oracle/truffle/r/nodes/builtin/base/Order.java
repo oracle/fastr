@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -394,7 +394,7 @@ public abstract class Order extends RBuiltinNode {
 
     // helpers
 
-    @SlowPath
+    @TruffleBoundary
     protected static int[] ordArray(int length) {
         int[] r = new int[length];
         for (int i = 0; i < length; ++i) {
@@ -403,7 +403,7 @@ public abstract class Order extends RBuiltinNode {
         return r;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void swaps(int[] a, int[] b, int i, int j) {
         int t;
         t = a[i];

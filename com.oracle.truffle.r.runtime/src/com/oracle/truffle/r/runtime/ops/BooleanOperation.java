@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class BooleanOperation extends Operation {
@@ -52,47 +52,47 @@ public abstract class BooleanOperation extends Operation {
         return true;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public RRaw op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") RRaw right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") int left, @SuppressWarnings("unused") String right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") String left, @SuppressWarnings("unused") int right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") double left, @SuppressWarnings("unused") String right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") String left, @SuppressWarnings("unused") double right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") Object right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RNull right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
         throw new UnsupportedOperationException();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
         throw new UnsupportedOperationException();
     }

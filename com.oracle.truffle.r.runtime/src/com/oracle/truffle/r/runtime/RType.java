@@ -62,7 +62,7 @@ public enum RType {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RType lookup(String mode) {
         for (RType type : values()) {
             if (type.getName().equals(mode)) {

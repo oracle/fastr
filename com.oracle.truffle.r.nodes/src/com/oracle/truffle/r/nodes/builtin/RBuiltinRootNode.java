@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -32,12 +31,9 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
 
-    private final RBuiltinNode uninitializedBuiltin;
-
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(builtin.getSourceSection(), formalArguments, frameDescriptor);
         this.builtin = builtin;
-        this.uninitializedBuiltin = NodeUtil.cloneNode(builtin);
     }
 
     @Override
@@ -76,8 +72,4 @@ public final class RBuiltinRootNode extends RRootNode {
         throw RInternalError.shouldNotReachHere();
     }
 
-    @Override
-    public RootNode split() {
-        return new RBuiltinRootNode(NodeUtil.cloneNode(uninitializedBuiltin), getFormalArguments(), getFrameDescriptor().shallowCopy());
-    }
 }

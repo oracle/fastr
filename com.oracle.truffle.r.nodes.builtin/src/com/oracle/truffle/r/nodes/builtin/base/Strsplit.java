@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -48,7 +48,7 @@ public abstract class Strsplit extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RList split(RAbstractStringVector x, String split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
         RStringVector[] result = new RStringVector[x.getLength()];
@@ -61,7 +61,7 @@ public abstract class Strsplit extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RList split(RAbstractStringVector x, RAbstractStringVector split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
         RStringVector[] result = new RStringVector[x.getLength()];
@@ -76,7 +76,7 @@ public abstract class Strsplit extends RBuiltinNode {
         return split.getDataAt(i % split.getLength());
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector splitIntl(String input, String separator, NACheck check) {
         String[] result = input.split(separator);
         return RDataFactory.createStringVector(result, check.neverSeenNA());

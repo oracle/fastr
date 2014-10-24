@@ -29,7 +29,7 @@ import java.util.stream.*;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -339,7 +339,7 @@ public final class REngine implements RContext.Engine {
      * @param body
      * @return {@link #makeCallTarget(Object, String)}
      */
-    @SlowPath
+    @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
@@ -384,7 +384,7 @@ public final class REngine implements RContext.Engine {
 
     private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
 
-    @SlowPath
+    @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
@@ -394,7 +394,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void printRError(RError e) {
         String es = e.toString();
         if (!es.isEmpty()) {
@@ -403,7 +403,7 @@ public final class REngine implements RContext.Engine {
         reportWarnings(true);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
@@ -415,7 +415,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void reportWarnings(boolean inAddition) {
         List<String> evalWarnings = singleton.context.extractEvalWarnings();
         ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();

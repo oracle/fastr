@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -85,7 +85,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int getIndexFromStart(RAbstractVector x, RAbstractVector incomparables) {
         HashSet<Object> incompContents = new HashSet<>();
         HashSet<Object> vectorContents = new HashSet<>();
@@ -105,7 +105,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int getIndexFromStart(RAbstractVector x) {
         HashSet<Object> vectorContents = new HashSet<>();
         vectorContents.add(x.getDataAtAsObject(0));
@@ -119,7 +119,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static int getIndexFromLast(RAbstractVector x, RAbstractVector incomparables) {
         HashSet<Object> incompContents = new HashSet<>();
         HashSet<Object> vectorContents = new HashSet<>();
@@ -139,7 +139,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int getIndexFromLast(RAbstractVector x) {
         HashSet<Object> vectorContents = new HashSet<>();
         vectorContents.add(x.getDataAtAsObject(x.getLength() - 1));

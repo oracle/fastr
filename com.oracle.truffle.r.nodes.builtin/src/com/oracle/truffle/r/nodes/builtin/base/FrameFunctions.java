@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -113,7 +113,7 @@ public class FrameFunctions {
             return sysCall(frame, (int) which);
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static String extractFunctionName(String callSource) {
             // TODO remove the need for this by assembling a proper RLanguage object for the call
             return callSource.substring(0, callSource.indexOf('('));

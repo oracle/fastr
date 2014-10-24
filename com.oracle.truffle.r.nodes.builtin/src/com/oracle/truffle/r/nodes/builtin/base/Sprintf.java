@@ -27,7 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -251,7 +251,7 @@ public abstract class Sprintf extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String intString(int x) {
         return Integer.toString(x);
     }
@@ -274,7 +274,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return f;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String stringFormat(String format, Object[] args) {
         return String.format((Locale) null, format, args);
     }
@@ -468,7 +468,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return args.length() == 1;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static IllegalStateException fail(String message) {
         throw new IllegalStateException(message);
     }

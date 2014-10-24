@@ -28,7 +28,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -69,7 +69,7 @@ public abstract class ConnectionFunctions {
             this.modeStrings = modeStrings;
         }
 
-        @SlowPath
+        @TruffleBoundary
         static OpenMode getOpenMode(String modeString) throws IOException {
             for (OpenMode openMode : values()) {
                 for (String ms : openMode.modeStrings) {
@@ -209,7 +209,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String[] readLines(int n) throws IOException {
             ConsoleHandler console = RContext.getInstance().getConsoleHandler();
             ArrayList<String> lines = new ArrayList<>();
@@ -247,7 +247,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdin extends RInvisibleBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected RConnection stdin() {
             controlVisibility();
             if (stdin == null) {
@@ -294,7 +294,7 @@ public abstract class ConnectionFunctions {
             bufferedReader = new BufferedReader(new FileReader(base.path));
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Override
         public String[] readLines(int n) throws IOException {
             ArrayList<String> lines = new ArrayList<>();
@@ -324,7 +324,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
     public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object file(RAbstractStringVector description, RAbstractStringVector open, byte blocking, RAbstractStringVector encoding, byte raw) {
             // temporarily return invisible to avoid missing print support
@@ -401,7 +401,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"})
     public abstract static class GZFile extends RInvisibleBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object gzFile(RAbstractStringVector description, RAbstractStringVector open, RAbstractStringVector encoding, double compression) {
             // temporarily return invisible to avoid missing print support
@@ -489,7 +489,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"nm", "object", "open", "env", "type"})
     public abstract static class TextConnection extends RInvisibleBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RIntVector encoding) {
             controlVisibility();
             try {
@@ -503,7 +503,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "..."})
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object close(Object con) {
             controlVisibility();
             if (con instanceof RConnection) {
@@ -522,7 +522,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"})
     public abstract static class ReadLines extends RBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding, @SuppressWarnings("unused") byte skipNul) {
             controlVisibility();
             try {
@@ -537,7 +537,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object readLines(RConnection con, double n, byte ok, byte warn, String encoding, byte skipNul) {
             return readLines(con, (int) n, ok, warn, encoding, skipNul);
         }

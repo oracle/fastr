@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
 
@@ -46,12 +46,12 @@ public final class RComplex extends RScalar {
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public String toString() {
         return toString(RRuntime.doubleToString(realPart), RRuntime.doubleToString(imaginaryPart));
     }
 
-    @SlowPath
+    @TruffleBoundary
     public String toString(String realPartString, String imaginaryPartString) {
         return isNA() ? "NA" : realPartString + (imaginaryPart < 0.0 ? "" : "+") + imaginaryPartString + "i";
     }

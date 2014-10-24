@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -98,7 +98,7 @@ public abstract class Format extends RBuiltinNode {
     // TODO: handling of logical values has been derived from GNU R, with handling of other
     // types following suit at some point for compliance
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector convertToString(RAbstractLogicalVector value) {
         int width = formatLogical(value);
         String[] data = new String[value.getLength()];
@@ -146,7 +146,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector convertToString(RAbstractIntVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
@@ -205,7 +205,7 @@ public abstract class Format extends RBuiltinNode {
         return ret;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector convertToString(RAbstractDoubleVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;

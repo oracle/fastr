@@ -126,13 +126,13 @@ public abstract class PrettyPrinterNode extends RNode {
         return builderToString(sb);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrint(RNull operand, Object listElementName, byte quote, byte right) {
         return "NULL";
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintVector(byte operand, Object listElementName, byte quote, byte right) {
         return concat("[1] ", prettyPrint(operand));
@@ -148,7 +148,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.logicalToString(operand);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintVector(int operand, Object listElementName, byte quote, byte right) {
         return concat("[1] ", prettyPrint(operand));
@@ -158,7 +158,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.intToString(operand, false);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintVector(double operand, Object listElementName, byte quote, byte right) {
         return concat("[1] ", prettyPrint(operand));
@@ -172,7 +172,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return doubleToStringPrintFormat(operand, roundFactor, digitsBehindDot);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintVector(RComplex operand, Object listElementName, byte quote, byte right) {
         return concat("[1] ", prettyPrint(operand));
@@ -184,7 +184,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), rfactor), doubleToStringPrintFormat(operand.getImaginaryPart(), ifactor));
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintVector(String operand, Object listElementName, byte quote, byte right) {
         if (RRuntime.fromLogical(quote)) {
@@ -197,7 +197,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.quoteString(operand);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintVector(RRaw operand, Object listElementName, byte quote, byte right) {
         return concat("[1] ", prettyPrint(operand));
@@ -207,7 +207,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return operand.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrint(RFunction operand, Object listElementName, byte quote, byte right) {
         if (operand.isBuiltin()) {
@@ -246,7 +246,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrint(REnvironment operand, Object listElementName, byte quote, byte right) {
         RAttributes attributes = operand.getAttributes();
@@ -261,7 +261,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrint(RExpression expr, Object listElementName, byte quote, byte right) {
         StringBuilder builder = new StringBuilder();
@@ -277,13 +277,13 @@ public abstract class PrettyPrinterNode extends RNode {
         return builderToString(builder);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintSymbol(RSymbol operand, Object listElementName, byte quote, byte right) {
         return operand.getName();
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintPromise(RPromise promise, Object listElementName, byte quote, byte right) {
         if (promise.isEvaluated()) {
@@ -293,7 +293,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintLanguage(RLanguage language, Object listElementName, byte quote, byte right) {
         return prettyPrintLanguageInternal(language);
@@ -327,7 +327,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintPairList(RPairList pairList, Object listElementName, byte quote, byte right) {
         StringBuilder sb = new StringBuilder();
@@ -350,13 +350,13 @@ public abstract class PrettyPrinterNode extends RNode {
         return sb.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintMissing(RMissing missing, Object listElementName, byte quote, byte right) {
         return "";
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String prettyPrintFormula(RFormula formula, Object listElementName, byte quote, byte right) {
         return formula.getSource().getCode();
@@ -645,49 +645,49 @@ public abstract class PrettyPrinterNode extends RNode {
         return concat(RRuntime.classToStringCap(operand.getElementClass()), ",", intString(operand.getLength()));
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RList operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, true, false, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractStringVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, right == RRuntime.LOGICAL_FALSE, false, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractComplexVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, true, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractRawVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, true, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractDoubleVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, false, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractIntVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, false, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractLogicalVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, false, quote);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RList operand, Object listElementName, byte quote, byte right) {
         return prettyPrintList0(operand, listElementName, quote, right);
@@ -713,7 +713,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return maxDigitsBehindDot;
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RAbstractDoubleVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
@@ -728,7 +728,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(operand, values, false, false);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RAbstractIntVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
@@ -740,7 +740,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(operand, values, false, false);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RAbstractStringVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
@@ -756,7 +756,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(operand, values, true, false);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RAbstractLogicalVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
@@ -768,7 +768,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(operand, values, false, false);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RAbstractRawVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
@@ -780,7 +780,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(operand, values, false, true);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization(guards = "!twoDimsOrMore")
     protected String prettyPrint(RAbstractComplexVector operand, Object listElementName, byte quote, byte right) {
         if (re == null) {
@@ -1007,73 +1007,73 @@ public abstract class PrettyPrinterNode extends RNode {
 
         public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName, byte quote, byte right);
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RNull operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(byte operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(int operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(double operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RComplex operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(String operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RRaw operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RAbstractVector operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RSymbol operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RLanguage operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(REnvironment operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(RFunction operand, Object listElementName, byte quote, byte right) {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
@@ -1096,37 +1096,37 @@ public abstract class PrettyPrinterNode extends RNode {
 
         public abstract Object executeString(VirtualFrame frame, Object o, byte isQuoted);
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(RNull operand, byte isQuoted) {
             return "NULL";
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(byte operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(int operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(double operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(RComplex operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(String operand, byte isQuoted) {
             if (RRuntime.fromLogical(isQuoted)) {
@@ -1135,31 +1135,31 @@ public abstract class PrettyPrinterNode extends RNode {
             return operand;
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(RRaw operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(RList operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization(guards = {"!isLengthOne", "!isVectorList"})
         protected String prettyPrintVectorElement(RAbstractVector operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization(guards = {"isLengthOne", "!isVectorList"})
         protected String prettyPrintVectorElementLengthOne(RAbstractVector operand, byte isQuoted) {
             return prettyPrintRecursive(operand.getDataAtAsObject(0), isQuoted);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String prettyPrintVectorElement(RLanguage operand, byte isQuoted) {
             return prettyPrintLanguageInternal(operand);
@@ -1204,7 +1204,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted);
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String printVectorMultiDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int[] dimensions = vector.getDimensions();
@@ -1299,7 +1299,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(sb);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization(guards = "isEmpty")
         protected String printVector2DimEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
@@ -1336,7 +1336,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(sb);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization(guards = "!isEmpty")
         protected String printVector2Dim(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
@@ -1398,7 +1398,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return formatResult(vector, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth, isListOrStringVector == RRuntime.LOGICAL_TRUE);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization(guards = "!isEmpty")
         protected String printVector2Dim(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
@@ -1453,7 +1453,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return formatResult(vector, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth, isListOrStringVector == RRuntime.LOGICAL_TRUE);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization(guards = {"!isEmpty", "notDoubleOrComplex"})
         protected String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
@@ -1655,7 +1655,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header, isQuoted);
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected String printDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header, byte isQuoted) {
             int[] dimensions = vector.getDimensions();

@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -109,7 +109,7 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String[] prepareResult(String sep, int length, Object[] converted, int maxLength) {
         String[] result = new String[maxLength];
         for (int i = 0; i < maxLength; i++) {
@@ -129,7 +129,7 @@ public abstract class Paste extends RBuiltinNode {
         return values.getLength() == 0 || (values.getLength() == 1 && values.getDataAt(0) == RNull.instance);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector buildString(String[] value, String collapseString) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < value.length; i++) {

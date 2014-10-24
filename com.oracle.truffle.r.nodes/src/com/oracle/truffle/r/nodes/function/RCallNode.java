@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -59,13 +59,13 @@ import com.oracle.truffle.r.runtime.data.*;
  * Problem 1 can be tackled by a the use of an {@link IndirectCallNode} instead of a
  * {@link DirectCallNode} which is not as performant as the latter but has no further disadvantages.
  * But as the function changed its formal parameters changed, too, so a re-match has to be done as
- * well, which involves the creation of nodes and thus must happen on the {@link SlowPath}.<br/>
+ * well, which involves the creation of nodes and thus must happen on the {@link TruffleBoundary}.<br/>
  * Problem 2 is not that easy, too: It is solved by reading the values associated with "..." (which
  * are Promises) and wrapping them in newly created {@link RNode}s. These nodes get inserted into
  * the arguments list ({@link CallArgumentsNode#executeFlatten(VirtualFrame)}) - which needs to be
  * be matched against the formal parameters again, as theses arguments may carry names as well which
  * may have an impact on argument order. As matching involves node creation, it has to happen on the
- * {@link SlowPath}.
+ * {@link TruffleBoundary}.
  * </p>
  * To avoid repeated node creations as much as possible by caching two interwoven PICs are
  * implemented. The caches are constructed using the following classes:
@@ -207,7 +207,7 @@ public abstract class RCallNode extends RNode {
      * Creates a modified call in which the first argument if replaced by {@code arg1}. This is, for
      * example, to support {@code HiddenInternalFunctions.MakeLazy}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RCallNode createCloneReplacingFirstArg(RCallNode call, ConstantNode arg1) {
         assert call instanceof UninitializedCallNode;
         UninitializedCallNode callClone = NodeUtil.cloneNode((UninitializedCallNode) call);
@@ -231,7 +231,7 @@ public abstract class RCallNode extends RNode {
         return null;
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected RCallNode getParentCallNode() {
         RNode parent = (RNode) getParent();
         if (!(parent instanceof RCallNode)) {

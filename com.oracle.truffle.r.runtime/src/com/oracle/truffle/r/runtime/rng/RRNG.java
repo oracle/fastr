@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -139,7 +139,7 @@ public class RRNG {
             return isError;
         }
 
-        @SlowPath
+        @TruffleBoundary
         public static RNGException raise(RError.Message message, boolean isError, Object... args) throws RNGException {
             throw new RNGException(message, isError, args);
         }
@@ -202,7 +202,7 @@ public class RRNG {
         updateDotRandomSeed(frame);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void changeKindsAndInitGenerator(int newSeed, int kindAsInt, int normKindAsInt) throws RNGException {
         Kind kind = changeKinds(kindAsInt, normKindAsInt);
         initGenerator(kind, newSeed);

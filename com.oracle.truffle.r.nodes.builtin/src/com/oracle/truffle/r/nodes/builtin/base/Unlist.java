@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -269,7 +269,7 @@ public abstract class Unlist extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -305,7 +305,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -341,7 +341,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -377,7 +377,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -413,7 +413,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -453,7 +453,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
         Object o = obj;
         int position = pos;
@@ -494,7 +494,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -590,12 +590,12 @@ public abstract class Unlist extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String createCompositeName(String s1, String s2) {
         return s1 + "." + s2;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String createCompositeName(String s1, int i) {
         return s1 + i;
     }

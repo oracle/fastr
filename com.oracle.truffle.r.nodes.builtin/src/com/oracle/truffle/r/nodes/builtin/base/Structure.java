@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -53,7 +53,7 @@ public abstract class Structure extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
         Object[] values = args.getValues();
         String[] argNames = getSuppliedArgsNames();
@@ -72,7 +72,7 @@ public abstract class Structure extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void validateArgNames(String[] argNames) {
         int containerIndex = 0;
         if (argNames == null || findNullIn(argNames, containerIndex + 1)) {
@@ -80,8 +80,8 @@ public abstract class Structure extends RBuiltinNode {
         }
     }
 
-    @SlowPath
-    private boolean findNullIn(String[] strings, int startIndex) {
+    @TruffleBoundary
+    private static boolean findNullIn(String[] strings, int startIndex) {
         for (int i = startIndex; i < strings.length; i++) {
             if (strings[i] == null) {
                 return true;

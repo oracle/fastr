@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -48,7 +48,7 @@ public abstract class MakeNames extends RBuiltinNode {
         return new RNode[]{children[0], AllowUnderscoreConverterFactory.create(children[1])};
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String concat(String s1, String s2) {
         return s1 + s2;
     }

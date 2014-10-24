@@ -13,12 +13,12 @@ package com.oracle.truffle.r.parser;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.parser.ast.*;
 
 public class ParseUtil {
 
-    @SlowPath
+    @TruffleBoundary
     public static String hexChar(String... chars) {
         int value = 0;
         for (int i = 0; i < chars.length; i++) {

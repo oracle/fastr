@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.env.frame;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -68,7 +68,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public void lockBindings() {
         Set<String> bindings = getBindingsForLock();
         if (bindings != null) {
@@ -83,7 +83,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public void lockBinding(String key) {
         if (lockedBindings == null) {
             lockedBindings = new HashSet<>();
@@ -91,7 +91,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
         lockedBindings.add(key);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public PutException createPutException(String key) throws PutException {
         throw new PutException(RError.Message.ENV_CHANGE_BINDING, key);
     }

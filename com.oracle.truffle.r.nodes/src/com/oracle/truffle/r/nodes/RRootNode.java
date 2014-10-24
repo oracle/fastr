@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -66,13 +66,13 @@ public abstract class RRootNode extends RootNode {
         return formalArguments;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public String getSourceCode() {
         return getSourceSection().getCode();
     }
 
     @Override
-    public boolean isSplittable() {
+    public boolean isCloningAllowed() {
         return true;
     }
 }

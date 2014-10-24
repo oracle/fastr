@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class Date extends RBuiltinNode {
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected String date() {
         return RRuntime.toString(new SimpleDateFormat(RRuntime.SYSTEM_DATE_FORMAT).format(Calendar.getInstance().getTime()));
     }

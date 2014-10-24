@@ -24,7 +24,8 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -246,8 +247,9 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     private void verifySet(FrameSlot slot, FrameSlotKind accessKind) {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
+            CompilerDirectives.transferToInterpreter();
             if (!resize()) {
-                illegal("The frame slot '%s' is not known by the frame descriptor.", slot);
+                throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
             }
         }
         getTags()[slotIndex] = (byte) accessKind.ordinal();
@@ -256,28 +258,24 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     private void verifyGet(FrameSlot slot, FrameSlotKind accessKind) throws FrameSlotTypeException {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
+            CompilerDirectives.transferToInterpreter();
             if (!resize()) {
-                illegal("The frame slot '%s' is not known by the frame descriptor.", slot);
+                throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
             }
         }
         byte tag = this.getTags()[slotIndex];
         if (tag != accessKind.ordinal()) {
-            if (slot.getKind() == accessKind || tag == 0) {
-                descriptor.getTypeConversion().updateFrameSlot(this, slot, getValue(slot));
-                if (getTags()[slotIndex] == accessKind.ordinal()) {
-                    return;
-                }
-            }
-            throw frameSlotTypeException();
+            CompilerDirectives.transferToInterpreter();
+            throw new FrameSlotTypeException();
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void illegal(String message, FrameSlot slot) {
         throw new IllegalArgumentException(String.format(message, slot));
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static FrameSlotTypeException frameSlotTypeException() throws FrameSlotTypeException {
         throw new FrameSlotTypeException();
     }

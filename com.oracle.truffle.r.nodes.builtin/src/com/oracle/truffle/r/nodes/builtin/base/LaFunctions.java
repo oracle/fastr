@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -36,7 +36,7 @@ public class LaFunctions {
     @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {})
     public abstract static class Version extends RBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected String doVersion() {
             int[] version = new int[3];
             RFFIFactory.getRFFI().getLapackRFFI().ilaver(version);

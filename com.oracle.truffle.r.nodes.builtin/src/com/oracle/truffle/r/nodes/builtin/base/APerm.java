@@ -12,7 +12,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -170,7 +170,7 @@ public abstract class APerm extends RBuiltinNode {
     /**
      * Apply permute to an equal sized array.
      */
-    @SlowPath
+    @TruffleBoundary
     private static int[] applyPermute(int[] a, int[] perm, boolean reverse) {
         int[] newA = a.clone();
         if (reverse) {
@@ -188,7 +188,7 @@ public abstract class APerm extends RBuiltinNode {
     /**
      * Increment a stride array.
      */
-    @SlowPath
+    @TruffleBoundary
     private static int[] incArray(int[] a, int[] dim) {
         int[] newA = a.clone();
         for (int i = 0; i < newA.length; i++) {
@@ -204,7 +204,7 @@ public abstract class APerm extends RBuiltinNode {
     /**
      * Stride array to a linear position.
      */
-    @SlowPath
+    @TruffleBoundary
     private static int toPos(int[] a, int[] dim) {
         int pos = a[0];
         for (int i = 1; i < a.length; i++) {

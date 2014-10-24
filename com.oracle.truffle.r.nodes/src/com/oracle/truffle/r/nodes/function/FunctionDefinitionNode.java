@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -41,7 +40,6 @@ public final class FunctionDefinitionNode extends RRootNode {
      * Identifies the lexical scope where this function is defined, through the "parent" field.
      */
     private final REnvironment.FunctionDefinition funcEnv;
-    private final RNode uninitializedBody;
     @Child private RNode body;
     private final String description;
 
@@ -74,7 +72,6 @@ public final class FunctionDefinitionNode extends RRootNode {
     public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit) {
         super(src, formals, funcEnv.getDescriptor());
         this.funcEnv = funcEnv;
-        this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
@@ -125,14 +122,8 @@ public final class FunctionDefinitionNode extends RRootNode {
     }
 
     @Override
-    public boolean isSplittable() {
-        // don't bother splitting library-loading nodes
+    public boolean isCloningAllowed() {
         return !substituteFrame;
-    }
-
-    @Override
-    public RootNode split() {
-        return new FunctionDefinitionNode(getSourceSection(), funcEnv, NodeUtil.cloneNode(uninitializedBody), getFormalArguments(), description, false);
     }
 
 }

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -60,17 +60,17 @@ public abstract class Call extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
         return makeCall0(name, args);
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
         return makeCall0(function, args);
     }
 
-    @SlowPath
+    @TruffleBoundary
     /**
      *
      * @param fn an {@link RFunction} or {@link String}

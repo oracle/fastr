@@ -13,7 +13,7 @@ package com.oracle.truffle.r.parser.ast;
 import java.util.*;
 
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 public abstract class ASTNode {
 
@@ -36,7 +36,7 @@ public abstract class ASTNode {
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public final String toString() {
         return source.getCode();
     }

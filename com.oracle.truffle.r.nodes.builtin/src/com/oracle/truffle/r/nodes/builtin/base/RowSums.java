@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 @RBuiltin(name = "rowSums", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
 public abstract class RowSums extends RBuiltinNode {
@@ -53,7 +53,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowSums(RDoubleVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -87,7 +87,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowSums(RLogicalVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -115,7 +115,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowSums(RIntVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];

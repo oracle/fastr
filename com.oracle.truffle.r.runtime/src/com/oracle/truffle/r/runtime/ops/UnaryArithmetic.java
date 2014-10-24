@@ -91,13 +91,13 @@ public abstract class UnaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public double opd(double op, int digits) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public RComplex opd(double re, double im, int digits) {
             throw new UnsupportedOperationException();
         }

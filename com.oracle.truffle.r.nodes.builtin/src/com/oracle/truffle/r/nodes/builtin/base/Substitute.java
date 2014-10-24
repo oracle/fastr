@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -110,7 +110,7 @@ public abstract class Substitute extends RBuiltinNode {
      * @return in general an {@link RLanguage} instance, but simple cases could be a constant value
      *         or {@link RSymbol}
      */
-    @SlowPath
+    @TruffleBoundary
     private Object doSubstituteWithEnv(VirtualFrame frame, RPromise expr, REnvironment envArg) {
         // In the global environment, substitute behaves like quote
         // TODO It may be too early to do this check, GnuR doesn't work this way (re promises)

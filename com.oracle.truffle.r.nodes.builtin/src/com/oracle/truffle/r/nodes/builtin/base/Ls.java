@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.regex.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -99,7 +99,7 @@ public abstract class Ls extends RBuiltinNode {
         return env.ls(RRuntime.fromLogical(allNames), null);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static Pattern compile(String pattern) {
         return Pattern.compile(RegExp.checkPreDefinedClasses(pattern));
     }

@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -210,7 +210,7 @@ public abstract class Repeat extends RBuiltinNode {
     // * single length.out argument (supersedes times)
     //
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector getNamesTimes(RAbstractVector value, int times) {
         int oldLength = value.getLength();
         int length = oldLength * times;
@@ -224,7 +224,7 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createStringVector(names, oldNames.isComplete());
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector getNamesLength(RAbstractVector value, int lengthOut) {
         String[] names = new String[lengthOut];
         RStringVector oldNames = (RStringVector) value.getNames();

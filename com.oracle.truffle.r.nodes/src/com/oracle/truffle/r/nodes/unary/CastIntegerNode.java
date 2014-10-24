@@ -417,7 +417,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Fallback
-    @SlowPath
+    @TruffleBoundary
     public int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }

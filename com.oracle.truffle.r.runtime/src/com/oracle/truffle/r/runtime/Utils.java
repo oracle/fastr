@@ -27,7 +27,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
@@ -233,7 +233,7 @@ public final class Utils {
      * @param depth identifies which frame is required
      * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
      */
-    @SlowPath
+    @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, int depth) {
         return Truffle.getRuntime().iterateFrames(frameInstance -> {
             Frame f = frameInstance.getFrame(fa, false);
@@ -245,7 +245,7 @@ public final class Utils {
      * TODO provide a better way of determining promise evaluation nature of frames than using
      * {@code toString()} on the call target.
      */
-    @SlowPath
+    @TruffleBoundary
     private static boolean isPromiseEvaluationFrame(FrameInstance frameInstance) {
         String desc = frameInstance.getCallTarget().toString();
         return desc == RPromise.CLOSURE_WRAPPER_NAME;
@@ -272,7 +272,7 @@ public final class Utils {
      * {@code FunctionDefinitionNode.execute(VirtualFrame)}. Also see
      * {@code FunctionDefinitionNode.substituteFrame}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static VirtualFrame getActualCurrentFrame() {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
@@ -282,7 +282,7 @@ public final class Utils {
         return frame;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String createStackTrace() {
         return createStackTrace(true);
     }
@@ -290,7 +290,7 @@ public final class Utils {
     /**
      * Generate a stack trace as a string.
      */
-    @SlowPath
+    @TruffleBoundary
     public static String createStackTrace(boolean printFrameSlots) {
         StringBuilder str = new StringBuilder();
 

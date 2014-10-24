@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.ConditionProfile;
@@ -87,12 +87,12 @@ public class SortFunctions {
     // TODO full implementation in Java handling NAs
     public abstract static class QSort extends RBuiltinNode {
 
-        @SlowPath
+        @TruffleBoundary
         private static void sort(double[] data) {
             Arrays.sort(data);
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static void sort(int[] data) {
             Arrays.sort(data);
         }

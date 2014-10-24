@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.stats;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -237,7 +237,7 @@ public abstract class Rnorm extends RBuiltinNode {
         return Math.log(1 + x);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void fail(String message) {
         throw new RuntimeException(message);
     }

@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.data.RDataFrame;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "unclass", kind = PRIMITIVE, parameterNames = {"x"})
@@ -27,7 +27,7 @@ public abstract class UnClass extends RBuiltinNode {
     private final BranchProfile objectProfile = BranchProfile.create();
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object unClass(RAbstractVector arg) {
         controlVisibility();
         if (arg.isObject()) {
@@ -42,7 +42,7 @@ public abstract class UnClass extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object unClass(RDataFrame arg) {
         controlVisibility();
         RDataFrame resultFrame = arg;

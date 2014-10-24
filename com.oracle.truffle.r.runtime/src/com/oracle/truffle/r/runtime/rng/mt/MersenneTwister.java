@@ -63,7 +63,7 @@
  */
 package com.oracle.truffle.r.runtime.rng.mt;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.rng.*;
 
 public final class MersenneTwister extends RNGInitAdapter implements RRNG.GeneratorPrivate {
@@ -147,7 +147,7 @@ public final class MersenneTwister extends RNGInitAdapter implements RRNG.Genera
     /**
      * The actual generating method, essentially transcribed from MT_genrand in GnuR RNG.c.
      * Additional method have been introduced for clarity and the import
-     * {@link com.oracle.truffle.api.CompilerDirectives.SlowPath} annotation on
+     * {@link com.oracle.truffle.api.CompilerDirectives.TruffleBoundary} annotation on
      * {@link #generateNewNumbers()}.
      */
     public double genrandDouble() {
@@ -180,7 +180,7 @@ public final class MersenneTwister extends RNGInitAdapter implements RRNG.Genera
         return y;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void generateNewNumbers() {
         int y;
         int kk;
