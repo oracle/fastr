@@ -288,6 +288,11 @@ public class RDeparse {
             append('}');
         }
         
+        public void decIndentWriteCloseCurly() {
+            decIndent();
+            append('}');           
+        }
+        
         @Override
         public String toString() {
             // assumes needVector == false

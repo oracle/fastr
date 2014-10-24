@@ -323,6 +323,13 @@ public abstract class Substitute extends RBuiltinNode {
         } else if (node instanceof DynamicFunctionExpressionNode) {
             DynamicFunctionExpressionNode dfe = (DynamicFunctionExpressionNode) node;
             return substituteFunction((FunctionDefinitionNode) dfe.getCallTarget().getRootNode(), env);
+        } else if (node instanceof SequenceNode) {
+            RNode[] sequence = ((SequenceNode) node).getSequence();
+            RNode[] sequenceSubs = new RNode[sequence.length];
+            for (int i = 0; i < sequence.length; i++) {
+                sequenceSubs[i] = (RNode) substituteAST(sequence[i], env);
+            }
+            return new SequenceNode(sequenceSubs);
         } else {
             assert false;
             return null;

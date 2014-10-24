@@ -64,7 +64,9 @@ public final class WhileNode extends LoopNode {
         state.append("while (");
         condition.deparse(state);
         state.append(") ");
+        state.writeOpenCurlyNLIncIndent();
         body.deparse(state);
+        state.decIndentWriteCloseCurly();
     }
 
     @Override

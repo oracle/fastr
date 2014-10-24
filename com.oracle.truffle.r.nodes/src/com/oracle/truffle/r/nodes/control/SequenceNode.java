@@ -97,6 +97,7 @@ public class SequenceNode extends RNode {
             if (state.changed()) {
                 // not all nodes will produce output
                 state.writeline();
+                state.mark(); // in case last
             }
         }
     }

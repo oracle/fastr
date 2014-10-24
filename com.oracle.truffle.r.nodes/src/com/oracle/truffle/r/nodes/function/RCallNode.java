@@ -484,7 +484,7 @@ public abstract class RCallNode extends RNode {
             }
             Func func = RASTDeparse.isInfixOperator(fname);
             if (func != null) {
-                RASTDeparse.deparseInfixOperator2(state, this, func);
+                RASTDeparse.deparseInfixOperator(state, this, func);
             } else {
                 getFunctionNode().deparse(state);
                 args.deparse(state);

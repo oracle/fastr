@@ -38,6 +38,8 @@ public abstract class ForNode extends LoopNode {
 
     @Child private WriteVariableNode cvar;
     @Child private RNode body;
+    
+    public abstract RNode getRange();
 
     private final ValueProfile seqTypeProfile = ValueProfile.createClassProfile();
 
@@ -70,9 +72,11 @@ public abstract class ForNode extends LoopNode {
         state.append("for (");
         cvar.deparse(state);
         state.append(" in ");
-        // range?
+        getRange().deparse(state);
         state.append(") ");
+        state.writeOpenCurlyNLIncIndent();
         body.deparse(state);
+        state.decIndentWriteCloseCurly();
     }
 
     @Fallback

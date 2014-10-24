@@ -127,20 +127,19 @@ public class IfNode extends RNode implements VisibilityController {
     public void deparse(State state) {
         /*
          * We have a problem with { }, since they do not exist as AST nodes (functions), so we
-         * insert them routinely
+         * insert them routinely, which means we can't match GnuR output in simple cases.
          */
         state.append("if (");
         condition.deparse(state);
         state.append(") ");
         state.writeOpenCurlyNLIncIndent();
         thenPart.deparse(state);
-        state.writeNLDecIndentCloseCurly();
+        state.decIndentWriteCloseCurly();
         if (elsePart != null) {
-            state.writeline();
             state.append(" else ");
             state.writeOpenCurlyNLIncIndent();
             elsePart.deparse(state);
-            state.writeNLDecIndentCloseCurly();
+            state.decIndentWriteCloseCurly();
         }
 
     }

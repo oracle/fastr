@@ -201,7 +201,7 @@ public abstract class DispatchedCallNode extends RNode {
             RDeparse.Func func = RDeparse.getFunc(name);
             if (func != null) {
                 // infix operator
-                RASTDeparse.deparseInfixOperator2(state, this, func);
+                RASTDeparse.deparseInfixOperator(state, this, func);
             } else {
                 state.append(name);
                 aDispatchNode.callArgsNode.deparse(state);

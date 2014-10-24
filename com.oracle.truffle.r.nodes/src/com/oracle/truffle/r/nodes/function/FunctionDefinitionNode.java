@@ -202,7 +202,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.writeNLOpenCurlyIncIndent();
         state.writeline();
         body.deparse(state);
-        state.writeNLDecIndentCloseCurly();
+        state.decIndentWriteCloseCurly();
     }
 
     private boolean instrumentationApplied = false;
