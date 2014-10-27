@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -41,14 +42,20 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     @Child private CastIntegerNode castInteger;
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
+        updateCastInteger();
+        return (RAbstractIntVector) castInteger.executeCast(frame, vector);
+    }
+
+    @SlowPath
+    private void updateCastInteger() {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
         }
-        return (RAbstractIntVector) castInteger.executeCast(frame, vector);
     }
 
     @Specialization
+    @SlowPath
     protected RAbstractVector updateDim(RAbstractVector vector, RNull dimensions) {
         controlVisibility();
         RVector result = vector.materialize();

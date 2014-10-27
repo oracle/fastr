@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 import java.util.ArrayList;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 // Implements default S3 method
@@ -51,12 +52,14 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         return vec;
     }
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ArrayList<String> dataList = new ArrayList<>(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -200,6 +203,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         IntArray dataList = new IntArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -213,6 +217,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         DoubleArray dataList = new DoubleArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -226,6 +231,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -239,6 +245,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -252,6 +259,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {

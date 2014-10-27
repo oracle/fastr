@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -43,26 +44,17 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
         }
-        if (typeof == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofNodeFactory.create(null));
-        }
+        initTypeOfNode();
         RType typeX = typeof.execute(frame, x);
         if (typeX == mode) {
             return x;
         }
-        if (isFactor == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorNodeFactory.create(null));
-        }
+        initFactorNode();
         if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
-        if (castTypeNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
-        }
+        initCastTypeNode();
         if (mode != null) {
             Object result = castTypeNode.execute(frame, x, mode);
             if (result != null) {
@@ -83,10 +75,35 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
+    @SlowPath
+    private void initCastTypeNode() {
+        if (castTypeNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
+        }
+    }
+
+    @SlowPath
+    private void initFactorNode() {
+        if (isFactor == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isFactor = insert(IsFactorNodeFactory.create(null));
+        }
+    }
+
+    @SlowPath
+    private void initTypeOfNode() {
+        if (typeof == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            typeof = insert(TypeofNodeFactory.create(null));
+        }
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected Object update(Object x, Object value) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
     }
 }

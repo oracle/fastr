@@ -23,24 +23,25 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeFactory;
+import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
 @RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
 
-    @Child private CastTypeNode castTypeNode;
     @Child private CastStringNode castStringNode;
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
@@ -51,20 +52,27 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
         }
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
-        }
+        initCastStringNode();
         Object result = castStringNode.executeCast(frame, className);
         return setOldClass(arg, (RStringVector) result);
     }
 
+    @SlowPath
+    private void initCastStringNode() {
+        if (castStringNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+        }
+    }
+
     @Specialization
+    @SlowPath
     protected Object setOldClass(RAbstractContainer arg, String className) {
         return setOldClass(arg, RDataFactory.createStringVector(className));
     }
 
     @Specialization
+    @SlowPath
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
@@ -72,12 +80,14 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);
     }
 
+    @SlowPath
     public Object setOldClass(RFunction arg, @SuppressWarnings("unused") Object className) {
         controlVisibility();
         return arg;

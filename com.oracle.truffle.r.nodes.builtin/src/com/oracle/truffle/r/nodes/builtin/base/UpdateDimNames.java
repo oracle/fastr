@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -42,19 +43,29 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Child private CastToVectorNode castVectorNode;
 
     private Object castString(VirtualFrame frame, Object o) {
+        initCastStringNode();
+        return castStringNode.executeCast(frame, o);
+    }
+
+    @SlowPath
+    private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, true, true, false, false));
         }
-        return castStringNode.executeCast(frame, o);
     }
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
+        initCastVectorNode();
+        return ((RAbstractVector) castVectorNode.executeObject(frame, value)).materialize();
+    }
+
+    @SlowPath
+    private void initCastVectorNode() {
         if (castVectorNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
         }
-        return ((RAbstractVector) castVectorNode.executeObject(frame, value)).materialize();
     }
 
     public abstract RAbstractVector executeList(VirtualFrame frame, RAbstractVector vector, Object o);
@@ -72,6 +83,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected RAbstractVector updateDimnames(RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
         v.setDimNames(null, getEncapsulatingSourceSection());
@@ -80,6 +92,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "isZeroLength")
+    @SlowPath
     protected RAbstractVector updateDimnamesEmpty(RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(null, getEncapsulatingSourceSection());
@@ -98,12 +111,14 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Specialization(guards = "!isVectorList")
     protected RAbstractVector updateDimnamesError(RAbstractVector vector, RAbstractVector v) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
     @Specialization
     protected RAbstractVector updateDimnamesError(RAbstractVector vector, RFunction v) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
