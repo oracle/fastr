@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -70,7 +69,7 @@ public abstract class Substr extends RBuiltinNode {
         na.enable(arg);
         na.enable(start);
         na.enable(stop);
-        for (int i = 0, j , k; i < arg.getLength(); ++i) {
+        for (int i = 0, j, k; i < arg.getLength(); ++i) {
             j = i % start.getLength();
             k = i % stop.getLength();
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));
@@ -88,51 +87,49 @@ public abstract class Substr extends RBuiltinNode {
             boolean stopLessOrEqualZero = stop <= 0;
             boolean startGreaterThanLength = start > length;
             boolean stopGreaterThanLength = stop > length;
-            boolean wrongRange = startGreaterThanStop || startLessOrEqualZero || stopLessOrEqualZero ||
-                    startGreaterThanLength || stopGreaterThanLength;
+            boolean wrongRange = startGreaterThanStop || startLessOrEqualZero || stopLessOrEqualZero || startGreaterThanLength || stopGreaterThanLength;
+            int newStart = start;
+            int newStop = stop;
             if (wrongRange) {
                 everSeenIllegalRange.enter();
-                if (startGreaterThanStop || (startLessOrEqualZero && stopLessOrEqualZero) ||
-                        (startGreaterThanLength && stopGreaterThanLength)) {
+                if (startGreaterThanStop || (startLessOrEqualZero && stopLessOrEqualZero) || (startGreaterThanLength && stopGreaterThanLength)) {
                     return "";
                 }
                 if (startLessOrEqualZero) {
-                    start = 1;
+                    newStart = 1;
                 }
                 if (stopGreaterThanLength) {
-                    stop = length;
+                    newStop = length;
                 }
             }
-            return x.substring(start - 1, stop);
+            return x.substring(newStart - 1, newStop);
         }
     }
 
-
-//    protected static boolean rangeOk(String x, int start, int stop) {
-//        return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
-//    }
+// protected static boolean rangeOk(String x, int start, int stop) {
+// return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
+// }
 //
-//    protected String substr0(String x, int start, int stop) {
-//        if (na.check(x) || na.check(start) || na.check(stop)) {
-//            return RRuntime.STRING_NA;
-//        }
-//        int actualStart = start;
-//        int actualStop = stop;
-//        if (!rangeOk(x, start, stop)) {
-//            everSeenIllegalRange.enter();
-//            if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
-//                return "";
-//            }
-//            if (start <= 0) {
-//                actualStart = 1;
-//            }
-//            if (stop > x.length()) {
-//                actualStop = x.length();
-//            }
-//        }
-//        return x.substring(actualStart - 1, actualStop);
-//    }
-
+// protected String substr0(String x, int start, int stop) {
+// if (na.check(x) || na.check(start) || na.check(stop)) {
+// return RRuntime.STRING_NA;
+// }
+// int actualStart = start;
+// int actualStop = stop;
+// if (!rangeOk(x, start, stop)) {
+// everSeenIllegalRange.enter();
+// if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
+// return "";
+// }
+// if (start <= 0) {
+// actualStart = 1;
+// }
+// if (stop > x.length()) {
+// actualStop = x.length();
+// }
+// }
+// return x.substring(actualStart - 1, actualStop);
+// }
 
     @SuppressWarnings("unused")
     protected boolean emptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {

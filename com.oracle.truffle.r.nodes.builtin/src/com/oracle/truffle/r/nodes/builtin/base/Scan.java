@@ -19,6 +19,7 @@ import java.io.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,6 +38,16 @@ public abstract class Scan extends RBuiltinNode {
     private static final int NO_COMCHAR = 100000; /* won't occur even in Unicode */
 
     private final NACheck naCheck = new NACheck();
+
+    @Child private CastToVectorNode castVector;
+
+    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+        if (castVector == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+        }
+        return ((RAbstractVector) castVector.executeObject(frame, value)).materialize();
+    }
 
     private static class LocalData {
         RAbstractStringVector naStrings = null;
@@ -85,8 +96,8 @@ public abstract class Scan extends RBuiltinNode {
     }
 
     @Specialization
-    Object doScan(RConnection file, RAbstractVector what, RAbstractIntVector nmaxVec, RAbstractVector sepVec, RAbstractVector decVec, RAbstractVector quotesVec, RAbstractIntVector nskipVec,
-                    RAbstractIntVector nlinesVec, RAbstractVector naStringsVec, RAbstractLogicalVector flushVec, RAbstractLogicalVector fillVec, RAbstractVector stripVec,
+    Object doScan(VirtualFrame frame, RConnection file, RAbstractVector what, RAbstractIntVector nmaxVec, RAbstractVector sepVec, RAbstractVector decVec, RAbstractVector quotesVec,
+                    RAbstractIntVector nskipVec, RAbstractIntVector nlinesVec, RAbstractVector naStringsVec, RAbstractLogicalVector flushVec, RAbstractLogicalVector fillVec, RAbstractVector stripVec,
                     RAbstractLogicalVector dataQuietVec, RAbstractLogicalVector blSkipVec, RAbstractLogicalVector multiLineVec, RAbstractVector commentCharVec, RAbstractLogicalVector escapesVec,
                     RAbstractVector encodingVec, RAbstractLogicalVector skipNullVec) {
 
@@ -188,10 +199,10 @@ public abstract class Scan extends RBuiltinNode {
         data.skipNull = skipNull != RRuntime.LOGICAL_FALSE;
 
         if (blSkip == RRuntime.LOGICAL_NA) {
-            blSkip = 1;
+            blSkip = RRuntime.LOGICAL_TRUE;
         }
         if (multiLine == RRuntime.LOGICAL_NA) {
-            multiLine = 1;
+            multiLine = RRuntime.LOGICAL_TRUE;
         }
         if (nskip < 0 || nskip == RRuntime.INT_NA) {
             nskip = 0;
@@ -213,8 +224,11 @@ public abstract class Scan extends RBuiltinNode {
             if (nskip > 0) {
                 data.con.readLines(nskip);
             }
-            if (what.getElementClass() != Object.class) {
-                return scanVector(what, nmax, nlines, flush, strip, blSkip, data);
+            if (what.getElementClass() == Object.class) {
+                return scanFrame(frame, (RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
+                                multiLine == RRuntime.LOGICAL_TRUE, data);
+            } else {
+                return scanVector(what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE, data);
             }
 
         } catch (IOException x) {
@@ -225,11 +239,136 @@ public abstract class Scan extends RBuiltinNode {
             } catch (IOException ex) {
             }
         }
-
-        return result;
     }
 
-    private RVector scanVector(RAbstractVector what, int maxItems, int maxLines, int flush, byte stripWhite, int blSkip, LocalData data) throws IOException {
+    private static String[] getItems(LocalData data) throws IOException {
+        String[] str = data.con.readLines(1);
+        if (str == null || str.length == 0) {
+            return null;
+        } else {
+            return data.sepchar == null ? str[0].trim().split("\\s+") : str[0].trim().split(data.sepchar);
+        }
+
+    }
+
+    private void fillEmpty(int from, int to, int records, RList list, LocalData data) {
+        for (int i = from; i < to; i++) {
+            RVector vec = (RVector) list.getDataAt(i);
+            vec.updateDataAtAsObject(records, extractItem(vec, "", data), naCheck);
+        }
+    }
+
+    private RVector scanFrame(VirtualFrame frame, RList what, int maxRecords, int maxLines, boolean flush, boolean fill, boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data)
+                    throws IOException {
+
+        int nc = what.getLength();
+        if (nc == 0) {
+            throw RError.error(RError.Message.EMPTY_WHAT);
+        }
+        int blockSize = maxRecords > 0 ? maxRecords : (maxLines > 0 ? maxLines : SCAN_BLOCKSIZE);
+
+        RList list = RDataFactory.createList(new Object[nc]);
+        for (int i = 0; i < nc; i++) {
+            if (what.getDataAt(i) == RNull.instance) {
+                throw RError.error(RError.Message.INVALID_ARGUMENT, "what");
+            } else {
+                RAbstractVector vec = castVector(frame, what.getDataAt(i));
+                list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
+            }
+        }
+        list.setNames(what.getNames());
+
+        naCheck.enable(true);
+
+        int n = 0;
+        int lines = 0;
+        int records = 0;
+        while (true) {
+            // TODO: does not do any fancy stuff, like handling comments
+            String[] strItems = getItems(data);
+            if (strItems == null) {
+                break;
+            }
+
+            boolean done = false;
+            for (int i = 0; i < Math.max(nc, strItems.length); i++) {
+
+                if (n == strItems.length) {
+                    if (fill) {
+                        fillEmpty(n, nc, records, list, data);
+                        records++;
+                        n = 0;
+                        break;
+                    } else if (!multiLine) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.LINE_ELEMENTS, lines + 1, nc);
+                    } else {
+                        strItems = getItems(data);
+                        i = 0;
+                        if (strItems == null) {
+                            done = true;
+                            break;
+                        }
+                    }
+                }
+                Object item = extractItem((RAbstractVector) list.getDataAt(n), strItems[i], data);
+
+                if (records == blockSize) {
+                    // enlarge the vector
+                    blockSize = blockSize * 2;
+                    for (int j = 0; j < nc; j++) {
+                        RVector vec = (RVector) list.getDataAt(j);
+                        vec.copyResized(blockSize, false);
+                    }
+                }
+
+                RVector vec = (RVector) list.getDataAt(n);
+                vec.updateDataAtAsObject(records, item, naCheck);
+                n++;
+                if (n == nc) {
+                    records++;
+                    n = 0;
+                    if (records == maxRecords) {
+                        done = true;
+                        break;
+                    }
+                    if (flush) {
+                        break;
+                    }
+                }
+            }
+            if (done) {
+                break;
+            }
+            lines++;
+            if (lines == maxLines) {
+                break;
+            }
+
+        }
+
+        if (n > 0 && n < nc) {
+            if (!fill) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ITEMS_NOT_MULTIPLE);
+            }
+            fillEmpty(n, nc, records, list, data);
+            records++;
+        }
+
+        if (!data.quiet) {
+            RContext.getInstance().getConsoleHandler().printf("Read %d record%s\n", records, (records == 1) ? "" : "s");
+        }
+        // trim vectors if necessary
+        for (int i = 0; i < nc; i++) {
+            RVector vec = (RVector) list.getDataAt(i);
+            if (vec.getLength() > records) {
+                list.updateDataAt(i, vec.copyResized(records, false), null);
+            }
+        }
+
+        return list;
+    }
+
+    private RVector scanVector(RAbstractVector what, int maxItems, int maxLines, boolean flush, boolean stripWhite, boolean blSkip, LocalData data) throws IOException {
         int blockSize = maxItems > 0 ? maxItems : SCAN_BLOCKSIZE;
         RVector vec = what.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR);
         naCheck.enable(true);
@@ -238,11 +377,10 @@ public abstract class Scan extends RBuiltinNode {
         int lines = 0;
         while (true) {
             // TODO: does not do any fancy stuff, like handling comments
-            String[] str = data.con.readLines(1);
-            if (str == null || str.length == 0) {
+            String[] strItems = getItems(data);
+            if (strItems == null) {
                 break;
             }
-            String[] strItems = data.sepchar == null ? str[0].trim().split("\\s+") : str[0].trim().split(data.sepchar);
 
             boolean done = false;
             for (int i = 0; i < strItems.length; i++) {
@@ -328,7 +466,7 @@ public abstract class Scan extends RBuiltinNode {
         }
 
         if (what.getElementClass() == RString.class) {
-            if (isNaString(buffer, 0, data)) {
+            if (isNaString(buffer, 1, data)) {
                 return RRuntime.STRING_NA;
             } else {
                 return buffer;
