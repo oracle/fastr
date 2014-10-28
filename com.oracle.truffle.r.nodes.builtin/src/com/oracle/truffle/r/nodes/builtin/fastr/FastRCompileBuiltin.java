@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.lang.reflect.*;
@@ -74,6 +75,7 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
     private static final Compiler compiler = Compiler.getCompiler();
 
     @Specialization
+    @SlowPath
     protected byte compileFunction(RFunction function) {
         controlVisibility();
         if (compiler != null) {
@@ -88,9 +90,10 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization
+    @Fallback
     protected byte compileFunction(@SuppressWarnings("unused") Object arg) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
     }
 }
