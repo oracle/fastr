@@ -51,28 +51,33 @@ public abstract class Sprintf extends RBuiltinNode {
     @Child Sprintf sprintfRecursive;
 
     @Specialization
+    @SlowPath
     protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return fmt;
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected String sprintf(RAbstractStringVector fmt, RMissing x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @SlowPath
     protected String sprintf(String fmt, int x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected String sprintf(RAbstractStringVector fmt, int x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @SlowPath
     protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -83,11 +88,13 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @SlowPath
     protected String sprintf(String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
@@ -101,11 +108,13 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected String sprintf(RAbstractStringVector fmt, double x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @SlowPath
     protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -116,22 +125,26 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @SlowPath
     protected String sprintf(String fmt, String x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected String sprintf(RAbstractStringVector fmt, String x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @SlowPath
     protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -142,17 +155,20 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @SlowPath
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization(guards = "!oneElement")
+    @SlowPath
     protected String sprintf(String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         return format(fmt, args.getValues());
     }
 
     @Specialization(guards = "oneElement")
+    @SlowPath
     protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         if (sprintfRecursive == null) {
@@ -163,11 +179,13 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!oneElement", "fmtLengthOne"})
+    @SlowPath
     protected String sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintf(fmt.getDataAt(0), args);
     }
 
     @Specialization(guards = {"oneElement", "fmtLengthOne"})
+    @SlowPath
     protected Object RAbstractStringVector(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(frame, fmt.getDataAt(0), args);
     }

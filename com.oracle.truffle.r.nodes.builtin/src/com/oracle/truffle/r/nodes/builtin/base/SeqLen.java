@@ -22,21 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.CreateCast;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"})
 public abstract class SeqLen extends RBuiltinNode {
 
-    private final ConditionProfile lengthProblem = ConditionProfile.createBinaryProfile();
+    private final BranchProfile lengthProblem = BranchProfile.create();
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
@@ -44,12 +48,13 @@ public abstract class SeqLen extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected RIntSequence seqLen(RAbstractIntVector length) {
-        if (lengthProblem.profile(length.getLength() == 0 || length.getLength() > 1)) {
-            if (length.getLength() == 0 || length.getLength() > 1) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.FIRST_ELEMENT_USED, "length.out");
-            }
-            if (length.getLength() == 0) {
+        boolean zeroLength = length.getLength() == 0;
+        if (zeroLength || length.getLength() > 1) {
+            lengthProblem.enter();
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.FIRST_ELEMENT_USED, "length.out");
+            if (zeroLength) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_COERCIBLE_INTEGER);
             }
         }

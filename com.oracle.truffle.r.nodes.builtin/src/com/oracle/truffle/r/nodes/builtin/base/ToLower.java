@@ -41,6 +41,7 @@ public abstract class ToLower extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected RStringVector toLower(RStringVector vector) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
@@ -52,6 +53,7 @@ public abstract class ToLower extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @SlowPath
     protected RStringVector tolower(RNull empty) {
         controlVisibility();
         return RDataFactory.createStringVector(0);

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -49,30 +50,35 @@ public abstract class Transpose extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object o);
 
     @Specialization
+    @SlowPath
     protected RNull transpose(RNull value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
+    @SlowPath
     protected int transpose(int value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
+    @SlowPath
     protected double transpose(double value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
+    @SlowPath
     protected byte transpose(byte value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "isEmpty2D")
+    @SlowPath
     protected RAbstractVector transpose(RAbstractVector vector) {
         controlVisibility();
         int[] dim = vector.getDimensions();
@@ -80,6 +86,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
+    @SlowPath
     protected RIntVector transpose(RAbstractIntVector vector) {
         controlVisibility();
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
@@ -107,6 +114,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
+    @SlowPath
     protected RDoubleVector transpose(RAbstractDoubleVector vector) {
         controlVisibility();
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
@@ -134,6 +142,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
+    @SlowPath
     protected RStringVector transpose(RAbstractStringVector vector) {
         controlVisibility();
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});

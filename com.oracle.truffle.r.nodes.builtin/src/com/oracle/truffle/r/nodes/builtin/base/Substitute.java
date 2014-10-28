@@ -148,6 +148,7 @@ public abstract class Substitute extends RBuiltinNode {
      * It is also possible that hidden (non-syntactic) nodes may need to be transformed.
      *
      */
+    @SlowPath
     private static Node substituteAST(Node node, REnvironment env) {
         if (node instanceof ConstantNode) {
             return node;
@@ -195,6 +196,7 @@ public abstract class Substitute extends RBuiltinNode {
         }
     }
 
+    @SlowPath
     private static Node substituteVariable(ReadVariableNode node, REnvironment env) {
         String name = node.getSymbol().getName();
         Object val = env.get(name);
@@ -242,6 +244,7 @@ public abstract class Substitute extends RBuiltinNode {
      * Substitute the arguments, handling the special case of '...', which can grow or shrink the
      * array.
      */
+    @SlowPath
     private static CallArgumentsNode substituteArgs(CallArgumentsNode arguments, REnvironment env) {
         boolean changed = false;
         String[] names = arguments.getNames();
@@ -298,6 +301,7 @@ public abstract class Substitute extends RBuiltinNode {
      * Semi-generic substitution of nodes not explicitly handled in {@link #substituteAST}. It
      * cannot be truly generic because we cannot use reflection.
      */
+    @SlowPath
     private static Node substituteOther(Node node, REnvironment env) {
         if (FastROptions.Debug.getValue()) {
             Utils.debug("substituteOther: " + node.getClass().getSimpleName());
@@ -326,6 +330,7 @@ public abstract class Substitute extends RBuiltinNode {
         }
     }
 
+    @SlowPath
     private static Node substituteFunction(FunctionDefinitionNode node, REnvironment env) {
         SequenceNode sn = (SequenceNode) RASTUtils.getChild(node, 0);
         for (Node child : sn.getChildren()) {
@@ -341,14 +346,7 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     private static Node clearSourceSection(Node node) {
-        node.accept(new NodeVisitor() {
-
-            public boolean visit(Node n) {
-                n.clearSourceSection();
-                return true;
-            }
-
-        });
+        node.accept(n -> {n.clearSourceSection(); return true;});
         return node;
     }
 
