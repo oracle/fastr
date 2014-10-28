@@ -81,7 +81,7 @@ public abstract class Structure extends RBuiltinNode {
     }
 
     @SlowPath
-    private boolean findNullIn(String[] strings, int startIndex) {
+    private static boolean findNullIn(String[] strings, int startIndex) {
         for (int i = startIndex; i < strings.length; i++) {
             if (strings[i] == null) {
                 return true;

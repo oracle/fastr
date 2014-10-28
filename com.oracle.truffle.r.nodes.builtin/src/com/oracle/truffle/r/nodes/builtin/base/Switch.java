@@ -130,8 +130,8 @@ public abstract class Switch extends RBuiltinNode {
         return value;
     }
 
-    private void switchVisibilityTo(boolean isVisible) {
-        this.isVisible = isVisible;
+    private void switchVisibilityTo(boolean visible) {
+        this.isVisible = visible;
         controlVisibility();
     }
 }
