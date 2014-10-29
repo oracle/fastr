@@ -71,10 +71,4 @@ public abstract class VApply extends RBuiltinNode {
         return result;
     }
 
-    @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
-        Object[] optionalArgs = new Object[]{optionalArg};
-        return vapply(frame, x, fun, optionalArgs);
-    }
-
 }
