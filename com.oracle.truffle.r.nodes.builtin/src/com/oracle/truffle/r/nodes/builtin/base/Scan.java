@@ -233,11 +233,6 @@ public abstract class Scan extends RBuiltinNode {
 
         } catch (IOException x) {
             throw RError.error(RError.Message.CANNOT_READ_CONNECTION);
-        } finally {
-            try {
-                data.con.close();
-            } catch (IOException ex) {
-            }
         }
     }
 

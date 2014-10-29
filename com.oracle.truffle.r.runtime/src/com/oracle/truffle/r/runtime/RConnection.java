@@ -23,17 +23,97 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
  */
 public abstract class RConnection implements RClassHierarchy {
+
+    private LinkedList<String> pushBack;
+
+    public abstract String[] readLinesInternal(int n) throws IOException;
+
+    private String readOneLineWithPushBack(String[] res, int ind) {
+        String s = pushBack.pollLast();
+        if (s == null) {
+            return null;
+        } else {
+            String[] lines = s.split("\n", 2);
+            if (lines.length == 2) {
+                // we hit end of the line
+                if (lines[1].length() != 0) {
+                    // suffix is not empty and needs to be processed later
+                    pushBack.push(lines[1]);
+                }
+                res[ind] = lines[0];
+                return null;
+            } else {
+                // no end of the line found yet
+                StringBuilder sb = new StringBuilder();
+                do {
+                    assert lines.length == 1;
+                    sb.append(lines[0]);
+                    s = pushBack.pollLast();
+                    if (s == null) {
+                        break;
+                    }
+
+                    lines = s.split("\n", 2);
+                    if (lines.length == 2) {
+                        // we hit end of the line
+                        if (lines[1].length() != 0) {
+                            // suffix is not empty and needs to be processed later
+                            pushBack.push(lines[1]);
+                        }
+                        res[ind] = sb.append(lines[0]).toString();
+                        return null;
+                    } // else continue
+                } while (true);
+                return sb.toString();
+            }
+        }
+    }
+
+    @SlowPath
+    private String[] readLinesWithPushBack(int n) throws IOException {
+        String[] res = new String[n];
+        for (int i = 0; i < n; i++) {
+            String s = readOneLineWithPushBack(res, i);
+            if (s == null) {
+                if (res[i] == null) {
+                    // no more push back value
+                    System.arraycopy(readLinesInternal(n - i), 0, res, i, n - i);
+                    pushBack = null;
+                    break;
+                }
+                // else res[i] has been filled - move to trying to fill the next one
+            } else {
+                // reached the last push back value without reaching and of line
+                assert pushBack.size() == 0;
+                System.arraycopy(readLinesInternal(n - i), 0, res, i, n - i);
+                res[i] = s + res[i];
+                pushBack = null;
+                break;
+            }
+        }
+        return res;
+    }
+
     /**
      * Read (n > 0 up to n else unlimited) lines on the connection.
      */
-    public abstract String[] readLines(int n) throws IOException;
+    public String[] readLines(int n) throws IOException {
+        if (pushBack == null) {
+            return readLinesInternal(n);
+        } else {
+            return readLinesWithPushBack(n);
+        }
+    }
 
     /**
      * Return the underlying input stream (for internal use).
@@ -49,5 +129,38 @@ public abstract class RConnection implements RClassHierarchy {
      * Implements {@link RClassHierarchy}.
      */
     public abstract RStringVector getClassHierarchy();
+
+    /**
+     * Pushes lines back to the connection
+     */
+    @SlowPath
+    public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+        if (pushBack == null) {
+            pushBack = new LinkedList<>();
+        }
+        for (int i = 0; i < lines.getLength(); i++) {
+            String newLine = lines.getDataAt(i);
+            if (addNewLine) {
+                newLine = newLine + '\n';
+            }
+            pushBack.addFirst(newLine);
+        }
+    }
+
+    /**
+     * Return the length of the push back
+     */
+    @SlowPath
+    public int pushBackLength() {
+        return pushBack == null ? 0 : pushBack.size();
+    }
+
+    /**
+     * Clears the pushback
+     */
+    @SlowPath
+    public void pushBackClear() {
+        pushBack = null;
+    }
 
 }
