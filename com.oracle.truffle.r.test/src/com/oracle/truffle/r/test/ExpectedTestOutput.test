@@ -58,36 +58,6 @@ $two
 [1] "Ga" "b"
 
 ##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
-#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G
-H"), con); pushBackLength(con) }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
-#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G
-H"), con); readLines(con, 1) }
-[1] "G"
-
-##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
-#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G
-H"), con); readLines(con, 2) }
-[1] "G" "H"
-
-##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
-#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G
-H"), con, newLine=FALSE); pushBackLength(con) }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
-#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G
-H"), con, newLine=FALSE); readLines(con, 1) }
-[1] "G"
-
-##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
-#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G
-H"), con, newLine=FALSE); readLines(con, 2) }
-[1] "G"  "Ha"
-
-##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
 #{ con<-textConnection(c("a","b","c","d")); pushBack(c("G", "H"), con); pushBackLength(con) }
 [1] 2
 
@@ -110,6 +80,30 @@ H"), con, newLine=FALSE); readLines(con, 2) }
 ##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
 #{ con<-textConnection(c("a","b","c","d")); pushBack(c("G", "H"), con, newLine=FALSE); readLines(con, 2) }
 [1] "GHa" "b"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
+#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G\nH"), con); pushBackLength(con) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
+#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G\nH"), con); readLines(con, 1) }
+[1] "G"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
+#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G\nH"), con); readLines(con, 2) }
+[1] "G" "H"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
+#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G\nH"), con, newLine=FALSE); pushBackLength(con) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
+#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G\nH"), con, newLine=FALSE); readLines(con, 1) }
+[1] "G"
+
+##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
+#{ con<-textConnection(c("a","b","c","d")); pushBack(c("G\nH"), con, newLine=FALSE); readLines(con, 2) }
+[1] "G"  "Ha"
 
 ##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
 #{ con<-textConnection(c("a","b","c","d")); pushBackLength(con) }
