@@ -22,18 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.CreateCast;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-import java.util.*;
+import java.util.ArrayList;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 /**
  * Encapsulates all which* as nested static classes.
@@ -49,6 +56,7 @@ public class WhichFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected RIntVector which(RAbstractLogicalVector x) {
             controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
@@ -75,6 +83,7 @@ public class WhichFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected int which(RAbstractDoubleVector x) {
             controlVisibility();
             double max = x.getDataAt(0);
@@ -100,6 +109,7 @@ public class WhichFunctions {
         }
 
         @Specialization
+        @SlowPath
         protected int which(RAbstractDoubleVector x) {
             controlVisibility();
             double minimum = x.getDataAt(0);

@@ -35,6 +35,7 @@ public abstract class Rnorm extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected RDoubleVector rnorm(int n, double mean, double standardd) {
         controlVisibility();
         double[] result = new double[n];
@@ -45,12 +46,14 @@ public abstract class Rnorm extends RBuiltinNode {
     }
 
     @Specialization
+    @SlowPath
     protected RDoubleVector rnorm(int n, int mean, int standardd) {
         controlVisibility();
         return rnorm(n, (double) mean, (double) standardd);
     }
 
     @Specialization
+    @SlowPath
     protected RDoubleVector rnorm(double n, double mean, double standardd) {
         controlVisibility();
         return rnorm((int) n, mean, standardd);

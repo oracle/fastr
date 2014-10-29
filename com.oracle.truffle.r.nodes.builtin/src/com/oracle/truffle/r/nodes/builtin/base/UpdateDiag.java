@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -65,6 +66,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @Specialization(guards = "!isMatrix")
     protected RIntVector updateDiagNoMatrix(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.ONLY_MATRIX_DIAGONALS);
     }
 
@@ -72,10 +74,12 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @Specialization(guards = {"isMatrix", "!correctReplacementLength"})
     protected RIntVector updateDiagReplacementDiagonalLength(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_DIAGONAL_LENGTH);
     }
 
     @Specialization(guards = {"isMatrix", "correctReplacementLength"})
+    @SlowPath
     protected RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
         controlVisibility();
         RIntVector resultVector = vector;
@@ -83,8 +87,8 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
             resultVector = (RIntVector) vector.copy();
             resultVector.markNonTemporary();
         }
-        int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
         int nrow = resultVector.getDimensions()[0];
+        int size = Math.min(nrow, resultVector.getDimensions()[1]);
         int pos = 0;
         naCheck.enable(!resultVector.isComplete());
         for (int i = 0; i < size; i++) {
@@ -95,6 +99,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix", "correctReplacementLength"})
+    @SlowPath
     protected RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         RDoubleVector resultVector = vector;
@@ -116,12 +121,17 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @Specialization(guards = {"isMatrix", "correctReplacementLength"})
     protected RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
+        initCastDoubleNode();
+        RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(frame, vector);
+        resultVector.copyAttributesFrom(vector);
+        return updateDiag(resultVector, valueVector);
+    }
+
+    @SlowPath
+    private void initCastDoubleNode() {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, false, false, false));
         }
-        RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(frame, vector);
-        resultVector.copyAttributesFrom(vector);
-        return updateDiag(resultVector, valueVector);
     }
 }
