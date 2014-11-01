@@ -88,19 +88,21 @@ public abstract class Substr extends RBuiltinNode {
             boolean startGreaterThanLength = start > length;
             boolean stopGreaterThanLength = stop > length;
             boolean wrongRange = startGreaterThanStop || startLessOrEqualZero || stopLessOrEqualZero || startGreaterThanLength || stopGreaterThanLength;
+            int newStart = start;
+            int newStop = stop;
             if (wrongRange) {
                 everSeenIllegalRange.enter();
                 if (startGreaterThanStop || (startLessOrEqualZero && stopLessOrEqualZero) || (startGreaterThanLength && stopGreaterThanLength)) {
                     return "";
                 }
                 if (startLessOrEqualZero) {
-                    start = 1;
+                    newStart = 1;
                 }
                 if (stopGreaterThanLength) {
-                    stop = length;
+                    newStop = length;
                 }
             }
-            return x.substring(start - 1, stop);
+            return x.substring(newStart - 1, newStop);
         }
     }
 

@@ -31,7 +31,9 @@ import java.util.zip.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
@@ -152,9 +154,9 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        public String[] readLines(int n) throws IOException {
+        public String[] readLinesInternal(int n) throws IOException {
             checkOpen();
-            return theConnection.readLines(n);
+            return theConnection.readLinesInternal(n);
         }
 
         @Override
@@ -210,7 +212,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         @TruffleBoundary
-        public String[] readLines(int n) throws IOException {
+        public String[] readLinesInternal(int n) throws IOException {
             ConsoleHandler console = RContext.getInstance().getConsoleHandler();
             ArrayList<String> lines = new ArrayList<>();
             String line;
@@ -296,7 +298,7 @@ public abstract class ConnectionFunctions {
 
         @TruffleBoundary
         @Override
-        public String[] readLines(int n) throws IOException {
+        public String[] readLinesInternal(int n) throws IOException {
             ArrayList<String> lines = new ArrayList<>();
             String line;
             while ((line = bufferedReader.readLine()) != null) {
@@ -382,7 +384,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        public String[] readLines(int n) throws IOException {
+        public String[] readLinesInternal(int n) throws IOException {
             throw new IOException("TODO");
         }
 
@@ -463,7 +465,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        public String[] readLines(int n) throws IOException {
+        public String[] readLinesInternal(int n) throws IOException {
             int nleft = lines.length - index;
             int nlines = nleft;
             if (n > 0) {
@@ -548,6 +550,89 @@ public abstract class ConnectionFunctions {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
+    }
+
+    @RBuiltin(name = "pushBack", kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
+    public abstract static class PushBack extends RInvisibleBuiltinNode {
+
+        @CreateCast("arguments")
+        protected RNode[] castTimesLength(RNode[] arguments) {
+            arguments[0] = CastToVectorNodeFactory.create(CastStringNodeFactory.create(arguments[0], false, false, false, false), false, false, false, false);
+            return arguments;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RNull pushBack(RAbstractStringVector data, RConnection connection, RAbstractLogicalVector newLine, RAbstractIntVector type) {
+            controlVisibility();
+            if (newLine.getLength() == 0) {
+                throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
+            }
+            connection.pushBack(data, newLine.getDataAt(0) == RRuntime.LOGICAL_TRUE);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object pushBack(RAbstractStringVector data, RConnection connection, RNull newLine, RAbstractIntVector type) {
+            controlVisibility();
+            throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!newLineIsLogical")
+        protected Object pushBack(RAbstractStringVector data, RConnection connection, RAbstractVector newLine, RAbstractIntVector type) {
+            controlVisibility();
+            throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object pushBack(Object data, Object connection, Object newLine, Object encoding) {
+            controlVisibility();
+            throw RError.error(RError.Message.INVALID_CONNECTION);
+        }
+
+        @SuppressWarnings("unused")
+        protected boolean newLineIsLogical(RAbstractStringVector data, RConnection connection, RAbstractVector newLine) {
+            return newLine.getElementClass() == RLogical.class;
+        }
+
+    }
+
+    @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"connection"})
+    public abstract static class PushBackLength extends RBuiltinNode {
+
+        @Specialization
+        protected int pushBackLength(RConnection connection) {
+            controlVisibility();
+            return connection.pushBackLength();
+        }
+
+        @Fallback
+        protected Object pushBacklLength(@SuppressWarnings("unused") Object connection) {
+            controlVisibility();
+            throw RError.error(RError.Message.INVALID_CONNECTION);
+        }
+
+    }
+
+    @RBuiltin(name = "clearPushBack", kind = INTERNAL, parameterNames = {"connection"})
+    public abstract static class PushBackClear extends RInvisibleBuiltinNode {
+
+        @Specialization
+        protected RNull pushBackClear(RConnection connection) {
+            controlVisibility();
+            connection.pushBackClear();
+            return RNull.instance;
+        }
+
+        @Fallback
+        protected Object pushBackClear(@SuppressWarnings("unused") Object connection) {
+            controlVisibility();
+            throw RError.error(RError.Message.INVALID_CONNECTION);
+        }
+
     }
 
 }

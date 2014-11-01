@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FastRSession implements RSession {
 
-    private static final int TIMEOUT = 5000; // 5 seconds until tests are killed
+    private static final int TIMEOUT = 10000; // 10 seconds until tests are killed
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for

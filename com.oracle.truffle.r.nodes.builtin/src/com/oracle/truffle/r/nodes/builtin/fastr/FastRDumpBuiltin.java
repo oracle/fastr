@@ -22,20 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import java.io.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeClass;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeField;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeFieldKind;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinComment;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+
+import java.io.*;
+
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 /**
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
@@ -54,6 +63,7 @@ public abstract class FastRDumpBuiltin extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object dump(RFunction function, byte igvDump, byte verbose) {
         controlVisibility();
 
@@ -113,6 +123,7 @@ public abstract class FastRDumpBuiltin extends RInvisibleBuiltinNode {
             this.verbose = verbose;
         }
 
+        @TruffleBoundary
         public void printTreeGraph(Node node) {
             pw.println("digraph debug_tree {");
             pw.println("rankdir = TB");

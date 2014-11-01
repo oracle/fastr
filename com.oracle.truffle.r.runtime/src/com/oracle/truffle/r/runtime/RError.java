@@ -272,6 +272,9 @@ public final class RError extends RuntimeException {
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         INVALID_SEP("invalid 'sep' specification"),
         INVALID_LENGTH("invalid '%s' length"),
+        EMPTY_WHAT("empty 'what' specified"),
+        LINE_ELEMENTS("line %d did not have %d elements"),
+        ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("argument is not a function, character or symbol"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
