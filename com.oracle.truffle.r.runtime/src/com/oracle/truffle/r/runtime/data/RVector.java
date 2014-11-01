@@ -170,7 +170,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
             setNames(value);
         } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
-            setDimensions(((RIntVector) value).getDataCopy());
+            if (value instanceof Integer) {
+                setDimensions(new int[]{(int) value});
+            } else {
+                setDimensions(((RAbstractIntVector) value).materialize().getDataCopy());
+            }
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             setDimNames((RList) value);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
@@ -271,11 +275,17 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             for (int i = 0; i < newDimNamesLength; i++) {
                 Object dimObject = newDimNames.getDataAt(i);
                 if (dimObject != RNull.instance) {
-                    RStringVector dimVector = (RStringVector) dimObject;
-                    if (dimVector.getLength() == 0) {
-                        newDimNames.updateDataAt(i, RNull.instance, null);
-                    } else if (dimVector.getLength() != dimensions[i]) {
-                        throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                    if (dimObject instanceof String) {
+                        if (dimensions[i] != 1) {
+                            throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                        }
+                    } else {
+                        RStringVector dimVector = (RStringVector) dimObject;
+                        if (dimVector.getLength() == 0) {
+                            newDimNames.updateDataAt(i, RNull.instance, null);
+                        } else if (dimVector.getLength() != dimensions[i]) {
+                            throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                        }
                     }
                 }
             }

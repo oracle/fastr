@@ -55099,6 +55099,18 @@ Error in x[[NA]] <- c(7, 42) : attempt to select more than one element
 Error in x[[NA]] <- c(7, 42, 1) : attempt to select more than one element
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ mp<-getOption("max.print"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, "foo")<-"foo"; print(x); options(max.print=mp) }
+[1] 1 2 3
+ [ reached getOption("max.print") -- omitted 2 entries ]
+attr(,"foo")
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ mp<-getOption("max.print"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }
+[1] 1 2 3
+ [ reached getOption("max.print") -- omitted 2 entries ]
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ x<-(1:4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[0, c(1,1,1,1)] }
      a a a a
 
@@ -64872,15 +64884,6 @@ logical(0)
 [61] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 [76] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 [91] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-
-##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators123
-#argv <- list(structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 1L, 2L), .Label = c('0-9g/day', '10-19', '20-29', '30+'), class = c('ordered', 'factor'), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88')), structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 1L, 2L), .Label = c('0-9g/day', '10-19', '20-29', '30+'), class = c('ordered', 'factor')));`==`(argv[[1]],argv[[2]]);
- [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-[16] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-[31] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-[46] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-[61] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-[76] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators124
 #argv <- list(16L, 8);`%%`(argv[[1]],argv[[2]]);

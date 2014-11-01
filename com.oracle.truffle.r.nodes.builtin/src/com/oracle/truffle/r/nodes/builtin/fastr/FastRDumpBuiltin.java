@@ -46,11 +46,6 @@ import java.io.*;
 import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import java.io.*;
-
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
-
 /**
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
  * .dot-file in the cwd

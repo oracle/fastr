@@ -68,6 +68,11 @@ format.default <-
     }
 }
 
+format.factor <- function (x, ...)
+	format(structure(as.character(x), names=names(x),
+					dim=dim(x), dimnames=dimnames(x)), ...)
+
+
 format.data.frame <- function(x, ..., justify = "none")
 {
     nr <- .row_names_info(x, 2L)

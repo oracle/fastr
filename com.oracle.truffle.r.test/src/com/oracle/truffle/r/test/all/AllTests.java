@@ -23259,6 +23259,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testPrint_25b8238c8e0bf0ee6c406a1051d57b0e() {
+        assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_c13b3c1c07be618ade31a2d3d3bd2eaf() {
+        assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, \"foo\")<-\"foo\"; print(x); options(max.print=mp) }");
+    }
+
+    @Test
     public void TestSimpleVectors_testRawIndex_56015d7e5db9ea79ba00565c74ba9e61() {
         assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }");
     }

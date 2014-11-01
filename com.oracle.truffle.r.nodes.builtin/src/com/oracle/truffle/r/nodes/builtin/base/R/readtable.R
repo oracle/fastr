@@ -34,8 +34,10 @@ function(file, sep = "", quote = "\"'", skip = 0,
 type.convert <-
 function(x, na.strings = "NA", as.is = FALSE, dec = ".",
 	 numerals = c("allow.loss", "warn.loss", "no.loss"))
-    .External2(C_typeconvert, x, na.strings, as.is, dec,
-               match.arg(numerals))
+     # TODO implement .External2
+#    .External2(C_typeconvert, x, na.strings, as.is, dec,
+#               match.arg(numerals))
+	.Internal(type.convert(x, na.strings, as.is, dec, match.arg(numerals)))
 
 
 read.table <-

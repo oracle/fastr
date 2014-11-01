@@ -35,14 +35,18 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
 public abstract class Match extends RBuiltinNode {
 
     @Child private CastStringNode castString;
     @Child private CastIntegerNode castInt;
+
+    private final NACheck naCheck = new NACheck();
 
     @Override
     public RNode[] getParameterValues() {
@@ -212,6 +216,12 @@ public abstract class Match extends RBuiltinNode {
             matchAll &= match;
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+    }
+
+    @Specialization
+    protected RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+        naCheck.enable(x);
+        return match(frame, RClosures.createLogicalToStringVector(x, naCheck), table, nomatchObj, incomparables);
     }
 
     @Specialization

@@ -312,7 +312,8 @@ public abstract class Scan extends RBuiltinNode {
                     blockSize = blockSize * 2;
                     for (int j = 0; j < nc; j++) {
                         RVector vec = (RVector) list.getDataAt(j);
-                        vec.copyResized(blockSize, false);
+                        vec = vec.copyResized(blockSize, false);
+                        list.updateDataAt(j, vec, null);
                     }
                 }
 
@@ -385,7 +386,7 @@ public abstract class Scan extends RBuiltinNode {
                 if (n == blockSize) {
                     // enlarge the vector
                     blockSize = blockSize * 2;
-                    vec.copyResized(blockSize, false);
+                    vec = vec.copyResized(blockSize, false);
                 }
 
                 vec.updateDataAtAsObject(n, item, naCheck);
