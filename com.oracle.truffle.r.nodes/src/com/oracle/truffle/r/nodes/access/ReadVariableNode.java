@@ -600,33 +600,58 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public abstract Symbol getSymbol();
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isByte")
+        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
-            return frameProfile.profile(frame).getByte(frameSlot);
+            try {
+                return frameProfile.profile(frame).getByte(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isInt")
+        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
-            return frameProfile.profile(frame).getInt(frameSlot);
+            try {
+                return frameProfile.profile(frame).getInt(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isDouble")
+        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
-            return frameProfile.profile(frame).getDouble(frameSlot);
+            try {
+                return frameProfile.profile(frame).getDouble(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization
+        @Fallback
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return frameProfile.profile(frame).getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
-                throw new IllegalStateException();
+                throw RInternalError.shouldNotReachHere();
             }
         }
+
+        protected static boolean isByte(VirtualFrame frame, FrameSlot frameSlot) {
+            return frame.isByte(frameSlot);
+        }
+
+        protected static boolean isInt(VirtualFrame frame, FrameSlot frameSlot) {
+            return frame.isInt(frameSlot);
+        }
+
+        protected static boolean isDouble(VirtualFrame frame, FrameSlot frameSlot) {
+            return frame.isDouble(frameSlot);
+        }
+
     }
 
     @SuppressWarnings("unused")
@@ -639,33 +664,58 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public abstract Symbol getSymbol();
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isByte")
+        protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            return enclosingFrame.getByte(frameSlot);
+            try {
+                return enclosingFrame.getByte(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isInt")
+        protected int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            return enclosingFrame.getInt(frameSlot);
-        }
+            try {
+                return enclosingFrame.getInt(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+       }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isDouble")
+        protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            return enclosingFrame.getDouble(frameSlot);
-        }
+            try {
+                return enclosingFrame.getDouble(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+       }
 
-        @Specialization
+        @Fallback
         protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return enclosingFrame.getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
-                throw new IllegalStateException();
+                throw RInternalError.shouldNotReachHere();
             }
         }
+
+        protected static boolean isByte(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            return enclosingFrame.isByte(frameSlot);
+        }
+
+        protected static boolean isInt(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            return enclosingFrame.isInt(frameSlot);
+        }
+
+        protected static boolean isDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            return enclosingFrame.isDouble(frameSlot);
+        }
+
     }
 
     public abstract static class ReadAndCopySuperVariableNode extends ReadSuperVariableNode {
@@ -681,7 +731,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 }
                 return result;
             } catch (FrameSlotTypeException e) {
-                throw new IllegalStateException();
+                throw RInternalError.shouldNotReachHere();
             }
         }
 
