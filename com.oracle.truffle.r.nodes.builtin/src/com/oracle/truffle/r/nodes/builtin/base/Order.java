@@ -174,6 +174,7 @@ public abstract class Order extends RBuiltinNode {
 
     // sorting
 
+    @TruffleBoundary
     protected void stringSort(String[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -204,6 +205,7 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     protected void doubleSort(double[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -234,6 +236,7 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     protected void intSort(int[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -264,6 +267,7 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     protected void complexSort(double[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
@@ -301,6 +305,7 @@ public abstract class Order extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     protected void byteSort(byte[] x, int[] o, int[] t, int l, int r) {
         if (l < r) {
             int i = l;
