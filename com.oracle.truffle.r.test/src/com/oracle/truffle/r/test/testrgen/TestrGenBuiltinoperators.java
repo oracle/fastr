@@ -2,7 +2,7 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
  *
@@ -703,8 +703,10 @@ public class TestrGenBuiltinoperators extends TestBase {
         assertEval("argv <- list(c(1.22408179743946+0i, 0.359813827057364+0i, 0.400771450594052+0i, 0.11068271594512+0i, -0.555841134754075+0i), structure(c(1.22408179743946+0i, 0.359813827057364+0i, 0.400771450594052+0i, 0.11068271594512+0i, -0.555841134754075+0i), .Dim = c(1L, 5L)));`==`(argv[[1]],argv[[2]]);");
     }
 
+    @Ignore
     @Test
     public void testoperators123() {
+        // comparison between factors does not preserve the names attribute
         assertEval("argv <- list(structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 1L, 2L), .Label = c(\'0-9g/day\', \'10-19\', \'20-29\', \'30+\'), class = c(\'ordered\', \'factor\'), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\', \'25\', \'26\', \'27\', \'28\', \'29\', \'30\', \'31\', \'32\', \'33\', \'34\', \'35\', \'36\', \'37\', \'38\', \'39\', \'40\', \'41\', \'42\', \'43\', \'44\', \'45\', \'46\', \'47\', \'48\', \'49\', \'50\', \'51\', \'52\', \'53\', \'54\', \'55\', \'56\', \'57\', \'58\', \'59\', \'60\', \'61\', \'62\', \'63\', \'64\', \'65\', \'66\', \'67\', \'68\', \'69\', \'70\', \'71\', \'72\', \'73\', \'74\', \'75\', \'76\', \'77\', \'78\', \'79\', \'80\', \'81\', \'82\', \'83\', \'84\', \'85\', \'86\', \'87\', \'88\')), structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 1L, 2L), .Label = c(\'0-9g/day\', \'10-19\', \'20-29\', \'30+\'), class = c(\'ordered\', \'factor\')));`==`(argv[[1]],argv[[2]]);");
     }
 
@@ -1091,7 +1093,6 @@ public class TestrGenBuiltinoperators extends TestBase {
         assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE), .Names = c(\' 100\', \'-1e-13\', \' Inf\', \'-Inf\', \' NaN\', \'3.14\', \'  NA\')), structure(c(TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE), .Names = c(\' 100\', \'-1e-13\', \' Inf\', \'-Inf\', \' NaN\', \'3.14\', \'  NA\')));`&`(argv[[1]],argv[[2]]);");
     }
 
-
     @Test
     @Ignore
     public void testoperators195() {
@@ -1115,7 +1116,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     public void testoperators198() {
         assertEval("argv <- list(structure(c(0.500999999999976, 0.584333333333234, 0.667666666666719, 0.750999999999976, 0.834333333333234, 0.917666666666719, 0.000999999999976353, 0.0843333333332339, 0.167666666666719, 0.250999999999976), .Tsp = c(1920.5, 1921.25, 12), class = \'ts\'));`(`(argv[[1]]);");
     }
-
 
     @Test
     @Ignore

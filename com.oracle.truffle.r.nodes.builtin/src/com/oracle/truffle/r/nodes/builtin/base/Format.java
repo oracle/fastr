@@ -246,6 +246,14 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!wrongArgs")
+    protected RStringVector format(VirtualFrame frame, RStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+        // TODO: implement full semantics
+        return value;
+    }
+
     // TruffleDSL bug - should not need multiple guards here
     protected boolean wrongArgsObject(@SuppressWarnings("unused") Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {

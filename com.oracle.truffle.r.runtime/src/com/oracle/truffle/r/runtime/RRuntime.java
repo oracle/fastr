@@ -271,14 +271,23 @@ public class RRuntime {
     // conversions from string
 
     @TruffleBoundary
-    public static int string2intNoCheck(String s) {
+    public static int string2intNoCheck(String s, boolean exceptionOnFail) {
         // FIXME use R rules
         try {
             return Integer.decode(s);  // decode supports hex constants
         } catch (NumberFormatException e) {
-            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            if (exceptionOnFail) {
+                throw e;
+            } else {
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            }
         }
         return INT_NA;
+    }
+
+    @TruffleBoundary
+    public static int string2intNoCheck(String s) {
+        return string2intNoCheck(s, false);
     }
 
     @TruffleBoundary
@@ -287,7 +296,7 @@ public class RRuntime {
     }
 
     @TruffleBoundary
-    public static double string2doubleNoCheck(String v) {
+    public static double string2doubleNoCheck(String v, boolean exceptionOnFail) {
         // FIXME use R rules
         if ("Inf".equals(v)) {
             return Double.POSITIVE_INFINITY;
@@ -303,9 +312,18 @@ public class RRuntime {
                 } catch (NumberFormatException ein) {
                 }
             }
-            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            if (exceptionOnFail) {
+                throw e;
+            } else {
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            }
         }
         return DOUBLE_NA;
+    }
+
+    @TruffleBoundary
+    public static double string2doubleNoCheck(String v) {
+        return string2doubleNoCheck(v, false);
     }
 
     @TruffleBoundary
@@ -317,7 +335,7 @@ public class RRuntime {
         }
     }
 
-    public static byte string2logicalNoCheck(String s) {
+    public static byte string2logicalNoCheck(String s, boolean exceptionOnFail) {
         switch (s) {
             case "TRUE":
             case "T":
@@ -330,9 +348,17 @@ public class RRuntime {
             case "false":
                 return LOGICAL_FALSE;
             default:
-                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+                if (exceptionOnFail) {
+                    throw new NumberFormatException();
+                } else {
+                    RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+                }
                 return LOGICAL_NA;
         }
+    }
+
+    public static byte string2logicalNoCheck(String s) {
+        return string2logicalNoCheck(s, false);
     }
 
     public static byte string2logical(String s) {

@@ -384,8 +384,33 @@ public abstract class PrettyPrinterNode extends RNode {
         builder.append(prettyPrintAttributes(attr.getValue()));
     }
 
+    private static int getMaxPrintLength() {
+        int maxPrint = -1; // infinity
+        Object maxPrintObj = ROptions.getValue(BaseOptions.Name.MaxPrint.getName());
+        if (maxPrintObj != null) {
+
+            if (maxPrintObj instanceof Integer) {
+                return (int) maxPrintObj;
+            } else if (maxPrintObj instanceof Double) {
+                return RRuntime.double2int(((double) maxPrintObj));
+            } else if (maxPrintObj instanceof RAbstractVector) {
+                RAbstractVector maxPrintVec = (RAbstractVector) maxPrintObj;
+                if (maxPrintVec.getLength() > 0) {
+                    if (maxPrintObj instanceof RAbstractIntVector) {
+                        maxPrint = ((RAbstractIntVector) maxPrintVec).getDataAt(0);
+                    }
+                    if (maxPrintObj instanceof RAbstractDoubleVector) {
+                        maxPrint = RRuntime.double2int(((RAbstractDoubleVector) maxPrintVec).getDataAt(0));
+                    }
+                }
+            }
+        }
+        return maxPrint;
+    }
+
     private String printVector(RAbstractVector vector, String[] values, boolean isStringVector, boolean isRawVector) {
         assert vector.getLength() == values.length;
+        int maxPrint = getMaxPrintLength();
         if (values.length == 0) {
             String result = concat(RRuntime.classToString(vector.getElementClass()), "(0)");
             if (vector.getNames() != RNull.instance) {
@@ -472,6 +497,9 @@ public abstract class PrettyPrinterNode extends RNode {
                         headerBuilder.append(headerString);
                     }
                     index++;
+                    if (index == maxPrint) {
+                        break;
+                    }
                 }
                 builder.append('\n');
                 if (printNamesHeader) {
@@ -479,9 +507,17 @@ public abstract class PrettyPrinterNode extends RNode {
                     headerBuilder.append(builderToString(builder));
                     builder = new StringBuilder();
                 }
+                if (index == maxPrint) {
+                    break;
+                }
             }
             StringBuilder resultBuilder = printNamesHeader ? headerBuilder : builder;
             resultBuilder.deleteCharAt(resultBuilder.length() - 1);
+            if (index == maxPrint) {
+                resultBuilder.append("\n [ reached getOption(\"max.print\") -- omitted ");
+                resultBuilder.append(vector.getLength() - maxPrint);
+                resultBuilder.append(" entries ]");
+            }
             RAttributes attributes = vector.getAttributes();
             if (attributes != null) {
                 resultBuilder.append(printAttributes(vector, attributes));
@@ -502,8 +538,14 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             sb.append("[,").append(rs).append(']');
         } else {
-            RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(1);
-            String dimId = dimNamesVector.getDataAt(r - 1);
+            String dimId;
+            if (dimNames.getDataAt(1) instanceof String) {
+                assert r == 1;
+                dimId = (String) dimNames.getDataAt(1);
+            } else {
+                RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(1);
+                dimId = dimNamesVector.getDataAt(r - 1);
+            }
             if (RRuntime.isNA(dimId)) {
                 dimId = RRuntime.NA_HEADER;
             }
@@ -1465,7 +1507,11 @@ public abstract class PrettyPrinterNode extends RNode {
             RList dimNames = vector.getDimNames();
             RStringVector columnDimNames = null;
             if (dimNames != null && dimNames.getDataAt(1) != RNull.instance) {
-                columnDimNames = (RStringVector) dimNames.getDataAt(1);
+                if (dimNames.getDataAt(1) instanceof String) {
+                    columnDimNames = RDataFactory.createStringVector((String) dimNames.getDataAt(1));
+                } else {
+                    columnDimNames = (RStringVector) dimNames.getDataAt(1);
+                }
             }
             int rowHeaderWidth = 0;
             for (int r = 0; r < nrow; ++r) {
@@ -1551,6 +1597,11 @@ public abstract class PrettyPrinterNode extends RNode {
                     boolean hasNegative = dataColWidths[colInd] < 0;
                     totalWidth += Math.abs(dataColWidths[colInd]) + ((isDoubleVector || isComplexVector) && hasNegative ? 2 : 1);
                     if (totalWidth > RContext.getInstance().getConsoleHandler().getWidth()) {
+                        if (colInd == startColInd) {
+                            // the first column is already too wide but needs to be printed
+                            // nevertheless
+                            colInd++;
+                        }
                         break;
                     }
                 }

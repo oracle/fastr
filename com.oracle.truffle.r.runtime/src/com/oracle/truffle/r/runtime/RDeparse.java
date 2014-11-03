@@ -750,8 +750,13 @@ public class RDeparse {
                 break;
             case REALSXP:
                 double d = (double) element;
-                String rep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
-                state.append(rep);
+                String dRep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
+                state.append(dRep);
+                break;
+            case INTSXP:
+                int i = (int) element;
+                String iRep = Integer.toString(i);
+                state.append(iRep);
                 break;
             default:
                 assert false;

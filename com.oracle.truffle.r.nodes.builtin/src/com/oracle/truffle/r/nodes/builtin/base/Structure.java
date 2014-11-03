@@ -52,6 +52,23 @@ public abstract class Structure extends RBuiltinNode {
         return obj;
     }
 
+    private static String fixupAttrName(String s) {
+        // as per documentation of the "structure" function
+        if (s.equals(".Dim")) {
+            return "dim";
+        } else if (s.equals(".Dimnames")) {
+            return "dimnames";
+        } else if (s.equals(".Names")) {
+            return "names";
+        } else if (s.equals(".Tsp")) {
+            return "tsp";
+        } else if (s.equals(".Label")) {
+            return "levels";
+        } else {
+            return s;
+        }
+    }
+
     @Specialization
     @TruffleBoundary
     protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
@@ -59,7 +76,13 @@ public abstract class Structure extends RBuiltinNode {
         String[] argNames = getSuppliedArgsNames();
         validateArgNames(argNames);
         for (int i = 0; i < values.length; i++) {
-            obj.setAttr(argNames[i + 1], fixupValue(values[i]));
+            Object value = fixupValue(values[i]);
+            String attrName = fixupAttrName(argNames[i + 1]);
+            if (value == RNull.instance) {
+                obj.removeAttr(attrName);
+            } else {
+                obj.setAttr(attrName, value);
+            }
         }
         return obj;
     }
