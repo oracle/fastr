@@ -596,9 +596,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.names = null;
         this.dimNames = null;
         if (this.dimensions != null) {
-            if (this.attributes != null) {
-                this.attributes.clear();
-            }
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(this.dimensions, true));
         } else {
             // nullifying dimensions does not reset regular attributes
