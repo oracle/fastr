@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -46,32 +46,35 @@ public class SequenceNode extends RNode {
         this(sequence);
         assignSourceSection(src);
     }
-    
+
     /**
-     * Similar to {@link #ensureSequence} but for subclasses, where we 
-     * have to extract any existing array.
-     * @param node 
+     * Similar to {@link #ensureSequence} but for subclasses, where we have to extract any existing
+     * array.
+     *
+     * @param node
      */
     protected SequenceNode(RNode node) {
         this(convert(node));
     }
-    
+
     /**
-     * Ensures that {@code node} is a {@link SequenceNode} by converting
-     * any other node to a single length sequence.
+     * Ensures that {@code node} is a {@link SequenceNode} by converting any other node to a single
+     * length sequence.
      */
     public static RNode ensureSequence(RNode node) {
         if (node == null || node instanceof SequenceNode) {
             return node;
         } else {
-            return new SequenceNode(new RNode[]{node}); 
-        }    
+            return new SequenceNode(new RNode[]{node});
+        }
     }
 
     private static RNode[] convert(RNode node) {
         if (node instanceof SequenceNode) {
             return ((SequenceNode) node).sequence;
-        } else return new RNode[]{node};      
+        } else {
+            return new RNode[]{node};
+        }
     }
 
     @Override
@@ -87,9 +90,9 @@ public class SequenceNode extends RNode {
     public RNode[] getSequence() {
         return sequence;
     }
-    
+
     @Override
-    @SlowPath
+    @TruffleBoundary
     public void deparse(State state) {
         for (int i = 0; i < sequence.length; i++) {
             state.mark();

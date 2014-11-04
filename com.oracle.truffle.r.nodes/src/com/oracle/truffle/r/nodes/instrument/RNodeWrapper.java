@@ -40,7 +40,7 @@ public final class RNodeWrapper extends RNode implements WrapperNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-       probeNode.enter(child, frame);
+        probeNode.enter(child, frame);
 
         Object result;
 
@@ -54,7 +54,7 @@ public final class RNodeWrapper extends RNode implements WrapperNode {
 
         return result;
     }
-    
+
     @Override
     public void deparse(State state) {
         child.deparse(state);

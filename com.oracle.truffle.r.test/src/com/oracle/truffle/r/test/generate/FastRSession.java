@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FastRSession implements RSession {
 
-    private static final int TIMEOUT = 5000; // 5 seconds until tests are killed
+    private static final int TIMEOUT = 10000; // 10 seconds until tests are killed
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
@@ -38,18 +38,18 @@ public class FastRSession implements RSession {
     private static class ConsoleHandler implements RContext.ConsoleHandler {
         private StringBuilder buffer = new StringBuilder();
 
-        @SlowPath
+        @TruffleBoundary
         public void println(String s) {
             buffer.append(s);
             buffer.append('\n');
         }
 
-        @SlowPath
+        @TruffleBoundary
         public void print(String s) {
             buffer.append(s);
         }
 
-        @SlowPath
+        @TruffleBoundary
         public void printf(String format, Object... args) {
             buffer.append(String.format(format, args));
         }
@@ -62,12 +62,12 @@ public class FastRSession implements RSession {
             return false;
         }
 
-        @SlowPath
+        @TruffleBoundary
         public void printErrorln(String s) {
             println(s);
         }
 
-        @SlowPath
+        @TruffleBoundary
         public void printError(String s) {
             print(s);
         }
@@ -84,7 +84,7 @@ public class FastRSession implements RSession {
             // ignore
         }
 
-        @SlowPath
+        @TruffleBoundary
         void reset() {
             buffer.delete(0, buffer.length());
         }

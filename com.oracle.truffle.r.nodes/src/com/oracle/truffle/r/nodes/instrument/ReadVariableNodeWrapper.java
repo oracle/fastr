@@ -28,7 +28,6 @@ import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.RDeparse;
 
@@ -78,7 +77,7 @@ public class ReadVariableNodeWrapper extends ReadVariableNode implements Wrapper
 
         return result;
     }
-    
+
     @Override
     public final Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
         probeNode.enter(child, frame);
@@ -94,15 +93,15 @@ public class ReadVariableNodeWrapper extends ReadVariableNode implements Wrapper
         }
 
         return result;
-            
+
     }
 
     @Override
     public void deparse(RDeparse.State state) {
         child.deparse(state);
     }
-    
-    @Override 
+
+    @Override
     public String getName() {
         return child.getName();
     }

@@ -183,7 +183,9 @@ public class TestSimpleFunctions extends TestBase {
 
         assertEval("{ f<-function(x, y) { print(missing(y)); } ; f(42) }");
         assertEval("{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }");
+        // Checkstyle: stop line length check
         assertEval("{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod(\"f\") }; f(c(1,2), row.names = \"r1\", nm=\"bar\") }");
+        // Checkstyle: resume line length check
 
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
         assertEvalError("{ f <- function(...) { ..1 } ;  f() }");

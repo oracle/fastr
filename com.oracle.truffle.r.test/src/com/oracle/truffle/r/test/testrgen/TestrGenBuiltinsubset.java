@@ -14,6 +14,7 @@ import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
 
+// Checkstyle: stop line length check
 public class TestrGenBuiltinsubset extends TestBase {
 
     @Test

@@ -177,7 +177,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
                     index++;
                 }
-                
+
                 saveArguments = new SaveArgumentsNode(init);
             } else {
                 saveArguments = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
@@ -190,9 +190,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
 
             String functionBody = func.getSource().getCode();
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, 
-                    new FunctionBodyNode(saveArguments, statements), formals, functionBody.substring(0, Math.min(functionBody.length(), 50)).replace("\n",
-                            "\\n"), false);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, new FunctionBodyNode(saveArguments, statements), formals, functionBody.substring(0,
+                            Math.min(functionBody.length(), 50)).replace("\n", "\\n"), false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         } catch (Throwable err) {
             err.printStackTrace();

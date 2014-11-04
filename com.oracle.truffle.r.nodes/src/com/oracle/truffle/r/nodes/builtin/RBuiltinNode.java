@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -179,7 +179,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         return args.getInlinedArgs();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void throwMissingFormalParameterError(int argsLength, int specializationExpectesArgs) {
         String name = getBuiltin().getRBuiltin().name();
         RInternalError.shouldNotReachHere("Builtin '" + name + "': Length of 'parameterNames' (" + argsLength + ") and specialization signature (" + specializationExpectesArgs +

@@ -59,7 +59,7 @@ public class WriteVariableNodeWrapper extends WriteVariableNode implements Probe
 
         return result;
     }
-    
+
     @Override
     public final void execute(VirtualFrame frame, Object value) {
         probeNode.enter(child, frame);
@@ -77,14 +77,17 @@ public class WriteVariableNodeWrapper extends WriteVariableNode implements Probe
         child.deparse(state);
     }
 
+    @Override
     public boolean isArgWrite() {
         return child.isArgWrite();
     }
 
+    @Override
     public RNode getRhs() {
         return child.getRhs();
     }
-    
+
+    @Override
     public String getName() {
         return child.getName();
     }

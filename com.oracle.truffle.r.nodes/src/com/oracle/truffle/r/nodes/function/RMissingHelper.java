@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -60,16 +60,15 @@ public class RMissingHelper {
     }
 
     /**
-     * This method determines whether a given name is missing in the given frame. This is
-     * used to determine whether an argument has to be replaced by its default value or not. In case
-     * the given name is associated with a promise, {@link #isMissingName(RPromise)} is
-     * called.
+     * This method determines whether a given name is missing in the given frame. This is used to
+     * determine whether an argument has to be replaced by its default value or not. In case the
+     * given name is associated with a promise, {@link #isMissingName(RPromise)} is called.
      *
      * @param frame The frame in which to decide whether value is missing or not
-     * @param symbol The {@link Symbol} which to check
-     * @return See {@link #isMissingSymbol(RPromise)}
+     * @param name The name to check
+     * @return See {@link #isMissingName(RPromise)}
      */
-    @SlowPath
+    @TruffleBoundary
     public static boolean isMissingArgument(Frame frame, String name) {
         // TODO VARARG: Anything special to do here?
 
@@ -109,8 +108,8 @@ public class RMissingHelper {
     /**
      * @param frame The frame to read name in
      * @param name The name to read
-     * @return The value for the given name in the given frame. {@code null} if name is not bound
-     *         or type is not object.
+     * @return The value for the given name in the given frame. {@code null} if name is not bound or
+     *         type is not object.
      */
     public static Object getMissingValue(Frame frame, String name) {
         // Check binding
@@ -134,7 +133,7 @@ public class RMissingHelper {
      *            {@link #isMissingArgument(Frame, String)}.
      * @return Whether the given {@link RPromise} represents a name that is 'missing' in its frame
      */
-    @SlowPath
+    @TruffleBoundary
     public static boolean isMissingName(RPromise promise) {
         boolean result = false;
         // Missing RPromises throw an error on evaluation, so this might only be checked if it has

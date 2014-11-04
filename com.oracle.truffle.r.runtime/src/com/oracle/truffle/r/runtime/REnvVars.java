@@ -27,7 +27,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -170,7 +170,7 @@ public class REnvVars {
         return result.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static IOException invalid(String path, String line) throws IOException {
         throw new IOException("   File " + path + " contains invalid line(s)\n      " + line + "\n   They were ignored\n");
     }

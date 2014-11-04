@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""})
@@ -51,7 +51,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
-    @SlowPath
+    @TruffleBoundary
     protected RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);

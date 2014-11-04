@@ -11,7 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -48,7 +48,7 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
-    @SlowPath
+    @TruffleBoundary
     protected Object doSwitch(RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         Object[] optionalArgValues = optionalArgs.getValues();
@@ -103,7 +103,7 @@ public abstract class Switch extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private Object doSwitchInt(int index, RArgsValuesAndNames optionalArgs) {
         Object[] optionalArgValues = optionalArgs.getValues();
         if (index >= 1 && index <= optionalArgValues.length) {
@@ -130,8 +130,8 @@ public abstract class Switch extends RBuiltinNode {
         return value;
     }
 
-    private void switchVisibilityTo(boolean isVisible) {
-        this.isVisible = isVisible;
+    private void switchVisibilityTo(boolean isVisibleArg) {
+        this.isVisible = isVisibleArg;
         controlVisibility();
     }
 }

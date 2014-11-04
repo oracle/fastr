@@ -33,13 +33,13 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "formals", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
 public abstract class Formals extends RBuiltinNode {
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object formals(@SuppressWarnings("unused") RMissing fun) {
         throw RError.error(RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object formals(RFunction fun) {
         controlVisibility();
         if (fun.isBuiltin()) {

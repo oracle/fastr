@@ -14,14 +14,7 @@ package com.oracle.truffle.r.nodes.runtime;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.WriteVariableNode.UnresolvedWriteLocalVariableNode;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.binary.ColonNode.ColonCastNode;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -126,18 +119,21 @@ public class RASTDeparse {
                             if (arginfo.prec == RDeparse.PREC_SUM) {
                                 arginfo = new PPInfo(arginfo.kind, RDeparse.PREC_SIGN, arginfo.rightassoc);
                             }
-                            // drop through
+                            // CheckStyle: stop case fall through check
                         case 2:
                             break;
+                        // CheckStyle: resume case fall through check
+
                         default:
                             return false;
                     }
-                    // drop through
 
+                    // CheckStyle: stop case fall through check
                 case UNARY:
                     if (mainop.prec > arginfo.prec || (mainop.prec == arginfo.prec && isLeft == mainop.rightassoc)) {
                         return true;
                     }
+                    // CheckStyle: resume case fall through check
             }
         } else {
             // TODO complex

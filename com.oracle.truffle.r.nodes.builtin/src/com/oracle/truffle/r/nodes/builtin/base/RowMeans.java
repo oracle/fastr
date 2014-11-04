@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 // Implements .rowMeans
 @RBuiltin(name = "rowMeans", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
@@ -49,7 +49,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -76,7 +76,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -103,7 +103,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -124,7 +124,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -151,7 +151,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -172,7 +172,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector rowMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];

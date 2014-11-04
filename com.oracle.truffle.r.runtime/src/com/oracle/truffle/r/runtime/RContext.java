@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -50,25 +50,25 @@ public final class RContext extends ExecutionContext {
     /**
      * The interface to the R console, which may have different implementations for different
      * environments, but only one in any given VM execution. Since I/O is involved, all methods are
-     * tagged with {@link SlowPath}, as should the appropriate implementation methods.
+     * tagged with {@link TruffleBoundary}, as should the appropriate implementation methods.
      */
     public interface ConsoleHandler {
         /**
          * Normal output with a new line.
          */
-        @SlowPath
+        @TruffleBoundary
         void println(String s);
 
         /**
          * Normal output without a newline.
          */
-        @SlowPath
+        @TruffleBoundary
         void print(String s);
 
         /**
          * Formatted output.
          */
-        @SlowPath
+        @TruffleBoundary
         void printf(String format, Object... args);
 
         /**
@@ -76,50 +76,50 @@ public final class RContext extends ExecutionContext {
          *
          * @param s
          */
-        @SlowPath
+        @TruffleBoundary
         void printErrorln(String s);
 
         /**
          * Error output without a newline.
          */
-        @SlowPath
+        @TruffleBoundary
         void printError(String s);
 
         /**
          * Read a line of input, newline omitted in result. Returns null if {@link #isInteractive()
          * == false}.
          */
-        @SlowPath
+        @TruffleBoundary
         String readLine();
 
         /**
          * Return {@code true} if and only if this console is interactive.
          */
-        @SlowPath
+        @TruffleBoundary
         boolean isInteractive();
 
         /**
          * Redirect error output to the normal output.
          */
-        @SlowPath
+        @TruffleBoundary
         void redirectError();
 
         /**
          * Get the current prompt.
          */
-        @SlowPath
+        @TruffleBoundary
         String getPrompt();
 
         /**
          * Set the R prompt.
          */
-        @SlowPath
+        @TruffleBoundary
         void setPrompt(String prompt);
 
         /**
          * Get the console width.
          */
-        @SlowPath
+        @TruffleBoundary
         int getWidth();
     }
 
@@ -175,7 +175,7 @@ public final class RContext extends ExecutionContext {
          */
         Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
 
-        static final Object INCOMPLETE_SOURCE = new Object();
+        Object INCOMPLETE_SOURCE = new Object();
 
         /**
          *
@@ -261,10 +261,10 @@ public final class RContext extends ExecutionContext {
          * @param e
          */
         void printRError(RError e);
-        
+
         /**
          * Returns {@code} iff AST instrumentation is enabled.
-        */
+         */
         boolean instrumentingEnabled();
 
     }

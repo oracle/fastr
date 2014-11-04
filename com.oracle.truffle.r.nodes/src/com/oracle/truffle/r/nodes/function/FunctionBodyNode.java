@@ -27,11 +27,10 @@ import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 
 /**
- * Denotes a function body, which is a special variant of {@link SequenceNode}
- * that supports instrumentation. A function body always has exactly two
- * elements: a {@link SaveArgumentsNode} followed by a
- * {@link FunctionStatementsNode} (which could be made explicit as children
- * rather than subclassing {@link SequenceNode}).
+ * Denotes a function body, which is a special variant of {@link SequenceNode} that supports
+ * instrumentation. A function body always has exactly two elements: a {@link SaveArgumentsNode}
+ * followed by a {@link FunctionStatementsNode} (which could be made explicit as children rather
+ * than subclassing {@link SequenceNode}).
  *
  */
 public class FunctionBodyNode extends SequenceNode {
@@ -39,7 +38,7 @@ public class FunctionBodyNode extends SequenceNode {
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
         super(new RNode[]{saveArgs, statements});
     }
-    
+
     public FunctionDefinitionNode getFunctionDefinitionNode() {
         return (FunctionDefinitionNode) RASTUtils.unwrapParent(this);
     }

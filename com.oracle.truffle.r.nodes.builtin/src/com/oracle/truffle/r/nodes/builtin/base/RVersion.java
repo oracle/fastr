@@ -28,14 +28,14 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "Version", kind = INTERNAL, parameterNames = {})
 public abstract class RVersion extends RBuiltinNode {
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object doRVersion() {
         controlVisibility();
         return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));

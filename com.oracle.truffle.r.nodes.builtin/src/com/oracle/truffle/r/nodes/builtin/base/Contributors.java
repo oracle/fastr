@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -36,7 +36,7 @@ public abstract class Contributors extends RInvisibleBuiltinNode {
     private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object contributors() {
         controlVisibility();
         RContext.getInstance().getConsoleHandler().println(CONTRIBUTORS);

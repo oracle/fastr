@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -77,15 +77,14 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
-        @SlowPath
+        @TruffleBoundary
         public static void doBrowser(MaterializedFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             REnvironment callerEnv = REnvironment.frameToEnvironment(frame);
             String savedPrompt = ch.getPrompt();
             ch.setPrompt(browserPrompt());
             try {
-                LW:
-                while (true) {
+                LW: while (true) {
                     String input = ch.readLine();
                     if (input.length() == 0) {
                         RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");
@@ -146,8 +145,7 @@ public class BrowserFunctions {
         }
 
         /**
-         * GnuR objects to indices <= 0 but allows positive indices that are out
-         * of range.
+         * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
         protected HelperState getHelperState(int n) {
             if (n <= 0) {
@@ -166,14 +164,14 @@ public class BrowserFunctions {
     public abstract static class BrowserText extends RetrieveAdapter {
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected String browserText(int n) {
             controlVisibility();
             return getHelperState(n).text;
         }
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected String browserText(double n) {
             controlVisibility();
             return getHelperState((int) n).text;
@@ -184,14 +182,14 @@ public class BrowserFunctions {
     public abstract static class BrowserCondition extends RetrieveAdapter {
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object browserCondition(int n) {
             controlVisibility();
             return getHelperState(n).condition;
         }
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object browserCondition(double n) {
             controlVisibility();
             return getHelperState((int) n).condition;
@@ -202,7 +200,7 @@ public class BrowserFunctions {
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
             controlVisibility();

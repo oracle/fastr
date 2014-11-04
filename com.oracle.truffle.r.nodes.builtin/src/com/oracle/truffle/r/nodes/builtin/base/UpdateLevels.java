@@ -19,14 +19,14 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 @RBuiltin(name = "levels<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
         controlVisibility();
         RVector v = vector.materialize();
@@ -35,7 +35,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
         controlVisibility();
         RVector v = vector.materialize();

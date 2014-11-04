@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -41,11 +42,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * symbol {@code func}. We could just eval this, but eval has a lot of unnecessary overhead given
  * that we know that {@code func} is either a builtin or it's an error. We want to rewrite the AST
  * as if the {@code func} had been called directly.
- * 
- * A note on {@link RInstrumentableNode}. Since both the {@code .Internal} and the argument
- * are {@link RCallNode}s both may have been wrapped. The call to {@link RASTUtils#unwrap} will
- * go through any {@link RWrapperNode} and the rewrite will remove one level of wrapping. However the
- * parent of the the {@code .Internal}, which will be an {@link RWrapperNode}, will remain so any
+ *
+ * A note on {@link RInstrumentableNode}. Since both the {@code .Internal} and the argument are
+ * {@link RCallNode}s both may have been wrapped. The call to {@link RASTUtils#unwrap} will go
+ * through any {@link RNodeWrapper} and the rewrite will remove one level of wrapping. However the
+ * parent of the the {@code .Internal}, which will be an {@link RNodeWrapper}, will remain so any
  * instrumentation at that level will remain in place.
  */
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = {0})

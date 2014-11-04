@@ -6,11 +6,7 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Instrument;
 import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.impl.SimpleEventReceiver;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -56,7 +52,7 @@ public class FastRCallCounting {
                 if (REntryCounters.findCounter(uuid) == null) {
                     Probe probe = RInstrument.findSingleProbe(uuid, RSyntaxTag.FUNCTION_BODY);
                     if (probe == null) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "failed to apply counter");                        
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "failed to apply counter");
                     } else {
                         REntryCounters.Function counter = new REntryCounters.Function(uuid);
                         probe.attach(counter.instrument);
@@ -93,36 +89,6 @@ public class FastRCallCounting {
                 return counter.getEnterCount();
             }
             return RNull.instance;
-        }
-    }
-
-    /**
-     * A counter for the number of times execution enters and leaves a probed
-     * AST node.
-     */
-    private static class TestCounter {
-
-        public int enterCount = 0;
-        public int leaveCount = 0;
-        public final Instrument instrument;
-
-        public TestCounter() {
-            instrument = Instrument.create(new SimpleEventReceiver() {
-
-                @Override
-                public void enter(Node node, VirtualFrame frame) {
-                    enterCount++;
-                }
-
-                @Override
-                public void returnAny(Node node, VirtualFrame frame) {
-                    leaveCount++;
-                }
-            }, "R function entry counter");
-        }
-
-        Instrument getInstrument() {
-            return instrument;
         }
     }
 

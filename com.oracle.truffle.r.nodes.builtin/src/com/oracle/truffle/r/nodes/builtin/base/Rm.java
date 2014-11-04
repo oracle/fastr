@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 @RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"name", "list", "pos", "envir", "inherits"})
@@ -84,7 +84,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     @SuppressWarnings("unused")
     protected Object rm(String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
@@ -97,7 +97,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     @SuppressWarnings("unused")
     protected Object rm(Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();

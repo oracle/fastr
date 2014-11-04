@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -42,6 +44,7 @@ public abstract class FastRTreeBuiltin extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object printTree(RFunction function, byte verbose) {
         controlVisibility();
         RootNode root = function.getTarget().getRootNode();
@@ -52,9 +55,10 @@ public abstract class FastRTreeBuiltin extends RBuiltinNode {
         }
     }
 
-    @Specialization
+    @Fallback
     protected RNull printTree(Object function, @SuppressWarnings("unused") Object verbose) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.Message.INVALID_VALUE, RRuntime.toString(function));
     }
 }

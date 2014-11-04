@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 /**
@@ -48,7 +48,7 @@ public abstract class Runif extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector runif(int n) {
         controlVisibility();
         double[] result = new double[n];
@@ -59,7 +59,7 @@ public abstract class Runif extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RDoubleVector runif(double d) {
         controlVisibility();
         return runif((int) d);

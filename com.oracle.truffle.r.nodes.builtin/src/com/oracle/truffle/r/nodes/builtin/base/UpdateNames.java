@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
@@ -52,6 +53,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     public abstract Object executeStringVector(VirtualFrame frame, RAbstractVector vector, Object o);
 
     @Specialization
+    @TruffleBoundary
     protected RAbstractVector updateNames(RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
         controlVisibility();
         RVector v = vector.materialize();
@@ -60,6 +62,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RAbstractVector updateNames(RAbstractVector vector, RStringVector names) {
         controlVisibility();
         RVector v = vector.materialize();
@@ -72,6 +75,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RAbstractVector updateNames(RAbstractVector vector, String name) {
         controlVisibility();
         RVector v = vector.materialize();
@@ -94,11 +98,13 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RAbstractVector updateNames(RDataFrame dataFrame, RStringVector names) {
         return updateNames(dataFrame.getVector(), names);
     }
 
     @Specialization
+    @TruffleBoundary
     protected RAbstractVector updateNames(RDataFrame dataFrame, String names) {
         return updateNames(dataFrame.getVector(), names);
     }

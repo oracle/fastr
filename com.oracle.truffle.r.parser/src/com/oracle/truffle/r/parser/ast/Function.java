@@ -14,7 +14,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class Function extends ASTNode {
+public final class Function extends ASTNode {
 
     private final List<ArgNode> signature;
     private final ASTNode body;

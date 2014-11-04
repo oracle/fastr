@@ -40,24 +40,24 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
         this.isInteractive = isInteractive;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void println(String s) {
         printWriter.println(s);
         printWriter.flush();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void print(String s) {
         printWriter.print(s);
         printWriter.flush();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void printf(String format, Object... args) {
         printWriter.format(format, args);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public String readLine() {
         try {
             return console.readLine();
@@ -71,12 +71,12 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
         return isInteractive;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void printErrorln(String s) {
         println(s);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void printError(String s) {
         print(s);
     }
@@ -84,12 +84,12 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     public void redirectError() {
     }
 
-    @SlowPath
+    @TruffleBoundary
     public String getPrompt() {
         return console.getPrompt();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void setPrompt(String prompt) {
         console.setPrompt(prompt);
     }

@@ -141,13 +141,20 @@ def gate(args):
     # suppress the download meter
     mx._opts.no_download_progress = True
 
-    # ideally would be standard gate tasks - we do these early
+    # FastR has custom copyright check
 
     t = mx.GateTask('Copyright check')
     rc = mx.checkcopyrights(['--primary'])
     t.stop()
     if rc != 0:
         mx.abort('copyright errors')
+
+    # Enforce checkstyle (not dedfault task in mx.gate)
+    t = mx.GateTask('Checkstyle check')
+    rc = mx.checkstyle(['--primary'])
+    t.stop()
+    if rc != 0:
+        mx.abort('checkstyle errors')
 
 # temp disable due to non-determinism
 #    t = mx.GateTask('FindBugs')

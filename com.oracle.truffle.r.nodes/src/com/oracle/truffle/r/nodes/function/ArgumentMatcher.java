@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -130,12 +130,11 @@ public class ArgumentMatcher {
 
     /**
      * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
-     * denote name's
+     * denote names.
      *
      * @param frame {@link VirtualFrame}
      * @param arg {@link RNode}
-     * @return Whether the given argument denotes a 'missing' name in the context of the given
-     *         frame
+     * @return Whether the given argument denotes a 'missing' name in the context of the given frame
      */
     private static boolean isMissingName(VirtualFrame frame, RNode arg) {
         if (arg instanceof ConstantMissingNode) {
@@ -288,7 +287,7 @@ public class ArgumentMatcher {
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
-    @SlowPath
+    @TruffleBoundary
     private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
                     SourceSection callSrc, SourceSection argsSrc) {
         String[] formalNames = formals.getNames();
@@ -388,7 +387,7 @@ public class ArgumentMatcher {
         return resultArgs;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static <T> void throwUnusedArgumentError(int leftoverCount, UnmatchedSuppliedIterator<T> si, ArrayFactory<T> arrFactory, SourceSection callSrc) {
         // UNUSED_ARGUMENT(S)?
         if (leftoverCount == 1) {
@@ -412,7 +411,7 @@ public class ArgumentMatcher {
     /**
      * Used in
      * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection, SourceSection)}
-     * for iteration over suppliedArgs
+     * for iteration over suppliedArgs.
      *
      * @param <T>
      */
@@ -552,7 +551,7 @@ public class ArgumentMatcher {
      * @param closureCache The {@link ClosureCache} for the supplied arguments
      * @return A list of {@link RNode} wrapped in {@link PromiseNode}s
      */
-    @SlowPath
+    @TruffleBoundary
     private static RNode[] wrapInPromises(RFunction function, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper, ClosureCache closureCache, SourceSection callSrc) {
         RNode[] defaultArgs = formals.getDefaultArgs();
         RNode[] resArgs = arguments;
@@ -627,7 +626,7 @@ public class ArgumentMatcher {
      * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
      *         {@link RMissing} in case neither is present!
      */
-    @SlowPath
+    @TruffleBoundary
     private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg,
                     RNode defaultValue, int logicalIndex) {
         // Determine whether to choose supplied argument or default value
@@ -689,7 +688,7 @@ public class ArgumentMatcher {
          */
         String debugString(T[] args);
 
-        @SlowPath
+        @TruffleBoundary
         default String debugString(T arg) {
             T[] args = newArray(1);
             args[0] = arg;
@@ -713,7 +712,7 @@ public class ArgumentMatcher {
             return name != null && ArgumentsTrait.isVarArg(name);
         }
 
-        @SlowPath
+        @TruffleBoundary
         public String debugString(RNode[] args) {
             SourceSection src = Utils.sourceBoundingBox(args);
             return String.valueOf(src);
@@ -728,7 +727,7 @@ public class ArgumentMatcher {
             return new Object[length];
         }
 
-        @SlowPath
+        @TruffleBoundary
         public String debugString(Object[] args) {
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < args.length; i++) {

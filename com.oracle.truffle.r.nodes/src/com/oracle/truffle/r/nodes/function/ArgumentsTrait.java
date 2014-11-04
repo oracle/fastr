@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.function;
 
 public interface ArgumentsTrait {
 
-    public static final String VARARG_NAME = "...";
-    public static final String VARARG_GETTER_PREFIX = "..";
-    public static final int NO_VARARG = -1;
+    String VARARG_NAME = "...";
+    String VARARG_GETTER_PREFIX = "..";
+    int NO_VARARG = -1;
 
     String[] getNames();
 
@@ -82,7 +82,7 @@ public interface ArgumentsTrait {
     }
 
     /**
-     * Replaces each {@link String} with its {@link String#intern()} equivalent
+     * Replaces each {@link String} with its {@link String#intern()} equivalent.
      *
      * @param names
      */

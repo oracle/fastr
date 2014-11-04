@@ -14,7 +14,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class Sequence extends ASTNode {
+public final class Sequence extends ASTNode {
 
     private final ASTNode[] expressions;
 

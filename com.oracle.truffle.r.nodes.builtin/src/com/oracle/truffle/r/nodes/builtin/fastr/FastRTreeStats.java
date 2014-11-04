@@ -15,52 +15,46 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author mjj
- */
 public class FastRTreeStats {
 
-
-@RBuiltin(name = "fastr.seqlengths", kind = PRIMITIVE, parameterNames = {"func"})
-@RBuiltinComment("Show SequenceNode lengths")
-public abstract static class FastRSeqLengths extends RInvisibleBuiltinNode {
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance)};
-    }
-
-    @Specialization
-    protected Object seqLengths(RFunction function) {
-        controlVisibility();
-        List<SequenceNode> list = NodeUtil.findAllNodeInstances(function.getTarget().getRootNode(), SequenceNode.class);
-        int[] counts = new int[11];
-        for (SequenceNode s : list) {
-            int l = s.getSequence().length;
-            if (l > counts.length - 1) {
-                counts[counts.length -1]++;
-            } else {
-                counts[l]++;
-            }
+    @RBuiltin(name = "fastr.seqlengths", kind = PRIMITIVE, parameterNames = {"func"})
+    @RBuiltinComment("Show SequenceNode lengths")
+    public abstract static class FastRSeqLengths extends RInvisibleBuiltinNode {
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
-        return RDataFactory.createIntVector(counts, RDataFactory.COMPLETE_VECTOR);
+
+        @Specialization
+        protected Object seqLengths(RFunction function) {
+            controlVisibility();
+            List<SequenceNode> list = NodeUtil.findAllNodeInstances(function.getTarget().getRootNode(), SequenceNode.class);
+            int[] counts = new int[11];
+            for (SequenceNode s : list) {
+                int l = s.getSequence().length;
+                if (l > counts.length - 1) {
+                    counts[counts.length - 1]++;
+                } else {
+                    counts[l]++;
+                }
+            }
+            return RDataFactory.createIntVector(counts, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @Specialization
+        protected RNull printTree(@SuppressWarnings("unused") RMissing function) {
+            controlVisibility();
+            throw RError.error(RError.Message.ARGUMENTS_PASSED_0_1);
+        }
+
+        @Fallback
+        protected RNull printTree(@SuppressWarnings("unused") Object function) {
+            controlVisibility();
+            throw RError.error(RError.Message.INVALID_ARGUMENT, "func");
+        }
+
     }
 
-    @Specialization
-    protected RNull printTree(@SuppressWarnings("unused") RMissing function) {
-        controlVisibility();
-        throw RError.error(RError.Message.ARGUMENTS_PASSED_0_1);
-    }
-
-    @Fallback
-    protected RNull printTree(@SuppressWarnings("unused") Object function) {
-        controlVisibility();
-        throw RError.error(RError.Message.INVALID_ARGUMENT, "func");
-    }
-
-}
-    
 }

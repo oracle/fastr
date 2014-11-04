@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
@@ -40,7 +40,7 @@ public class RASTUtils {
     /**
      * Removes any {@link WrapArgumentNode}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static Node unwrap(Object node) {
         if (node instanceof WrapArgumentNode) {
             return unwrap(((WrapArgumentNode) node).getOperand());
@@ -50,8 +50,8 @@ public class RASTUtils {
             return (Node) node;
         }
     }
-    
-    @SlowPath
+
+    @TruffleBoundary
     public static Node unwrapParent(Node node) {
         Node parent = node.getParent();
         if (parent instanceof WrapperNode) {
@@ -59,13 +59,13 @@ public class RASTUtils {
         } else {
             return parent;
         }
-        
+
     }
 
     /**
      * Creates a standard {@link ReadVariableNode}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static ReadVariableNode createReadVariableNode(String name) {
         return ReadVariableNode.create(name, RType.Any, false, true, false, true);
     }
@@ -73,7 +73,7 @@ public class RASTUtils {
     /**
      * Creates a language element for the {@code index}'th element of {@code args}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static Object createLanguageElement(CallArgumentsNode args, int index) {
         Node argNode = unwrap(args.getArguments()[index]);
         return RASTUtils.createLanguageElement(argNode);
@@ -82,7 +82,7 @@ public class RASTUtils {
     /**
      * Handles constants and symbols as special cases as required by R.
      */
-    @SlowPath
+    @TruffleBoundary
     public static Object createLanguageElement(Node argNode) {
         if (argNode instanceof ConstantNode) {
             return ((ConstantNode) argNode).getValue();
@@ -96,12 +96,12 @@ public class RASTUtils {
     /**
      * Creates an {@link RSymbol} from a {@link ReadVariableNode}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RSymbol createRSymbol(Node readVariableNode) {
         return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getName());
     }
 
-    @SlowPath
+    @TruffleBoundary
     /**
      * Create an {@link RCallNode} where {@code fn} is either a:
      * <ul>
@@ -137,7 +137,7 @@ public class RASTUtils {
     private static class CallArgsNodeFinder implements NodeVisitor {
         CallArgumentsNode callArgumentsNode;
 
-        @SlowPath
+        @TruffleBoundary
         public boolean visit(Node node) {
             if (node instanceof CallArgumentsNode) {
                 callArgumentsNode = (CallArgumentsNode) node;
@@ -189,7 +189,7 @@ public class RASTUtils {
         } else {
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
-            ((RNode) child).deparse(state);
+            child.deparse(state);
             return RDataFactory.createSymbol(state.toString());
         }
     }

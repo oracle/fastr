@@ -72,7 +72,7 @@ public final class RFunction extends RScalar {
     public RootCallTarget getTarget() {
         return target;
     }
-    
+
     public RootNode getRootNode() {
         return target.getRootNode();
     }

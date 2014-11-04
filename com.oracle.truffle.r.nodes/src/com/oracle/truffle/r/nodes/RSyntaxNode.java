@@ -63,7 +63,7 @@ public interface RSyntaxNode {
      * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
      * {@code true} to {@link RSyntaxNode#isSyntax()}.
      */
-    public static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
+    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
         boolean visitChildren = true;
         if (node instanceof RSyntaxNode) {
             RSyntaxNode syntaxNode = (RSyntaxNode) node;

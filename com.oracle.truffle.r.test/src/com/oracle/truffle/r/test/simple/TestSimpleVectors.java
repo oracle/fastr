@@ -2096,6 +2096,9 @@ public class TestSimpleVectors extends TestBase {
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"c\", \"d\")); x[0, c(1,1,1,1)] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"c\", \"d\")); x[0, c(1,2,3,4)] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"cc\", \"d\")); x[0, c(1,2,3,4)] }", TESTED_4L_VECTORS));
+
+        assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }");
+        assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, \"foo\")<-\"foo\"; print(x); options(max.print=mp) }");
     }
 
     @Test

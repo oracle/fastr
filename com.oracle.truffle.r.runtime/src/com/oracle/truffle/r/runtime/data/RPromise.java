@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -98,7 +98,7 @@ public final class RPromise extends RLanguageRep {
     protected MaterializedFrame execFrame;
 
     /**
-     * Might not be <code>null</code>
+     * Might not be <code>null</code>.
      */
     private final Closure closure;
 
@@ -227,7 +227,7 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
-     * Used in case the {@link RPromise} is evaluated outside
+     * Used in case the {@link RPromise} is evaluated outside.
      *
      * @param newValue
      */
@@ -243,7 +243,7 @@ public final class RPromise extends RLanguageRep {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected Object doEvalArgument(SourceSection callSrc) {
         assert execFrame != null;
         return RContext.getEngine().evalPromise(this, callSrc);
@@ -368,7 +368,7 @@ public final class RPromise extends RLanguageRep {
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public String toString() {
         return "[" + evalPolicy + ", " + type + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
@@ -482,7 +482,7 @@ public final class RPromise extends RLanguageRep {
             return callTarget;
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static RootCallTarget generateCallTarget(Object expr) {
             return RContext.getEngine().makeCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }

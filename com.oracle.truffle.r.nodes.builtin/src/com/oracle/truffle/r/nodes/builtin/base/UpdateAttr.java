@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -108,6 +109,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
+    @TruffleBoundary
     public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
         if (value instanceof RStringVector) {
             return RVector.setClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RVector.class ? container : null);

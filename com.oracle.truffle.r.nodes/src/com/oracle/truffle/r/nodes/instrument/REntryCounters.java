@@ -9,13 +9,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrument.Instrument;
 import com.oracle.truffle.api.instrument.impl.SimpleEventReceiver;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.RNode;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
 public class REntryCounters {
 
-    private static WeakHashMap<Object, Basic> counterMap = new WeakHashMap();
+    private static WeakHashMap<Object, Basic> counterMap = new WeakHashMap<>();
 
     public static class Basic {
 

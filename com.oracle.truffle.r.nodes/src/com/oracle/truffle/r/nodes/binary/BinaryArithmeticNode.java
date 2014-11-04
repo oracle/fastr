@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -504,7 +504,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void copyAttributesInternal(RVector ret, RAbstractVector attributeSource, RAbstractVector left, RAbstractVector right) {
         ret.copyRegAttributesFrom(attributeSource);
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getSourceSection());
@@ -519,7 +519,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void copyAttributesSameLengthInternal(RVector ret, RAbstractVector left, RAbstractVector right) {
         ret.copyRegAttributesFrom(right);
         ret.copyRegAttributesFrom(left);

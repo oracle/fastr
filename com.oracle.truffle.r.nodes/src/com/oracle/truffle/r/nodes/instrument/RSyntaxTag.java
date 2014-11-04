@@ -13,7 +13,7 @@ import com.oracle.truffle.api.instrument.SyntaxTag;
 public enum RSyntaxTag implements SyntaxTag {
     DEBUGGED("debug set", "debug invoked on a function"),
     FUNCTION_BODY("function body", "a function body");
-    
+
     private final String name;
     private final String description;
 

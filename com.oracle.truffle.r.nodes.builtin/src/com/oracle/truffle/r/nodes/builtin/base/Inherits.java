@@ -67,7 +67,7 @@ public abstract class Inherits extends RBuiltinNode {
         return initInheritsNode().execute(frame, x, what);
     }
 
-    @SlowPath
+    @TruffleBoundary
     // map operations lead to recursion resulting in compilation failure
     @Specialization(guards = "!whichFalse")
     protected Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {

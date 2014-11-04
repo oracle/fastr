@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class ArgNode extends ASTNode {
+public final class ArgNode extends ASTNode {
 
     private final Symbol name;
     private final ASTNode value;

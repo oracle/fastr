@@ -9,6 +9,101 @@ import com.oracle.truffle.r.test.*;
 //Checkstyle: stop
 public class AllTests extends TestBase {
     @Test
+    public void TestConnections_testPushBack_57eb33ce24132c578875659c3672161c() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_9ab94443d4655966c16600edc46013db() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_fb83ddf08b850f1fb0fcfa825768f88c() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); clearPushBack(con); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_55ed6d0b83e86e1385de091582e4af8d() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); readLines(con, 1) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_d91ddfe61c4e439f5209ecaba013916d() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_94a34439238e4c99bceeda15b2b188e9() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con, newLine=FALSE); readLines(con, 1) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_4fdcb63fc43fe75d3bcbc2d474febfd7() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con, newLine=FALSE); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_db52df62c6e2dbab91e2a3304e913e32() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_c5817008fe12a3cea146ab439cf253d0() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con); readLines(con, 1) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_fd6725165764cf8a366286d2f48fd0bd() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_196e9a486c227dad1cbdeb22ca8fbcb9() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con, newLine=FALSE); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_29dbbd688316a533cf6a889c7313ebf4() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con, newLine=FALSE); readLines(con, 1) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_76de44fe978f208462151f57d1ee3aed() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con, newLine=FALSE); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_e4b327628b569f903a3f239f5a226fb7() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_d4d6eb9b95b2dee91619746ab87657ca() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con); readLines(con, 1) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_6f6542b9ba9f30da8906fc36a12e7b6f() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_3452d401d4b77d0a5da3cec670b75dd6() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); pushBackLength(con) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_ef4bb1fb2afbe783e73c8f6450c67c32() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); readLines(con, 1) }");
+    }
+
+    @Test
+    public void TestConnections_testPushBack_e0fcd304300ae2e3c775fa989d5a667d() {
+        assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); readLines(con, 2) }");
+    }
+
+    @Test
     public void TestConnections_testTextReadConnection_d61f16f8b553065174bc69e879308230() {
         assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con) }");
     }
@@ -12864,6 +12959,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testScan_6ce38938957aa74ca8c5a4af6de949db() {
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_9aa8e52d2ad98511843283b9753e7e32() {
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_32beb8f339456101965440adf07bc70a() {
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, nlines = 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_88780f5fd3419951c50990b70fda4a21() {
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, what = list(\"\",\"\",\"\"), flush=TRUE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testScan_d797ae7c9d316b0e407c0192790da03b() {
         assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1) }");
     }
@@ -12876,6 +12991,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testScan_7cdf357f0dd6e86ad8f7f92579bea613() {
         assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, nlines = 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_c1f51db80a9fbe167afc07873c64dd31() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), fill=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_49c07224e8b945a3e96a35a0f8667b5d() {
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), fill=TRUE, multi.line=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_1a9f4a5c02250dbe595746a1b0656d70() {
+        assertEvalError("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), multi.line=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_072fc8a68eec1fb75f74adbdcc842c0e() {
+        assertEvalWarning("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, what = list(\"\",\"\",\"\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_4c29af300371631d72632f9e65625add() {
+        assertEvalWarning("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\")) }");
     }
 
     @Test
@@ -23116,6 +23256,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testPrint_d7db3c40a9f1dd6b5ee5c23bbabec53d() {
         assertEval("{ x<-c(3+2i, 5+0i, 1+3i, 5+3i, 2-4i, 5-2i, 6-7i, 5-0i); dim(x)<-c(2,2,2); x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_25b8238c8e0bf0ee6c406a1051d57b0e() {
+        assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_c13b3c1c07be618ade31a2d3d3bd2eaf() {
+        assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, \"foo\")<-\"foo\"; print(x); options(max.print=mp) }");
     }
 
     @Test

@@ -55,7 +55,7 @@ public class RInstrument {
     private static void putProbe(UUID uuid, Probe probe) {
         ArrayList<Probe> list = probeMap.get(uuid);
         if (list == null) {
-            list = new ArrayList<Probe>();
+            list = new ArrayList<>();
             probeMap.put(uuid, list);
         }
         list.add(probe);

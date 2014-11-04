@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.access.array;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -317,7 +317,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return RRuntime.INT_NA;
         }
 
-        @SlowPath
+        @TruffleBoundary
         @Specialization
         protected Object doStringVectorOneDimAssignment(VirtualFrame frame, RNull vector, RAbstractStringVector operand) {
             if (assignment && numDimensions == 1 && isSubset && operand.getLength() > 1) {
@@ -528,7 +528,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             }
         }
 
-        @SlowPath
+        @TruffleBoundary
         // retrieving vector components by name is likely OK on the slow path
         @Specialization(guards = "!indNA")
         protected Object doString(RAbstractContainer container, String operand) {
@@ -566,8 +566,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (container.getDimNames() != null) {
                     if (assignment) {
                         return findPositionWithNames(container, container.getDimNames().getDataAt(dimension), operand);
-                    } else
+                    } else {
                         return findPosition(container, container.getDimNames().getDataAt(dimension), operand);
+                    }
                 } else {
                     if (isSubset || container.getElementClass() == Object.class) {
                         throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);

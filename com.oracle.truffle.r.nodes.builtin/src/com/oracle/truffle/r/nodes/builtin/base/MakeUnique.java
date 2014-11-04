@@ -83,7 +83,7 @@ public abstract class MakeUnique extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String concat(String s1, String sep, int index) {
         return s1 + sep + index;
     }

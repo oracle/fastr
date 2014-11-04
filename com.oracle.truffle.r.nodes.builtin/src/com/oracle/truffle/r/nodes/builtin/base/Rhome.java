@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 
 import java.nio.file.FileSystems;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 /**
@@ -50,14 +50,14 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 public abstract class Rhome extends RBuiltinNode {
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object doRhome(@SuppressWarnings("unused") RMissing component) {
         controlVisibility();
         return RDataFactory.createStringVector(REnvVars.rHome());
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object doRhome(String component) {
         controlVisibility();
         String rHome = REnvVars.rHome();

@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public class CallRFFIHelper {
     @SuppressWarnings("unused") private static final NACheck elementNACheck = NACheck.create();
 
+    // Checkstyle: stop method name check
+
     static RIntVector ScalarInteger(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
@@ -41,6 +43,8 @@ public class CallRFFIHelper {
     static RDoubleVector ScalarDouble(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
+
+    // Checkstyle: resume method name check
 
     /**
      * Helper function that handles {@link Integer} and {@link RIntVector} "vectors".

@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 @RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
@@ -54,7 +54,7 @@ public abstract class Seq extends RBuiltinNode {
                         ConstantNode.create(RMissing.instance)};
     }
 
-    @SlowPath
+    @TruffleBoundary
     private RDoubleVector getVectorWithComputedStride(double start, double to, double lengthOut, boolean ascending) {
         int length = (int) Math.ceil(lengthOut);
         if (lengthProfile1.profile(length == 1)) {
@@ -285,7 +285,7 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(guards = "lengthZeroAlong")
-    protected RIntVector LengthZero(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
+    protected RIntVector seqLengthZeroAlong(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }

@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -111,7 +111,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void catIntl(String s) {
         RContext.getInstance().getConsoleHandler().print(s);
     }

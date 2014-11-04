@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -152,7 +152,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
         Object[] argObject = RArguments.createS3Args(targetFunction, funCallNode.getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
@@ -169,7 +169,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void findTargetFunctionLookup(Frame callerFrame) {
         for (int i = 0; i < this.type.getLength(); ++i) {
             findFunction(this.genericName, this.type.getDataAt(i), callerFrame);

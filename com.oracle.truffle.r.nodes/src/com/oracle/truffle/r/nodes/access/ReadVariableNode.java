@@ -55,11 +55,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
-    
+
     public abstract String getName();
 
     /**
-     * Convenience method
+     * Convenience method.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -77,7 +77,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Convenience method
+     * Convenience method.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -88,7 +88,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Convenience method
+     * Convenience method.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -105,7 +105,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Creates every {@link ReadVariableNode} out there
+     * Creates every {@link ReadVariableNode} out there.
      *
      * @param name The symbol the {@link ReadVariableNode} is meant to resolve
      * @param mode The mode of the variable
@@ -187,7 +187,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
         return false;
     }
-    
+
     @Override
     public void deparse(State state) {
         state.append(getName());
@@ -200,7 +200,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
         public abstract ReadVariableNode getReadNode();
-        
+
+        @Override
         public abstract String getName();
 
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
@@ -303,7 +304,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
          * frame.
          */
         @CompilationFinal private boolean copyValue;
-        
+
         @Override
         public boolean isSyntax() {
             return true;
@@ -325,8 +326,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (enclosingFrame != null) {
-                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, FrameSlotNode.create(name), name) : ReadSuperVariableNodeFactory.create(
-                                null, FrameSlotNode.create(name), name);
+                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, FrameSlotNode.create(name), name) : ReadSuperVariableNodeFactory.create(null,
+                                FrameSlotNode.create(name), name);
                 ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(name, mode, readMissing, forcePromise, copyValue), readMissing,
                                 forcePromise, mode);
                 return replace(readNode).execute(frame, enclosingFrame);
@@ -400,7 +401,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             this.name = name;
             this.absentFrameSlotAssumptions = assumptions.toArray(new Assumption[assumptions.size()]);
         }
-        
+
         @ExplodeLoop
         @Override
         public Object execute(VirtualFrame frame) {
@@ -422,7 +423,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         @Override
-        public String getName(){
+        public String getName() {
             return name;
         }
 
@@ -445,7 +446,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
         }
-        
+
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
@@ -465,6 +466,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public String getName() {
             return readNode.getName();
         }
@@ -488,7 +490,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
         }
-        
+
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -527,7 +529,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public ReadVariableSuperMaterializedNode(ReadVariableNode readNode) {
             this.readNode = readNode;
         }
-        
+
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
@@ -571,7 +573,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
         }
-        
+
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
@@ -614,33 +616,58 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public abstract String getName();
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isByte")
+        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
-            return frameProfile.profile(frame).getByte(frameSlot);
+            try {
+                return frameProfile.profile(frame).getByte(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isInt")
+        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
-            return frameProfile.profile(frame).getInt(frameSlot);
+            try {
+                return frameProfile.profile(frame).getInt(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isDouble")
+        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
-            return frameProfile.profile(frame).getDouble(frameSlot);
+            try {
+                return frameProfile.profile(frame).getDouble(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization
+        @Fallback
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return frameProfile.profile(frame).getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
-                throw new IllegalStateException();
+                throw RInternalError.shouldNotReachHere();
             }
         }
+
+        protected static boolean isByte(VirtualFrame frame, FrameSlot frameSlot) {
+            return frame.isByte(frameSlot);
+        }
+
+        protected static boolean isInt(VirtualFrame frame, FrameSlot frameSlot) {
+            return frame.isInt(frameSlot);
+        }
+
+        protected static boolean isDouble(VirtualFrame frame, FrameSlot frameSlot) {
+            return frame.isDouble(frameSlot);
+        }
+
     }
 
     @SuppressWarnings("unused")
@@ -653,33 +680,58 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public abstract String getName();
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isByte")
+        protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            return enclosingFrame.getByte(frameSlot);
+            try {
+                return enclosingFrame.getByte(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isInt")
+        protected int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            return enclosingFrame.getInt(frameSlot);
+            try {
+                return enclosingFrame.getInt(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization(rewriteOn = FrameSlotTypeException.class)
-        protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        @Specialization(guards = "isDouble")
+        protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            return enclosingFrame.getDouble(frameSlot);
+            try {
+                return enclosingFrame.getDouble(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
-        @Specialization
+        @Fallback
         protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return enclosingFrame.getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
-                throw new IllegalStateException();
+                throw RInternalError.shouldNotReachHere();
             }
         }
+
+        protected static boolean isByte(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            return enclosingFrame.isByte(frameSlot);
+        }
+
+        protected static boolean isInt(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            return enclosingFrame.isInt(frameSlot);
+        }
+
+        protected static boolean isDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            return enclosingFrame.isDouble(frameSlot);
+        }
+
     }
 
     public abstract static class ReadAndCopySuperVariableNode extends ReadSuperVariableNode {
@@ -695,7 +747,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 }
                 return result;
             } catch (FrameSlotTypeException e) {
-                throw new IllegalStateException();
+                throw RInternalError.shouldNotReachHere();
             }
         }
 
@@ -736,7 +788,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             throw RError.error(getMode() == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getName());
         }
     }
-    
+
     @Override
     public WrapperNode createWrapperNode(RNode node) {
         return new ReadVariableNodeWrapper((ReadVariableNode) node);

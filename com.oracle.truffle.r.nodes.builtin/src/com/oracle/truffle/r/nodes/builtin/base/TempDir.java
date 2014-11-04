@@ -27,14 +27,14 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.TempDirPath;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "tempdir", kind = INTERNAL, parameterNames = {})
 public abstract class TempDir extends RBuiltinNode {
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object tempdir() {
         controlVisibility();
         return TempDirPath.tempDirPath();

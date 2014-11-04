@@ -100,14 +100,14 @@ public class RCommand {
                 fileArg = null;
             }
         }
-        
+
         if (DEBUGGER.getValue() != null) {
             REngine.setInstrumentAll(true);
         }
 
         REnvVars.initialize();
 
-            // Whether the input is from stdin, a file or an expression on the command line (-e)
+        // Whether the input is from stdin, a file or an expression on the command line (-e)
         // it goes through the console. However, we cannot (yet) do incremental parsing, so file
         // input has to be treated specially.
         if (fileArg != null) {

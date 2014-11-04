@@ -14,7 +14,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class If extends ASTNode {
+public final class If extends ASTNode {
 
     private final ASTNode condition;
     private final ASTNode trueCase;

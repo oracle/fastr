@@ -38,7 +38,7 @@ public abstract class ForNode extends LoopNode {
 
     @Child private WriteVariableNode cvar;
     @Child private RNode body;
-    
+
     public abstract RNode getRange();
 
     private final ValueProfile seqTypeProfile = ValueProfile.createClassProfile();

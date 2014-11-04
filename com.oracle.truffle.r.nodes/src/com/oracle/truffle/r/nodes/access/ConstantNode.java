@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
@@ -39,7 +39,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public void deparse(State state) {
         RDeparse.deparse2buff(state, getValue());
     }

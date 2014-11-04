@@ -35,7 +35,7 @@ import java.io.File;
 import java.util.Random;
 
 import static com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"})
@@ -57,7 +57,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization(guards = "tempDirL1")
-    @SlowPath
+    @TruffleBoundary
     protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         controlVisibility();
         return RDataFactory.createStringVector(createNonExistedFilePath(pattern, tempDir.getDataAt(0), fileExt));
@@ -69,7 +69,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected RStringVector tempfileGeneric(Object pattern, Object tempDir, Object fileExt) {
         controlVisibility();
         // Now we have RStringVectors of at least length 1
@@ -81,7 +81,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @ExplodeLoop //sure that array not empty
-    @SlowPath
+    @TruffleBoundary
     private int findMaxLengthIn(RStringVector[] stringVectors) {
         int maxLength = 0;
         for (int i = 0; i < stringVectorsAmount; i++) {
@@ -94,7 +94,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @ExplodeLoop
-    @SlowPath
+    @TruffleBoundary
     private void extendVectorsToSameLength(RStringVector[] stringVectors, int desiredLength) {
         for (int i = 0; i < stringVectorsAmount; i++) {
             RStringVector stringVector = stringVectors[i];
@@ -105,7 +105,7 @@ public abstract class TempFile extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector extendVector(RStringVector vec, int vecL, int maxL) {
         String[] data = new String[maxL];
         int i = 0;
@@ -120,7 +120,7 @@ public abstract class TempFile extends RBuiltinNode {
         return RDataFactory.createStringVector(data, true);
     }
 
-    @SlowPath
+    @TruffleBoundary
     @ExplodeLoop
     private static String[] createTempFilesPaths(RStringVector[] stringVectors, int pathsAmount) {
         //pathsAmount must be equals to length of vector. All vectors must be same length
@@ -131,7 +131,7 @@ public abstract class TempFile extends RBuiltinNode {
         return paths;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private RStringVector checkVector(Object obj, String msg) {
         if (obj instanceof RStringVector) {
             RStringVector result = (RStringVector) obj;
@@ -144,7 +144,7 @@ public abstract class TempFile extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String createNonExistedFilePath(String pattern, String tempDir, String fileExt) {
         while (true) {
             StringBuilder sb = new StringBuilder(tempDir);
@@ -162,7 +162,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @ExplodeLoop
-    @SlowPath
+    @TruffleBoundary
     private static void appendRandomString(StringBuilder sb) {
         for (int i = 0; i < RANDOM_LENGTH; i++) {
             sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));

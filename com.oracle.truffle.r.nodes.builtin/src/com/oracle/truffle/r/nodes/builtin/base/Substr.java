@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -39,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "substr", kind = INTERNAL, parameterNames = {"x", "start", "stop"})
@@ -56,23 +55,25 @@ public abstract class Substr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "wrongParams"})
-    @SlowPath
+    @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         assert false; // should never happen
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg", "!wrongParams"})
-    @SlowPath
+    @TruffleBoundary
     @ExplodeLoop
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);
         na.enable(stop);
-        for (int i = 0, j , k; i < arg.getLength(); ++i) {
+        for (int i = 0, j, k; i < arg.getLength(); ++i) {
+            // Checkstyle: stop modified control variable check
             j = i % start.getLength();
             k = i % stop.getLength();
+            // Checkstyle: resume modified control variable check
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));
         }
         return RDataFactory.createStringVector(res, na.neverSeenNA());
@@ -88,51 +89,49 @@ public abstract class Substr extends RBuiltinNode {
             boolean stopLessOrEqualZero = stop <= 0;
             boolean startGreaterThanLength = start > length;
             boolean stopGreaterThanLength = stop > length;
-            boolean wrongRange = startGreaterThanStop || startLessOrEqualZero || stopLessOrEqualZero ||
-                    startGreaterThanLength || stopGreaterThanLength;
+            boolean wrongRange = startGreaterThanStop || startLessOrEqualZero || stopLessOrEqualZero || startGreaterThanLength || stopGreaterThanLength;
+            int newStart = start;
+            int newStop = stop;
             if (wrongRange) {
                 everSeenIllegalRange.enter();
-                if (startGreaterThanStop || (startLessOrEqualZero && stopLessOrEqualZero) ||
-                        (startGreaterThanLength && stopGreaterThanLength)) {
+                if (startGreaterThanStop || (startLessOrEqualZero && stopLessOrEqualZero) || (startGreaterThanLength && stopGreaterThanLength)) {
                     return "";
                 }
                 if (startLessOrEqualZero) {
-                    start = 1;
+                    newStart = 1;
                 }
                 if (stopGreaterThanLength) {
-                    stop = length;
+                    newStop = length;
                 }
             }
-            return x.substring(start - 1, stop);
+            return x.substring(newStart - 1, newStop);
         }
     }
 
-
-//    protected static boolean rangeOk(String x, int start, int stop) {
-//        return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
-//    }
+// protected static boolean rangeOk(String x, int start, int stop) {
+// return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
+// }
 //
-//    protected String substr0(String x, int start, int stop) {
-//        if (na.check(x) || na.check(start) || na.check(stop)) {
-//            return RRuntime.STRING_NA;
-//        }
-//        int actualStart = start;
-//        int actualStop = stop;
-//        if (!rangeOk(x, start, stop)) {
-//            everSeenIllegalRange.enter();
-//            if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
-//                return "";
-//            }
-//            if (start <= 0) {
-//                actualStart = 1;
-//            }
-//            if (stop > x.length()) {
-//                actualStop = x.length();
-//            }
-//        }
-//        return x.substring(actualStart - 1, actualStop);
-//    }
-
+// protected String substr0(String x, int start, int stop) {
+// if (na.check(x) || na.check(start) || na.check(stop)) {
+// return RRuntime.STRING_NA;
+// }
+// int actualStart = start;
+// int actualStop = stop;
+// if (!rangeOk(x, start, stop)) {
+// everSeenIllegalRange.enter();
+// if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
+// return "";
+// }
+// if (start <= 0) {
+// actualStart = 1;
+// }
+// if (stop > x.length()) {
+// actualStop = x.length();
+// }
+// }
+// return x.substring(actualStart - 1, actualStop);
+// }
 
     @SuppressWarnings("unused")
     protected boolean emptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {

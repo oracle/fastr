@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "setwd", kind = INTERNAL, parameterNames = "path")
@@ -37,7 +37,7 @@ public abstract class Setwd extends RInvisibleBuiltinNode {
     private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object setwd(String dir) {
         controlVisibility();
         int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);

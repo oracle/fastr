@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.nio.file.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
@@ -44,7 +44,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         loadLibrary();
     }
 
-    private static boolean FORCE_RTLD_GLOBAL = false;
+    private static boolean ForceRTLDGlobal = false;
 
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
@@ -53,14 +53,14 @@ public class CallRFFIWithJNI implements CallRFFI {
      * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
      * so we have to do an additional {@code System.load} to achieve that.
      */
-    @SlowPath
+    @TruffleBoundary
     private static void loadLibrary() {
         String rHome = REnvVars.rHome();
         String packageName = "com.oracle.truffle.r.native";
         OSInfo osInfo = RPlatform.getOSInfo();
         Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", osInfo.osSubDir, "librfficall." + osInfo.libExt);
         try {
-            DLL.load(path.toString(), FORCE_RTLD_GLOBAL, false);
+            DLL.load(path.toString(), ForceRTLDGlobal, false);
         } catch (DLLException ex) {
             throw RError.error((SourceSection) null, ex);
         }

@@ -27,7 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -61,7 +61,7 @@ public class GrepFunctions {
             }
         }
 
-        @SlowPath
+        @TruffleBoundary
         protected void checkNotImplemented(boolean condition, String arg, boolean b) {
             if (condition) {
                 errorProfile.enter();
@@ -122,7 +122,7 @@ public class GrepFunctions {
             return trimResult(tmp, numMatches, vector.getLength());
         }
 
-        @SlowPath
+        @TruffleBoundary
         protected static boolean findIndex(String pattern, String text) {
             Matcher m = Regexp.getPatternMatcher(pattern, text);
             if (m.find()) {
@@ -140,7 +140,7 @@ public class GrepFunctions {
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),};
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
 
         @Specialization
@@ -243,7 +243,7 @@ public class GrepFunctions {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         protected String replaceMatch(String pattern, String replacement, String input) {
             return input.replaceAll(pattern, replacement);
         }
@@ -270,7 +270,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @SlowPath
+        @TruffleBoundary
         protected static List<Integer> findIndex(String pattern, String text) {
             Matcher m = getPatternMatcher(pattern, text);
             List<Integer> list = new ArrayList<>();
@@ -285,7 +285,7 @@ public class GrepFunctions {
             return list;
         }
 
-        @SlowPath
+        @TruffleBoundary
         public static Matcher getPatternMatcher(String pattern, String text) {
             return Pattern.compile(pattern).matcher(text);
         }

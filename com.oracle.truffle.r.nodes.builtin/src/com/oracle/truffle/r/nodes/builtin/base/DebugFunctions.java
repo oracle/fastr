@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrument.Instrument;
@@ -54,15 +54,15 @@ public class DebugFunctions {
     @RBuiltin(name = "debug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class Debug extends ErrorAdapter {
 
+        @SuppressWarnings("unused")
         @Fallback
-        @SlowPath
+        @TruffleBoundary
         protected Object doDebug(Object fun, Object text, Object condition) {
             throw arg1Closure();
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected RNull doDebug(RFunction fun, Object text, Object condition) {
             controlVisibility();
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
@@ -78,15 +78,16 @@ public class DebugFunctions {
     @RBuiltin(name = "debugonce", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class DebugOnce extends ErrorAdapter {
 
+        @SuppressWarnings("unused")
         @Fallback
-        @SlowPath
+        @TruffleBoundary
         protected Object doDebug(Object fun, Object text, Object condition) {
             throw arg1Closure();
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected RNull debugonce(RFunction fun, Object text, Object condition) {
             // TODO implement
             controlVisibility();
@@ -98,21 +99,20 @@ public class DebugFunctions {
     public abstract static class UnDebug extends ErrorAdapter {
 
         @Fallback
-        @SlowPath
-        protected Object doDebug(Object fun) {
+        @TruffleBoundary
+        protected Object doDebug(@SuppressWarnings("unused") Object fun) {
             throw arg1Closure();
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected RNull undebug(RFunction func) {
             controlVisibility();
             Probe probe = findStartMethodProbe(func);
             if (probe != null && probe.isTaggedAs(RSyntaxTag.DEBUGGED)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_DEBUGGED);
             } else {
-                
+                // TDOD
             }
             return RNull.instance;
         }
@@ -122,14 +122,13 @@ public class DebugFunctions {
     public abstract static class IsDebugged extends ErrorAdapter {
 
         @Fallback
-        @SlowPath
-        protected Object doDebug(Object fun) {
+        @TruffleBoundary
+        protected Object doDebug(@SuppressWarnings("unused") Object fun) {
             throw arg1Closure();
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected byte isDebugged(RFunction func) {
             controlVisibility();
             Probe probe = findStartMethodProbe(func);
@@ -139,14 +138,17 @@ public class DebugFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
     }
-    
+
     private static Probe findStartMethodProbe(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         return RInstrument.findSingleProbe(fdn.getUUID(), StandardSyntaxTag.START_METHOD);
     }
 
+    /**
+     * Attach the DebugHandler instrument to the FunctionStatementsNode and all syntactic nodes.
+     */
+    @SuppressWarnings("unused")
     private static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
-        // need to attach the DebugHandler instrument to the FunctionStatementsNode and all syntactic nodes
         Probe probe = findStartMethodProbe(func);
         if (probe == null) {
             return false;
@@ -172,10 +174,10 @@ public class DebugFunctions {
         });
     }
 
-    private static class DebugHandler {
+    private static final class DebugHandler {
 
-        private Object text;
-        private Object condition;
+        @SuppressWarnings("unused") private Object text;
+        @SuppressWarnings("unused") private Object condition;
         public final Instrument instrument;
 
         static Instrument create() {
@@ -205,7 +207,7 @@ public class DebugFunctions {
                         ch.print("}");
                     }
                     ch.print("\n");
-                    
+
                     BrowserFunctions.Browser.doBrowser(frame.materialize());
                 }
 

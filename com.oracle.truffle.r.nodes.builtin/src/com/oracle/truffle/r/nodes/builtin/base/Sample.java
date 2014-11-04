@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
-import static com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 @RBuiltin(name = "sample", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "size", "replace", "prob"})
 public abstract class Sample extends RBuiltinNode {
@@ -82,7 +82,7 @@ public abstract class Sample extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!invalidFirstArgument", "!invalidProb", "!largerPopulation", "!invalidSizeArgument", "withReplacement"})
-    @SlowPath
+    @TruffleBoundary
     protected RIntVector doSampleWithReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         // The following code is transcribed from GNU R src/main/random.c lines 493-501 in
         // function do_sample.
@@ -103,7 +103,7 @@ public abstract class Sample extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!invalidFirstArgument", "!invalidProb", "!largerPopulation", "!invalidSizeArgument", "!withReplacement"})
-    @SlowPath
+    @TruffleBoundary
     protected RIntVector doSampleNoReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         double[] probArray = prob.getDataCopy();
         fixupProbability(probArray, x, size, isRepeatable);
@@ -132,7 +132,7 @@ public abstract class Sample extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!invalidFirstArgumentNullProb", "!invalidSizeArgument", "!largerPopulation"})
-    @SlowPath
+    @TruffleBoundary
     protected RIntVector doSample(final int x, final int size, final byte isRepeatable, @SuppressWarnings("unused") final RNull prob) {
         // TODO:Add support of long integers.
         // The following code is transcribed from GNU R src/main/random.c lines 533-545 in
@@ -165,7 +165,7 @@ public abstract class Sample extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(isRepeatable));
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void fixupProbability(double[] probArray, int x, int size, byte isRepeatable) {
         // The following code is transcribed from GNU R src/main/random.c lines 429-449
         int nonZeroProbCount = 0;
@@ -235,7 +235,7 @@ public abstract class Sample extends RBuiltinNode {
         return RRuntime.isNA(isRepeatable);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private int[] probSampleReplace(int n, double[] probArray, int resultSize) {
         // The following code is transcribed from GNU R src/main/random.c lines 309-335
         int[] result = new int[resultSize];
@@ -261,7 +261,7 @@ public abstract class Sample extends RBuiltinNode {
         return result;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private int[] probSampleWithoutReplace(int n, double[] probArray, int resultSize) {
         // The following code is transcribed from GNU R src/main/random.c lines 396-428
         int[] ans = new int[resultSize];
@@ -291,14 +291,14 @@ public abstract class Sample extends RBuiltinNode {
         return ans;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void buildheap(double[] keys, int[] values) {
         for (int i = (keys.length >> 1); i >= 0; i--) {
             minHeapify(keys, i, keys.length, values);
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void minHeapify(double[] keys, int currentIndex, int heapSize, int[] values) {
         int leftChildIndex = currentIndex << 1;
         int rightChildIndex = leftChildIndex + 1;
@@ -315,7 +315,7 @@ public abstract class Sample extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void exchange(double[] keys, int i, int j, int[] values) {
         double c = keys[i];
         keys[i] = keys[j];
@@ -325,7 +325,7 @@ public abstract class Sample extends RBuiltinNode {
         values[j] = temp;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private void heapSort(int[] values, double[] keys) {
         buildheap(keys, values);
         for (int i = keys.length - 1; i > 0; i--) {

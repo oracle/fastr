@@ -29,7 +29,6 @@ import java.io.*;
  * multiple-line output.
  */
 public class GnuROneShotRSession implements RSession {
-    // CheckStyle: stop system..print check
 
     protected static final String[] GNUR_COMMANDLINE = new String[]{"R", "--vanilla", "--slave", "--silent"};
     //@formatter:off

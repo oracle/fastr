@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -49,8 +49,8 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     @Child private ReadVariableNode varArgsSlotNode;
 
     /**
-     * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
-     * field contains the index of the symbol. Otherwise it is an empty list.
+     * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
+     * the index of the name. Otherwise it is an empty list.
      */
     private final Integer[] varArgsSymbolIndices;
 
@@ -241,7 +241,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RNode wrapVarArgValue(Object varArgValue) {
         if (varArgValue instanceof RPromise) {
             return PromiseNode.createVarArg((RPromise) varArgValue);

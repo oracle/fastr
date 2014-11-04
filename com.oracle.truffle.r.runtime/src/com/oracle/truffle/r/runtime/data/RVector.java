@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -78,7 +78,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this(complete, length, dimensions, null);
     }
 
-    private final void removeAttributeMapping(String key) {
+    private void removeAttributeMapping(String key) {
         if (this.attributes != null) {
             this.attributes.remove(key);
             if (this.attributes.size() == 0) {
@@ -87,7 +87,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    private final void setMatrixDimensions(int[] newDimensions, int vectorLength) {
+    private void setMatrixDimensions(int[] newDimensions, int vectorLength) {
         if (newDimensions != null && newDimensions.length == 2) {
             matrixDimension = newDimensions[0];
             // this assertion should not fail (should be signaled as error before getting to this
@@ -102,7 +102,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return names == null ? RNull.instance : names;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public final int getElementIndexByName(String name) {
         if (getNames() == RNull.instance) {
             return -1;
@@ -122,7 +122,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
      * index. If there are no names, or none is found, or there are multiple inexact matches, return
      * -1.
      */
-    @SlowPath
+    @TruffleBoundary
     public final int getElementIndexByNameInexact(String name) {
         if (getNames() == RNull.instance) {
             return -1;
@@ -157,12 +157,12 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
      * @param attribute
      * @param value
      */
-    private final void putAttribute(String attribute, Object value) {
+    private void putAttribute(String attribute, Object value) {
         initAttributes();
         attributes.put(attribute, value);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public final void setAttr(String name, Object value) {
         if (attributes == null) {
             initAttributes();
@@ -170,7 +170,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
             setNames(value);
         } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
-            setDimensions(((RIntVector) value).getDataCopy());
+            if (value instanceof Integer) {
+                setDimensions(new int[]{(int) value});
+            } else {
+                setDimensions(((RAbstractIntVector) value).materialize().getDataCopy());
+            }
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             setDimNames((RList) value);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
@@ -271,11 +275,17 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             for (int i = 0; i < newDimNamesLength; i++) {
                 Object dimObject = newDimNames.getDataAt(i);
                 if (dimObject != RNull.instance) {
-                    RStringVector dimVector = (RStringVector) dimObject;
-                    if (dimVector.getLength() == 0) {
-                        newDimNames.updateDataAt(i, RNull.instance, null);
-                    } else if (dimVector.getLength() != dimensions[i]) {
-                        throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                    if (dimObject instanceof String) {
+                        if (dimensions[i] != 1) {
+                            throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                        }
+                    } else {
+                        RStringVector dimVector = (RStringVector) dimObject;
+                        if (dimVector.getLength() == 0) {
+                            newDimNames.updateDataAt(i, RNull.instance, null);
+                        } else if (dimVector.getLength() != dimensions[i]) {
+                            throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                        }
                     }
                 }
             }
@@ -576,7 +586,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public final void resetDimensions(int[] newDimensions) {
         // reset all attributes other than dimensions;
         this.dimensions = newDimensions;

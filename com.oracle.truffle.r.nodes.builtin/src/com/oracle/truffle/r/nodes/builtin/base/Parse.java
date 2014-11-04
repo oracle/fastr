@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -81,12 +81,12 @@ public abstract class Parse extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RExpression doParse(String script) throws ParseException {
         return RContext.getEngine().parse(script);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String coalesce(String[] lines) {
         StringBuffer sb = new StringBuffer();
         for (String line : lines) {

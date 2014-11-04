@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -54,7 +54,7 @@ public abstract class Stop extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String collapseStringVector(RStringVector v) {
         if (v.getLength() == 0) {
             return "";

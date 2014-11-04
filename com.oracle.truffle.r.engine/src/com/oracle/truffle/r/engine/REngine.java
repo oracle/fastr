@@ -29,7 +29,7 @@ import java.util.stream.*;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -68,26 +68,24 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
     @CompilationFinal private RFunction evalFunction;
-    
+
     /**
-     * Controls whether ASTs are instrumented after parse. The default value controlled
-     * by {@link FastROptions#DisableInstrumentation}, but can be overridden by
-     * calling {@link #setInstrumentAll().
+     * Controls whether ASTs are instrumented after parse. The default value controlled by
+     * {@link FastROptions#DisableInstrumentation}, but can be overridden by calling
+     * {@link #setInstrumentAll}.
      */
     private static boolean instrumentingEnabled;
-    
-   /**
-     * Only relevant if {@link #instrumentingEnabled} is {@code true}.
-     * Used to control whether AST instrumenting is enabled.
-     * By default none of the code in the base packages nor the system profile 
-     * is instrumented, so this value is {@code false} during that phase.
-     * TODO relax this?
+
+    /**
+     * Only relevant if {@link #instrumentingEnabled} is {@code true}. Used to control whether AST
+     * instrumenting is enabled. By default none of the code in the base packages nor the system
+     * profile is instrumented, so this value is {@code false} during that phase. TODO relax this?
      */
     private static boolean instrumentingOn;
-    
+
     /**
-     * Only of relevance for in-process debugging, prevents most
-     * re-initialization on repeat calls to {@link #initialize}.
+     * Only of relevance for in-process debugging, prevents most re-initialization on repeat calls
+     * to {@link #initialize}.
      */
     private static boolean initialized;
 
@@ -170,11 +168,11 @@ public final class REngine implements RContext.Engine {
     public long[] childTimesInNanos() {
         return childTimes;
     }
-    
+
     public boolean instrumentingEnabled() {
         return instrumentingEnabled && instrumentingOn;
     }
-    
+
     public static void setInstrumentAll(boolean value) {
         instrumentingEnabled = value;
     }
@@ -256,7 +254,7 @@ public final class REngine implements RContext.Engine {
      * @return @see
      *         {@link #eval(RFunction, RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
      */
-    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos, int depth) throws PutException {
+    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
         RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
         SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
         return eval(function, callTarget, callSrc, envir, enclos, depth);
@@ -272,8 +270,7 @@ public final class REngine implements RContext.Engine {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    @SuppressWarnings("unused")
-    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, REnvironment enclos, int depth) throws PutException {
+    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
@@ -291,17 +288,11 @@ public final class REngine implements RContext.Engine {
 
     public Object evalPromise(RPromise promise, SourceSection callSrc) {
         // have to do the full out eval
-        try {
-            MaterializedFrame frame = promise.getFrame().materialize();
-            REnvironment env = REnvironment.frameToEnvironment(frame);
-            assert env != null;
-            Closure closure = promise.getClosure();
-            return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
-        } catch (PutException ex) {
-            // TODO a new, rather unlikely, error
-            assert false;
-            return null;
-        }
+        MaterializedFrame frame = promise.getFrame().materialize();
+        REnvironment env = REnvironment.frameToEnvironment(frame);
+        assert env != null;
+        Closure closure = promise.getClosure();
+        return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
     }
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
@@ -381,11 +372,13 @@ public final class REngine implements RContext.Engine {
     }
 
     /**
-     * Creates an anonymous function, with no arguments, whose {@link #FunctionStatementsNode} is {@code body}.
+     * Creates an anonymous function, with no arguments, whose {@link FunctionStatementsNode} is
+     * {@code body}.
+     *
      * @param body
      * @return {@link #makeCallTarget(Object, String)}
      */
-    @SlowPath
+    @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
@@ -433,7 +426,7 @@ public final class REngine implements RContext.Engine {
 
     private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
 
-    @SlowPath
+    @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
@@ -443,7 +436,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void printRError(RError e) {
         String es = e.toString();
         if (!es.isEmpty()) {
@@ -452,7 +445,7 @@ public final class REngine implements RContext.Engine {
         reportWarnings(true);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
@@ -464,7 +457,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void reportWarnings(boolean inAddition) {
         List<String> evalWarnings = singleton.context.extractEvalWarnings();
         ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();

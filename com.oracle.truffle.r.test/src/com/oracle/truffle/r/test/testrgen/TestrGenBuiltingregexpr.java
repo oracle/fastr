@@ -14,6 +14,7 @@ import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
 
+// Checkstyle: stop line length check
 public class TestrGenBuiltingregexpr extends TestBase {
 
     @Test

@@ -35,10 +35,10 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class ColonNode extends RNode implements VisibilityController {
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
-    
+
     public abstract RNode getLeft();
+
     public abstract RNode getRight();
-    
 
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {
@@ -120,7 +120,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     public boolean isSyntax() {
         return true;
     }
-    
+
     @Override
     public void deparse(State state) {
         getLeft().deparse(state);
@@ -148,7 +148,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     public abstract static class ColonCastNode extends RNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
-        
+
         public abstract RNode getOperand();
 
         @Specialization(guards = "isIntValue")
@@ -210,7 +210,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         public static boolean isFirstIntValue(RDoubleVector d) {
             return (((int) d.getDataAt(0))) == d.getDataAt(0);
         }
-        
+
         @Override
         public void deparse(State state) {
             getOperand().deparse(state);

@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
@@ -60,7 +60,7 @@ public abstract class ConvertIntExact extends UnaryNode {
         throw fail(operand.getClass().getName());
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static ConversionFailedException fail(String className) {
         throw new ConversionFailedException(className);
     }

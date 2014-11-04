@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class IsFiniteFunctions {
 
-    public static abstract class Adapter extends RBuiltinNode {
+    public abstract static class Adapter extends RBuiltinNode {
         protected interface IsFinCall {
             boolean call(double x);
         }
@@ -110,7 +110,7 @@ public class IsFiniteFunctions {
     }
 
     @RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"})
-    public static abstract class IsFinite extends Adapter {
+    public abstract static class IsFinite extends Adapter {
 
         @Specialization
         protected RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
@@ -137,7 +137,7 @@ public class IsFiniteFunctions {
     }
 
     @RBuiltin(name = "is.infinite", kind = PRIMITIVE, parameterNames = {"x"})
-    public static abstract class IsInfinite extends Adapter {
+    public abstract static class IsInfinite extends Adapter {
 
         @Specialization
         protected RLogicalVector doIsInfinite(RAbstractDoubleVector vec) {
@@ -164,7 +164,7 @@ public class IsFiniteFunctions {
     }
 
     @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"})
-    public static abstract class IsNan extends Adapter {
+    public abstract static class IsNan extends Adapter {
 
         @Specialization
         protected RLogicalVector doIsNan(RAbstractDoubleVector vec) {

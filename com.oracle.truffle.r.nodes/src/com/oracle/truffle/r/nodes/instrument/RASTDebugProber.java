@@ -11,17 +11,16 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
- * A visitor which traverses a completely parsed R AST (presumed not yet
- * executed) and attaches {@linkplain Probe Probes} at some of them for use by
- * the debugging framework.
+ * A visitor which traverses a completely parsed R AST (presumed not yet executed) and attaches
+ * {@linkplain Probe Probes} at some of them for use by the debugging framework.
  *
- * Syntax nodes in {@link SequenceNode}s are tagged with {@link STATEMENT}.
- * Function calls are tagged with {@link CALL}. {@link FunctionStatementsNode}s
- * are tagged with {@link START_METHOD} which allows the debugger to pause after
+ * Syntax nodes in {@link SequenceNode}s are tagged with {@link StandardSyntaxTag#STATEMENT}.
+ * Function calls are tagged with {@link StandardSyntaxTag#CALL}. {@link FunctionStatementsNode}s
+ * are tagged with {@link StandardSyntaxTag#START_METHOD} which allows the debugger to pause after
  * the arguments have been saved in the frame.
  *
- * N.B. The calls to {@code probe()} insert a {@link WrapperNode} as the
- * parent of the associated node.
+ * N.B. The calls to {@code probe()} insert a {@link WrapperNode} as the parent of the associated
+ * node.
  */
 public final class RASTDebugProber implements NodeVisitor, ASTProber {
 

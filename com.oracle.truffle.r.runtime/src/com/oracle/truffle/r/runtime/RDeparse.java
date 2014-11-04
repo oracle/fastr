@@ -162,7 +162,7 @@ public class RDeparse {
         }
     }
 
-    public static class State {
+    public static final class State {
         private final StringBuilder sb = new StringBuilder();
         private final ArrayList<String> lines;
         private int linenumber;
@@ -187,7 +187,7 @@ public class RDeparse {
             this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
             lines = needVector ? new ArrayList<>() : null;
         }
-        
+
         public static State createPrintableState() {
             return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, false);
         }
@@ -287,12 +287,12 @@ public class RDeparse {
             decIndent();
             append('}');
         }
-        
+
         public void decIndentWriteCloseCurly() {
             decIndent();
-            append('}');           
+            append('}');
         }
-        
+
         @Override
         public String toString() {
             // assumes needVector == false
@@ -303,7 +303,7 @@ public class RDeparse {
     /**
      * Version for use by {@code RSerialize}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static String deparse(RPairList pl) {
         State state = new State(80, false, -1, false);
         return deparse2buff(state, pl).sb.toString();
@@ -312,7 +312,7 @@ public class RDeparse {
     /**
      * Version for {@code deparse}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static String[] deparse(Object expr, int widthCutoff, boolean backtick, int nlines) {
         State state = new State(widthCutoff, backtick, nlines, true);
         deparse2buff(state, expr);
@@ -323,7 +323,7 @@ public class RDeparse {
     }
 
     @SuppressWarnings("unused")
-    @SlowPath
+    @TruffleBoundary
     public static State deparse2buff(State state, Object obj) {
         boolean lbreak = false;
         if (!state.active) {
@@ -694,7 +694,7 @@ public class RDeparse {
         return false;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static State args2buff(State state, RPairList args, @SuppressWarnings("unused") boolean lineb, boolean formals) {
         boolean lbreak = false;
         RPairList arglist = args;
@@ -727,7 +727,7 @@ public class RDeparse {
         return state;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static State vector2buff(State state, RVector vec) {
         SEXPTYPE type = SEXPTYPE.typeForClass(vec.getClass());
         boolean surround = false;
@@ -795,8 +795,8 @@ public class RDeparse {
                 break;
             case REALSXP:
                 double d = (double) element;
-                String rep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
-                state.append(rep);
+                String dRep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
+                state.append(dRep);
                 break;
             case INTSXP:
                 int i = (int) element;

@@ -80,7 +80,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
         private final Function<T, RNode> reify;
         private final BiFunction<F, T, Object> generic;
 
-        /** The current depth of the inline cache */
+        /** The current depth of the inline cache. */
         private int picDepth = 0;
 
         public UninitializedInlineCacheNode(int maxPicDepth, Function<T, RNode> reify, BiFunction<F, T, Object> generic) {
@@ -90,7 +90,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
         }
 
         @Override
-        public final Object execute(F frame, T value) {
+        public Object execute(F frame, T value) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
 
             // Specialize below
@@ -122,7 +122,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
             }
 
             @Override
-            public final Object execute(F frame, T value) {
+            public Object execute(F frame, T value) {
                 return value == originalValue ? reified.execute((VirtualFrame) frame) : next.execute(frame, value);
             }
         }
@@ -130,7 +130,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
         private final class GenericInlineCacheNode extends InlineCacheNode<F, T> {
 
             @Override
-            public final Object execute(F frame, T value) {
+            public Object execute(F frame, T value) {
                 return generic.apply(frame, value);
             }
         }

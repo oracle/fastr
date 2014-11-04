@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.binary.*;
@@ -52,7 +52,7 @@ public abstract class InheritsNode extends BinaryNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static Map<String, Integer> initClassToPos(RAbstractVector x) {
         RStringVector klass = x.getClassHierarchy();
 

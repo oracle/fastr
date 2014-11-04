@@ -4,20 +4,13 @@
  */
 package com.oracle.truffle.r.debug.rrepl;
 
-import static com.oracle.truffle.api.instrument.StandardSyntaxTag.*;
-
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.debug.*;
 import com.oracle.truffle.debug.impl.*;
-import com.oracle.truffle.debug.instrument.*;
-import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.instrument.*;
-//import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.shell.*;
 
 /**

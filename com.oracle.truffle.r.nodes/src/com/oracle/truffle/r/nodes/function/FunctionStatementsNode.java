@@ -10,9 +10,8 @@ import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 
 /**
- * Encapsulates the sequence of statements (expressions) of a function. Has no
- * specific execute behavior but is an important placeholder for debugging
- * instrumentation.
+ * Encapsulates the sequence of statements (expressions) of a function. Has no specific execute
+ * behavior but is an important placeholder for debugging instrumentation.
  */
 public class FunctionStatementsNode extends SequenceNode {
 
@@ -23,14 +22,14 @@ public class FunctionStatementsNode extends SequenceNode {
     public FunctionStatementsNode(SourceSection src, RNode[] sequence) {
         super(src, sequence);
     }
-    
+
     public FunctionStatementsNode(RNode node) {
         super(node);
     }
-    
+
     @Override
     public boolean isInstrumentable() {
         return true;
     }
-    
+
 }

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -41,7 +41,7 @@ public abstract class FastRStackTrace extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected Object printStackTrace(byte printFrameContents) {
         controlVisibility();
         boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
