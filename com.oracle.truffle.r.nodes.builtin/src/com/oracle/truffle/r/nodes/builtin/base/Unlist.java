@@ -45,7 +45,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @NodeChild(value = "operand")
-    protected static abstract class RecursiveLength extends RNode {
+    protected abstract static class RecursiveLength extends RNode {
 
         public abstract int executeInt(VirtualFrame frame, Object vector);
 

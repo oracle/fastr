@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ConnectionFunctions {
-    private static class ModeException extends IOException {
+    private static final class ModeException extends IOException {
         private static final long serialVersionUID = 1L;
 
         private ModeException() {
@@ -97,7 +97,7 @@ public abstract class ConnectionFunctions {
      * not to use delegation by overriding the default implementations.
      *
      */
-    private static abstract class BaseRConnection extends RConnection {
+    private abstract static class BaseRConnection extends RConnection {
         protected boolean isOpen;
         /**
          * if {@link #isOpen} is {@code true} the {@link OpenMode} that this connection is opened
@@ -147,7 +147,7 @@ public abstract class ConnectionFunctions {
         }
 
         protected void setClass(String rClass) {
-            String classes[] = new String[2];
+            String[] classes = new String[2];
             classes[0] = rClass;
             classes[1] = "connection";
             this.classHr = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
@@ -185,7 +185,7 @@ public abstract class ConnectionFunctions {
         protected abstract void createDelegateConnection() throws IOException;
     }
 
-    private static abstract class DelegateRConnection extends RConnection {
+    private abstract static class DelegateRConnection extends RConnection {
         protected BaseRConnection base;
 
         DelegateRConnection(BaseRConnection base) {

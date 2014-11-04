@@ -12,7 +12,7 @@ package com.oracle.truffle.r.parser.ast;
 
 import com.oracle.truffle.api.source.*;
 
-public class Next extends ControlStatement {
+public final class Next extends ControlStatement {
 
     public static Next create(SourceSection source) {
         return new Next(source);

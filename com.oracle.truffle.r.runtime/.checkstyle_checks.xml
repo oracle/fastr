@@ -21,7 +21,9 @@
     <module name="MemberName">
       <property name="format" value="^(([a-z][a-zA-Z0-9]*$)|(_[A-Z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*$))"/>
     </module>
-    <module name="MethodName"/>
+    <module name="MethodName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
     <module name="PackageName"/>
     <module name="ParameterName"/>
     <module name="TypeName">
@@ -127,6 +129,7 @@
   </module>
   <module name="FileTabCharacter">
     <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
   </module>
   <module name="NewlineAtEndOfFile">
     <property name="lineSeparator" value="lf"/>
@@ -146,8 +149,8 @@
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable method name checks"/>
   </module>
   <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CheckStyle: stop parameter assignment check"/>
-    <property name="onCommentFormat" value="CheckStyle: resume parameter assignment check"/>
+    <property name="offCommentFormat" value="Checkstyle: stop parameter assignment check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume parameter assignment check"/>
     <property name="checkFormat" value="ParameterAssignment"/>
     <property name="checkC" value="false"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable Parameter Assignment"/>
@@ -164,8 +167,8 @@
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks"/>
   </module>
   <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CheckStyle: stop inner assignment check"/>
-    <property name="onCommentFormat" value="CheckStyle: resume inner assignment check"/>
+    <property name="offCommentFormat" value="Checkstyle: stop inner assignment check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume inner assignment check"/>
     <property name="checkFormat" value="InnerAssignment"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable inner assignment checks"/>
   </module>
@@ -182,23 +185,23 @@
     <property name="message" value="illegal Windows line ending"/>
   </module>
   <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CheckStyle: stop system..print check"/>
-    <property name="onCommentFormat" value="CheckStyle: resume system..print check"/>
-    <property name="checkFormat" value="RegexpSingleline"/>
-    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable System.(out|err).print checks"/>
+    <property name="offCommentFormat" value="Checkstyle: stop line length check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume line length check"/>
+    <property name="checkFormat" value="LineLength"/>
   </module>
   <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CheckStyle: stop header check"/>
-    <property name="onCommentFormat" value="CheckStyle: resume header check"/>
-    <property name="checkFormat" value=".*Header"/>
-    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable header checks"/>
+    <property name="offCommentFormat" value="Checkstyle: stop modified control variable check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume modified control variable check"/>
+    <property name="checkFormat" value="ModifiedControlVariable"/>
   </module>
-  <module name="RegexpSingleline">
-    <property name="format" value="System\.(out|err)\.print"/>
-    <property name="fileExtensions" value="java"/>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: stop final class check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume final class check"/>
+    <property name="checkFormat" value="FinalClass"/>
   </module>
-  <module name="RegexpSingleline">
-    <property name="format" value="adoptChild"/>
-    <property name="message" value="illegal use of deprecated adoptChild() API"/>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: stop case fall through check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume case fall through check"/>
+    <property name="checkFormat" value="FallThrough"/>
   </module>
 </module>

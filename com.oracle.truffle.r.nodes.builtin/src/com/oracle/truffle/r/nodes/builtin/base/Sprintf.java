@@ -186,7 +186,7 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization(guards = {"oneElement", "fmtLengthOne"})
     @TruffleBoundary
-    protected Object RAbstractStringVector(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(frame, fmt.getDataAt(0), args);
     }
 

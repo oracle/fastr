@@ -28,8 +28,6 @@ import java.util.*;
 import com.oracle.truffle.r.runtime.*;
 
 public abstract class WhiteList {
-    // CheckStyle: stop system..print check
-
     public static class Results {
 
         public final String fastR;

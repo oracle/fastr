@@ -130,7 +130,7 @@ public class ArgumentMatcher {
 
     /**
      * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
-     * denote symbols
+     * denote symbols.
      *
      * @param frame {@link VirtualFrame}
      * @param arg {@link RNode}
@@ -412,7 +412,7 @@ public class ArgumentMatcher {
     /**
      * Used in
      * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection, SourceSection)}
-     * for iteration over suppliedArgs
+     * for iteration over suppliedArgs.
      *
      * @param <T>
      */

@@ -176,7 +176,7 @@ public final class RContext extends ExecutionContext {
          */
         Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
 
-        static final Object INCOMPLETE_SOURCE = new Object();
+        Object INCOMPLETE_SOURCE = new Object();
 
         /**
          *

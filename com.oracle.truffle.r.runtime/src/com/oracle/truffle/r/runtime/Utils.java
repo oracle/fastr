@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public final class Utils {
 
     /**
-     * Not yet implemented
+     * Not yet implemented.
      *
      * @return Throws an error
      */
@@ -48,7 +48,7 @@ public final class Utils {
     }
 
     /**
-     * Not yet implemented
+     * Not yet implemented.
      *
      * @param reason
      * @return Throws an error
@@ -68,9 +68,7 @@ public final class Utils {
 
     public static void debug(String msg) {
         if (FastROptions.Debug.getValue()) {
-            // CheckStyle: stop system..print check
             System.err.println(msg);
-            // CheckStyle: resume system..print check
         }
     }
 

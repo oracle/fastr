@@ -356,7 +356,7 @@ public abstract class Substitute extends RBuiltinNode {
     /**
      * Marker class for special '...' handling.
      */
-    private static abstract class DotsNode extends RNode {
+    private abstract static class DotsNode extends RNode {
     }
 
     /**

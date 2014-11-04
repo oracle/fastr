@@ -566,8 +566,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (container.getDimNames() != null) {
                     if (assignment) {
                         return findPositionWithNames(container, container.getDimNames().getDataAt(dimension), operand);
-                    } else
+                    } else {
                         return findPosition(container, container.getDimNames().getDataAt(dimension), operand);
+                    }
                 } else {
                     if (isSubset || container.getElementClass() == Object.class) {
                         throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);

@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 public class RArgsValuesAndNames {
     private final Object[] values;
     /**
-     * May NOT be null
+     * May NOT be null.
      */
     private final String[] names;
     private final boolean allNamesEmpty;

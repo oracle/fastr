@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  * the original arguments, as it happens in
  * {@link CallArgumentsNode#executeFlatten(com.oracle.truffle.api.frame.VirtualFrame)}.
  */
-public class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
+public final class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 
     private final IdentityHashMap<RNode, Closure> closureCache;
 

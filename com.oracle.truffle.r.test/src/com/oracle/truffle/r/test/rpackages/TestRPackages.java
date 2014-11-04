@@ -46,7 +46,7 @@ public class TestRPackages extends TestBase {
      * environment is handled in the Makefile using environment variables set in
      * {@link #installPackage(String)}.
      */
-    private static class PackagePaths {
+    private static final class PackagePaths {
         private final Path rpackagesDists;
         private final Path rpackagesLibs;
 

@@ -131,7 +131,7 @@ public abstract class RConnection implements RClassHierarchy {
     public abstract RStringVector getClassHierarchy();
 
     /**
-     * Pushes lines back to the connection
+     * Pushes lines back to the connection.
      */
     @TruffleBoundary
     public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
@@ -148,7 +148,7 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     /**
-     * Return the length of the push back
+     * Return the length of the push back.
      */
     @TruffleBoundary
     public int pushBackLength() {
@@ -156,7 +156,7 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     /**
-     * Clears the pushback
+     * Clears the pushback.
      */
     @TruffleBoundary
     public void pushBackClear() {

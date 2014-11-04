@@ -24,6 +24,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * Serialize/unserialize. Only unserialize is implemented currently to support package loading.
  *
  */
+// Checkstyle: stop final class check
 public class RSerialize {
 
     private static class Flags {

@@ -54,7 +54,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
     /**
-     * Convenience method
+     * Convenience method.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -72,7 +72,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Convenience method
+     * Convenience method.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -83,7 +83,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Convenience method
+     * Convenience method.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -100,7 +100,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Creates every {@link ReadVariableNode} out there
+     * Creates every {@link ReadVariableNode} out there.
      *
      * @param symbolStr The symbol the {@link ReadVariableNode} is meant to resolve
      * @param mode The mode of the variable
@@ -682,7 +682,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-       }
+        }
 
         @Specialization(guards = "isDouble")
         protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
@@ -692,7 +692,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-       }
+        }
 
         @Fallback
         protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {

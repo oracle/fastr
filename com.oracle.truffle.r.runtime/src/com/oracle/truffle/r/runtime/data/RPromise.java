@@ -98,7 +98,7 @@ public final class RPromise extends RLanguageRep {
     protected MaterializedFrame execFrame;
 
     /**
-     * Might not be <code>null</code>
+     * Might not be <code>null</code>.
      */
     private final Closure closure;
 
@@ -227,7 +227,7 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
-     * Used in case the {@link RPromise} is evaluated outside
+     * Used in case the {@link RPromise} is evaluated outside.
      *
      * @param newValue
      */

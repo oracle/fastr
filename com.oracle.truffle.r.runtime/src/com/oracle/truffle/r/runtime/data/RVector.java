@@ -78,7 +78,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this(complete, length, dimensions, null);
     }
 
-    private final void removeAttributeMapping(String key) {
+    private void removeAttributeMapping(String key) {
         if (this.attributes != null) {
             this.attributes.remove(key);
             if (this.attributes.size() == 0) {
@@ -87,7 +87,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    private final void setMatrixDimensions(int[] newDimensions, int vectorLength) {
+    private void setMatrixDimensions(int[] newDimensions, int vectorLength) {
         if (newDimensions != null && newDimensions.length == 2) {
             matrixDimension = newDimensions[0];
             // this assertion should not fail (should be signaled as error before getting to this
@@ -157,7 +157,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
      * @param attribute
      * @param value
      */
-    private final void putAttribute(String attribute, Object value) {
+    private void putAttribute(String attribute, Object value) {
         initAttributes();
         attributes.put(attribute, value);
     }

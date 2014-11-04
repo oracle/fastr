@@ -53,7 +53,7 @@ public interface ClosureCache {
     }
 
     /**
-     * Access to the raw content
+     * Access to the raw content.
      *
      * @return The {@link Map} containing the cached values
      */

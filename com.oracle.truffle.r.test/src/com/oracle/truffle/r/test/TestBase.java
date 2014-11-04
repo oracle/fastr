@@ -117,7 +117,6 @@ public class TestBase {
             try {
                 if (expectedOutputManager.generate) {
                     boolean updated = expectedOutputManager.writeTestOutputFile();
-                    // CheckStyle: stop system..print check
                     if (updated) {
                         if (expectedOutputManager.checkOnly) {
                             // fail fast
@@ -126,7 +125,6 @@ public class TestBase {
                         }
                         System.out.println("updating " + expectedOutputManager.outputFile);
                     }
-                    // CheckStyle: resume system..print check
                 }
                 if (fastROutputManager.outputFile != null) {
                     fastROutputManager.writeTestOutputFile(null, false);
@@ -387,7 +385,6 @@ public class TestBase {
         assertTemplateEval(null, expressions);
     }
 
-    // CheckStyle: stop system..print check
     protected static void assertTemplateEval(WhiteList whiteList, String... expressions) {
         if (!generatingExpected()) {
             System.out.print("Testing " + expressions.length + " expressions ");
@@ -450,8 +447,6 @@ public class TestBase {
         }
     }
 
-    // CheckStyle: resume system..print check
-
     /*
      * implementation support methods
      */
@@ -504,7 +499,6 @@ public class TestBase {
                     break;
                 }
             }
-            // CheckStyle: stop system..print check
             // @formatter:off
              System.err.printf("Micro-test failure: %s(%s:%d)%n",
                             culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
@@ -512,7 +506,6 @@ public class TestBase {
              System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
              System.err.printf("%16s %s%n", "FastR output:", microTestInfo.fastROutput);
             // @formatter:on
-            // CheckStyle: resume system..print check
         }
     }
 
@@ -698,8 +691,6 @@ public class TestBase {
 
     private static class LocalDiagnosticHandler implements TestOutputManager.DiagnosticHandler {
         private boolean quiet;
-
-        // CheckStyle: stop system..print check
 
         public void warning(String msg) {
             System.out.println("warning: " + msg);

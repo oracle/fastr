@@ -12,7 +12,7 @@ package com.oracle.truffle.r.parser.ast;
 
 import com.oracle.truffle.api.source.*;
 
-public class Break extends ControlStatement {
+public final class Break extends ControlStatement {
 
     public static Break create(SourceSection source) {
         return new Break(source);

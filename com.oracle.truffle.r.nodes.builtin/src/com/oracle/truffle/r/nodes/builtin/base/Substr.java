@@ -70,8 +70,10 @@ public abstract class Substr extends RBuiltinNode {
         na.enable(start);
         na.enable(stop);
         for (int i = 0, j, k; i < arg.getLength(); ++i) {
+            // Checkstyle: stop modified control variable check
             j = i % start.getLength();
             k = i % stop.getLength();
+            // Checkstyle: resume modified control variable check
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));
         }
         return RDataFactory.createStringVector(res, na.neverSeenNA());

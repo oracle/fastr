@@ -118,7 +118,9 @@ public abstract class UpdateSubstr extends RBuiltinNode {
         int startLength = start.getLength();
         int stopLength = stop.getLength();
         int valueLength = value.getLength();
-        int j, k, l;
+        int j;
+        int k;
+        int l;
         for (int i = 0; i < argLength; ++i) {
             j = i % startLength;
             k = i % stopLength;

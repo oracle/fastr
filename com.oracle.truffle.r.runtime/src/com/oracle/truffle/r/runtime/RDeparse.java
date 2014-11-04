@@ -162,7 +162,7 @@ public class RDeparse {
         }
     }
 
-    public static class State {
+    public static final class State {
         private final StringBuilder sb = new StringBuilder();
         private final ArrayList<String> lines;
         private int linenumber;

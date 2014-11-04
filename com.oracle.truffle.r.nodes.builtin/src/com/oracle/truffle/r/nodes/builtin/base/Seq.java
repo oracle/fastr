@@ -285,7 +285,7 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(guards = "lengthZeroAlong")
-    protected RIntVector LengthZero(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
+    protected RIntVector seqLengthZeroAlong(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }

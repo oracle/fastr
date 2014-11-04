@@ -49,7 +49,7 @@ public abstract class CallInlineCacheNode extends Node {
 
         private final int maxPicDepth;
 
-        /** The current depth of the inline cache */
+        /** The current depth of the inline cache. */
         private int picDepth = 0;
 
         public UninitializedCallInlineCacheNode(int maxPicDepth) {
@@ -57,7 +57,7 @@ public abstract class CallInlineCacheNode extends Node {
         }
 
         @Override
-        public final Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
+        public Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
 
             // Specialize below
@@ -85,7 +85,7 @@ public abstract class CallInlineCacheNode extends Node {
         }
 
         @Override
-        public final Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
+        public Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
             return target == originalTarget ? callNode.call(frame, arguments) : next.execute(frame, target, arguments);
         }
     }
@@ -95,7 +95,7 @@ public abstract class CallInlineCacheNode extends Node {
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
         @Override
-        public final Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
+        public Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
             return indirectCall.call(frame, target, arguments);
         }
     }

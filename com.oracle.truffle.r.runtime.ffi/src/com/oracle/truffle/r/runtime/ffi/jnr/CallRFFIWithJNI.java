@@ -44,7 +44,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         loadLibrary();
     }
 
-    private static boolean FORCE_RTLD_GLOBAL = false;
+    private static boolean ForceRTLDGlobal = false;
 
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
@@ -60,7 +60,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         OSInfo osInfo = RPlatform.getOSInfo();
         Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", osInfo.osSubDir, "librfficall." + osInfo.libExt);
         try {
-            DLL.load(path.toString(), FORCE_RTLD_GLOBAL, false);
+            DLL.load(path.toString(), ForceRTLDGlobal, false);
         } catch (DLLException ex) {
             throw RError.error((SourceSection) null, ex);
         }

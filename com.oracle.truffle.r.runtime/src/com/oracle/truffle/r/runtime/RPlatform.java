@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 public class RPlatform {
-    public static class OSInfo {
+    public static final class OSInfo {
         public final String libExt;
         public final String osSubDir;
         public final String osName;

@@ -724,7 +724,7 @@ public abstract class REnvironment implements RAttributable {
      * Denotes the "namespace:xxx" environment of an R package. The "parent" is the associated
      * "imports" environment, except for "base" where it is globalEnv
      */
-    private static class Namespace extends REnvironment {
+    private static final class Namespace extends REnvironment {
         private Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
             namespaceRegistry.safePut(name, this);
@@ -739,7 +739,7 @@ public abstract class REnvironment implements RAttributable {
     /**
      * Denotes the "imports:xxx" environment of an R package.
      */
-    private static class Imports extends REnvironment {
+    private static final class Imports extends REnvironment {
 
         private Imports(String name, REnvFrameAccess frameAccess) {
             super(baseEnv.getNamespace(), UNNAMED, frameAccess);
@@ -789,7 +789,7 @@ public abstract class REnvironment implements RAttributable {
         }
     }
 
-    private static class Base extends Package {
+    private static final class Base extends Package {
         private Base(VirtualFrame frame) {
             super(frame);
         }

@@ -21,7 +21,7 @@
 # questions.
 #
 suite = {
-  "mxversion" : "2.6.9",
+  "mxversion" : "2.7.1",
   "name" : "fastr",
   "libraries" : {
     "JDK_TOOLS" : {

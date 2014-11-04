@@ -298,7 +298,9 @@ public abstract class Scan extends RBuiltinNode {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.LINE_ELEMENTS, lines + 1, nc);
                     } else {
                         strItems = getItems(data);
+                        // Checkstyle: stop modified control variable check
                         i = 0;
+                        // Checkstyle: resume modified control variable check
                         if (strItems == null) {
                             done = true;
                             break;

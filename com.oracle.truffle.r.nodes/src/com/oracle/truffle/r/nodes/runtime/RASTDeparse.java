@@ -224,18 +224,21 @@ public class RASTDeparse {
                             if (arginfo.prec == RDeparse.PREC_SUM) {
                                 arginfo = new PPInfo(arginfo.kind, RDeparse.PREC_SIGN, arginfo.rightassoc);
                             }
-                            // drop through
+                            // CheckStyle: stop case fall through check
                         case 2:
                             break;
+                        // CheckStyle: resume case fall through check
+
                         default:
                             return false;
                     }
-                    // drop through
 
+                    // CheckStyle: stop case fall through check
                 case UNARY:
                     if (mainop.prec > arginfo.prec || (mainop.prec == arginfo.prec && isLeft == mainop.rightassoc)) {
                         return true;
                     }
+                    // CheckStyle: resume case fall through check
             }
         } else {
             // TODO complex

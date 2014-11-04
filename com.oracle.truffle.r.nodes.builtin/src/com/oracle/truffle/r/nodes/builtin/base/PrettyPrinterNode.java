@@ -1265,9 +1265,9 @@ public abstract class PrettyPrinterNode extends RNode {
                 if (numDimensions == 3) {
                     int matrixSize = dimensions[0] * dimensions[1];
                     for (int dimInd = 0; dimInd < dimSize; dimInd++) {
-                        // CheckStyle: stop system..print check
+                        // Checkstyle: stop
                         sb.append(", , ");
-                        // CheckStyle: resume system..print check
+                        // Checkstyle: resume
                         sb.append(getDimId(vector, numDimensions, dimInd));
                         sb.append("\n\n");
                         sb.append(printVector2Dim(vector, dimensionsVector, dimInd * matrixSize, isListOrStringVector, isComplexOrRawVector, isQuoted));
@@ -1719,9 +1719,9 @@ public abstract class PrettyPrinterNode extends RNode {
             if (currentDimLevel == 3) {
                 int matrixSize = dimensions[0] * dimensions[1];
                 for (int dimInd = 0; dimInd < dimSize; dimInd++) {
-                    // CheckStyle: stop system..print check
+                    // Checkstyle: stop
                     sb.append(", , ");
-                    // CheckStyle: resume system..print check
+                    // Checkstyle: resume
                     sb.append(getDimId(vector, currentDimLevel, dimInd));
                     sb.append(", ");
                     sb.append(header);

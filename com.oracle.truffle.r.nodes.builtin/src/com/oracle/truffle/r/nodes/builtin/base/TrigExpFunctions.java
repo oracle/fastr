@@ -42,11 +42,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 /**
- * TODO complex specializations, runtime type checks on arguments
+ * TODO complex specializations, runtime type checks on arguments.
  *
  */
 public class TrigExpFunctions {
-    public static abstract class AdapterCall1 extends RBuiltinNode {
+    public abstract static class AdapterCall1 extends RBuiltinNode {
         private static final BranchProfile notCompleteIntValueMet = BranchProfile.create();
         private static final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
 
@@ -100,14 +100,14 @@ public class TrigExpFunctions {
             return createDoubleVectorBasedOnOrigin(resultVector, vector);
         }
 
-        private static RDoubleVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector){
+        private static RDoubleVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
             RDoubleVector result = RDataFactory.createDoubleVector(values, originVector.isComplete());
             result.copyAttributesFrom(originVector);
             return result;
         }
     }
 
-    public static abstract class ComplexArgumentsCallAdapter extends AdapterCall1 {
+    public abstract static class ComplexArgumentsCallAdapter extends AdapterCall1 {
         protected interface ComplexArgumentFunctionCall {
             RComplex call(RComplex rComplex);
         }
@@ -124,7 +124,7 @@ public class TrigExpFunctions {
         }
     }
 
-    public static abstract class ComplexExpCalculator extends ComplexArgumentsCallAdapter {
+    public abstract static class ComplexExpCalculator extends ComplexArgumentsCallAdapter {
         @Child private BinaryArithmetic calculatePowNode;
 
         private final ComplexArgumentFunctionCall expFunctionCall = new ComplexArgumentFunctionCall() {
@@ -399,7 +399,7 @@ public class TrigExpFunctions {
         }
     }
 
-    public static abstract class AdapterCall2 extends RBuiltinNode {
+    public abstract static class AdapterCall2 extends RBuiltinNode {
 
         protected interface MathCall2 {
             double call(double x, double y);
