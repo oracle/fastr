@@ -204,6 +204,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
+        private final BranchProfile invalidateProfile = new BranchProfile();
 
         public abstract Mode getMode();
 
@@ -215,7 +216,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
             frame.setByte(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
             return value;
         }
 
@@ -223,7 +224,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
             frame.setInt(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
             return value;
         }
 
@@ -231,7 +232,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
             frame.setDouble(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
             return value;
         }
 
@@ -239,7 +240,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
             writeObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
-            FrameSlotChangeMonitor.checkAndUpdate(frame, frameSlot);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
             return value;
         }
 

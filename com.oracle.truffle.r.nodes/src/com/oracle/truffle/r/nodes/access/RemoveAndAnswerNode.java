@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
@@ -83,6 +84,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
          * returned.
          */
         private final FrameSlot slot;
+        private final BranchProfile invalidateProfile = new BranchProfile();
 
         protected RemoveAndAnswerResolvedNode(FrameSlot slot) {
             this.slot = slot;
@@ -93,7 +95,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
             controlVisibility();
             Object result = frame.getValue(slot);
             frame.setObject(slot, null); // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.checkAndUpdate(frame, slot);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot, invalidateProfile);
             return result;
         }
 

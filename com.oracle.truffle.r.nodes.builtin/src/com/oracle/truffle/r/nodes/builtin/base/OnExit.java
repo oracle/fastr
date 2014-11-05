@@ -55,6 +55,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
     private final NAProfile na = NAProfile.create();
 
     private final PromiseProfile promiseProfile = new PromiseProfile();
+    private final BranchProfile invalidateProfile = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -86,7 +87,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
         } else {
             // initialize the list of exit handlers
             frame.setObject(slot, current = new ArrayList<>());
-            FrameSlotChangeMonitor.checkAndUpdate(frame, slot);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot, invalidateProfile);
         }
         if (!empty) {
             current.add(expr.getRep());

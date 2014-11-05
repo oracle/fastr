@@ -1,9 +1,8 @@
 package com.oracle.truffle.r.runtime.env.frame;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -37,6 +36,7 @@ public final class FrameSlotChangeMonitor {
     public static Assumption getMonitor(FrameSlot slot) {
         Object info = slot.getInfo();
         if (!(info instanceof Assumption)) {
+            CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("Each FrameSlot should hold an Assumption in it's info field!");
         }
         return (Assumption) info;
@@ -54,38 +54,61 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void invalidate(FrameSlot slot) {
-        doInvalidate(slot);
+        Assumption notChangedLocally = getMonitor(slot);
+        notChangedLocally.invalidate();
     }
 
     /**
      * Assumes info to be an {@link Assumption} attached to a {@link FrameSlot} and invalidates it
      *
-     * @param frame
+     * @param curFrame
      * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
      *            {@link RInternalError} otherwise
      */
-    public static void checkAndInvalidate(Frame frame, FrameSlot slot) {
-        doCheckAndInvalidate(RArguments.getDepth(frame), slot);
-    }
+    public static void checkAndInvalidate(Frame curFrame, FrameSlot slot, BranchProfile invalidateProfile) {
+        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
 
-    @SlowPath
-    private static void doCheckAndInvalidate(int depth, FrameSlot slot) {
-        VirtualFrame frame = Utils.getActualCurrentFrame(FrameAccess.READ_ONLY);
-        if (frame == null || depth == RArguments.getDepth(frame)) {
-            return;
+        // Check whether current frame is used outside a regular stack
+        if (RArguments.getIsIrregular(curFrame)) {
+            // False positive: Also invalidates a slot in the current active frame if that one is
+            // used inside eval or the like
+            invalidateProfile.enter();
+            getMonitor(slot).invalidate();
         }
-
-        doInvalidate(slot);
     }
 
-    @SlowPath
-    private static void doInvalidate(FrameSlot slot) {
-        Assumption notChangedLocally = getMonitor(slot);
-        notChangedLocally.invalidate();
-        System.err.println("Invalidated " + RRuntime.toString(slot.getIdentifier()));
+    public static void checkAndInvalidate(Frame curFrame, FrameSlot slot) {
+        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
+
+        // Check whether current frame is used outside a regular stack
+        if (RArguments.getIsIrregular(curFrame)) {
+            // False positive: Also invalidates a slot in the current active frame if that one is
+            // used inside eval or the like
+            getMonitor(slot).invalidate();
+        }
     }
 
-    public static void checkAndUpdate(Frame frame, FrameSlot slot) {
-        checkAndInvalidate(frame, slot);
-    }
+// public static void checkAndInvalidate(Frame curFrame, FrameSlot slot, BranchProfile
+// invalidateProfile) {
+// // if (!isMonitorValid(slot)) {
+// // // For performance reasons: Avoid Utils.getActualCurrentFrame if not absolutely
+// // // necessary
+// // return;
+// // }
+// //
+// // Fast check
+// if (checkLightAndInvalidate(curFrame, slot)) {
+// return;
+// }
+//
+// // int depth = RArguments.getDepth(curFrame);
+// // Frame topFrame = Utils.getActualCurrentFrame(FrameAccess.READ_ONLY);
+// // // TODO Current stackDepth implementation creates false negatives!
+// // if (topFrame == null || depth == RArguments.getDepth(topFrame)) {
+// // return;
+// // }
+//
+// invalidateProfile.enter();
+// invalidate(slot);
+// }
 }

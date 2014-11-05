@@ -41,6 +41,7 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
         this.originalFrame = originalFrame;
         this.arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
         RArguments.setDepth(this, depth);
+        RArguments.setIsIrregular(this, true);
         RArguments.setFunction(this, function);
         RArguments.setCallSourceSection(this, callSrc);
     }

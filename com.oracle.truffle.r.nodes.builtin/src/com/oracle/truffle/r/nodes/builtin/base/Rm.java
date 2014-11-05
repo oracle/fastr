@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -54,6 +55,8 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     public RNode[] getParameterValues() {
         return getParameterValues0();
     }
+
+    private final BranchProfile invalidateProfile = new BranchProfile();
 
     @Specialization
     @SuppressWarnings("unused")
@@ -114,7 +117,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
         } else {
             frm.setObject(fs, null); // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.checkAndUpdate(frame, fs);
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, fs, invalidateProfile);
         }
     }
 

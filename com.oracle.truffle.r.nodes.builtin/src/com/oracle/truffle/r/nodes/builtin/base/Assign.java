@@ -52,6 +52,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     // FIXME deal with omitted parameters: pos, imemdiate
 
     private final BranchProfile[] slotFoundOnIteration = {new BranchProfile(), new BranchProfile(), new BranchProfile()};
+    private final BranchProfile invalidateProfile = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -99,7 +100,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return variableValue;
     }
 
-    private static Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
+    private Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
         MaterializedFrame materializedFrame = startFrame;
         FrameSlot frameSlot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         while (!isAppropriateFrameSlot(frameSlot, materializedFrame)) {
@@ -110,13 +111,13 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return variableValue;
     }
 
-    private static void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
+    private void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
         FrameSlot fs = frameSlot;
         if (fs == null) {
             fs = frame.getFrameDescriptor().addFrameSlot(variableName, FrameSlotChangeMonitor.createMonitor(), FrameSlotKind.Illegal);
         }
         frame.setObject(fs, variableValue);
-        FrameSlotChangeMonitor.checkAndUpdate(frame, fs);
+        FrameSlotChangeMonitor.checkAndInvalidate(frame, fs, invalidateProfile);
     }
 
     private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {
