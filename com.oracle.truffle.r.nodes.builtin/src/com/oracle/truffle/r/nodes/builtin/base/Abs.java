@@ -41,7 +41,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     protected RNull abs(RNull x) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization
@@ -79,14 +79,14 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     protected Object abs(RRaw vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object abs(String vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @Specialization
@@ -143,14 +143,14 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     protected Object abs(RStringVector vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object abs(RRawVector vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     private int performInt(int value) {
