@@ -13106,6 +13106,14 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
 #{ x <- 200 ; rm("x") }
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x<-200; y<-100; rm("x", "y"); x }
+Error: object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x<-200; y<-100; rm("x", "y"); y }
+Error: object 'y' not found
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
 #{ sort(c(1L,10L,2L)) }
 [1]  1  2 10
@@ -50690,6 +50698,49 @@ Error in x$b : $ operator is invalid for atomic vectors
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
 #{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; x <- list(c=2,b=10) ; f(x) }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.1 }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.2 }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x$a$b<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x$a[["b"]]<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x[["a"]]$b<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(list(a=7), NULL); x[[1]]$a<-42; x }
+[[1]]
+[[1]]$a
+[1] 42
+
+
+[[2]]
+NULL
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testGenericUpdate
 #{ a <- TRUE; a[[2]] <- FALSE; a; }
