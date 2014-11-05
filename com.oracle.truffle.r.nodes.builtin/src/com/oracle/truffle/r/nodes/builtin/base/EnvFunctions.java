@@ -191,7 +191,9 @@ public class EnvFunctions {
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-            return REnvironment.frameToEnvironment(callerFrame.materialize());
+            MaterializedFrame matFrame = callerFrame.materialize();
+            RPromise.deoptimizeFrame(matFrame);
+            return REnvironment.frameToEnvironment(matFrame);
         }
 
         /**
