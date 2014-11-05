@@ -73,33 +73,32 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return semantics.isNullInt();
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isNullInt")
-    protected int doInt(RNull operand, byte naRm) {
+    private void emptyWarning() {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isNullInt")
+    protected int doInt(RNull operand, byte naRm) {
+        emptyWarning();
         return semantics.getIntStart();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isNullInt")
     protected double doDouble(RNull operand, byte naRm) {
-        if (semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
-        }
+        emptyWarning();
         return semantics.getDoubleStart();
     }
 
     @Specialization
     protected int doInt(int operand, byte naRm) {
-        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(operand);
-        if (profiledNaRm) {
+        if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
             if (na.check(operand)) {
-                if (semantics.getEmptyWarning() != null) {
-                    RError.warning(semantics.emptyWarning);
-                }
+                emptyWarning();
                 return semantics.getIntStart();
             } else {
                 return operand;
@@ -111,13 +110,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected double doDouble(double operand, byte naRm) {
-        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(operand);
-        if (profiledNaRm) {
+        if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
             if (na.check(operand)) {
-                if (semantics.getEmptyWarning() != null) {
-                    RError.warning(semantics.emptyWarning);
-                }
+                emptyWarning();
                 return semantics.getIntStart();
             } else {
                 return operand;
@@ -129,13 +125,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Specialization
     protected int doLogical(byte operand, byte naRm) {
-        boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(operand);
-        if (profiledNaRm) {
+        if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
             if (na.check(operand)) {
-                if (semantics.getEmptyWarning() != null) {
-                    RError.warning(semantics.emptyWarning);
-                }
+                emptyWarning();
                 return semantics.getIntStart();
             } else {
                 return operand;
@@ -148,13 +141,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization
     protected RComplex doComplex(RComplex operand, byte naRm) {
         if (semantics.supportComplex) {
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             na.enable(operand);
-            if (profiledNaRm) {
+            if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(operand)) {
-                    if (semantics.getEmptyWarning() != null) {
-                        RError.warning(semantics.emptyWarning);
-                    }
+                    emptyWarning();
                     return RRuntime.double2complex(semantics.getDoubleStart());
                 } else {
                     return operand;
@@ -170,13 +160,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization
     protected String doString(String operand, byte naRm) {
         if (semantics.supportString) {
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             na.enable(operand);
-            if (profiledNaRm) {
+            if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(operand)) {
-                    if (semantics.getEmptyWarning() != null) {
-                        RError.warning(semantics.emptyWarning);
-                    }
+                    emptyWarning();
                     return semantics.getStringStart();
                 } else {
                     return operand;

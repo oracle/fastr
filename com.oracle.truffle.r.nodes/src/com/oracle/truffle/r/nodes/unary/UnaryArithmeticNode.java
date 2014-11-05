@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -36,56 +37,41 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     private final UnaryArithmetic arithmetic;
 
+    private final NAProfile naProfile = NAProfile.create();
     private final NACheck na = NACheck.create();
 
-    public UnaryArithmeticNode(UnaryArithmeticFactory factory) {
+    private final Message error;
+
+    public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error) {
         this.arithmetic = factory.create();
+        this.error = error;
     }
 
     public UnaryArithmeticNode(UnaryArithmeticNode prev) {
         this.arithmetic = prev.arithmetic;
+        this.error = prev.error;
     }
 
     public abstract Object execute(VirtualFrame frame, Object operand);
 
-    @Specialization(guards = "!isNA")
+    @Specialization
     protected int doInt(int operand) {
-        return arithmetic.op(operand);
+        return naProfile.isNA(operand) ? RRuntime.INT_NA : arithmetic.op(operand);
     }
 
-    @Specialization(guards = "isNA")
-    protected int doIntNA(@SuppressWarnings("unused") int operand) {
-        return RRuntime.INT_NA;
-    }
-
-    @Specialization(guards = "!isNA")
+    @Specialization
     protected double doDouble(double operand) {
-        return arithmetic.op(operand);
+        return naProfile.isNA(operand) ? RRuntime.DOUBLE_NA : arithmetic.op(operand);
     }
 
-    @Specialization(guards = "isNA")
-    protected double doDoubleNA(@SuppressWarnings("unused") double operand) {
-        return RRuntime.DOUBLE_NA;
-    }
-
-    @Specialization(guards = "!isNA")
+    @Specialization
     protected RComplex doComplex(RComplex operand) {
-        return arithmetic.op(operand.getRealPart(), operand.getImaginaryPart());
+        return naProfile.isNA(operand) ? RRuntime.createComplexNA() : arithmetic.op(operand.getRealPart(), operand.getImaginaryPart());
     }
 
-    @Specialization(guards = "isNA")
-    protected RComplex doComplexNA(@SuppressWarnings("unused") RComplex operand) {
-        return RRuntime.createComplexNA();
-    }
-
-    @Specialization(guards = "!isNA")
+    @Specialization
     protected int doLogical(byte operand) {
-        return arithmetic.op(operand);
-    }
-
-    @Specialization(guards = "isNA")
-    protected int doLogicalNA(@SuppressWarnings("unused") byte operand) {
-        return RRuntime.INT_NA;
+        return naProfile.isNA(operand) ? RRuntime.INT_NA : arithmetic.op(operand);
     }
 
     @TruffleBoundary
@@ -188,14 +174,9 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return doIntVectorNA(RClosures.createLogicalToIntVector(operands, na));
     }
 
-    @Specialization
-    protected Object doStringVector(@SuppressWarnings("unused") RAbstractStringVector operands) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
-    }
-
-    @Specialization
-    protected Object doRawVector(@SuppressWarnings("unused") RAbstractRawVector operands) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
+    @Fallback
+    protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), error);
     }
 
     protected static boolean isComplete(RAbstractVector cv) {
