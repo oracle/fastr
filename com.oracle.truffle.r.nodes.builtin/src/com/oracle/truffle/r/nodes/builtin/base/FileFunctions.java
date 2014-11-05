@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FileFunctions {
 
@@ -485,6 +486,33 @@ public class FileFunctions {
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
             return doXyzName(vec, basePathFunction);
+        }
+    }
+
+    @RBuiltin(name = "dir.create", kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
+    public abstract static class DirCreate extends RInvisibleBuiltinNode {
+        @TruffleBoundary
+        @Specialization
+        protected byte dirCreate(RAbstractStringVector pathVec, byte showWarnings, byte recursive, RIntVector octMode) {
+            controlVisibility();
+            boolean ok = true;
+            if (pathVec.getLength() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
+            }
+            String path = Utils.tildeExpand(pathVec.getDataAt(0));
+            if (RRuntime.fromLogical(recursive)) {
+                throw RError.nyi(getEncapsulatingSourceSection(), "recursive create");
+            } else {
+                try {
+                    RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, octMode.getDataAt(0));
+                } catch (IOException ex) {
+                    if (RRuntime.fromLogical(showWarnings)) {
+                        RContext.getInstance().setEvalWarning("cannot create dir '" + pathVec.getDataAt(0) + "'");
+                    }
+                    ok = false;
+                }
+            }
+            return RRuntime.asLogical(ok);
         }
     }
 }
