@@ -27,13 +27,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
-//@PolymorphicLimit(1)
 public abstract class ConvertInt extends UnaryNode {
-
-    @Override
-    public abstract int executeInteger(VirtualFrame frame);
-
-    public abstract Object execute(VirtualFrame frame, Object operand);
 
     public abstract int executeInteger(VirtualFrame frame, Object operand);
 
