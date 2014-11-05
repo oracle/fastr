@@ -90,7 +90,7 @@ public abstract class Inherits extends RBuiltinNode {
     @TruffleBoundary
     // map operations lead to recursion resulting in compilation failure
     private static Object doDoesInherit(RStringVector classHr, RAbstractStringVector what) {
-        Map<String, Integer> classToPos = InheritsNode.initClassToPos(classHr);
+        HashMap<String, Integer> classToPos = InheritsNode.initClassToPos(classHr);
         int[] result = new int[what.getLength()];
         for (int i = 0; i < what.getLength(); ++i) {
             final Integer pos = classToPos.get(what.getDataAt(i));
