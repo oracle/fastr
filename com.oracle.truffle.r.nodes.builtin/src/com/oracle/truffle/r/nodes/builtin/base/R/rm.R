@@ -1,4 +1,4 @@
-#  File src/library/base/R/is.R
+#  File src/library/base/R/rm.R
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
@@ -16,15 +16,22 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-is.vector <- function(x, mode="any") .Internal(is.vector(x,mode))
+rm <-
+    function (..., list = character(), pos = -1, envir = as.environment(pos),
+              inherits = FALSE)
+{
+	# TODO fix match.call	
+#    dots <- match.call(expand.dots=FALSE)$...
+	dots <- list(...)
+    if(length(dots) &&
+       !all(sapply(dots, function(x) is.symbol(x) || is.character(x))))
+       stop("... must contain names or character strings")
+    names <- sapply(dots, as.character)
+    if (length(names) == 0L) names <- character()
+	# TODO add support for .Primitive
+#    list <- .Primitive("c")(list, names)
+	list <- c(list, names)
+    .Internal(remove(list, envir, inherits))
+}
 
-#`is.na<-` <- function(x, value) UseMethod("is.na<-")
-#
-#`is.na<-.default` <- function(x, value)
-#{
-#    x[value] <- NA
-#    x
-#}
-
-is.primitive <- function(x)
-    switch(typeof(x), "special" = , "builtin" = TRUE, FALSE)
+remove <- rm

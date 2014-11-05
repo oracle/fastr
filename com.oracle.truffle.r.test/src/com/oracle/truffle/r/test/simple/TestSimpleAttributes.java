@@ -77,10 +77,6 @@ public class TestSimpleAttributes extends TestBase {
     }
 
     @Test
-    public void testCastsIgnore() {
-    }
-
-    @Test
     public void testArrayPropagation() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; x[c(1,1)] }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; x[\"a\"] <- 2 ; x }");
@@ -133,6 +129,9 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- c(1,2) ; dim(x)<-c(1,2); attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
         assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
+
+        assertEval("{ a <- c(1,2,3,4); attr(a, \"x\") <- \"attrib\"; dim(a) <- c(2,2); a }");
+        assertEval("{ a <- c(1,2,3,4); attr(a, \"x\") <- \"attrib\"; dim(a) <- NULL; a }");
     }
 
     @Test

@@ -1,4 +1,4 @@
-#  File src/library/base/R/is.R
+#  File src/library/base/R/unname.R
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
@@ -16,15 +16,11 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-is.vector <- function(x, mode="any") .Internal(is.vector(x,mode))
-
-#`is.na<-` <- function(x, value) UseMethod("is.na<-")
-#
-#`is.na<-.default` <- function(x, value)
-#{
-#    x[value] <- NA
-#    x
-#}
-
-is.primitive <- function(x)
-    switch(typeof(x), "special" = , "builtin" = TRUE, FALSE)
+unname <- function (obj, force = FALSE)
+{
+    if (!is.null(names(obj)))
+        names(obj) <- NULL
+    if (!is.null(dimnames(obj)) && (force || !is.data.frame(obj)))
+        dimnames(obj) <- NULL
+    obj
+}

@@ -3999,6 +3999,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_bdbce9dc51ead906ffe3abd5d3c92918() {
+        assertEval("{ a <- c(1,2,3,4); attr(a, \"x\") <- \"attrib\"; dim(a) <- c(2,2); a }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_fc7ec3d913ed7cc4163fe6821cb8b39a() {
+        assertEval("{ a <- c(1,2,3,4); attr(a, \"x\") <- \"attrib\"; dim(a) <- NULL; a }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_df9b3724960b222fffd20b6a1ef94ed5() {
         assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
     }
@@ -13334,6 +13344,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSimpleRm_8662a5030633d2cb14450cd771888e2b() {
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSimpleRm_9f23e805abd852e0d37f62b2941a1ed5() {
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSimpleRm_638fe08c6d320c8475e37234929ca562() {
         assertEvalWarning("{ rm(\"ieps\") }");
     }
@@ -19361,6 +19381,36 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testFieldAccess_844d753a53a599ab792b7c02eccfc524() {
         assertEval("{ f <- function(v) { v$x } ; f(list(xa=1, xb=2, hello=3)) ; l <- list(y=2,x=3) ; f(l) ; l[[2]] <- 4 ; f(l) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_c4d56667f58ee4170ef99e31cc81ca13() {
+        assertEval("{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.1 }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_b636b36007783ed1d56ac9a7b512d721() {
+        assertEval("{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.2 }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_a81bb4b69ece4ce2f037203158ffb0eb() {
+        assertEval("{ x<-list(list(a=7), NULL); x[[1]]$a<-42; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_62c26169224b454b2b2ec33711c551e7() {
+        assertEval("{ x<-list(a=list(b=7)); x$a$b<-42; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_da61b86eadc3490615eccc8f5a79e0c4() {
+        assertEval("{ x<-list(a=list(b=7)); x[[\"a\"]]$b<-42; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_187f49c0f59c0658dd2b0298c277c0c2() {
+        assertEval("{ x<-list(a=list(b=7)); x$a[[\"b\"]]<-42; x }");
     }
 
     @Test
