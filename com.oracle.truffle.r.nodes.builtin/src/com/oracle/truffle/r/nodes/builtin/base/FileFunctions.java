@@ -501,18 +501,38 @@ public class FileFunctions {
             }
             String path = Utils.tildeExpand(pathVec.getDataAt(0));
             if (RRuntime.fromLogical(recursive)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "recursive create");
-            } else {
-                try {
-                    RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, octMode.getDataAt(0));
-                } catch (IOException ex) {
-                    if (RRuntime.fromLogical(showWarnings)) {
-                        RContext.getInstance().setEvalWarning("cannot create dir '" + pathVec.getDataAt(0) + "'");
-                    }
-                    ok = false;
-                }
+                ok = mkparentdirs(new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode.getDataAt(0));
+            }
+            if (ok) {
+                ok = mkdir(path, showWarnings, octMode.getDataAt(0));
             }
             return RRuntime.asLogical(ok);
+        }
+
+        protected boolean mkparentdirs(File file, byte showWarnings, int mode) {
+            if (file.isDirectory()) {
+                return true;
+            }
+            if (file.exists()) {
+                return false;
+            }
+            if (mkparentdirs(file.getParentFile(), showWarnings, mode)) {
+                return mkdir(file.getAbsolutePath(), showWarnings, mode);
+            } else {
+                return false;
+            }
+        }
+
+        protected boolean mkdir(String path, byte showWarnings, int mode) {
+            try {
+                RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, mode);
+                return true;
+            } catch (IOException ex) {
+                if (RRuntime.fromLogical(showWarnings)) {
+                    RContext.getInstance().setEvalWarning("cannot create dir '" + path + "'");
+                }
+                return false;
+            }
         }
     }
 }
