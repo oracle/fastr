@@ -1407,6 +1407,14 @@ complex(0)
 #{ -c((1+0i)/0,2) }
 [1] NaN+NaNi  -2+  0i
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusDimensions
+#{ xx <- double(0); dim(xx) <- c(0,0); dim(-xx) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusDimensions
+#{ xx <- double(1); dim(xx) <- c(1,1); dim(-xx) }
+[1] 1 1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusErrors
 #{ f <- function(z) { -z } ; f(1:3) ; f("hello") }
 Error in -z : invalid argument to unary operator
@@ -1434,6 +1442,14 @@ Error in -z : invalid argument to unary operator
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNot
 #{ !TRUE }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotDimensions
+#{ xx <- double(0); dim(xx) <- c(0,0); dim(!xx) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotDimensions
+#{ xx <- double(1); dim(xx) <- c(1,1); dim(!xx) }
+[1] 1 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotError
 #{ l <- c("hello", "hi") ; !l }

@@ -1734,6 +1734,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testUnaryMinusDimensions_82d8cc2dfa20802f3af03d30533599c1() {
+        assertEval("{ xx <- double(0); dim(xx) <- c(0,0); dim(-xx) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testUnaryMinusDimensions_1c0bc1dd2399b5dd2298ffe8d8da94c2() {
+        assertEval("{ xx <- double(1); dim(xx) <- c(1,1); dim(-xx) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testUnaryMinusErrors_c1f5e118009944a5b67f947745697a4a() {
         assertEvalError("{ z <- \"hello\" ; -z }");
     }
@@ -1766,6 +1776,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testUnaryNot_b79c4e77d1ff433f864e22550d675120() {
         assertEval("{ !NA }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testUnaryNotDimensions_c06858978ee19736bc28f17e7c3acf08() {
+        assertEval("{ xx <- double(0); dim(xx) <- c(0,0); dim(!xx) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testUnaryNotDimensions_e16c9de9476e28643ba613022602d2a6() {
+        assertEval("{ xx <- double(1); dim(xx) <- c(1,1); dim(!xx) }");
     }
 
     @Test

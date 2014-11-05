@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,156 +34,140 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class UnaryNotNode extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
+    private final NAProfile naProfile = NAProfile.create();
+    private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
-    @Specialization
-    protected byte doLogical(byte operand) {
-        na.enable(operand);
-        if (na.check(operand)) {
-            return RRuntime.LOGICAL_NA;
-        }
-        return not(operand);
+    private static byte not(byte value) {
+        return (value == RRuntime.LOGICAL_TRUE ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization
-    protected byte doInt(int operand) {
-        na.enable(operand);
-        if (na.check(operand)) {
-            return RRuntime.LOGICAL_NA;
-        }
+    private static byte not(int operand) {
         return RRuntime.asLogical(operand == 0);
     }
 
-    @Specialization
-    protected byte doDouble(double operand) {
-        na.enable(operand);
-        if (na.check(operand)) {
-            return RRuntime.LOGICAL_NA;
-        }
+    private static byte not(double operand) {
         return RRuntime.asLogical(operand == 0);
     }
 
-    @Specialization
-    protected RRaw doRaw(RRaw operand) {
-        return RDataFactory.createRaw(performRaw(operand));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doNull(RNull operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
-    }
-
-    private static byte performRaw(RRaw operand) {
+    private static byte notRaw(RRaw operand) {
         return (byte) (255 - operand.getValue());
     }
 
     @Specialization
-    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RFunction operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
-    }
-
-    @Specialization(guards = "isZeroLength")
-    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RAbstractVector vector) {
-        return RDataFactory.createEmptyLogicalVector();
+    protected byte doLogical(byte operand) {
+        return naProfile.isNA(operand) ? RRuntime.LOGICAL_NA : not(operand);
     }
 
     @Specialization
-    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RAbstractStringVector vector) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+    protected byte doInt(int operand) {
+        return naProfile.isNA(operand) ? RRuntime.LOGICAL_NA : not(operand);
     }
 
     @Specialization
-    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RList list) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+    protected byte doDouble(double operand) {
+        return naProfile.isNA(operand) ? RRuntime.LOGICAL_NA : not(operand);
     }
 
-    @Specialization(guards = "!isZeroLength")
+    @Specialization
+    protected RRaw doRaw(RRaw operand) {
+        return RDataFactory.createRaw(notRaw(operand));
+    }
+
+    @Specialization
     protected RLogicalVector doLogicalVector(RLogicalVector vector) {
-        return performLogicalVectorNot(vector);
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RLogicalVector doIntVector(RIntVector vector) {
-        return performAbstractIntVectorNot(vector);
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RLogicalVector doDoubleVector(RDoubleVector vector) {
-        return performAbstractDoubleVectorNot(vector);
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RLogicalVector doIntSequence(RIntSequence vector) {
-        return performAbstractIntVectorNot(vector);
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RLogicalVector doDoubleSequence(RDoubleSequence vector) {
-        return performAbstractDoubleVectorNot(vector);
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RRawVector doRawVector(RRawVector vector) {
-        return performRawVectorNot(vector);
-    }
-
-    private RLogicalVector performLogicalVectorNot(RLogicalVector vector) {
-        na.enable(vector);
         int length = vector.getLength();
-        byte[] result = new byte[length];
-        for (int i = 0; i < length; ++i) {
-            byte value = vector.getDataAt(i);
-            result[i] = doLogical(value);
+        byte[] result;
+        if (zeroLengthProfile.profile(length == 0)) {
+            result = RDataFactory.EMPTY_LOGICAL_ARRAY;
+        } else {
+            na.enable(vector);
+            result = new byte[length];
+            for (int i = 0; i < length; ++i) {
+                byte value = vector.getDataAt(i);
+                result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
+            }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
         resultVector.copyAttributesFrom(vector);
         return resultVector;
     }
 
-    private RLogicalVector performAbstractIntVectorNot(RAbstractIntVector vector) {
-        na.enable(vector);
+    @Specialization
+    protected RLogicalVector doIntVector(RAbstractIntVector vector) {
         int length = vector.getLength();
-        byte[] result = new byte[length];
-        for (int i = 0; i < length; ++i) {
-            int value = vector.getDataAt(i);
-            result[i] = doInt(value);
+        byte[] result;
+        if (zeroLengthProfile.profile(length == 0)) {
+            result = RDataFactory.EMPTY_LOGICAL_ARRAY;
+        } else {
+            na.enable(vector);
+            result = new byte[length];
+            for (int i = 0; i < length; ++i) {
+                int value = vector.getDataAt(i);
+                result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
+            }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
         resultVector.copyNamesDimsDimNamesFrom(vector, getSourceSection());
         return resultVector;
     }
 
-    private RLogicalVector performAbstractDoubleVectorNot(RAbstractDoubleVector vector) {
-        na.enable(vector);
+    @Specialization
+    protected RLogicalVector doDoubleVector(RAbstractDoubleVector vector) {
         int length = vector.getLength();
-        byte[] result = new byte[length];
-        for (int i = 0; i < length; ++i) {
-            double value = vector.getDataAt(i);
-            result[i] = doDouble(value);
+        byte[] result;
+        if (zeroLengthProfile.profile(length == 0)) {
+            result = RDataFactory.EMPTY_LOGICAL_ARRAY;
+        } else {
+            na.enable(vector);
+            result = new byte[length];
+            for (int i = 0; i < length; ++i) {
+                double value = vector.getDataAt(i);
+                result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
+            }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesFrom(vector);
+        resultVector.copyNamesDimsDimNamesFrom(vector, getSourceSection());
         return resultVector;
     }
 
-    private RRawVector performRawVectorNot(RRawVector vector) {
-        na.enable(vector);
+    @Specialization
+    protected RRawVector doRawVector(RRawVector vector) {
         int length = vector.getLength();
-        byte[] result = new byte[length];
-        for (int i = 0; i < length; ++i) {
-            RRaw value = vector.getDataAt(i);
-            result[i] = performRaw(value);
+        byte[] result;
+        if (zeroLengthProfile.profile(length == 0)) {
+            result = RDataFactory.EMPTY_RAW_ARRAY;
+        } else {
+            result = new byte[length];
+            for (int i = 0; i < length; ++i) {
+                result[i] = notRaw(vector.getDataAt(i));
+            }
         }
         RRawVector resultVector = RDataFactory.createRawVector(result);
         resultVector.copyAttributesFrom(vector);
         return resultVector;
     }
 
-    private static byte not(byte value) {
-        return (value == RRuntime.LOGICAL_TRUE ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"isZeroLength"})
+    protected RLogicalVector doStringVector(@SuppressWarnings("unused") RAbstractStringVector vector) {
+        return RDataFactory.createEmptyLogicalVector();
+    }
+
+    @Specialization(guards = {"isZeroLength"})
+    protected RLogicalVector doComplexVector(@SuppressWarnings("unused") RAbstractComplexVector vector) {
+        return RDataFactory.createEmptyLogicalVector();
+    }
+
+    @Specialization(guards = {"isZeroLength"})
+    protected RLogicalVector doList(@SuppressWarnings("unused") RList list) {
+        return RDataFactory.createEmptyLogicalVector();
     }
 
     protected boolean isZeroLength(RAbstractVector vector) {
         return vector.getLength() == 0;
+    }
+
+    @Fallback
+    protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 }
