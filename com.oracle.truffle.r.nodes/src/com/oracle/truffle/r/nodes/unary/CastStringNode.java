@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastNode {
 
-    @Child private ToStringNode toString = ToStringNodeFactory.create(null);
+    @Child private ToStringNode toString = ToStringNodeFactory.create(null, false, ToStringNode.DEFAULT_SEPARATOR, false);
 
     public abstract Object executeString(VirtualFrame frame, int o);
 
@@ -41,10 +41,6 @@ public abstract class CastStringNode extends CastNode {
     public abstract Object executeString(VirtualFrame frame, Object o);
 
     public abstract boolean isEmptyVectorConvertedToNull();
-
-    public CastStringNode() {
-        toString.setQuotes(false);
-    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
