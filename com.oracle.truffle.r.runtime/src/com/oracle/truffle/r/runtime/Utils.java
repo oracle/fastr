@@ -273,16 +273,16 @@ public final class Utils {
      * {@code FunctionDefinitionNode.substituteFrame}.
      */
     @SlowPath
-    public static VirtualFrame getActualCurrentFrame(FrameAccess frameAccess) {
+    public static Frame getActualCurrentFrame(FrameAccess frameAccess) {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         if (frameInstance == null) {
             // Might be the case during initialization, when envs are prepared before the actual
             // Truffle/R system has started
             return null;
         }
-        VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(frameAccess, true);
+        Frame frame = frameInstance.getFrame(frameAccess, true);
         if (isSubstitutedFrame(frame)) {
-            frame = (VirtualFrame) frame.getArguments()[0];
+            frame = (Frame) frame.getArguments()[0];
         }
         return frame;
     }

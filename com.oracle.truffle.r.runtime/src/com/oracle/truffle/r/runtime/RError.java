@@ -140,7 +140,7 @@ public final class RError extends RuntimeException {
                 errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                VirtualFrame frame = Utils.getActualCurrentFrame(FrameAccess.MATERIALIZE);
+                Frame frame = Utils.getActualCurrentFrame(FrameAccess.MATERIALIZE);
                 if (errorExpr instanceof RLanguage) {
                     RContext.getEngine().eval((RLanguage) errorExpr, frame.materialize());
                 } else if (errorExpr instanceof RExpression) {
