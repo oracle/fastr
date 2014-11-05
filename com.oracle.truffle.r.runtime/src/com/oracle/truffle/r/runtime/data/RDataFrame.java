@@ -128,4 +128,13 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public RShareable materializeToShareable() {
         return this;
     }
+
+    public final int getElementIndexByName(String name) {
+        return vector.getElementIndexByName(name);
+    }
+
+    public final int getElementIndexByNameInexact(String name) {
+        return vector.getElementIndexByNameInexact(name);
+    }
+
 }

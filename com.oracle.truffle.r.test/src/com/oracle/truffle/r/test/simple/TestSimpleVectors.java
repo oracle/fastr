@@ -2026,6 +2026,16 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ a <- c(a=1,b=2); a$a; }");
         // make sure that coercion returns warning
         assertEvalWarning("{ a <- c(1,2); a$a = 3; a; }");
+
+        assertEval("{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.1 }");
+        assertEval("{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.2 }");
+
+        assertEval("{ x<-list(list(a=7), NULL); x[[1]]$a<-42; x }");
+
+        assertEval("{ x<-list(a=list(b=7)); x$a$b<-42; x }");
+        assertEval("{ x<-list(a=list(b=7)); x[[\"a\"]]$b<-42; x }");
+        assertEval("{ x<-list(a=list(b=7)); x$a[[\"b\"]]<-42; x }");
+
     }
 
     @Test
