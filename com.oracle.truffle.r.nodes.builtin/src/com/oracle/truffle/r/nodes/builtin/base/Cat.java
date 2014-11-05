@@ -51,31 +51,19 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     @Child private ToStringNode toString;
 
     @CompilationFinal private String currentSep;
+    @CompilationFinal private boolean sepContainsNewline;
 
     private void ensureToString(String sep) {
         if (toString == null || !sep.equals(currentSep)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             toString = insert(ToStringNodeFactory.create(null, false, sep, false));
+            sepContainsNewline = sep.contains("\n");
             currentSep = sep;
         }
     }
 
     @Specialization
-    protected Object cat(RNull arg, String file, String sep, byte fill, Object labels, byte append) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
     protected RNull cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull cat(VirtualFrame frame, RAbstractVector arg, String file, String sep, byte fill, Object labels, byte append) {
-        ensureToString(sep);
-        catIntl(toString.executeString(frame, arg));
         controlVisibility();
         return RNull.instance;
     }
@@ -85,27 +73,26 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         ensureToString(sep);
         Object[] argValues = args.getValues();
         for (int i = 0; i < argValues.length; ++i) {
+            if (i > 0) {
+                catIntl(sep);
+            }
             catIntl(toString.executeString(frame, argValues[i]));
-            catSep(sep, argValues, i);
+        }
+        if (sepContainsNewline && argValues.length > 0) {
+            catIntl("\n");
         }
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "isNull")
-    protected RNull catNull(VirtualFrame frame, RArgsValuesAndNames args, String file, String sep, byte fill, Object labels, byte append) {
+    protected RNull catNull(RArgsValuesAndNames args, String file, String sep, byte fill, Object labels, byte append) {
         controlVisibility();
         return RNull.instance;
     }
 
     protected boolean isNull(RArgsValuesAndNames args) {
         return args.length() == 1 && args.getValues()[0] == RNull.instance;
-    }
-
-    private static void catSep(String sep, Object[] os, int j) {
-        if (j < os.length - 1 || sep.indexOf('\n') != -1) {
-            catIntl(sep);
-        }
     }
 
     @TruffleBoundary

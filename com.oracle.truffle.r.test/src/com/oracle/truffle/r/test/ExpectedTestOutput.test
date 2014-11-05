@@ -6106,6 +6106,12 @@ hi 1 2 3 hello
 #{ cat("hi",1[2],"hello",sep="-") }
 hi-NA-hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat("hi",1[2],"hello",sep="-\n") }
+hi-
+NA-
+hello
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat() }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
@@ -6114,6 +6120,10 @@ hi-NA-hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(1, "a") }
 1 a
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat(1, sep="\n") }
+1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(1,2,3) }
 1 2 3
@@ -6172,6 +6182,21 @@ hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }
 1 2 3 4 5 6
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-")}; f("a") }
+a
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-")}; f("a", "b") }
+a-b
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-\n")}; f("a") }
+a
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-\n")}; f("a", "b") }
+a-
+b
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
 #{ cbind() }
 NULL

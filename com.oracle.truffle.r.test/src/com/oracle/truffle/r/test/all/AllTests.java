@@ -5704,6 +5704,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_5cd9f21c97025b5427f8244d0c0e0ffc() {
+        assertEvalNoNL("{ cat(1, sep=\"\\n\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_f48953c23109705840adb64bc147151b() {
         assertEvalNoNL("{ cat(1,2,3) }");
     }
@@ -5809,6 +5814,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_91de7df676b06ad665ce3584e334842c() {
+        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_1dcd33ce696ea60d54dd157e9d0dd76f() {
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
     }
@@ -5831,6 +5841,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCatIgnore_4949a7df83738286ea025e86159c9cdc() {
         assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_ff51d78a6902080ce5f8721aa9bd9932() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_a217c0f15c1bc137c95929aaed1c51f2() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_ca16199a5bf10ef8a2fccd05debcaf73() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_782dd61fabc4402b2636903c37f05fe6() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
     @Test
