@@ -3999,6 +3999,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_bdbce9dc51ead906ffe3abd5d3c92918() {
+        assertEval("{ a <- c(1,2,3,4); attr(a, \"x\") <- \"attrib\"; dim(a) <- c(2,2); a }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_fc7ec3d913ed7cc4163fe6821cb8b39a() {
+        assertEval("{ a <- c(1,2,3,4); attr(a, \"x\") <- \"attrib\"; dim(a) <- NULL; a }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_df9b3724960b222fffd20b6a1ef94ed5() {
         assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
     }
