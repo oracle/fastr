@@ -3131,6 +3131,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
     }
 
     @Test
