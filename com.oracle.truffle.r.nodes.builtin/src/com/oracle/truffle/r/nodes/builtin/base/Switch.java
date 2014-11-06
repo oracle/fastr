@@ -11,11 +11,14 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -27,6 +30,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."})
 public abstract class Switch extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
+
+    private final BranchProfile suppliedArgNameIsNull = BranchProfile.create();
+    private final ConditionProfile currentDefaultValueProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile returnValueProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile notIntType = BranchProfile.create();
 
     private boolean isVisible = true;
 
@@ -40,28 +48,29 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
+    @TruffleBoundary
     protected Object doSwitch(RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         Object[] optionalArgValues = optionalArgs.getValues();
         Object currentDefaultValue = null;
         final String xStr = x.getDataAt(0);
-        final String[] argNames = this.getSuppliedArgsNames();
-        for (int i = 1; i < argNames.length; ++i) {
-            final String argName = argNames[i];
-            final Object value = optionalArgValues[i - 1];
-            if (xStr.equals(argName)) {
-                if (value != null) {
-                    return returnNonNull(value);
-                }
+        final String[] suppliedArgsNames = this.getSuppliedArgsNames();
+        for (int i = 1; i < suppliedArgsNames.length; ++i) {
+            final String suppliedArgName = suppliedArgsNames[i];
+            final Object optionalArgValue = optionalArgValues[i - 1];
+            if (xStr.equals(suppliedArgName) && optionalArgValue != null) {
+                return returnNonNull(optionalArgValue);
             }
-            if (argName == null) {
-                if (currentDefaultValue != null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, currentDefaultValue.toString(), value.toString());
+            if (suppliedArgName == null) {
+                suppliedArgNameIsNull.enter();
+                if (currentDefaultValueProfile.profile(currentDefaultValue != null)) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, currentDefaultValue.toString(), optionalArgValue.toString());
+                } else {
+                    currentDefaultValue = optionalArgValue;
                 }
-                currentDefaultValue = value;
             }
         }
-        if (currentDefaultValue != null) {
+        if (returnValueProfile.profile(currentDefaultValue != null)) {
             return returnNonNull(currentDefaultValue);
         } else {
             return returnNull();
@@ -81,18 +90,20 @@ public abstract class Switch extends RBuiltinNode {
         }
         Object objIndex = castIntNode.executeCast(frame, x);
         if (!(objIndex instanceof Integer)) {
+            notIntType.enter();
             return returnNull();
         }
-        int index = (Integer) objIndex;
-        return doSwitchInt(index, optionalArgs);
+        return doSwitchInt((int) objIndex, optionalArgs);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object doSwitch(RMissing x, RMissing optionalArgs) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }
 
+    @TruffleBoundary
     private Object doSwitchInt(int index, RArgsValuesAndNames optionalArgs) {
         Object[] optionalArgValues = optionalArgs.getValues();
         if (index >= 1 && index <= optionalArgValues.length) {
@@ -110,14 +121,17 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     private Object returnNull() {
-        this.isVisible = false;
-        controlVisibility();
+        switchVisibilityTo(false);
         return RNull.instance;
     }
 
     private Object returnNonNull(Object value) {
-        this.isVisible = true;
-        controlVisibility();
+        switchVisibilityTo(true);
         return value;
+    }
+
+    private void switchVisibilityTo(boolean isVisibleArg) {
+        this.isVisible = isVisibleArg;
+        controlVisibility();
     }
 }

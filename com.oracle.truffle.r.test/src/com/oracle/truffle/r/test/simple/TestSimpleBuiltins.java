@@ -20,9 +20,22 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testScan() {
+        // from scan's documentation
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1) }");
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, nlines = 1) }");
+        assertEvalWarning("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, what = list(\"\",\"\",\"\")) }");
+        assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, what = list(\"\",\"\",\"\"), flush=TRUE) }");
+
         assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1) }");
         assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, quiet=TRUE) }");
         assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, skip = 1, nlines = 1) }");
+        assertEvalWarning("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\")) }");
+
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), fill=TRUE) }");
+        assertEvalError("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), multi.line=FALSE) }");
+        assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), fill=TRUE, multi.line=FALSE) }");
+
     }
 
     @Test
@@ -172,7 +185,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.character(-3:3),seq(1L,7L,3L),c(\"A\",\"a\",\"XX\")) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; f(1:8, seq(1L,7L,3L), c(10,100,1000)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; z <- f(1:8, seq(1L,7L,3L), list(10,100,1000)) ; sum(as.double(z)) }");
-
     }
 
     @Test
@@ -1839,7 +1851,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ assign(\"z\", 10, inherits=TRUE) ; z }");
 
         // top-level lookups
-        assertEval("{ exists(\"sum\") }");
         assertEval("{ exists(\"sum\", inherits = FALSE) }");
         assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
 
@@ -1857,6 +1868,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
         assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
 
+        // top-level lookups
+        assertEval("{ exists(\"sum\") }");
     }
 
     @Test
@@ -2002,30 +2015,64 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ t(t(matrix(1:4, nrow=2))) }");
     }
 
+    //@formatter:off
+    private static final String[] BASIC_TYPES = new String[]{
+        "call", "character", "complex", "double", "expression", "function", "integer", "list",
+        "logical", "name", "symbol", "null", "pairlist", "raw",
+    };
+
+    private static final String[] BASIC_TYPE_VALUES = new String[]{
+        "call(\"foo\")", "\"1\"", "1i", "1", "expression(x + 1)", "function() { }",
+        "1L", "list()", "TRUE", "quote(x)", "NULL", "pairlist()", "raw()"
+    };
+
+    //@formatter:on
+
     @Test
-    public void testTypeCheck() {
-        assertEval("{ is.double(10L) }");
-        assertEval("{ is.double(10) }");
-        assertEval("{ is.double(\"10\") }");
-        assertEval("{ is.numeric(10L) }");
-        assertEval("{ is.numeric(10) }");
-        assertEval("{ is.numeric(TRUE) }");
-        assertEval("{ is.character(\"hi\") }");
-        assertEval("{ is.logical(1L) }");
-        assertEval("{ is.integer(1) }");
-        assertEval("{ is.integer(1L) }");
-        assertEval("{ is.complex(1i) }");
-        assertEval("{ is.complex(1) }");
-        assertEval("{ is.raw(raw()) }");
-        assertEval("{ is.logical(NA) }");
-        assertEval("{ is.matrix(1) }");
-        assertEval("{ is.matrix(NULL) }");
-        assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
-        assertEval("{ is.array(1) }");
-        assertEval("{ is.array(NULL) }");
-        assertEval("{ is.array(matrix(1:6, nrow=2)) }");
-        assertEval("{ is.array(1:6) }");
-        assertEval("{ is.list(NULL) }");
+    public void testBasicTypes() {
+        // cross-product of all basic types and values
+        assertTemplateEval(template("is.%0(%1)", BASIC_TYPES, BASIC_TYPE_VALUES));
+    }
+
+    @Test
+    public void testArrayTypeCheck() {
+        assertTemplateEval(template("is.array(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.array(as.array(1)) }");
+    }
+
+    @Test
+    public void testAtomicTypeCheck() {
+        assertTemplateEval(template("is.atomic(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.atomic(integer()) }");
+    }
+
+    @Test
+    public void testDataFrameTypeCheck() {
+        assertTemplateEval(template("is.data.frame(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.data.frame(as.data.frame(1)) }");
+    }
+
+    @Test
+    public void testLanguageTypeCheck() {
+        assertTemplateEval(template("is.language(%0)", BASIC_TYPE_VALUES));
+    }
+
+    @Test
+    public void testMatrixTypeCheck() {
+        assertTemplateEval(template("is.matrix(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.matrix(as.matrix(1)) }");
+    }
+
+    @Test
+    public void testObjectTypeCheck() {
+        assertTemplateEval(template("is.object(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ e <- expression(x + 1); class(e) <- \"foo\"; is.object(e) }");
+    }
+
+    @Test
+    public void testNumericTypeCheck() {
+        assertTemplateEval(template("is.numeric(%0)", BASIC_TYPE_VALUES));
+        assertEval("{ is.numeric(1:6) }");
     }
 
     @Test
@@ -3084,6 +3131,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
     }
 
     @Test
@@ -3242,6 +3291,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
         assertEval("{ inherits(NULL, \"try-error\") }");
         assertEval("{ inherits(new.env(), \"try-error\") }");
+        assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
     }
 
     @Test
@@ -3819,7 +3869,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}");
         assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12);}");
         assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); print(schtyp.f);}");
+        // Checkstyle: stop line length check
         assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order); } ");
+        // Checkstyle: resume line length check
     }
 
     @Test

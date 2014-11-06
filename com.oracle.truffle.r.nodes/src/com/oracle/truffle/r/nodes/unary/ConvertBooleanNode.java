@@ -116,7 +116,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
     }
 
-    private final BranchProfile moreThanOneElem = new BranchProfile();
+    private final BranchProfile moreThanOneElem = BranchProfile.create();
 
     @Specialization(guards = "!isEmpty")
     protected byte doIntVector(RIntVector value) {

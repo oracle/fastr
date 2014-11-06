@@ -46,7 +46,7 @@ public abstract class Matrix extends RBuiltinNode {
     private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
     @NodeChild("argument")
-    protected static abstract class FirstIntNode extends RNode {
+    protected abstract static class FirstIntNode extends RNode {
 
         @Specialization
         protected int firstScalar(int argument) {

@@ -22,8 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -32,23 +31,24 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
-@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"name", "list", "pos", "envir", "inherits"})
-// TODO remove should be INTERNAL and rm is in R
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+
+@RBuiltin(name = "remove", kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
 public abstract class Rm extends RInvisibleBuiltinNode {
 
     public static Rm create(String name) {
         RNode[] args = getParameterValues0();
         args[0] = ConstantNode.create(name);
-        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("rm"), null);
+        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("remove"), null);
     }
 
     private static RNode[] getParameterValues0() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RDataFactory.createStringVector(0)), ConstantNode.create(-1), ConstantNode.create(RMissing.instance),
-                        ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
     @Override
@@ -56,46 +56,29 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         return getParameterValues0();
     }
 
-    private final BranchProfile invalidateProfile = new BranchProfile();
+    private final BranchProfile invalidateProfile = BranchProfile.create();
 
+    // this specialization is for internal use only
     @Specialization
     @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, String name, RMissing envir, byte inherits) {
         controlVisibility();
-        removeFromCurrentFrame(frame, name);
+        removeFromFrame(frame, name);
         return RNull.instance;
     }
 
     @Specialization
+    @TruffleBoundary
     @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
-        controlVisibility();
-        for (Object o : names) {
-            assert o instanceof String;
-            removeFromCurrentFrame(frame, (String) o);
-        }
-        return RNull.instance;
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected Object rm(String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(RAbstractStringVector list, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
-            envir.rm(name);
-        } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
-        }
-        return RNull.instance;
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected Object rm(Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
-        controlVisibility();
-        try {
-            for (Object o : names) {
-                envir.rm((String) (o));
+            for (int i = 0; i < list.getLength(); i++) {
+                if (envir == REnvironment.globalEnv()) {
+                    removeFromFrame(envir.getFrame(), list.getDataAt(i));
+                } else {
+                    envir.rm(list.getDataAt(i));
+                }
             }
         } catch (PutException ex) {
             throw RError.error(getEncapsulatingSourceSection(), ex);
@@ -103,7 +86,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         return RNull.instance;
     }
 
-    private void removeFromCurrentFrame(VirtualFrame frame, String x) {
+    private void removeFromFrame(Frame frame, String x) {
         // standard case for lookup in current frame
         Frame frm = frame;
         FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(x);

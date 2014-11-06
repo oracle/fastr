@@ -14,7 +14,7 @@ package com.oracle.truffle.r.runtime;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -150,7 +150,7 @@ public class RRuntime {
         return isNA(d) || Double.isNaN(d);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String classToString(Class<?> c, boolean numeric) {
         if (c == RLogical.class) {
             return RType.Logical.getName();
@@ -169,12 +169,12 @@ public class RRuntime {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String classToString(Class<?> c) {
         return classToString(c, true);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String classToStringCap(Class<?> c) {
         if (c == RLogical.class) {
             return "Logical";
@@ -263,31 +263,40 @@ public class RRuntime {
         return int2complex(raw2int(r));
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String rawToString(RRaw operand) {
         return intToString(raw2int(operand), false);
     }
 
     // conversions from string
 
-    @SlowPath
-    public static int string2intNoCheck(String s) {
+    @TruffleBoundary
+    public static int string2intNoCheck(String s, boolean exceptionOnFail) {
         // FIXME use R rules
         try {
             return Integer.decode(s);  // decode supports hex constants
         } catch (NumberFormatException e) {
-            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            if (exceptionOnFail) {
+                throw e;
+            } else {
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            }
         }
         return INT_NA;
     }
 
-    @SlowPath
+    @TruffleBoundary
+    public static int string2intNoCheck(String s) {
+        return string2intNoCheck(s, false);
+    }
+
+    @TruffleBoundary
     public static int string2int(String s) {
         return isNA(s) ? INT_NA : string2intNoCheck(s);
     }
 
-    @SlowPath
-    public static double string2doubleNoCheck(String v) {
+    @TruffleBoundary
+    public static double string2doubleNoCheck(String v, boolean exceptionOnFail) {
         // FIXME use R rules
         if ("Inf".equals(v)) {
             return Double.POSITIVE_INFINITY;
@@ -303,12 +312,21 @@ public class RRuntime {
                 } catch (NumberFormatException ein) {
                 }
             }
-            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            if (exceptionOnFail) {
+                throw e;
+            } else {
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+            }
         }
         return DOUBLE_NA;
     }
 
-    @SlowPath
+    @TruffleBoundary
+    public static double string2doubleNoCheck(String v) {
+        return string2doubleNoCheck(v, false);
+    }
+
+    @TruffleBoundary
     public static double string2double(String v) {
         if (isNA(v)) {
             return DOUBLE_NA;
@@ -317,7 +335,7 @@ public class RRuntime {
         }
     }
 
-    public static byte string2logicalNoCheck(String s) {
+    public static byte string2logicalNoCheck(String s, boolean exceptionOnFail) {
         switch (s) {
             case "TRUE":
             case "T":
@@ -330,16 +348,24 @@ public class RRuntime {
             case "false":
                 return LOGICAL_FALSE;
             default:
-                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+                if (exceptionOnFail) {
+                    throw new NumberFormatException();
+                } else {
+                    RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+                }
                 return LOGICAL_NA;
         }
+    }
+
+    public static byte string2logicalNoCheck(String s) {
+        return string2logicalNoCheck(s, false);
     }
 
     public static byte string2logical(String s) {
         return isNA(s) ? LOGICAL_NA : string2logicalNoCheck(s);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static RComplex string2complexNoCheck(String v) {
         double doubleValue = string2doubleNoCheck(v);
         if (!RRuntime.isNA(doubleValue)) {
@@ -369,12 +395,12 @@ public class RRuntime {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static RComplex string2complex(String v) {
         return isNA(v) ? createComplexNA() : string2complexNoCheck(v);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static RRaw string2raw(String v) {
         if (v.length() == 2 && (Utils.isIsoLatinDigit(v.charAt(0)) || Utils.isRomanLetter(v.charAt(0))) && (Utils.isIsoLatinDigit(v.charAt(1)) || Utils.isRomanLetter(v.charAt(1)))) {
             return RDataFactory.createRaw(Byte.parseByte(v, 16));
@@ -409,7 +435,7 @@ public class RRuntime {
         return isNA(i) ? createComplexNA() : int2complexNoCheck(i);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String intToStringNoCheck(int operand, boolean appendL) {
         return String.valueOf(operand) + (appendL ? "L" : "");
     }
@@ -452,12 +478,12 @@ public class RRuntime {
         return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String doubleToString(double operand, int digitsBehindDot) {
         return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand, digitsBehindDot);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
         if (doubleIsInt(operand)) {
             return String.valueOf((int) operand);
@@ -537,12 +563,12 @@ public class RRuntime {
         return isNA(c) ? LOGICAL_NA : complex2doubleNoCheck(c);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String complexToStringNoCheck(RComplex operand) {
         return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String complexToString(RComplex operand) {
         return isNA(operand) ? STRING_NA : complexToStringNoCheck(operand);
     }
@@ -569,7 +595,7 @@ public class RRuntime {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String toString(Object object) {
         if (object instanceof Integer) {
             int intValue = (int) object;
@@ -594,7 +620,7 @@ public class RRuntime {
         return object.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String toString(StringBuilder sb) {
         return sb.toString();
     }
@@ -645,7 +671,7 @@ public class RRuntime {
         return !isNA(value);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String quoteString(String value) {
         return isNA(value) ? STRING_NA : "\"" + value + "\"";
     }

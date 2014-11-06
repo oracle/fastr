@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -30,7 +30,7 @@ public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
 
-    protected final BranchProfile errorProfile = new BranchProfile();
+    protected final BranchProfile errorProfile = BranchProfile.create();
 
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
@@ -98,7 +98,7 @@ public abstract class Format extends RBuiltinNode {
     // TODO: handling of logical values has been derived from GNU R, with handling of other
     // types following suit at some point for compliance
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector convertToString(RAbstractLogicalVector value) {
         int width = formatLogical(value);
         String[] data = new String[value.getLength()];
@@ -146,7 +146,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector convertToString(RAbstractIntVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
@@ -205,7 +205,7 @@ public abstract class Format extends RBuiltinNode {
         return ret;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RStringVector convertToString(RAbstractDoubleVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
@@ -244,6 +244,14 @@ public abstract class Format extends RBuiltinNode {
         } else {
             return convertToString(value);
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!wrongArgs")
+    protected RStringVector format(VirtualFrame frame, RStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+        // TODO: implement full semantics
+        return value;
     }
 
     // TruffleDSL bug - should not need multiple guards here

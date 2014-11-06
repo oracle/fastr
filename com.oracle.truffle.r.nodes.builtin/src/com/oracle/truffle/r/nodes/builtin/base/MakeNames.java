@@ -24,9 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,11 +38,10 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow"})
+@RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow_"})
 public abstract class MakeNames extends RBuiltinNode {
 
-    private final BranchProfile empty = new BranchProfile();
-    private final BranchProfile nonEmpty = new BranchProfile();
+    private final ConditionProfile namesLengthZero = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
 
     @CreateCast({"arguments"})
@@ -49,7 +49,7 @@ public abstract class MakeNames extends RBuiltinNode {
         return new RNode[]{children[0], AllowUnderscoreConverterFactory.create(children[1])};
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String concat(String s1, String s2) {
         return s1 + s2;
     }
@@ -144,13 +144,11 @@ public abstract class MakeNames extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractStringVector makeNames(RAbstractStringVector names, byte allow_) {
-        if (names.getLength() == 0) {
-            empty.enter();
+    protected RAbstractStringVector makeNames(RAbstractStringVector names, byte allowUnderScoreArg) {
+        if (namesLengthZero.profile(names.getLength() == 0)) {
             return names;
         } else {
-            nonEmpty.enter();
-            boolean allowUnderscore = allow_ == RRuntime.LOGICAL_TRUE;
+            boolean allowUnderscore = allowUnderScoreArg == RRuntime.LOGICAL_TRUE;
             RStringVector newNames = null;
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
@@ -172,35 +170,39 @@ public abstract class MakeNames extends RBuiltinNode {
     }
 
     @Specialization(guards = "!wrongAllowUnderscore")
-    protected RAbstractStringVector makeNames(RAbstractStringVector names, RAbstractLogicalVector allow_) {
-        return makeNames(names, allow_.getDataAt(0));
+    protected RAbstractStringVector makeNames(RAbstractStringVector names, RAbstractLogicalVector allowUnderScoreArg) {
+        return makeNames(names, allowUnderScoreArg.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "wrongAllowUnderscore")
-    protected RAbstractStringVector makeNamesWrongUnderscoreEmpty(RAbstractStringVector names, RAbstractLogicalVector allow_) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "allow_");
+    protected RAbstractStringVector makeNamesWrongUnderscoreEmpty(RAbstractStringVector names, RAbstractLogicalVector allowUnderScoreArg) {
+        throw invalidAllowValue(getEncapsulatingSourceSection());
     }
 
-    protected boolean wrongAllowUnderscore(@SuppressWarnings("unused") Object names, RAbstractLogicalVector allow_) {
-        return allow_.getLength() == 0 || RRuntime.isNA(allow_.getDataAt(0));
+    protected boolean wrongAllowUnderscore(@SuppressWarnings("unused") Object names, RAbstractLogicalVector allowUnderScoreArg) {
+        return allowUnderScoreArg.getLength() == 0 || RRuntime.isNA(allowUnderScoreArg.getDataAt(0));
     }
 
-    @NodeChild("allow_")
+    @NodeChild("allowUnderScoreArg")
     protected abstract static class AllowUnderscoreConverter extends RNode {
 
         @Child private CastLogicalNode castLogical = CastLogicalNodeFactory.create(null, false, false, false);
         @Child private CastToVectorNode castVector = CastToVectorNodeFactory.create(null, false, false, false, false);
 
         @Specialization
-        protected RAbstractLogicalVector convert(VirtualFrame frame, Object allow_) {
+        protected RAbstractLogicalVector convert(VirtualFrame frame, Object allowUnderScoreArg) {
             try {
-                return (RLogicalVector) castLogical.executeCast(frame, castVector.executeCast(frame, allow_));
+                return (RLogicalVector) castLogical.executeCast(frame, castVector.executeCast(frame, allowUnderScoreArg));
             } catch (RError x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "allow_");
+                throw invalidAllowValue(getEncapsulatingSourceSection());
             }
         }
 
+    }
+
+    private static RError invalidAllowValue(SourceSection src) throws RError {
+        throw RError.error(src, RError.Message.INVALID_VALUE, "allow_");
     }
 
 }

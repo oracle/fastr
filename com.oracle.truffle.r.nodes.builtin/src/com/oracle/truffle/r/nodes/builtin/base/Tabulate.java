@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -18,6 +19,8 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 @RBuiltin(name = "tabulate", kind = RBuiltinKind.INTERNAL, parameterNames = {"bin", "nbins"})
 public abstract class Tabulate extends RBuiltinNode {
@@ -34,6 +37,7 @@ public abstract class Tabulate extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isValidNBin"})
+    @TruffleBoundary
     public RIntVector tabulate(RAbstractIntVector bin, int nBins) {
         controlVisibility();
         int[] ans = new int[nBins];
@@ -49,6 +53,7 @@ public abstract class Tabulate extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RIntVector tabulate(Object bin, int nBins) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT);
     }
 

@@ -50,7 +50,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
         this.frame = frame;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static LinkedHashMap<String, Object> newHashMap(int size) {
         return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
     }
@@ -69,7 +69,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     @Override
     public void put(String key, Object value) throws PutException {
         super.put(key, value);

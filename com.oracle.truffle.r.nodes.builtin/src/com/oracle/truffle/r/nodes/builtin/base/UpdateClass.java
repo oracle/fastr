@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -42,15 +43,21 @@ public abstract class UpdateClass extends RBuiltinNode {
         if (className.getLength() == 0) {
             return setClass(arg, RNull.instance);
         }
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
-        }
+        initCastStringNode();
         Object result = castStringNode.executeCast(frame, className);
         return setClass(arg, (RStringVector) result);
     }
 
+    @TruffleBoundary
+    private void initCastStringNode() {
+        if (castStringNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+        }
+    }
+
     @Specialization
+    @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
@@ -99,6 +106,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
@@ -110,6 +118,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         return arg;
     }
 
+    @TruffleBoundary
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -117,6 +126,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

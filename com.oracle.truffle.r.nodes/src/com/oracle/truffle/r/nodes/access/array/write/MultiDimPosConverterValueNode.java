@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.array.write;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,6 +37,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     public abstract RIntVector executeConvert(VirtualFrame frame, Object vector, Object value, Object p);
 
     private final boolean isSubset;
+
+    private final ConditionProfile listProfile = ConditionProfile.createBinaryProfile();
 
     protected MultiDimPosConverterValueNode(boolean isSubset) {
         this.isSubset = isSubset;
@@ -203,7 +206,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -214,7 +217,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -225,7 +228,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -236,7 +239,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -247,7 +250,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -258,7 +261,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -269,7 +272,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -278,7 +281,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "emptyValue", "!isPosVectorInt"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -287,7 +290,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "emptyValue", "!firstPosZero"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -307,7 +310,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -334,7 +337,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
     protected RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -357,7 +360,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt"})
     protected RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -366,7 +369,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!firstPosZero"})
     protected RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -386,7 +389,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -413,7 +416,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "!isPosVectorInt"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -422,7 +425,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     @Specialization(guards = {"onePosition", "!firstPosZero"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
-        if (positions.getElementClass() == Object.class) {
+        if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -442,7 +445,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -471,7 +474,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListTwoPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -482,7 +485,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListTwoPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -493,7 +496,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListTwoPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -504,7 +507,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -515,7 +518,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListTwoPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
@@ -526,7 +529,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else if (positions.getElementClass() == Object.class) {
+        } else if (listProfile.profile(positions.getElementClass() == Object.class)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;

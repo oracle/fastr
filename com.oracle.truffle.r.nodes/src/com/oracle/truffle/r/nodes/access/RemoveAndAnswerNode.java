@@ -84,7 +84,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
          * returned.
          */
         private final FrameSlot slot;
-        private final BranchProfile invalidateProfile = new BranchProfile();
+        private final BranchProfile invalidateProfile = BranchProfile.create();
 
         protected RemoveAndAnswerResolvedNode(FrameSlot slot) {
             this.slot = slot;

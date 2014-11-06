@@ -55,7 +55,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
     private final NAProfile na = NAProfile.create();
 
     private final PromiseProfile promiseProfile = new PromiseProfile();
-    private final BranchProfile invalidateProfile = new BranchProfile();
+    private final BranchProfile invalidateProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {

@@ -13,8 +13,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -35,7 +36,7 @@ public class LaFunctions {
     @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {})
     public abstract static class Version extends RBuiltinNode {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected String doVersion() {
             int[] version = new int[3];
             RFFIFactory.getRFFI().getLapackRFFI().ilaver(version);
@@ -48,14 +49,19 @@ public class LaFunctions {
 
         private static final String[] NAMES = new String[]{"values", "vectors"};
 
+        private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
+        private final BranchProfile errorProfile = BranchProfile.create();
+
         @Specialization
         protected Object doRg(RDoubleVector matrix, byte onlyValues) {
             controlVisibility();
             if (!matrix.isMatrix()) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
             }
             int[] dims = matrix.getDimensions();
             if (onlyValues == RRuntime.LOGICAL_NA) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "only.values");
             }
             // copy array component of matrix as Lapack destroys it
@@ -80,6 +86,7 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, -1);
             if (info != 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeev");
             }
             // now allocate work array and make the actual call
@@ -87,6 +94,7 @@ public class LaFunctions {
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, lwork);
             if (info != 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeev");
             }
             // result is a list containing "values" and "vectors" (unless only.values is TRUE)
@@ -94,11 +102,12 @@ public class LaFunctions {
             for (int i = 0; i < n; i++) {
                 if (Math.abs(wi[i]) > 10 * RAccuracyInfo.get().eps * Math.abs(wr[i])) {
                     complexValues = true;
+                    break;
                 }
             }
             RVector values = null;
             Object vectorValues = RNull.instance;
-            if (complexValues) {
+            if (hasComplexValues.profile(complexValues)) {
                 double[] data = new double[n * 2];
                 for (int i = 0; i < n; i++) {
                     int ix = 2 * i;
@@ -124,12 +133,16 @@ public class LaFunctions {
 
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"})
     public abstract static class Qr extends RBuiltinNode {
+
         private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
+
+        private final BranchProfile errorProfile = BranchProfile.create();
 
         @Specialization
         protected RList doQr(RAbstractVector aIn) {
             // This implementation is sufficient for B25 matcal-5.
             if (!aIn.isMatrix()) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
             }
             if (!(aIn instanceof RDoubleVector)) {
@@ -147,12 +160,14 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, -1);
             if (info < 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeqp3");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, lwork);
             if (info < 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgeqp3");
             }
             Object[] data = new Object[4];
@@ -171,6 +186,8 @@ public class LaFunctions {
     @RBuiltin(name = "qr_coef_real", kind = INTERNAL, parameterNames = {"q", "b"})
     public abstract static class QrCoefReal extends RBuiltinNode {
 
+        private final BranchProfile errorProfile = BranchProfile.create();
+
         private static final char SIDE = 'L';
         private static final char TRANS = 'T';
 
@@ -183,6 +200,7 @@ public class LaFunctions {
         @Specialization
         protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn) {
             if (!bIn.isMatrix()) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
             }
             // If bIn was coerced this extra copy is unnecessary
@@ -197,6 +215,7 @@ public class LaFunctions {
             int[] qrDims = qr.getDimensions();
             int n = qrDims[0];
             if (bDims[0] != n) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.RHS_SHOULD_HAVE_ROWS, n, bDims[0]);
             }
             int nrhs = bDims[1];
@@ -209,16 +228,19 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
             if (info < 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dormqr");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, lwork);
             if (info < 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dormqr");
             }
             info = RFFIFactory.getRFFI().getLapackRFFI().dtrtrs('U', 'N', 'N', k, nrhs, qrData, n, bData, n);
             if (info < 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dtrtrs");
             }
             // TODO check complete
@@ -233,15 +255,21 @@ public class LaFunctions {
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(new String[]{"modulus", "sign"}, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector DET_CLASS = RDataFactory.createStringVector(new String[]{"det"}, RDataFactory.COMPLETE_VECTOR);
 
+        private final BranchProfile errorProfile = BranchProfile.create();
+        private final ConditionProfile infoGreaterZero = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile doUseLog = ConditionProfile.createBinaryProfile();
+
         @Specialization
         protected RList doDetGeReal(RDoubleVector aIn, byte useLogIn) {
             if (!aIn.isMatrix()) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
             }
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = aIn.getDimensions();
             int n = aDims[0];
             if (n != aDims[1]) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE, "a");
             }
             int[] ipiv = new int[n];
@@ -251,8 +279,9 @@ public class LaFunctions {
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgetrf(n, n, aData, n, ipiv);
             int sign = 1;
             if (info < 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dgetrf");
-            } else if (info > 0) {
+            } else if (infoGreaterZero.profile(info > 0)) {
                 modulus = useLog ? Double.NEGATIVE_INFINITY : 0;
             } else {
                 for (int i = 0; i < n; i++) {
@@ -260,7 +289,7 @@ public class LaFunctions {
                         sign = -sign;
                     }
                 }
-                if (useLog) {
+                if (doUseLog.profile(useLog)) {
                     modulus = 0.0;
                     int n1 = n + 1;
                     for (int i = 0; i < n; i++) {
@@ -292,6 +321,10 @@ public class LaFunctions {
 
     @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"})
     public abstract static class LaChol extends RBuiltinNode {
+
+        private final BranchProfile errorProfile = BranchProfile.create();
+        private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
+
         @Specialization
         protected RDoubleVector doDetGeReal(RDoubleVector aIn, byte pivot, double tol) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
@@ -299,9 +332,11 @@ public class LaFunctions {
             int n = aDims[0];
             int m = aDims[1];
             if (n != m) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE, "a");
             }
             if (m <= 0) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMS_GT_ZERO, "a");
             }
             double[] aData = a.getDataWithoutCopying();
@@ -313,9 +348,10 @@ public class LaFunctions {
             }
             boolean piv = RRuntime.fromLogical(pivot);
             int info;
-            if (!piv) {
+            if (noPivot.profile(!piv)) {
                 info = RFFIFactory.getRFFI().getLapackRFFI().dpotrf('U', m, aData, m);
                 if (info != 0) {
+                    errorProfile.enter();
                     // TODO informative error message (aka GnuR)
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
@@ -325,6 +361,7 @@ public class LaFunctions {
                 int[] rank = new int[1];
                 info = RFFIFactory.getRFFI().getLapackRFFI().dpstrf('U', n, aData, n, ipiv, rank, tol, work);
                 if (info != 0) {
+                    errorProfile.enter();
                     // TODO informative error message (aka GnuR)
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -57,6 +58,10 @@ abstract class GetDimNamesNode extends RNode {
         this.namesNACheck = other.namesNACheck;
     }
 
+    private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile srcNamesNullProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile emptyPosProfile = ConditionProfile.createBinaryProfile();
+
     @Specialization
     protected Object getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
         if (currentSrcDimLevel == 0) {
@@ -64,11 +69,11 @@ abstract class GetDimNamesNode extends RNode {
         }
         RIntVector p = (RIntVector) positions[currentSrcDimLevel - 1];
         int numPositions = p.getLength();
-        if (numPositions > 1) {
+        if (multiPosProfile.profile(numPositions > 1)) {
             RList srcDimNames = vector.getDimNames();
             RStringVector srcNames = srcDimNames == null ? null : (srcDimNames.getDataAt(currentSrcDimLevel - 1) == RNull.instance ? null
                             : (RStringVector) srcDimNames.getDataAt(currentSrcDimLevel - 1));
-            if (srcNames == null) {
+            if (srcNamesNullProfile.profile(srcNames == null)) {
                 dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
             } else {
                 namesNACheck.enable(!srcNames.isComplete() || !p.isComplete());
@@ -87,7 +92,7 @@ abstract class GetDimNamesNode extends RNode {
             }
             getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
         } else {
-            if (p.getDataAt(0) == 0) {
+            if (emptyPosProfile.profile(p.getDataAt(0) == 0)) {
                 dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
                 getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
             } else {

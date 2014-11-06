@@ -22,17 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinComment;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "fastr.typeof", kind = PRIMITIVE, parameterNames = {"x"})
 @RBuiltinComment("Returns a simple string representation of the internal runtime type of a value.")
 public abstract class FastRTypeOfBuiltin extends RBuiltinNode {
 
     @Specialization
+    @TruffleBoundary
     protected String type(Object value) {
         controlVisibility();
         return value.getClass().getSimpleName();

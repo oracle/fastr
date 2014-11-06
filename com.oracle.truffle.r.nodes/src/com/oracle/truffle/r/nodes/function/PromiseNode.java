@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -70,7 +70,7 @@ public abstract class PromiseNode extends RNode {
      * @return Depending on {@link RPromiseFactory#getEvalPolicy()} and
      *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
      */
-    @SlowPath
+    @TruffleBoundary
     public static PromiseNode create(SourceSection src, RPromiseFactory factory) {
         assert factory.getType() != PromiseType.NO_ARG;
 
@@ -288,7 +288,7 @@ public abstract class PromiseNode extends RNode {
             return replace(fallback);
         }
 
-        @SlowPath
+        @TruffleBoundary
         public void onSuccess() {
 // System.out.println("Successfully optimized read from '" + symbol.getName() + "'");
         }
@@ -324,14 +324,14 @@ public abstract class PromiseNode extends RNode {
      * evaluate it here, and as it's {@link EvalPolicy#INLINED}, return its value and not the
      * {@link RPromise} itself! {@link EvalPolicy#INLINED} {@link PromiseType#ARG_SUPPLIED}
      */
-    private final static class InlinedSuppliedPromiseNode extends PromiseNode {
+    private static final class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
         private final PromiseProfile promiseProfile = new PromiseProfile();
 
-        private final BranchProfile isMissingProfile = new BranchProfile();
-        private final BranchProfile isVarArgProfile = new BranchProfile();
-        private final BranchProfile checkPromiseProfile = new BranchProfile();
+        private final BranchProfile isMissingProfile = BranchProfile.create();
+        private final BranchProfile isVarArgProfile = BranchProfile.create();
+        private final BranchProfile checkPromiseProfile = BranchProfile.create();
 
         public InlinedSuppliedPromiseNode(RPromiseFactory factory) {
             super(factory);
@@ -367,7 +367,7 @@ public abstract class PromiseNode extends RNode {
      * the caller frame: This means we can simply evaluate it here, and as it's
      * {@link EvalPolicy#INLINED}, return its value and not the {@link RPromise} itself!
      */
-    private final static class InlinedPromiseNode extends PromiseNode {
+    private static final class InlinedPromiseNode extends PromiseNode {
         @Child private RNode defaultExpr;
 
         public InlinedPromiseNode(RPromiseFactory factory) {
@@ -391,7 +391,7 @@ public abstract class PromiseNode extends RNode {
      * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
      * other varargs classes)
      */
-    public final static class VarArgNode extends RNode {
+    public static final class VarArgNode extends RNode {
         private final RPromise promise;
         @CompilationFinal private boolean isEvaluated = false;
 
@@ -430,7 +430,7 @@ public abstract class PromiseNode extends RNode {
      * @return Creates either a {@link InlineVarArgsPromiseNode} or a {@link VarArgsPromiseNode},
      *         depending on the {@link EvalPolicy}
      */
-    @SlowPath
+    @TruffleBoundary
     public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
         RNode node;
         switch (evalPolicy) {
@@ -453,7 +453,7 @@ public abstract class PromiseNode extends RNode {
     /**
      * This class is used for wrapping arguments into "..." ({@link RArgsValuesAndNames}).
      */
-    private final static class VarArgsPromiseNode extends RNode {
+    private static final class VarArgsPromiseNode extends RNode {
         protected final RNode[] nodes;
         protected final String[] names;
         protected final ClosureCache closureCache;
@@ -481,7 +481,7 @@ public abstract class PromiseNode extends RNode {
      * more complicated, as "..." might also values from an outer "...", which might resolve to an
      * empty argument list.
      */
-    public final static class InlineVarArgsPromiseNode extends RNode {
+    public static final class InlineVarArgsPromiseNode extends RNode {
         @Children private final RNode[] varargs;
         protected final String[] names;
 

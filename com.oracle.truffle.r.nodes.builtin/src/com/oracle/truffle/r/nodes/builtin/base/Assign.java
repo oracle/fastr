@@ -51,8 +51,8 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     // FIXME deal with omitted parameters: pos, imemdiate
 
-    private final BranchProfile[] slotFoundOnIteration = {new BranchProfile(), new BranchProfile(), new BranchProfile()};
-    private final BranchProfile invalidateProfile = new BranchProfile();
+    private final BranchProfile[] slotFoundOnIteration = {BranchProfile.create(), BranchProfile.create(), BranchProfile.create()};
+    private final BranchProfile invalidateProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {

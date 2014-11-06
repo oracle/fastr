@@ -27,7 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -51,28 +51,33 @@ public abstract class Sprintf extends RBuiltinNode {
     @Child Sprintf sprintfRecursive;
 
     @Specialization
+    @TruffleBoundary
     protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return fmt;
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, RMissing x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @TruffleBoundary
     protected String sprintf(String fmt, int x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, int x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -83,11 +88,13 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @TruffleBoundary
     protected String sprintf(String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
@@ -101,11 +108,13 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, double x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -116,22 +125,26 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @TruffleBoundary
     protected String sprintf(String fmt, String x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, String x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -142,17 +155,20 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
+    @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization(guards = "!oneElement")
+    @TruffleBoundary
     protected String sprintf(String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         return format(fmt, args.getValues());
     }
 
     @Specialization(guards = "oneElement")
+    @TruffleBoundary
     protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         if (sprintfRecursive == null) {
@@ -163,12 +179,14 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!oneElement", "fmtLengthOne"})
+    @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintf(fmt.getDataAt(0), args);
     }
 
     @Specialization(guards = {"oneElement", "fmtLengthOne"})
-    protected Object RAbstractStringVector(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    @TruffleBoundary
+    protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(frame, fmt.getDataAt(0), args);
     }
 
@@ -251,7 +269,7 @@ public abstract class Sprintf extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String intString(int x) {
         return Integer.toString(x);
     }
@@ -274,7 +292,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return f;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String stringFormat(String format, Object[] args) {
         return String.format((Locale) null, format, args);
     }
@@ -468,7 +486,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return args.length() == 1;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static IllegalStateException fail(String message) {
         throw new IllegalStateException(message);
     }

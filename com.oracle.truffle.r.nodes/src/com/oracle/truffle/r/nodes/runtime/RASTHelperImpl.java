@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
@@ -69,14 +69,14 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  */
 public class RASTHelperImpl implements RASTHelper {
 
-    @SlowPath
+    @TruffleBoundary
     public int getLength(RLanguage rl) {
         RNode root = (RNode) rl.getRep();
         // NodeUtil.printTree(System.out, root);
         return computeLength(RASTUtils.unwrap(root));
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int computeLength(Node node) {
         int result = 1;
         if (node instanceof RCallNode || node instanceof DispatchedCallNode) {
@@ -92,7 +92,7 @@ public class RASTHelperImpl implements RASTHelper {
         return result;
     }
 
-    @SlowPath
+    @TruffleBoundary
     public Object getDataAtAsObject(RLanguage rl, int index) {
         Node node = RASTUtils.unwrap(rl.getRep());
         if (node instanceof RCallNode || node instanceof DispatchedCallNode) {

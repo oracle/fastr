@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,13 +34,14 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class ToUpper extends RBuiltinNode {
 
     @Specialization
-    @SlowPath
+    @TruffleBoundary
     protected String toUpper(String value) {
         controlVisibility();
         return value.toUpperCase();
     }
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector toUpper(RStringVector vector) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
@@ -54,6 +55,7 @@ public abstract class ToUpper extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RStringVector toupper(RNull empty) {
         controlVisibility();
         return RDataFactory.createStringVector(0);

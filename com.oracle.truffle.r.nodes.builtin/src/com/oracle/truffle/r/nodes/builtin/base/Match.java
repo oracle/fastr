@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -33,14 +35,18 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
 public abstract class Match extends RBuiltinNode {
 
     @Child private CastStringNode castString;
     @Child private CastIntegerNode castInt;
+
+    private final NACheck naCheck = new NACheck();
 
     @Override
     public RNode[] getParameterValues() {
@@ -213,6 +219,12 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
+    protected RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+        naCheck.enable(x);
+        return match(frame, RClosures.createLogicalToStringVector(x, naCheck), table, nomatchObj, incomparables);
+    }
+
+    @Specialization
     @SuppressWarnings("unused")
     protected RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractLogicalVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -295,9 +307,7 @@ public abstract class Match extends RBuiltinNode {
 
     private static int[] initResult(int length, int nomatch) {
         int[] result = new int[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = nomatch;
-        }
+        Arrays.fill(result, nomatch);
         return result;
     }
 

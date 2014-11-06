@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -37,36 +37,42 @@ public abstract class Unlist extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
-    @Child private PrecedenceNode precedenceNode;
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeFactory.create(null, null);
     @Child private Length lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
 
     protected Unlist() {
-        this.precedenceNode = PrecedenceNodeFactory.create(null, null);
     }
 
     @NodeChild(value = "operand")
-    protected static abstract class RecursiveLength extends RNode {
+    protected abstract static class RecursiveLength extends RNode {
 
         public abstract int executeInt(VirtualFrame frame, Object vector);
 
         @Child private RecursiveLength recursiveLengthNode;
 
         private int getRecursiveLength(VirtualFrame frame, Object operand) {
+            initRecursiveLengthNode();
+            return recursiveLengthNode.executeInt(frame, operand);
+        }
+
+        @TruffleBoundary
+        private void initRecursiveLengthNode() {
             if (recursiveLengthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 recursiveLengthNode = insert(RecursiveLengthFactory.create(null));
             }
-            return recursiveLengthNode.executeInt(frame, operand);
         }
 
         @Specialization
         @SuppressWarnings("unused")
+        @TruffleBoundary
         protected int getLength(RNull vector) {
             return 0;
         }
 
         @Specialization(guards = "!isVectorList")
+        @TruffleBoundary
         protected int getLength(RAbstractVector vector) {
             return vector.getLength();
         }
@@ -87,23 +93,34 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     private int getLength(VirtualFrame frame, Object operand) {
+        initLengthNode();
+        return lengthNode.executeInt(frame, operand);
+    }
+
+    @TruffleBoundary
+    private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lengthNode = insert(LengthFactory.create(new RNode[1], getBuiltin(), null));
         }
-        return lengthNode.executeInt(frame, operand);
     }
 
     private int getRecursiveLength(VirtualFrame frame, Object operand) {
+        initRecursiveLengthNode();
+        return recursiveLengthNode.executeInt(frame, operand);
+    }
+
+    @TruffleBoundary
+    private void initRecursiveLengthNode() {
         if (recursiveLengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveLengthNode = insert(RecursiveLengthFactory.create(null));
         }
-        return recursiveLengthNode.executeInt(frame, operand);
     }
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RNull unlist(RNull vector, byte recursive, byte useNames) {
         controlVisibility();
         return RNull.instance;
@@ -111,6 +128,7 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isVectorList")
+    @TruffleBoundary
     protected RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
         controlVisibility();
         return vector;
@@ -136,7 +154,7 @@ public abstract class Unlist extends RBuiltinNode {
         for (int i = 0; i < list.getLength(); ++i) {
             Object data = list.getDataAt(i);
             precedence = Math.max(precedence, precedenceNode.executeInteger(frame, data, recursive));
-            if (recursive == RRuntime.LOGICAL_TRUE) {
+            if (rec) {
                 totalSize += getRecursiveLength(frame, data);
             } else {
                 totalSize += getLength(frame, data);
@@ -257,19 +275,19 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     private static class NamesInfo {
-        public int count = 0;
-        public int seqNo = 0;
-        public int firstPos = 0;
-        public boolean namesAssigned = false;
+        private int count = 0;
+        private int seqNo = 0;
+        private int firstPos = 0;
+        private boolean namesAssigned = false;
 
-        public void reset() {
+        private void reset() {
             this.firstPos = -1;
             this.seqNo = 0;
             this.count = 0;
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -305,7 +323,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -341,7 +359,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -377,7 +395,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -413,7 +431,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -453,7 +471,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
         Object o = obj;
         int position = pos;
@@ -494,7 +512,7 @@ public abstract class Unlist extends RBuiltinNode {
         return position;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
@@ -590,12 +608,12 @@ public abstract class Unlist extends RBuiltinNode {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String createCompositeName(String s1, String s2) {
         return s1 + "." + s2;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String createCompositeName(String s1, int i) {
         return s1 + i;
     }

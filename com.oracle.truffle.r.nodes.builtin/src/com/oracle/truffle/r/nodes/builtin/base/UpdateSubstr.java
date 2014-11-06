@@ -24,7 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -39,17 +40,18 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
 
-    private final BranchProfile everSeenIllegalRange = new BranchProfile();
+    private final BranchProfile everSeenIllegalRange = BranchProfile.create();
 
     protected static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String replaceSubstring(String x, String value, int actualStart, int replacementLength, int actualStop) {
         return x.substring(0, actualStart - 1) + value.substring(0, replacementLength) + x.substring(actualStop, x.length());
     }
 
+    @TruffleBoundary
     protected String substr0(String x, int start, int stop, String value) {
         if (na.check(x) || na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
@@ -78,12 +80,14 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg")
+    @TruffleBoundary
     protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "wrongParams"})
+    @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         assert false; // should never happen
         return RNull.instance; // dummy
@@ -91,6 +95,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "!wrongParams"})
+    @TruffleBoundary
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
@@ -98,16 +103,28 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "!wrongParams", "wrongValue"})
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @Specialization(guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
+    @TruffleBoundary
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
-        String[] res = new String[arg.getLength()];
+        int argLength = arg.getLength();
+        String[] res = new String[argLength];
         na.enable(arg);
         na.enable(start);
         na.enable(stop);
-        for (int i = 0, j = 0, k = 0, l = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength()), l = Utils.incMod(k, value.getLength())) {
+        int startLength = start.getLength();
+        int stopLength = stop.getLength();
+        int valueLength = value.getLength();
+        int j;
+        int k;
+        int l;
+        for (int i = 0; i < argLength; ++i) {
+            j = i % startLength;
+            k = i % stopLength;
+            l = i % valueLength;
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k), value.getDataAt(l));
         }
         return RDataFactory.createStringVector(res, na.neverSeenNA());

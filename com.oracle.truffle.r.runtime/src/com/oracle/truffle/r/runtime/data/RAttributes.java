@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
 
@@ -325,7 +325,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
             return value1;
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static NoSuchElementException noSuchElement() {
             throw new NoSuchElementException();
         }

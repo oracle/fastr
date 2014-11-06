@@ -37,7 +37,7 @@ public interface ClosureCache {
      * @return A {@link Closure} representing the given {@link RNode}. If expr is <code>null</code>
      *         <code>null</code> is returned.
      */
-    @SlowPath
+    @TruffleBoundary
     default Closure getOrCreateClosure(RNode expr) {
         if (expr == null) {
             return null;
@@ -53,7 +53,7 @@ public interface ClosureCache {
     }
 
     /**
-     * Access to the raw content
+     * Access to the raw content.
      *
      * @return The {@link Map} containing the cached values
      */

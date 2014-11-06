@@ -27,7 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltinComment("Returns the source code associated with a function, and for all of its nodes.")
 public abstract class FastRSource extends RBuiltinNode {
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected String debugSource(RFunction f) {
         controlVisibility();

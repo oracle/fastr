@@ -25,77 +25,31 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"})
-@SuppressWarnings("unused")
 public abstract class Names extends RBuiltinNode {
 
-    @Specialization
-    protected RNull getNames(RNull vector) {
-        controlVisibility();
-        return RNull.instance;
-    }
+    private ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
 
     @Specialization
-    protected RNull getNames(byte operand) {
+    protected Object getNames(RAbstractContainer container) {
+        controlVisibility();
+        if (hasNames.profile(container.getNames() != null && container.getNames() != RNull.instance)) {
+            return container.getNames();
+        } else {
+            return RNull.instance;
+        }
+    }
+
+    @Fallback
+    protected RNull getNames(@SuppressWarnings("unused") Object operand) {
         controlVisibility();
         return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull getNames(int operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull getNames(double operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull getNames(RComplex operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull getNames(String operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull getNames(RRaw operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RNull getNames(RFunction function) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization(guards = "!hasNames")
-    protected RNull getEmptyNames(RAbstractContainer container) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization(guards = "hasNames")
-    protected RStringVector getNames(RAbstractContainer container) {
-        controlVisibility();
-        return (RStringVector) container.getNames();
-    }
-
-    public static boolean hasNames(RAbstractContainer container) {
-        return container.getNames() != null && container.getNames() != RNull.instance;
     }
 
 }

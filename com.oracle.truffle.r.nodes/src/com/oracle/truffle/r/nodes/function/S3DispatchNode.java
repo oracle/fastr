@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -71,7 +71,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         findFunction(functionName(generic, className), frame);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String functionName(String generic, String className) {
         return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
     }
@@ -110,7 +110,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         addVars0(frame.getFrameDescriptor());
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void addVars0(FrameDescriptor fDesc) {
         findOrAddFrameSlot(fDesc, RRuntime.RDotGeneric);
         findOrAddFrameSlot(fDesc, RRuntime.RDotMethod);
@@ -136,7 +136,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         removeVars0(frame.getFrameDescriptor());
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void removeVars0(FrameDescriptor fDesc) {
         fDesc.removeFrameSlot(RRuntime.RDotGeneric);
         fDesc.removeFrameSlot(RRuntime.RDotMethod);

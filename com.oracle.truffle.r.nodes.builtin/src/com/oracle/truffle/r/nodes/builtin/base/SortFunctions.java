@@ -22,20 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import java.util.*;
-
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+
+import java.util.Arrays;
+
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 /**
  * Temporary minimal implementation for b25 benchmarks. Eventually this should be combined with
@@ -47,7 +52,7 @@ public class SortFunctions {
     @RBuiltin(name = "sort.list", kind = SUBSTITUTE, parameterNames = {"x", "partial", "na.last", "decreasing", "method"})
     // TODO Implement in R
     public abstract static class SortList extends RBuiltinNode {
-
+        private final ConditionProfile orderProfile = ConditionProfile.createBinaryProfile();
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
@@ -65,15 +70,16 @@ public class SortFunctions {
                 order = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
             }
             RIntVector result = (RIntVector) order.executeDoubleVector(frame, vec, RMissing.instance);
-            if (RRuntime.fromLogical(decreasing)) {
+            if (orderProfile.profile(RRuntime.fromLogical(decreasing))) {
                 int[] data = result.getDataWithoutCopying();
                 int[] rdata = new int[data.length];
                 for (int i = 0; i < data.length; i++) {
                     rdata[i] = data[data.length - (i + 1)];
                 }
-                result = RDataFactory.createIntVector(rdata, RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createIntVector(rdata, RDataFactory.COMPLETE_VECTOR);
+            } else {
+                return result;
             }
-            return result;
         }
     }
 
@@ -81,12 +87,12 @@ public class SortFunctions {
     // TODO full implementation in Java handling NAs
     public abstract static class QSort extends RBuiltinNode {
 
-        @SlowPath
+        @TruffleBoundary
         private static void sort(double[] data) {
             Arrays.sort(data);
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static void sort(int[] data) {
             Arrays.sort(data);
         }

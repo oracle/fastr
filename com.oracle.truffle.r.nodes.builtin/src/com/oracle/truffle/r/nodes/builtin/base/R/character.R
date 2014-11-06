@@ -189,6 +189,6 @@ sQuote <- function(x)
 #  paste0(before, x, after)
 #}
 #
-#strtoi <-
-#    function(x, base = 0L)
-#  .Internal(strtoi(as.character(x), as.integer(base)))
+strtoi <-
+    function(x, base = 0L)
+  .Internal(strtoi(as.character(x), as.integer(base)))

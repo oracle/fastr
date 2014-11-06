@@ -16,7 +16,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
 @Precedence(Precedence.MAX)
-public class Constant extends ASTNode {
+public final class Constant extends ASTNode {
 
     public enum ConstantType {
         DOUBLE,

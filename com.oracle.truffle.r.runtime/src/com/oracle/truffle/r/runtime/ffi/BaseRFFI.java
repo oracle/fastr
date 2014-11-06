@@ -45,6 +45,11 @@ public interface BaseRFFI {
     int setwd(String dir);
 
     /**
+     * Create directory with given mode. Exception is thrown omn error.
+     */
+    void mkdir(String dir, int mode) throws IOException;
+
+    /**
      * Try to convert a symbolic link to it's target.
      *
      * @param path the link path
@@ -93,5 +98,10 @@ public interface BaseRFFI {
      * @return standard return code (0 ok)
      */
     int uncompress(byte[] dest, long[] destlen, byte[] source);
+
+    /**
+     * Convert string to long.
+     */
+    long strtol(String s, int base) throws IllegalArgumentException;
 
 }

@@ -22,19 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.CreateCast;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
+    private final BranchProfile sharedVectorSeen = BranchProfile.create();
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -44,11 +51,13 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
+    @TruffleBoundary
     protected RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
         RVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
+            sharedVectorSeen.enter();
             resultVector = resultVector.copy();
             resultVector.markNonTemporary();
         }
@@ -60,6 +69,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     @Specialization(guards = "!isLengthOne")
     protected RAbstractVector updateLengthError(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
@@ -67,6 +77,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     @Specialization
     protected Object updateLengthError(Object vector, Object lengthVector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 

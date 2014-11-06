@@ -10,7 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -33,7 +33,7 @@ public abstract class EncodeString extends RBuiltinNode {
     }
 
     private final NACheck na = NACheck.create();
-    private final BranchProfile everSeenNA = new BranchProfile();
+    private final BranchProfile everSeenNA = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {
@@ -70,7 +70,7 @@ public abstract class EncodeString extends RBuiltinNode {
         return maxElWidth;
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String concat(Object... args) {
         StringBuffer sb = new StringBuffer();
         for (Object arg : args) {
@@ -79,7 +79,7 @@ public abstract class EncodeString extends RBuiltinNode {
         return sb.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String format(final String format, final String arg) {
         return String.format(format, arg);
     }
@@ -213,7 +213,7 @@ public abstract class EncodeString extends RBuiltinNode {
         return RDataFactory.createStringVector(result, na.neverSeenNA());
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String addPaddingIgnoreNA(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
         final StringBuffer sb = new StringBuffer();
         for (int j = 0; j < leftPadding; ++j) {
@@ -228,7 +228,7 @@ public abstract class EncodeString extends RBuiltinNode {
         return sb.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private String addPadding(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
         final StringBuffer sb = new StringBuffer();
         for (int j = 0; j < leftPadding; ++j) {

@@ -25,9 +25,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -41,6 +42,10 @@ public abstract class Paste extends RBuiltinNode {
     public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
     @Child private CastStringNode castCharacterNode;
+
+    private final ConditionProfile emptyOrNull = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile noCollapse = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -76,7 +81,7 @@ public abstract class Paste extends RBuiltinNode {
     @Specialization
     protected RStringVector pasteList(VirtualFrame frame, RList values, String sep, Object collapse) {
         controlVisibility();
-        if (isEmptyOrNull(values)) {
+        if (emptyOrNull.profile(isEmptyOrNull(values))) {
             return RDataFactory.createEmptyStringVector();
         }
         int length = values.getLength();
@@ -84,7 +89,7 @@ public abstract class Paste extends RBuiltinNode {
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
-            if (element instanceof RVector || element instanceof RSequence) {
+            if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
                 converted[i] = castCharacterVector(frame, element);
                 int len = ((RStringVector) converted[i]).getLength();
                 if (len > maxLength) {
@@ -95,6 +100,17 @@ public abstract class Paste extends RBuiltinNode {
             }
         }
 
+        String[] result = prepareResult(sep, length, converted, maxLength);
+        if (noCollapse.profile(collapse != RNull.instance)) {
+            String collapseString = RRuntime.toString(collapse);
+            return buildString(result, collapseString);
+        } else {
+            return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @TruffleBoundary
+    private static String[] prepareResult(String sep, int length, Object[] converted, int maxLength) {
         String[] result = new String[maxLength];
         for (int i = 0; i < maxLength; i++) {
             StringBuilder builder = new StringBuilder();
@@ -104,21 +120,16 @@ public abstract class Paste extends RBuiltinNode {
                 }
                 builder.append(getConvertedElement(converted[j], i));
             }
-            result[i] = builderToString(builder);
+            result[i] = RRuntime.toString(builder);
         }
-
-        if (collapse != RNull.instance) {
-            String collapseString = RRuntime.toString(collapse);
-            return buildString(result, collapseString);
-        } else {
-            return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        }
+        return result;
     }
 
     public boolean isEmptyOrNull(RList values) {
         return values.getLength() == 0 || (values.getLength() == 1 && values.getDataAt(0) == RNull.instance);
     }
 
+    @TruffleBoundary
     private static RStringVector buildString(String[] value, String collapseString) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < value.length; i++) {
@@ -127,17 +138,7 @@ public abstract class Paste extends RBuiltinNode {
             }
             sb.append(value[i]);
         }
-        return RDataFactory.createStringVector(new String[]{buildStringToString(sb)}, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @SlowPath
-    private static String buildStringToString(StringBuilder sb) {
-        return sb.toString();
-    }
-
-    @SlowPath
-    private static String builderToString(StringBuilder builder) {
-        return buildStringToString(builder);
+        return RDataFactory.createStringVector(new String[]{RRuntime.toString(sb)}, RDataFactory.COMPLETE_VECTOR);
     }
 
     private static String getConvertedElement(final Object converted, int index) {

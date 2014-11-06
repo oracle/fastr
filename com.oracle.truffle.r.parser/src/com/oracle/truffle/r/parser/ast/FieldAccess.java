@@ -14,7 +14,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class FieldAccess extends ASTNode {
+public final class FieldAccess extends ASTNode {
 
     private final ASTNode lhs;
     private final Symbol fieldName;

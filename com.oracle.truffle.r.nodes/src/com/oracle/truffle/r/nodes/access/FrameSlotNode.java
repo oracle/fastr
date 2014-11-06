@@ -151,7 +151,7 @@ public abstract class FrameSlotNode extends Node {
         }
     }
 
-    private final static class PresentFrameSlotNode extends FrameSlotNode {
+    private static final class PresentFrameSlotNode extends FrameSlotNode {
 
         private final ConditionProfile initializedProfile = ConditionProfile.createBinaryProfile();
         private final FrameSlot frameSlot;
@@ -163,7 +163,7 @@ public abstract class FrameSlotNode extends Node {
         }
 
         @Override
-        public final FrameSlot executeFrameSlot(VirtualFrame frame) {
+        public FrameSlot executeFrameSlot(VirtualFrame frame) {
             return frameSlot;
         }
 

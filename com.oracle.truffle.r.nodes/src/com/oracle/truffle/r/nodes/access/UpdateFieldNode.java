@@ -42,7 +42,7 @@ public abstract class UpdateFieldNode extends RNode {
 
     public abstract String getField();
 
-    private final BranchProfile inexactMatch = new BranchProfile();
+    private final BranchProfile inexactMatch = BranchProfile.create();
 
     @Child private CastListNode castList;
 

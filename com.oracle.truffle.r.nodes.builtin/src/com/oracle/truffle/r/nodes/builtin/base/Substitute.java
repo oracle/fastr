@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -110,7 +110,7 @@ public abstract class Substitute extends RBuiltinNode {
      * @return in general an {@link RLanguage} instance, but simple cases could be a constant value
      *         or {@link RSymbol}
      */
-    @SlowPath
+    @TruffleBoundary
     private Object doSubstituteWithEnv(VirtualFrame frame, RPromise expr, REnvironment envArg) {
         // In the global environment, substitute behaves like quote
         // TODO It may be too early to do this check, GnuR doesn't work this way (re promises)
@@ -148,6 +148,7 @@ public abstract class Substitute extends RBuiltinNode {
      * It is also possible that hidden (non-syntactic) nodes may need to be transformed.
      *
      */
+    @TruffleBoundary
     private static Node substituteAST(Node node, REnvironment env) {
         if (node instanceof ConstantNode) {
             return node;
@@ -195,6 +196,7 @@ public abstract class Substitute extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     private static Node substituteVariable(ReadVariableNode node, REnvironment env) {
         String name = node.getSymbol().getName();
         Object val = env.get(name);
@@ -242,6 +244,7 @@ public abstract class Substitute extends RBuiltinNode {
      * Substitute the arguments, handling the special case of '...', which can grow or shrink the
      * array.
      */
+    @TruffleBoundary
     private static CallArgumentsNode substituteArgs(CallArgumentsNode arguments, REnvironment env) {
         boolean changed = false;
         String[] names = arguments.getNames();
@@ -298,6 +301,7 @@ public abstract class Substitute extends RBuiltinNode {
      * Semi-generic substitution of nodes not explicitly handled in {@link #substituteAST}. It
      * cannot be truly generic because we cannot use reflection.
      */
+    @TruffleBoundary
     private static Node substituteOther(Node node, REnvironment env) {
         if (FastROptions.Debug.getValue()) {
             Utils.debug("substituteOther: " + node.getClass().getSimpleName());
@@ -326,6 +330,7 @@ public abstract class Substitute extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     private static Node substituteFunction(FunctionDefinitionNode node, REnvironment env) {
         SequenceNode sn = (SequenceNode) RASTUtils.getChild(node, 0);
         for (Node child : sn.getChildren()) {
@@ -341,13 +346,9 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     private static Node clearSourceSection(Node node) {
-        node.accept(new NodeVisitor() {
-
-            public boolean visit(Node n) {
-                n.clearSourceSection();
-                return true;
-            }
-
+        node.accept(n -> {
+            n.clearSourceSection();
+            return true;
         });
         return node;
     }
@@ -355,7 +356,7 @@ public abstract class Substitute extends RBuiltinNode {
     /**
      * Marker class for special '...' handling.
      */
-    private static abstract class DotsNode extends RNode {
+    private abstract static class DotsNode extends RNode {
     }
 
     /**

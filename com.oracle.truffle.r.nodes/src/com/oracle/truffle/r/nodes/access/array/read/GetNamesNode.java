@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -67,6 +68,12 @@ abstract class GetNamesNode extends RNode {
         return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, null);
     }
 
+    private final ConditionProfile oneDimLevelProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile nonEmptyPos = BranchProfile.create();
+    private final BranchProfile nullNames = BranchProfile.create();
+    private final BranchProfile nonNullSrcNames = BranchProfile.create();
+    private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
+
     RStringVector getNamesInternal(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
         int numPositions = p.getLength();
@@ -74,31 +81,35 @@ abstract class GetNamesNode extends RNode {
         Object srcNames = dimNames == null ? RNull.instance : (dimNames.getDataAt(currentDimLevel - 1) == RNull.instance ? RNull.instance : dimNames.getDataAt(currentDimLevel - 1));
         RStringVector newNames = null;
         if (numPositions > 0) {
+            nonEmptyPos.enter();
             if (numPositions == 1 && p.getDataAt(0) == 0) {
+                nullNames.enter();
                 return null;
-            } else {
+            } else if (srcNames != RNull.instance) {
+                nonNullSrcNames.enter();
                 newNames = AccessArrayNode.getNamesVector(srcNames, p, numPositions, namesNACheck);
             }
         }
-        if (numPositions > 1) {
+        if (multiPosProfile.profile(numPositions > 1)) {
             return newNames;
-        }
-        byte newAllNull = allNull;
-        if (newNames != null) {
-            if (names != null) {
-                newAllNull = RRuntime.LOGICAL_FALSE;
-            }
         } else {
-            newNames = names;
-        }
-        if (currentDimLevel == 1) {
-            if (newAllNull == RRuntime.LOGICAL_TRUE) {
-                return newNames != null ? newNames : (names != null ? names : null);
+            byte newAllNull = allNull;
+            if (newNames != null) {
+                if (names != null) {
+                    newAllNull = RRuntime.LOGICAL_FALSE;
+                }
             } else {
-                return null;
+                newNames = names;
             }
-        } else {
-            return getNamesRecursive(frame, vector, positions, currentDimLevel - 1, newAllNull, newNames == null ? RNull.instance : newNames, namesNACheck);
+            if (oneDimLevelProfile.profile(currentDimLevel == 1)) {
+                if (newAllNull == RRuntime.LOGICAL_TRUE) {
+                    return newNames != null ? newNames : names;
+                } else {
+                    return null;
+                }
+            } else {
+                return getNamesRecursive(frame, vector, positions, currentDimLevel - 1, newAllNull, newNames == null ? RNull.instance : newNames, namesNACheck);
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -41,6 +42,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * TODO Revert to {@code INTERNAL} when argument names available.
  */
 public abstract class Options extends RBuiltinNode {
+
+    private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
 
     @Specialization
     protected RList options(@SuppressWarnings("unused") RMissing x) {
@@ -72,7 +75,7 @@ public abstract class Options extends RBuiltinNode {
         for (int i = 0; i < values.length; i++) {
             String argName = namedArgument(argNames, i);
             Object value = values[i];
-            if (argName == null) {
+            if (argNameNull.profile(argName == null)) {
                 // getting
                 String optionName = null;
                 if (value instanceof RStringVector) {

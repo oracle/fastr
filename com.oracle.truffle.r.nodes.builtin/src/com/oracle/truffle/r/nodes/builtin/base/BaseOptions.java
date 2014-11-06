@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class BaseOptions implements ROptions.Handler {
-    private enum Name {
+    public enum Name {
         AddSmooth("add.smooth"),
         BrowserNLdisabled("browserNLdisabled"),
         CheckPackageLicense("checkPackageLicense"),
@@ -81,6 +81,10 @@ public class BaseOptions implements ROptions.Handler {
 
         private Name(String name) {
             this.rName = name;
+        }
+
+        public String getName() {
+            return rName;
         }
     }
 

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -74,7 +74,7 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static void doBrowser(MaterializedFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             REnvironment callerEnv = REnvironment.frameToEnvironment(frame.materialize());
@@ -160,14 +160,14 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected String browserText(int n) {
             controlVisibility();
             return getHelperState(n).text;
         }
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected String browserText(double n) {
             controlVisibility();
             return getHelperState((int) n).text;
@@ -177,14 +177,14 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object browserCondition(int n) {
             controlVisibility();
             return getHelperState(n).condition;
         }
 
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected Object browserCondition(double n) {
             controlVisibility();
             return getHelperState((int) n).condition;
@@ -194,7 +194,7 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
         @Specialization
-        @SlowPath
+        @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
             controlVisibility();

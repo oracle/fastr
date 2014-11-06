@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
@@ -105,12 +105,12 @@ public final class RError extends RuntimeException {
      * @param msg a {@link Message} instance specifying the error
      * @param args arguments for format specifiers in the message string
      */
-    @SlowPath
+    @TruffleBoundary
     public static RError error(SourceSection src, Message msg, Object... args) {
         throw error0(src, msg, args);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static RError error(SourceSection src, Message msg) {
         throw error0(src, msg, (Object[]) null);
     }
@@ -161,12 +161,12 @@ public final class RError extends RuntimeException {
      * Convenience variant of {@link #error(SourceSection, Message, Object...)} where no source
      * section can be provide. Ideally, this would never happen.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RError error(Message msg, Object... args) {
         throw error(null, msg, args);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static RError error(Message msg) {
         throw error(null, msg, (Object[]) null);
     }
@@ -176,7 +176,7 @@ public final class RError extends RuntimeException {
      * argument to the message is given. This avoids object array creation in the (probably
      * fast-path) caller.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RError error(SourceSection src, Message msg, Object arg) {
         throw error(src, msg, new Object[]{arg});
     }
@@ -185,7 +185,7 @@ public final class RError extends RuntimeException {
      * Convenience variant of {@link #error(Message, Object...)} where only one argument to the
      * message is given. This avoids object array creation in the (probably fast-path) caller.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RError error(Message msg, Object arg) {
         throw error(msg, new Object[]{arg});
     }
@@ -194,7 +194,7 @@ public final class RError extends RuntimeException {
      * Variant for the case where the original error occurs in code where it is not appropriate to
      * report the error. The error information is propagated using the {@link RErrorException}.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RError error(SourceSection src, RErrorException ex) {
         throw error(src, ex.msg, ex.args);
     }
@@ -203,22 +203,22 @@ public final class RError extends RuntimeException {
      * A temporary error that indicates an unimplemented feature where terminating the VM using
      * {@link Utils#fatalError(String)} would be inappropriate.
      */
-    @SlowPath
+    @TruffleBoundary
     public static RError nyi(SourceSection src, String msg) {
         throw new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static void warning(Message msg, Object... args) {
         RContext.getInstance().setEvalWarning(formatMessage(msg, args));
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static void warning(SourceSection src, Message msg, Object... args) {
         RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
     }
 
-    @SlowPath
+    @TruffleBoundary
     public static String formatMessage(Message msg, Object... args) {
         return msg.hasArgs ? String.format(msg.message, args) : msg.message;
     }
@@ -273,6 +273,9 @@ public final class RError extends RuntimeException {
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         INVALID_SEP("invalid 'sep' specification"),
         INVALID_LENGTH("invalid '%s' length"),
+        EMPTY_WHAT("empty 'what' specified"),
+        LINE_ELEMENTS("line %d did not have %d elements"),
+        ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("argument is not a function, character or symbol"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),

@@ -29,6 +29,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -37,6 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "normalizePath", kind = INTERNAL, parameterNames = {"path", "winslash", "mustwork"})
 public abstract class NormalizePath extends RBuiltinNode {
+
+    private final ConditionProfile doesNotNeedToWork = ConditionProfile.createBinaryProfile();
 
     @Specialization
     protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
@@ -50,7 +53,7 @@ public abstract class NormalizePath extends RBuiltinNode {
             try {
                 normPath = fileSystem.getPath(path).toRealPath().toString();
             } catch (IOException e) {
-                if (mustWork == RRuntime.LOGICAL_FALSE) {
+                if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning
                 } else {
                     Object[] errorArgs;

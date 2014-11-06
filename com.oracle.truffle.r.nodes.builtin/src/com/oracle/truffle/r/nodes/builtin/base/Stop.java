@@ -22,15 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 @RBuiltin(name = "stop", kind = SUBSTITUTE, parameterNames = {"message", "call.", "domain"})
 // TODO INTERNAL
@@ -45,10 +50,11 @@ public abstract class Stop extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected Object stop(String msg, byte call, Object domain) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String collapseStringVector(RStringVector v) {
         if (v.getLength() == 0) {
             return "";
@@ -65,6 +71,7 @@ public abstract class Stop extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected Object stop(RStringVector msg, byte call, Object domain) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, collapseStringVector(msg));
     }
 

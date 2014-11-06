@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -38,7 +38,7 @@ public final class NACheck {
     private static final int CHECK_DEOPT = 1;
     private static final int CHECK = 2;
 
-    private final BranchProfile conversionOverflowReached = new BranchProfile();
+    private final BranchProfile conversionOverflowReached = BranchProfile.create();
 
     @CompilationFinal int state;
     @CompilationFinal boolean seenNaN;
@@ -200,7 +200,7 @@ public final class NACheck {
         return RRuntime.intToStringNoCheck(right, false);
     }
 
-    @SlowPath
+    @TruffleBoundary
     public double convertStringToDouble(String value) {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;

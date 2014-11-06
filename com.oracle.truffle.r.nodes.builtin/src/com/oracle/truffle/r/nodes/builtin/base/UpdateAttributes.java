@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -38,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // 2nd parameter is "value", but should not be matched against, so ""
 @SuppressWarnings("unused")
 public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
+    private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
 
     @Child private UpdateNames updateNames;
     @Child private CastIntegerNode castInteger;
@@ -92,78 +96,102 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
-        int numAttributes = list.getLength();
         RVector resultVector = container.materializeNonSharedVector();
-        if (numAttributes == 0) {
+        if (numAttributesProfile.profile(list.getLength() == 0)) {
             resultVector.resetAllAttributes(true);
         } else {
             resultVector.resetAllAttributes(false);
             // error checking is a little weird - seems easier to separate it than weave it into the
             // update loop
             if (listNames.getLength() > 1) {
-                for (int i = 1; i < numAttributes; i++) {
-                    String attrName = listNames.getDataAt(i);
-                    if (attrName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
-                    }
-                }
+                checkAttributeForEmptyValue(list);
             }
             // has to be reported if no other name is undefined
             if (listNames.getDataAt(0).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ZERO_LENGTH_VARIABLE);
             }
             // set the dim attribute first
-            for (int i = 0; i < numAttributes; i++) {
-                Object value = list.getDataAt(i);
-                String attrName = listNames.getDataAt(i);
-                if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
-                    if (value == RNull.instance) {
-                        resultVector.setDimensions(null, getEncapsulatingSourceSection());
-                    } else {
-                        RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
-                        if (dimsVector.getLength() == 0) {
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
-                        }
-                        resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
-                    }
-                }
-            }
+            setDimAttribute(frame, resultVector, list);
             // set the remaining attributes in order
-            for (int i = 0; i < numAttributes; i++) {
-                Object value = list.getDataAt(i);
-                String attrName = listNames.getDataAt(i);
-                if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
-                    continue;
-                } else if (attrName.equals(RRuntime.NAMES_ATTR_KEY)) {
-                    updateNamesStringVector(frame, resultVector, value);
-                } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                    if (value == RNull.instance) {
-                        resultVector.setDimNames(null, getEncapsulatingSourceSection());
-                    } else {
-                        resultVector.setDimNames(castList(frame, value), getEncapsulatingSourceSection());
-                    }
-                } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
-                    if (value == RNull.instance) {
-                        RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
-                    } else {
-                        UpdateAttr.setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
-                    }
-                } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                    if (value == RNull.instance) {
-                        resultVector.setRowNames(null);
-                    } else {
-                        resultVector.setRowNames(castVector(frame, value));
-                    }
+            setRemainingAttributes(frame, container, resultVector, list);
+        }
+        return resultVector;
+    }
+
+    @TruffleBoundary
+    @ExplodeLoop
+    private void checkAttributeForEmptyValue(RList rlist) {
+        RStringVector listNames = (RStringVector) rlist.getNames();
+        int length = rlist.getLength();
+        assert length > 0 : "Length should be > 0 for ExplodeLoop";
+        for (int i = 1; i < length; i++) {
+            String attrName = listNames.getDataAt(i);
+            if (attrName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
+            }
+        }
+    }
+
+    @ExplodeLoop
+    private void setDimAttribute(VirtualFrame virtualFrame, RVector resultVector, RList sourceList) {
+        RStringVector listNames = (RStringVector) sourceList.getNames();
+        int length = sourceList.getLength();
+        assert length > 0 : "Length should be > 0 for ExplodeLoop";
+        for (int i = 0; i < sourceList.getLength(); i++) {
+            Object value = sourceList.getDataAt(i);
+            String attrName = listNames.getDataAt(i);
+            if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
+                if (value == RNull.instance) {
+                    resultVector.setDimensions(null, getEncapsulatingSourceSection());
                 } else {
-                    if (value == RNull.instance) {
-                        resultVector.removeAttr(attrName);
-                    } else {
-                        resultVector.setAttr(attrName, value);
+                    RAbstractIntVector dimsVector = castInteger(virtualFrame, castVector(virtualFrame, value));
+                    if (dimsVector.getLength() == 0) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
                     }
+                    resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
                 }
             }
         }
-        return resultVector;
+    }
+
+    @ExplodeLoop
+    private void setRemainingAttributes(VirtualFrame virtualFrame, RAbstractContainer container, RVector resultVector, RList sourceList) {
+        RStringVector listNames = (RStringVector) sourceList.getNames();
+        int length = sourceList.getLength();
+        assert length > 0 : "Length should be > 0 for ExplodeLoop";
+        for (int i = 0; i < sourceList.getLength(); i++) {
+            Object value = sourceList.getDataAt(i);
+            String attrName = listNames.getDataAt(i);
+            if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
+                continue;
+            } else if (attrName.equals(RRuntime.NAMES_ATTR_KEY)) {
+                updateNamesStringVector(virtualFrame, resultVector, value);
+            } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+                if (value == RNull.instance) {
+                    resultVector.setDimNames(null, getEncapsulatingSourceSection());
+                } else {
+                    resultVector.setDimNames(castList(virtualFrame, value), getEncapsulatingSourceSection());
+                }
+            } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (value == RNull.instance) {
+                    RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
+                } else {
+                    UpdateAttr.setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
+                }
+            } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                if (value == RNull.instance) {
+                    resultVector.setRowNames(null);
+                } else {
+                    resultVector.setRowNames(castVector(virtualFrame, value));
+                }
+            } else {
+                if (value == RNull.instance) {
+                    resultVector.removeAttr(attrName);
+                } else {
+                    resultVector.setAttr(attrName, value);
+                }
+            }
+        }
     }
 
     @Fallback

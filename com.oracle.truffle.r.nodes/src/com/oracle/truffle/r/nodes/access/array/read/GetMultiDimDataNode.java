@@ -44,6 +44,8 @@ abstract class GetMultiDimDataNode extends RNode {
     private final NACheck elementNACheck;
 
     private final ConditionProfile dimLevelOneProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile negativeSrcArrayBaseProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile negativeSrcIndexProfile = ConditionProfile.createBinaryProfile();
 
     @Child private GetMultiDimDataNode getMultiDimDataRecursive;
 
@@ -79,7 +81,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = RNull.instance;
                 } else {
                     data[dstIndex] = vector.getDataAt(srcIndex);
@@ -109,7 +111,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = RRuntime.INT_NA;
                 } else {
                     data[dstIndex] = vector.getDataAt(srcIndex);
@@ -140,7 +142,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = RRuntime.DOUBLE_NA;
                 } else {
                     data[dstIndex] = vector.getDataAt(srcIndex);
@@ -171,7 +173,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = RRuntime.LOGICAL_NA;
                 } else {
                     data[dstIndex] = vector.getDataAt(srcIndex);
@@ -202,7 +204,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = RRuntime.STRING_NA;
                 } else {
                     data[dstIndex] = vector.getDataAt(srcIndex);
@@ -233,7 +235,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = (dstArrayBase + newAccDstDimensions * i) << 1;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = RRuntime.COMPLEX_NA_REAL_PART;
                     data[dstIndex + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
                 } else {
@@ -266,7 +268,7 @@ abstract class GetMultiDimDataNode extends RNode {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
                 int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
-                if (srcIndex == -1) {
+                if (negativeSrcIndexProfile.profile(srcIndex == -1)) {
                     data[dstIndex] = 0;
                 } else {
                     data[dstIndex] = vector.getDataAt(srcIndex).getValue();
@@ -284,7 +286,7 @@ abstract class GetMultiDimDataNode extends RNode {
 
     private int getNewArrayBase(int srcArrayBase, RIntVector p, int i, int newAccSrcDimensions) {
         int newSrcArrayBase;
-        if (srcArrayBase == -1) {
+        if (negativeSrcArrayBaseProfile.profile(srcArrayBase == -1)) {
             newSrcArrayBase = -1;
         } else {
             int pos = p.getDataAt(i);
@@ -298,7 +300,7 @@ abstract class GetMultiDimDataNode extends RNode {
     }
 
     private int getSrcIndex(int srcArrayBase, RIntVector p, int i, int newAccSrcDimensions) {
-        if (srcArrayBase == -1) {
+        if (negativeSrcArrayBaseProfile.profile(srcArrayBase == -1)) {
             return -1;
         } else {
             int pos = p.getDataAt(i);

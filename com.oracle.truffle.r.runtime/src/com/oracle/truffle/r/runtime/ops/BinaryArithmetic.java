@@ -15,7 +15,7 @@ package com.oracle.truffle.r.runtime.ops;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -200,7 +200,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -249,7 +249,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -319,7 +319,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -458,7 +458,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -492,13 +492,13 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -530,13 +530,13 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -544,9 +544,9 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static class Pow extends BinaryArithmetic {
 
-        BranchProfile everSeenExponentOtherThanTwo = new BranchProfile();
-        BranchProfile everSeenNonIntegralExponent = new BranchProfile();
-        BranchProfile everSeenNegativeExponent = new BranchProfile();
+        BranchProfile everSeenExponentOtherThanTwo = BranchProfile.create();
+        BranchProfile everSeenNonIntegralExponent = BranchProfile.create();
+        BranchProfile everSeenNegativeExponent = BranchProfile.create();
 
         public Pow() {
             super(false, false, false);
@@ -692,7 +692,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
@@ -962,13 +962,13 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             return left.compareTo(right) > 0 ? left : right;
         }
@@ -991,13 +991,13 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
 
         @Override
-        @SlowPath
+        @TruffleBoundary
         public String op(String left, String right) {
             return left.compareTo(right) < 0 ? left : right;
         }

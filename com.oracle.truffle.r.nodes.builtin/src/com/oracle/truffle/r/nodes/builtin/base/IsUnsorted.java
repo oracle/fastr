@@ -33,20 +33,20 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "is.unsorted", kind = SUBSTITUTE, parameterNames = {"x", "na.rm", "strictly"})
-// TODO INTERNAL
+@RBuiltin(name = "is.unsorted", kind = INTERNAL, parameterNames = {"x", "strictly"})
+// TODO support strictly
+// TODO support lists
 public abstract class IsUnsorted extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
     @Child private BinaryBooleanNode ge = BinaryBooleanNodeFactory.create(BinaryCompare.GREATER_EQUAL, new RNode[1], getBuiltin(), getSuppliedArgsNames());
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected byte isUnsorted(RDoubleVector x, byte narm, byte strictly) {
+    protected byte isUnsorted(RDoubleVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         double last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -58,4 +58,33 @@ public abstract class IsUnsorted extends RBuiltinNode {
         }
         return RRuntime.LOGICAL_FALSE;
     }
+
+    @Specialization
+    protected byte isUnsorted(RIntVector x, @SuppressWarnings("unused") byte strictly) {
+        controlVisibility();
+        int last = x.getDataAt(0);
+        for (int k = 1; k < x.getLength(); ++k) {
+            int current = x.getDataAt(k);
+            if (ge.doInt(current, last) == RRuntime.LOGICAL_FALSE) {
+                return RRuntime.LOGICAL_TRUE;
+            }
+            last = current;
+        }
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isUnsorted(RStringVector x, @SuppressWarnings("unused") byte strictly) {
+        controlVisibility();
+        String last = x.getDataAt(0);
+        for (int k = 1; k < x.getLength(); ++k) {
+            String current = x.getDataAt(k);
+            if (ge.doString(current, last) == RRuntime.LOGICAL_FALSE) {
+                return RRuntime.LOGICAL_TRUE;
+            }
+            last = current;
+        }
+        return RRuntime.LOGICAL_FALSE;
+    }
+
 }

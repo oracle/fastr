@@ -24,12 +24,14 @@ package com.oracle.truffle.r.engine;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.*;
 
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -84,6 +86,7 @@ public final class REngine implements RContext.Engine {
         Locale.setDefault(Locale.ROOT);
         FastROptions.initialize();
         Load_RFFIFactory.initialize();
+        RAccuracyInfo.initialize();
         singleton.crashOnFatalError = crashOnFatalErrorArg;
         singleton.builtinLookup = RBuiltinPackages.getInstance();
         singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
@@ -93,7 +96,6 @@ public final class REngine implements RContext.Engine {
         singleton.evalFunction = singleton.lookupBuiltin("eval");
         RPackageVariables.initializeBase();
         RVersionInfo.initialize();
-        RAccuracyInfo.initialize();
         RRNG.initialize();
         TempDirPath.initialize();
         LibPaths.initialize();
@@ -277,6 +279,11 @@ public final class REngine implements RContext.Engine {
         } catch (RError e) {
             singleton.context.getConsoleHandler().println(e.getMessage());
             return null;
+        } catch (UnsupportedSpecializationException use) {
+            ConsoleHandler ch = singleton.context.getConsoleHandler();
+            ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
+            return null;
         } catch (RecognitionException | RuntimeException e) {
             singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -333,7 +340,7 @@ public final class REngine implements RContext.Engine {
      * @param body
      * @return {@link #makeCallTarget(Object, String)}
      */
-    @SlowPath
+    @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, funName, true, true);
@@ -368,6 +375,8 @@ public final class REngine implements RContext.Engine {
             } else {
                 throw e;
             }
+        } catch (UnsupportedSpecializationException use) {
+            throw use;
         } catch (Throwable e) {
             reportImplementationError(e);
         }
@@ -376,7 +385,7 @@ public final class REngine implements RContext.Engine {
 
     private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
 
-    @SlowPath
+    @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
@@ -386,7 +395,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     public void printRError(RError e) {
         String es = e.toString();
         if (!es.isEmpty()) {
@@ -395,7 +404,7 @@ public final class REngine implements RContext.Engine {
         reportWarnings(true);
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
@@ -407,7 +416,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static void reportWarnings(boolean inAddition) {
         List<String> evalWarnings = singleton.context.extractEvalWarnings();
         ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();

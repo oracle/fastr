@@ -206,6 +206,17 @@ public abstract class AsVector extends RBuiltinNode {
         return result;
     }
 
+    @Specialization(guards = "modeIsPairList")
+    protected Object asVectorPairList(RList x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        // TODO implement non-empty element list conversion; this is a placeholder for type test
+        if (x.getLength() == 0) {
+            return RNull.instance;
+        } else {
+            throw RError.nyi(getEncapsulatingSourceSection(), " non-empty lists");
+        }
+    }
+
     @Specialization(guards = "modeIsAnyOrMatches")
     protected RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -271,6 +282,10 @@ public abstract class AsVector extends RBuiltinNode {
         return RType.Any.getName().equals(mode);
     }
 
+    protected boolean modeIsPairList(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+        return RType.PairList.getName().equals(mode);
+    }
+
     protected boolean invalidMode(@SuppressWarnings("unused") RAbstractVector x, String mode) {
         RType modeType = RType.fromString(mode);
         if (modeType == null) {
@@ -287,6 +302,7 @@ public abstract class AsVector extends RBuiltinNode {
             case Logical:
             case Matrix:
             case Numeric:
+            case PairList:
             case Raw:
             case Symbol:
                 return false;

@@ -22,17 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import java.util.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+
+import java.util.ArrayList;
+
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 // Implements default S3 method
 @RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax", "..."})
@@ -50,12 +52,14 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         return vec;
     }
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ArrayList<String> dataList = new ArrayList<>(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -199,6 +203,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         IntArray dataList = new IntArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -212,6 +217,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         DoubleArray dataList = new DoubleArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -225,6 +231,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -238,6 +245,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -251,6 +259,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {

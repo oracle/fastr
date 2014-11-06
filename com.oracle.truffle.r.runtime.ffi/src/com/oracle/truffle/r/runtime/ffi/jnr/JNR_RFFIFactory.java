@@ -30,7 +30,7 @@ import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -61,12 +61,14 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         int getcwd(@Out byte[] path);
 
         long mkdtemp(@In @Out ByteBuffer template);
+
+        long strtol(@In String dir, @In String end, int base);
     }
 
     private static class LibCXProvider {
         private static LibCX libcx;
 
-        @SlowPath
+        @TruffleBoundary
         private static LibCX createAndLoadLib() {
             return LibraryLoader.create(LibCX.class).load("c");
         }
@@ -127,7 +129,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
                 // not a link
             } else {
                 // some other error
-                throw ioex();
+                throw ioex(Errno.valueOf(n).description());
             }
         }
         return s;
@@ -140,6 +142,25 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
             return null;
         } else {
             return new String(bb.array());
+        }
+    }
+
+    public void mkdir(String dir, int mode) throws IOException {
+        try {
+            posix().mkdir(dir, mode);
+        } catch (RuntimeException ex) {
+            throw ioex(Errno.valueOf(posix().errno()).description());
+        }
+    }
+
+    public long strtol(String s, int base) throws IllegalArgumentException {
+        posix().errno(0);
+        long result = libcx().strtol(s, null, base);
+        int e = posix().errno();
+        if (e != 0) {
+            throw new IllegalArgumentException(Errno.valueOf(e).description());
+        } else {
+            return result;
         }
     }
 
@@ -205,7 +226,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     private static class LapackProvider {
         private static Lapack lapack;
 
-        @SlowPath
+        @TruffleBoundary
         private static Lapack createAndLoadLib() {
             return LibraryLoader.create(Lapack.class).load("Rlapack");
         }
@@ -401,7 +422,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
    private static class LinpackProvider {
        private static Linpack linpack;
 
-       @SlowPath
+       @TruffleBoundary
        private static Linpack createAndLoadLib() {
            // need to load blas lib as Fortran functions in RDerived lib need it
            LibraryLoader.create(Linpack.class).load("Rblas");
@@ -463,7 +484,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
    private static class FFTProvider {
        private static FFT fft;
 
-       @SlowPath
+       @TruffleBoundary
        private static FFT createAndLoadLib() {
            return LibraryLoader.create(FFT.class).load("RDerived");
        }
@@ -531,7 +552,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
             UserRngProvider.libPath = libPath;
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static UserRng createAndLoadLib() {
             return LibraryLoader.create(UserRng.class).load(libPath);
         }
@@ -611,7 +632,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     private static class ZipProvider {
         private static Zip zip;
 
-        @SlowPath
+        @TruffleBoundary
         private static Zip createAndLoadLib() {
             return LibraryLoader.create(Zip.class).load("z");
         }
@@ -631,4 +652,5 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         return zip().uncompress(dest, destlen, source, source.length);
     }
+
 }

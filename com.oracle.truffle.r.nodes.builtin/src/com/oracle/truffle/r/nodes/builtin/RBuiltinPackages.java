@@ -34,17 +34,12 @@ import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Support for the default set of packages in an R session. Setup is a two-phase process. The
  * meta-data for the possible set of default packages (which is a known set) is established
  * statically (to support an AOT-based VM without runtime reflection), and then the dynamic state is
  * established for a given subset of the packages at runtime, through the {@link #load} method.
- *
- * The current implementation is temporary in that it loads R sources for the package and parses
- * them. Eventually, these will be loaded from a binary, pre-parsed, form, similar to that used for
- * standard R packages (which use a GnuR-specific format).
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
@@ -76,28 +71,9 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         RBuiltinPackage pkg = packages.get(name);
         if (pkg == null) {
             Utils.fail("unknown default package: " + name);
+        } else {
+            pkg.loadSources(frame, envForFrame);
         }
-        pkg.setEnv(envForFrame);
-        /*
-         * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
-         * environment so that lookups through the environment work as expected.
-         */
-        Map<String, RBuiltinFactory> builtins = pkg.getBuiltins();
-        for (Map.Entry<String, RBuiltinFactory> entrySet : builtins.entrySet()) {
-            String methodName = entrySet.getKey();
-            RBuiltinFactory builtinFactory = entrySet.getValue();
-            builtinFactory.setEnv(envForFrame);
-            RBuiltin builtin = builtinFactory.getRBuiltin();
-            if (builtin.kind() != RBuiltinKind.INTERNAL) {
-                RFunction function = createFunction(builtinFactory, methodName);
-                try {
-                    envForFrame.put(methodName, function);
-                } catch (PutException ex) {
-                    Utils.fail("failed to install builtin function: " + methodName);
-                }
-            }
-        }
-        pkg.loadSources(frame, envForFrame);
     }
 
     @Override

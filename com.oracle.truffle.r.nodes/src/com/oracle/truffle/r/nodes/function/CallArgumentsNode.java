@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -241,7 +241,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static RNode wrapVarArgValue(Object varArgValue) {
         if (varArgValue instanceof RPromise) {
             return PromiseNode.createVarArg((RPromise) varArgValue);

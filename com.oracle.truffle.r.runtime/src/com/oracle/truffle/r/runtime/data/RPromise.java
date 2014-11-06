@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
@@ -112,7 +112,7 @@ public class RPromise extends RLanguageRep {
     protected MaterializedFrame execFrame;
 
     /**
-     * Might not be <code>null</code>
+     * Might not be <code>null</code>.
      */
     private final Closure closure;
 
@@ -282,7 +282,7 @@ public class RPromise extends RLanguageRep {
     }
 
     /**
-     * Used in case the {@link RPromise} is evaluated outside
+     * Used in case the {@link RPromise} is evaluated outside.
      *
      * @param newValue
      */
@@ -337,13 +337,13 @@ public class RPromise extends RLanguageRep {
         }
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected Object doEvalArgument(SourceSection callSrc) {
         assert execFrame != null;
         return RContext.getEngine().evalPromise(this, callSrc);
     }
 
-    @SlowPath
+    @TruffleBoundary
     protected Object doEvalArgument(MaterializedFrame frame) {
         return RContext.getEngine().evalPromise(this, frame);
     }
@@ -380,7 +380,7 @@ public class RPromise extends RLanguageRep {
      * @return Whether there was at least on {@link RPromise} which needed to be
      *         {@link #deoptimize()}d.
      */
-    @SlowPath
+    @TruffleBoundary
     public static boolean deoptimizeFrame(MaterializedFrame frame) {
         boolean deoptOne = false;
         for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
@@ -516,7 +516,7 @@ public class RPromise extends RLanguageRep {
     }
 
     @Override
-    @SlowPath
+    @TruffleBoundary
     public String toString() {
         return "[" + evalPolicy + ", " + type + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
@@ -621,7 +621,7 @@ public class RPromise extends RLanguageRep {
             this.vararg = vararg;
         }
 
-        @SlowPath
+        @TruffleBoundary
         protected Object varargGenerateValue(PromiseProfile profile) {
             return vararg.evaluate((VirtualFrame) null, profile);
         }
@@ -641,7 +641,7 @@ public class RPromise extends RLanguageRep {
             super(type, OptType.PROMISED, closure, eagerValue, assumption, nFrameId, feedback);
         }
 
-        @SlowPath
+        @TruffleBoundary
         protected Object promisedGenEagerValue(PromiseProfile profile) {
             RPromise promisedPromise = (RPromise) eagerValue;
             return promisedPromise.evaluate((VirtualFrame) null, profile);
@@ -794,7 +794,7 @@ public class RPromise extends RLanguageRep {
             return callTarget;
         }
 
-        @SlowPath
+        @TruffleBoundary
         private static RootCallTarget generateCallTarget(Object expr) {
             return RContext.getEngine().makeCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }

@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class Formula extends ASTNode {
+public final class Formula extends ASTNode {
 
     private final ASTNode response;
     private final ASTNode model;

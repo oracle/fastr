@@ -11,21 +11,27 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFrame;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "unclass", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class UnClass extends RBuiltinNode {
+    private final BranchProfile objectProfile = BranchProfile.create();
 
     @Specialization
+    @TruffleBoundary
     protected Object unClass(RAbstractVector arg) {
         controlVisibility();
         if (arg.isObject()) {
+            objectProfile.enter();
             RVector resultVector = arg.materialize();
             if (resultVector.isShared()) {
                 resultVector = resultVector.copy();
@@ -36,6 +42,7 @@ public abstract class UnClass extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object unClass(RDataFrame arg) {
         controlVisibility();
         RDataFrame resultFrame = arg;

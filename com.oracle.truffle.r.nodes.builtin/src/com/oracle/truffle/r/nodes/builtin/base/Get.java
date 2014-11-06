@@ -52,8 +52,8 @@ public abstract class Get extends RBuiltinNode {
     @CompilationFinal private RType lastMode;
 
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
-    private final BranchProfile errorProfile = new BranchProfile();
-    private final BranchProfile inheritsProfile = new BranchProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile inheritsProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {

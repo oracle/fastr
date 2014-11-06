@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -35,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "pmatch", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "duplicates.ok"})
 public abstract class PMatch extends RBuiltinNode {
+
+    private final ConditionProfile nomatchNA = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -89,7 +92,7 @@ public abstract class PMatch extends RBuiltinNode {
             }
         }
         boolean complete = RDataFactory.COMPLETE_VECTOR;
-        if (nomatch == RRuntime.INT_NA) {
+        if (nomatchNA.profile(nomatch == RRuntime.INT_NA)) {
             for (int i = 0; i < matches.length; i++) {
                 if (matches[i] == RRuntime.INT_NA) {
                     complete = RDataFactory.INCOMPLETE_VECTOR;

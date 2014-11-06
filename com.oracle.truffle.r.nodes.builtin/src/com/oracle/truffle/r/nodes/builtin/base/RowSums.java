@@ -10,17 +10,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.CreateCast;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BinaryConditionProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 @RBuiltin(name = "rowSums", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
 public abstract class RowSums extends RBuiltinNode {
@@ -45,6 +53,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RDoubleVector rowSums(RDoubleVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -78,6 +87,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RDoubleVector rowSums(RLogicalVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -105,6 +115,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RDoubleVector rowSums(RIntVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -135,6 +146,7 @@ public abstract class RowSums extends RBuiltinNode {
     @Specialization
     protected RDoubleVector rowSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }
 

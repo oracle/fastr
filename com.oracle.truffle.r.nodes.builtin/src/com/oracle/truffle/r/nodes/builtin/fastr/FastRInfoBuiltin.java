@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 @RBuiltinComment("Prints this message.")
 public abstract class FastRInfoBuiltin extends RBuiltinNode {
 
-    @SlowPath
+    @TruffleBoundary
     @Specialization
     protected Object printTree() {
         controlVisibility();
@@ -47,7 +47,7 @@ public abstract class FastRInfoBuiltin extends RBuiltinNode {
         return b.toString();
     }
 
-    @SlowPath
+    @TruffleBoundary
     private static String createPackageString(RBuiltinPackage pack) {
         Map<String, RBuiltinFactory> builtins = pack.getBuiltins();
         StringBuilder msg = new StringBuilder();

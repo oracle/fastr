@@ -22,19 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.util.Random;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import static com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"})
 public abstract class TempFile extends RBuiltinNode {
+    @CompilationFinal
+    private int stringVectorsAmount;
 
     private static Random rand = new Random();
 
@@ -50,9 +57,10 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization(guards = "tempDirL1")
+    @TruffleBoundary
     protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         controlVisibility();
-        return RDataFactory.createStringVector(createFile(pattern, tempDir.getDataAt(0), fileExt));
+        return RDataFactory.createStringVector(createNonExistedFilePath(pattern, tempDir.getDataAt(0), fileExt));
     }
 
     @SuppressWarnings("unused")
@@ -61,31 +69,43 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector tempfileGeneric(Object pattern, Object tempDir, Object fileExt) {
         controlVisibility();
-        RStringVector[] argVecs = new RStringVector[]{checkVector(pattern, INVALID_PATTERN), checkVector(tempDir, INVALID_TEMPDIR), checkVector(fileExt, INVALID_FILEEXT)};
         // Now we have RStringVectors of at least length 1
-        int maxL = 0;
-        for (int i = 0; i < argVecs.length; i++) {
-            int l = argVecs[i].getLength();
-            if (i > maxL) {
-                maxL = l;
-            }
-        }
-        for (int i = 0; i < argVecs.length; i++) {
-            int l = argVecs[i].getLength();
-            if (l < maxL) {
-                argVecs[i] = extendVector(argVecs[i], l, maxL);
-            }
-        }
-        // Now all vectors are same length
-        String[] data = new String[maxL];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = createFile(argVecs[0].getDataAt(i), argVecs[1].getDataAt(i), argVecs[2].getDataAt(i));
-        }
-        return RDataFactory.createStringVector(data, true);
+        RStringVector[] argVecs = new RStringVector[]{checkVector(pattern, INVALID_PATTERN), checkVector(tempDir, INVALID_TEMPDIR), checkVector(fileExt, INVALID_FILEEXT)};
+        stringVectorsAmount = argVecs.length;
+        int maxL = findMaxLengthIn(argVecs);
+        extendVectorsToSameLength(argVecs, maxL);   // Now all vectors are same length
+        return RDataFactory.createStringVector(createTempFilesPaths(argVecs, maxL), true);
     }
 
+    @ExplodeLoop //sure that array not empty
+    @TruffleBoundary
+    private int findMaxLengthIn(RStringVector[] stringVectors) {
+        int maxLength = 0;
+        for (int i = 0; i < stringVectorsAmount; i++) {
+            int length = stringVectors[i].getLength();
+            if (length > maxLength) {
+                maxLength = length;
+            }
+        }
+        return maxLength;
+    }
+
+    @ExplodeLoop
+    @TruffleBoundary
+    private void extendVectorsToSameLength(RStringVector[] stringVectors, int desiredLength) {
+        for (int i = 0; i < stringVectorsAmount; i++) {
+            RStringVector stringVector = stringVectors[i];
+            int length = stringVector.getLength();
+            if (length < desiredLength) {
+                stringVectors[i] = extendVector(stringVector, length, desiredLength);
+            }
+        }
+    }
+
+    @TruffleBoundary
     private static RStringVector extendVector(RStringVector vec, int vecL, int maxL) {
         String[] data = new String[maxL];
         int i = 0;
@@ -100,6 +120,18 @@ public abstract class TempFile extends RBuiltinNode {
         return RDataFactory.createStringVector(data, true);
     }
 
+    @TruffleBoundary
+    @ExplodeLoop
+    private static String[] createTempFilesPaths(RStringVector[] stringVectors, int pathsAmount) {
+        //pathsAmount must be equals to length of vector. All vectors must be same length
+        String[] paths = new String[pathsAmount];
+        for (int i = 0; i < pathsAmount; i++) {
+            paths[i] = createNonExistedFilePath(stringVectors[0].getDataAt(i), stringVectors[1].getDataAt(i), stringVectors[2].getDataAt(i));
+        }
+        return paths;
+    }
+
+    @TruffleBoundary
     private RStringVector checkVector(Object obj, String msg) {
         if (obj instanceof RStringVector) {
             RStringVector result = (RStringVector) obj;
@@ -112,7 +144,8 @@ public abstract class TempFile extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
-    private static String createFile(String pattern, String tempDir, String fileExt) {
+    @TruffleBoundary
+    private static String createNonExistedFilePath(String pattern, String tempDir, String fileExt) {
         while (true) {
             StringBuilder sb = new StringBuilder(tempDir);
             sb.append(File.separatorChar);
@@ -128,6 +161,8 @@ public abstract class TempFile extends RBuiltinNode {
         }
     }
 
+    @ExplodeLoop
+    @TruffleBoundary
     private static void appendRandomString(StringBuilder sb) {
         for (int i = 0; i < RANDOM_LENGTH; i++) {
             sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));

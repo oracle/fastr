@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.*;
 /**
  * A simple wrapper class that represents a symbol that might me read or written to.
  */
-public class Symbol {
+public final class Symbol {
     /**
      * The {@link Symbol}s identifier.
      */

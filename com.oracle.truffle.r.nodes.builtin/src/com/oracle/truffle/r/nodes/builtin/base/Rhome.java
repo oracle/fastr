@@ -22,14 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RMissing;
 
-import java.nio.file.*;
+import java.nio.file.FileSystems;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 /**
  * R.home builtin.
@@ -46,12 +50,14 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Rhome extends RBuiltinNode {
 
     @Specialization
+    @TruffleBoundary
     protected Object doRhome(@SuppressWarnings("unused") RMissing component) {
         controlVisibility();
         return RDataFactory.createStringVector(REnvVars.rHome());
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object doRhome(String component) {
         controlVisibility();
         String rHome = REnvVars.rHome();

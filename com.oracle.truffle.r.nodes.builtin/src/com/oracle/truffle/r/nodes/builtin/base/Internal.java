@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = {0})
 public abstract class Internal extends RBuiltinNode {
 
-    protected final BranchProfile errorProfile = new BranchProfile();
+    protected final BranchProfile errorProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {
