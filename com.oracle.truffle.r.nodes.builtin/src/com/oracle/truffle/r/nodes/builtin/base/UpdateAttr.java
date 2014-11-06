@@ -102,6 +102,8 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return RVector.setClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(null);
+        } else if (name.equals(RRuntime.LEVELS_ATTR_KEY)) {
+            resultVector.setLevels(null);
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
@@ -140,6 +142,8 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(castVector(frame, value));
+        } else if (name.equals(RRuntime.LEVELS_ATTR_KEY)) {
+            resultVector.setLevels(castVector(frame, value));
         } else {
             // generic attribute
             resultVector.setAttr(name, value);

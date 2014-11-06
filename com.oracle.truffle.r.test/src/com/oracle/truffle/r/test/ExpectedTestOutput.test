@@ -8333,6 +8333,35 @@ NULL
 [1] NA NA NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x == "a" }
+[1]  TRUE FALSE  TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x == c("a", "b") }
+[1] TRUE TRUE TRUE
+Warning messages:
+1: In is.na(e1) | is.na(e2) :
+  longer object length is not a multiple of shorter object length
+2: In `==.default`(x, c("a", "b")) :
+  longer object length is not a multiple of shorter object length
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x > "a" }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, "a") : > not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x > c("a", "b") }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, c("a", "b")) : > not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a", "c")); x == c("a", "b") }
+[1]  TRUE  TRUE  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}
  [1] I   II  II  III I   II  III III I   II  III III I
 Levels: I II III

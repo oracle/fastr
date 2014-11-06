@@ -8114,6 +8114,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFactor_696be2cb6d37235d8e5aa08b6de78b44() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x == \"a\" }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_6b857dc0c28485c71e998f91ad719e79() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testFactor_2ef7de52def309425a9b70965111f004() {
         assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
     }
@@ -8126,6 +8136,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testFactor_78f60bd3f5d980d4b71b67fa44964e85() {
         assertEvalError("{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_8e866be378d6495f8d649996dcb5bb3c() {
+        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_7cd2b27121f6c77b417a436d60108819() {
+        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_61bfd366e4db68e9bda18fe2c3cc87f2() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
     }
 
     @Test

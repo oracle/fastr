@@ -214,6 +214,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
+    @TruffleBoundary
     public final void setLevels(Object newLevels) {
         if (attributes != null && newLevels == null) {
             // whether it's one dimensional array or not, assigning null always removes the "Levels"

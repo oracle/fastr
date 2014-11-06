@@ -158,6 +158,10 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRDataFrame(execute(frame));
     }
 
+    public RFactor executeRFactor(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRFactor(execute(frame));
+    }
+
     public RSymbol executeRSymbol(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectRSymbol(execute(frame));
     }
@@ -190,7 +194,7 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRType(execute(frame));
     }
 
-    public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
+    public static boolean areSameLength(RAbstractContainer a, RAbstractContainer b) {
         return a.getLength() == b.getLength();
     }
 }
