@@ -58,7 +58,7 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    public boolean whichFalse(RAbstractVector x, RAbstractStringVector what, byte which) {
+    public boolean whichFalse(RAbstractContainer x, RAbstractStringVector what, byte which) {
         return which != RRuntime.LOGICAL_TRUE;
     }
 
@@ -68,7 +68,7 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @Specialization(guards = "whichFalse")
-    protected byte doInherits(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+    protected byte doInherits(VirtualFrame frame, RAbstractContainer x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
@@ -90,7 +90,7 @@ public abstract class Inherits extends RBuiltinNode {
     @TruffleBoundary
     // map operations lead to recursion resulting in compilation failure
     private static Object doDoesInherit(RStringVector classHr, RAbstractStringVector what) {
-        HashMap<String, Integer> classToPos = InheritsNode.initClassToPos(classHr);
+        Map<String, Integer> classToPos = InheritsNode.initClassToPos(classHr);
         int[] result = new int[what.getLength()];
         for (int i = 0; i < what.getLength(); ++i) {
             final Integer pos = classToPos.get(what.getDataAt(i));

@@ -61,7 +61,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     @Specialization
@@ -102,7 +102,8 @@ public abstract class UpdateClass extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
-        return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg
+                        : null);
     }
 
     @Specialization
@@ -110,7 +111,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     public Object setClass(RFunction arg, @SuppressWarnings("unused") Object className) {

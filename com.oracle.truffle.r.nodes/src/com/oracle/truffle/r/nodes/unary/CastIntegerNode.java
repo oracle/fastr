@@ -235,6 +235,11 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
+    @Specialization
+    protected RIntVector doFactor(RFactor factor) {
+        return factor.getVector();
+    }
+
     @Fallback
     @TruffleBoundary
     public int doOther(Object operand) {
