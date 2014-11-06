@@ -42,6 +42,15 @@ public abstract class CoerceVector extends RNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastStringNode castString;
     @Child private CastListNode castList;
+    @Child private CoerceVector coerceRecursive;
+
+    private Object coerceRecursive(VirtualFrame frame, Object value, Object vector, Object operand) {
+        if (coerceRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            coerceRecursive = insert(CoerceVectorFactory.create(null, null, null));
+        }
+        return coerceRecursive.executeEvaluated(frame, value, vector, operand);
+    }
 
     private Object castComplex(VirtualFrame frame, Object vector) {
         if (castComplex == null) {
@@ -309,6 +318,13 @@ public abstract class CoerceVector extends RNode {
         return (RList) castList(frame, vector);
     }
 
+    // factor value
+
+    @Specialization
+    protected Object coerce(VirtualFrame frame, RFactor value, RAbstractVector vector, Object operand) {
+        return coerceRecursive(frame, value.getVector(), vector, operand);
+    }
+
     // function vector value
 
     @Specialization
@@ -338,7 +354,7 @@ public abstract class CoerceVector extends RNode {
         return vector;
     }
 
-    protected boolean isVectorList(RAbstractVector value, RAbstractVector vector) {
+    protected boolean isVectorList(RAbstractContainer value, RAbstractVector vector) {
         return vector.getElementClass() == Object.class;
     }
 
