@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -29,7 +31,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 @TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends Node {
@@ -109,19 +110,6 @@ public abstract class FrameSlotNode extends Node {
                 newNode = new AbsentFrameSlotNode(getAssumption(frame, identifier), identifier);
             }
             return replace(newNode);
-        }
-
-        // TODO FINDORADDFRAMESLOT
-        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
-            return findOrAddFrameSlot(fd, identifier, FrameSlotKind.Illegal);
-        }
-
-        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
-            FrameSlot slot = fd.findFrameSlot(identifier);
-            if (slot != null) {
-                return slot;
-            }
-            return fd.addFrameSlot(identifier, FrameSlotChangeMonitor.createMonitor(), kind);
         }
     }
 

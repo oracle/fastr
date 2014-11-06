@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
+
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeField(name = "argWrite", type = boolean.class)
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
@@ -189,15 +191,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, getMode())).execute(frame, value);
         }
-
-        // TODO FINDORADDFRAMESLOT
-        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, String name, FrameSlotKind kind) {
-            FrameSlot slot = fd.findFrameSlot(name);
-            if (slot != null) {
-                return slot;
-            }
-            return fd.addFrameSlot(name, FrameSlotChangeMonitor.createMonitor(), kind);
-        }
     }
 
     @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
@@ -346,19 +339,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
-        }
-
-        // TODO FINDORADDFRAMESLOT
-        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
-            return findOrAddFrameSlot(fd, identifier, FrameSlotKind.Illegal);
-        }
-
-        private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
-            FrameSlot slot = fd.findFrameSlot(identifier);
-            if (slot != null) {
-                return slot;
-            }
-            return fd.addFrameSlot(identifier, FrameSlotChangeMonitor.createMonitor(), kind);
         }
 
         @Override

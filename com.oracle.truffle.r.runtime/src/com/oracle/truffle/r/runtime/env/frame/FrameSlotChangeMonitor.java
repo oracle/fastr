@@ -111,4 +111,12 @@ public final class FrameSlotChangeMonitor {
 // invalidateProfile.enter();
 // invalidate(slot);
 // }
+
+    public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
+        return fd.findOrAddFrameSlot(identifier, createMonitor(), FrameSlotKind.Illegal);
+    }
+
+    public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
+        return fd.findOrAddFrameSlot(identifier, createMonitor(), initialKind);
+    }
 }

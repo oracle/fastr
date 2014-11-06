@@ -11,6 +11,8 @@
 
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -19,7 +21,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 public abstract class S3DispatchNode extends DispatchNode {
 
@@ -117,19 +118,6 @@ public abstract class S3DispatchNode extends DispatchNode {
         findOrAddFrameSlot(fDesc, RRuntime.RDotClass);
         findOrAddFrameSlot(fDesc, RRuntime.RDotGenericCallEnv);
         findOrAddFrameSlot(fDesc, RRuntime.RDotGenericDefEnv);
-    }
-
-    // TODO FINDORADDFRAMESLOT
-    private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
-        return findOrAddFrameSlot(fd, identifier, FrameSlotKind.Illegal);
-    }
-
-    private static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
-        FrameSlot slot = fd.findFrameSlot(identifier);
-        if (slot != null) {
-            return slot;
-        }
-        return fd.addFrameSlot(identifier, FrameSlotChangeMonitor.createMonitor(), kind);
     }
 
     protected void removeVars(VirtualFrame frame) {
