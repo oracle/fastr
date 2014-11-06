@@ -7099,6 +7099,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDiff_f0ac3bed06cb4b5646da1f73e78291f8() {
+        assertEval("{ diff(1:10, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiff_7b31177c1f34b8a05962fdbb5b777fde() {
+        assertEval("{ diff(1:10, 2, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiff_3715f48e2640f2039090554c74f88ddc() {
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, lag = 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiff_e72d1cda19e760416d19b9192a7a2321() {
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, differences = 2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDimensions_0c23ecb60a78eddaab4dced71193f975() {
         assertEval("{ dim(1) }");
     }

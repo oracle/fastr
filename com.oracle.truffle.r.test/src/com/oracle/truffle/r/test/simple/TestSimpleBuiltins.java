@@ -3956,4 +3956,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-gl(2, 1, 20); print(x)}");
         assertEval("{x<-gl(2, 2, 20); print(x)}");
     }
+
+    @Test
+    public void testDiff() {
+        assertEval("{ diff(1:10, 2) }");
+        assertEval("{ diff(1:10, 2, 2) }");
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, lag = 2) }");
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, differences = 2) }");
+    }
 }
