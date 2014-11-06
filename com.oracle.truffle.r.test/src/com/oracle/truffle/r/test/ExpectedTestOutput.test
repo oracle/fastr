@@ -8511,6 +8511,10 @@ NULL
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(textConnection("abc"), "connection") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{x <- 10; inherits(x, "a") ;}
 [1] FALSE
 

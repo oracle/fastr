@@ -43,7 +43,16 @@ public abstract class InheritsNode extends BinaryNode {
     // map operations lead to recursion resulting in compilation failure
     @Specialization
     protected Object doesInherit(RAbstractVector x, RAbstractStringVector what) {
-        Map<String, Integer> classToPos = initClassToPos(x);
+        return checkDoesInherit(x.getClassHierarchy(), what);
+    }
+
+    @Specialization
+    protected Object doesInherit(RConnection x, RAbstractStringVector what) {
+        return checkDoesInherit(x.getClassHierarchy(), what);
+    }
+
+    private static byte checkDoesInherit(RStringVector classHr, RAbstractStringVector what) {
+        Map<String, Integer> classToPos = initClassToPos(classHr);
         for (int i = 0; i < what.getLength(); ++i) {
             if (classToPos.get(what.getDataAt(i)) != null) {
                 return RRuntime.LOGICAL_TRUE;
@@ -53,14 +62,12 @@ public abstract class InheritsNode extends BinaryNode {
     }
 
     @TruffleBoundary
-    public static Map<String, Integer> initClassToPos(RAbstractVector x) {
-        RStringVector klass = x.getClassHierarchy();
-
+    public static Map<String, Integer> initClassToPos(RStringVector classHr) {
         // Create a mapping for elements to their respective positions
         // in the vector for faster lookup.
         Map<String, Integer> classToPos = new HashMap<>();
-        for (int i = 0; i < klass.getLength(); ++i) {
-            classToPos.put(klass.getDataAt(i), i);
+        for (int i = 0; i < classHr.getLength(); ++i) {
+            classToPos.put(classHr.getDataAt(i), i);
         }
         return classToPos;
     }

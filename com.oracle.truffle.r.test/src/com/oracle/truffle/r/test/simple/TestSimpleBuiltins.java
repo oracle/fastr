@@ -3291,6 +3291,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
         assertEval("{ inherits(NULL, \"try-error\") }");
         assertEval("{ inherits(new.env(), \"try-error\") }");
+        assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
     }
 
     @Test
