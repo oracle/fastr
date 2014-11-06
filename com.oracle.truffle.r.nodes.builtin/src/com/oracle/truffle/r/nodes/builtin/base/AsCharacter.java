@@ -29,7 +29,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -38,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."})
-@SuppressWarnings("unused")
 public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
@@ -75,11 +73,6 @@ public abstract class AsCharacter extends RBuiltinNode {
         return (String) castStringNode.executeString(frame, o);
     }
 
-    private String castString(VirtualFrame frame, Object o) {
-        initCast();
-        return (String) castStringNode.executeString(frame, o);
-    }
-
     private RStringVector castStringVector(VirtualFrame frame, Object o) {
         initCast();
         return (RStringVector) ((RStringVector) castStringNode.executeString(frame, o)).copyDropAttributes();
@@ -104,31 +97,31 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization
-    protected String doString(VirtualFrame frame, String value) {
+    protected String doString(String value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    protected String doSymbol(VirtualFrame frame, RSymbol value) {
+    protected String doSymbol(RSymbol value) {
         controlVisibility();
         return value.getName();
     }
 
     @Specialization
-    protected RStringVector doNull(RNull value) {
+    protected RStringVector doNull(@SuppressWarnings("unused") RNull value) {
         controlVisibility();
         return RDataFactory.createStringVector(0);
     }
 
     @Specialization(guards = "!isObject")
-    protected RStringVector doStringVector(VirtualFrame frame, RStringVector vector) {
+    protected RStringVector doStringVector(RStringVector vector) {
         controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
-    protected RStringVector doList(VirtualFrame frame, RList list) {
+    protected RStringVector doList(@SuppressWarnings("unused") RList list) {
         controlVisibility();
         throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
     }
@@ -144,7 +137,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("as.character", RRuntime.USE_METHOD, this.getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create("as.character", RRuntime.USE_METHOD, getSuppliedArgsNames()));
         }
         try {
             return dcn.executeInternal(frame, vector.getClassHierarchy(), new Object[]{vector});
@@ -175,7 +168,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         }
     }
 
-    protected boolean isObject(VirtualFrame frame, RAbstractVector vector) {
+    protected boolean isObject(RAbstractVector vector) {
         return vector.isObject();
     }
 }
