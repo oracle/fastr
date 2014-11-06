@@ -11457,6 +11457,15 @@ a b
 #{prod(c(TRUE, TRUE))}
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQgamma
+#{ p <- (1:9)/10 ; qgamma(p, shape=1) }
+[1] 0.1053605 0.2231436 0.3566749 0.5108256 0.6931472 0.9162907 1.2039728
+[8] 1.6094379 2.3025851
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQgamma
+#{ qgamma(0.5, shape=1) }
+[1] 0.6931472
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
 #{ class(quote(x + y)) }
 [1] "call"
