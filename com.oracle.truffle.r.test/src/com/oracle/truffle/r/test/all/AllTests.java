@@ -8154,6 +8154,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFactor_9b48b1721b63ffee900121993a15bb82() {
+        assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_ea50b4927f7021c815fba8b2628b3939() {
+        assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testFileListing_9646bfd3fb553824f1f54cc5d04b8219() {
         assertEval("{ list.files(\"test/r/simple/data/tree1\") }");
     }
