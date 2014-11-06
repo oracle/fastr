@@ -116,6 +116,13 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     /**
+     * Returns {@code true} if this is the "stdin" connection.
+     */
+    public boolean isStdin() {
+        return false;
+    }
+
+    /**
      * Return the underlying input stream (for internal use).
      */
     public abstract InputStream getInputStream() throws IOException;

@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.io.*;
+
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.utils.CountFields;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -401,24 +405,6 @@ public class ForeignFunctions {
             return RDataFactory.createComplexVector(z, zVec.isComplete(), zVec.getDimensions());
         }
 
-        /**
-         * This is an inefficient guard but it matters little unless there are many different calls
-         * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a
-         * more efficient basis.
-         */
-        private static boolean matchName(RList f, String name) {
-            if (f.getNames() == RNull.instance) {
-                return false;
-            }
-            RStringVector names = (RStringVector) f.getNames();
-            for (int i = 0; i < names.getLength(); i++) {
-                if (names.getDataAt(i).equals("name")) {
-                    return f.getDataAt(i).equals(name) ? true : false;
-                }
-            }
-            return false;
-        }
-
         public boolean fft(RList f) {
             return matchName(f, "fft");
         }
@@ -465,6 +451,124 @@ public class ForeignFunctions {
             }
         }
 
+    }
+
+    /**
+     * This is an inefficient guard but it matters little unless there are many different calls
+     * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a more
+     * efficient basis.
+     */
+    private static boolean matchName(RList f, String name) {
+        if (f.getNames() == RNull.instance) {
+            return false;
+        }
+        RStringVector names = (RStringVector) f.getNames();
+        for (int i = 0; i < names.getLength(); i++) {
+            if (names.getDataAt(i).equals("name")) {
+                return f.getDataAt(i).equals(name) ? true : false;
+            }
+        }
+        return false;
+    }
+
+    @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    public abstract static class DotExternal extends RBuiltinNode {
+
+        @Child private CastLogicalNode castLogical;
+        @Child private CastIntegerNode castInt;
+
+        private byte castLogical(VirtualFrame frame, Object operand) {
+            if (castLogical == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
+            }
+            return (byte) castLogical.executeCast(frame, operand);
+        }
+
+        private int castInt(VirtualFrame frame, Object operand) {
+            if (castInt == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castInt = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            }
+            return (int) castInt.executeCast(frame, operand);
+        }
+
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization(guards = "isCountFields")
+        protected Object countFields(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            RConnection conn = (RConnection) argValues[0];
+            Object sepArg = argValues[1];
+            char sepChar;
+            Object quoteArg = argValues[2];
+            int nskip = castInt(frame, argValues[3]);
+            byte blskip = castLogical(frame, argValues[4]);
+            String commentCharArg = isString(argValues[5]);
+            char comChar;
+            if (!(commentCharArg != null && commentCharArg.length() == 1)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "comment.char");
+            } else {
+                comChar = commentCharArg.charAt(0);
+            }
+
+            if (nskip < 0 || nskip == RRuntime.INT_NA) {
+                nskip = 0;
+            }
+            if (blskip == RRuntime.LOGICAL_NA) {
+                blskip = RRuntime.LOGICAL_TRUE;
+            }
+
+            if (sepArg instanceof RNull) {
+                sepChar = 0;
+            } else {
+                String s = isString(sepArg);
+                if (s == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "sep");
+                } else {
+                    if (s.length() == 0) {
+                        sepChar = 0;
+                    } else {
+                        sepChar = s.charAt(0);
+                    }
+                }
+            }
+            String quoteSet;
+            if (quoteArg instanceof RNull) {
+                quoteSet = "";
+            } else {
+                String s = isString(quoteArg);
+                if (s == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "invalid quote symbol set");
+                } else {
+                    quoteSet = s;
+                }
+            }
+            try {
+                return CountFields.execute(conn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
+            } catch (IllegalStateException | IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
+        private static String isString(Object arg) {
+            if (arg instanceof String) {
+                return (String) arg;
+            } else if (arg instanceof RStringVector) {
+                if (((RStringVector) arg).getLength() == 0) {
+                    return null;
+                } else {
+                    return ((RStringVector) arg).getDataAt(0);
+                }
+            } else {
+                return null;
+            }
+        }
+
+        public boolean isCountFields(RList f) {
+            return matchName(f, "countfields");
+        }
     }
 
 }

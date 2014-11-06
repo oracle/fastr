@@ -87,6 +87,7 @@ public abstract class ConnectionFunctions {
     // TODO remove invisibility when print for RConnection works
     // TODO implement all open modes
     // TODO implement missing .Internal functions expected by connections.R
+    // TODO revisit the use of InputStream for internal use, e.g. in RSerialize
 
     /**
      * Base class for all {@link RConnection} instances. It supports lazy opening, as required by
@@ -98,6 +99,8 @@ public abstract class ConnectionFunctions {
      *
      */
     private abstract static class BaseRConnection extends RConnection {
+        private static final RStringVector DEFAULT_CLASSHR = RDataFactory.createStringVector(new String[]{"connection"}, RDataFactory.COMPLETE_VECTOR);
+
         protected boolean isOpen;
         /**
          * if {@link #isOpen} is {@code true} the {@link OpenMode} that this connection is opened
@@ -168,12 +171,17 @@ public abstract class ConnectionFunctions {
         @Override
         public void close() throws IOException {
             isOpen = false;
-            theConnection.close();
+            if (theConnection != null) {
+                theConnection.close();
+            }
         }
 
         @Override
+        /**
+         * Must always respond to {@code inherits("connection")} even when not open.
+         */
         public RStringVector getClassHierarchy() {
-            return classHr;
+            return classHr != null ? classHr : DEFAULT_CLASSHR;
         }
 
         /**
@@ -208,6 +216,11 @@ public abstract class ConnectionFunctions {
             super(OpenMode.Read, null);
             this.isOpen = true;
             setClass("terminal");
+        }
+
+        @Override
+        public boolean isStdin() {
+            return true;
         }
 
         @Override
@@ -289,11 +302,13 @@ public abstract class ConnectionFunctions {
     }
 
     private static class FileReadTextRConnection extends DelegateRConnection {
+        private BufferedInputStream inputStream;
         private BufferedReader bufferedReader;
 
         FileReadTextRConnection(FileRConnection base) throws IOException {
             super(base);
-            bufferedReader = new BufferedReader(new FileReader(base.path));
+            inputStream = new BufferedInputStream(new FileInputStream(base.path));
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
         }
 
         @TruffleBoundary
@@ -314,7 +329,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         public InputStream getInputStream() throws IOException {
-            throw new IOException();
+            return inputStream;
         }
 
         @Override
