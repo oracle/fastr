@@ -27,6 +27,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeChild(value = "operand", type = RNode.class)
 public abstract class WrapArgumentNode extends RProxyNode {
@@ -86,5 +87,15 @@ public abstract class WrapArgumentNode extends RProxyNode {
     @Override
     public void deparse(State state) {
         getOperand().deparse(state);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode sub = getOperand().substitute(env);
+        if (sub instanceof RASTUtils.DotsNode) {
+            return sub;
+        } else {
+            return create(sub, modeChange);
+        }
     }
 }

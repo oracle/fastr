@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class ConstantNode extends RNode implements VisibilityController {
 
@@ -42,6 +43,11 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     @TruffleBoundary
     public void deparse(State state) {
         RDeparse.deparse2buff(state, getValue());
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return this;
     }
 
     public static ConstantNode create(Object value) {

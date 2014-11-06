@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class IfNode extends RNode implements VisibilityController {
 
@@ -141,6 +142,10 @@ public class IfNode extends RNode implements VisibilityController {
             elsePart.deparse(state);
             state.decIndentWriteCloseCurly();
         }
+    }
 
+    @Override
+    public RNode substitute(REnvironment env) {
+        return IfNode.create(condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
     }
 }

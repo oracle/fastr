@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeChild(value = "range", type = RNode.class)
 public abstract class ForNode extends LoopNode {
@@ -77,6 +78,12 @@ public abstract class ForNode extends LoopNode {
         state.writeOpenCurlyNLIncIndent();
         body.deparse(state);
         state.decIndentWriteCloseCurly();
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        // TODO check type of cvar.substitute
+        return create((WriteVariableNode) cvar.substitute(env), getRange().substitute(env), body.substitute(env));
     }
 
     @Fallback

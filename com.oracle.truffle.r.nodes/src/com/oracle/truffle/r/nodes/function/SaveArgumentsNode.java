@@ -7,6 +7,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Encapsulates the nodes that save the incoming function arguments into the frame. Functionally a
@@ -19,6 +20,12 @@ public class SaveArgumentsNode extends SequenceNode {
 
     public SaveArgumentsNode(RNode[] sequence) {
         super(sequence);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        SequenceNode seqSub = (SequenceNode) super.substitute(env);
+        return new SaveArgumentsNode(seqSub.getSequence());
     }
 
 }

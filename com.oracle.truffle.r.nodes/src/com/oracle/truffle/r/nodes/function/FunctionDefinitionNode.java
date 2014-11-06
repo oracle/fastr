@@ -172,6 +172,21 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.decIndentWriteCloseCurly();
     }
 
+    /**
+     * Since a {@link FunctionDefinitionNode} is not a subclass of an {@link RNode}
+     * we cannot just override the {@link RSyntaxNode#substitute} method as that requires
+     * an {@link RNode} result. So we define this custom method.
+     * N.B. The formal arguments are <b>not</b> subject to substitution, just the body.
+     */
+    public FunctionDefinitionNode substituteFDN(REnvironment env) {
+        return new FunctionDefinitionNode(null, funcEnv, body.substitute(env), getFormalArguments(), description, substituteFrame);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
     private boolean instrumentationApplied = false;
 
     @Override

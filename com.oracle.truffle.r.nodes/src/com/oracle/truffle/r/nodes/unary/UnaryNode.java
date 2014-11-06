@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeChildren({@NodeChild("operand")})
 public abstract class UnaryNode extends RNode {
@@ -62,5 +63,10 @@ public abstract class UnaryNode extends RNode {
     @Override
     public void deparse(State state) {
         getOperand().deparse(state);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return getOperand().substitute(env);
     }
 }

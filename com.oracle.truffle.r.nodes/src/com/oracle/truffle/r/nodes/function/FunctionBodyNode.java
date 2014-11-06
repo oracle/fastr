@@ -22,29 +22,57 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RNode;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
- * Denotes a function body, which is a special variant of {@link SequenceNode} that supports
- * instrumentation. A function body always has exactly two elements: a {@link SaveArgumentsNode}
- * followed by a {@link FunctionStatementsNode} (which could be made explicit as children rather
- * than subclassing {@link SequenceNode}).
+ * Denotes a function body, which consists of a {@link SaveArgumentsNode}
+ * and a {@link FunctionStatementsNode}.
  *
  */
-public class FunctionBodyNode extends SequenceNode {
+public class FunctionBodyNode extends RNode {
+
+    @Child private RNode saveArgs;
+    @Child private RNode statements;
 
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
-        super(new RNode[]{saveArgs, statements});
+        this.saveArgs = saveArgs;
+        this.statements = statements;
     }
 
-    public FunctionDefinitionNode getFunctionDefinitionNode() {
+    private FunctionBodyNode(RNode saveArgs, RNode statements) {
+        this.saveArgs = saveArgs;
+        this.statements = statements;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        saveArgs.execute(frame);
+        return statements.execute(frame);
+    }
+
+   public FunctionDefinitionNode getFunctionDefinitionNode() {
         return (FunctionDefinitionNode) RASTUtils.unwrapParent(this);
     }
 
     @Override
     public boolean isInstrumentable() {
         return true;
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode saveArgsSub = saveArgs.substitute(env);
+        RNode statementsSub = statements.substitute(env);
+        return new FunctionBodyNode(saveArgsSub, statementsSub);
+    }
+
+    @Override
+    public void deparse(State state) {
+        // Don't deparse the argument saving nodes
+         statements.deparse(state);
     }
 }

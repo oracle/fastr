@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class denotes a call site to a function,e.g.:
@@ -171,6 +172,39 @@ public abstract class RCallNode extends RNode {
     @Override
     public boolean isSyntax() {
         return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        Object fname = RASTUtils.findFunctionName(this, false);
+        if (fname instanceof RSymbol) {
+            String sfname = ((RSymbol) fname).getName();
+            if (sfname.equals(":::") || sfname.equals("::")) {
+                // special infix
+                RCallNode colonCall = (RCallNode) getFunctionNode().unwrap();
+                RNode[] argValues = colonCall.getArgumentsNode().getArguments();
+                argValues[0].deparse(state);
+                state.append(sfname);
+                argValues[1].deparse(state);
+                getArgumentsNode().deparse(state);
+                return;
+            }
+        }
+        Func func = RASTDeparse.isInfixOperator(fname);
+        if (func != null) {
+            RASTDeparse.deparseInfixOperator(state, this, func);
+        } else {
+            getFunctionNode().deparse(state);
+            getArgumentsNode().deparse(state);
+        }
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode functionSub = getFunctionNode().substitute(env);
+        CallArgumentsNode argsSub = (CallArgumentsNode) getArgumentsNode().substitute(env);
+        // TODO check type of functionSub
+        return RASTUtils.createCall(functionSub, argsSub);
     }
 
     public int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
@@ -467,30 +501,6 @@ public abstract class RCallNode extends RNode {
             return NodeUtil.cloneNode(args);
         }
 
-        @Override
-        public void deparse(State state) {
-            Object fname = RASTUtils.findFunctionName(this, false);
-            if (fname instanceof RSymbol) {
-                String sfname = ((RSymbol) fname).getName();
-                if (sfname.equals(":::") || sfname.equals("::")) {
-                    // special infix
-                    RCallNode colonCall = (RCallNode) getFunctionNode().unwrap();
-                    RNode[] argValues = colonCall.getArgumentsNode().getArguments();
-                    argValues[0].deparse(state);
-                    state.append(sfname);
-                    argValues[1].deparse(state);
-                    args.deparse(state);
-                    return;
-                }
-            }
-            Func func = RASTDeparse.isInfixOperator(fname);
-            if (func != null) {
-                RASTDeparse.deparseInfixOperator(state, this, func);
-            } else {
-                getFunctionNode().deparse(state);
-                args.deparse(state);
-            }
-        }
     }
 
     /**

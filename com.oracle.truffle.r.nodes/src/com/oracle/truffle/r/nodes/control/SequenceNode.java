@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class SequenceNode extends RNode {
 
@@ -55,6 +56,10 @@ public class SequenceNode extends RNode {
      */
     protected SequenceNode(RNode node) {
         this(convert(node));
+    }
+
+    public RNode[] getSequence() {
+        return sequence;
     }
 
     /**
@@ -87,12 +92,8 @@ public class SequenceNode extends RNode {
         return lastResult;
     }
 
-    public RNode[] getSequence() {
-        return sequence;
-    }
-
-    @Override
     @TruffleBoundary
+    @Override
     public void deparse(State state) {
         for (int i = 0; i < sequence.length; i++) {
             state.mark();
@@ -103,6 +104,16 @@ public class SequenceNode extends RNode {
                 state.mark(); // in case last
             }
         }
+    }
+
+    @TruffleBoundary
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode[] sequenceSubs = new RNode[sequence.length];
+        for (int i = 0; i < sequence.length; i++) {
+            sequenceSubs[i] = sequence[i].substitute(env);
+        }
+        return new SequenceNode(sequenceSubs);
     }
 
     /**

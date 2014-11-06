@@ -12,6 +12,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class WriteVariableNodeWrapper extends WriteVariableNode implements ProbeNode.WrapperNode {
     @Node.Child WriteVariableNode child;
@@ -100,5 +101,12 @@ public class WriteVariableNodeWrapper extends WriteVariableNode implements Probe
     @Override
     public boolean isSyntax() {
         return false;
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        WriteVariableNodeWrapper wrapperSub = new WriteVariableNodeWrapper((WriteVariableNode) child.substitute(env));
+        ProbeNode.insertProbe(wrapperSub);
+        return wrapperSub;
     }
 }

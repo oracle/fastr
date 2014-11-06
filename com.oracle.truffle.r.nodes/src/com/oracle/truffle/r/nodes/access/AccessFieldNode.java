@@ -86,4 +86,15 @@ public abstract class AccessFieldNode extends RNode {
         state.append(getField());
     }
 
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode object = getObject().substitute(env);
+        String field = getField();
+        RNode fieldSub = RASTUtils.substituteName(field, env);
+        if (fieldSub != null) {
+            field = RASTUtils.expectName(fieldSub);
+        }
+        return AccessFieldNodeFactory.create(object, field);
+    }
+
 }

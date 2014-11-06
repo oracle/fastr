@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their {@link #getNames()}
@@ -303,4 +304,57 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     public boolean modeChangeForAll() {
         return modeChangeForAll;
     }
+
+    @TruffleBoundary
+    @Override
+    public RNode substitute(REnvironment env) {
+        boolean changed = false;
+        RNode[] argNodesNew = new RNode[arguments.length];
+        int missingCount = 0;
+        int j = 0;
+        for (int i = 0; i < arguments.length; i++) {
+            RNode argNode = arguments[i];
+            RNode argNodeSubs = argNode.substitute(env);
+            if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
+                // in this case we remove the argument altogether, leave slot as null
+                missingCount++;
+                changed = true;
+            } else if (argNodeSubs instanceof RASTUtils.ExpandedDotsNode) {
+                // 2 or more
+                RASTUtils.ExpandedDotsNode expandedDotsNode = (RASTUtils.ExpandedDotsNode) argNodeSubs;
+                RNode[] argNodesNewer = new RNode[argNodesNew.length + expandedDotsNode.nodes.length - 1];
+                if (i > 0) {
+                    System.arraycopy(argNodesNew, 0, argNodesNewer, 0, j);
+                }
+                System.arraycopy(expandedDotsNode.nodes, 0, argNodesNewer, j, expandedDotsNode.nodes.length);
+                argNodesNew = argNodesNewer;
+                changed = true;
+                j += expandedDotsNode.nodes.length - 1;
+            } else {
+                argNodesNew[j] = argNodeSubs;
+                changed = changed || argNode != argNodeSubs;
+            }
+            j++;
+        }
+        if (!changed) {
+            return this;
+        } else {
+            if (missingCount > 0) {
+                // Strip out the Missing ... instances
+                RNode[] argNodesNewer = new RNode[argNodesNew.length - missingCount];
+                j = 0;
+                for (int i = 0; i < argNodesNew.length; i++) {
+                    RNode argNode = argNodesNew[i];
+                    if (argNode == null) {
+                        continue;
+                    }
+                    argNodesNewer[j++] = argNode;
+                }
+                argNodesNew = argNodesNewer;
+            }
+            return CallArgumentsNode.create(false, false, argNodesNew, names);
+        }
+
+    }
+
 }

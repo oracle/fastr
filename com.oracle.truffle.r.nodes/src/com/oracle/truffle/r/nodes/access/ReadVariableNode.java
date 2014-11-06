@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
 
@@ -191,6 +192,20 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     @Override
     public void deparse(State state) {
         state.append(getName());
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode result = RASTUtils.substituteName(getName(), env);
+        if (result == null) {
+            if (this instanceof ResolvePromiseNode) {
+                result = ((ResolvePromiseNode) this).getReadNode();
+            } else {
+                result = this;
+            }
+            result = NodeUtil.cloneNode(result);
+        }
+        return result;
     }
 
     @NodeChild(value = "readNode", type = ReadVariableNode.class)

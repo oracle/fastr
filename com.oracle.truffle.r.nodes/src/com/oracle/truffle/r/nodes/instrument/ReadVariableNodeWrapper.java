@@ -28,8 +28,10 @@ import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class ReadVariableNodeWrapper extends ReadVariableNode implements WrapperNode {
     @Child ReadVariableNode child;
@@ -114,5 +116,12 @@ public class ReadVariableNodeWrapper extends ReadVariableNode implements Wrapper
     @Override
     public boolean isSyntax() {
         return false;
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        ReadVariableNodeWrapper wrapperSub = new ReadVariableNodeWrapper((ReadVariableNode) child.substitute(env));
+        ProbeNode.insertProbe(wrapperSub);
+        return wrapperSub;
     }
 }

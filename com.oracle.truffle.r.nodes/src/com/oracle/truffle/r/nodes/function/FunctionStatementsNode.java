@@ -8,6 +8,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Encapsulates the sequence of statements (expressions) of a function. Has no specific execute
@@ -30,6 +31,11 @@ public class FunctionStatementsNode extends SequenceNode {
     @Override
     public boolean isInstrumentable() {
         return true;
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return new FunctionStatementsNode(super.substitute(env));
     }
 
 }

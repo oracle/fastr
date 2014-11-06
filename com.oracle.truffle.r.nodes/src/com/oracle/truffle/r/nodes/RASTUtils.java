@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
@@ -31,6 +32,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.RNodeWrapper;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * A collection of useful methods for working with {@code AST} instances.
@@ -225,6 +227,102 @@ public class RASTUtils {
             }
         }
         return null;
+    }
+
+    @TruffleBoundary
+    public static RNode substituteName(String name, REnvironment env) {
+        Object val = env.get(name);
+        if (val == null) {
+            // not bound in env,
+            return null;
+        } else if (val instanceof RMissing) {
+            if (name.equals("...")) {
+                return new MissingDotsNode();
+            } else {
+                // strange special case, mimics GnuR behavior
+                return RASTUtils.createReadVariableNode("");
+            }
+        } else if (val instanceof RPromise) {
+            return (RNode) RASTUtils.unwrap(((RPromise) val).getRep());
+        } else if (val instanceof RLanguage) {
+            return (RNode) ((RLanguage) val).getRep();
+        } else if (val instanceof RArgsValuesAndNames) {
+            // this is '...'
+            RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
+            Object[] values = rva.getValues();
+            RNode[] expandedNodes = new RNode[values.length];
+            for (int i = 0; i < values.length; i++) {
+                Object argval = values[i];
+                if (argval instanceof RPromise) {
+                    RPromise promise = (RPromise) argval;
+                    expandedNodes[i] = (RNode) RASTUtils.unwrap(promise.getRep());
+                } else {
+                    expandedNodes[i] = ConstantNode.create(argval);
+                }
+            }
+            return values.length > 1 ? new ExpandedDotsNode(expandedNodes) : expandedNodes[0];
+        } else {
+            // An actual value
+            return ConstantNode.create(val);
+        }
+
+    }
+
+    @TruffleBoundary
+    public static String expectName(RNode node) {
+        if (node instanceof ConstantNode) {
+            Object c = ((ConstantNode) node).getValue();
+            if (c instanceof String) {
+                return (String) c;
+            } else if (c instanceof Double) {
+                return ((Double) c).toString();
+            } else {
+                throw RInternalError.unimplemented();
+            }
+        } else if (node instanceof ReadVariableNode) {
+            return ((ReadVariableNode) node).getName();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    /**
+     * Marker class for special '...' handling.
+     */
+    public abstract static class DotsNode extends RNode {
+    }
+
+    /**
+     * A temporary {@link RNode} type that exists only during substitution to hold the expanded
+     * array of values from processing '...'. Allows {@link RSyntaxNode#substitute} to always return
+     * a single node.
+     */
+    public static class ExpandedDotsNode extends DotsNode {
+
+        public final RNode[] nodes;
+
+        ExpandedDotsNode(RNode[] nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            assert false;
+            return null;
+        }
+
+    }
+
+    /**
+     * Denotes a '...' usage that was "missing".
+     */
+    public static class MissingDotsNode extends DotsNode {
+        @Override
+        public Object execute(VirtualFrame frame) {
+            assert false;
+            return null;
+        }
+
     }
 
 }

@@ -19,6 +19,7 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -206,6 +207,12 @@ public abstract class DispatchedCallNode extends RNode {
                 state.append(name);
                 aDispatchNode.callArgsNode.deparse(state);
             }
+        }
+
+        @Override
+        public RNode substitute(REnvironment env) {
+            // TODO substitute aDispatchNode
+            return RASTUtils.createCall(aDispatchNode, (CallArgumentsNode) aDispatchNode.callArgsNode.substitute(env));
         }
 
         @Override

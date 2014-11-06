@@ -6,6 +6,7 @@ import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public final class RNodeWrapper extends RNode implements WrapperNode {
 
@@ -68,6 +69,14 @@ public final class RNodeWrapper extends RNode implements WrapperNode {
     @Override
     public boolean isSyntax() {
         return false;
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        // TODO tagging preservation?
+        RNodeWrapper wrapperSub =  new RNodeWrapper(child.substitute(env));
+        ProbeNode.insertProbe(wrapperSub);
+        return wrapperSub;
     }
 
 }
