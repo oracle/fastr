@@ -221,7 +221,7 @@ public class RPromise extends RLanguageRep {
         private final ConditionProfile isInlinedProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isEagerPromise = ConditionProfile.createBinaryProfile();
+        private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
 
         private final ValueProfile valueProfile = ValueProfile.createClassProfile();
     }
@@ -257,6 +257,14 @@ public class RPromise extends RLanguageRep {
      * @return The value this promise resolves to
      */
     public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
+        SourceSection callSrc = null;
+        if (frame != null) {
+            callSrc = RArguments.getCallSourceSection(frame);
+        }
+        return doEvaluate(frame, profile, callSrc);
+    }
+
+    protected Object doEvaluate(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
         CompilerAsserts.compilationConstant(profile);
         if (isEvaluated(profile)) {
             return value;
@@ -264,7 +272,7 @@ public class RPromise extends RLanguageRep {
 
         // Check for dependency cycle
         if (isUnderEvaluation(profile)) {
-            SourceSection callSrc = RArguments.getCallSourceSection(frame);
+            // SourceSection callSrc = RArguments.getCallSourceSection(frame);
             throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
         }
 
@@ -272,7 +280,7 @@ public class RPromise extends RLanguageRep {
         try {
             underEvaluation = true;
 
-            newValue = generateValue(frame, profile);
+            newValue = generateValue(frame, profile, callSrc);
 
             setValue(newValue, profile);
         } finally {
@@ -306,30 +314,30 @@ public class RPromise extends RLanguageRep {
      * @param profile
      * @return The value this Promise represents
      */
-    protected final Object generateValue(VirtualFrame frame, PromiseProfile profile) {
-        switch (optType) {
+    protected final Object generateValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
+        switch (profile.optTypeProfile.profile(optType)) {
             case DEFAULT:
-                return defaultGenerateValue(frame, profile);
+                return defaultGenerateValue(frame, profile, callSrc);
 
             case PROMISED:
             case EAGER:
                 EagerPromise eager = (EagerPromise) this;
-                return eager.eagerGenerateValue(frame, profile);
+                return eager.eagerGenerateValue(frame, profile, callSrc);
 
             case VARARG:
                 VarargPromise var = (VarargPromise) this;
-                return var.varargGenerateValue(profile);
+                return var.varargGenerateValue(profile, callSrc);
 
             default:
                 throw RInternalError.shouldNotReachHere();
         }
     }
 
-    protected final Object defaultGenerateValue(VirtualFrame frame, PromiseProfile profile) {
+    protected final Object defaultGenerateValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
         // Evaluate this promise's value!
         // Performance: We can use frame directly
         if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
-            SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
+// SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
             return doEvalArgument(callSrc);
         } else {
             assert isInOriginFrame(frame, profile);
@@ -496,7 +504,8 @@ public class RPromise extends RLanguageRep {
      * @return Whether this is a eagerly evaluated Promise
      */
     public boolean isEagerPromise(PromiseProfile profile) {
-        return profile.isEagerPromise.profile(false);
+        OptType optTypeProfiled = profile.optTypeProfile.profile(optType);
+        return optTypeProfiled == OptType.EAGER || optTypeProfiled == OptType.PROMISED || optTypeProfiled == OptType.VARARG;
     }
 
     /**
@@ -544,15 +553,15 @@ public class RPromise extends RLanguageRep {
             this.feedback = feedback;
         }
 
-        protected Object eagerGenerateValue(VirtualFrame frame, PromiseProfile profile) {
+        protected Object eagerGenerateValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
             if (deoptimized) {
                 // execFrame already materialized, feedback already given. Now we're a
                 // plain'n'simple RPromise
-                return super.defaultGenerateValue(frame, profile);
+                return super.defaultGenerateValue(frame, profile, callSrc);
             } else if (assumption.isValid()) {
                 feedback.onSuccess();
 
-                return genEagerValue(frame, profile);
+                return genEagerValue(frame, profile, callSrc);
             } else {
                 feedback.onFailure();
 
@@ -560,18 +569,18 @@ public class RPromise extends RLanguageRep {
                 materialize();
 
                 // Call
-                return super.defaultGenerateValue(frame, profile);
+                return super.defaultGenerateValue(frame, profile, callSrc);
             }
         }
 
-        private Object genEagerValue(VirtualFrame frame, PromiseProfile profile) {
-            switch (optType) {
+        private Object genEagerValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
+            switch (profile.optTypeProfile.profile(optType)) {
                 case EAGER:
                     return eagerGenEagerValue(frame, profile);
 
                 case PROMISED:
                     PromisedPromise p = (PromisedPromise) this;
-                    return p.promisedGenEagerValue(profile);
+                    return p.promisedGenEagerValue(profile, callSrc);
 
                 default:
                     throw RInternalError.shouldNotReachHere();
@@ -602,11 +611,6 @@ public class RPromise extends RLanguageRep {
             }
             return true;
         }
-
-        @Override
-        public boolean isEagerPromise(PromiseProfile profile) {
-            return profile.isEagerPromise.profile(true);
-        }
     }
 
     /**
@@ -622,13 +626,8 @@ public class RPromise extends RLanguageRep {
         }
 
         @TruffleBoundary
-        protected Object varargGenerateValue(PromiseProfile profile) {
-            return vararg.evaluate((VirtualFrame) null, profile);
-        }
-
-        @Override
-        public boolean isEagerPromise(PromiseProfile profile) {
-            return profile.isEagerPromise.profile(true);
+        protected Object varargGenerateValue(PromiseProfile profile, SourceSection callSrc) {
+            return vararg.doEvaluate((VirtualFrame) null, profile, callSrc);
         }
     }
 
@@ -642,14 +641,9 @@ public class RPromise extends RLanguageRep {
         }
 
         @TruffleBoundary
-        protected Object promisedGenEagerValue(PromiseProfile profile) {
+        protected Object promisedGenEagerValue(PromiseProfile profile, SourceSection callSrc) {
             RPromise promisedPromise = (RPromise) eagerValue;
-            return promisedPromise.evaluate((VirtualFrame) null, profile);
-        }
-
-        @Override
-        public boolean isEagerPromise(PromiseProfile profile) {
-            return profile.isEagerPromise.profile(true);
+            return promisedPromise.doEvaluate((VirtualFrame) null, profile, callSrc);
         }
     }
 
