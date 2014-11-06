@@ -16234,6 +16234,12 @@ $foo
 #{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-c("foo", "data.frame", "bar"); is.data.frame(x) }
 [1] TRUE
 
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testLapply
+#{ x <- c(1, 2, 3); xa <- as.data.frame(x); lapply(xa, function(x) x > 1) }
+$x
+[1] FALSE  TRUE  TRUE
+
+
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-c(1,2); class(x)<-"data.frame"; row.names(x)<-integer(); x }
 NULL
