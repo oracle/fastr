@@ -130,4 +130,11 @@ public abstract class AsInteger extends RBuiltinNode {
         controlVisibility();
         return castIntVector(frame, vector);
     }
+
+    @Specialization
+    protected RIntVector asInteger(RFactor factor) {
+        controlVisibility();
+        return factor.getVector();
+    }
+
 }

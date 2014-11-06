@@ -42,7 +42,7 @@ public abstract class InheritsNode extends BinaryNode {
 
     // map operations lead to recursion resulting in compilation failure
     @Specialization
-    protected Object doesInherit(RAbstractVector x, RAbstractStringVector what) {
+    protected Object doesInherit(RAbstractContainer x, RAbstractStringVector what) {
         Map<String, Integer> classToPos = initClassToPos(x);
         for (int i = 0; i < what.getLength(); ++i) {
             if (classToPos.get(what.getDataAt(i)) != null) {
@@ -53,7 +53,7 @@ public abstract class InheritsNode extends BinaryNode {
     }
 
     @TruffleBoundary
-    public static Map<String, Integer> initClassToPos(RAbstractVector x) {
+    public static Map<String, Integer> initClassToPos(RAbstractContainer x) {
         RStringVector klass = x.getClassHierarchy();
 
         // Create a mapping for elements to their respective positions

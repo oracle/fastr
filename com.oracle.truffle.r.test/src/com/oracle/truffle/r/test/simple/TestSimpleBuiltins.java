@@ -1592,6 +1592,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(...) typeof(...); f(1, 2)}");
         assertEval("{ f <- function(...) typeof(...); f(1, 2, 3)}");
         assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); typeof(x) }");
+        assertEval("{ x<-data.frame(c(\"a\", \"b\", \"a\")); typeof(x) }");
     }
 
     @Test
@@ -3291,6 +3294,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
         assertEval("{ inherits(NULL, \"try-error\") }");
         assertEval("{ inherits(new.env(), \"try-error\") }");
+
+        assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
+        assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
     }
 
     @Test
@@ -3871,6 +3877,12 @@ public class TestSimpleBuiltins extends TestBase {
         // Checkstyle: stop line length check
         assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order); } ");
         // Checkstyle: resume line length check
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-character(); as.character(x) }");
+        assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
+        assertEvalError("{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
+        assertEvalError("{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
     }
 
     @Test

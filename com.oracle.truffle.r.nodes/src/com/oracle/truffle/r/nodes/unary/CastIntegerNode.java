@@ -412,6 +412,11 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
+    @Specialization
+    protected RIntVector doFactor(RFactor factor) {
+        return factor.getVector();
+    }
+
     private RError cannotCoerceListError() {
         throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "integer");
     }

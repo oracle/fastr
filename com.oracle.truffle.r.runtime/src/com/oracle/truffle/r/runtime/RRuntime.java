@@ -93,6 +93,7 @@ public class RRuntime {
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
     public static final String CLASS_ATTR_KEY = "class";
+    public static final String FACTOR_ATTR_KEY = "factor";
     public static final String PREVIOUS_ATTR_KEY = "previous";
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 

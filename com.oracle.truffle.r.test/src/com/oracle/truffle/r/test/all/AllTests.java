@@ -8054,6 +8054,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFactor_6287c53e3c5f805807ac27e404a05595() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_6057e63e95871f7ed5c00eb75931ac57() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-character(); as.character(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_2ef7de52def309425a9b70965111f004() {
+        assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_7a9b1db57fd6e717cb6a5a4289638383() {
+        assertEvalError("{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFactor_78f60bd3f5d980d4b71b67fa44964e85() {
+        assertEvalError("{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testFileListing_9646bfd3fb553824f1f54cc5d04b8219() {
         assertEval("{ list.files(\"test/r/simple/data/tree1\") }");
     }
@@ -8416,6 +8441,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInherits_c3babb7ceea8dc93b0085895b3a09d12() {
         assertEval("{ inherits(new.env(), \"try-error\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_04a77c3cfe28848e28a68ba564162427() {
+        assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_20d6545f67c653e20d3b612df41b64c2() {
+        assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
     }
 
     @Test
@@ -14916,6 +14951,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testTypeOf_1675c9457b46c8dc92e10c262f429ca0() {
         assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTypeOf_d63eb623f4c13b74dc9704bb857ca416() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); typeof(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTypeOf_4b90c824616e773167165340b6cfea37() {
+        assertEval("{ x<-data.frame(c(\"a\", \"b\", \"a\")); typeof(x) }");
     }
 
     @Test

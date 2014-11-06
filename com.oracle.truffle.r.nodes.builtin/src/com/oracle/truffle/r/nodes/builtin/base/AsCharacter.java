@@ -24,9 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -40,12 +43,21 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
     @Child private DispatchedCallNode dcn;
+    @Child private CastToVectorNode castVector;
 
     private void initCast() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
         }
+    }
+
+    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+        if (castVector == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+        }
+        return (RAbstractVector) castVector.executeObject(frame, value);
     }
 
     private String castString(VirtualFrame frame, int o) {
@@ -138,6 +150,28 @@ public abstract class AsCharacter extends RBuiltinNode {
             return dcn.executeInternal(frame, vector.getClassHierarchy(), new Object[]{vector});
         } catch (RError e) {
             return castStringVector(frame, vector);
+        }
+    }
+
+    // TODO: this shold be handled by a generic function
+    @Specialization
+    protected Object doFactor(VirtualFrame frame, RFactor value) {
+        controlVisibility();
+        Object attr = value.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY);
+        if (attr == null) {
+            return RNull.instance;
+        } else {
+            RAbstractStringVector vec = (RAbstractStringVector) castVector(frame, attr);
+            String[] data = new String[value.getLength()];
+            if (vec.getLength() == 0) {
+                Arrays.fill(data, RRuntime.STRING_NA);
+                return RDataFactory.createStringVector(data, RDataFactory.INCOMPLETE_VECTOR);
+            } else {
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = vec.getDataAt(value.getVector().getDataAt(i) - 1);
+                }
+                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            }
         }
     }
 

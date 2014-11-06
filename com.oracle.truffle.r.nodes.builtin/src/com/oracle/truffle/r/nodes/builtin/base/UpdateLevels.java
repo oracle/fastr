@@ -15,8 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,6 +40,22 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
         RVector v = vector.materialize();
         v.setLevels(levels);
         return v;
-
     }
+
+    @Specialization
+    @TruffleBoundary
+    protected RFactor updateLevels(RFactor factor, @SuppressWarnings("unused") RNull levels) {
+        controlVisibility();
+        factor.getVector().setLevels(null);
+        return factor;
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected RFactor updateLevels(RFactor factor, Object levels) {
+        controlVisibility();
+        factor.getVector().setLevels(levels);
+        return factor;
+    }
+
 }

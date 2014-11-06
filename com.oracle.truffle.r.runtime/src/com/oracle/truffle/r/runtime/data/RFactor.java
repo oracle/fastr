@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,15 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public final class RDataFrame implements RShareable, RAbstractContainer {
+public final class RFactor implements RShareable, RAbstractContainer {
 
-    private RVector vector;
+    private RIntVector vector;
 
-    public RDataFrame(RVector vector) {
+    public RFactor(RIntVector vector) {
         this.vector = vector;
     }
 
-    public RVector getVector() {
+    public RIntVector getVector() {
         return vector;
     }
 
@@ -62,8 +62,8 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RDataFrame copy() {
-        return RDataFactory.createDataFrame(vector.copy());
+    public RFactor copy() {
+        return RDataFactory.createFactor((RIntVector) vector.copy());
     }
 
     @Override
@@ -78,13 +78,13 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public Class<?> getElementClass() {
-        return RDataFrame.class;
+        return RFactor.class;
     }
 
     @Override
     public RVector materializeNonSharedVector() {
         if (isShared()) {
-            vector = vector.copy();
+            vector = (RIntVector) vector.copy();
             vector.markNonTemporary();
         }
         return vector;
@@ -135,6 +135,10 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     public int getElementIndexByNameInexact(String name) {
         return vector.getElementIndexByNameInexact(name);
+    }
+
+    public void setLevels(Object newLevels) {
+        vector.setLevels(newLevels);
     }
 
 }
