@@ -61,6 +61,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         int getcwd(@Out byte[] path);
 
         long mkdtemp(@In @Out ByteBuffer template);
+
+        long strtol(@In String dir, @In String end, int base);
     }
 
     private static class LibCXProvider {
@@ -127,7 +129,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
                 // not a link
             } else {
                 // some other error
-                throw ioex();
+                throw ioex(Errno.valueOf(n).description());
             }
         }
         return s;
@@ -140,6 +142,25 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
             return null;
         } else {
             return new String(bb.array());
+        }
+    }
+
+    public void mkdir(String dir, int mode) throws IOException {
+        try {
+            posix().mkdir(dir, mode);
+        } catch (RuntimeException ex) {
+            throw ioex(Errno.valueOf(posix().errno()).description());
+        }
+    }
+
+    public long strtol(String s, int base) throws IllegalArgumentException {
+        posix().errno(0);
+        long result = libcx().strtol(s, null, base);
+        int e = posix().errno();
+        if (e != 0) {
+            throw new IllegalArgumentException(Errno.valueOf(e).description());
+        } else {
+            return result;
         }
     }
 
@@ -631,4 +652,5 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         return zip().uncompress(dest, destlen, source, source.length);
     }
+
 }

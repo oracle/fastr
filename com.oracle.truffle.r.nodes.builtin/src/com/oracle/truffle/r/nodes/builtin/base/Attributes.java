@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"})
 public abstract class Attributes extends RBuiltinNode {
+
+    private final BranchProfile rownamesBranch = BranchProfile.create();
 
     @Specialization(guards = "!hasAttributes")
     protected RNull attributesNull(@SuppressWarnings("unused") RAbstractVector vector) {
@@ -51,6 +54,7 @@ public abstract class Attributes extends RBuiltinNode {
         for (RAttribute attr : attributes) {
             names[z] = attr.getName();
             if (names[z].equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                rownamesBranch.enter();
                 values[z] = Attr.getFullRowNames(attr.getValue());
             } else {
                 values[z] = attr.getValue();

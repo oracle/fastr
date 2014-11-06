@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,6 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
 public abstract class Vector extends RBuiltinNode {
+
+    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -54,7 +57,7 @@ public abstract class Vector extends RBuiltinNode {
     @Specialization
     protected RAbstractVector vector(String mode, int length) {
         controlVisibility();
-        switch (mode) {
+        switch (modeProfile.profile(mode)) {
             case "character":
                 return RDataFactory.createStringVector(length);
             case "logical":
@@ -72,5 +75,4 @@ public abstract class Vector extends RBuiltinNode {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
     }
-
 }

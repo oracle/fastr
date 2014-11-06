@@ -139,7 +139,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
                     return null;
                 } else {
                     // some other error
-                    throw ioex();
+                    throw ioex(null);
                 }
             } else {
                 return CString.create(resultBuf.address, length, false);
@@ -184,6 +184,15 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
 
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         Utils.fail("uncompress not implemented");
+        return 0;
+    }
+
+    public void mkdir(String dir, int mode) throws IOException {
+        Utils.fail("mkdir not implemented");
+    }
+
+    public long strtol(String s, int base) throws IllegalArgumentException {
+        Utils.fail("strtol not implemented");
         return 0;
     }
 

@@ -1407,6 +1407,14 @@ complex(0)
 #{ -c((1+0i)/0,2) }
 [1] NaN+NaNi  -2+  0i
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusDimensions
+#{ xx <- double(0); dim(xx) <- c(0,0); dim(-xx) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusDimensions
+#{ xx <- double(1); dim(xx) <- c(1,1); dim(-xx) }
+[1] 1 1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusErrors
 #{ f <- function(z) { -z } ; f(1:3) ; f("hello") }
 Error in -z : invalid argument to unary operator
@@ -1434,6 +1442,14 @@ Error in -z : invalid argument to unary operator
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNot
 #{ !TRUE }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotDimensions
+#{ xx <- double(0); dim(xx) <- c(0,0); dim(!xx) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotDimensions
+#{ xx <- double(1); dim(xx) <- c(1,1); dim(!xx) }
+[1] 1 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotError
 #{ l <- c("hello", "hi") ; !l }
@@ -6090,6 +6106,12 @@ hi 1 2 3 hello
 #{ cat("hi",1[2],"hello",sep="-") }
 hi-NA-hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat("hi",1[2],"hello",sep="-\n") }
+hi-
+NA-
+hello
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat() }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
@@ -6098,6 +6120,10 @@ hi-NA-hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(1, "a") }
 1 a
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat(1, sep="\n") }
+1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(1,2,3) }
 1 2 3
@@ -6156,6 +6182,21 @@ hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }
 1 2 3 4 5 6
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-")}; f("a") }
+a
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-")}; f("a", "b") }
+a-b
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-\n")}; f("a") }
+a
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-\n")}; f("a", "b") }
+a-
+b
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
 #{ cbind() }
 NULL
@@ -8509,6 +8550,10 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{ inherits(new.env(), "try-error") }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(textConnection("abc"), "connection") }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{x <- 10; inherits(x, "a") ;}
@@ -13114,6 +13159,14 @@ Error: object 'x' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
 #{ x <- 200 ; rm("x") }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x<-200; y<-100; rm("x", "y"); x }
+Error: object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x<-200; y<-100; rm("x", "y"); y }
+Error: object 'y' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
 #{ sort(c(1L,10L,2L)) }
@@ -50699,6 +50752,49 @@ Error in x$b : $ operator is invalid for atomic vectors
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
 #{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; x <- list(c=2,b=10) ; f(x) }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.1 }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.2 }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x$a$b<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x$a[["b"]]<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x[["a"]]$b<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(list(a=7), NULL); x[[1]]$a<-42; x }
+[[1]]
+[[1]]$a
+[1] 42
+
+
+[[2]]
+NULL
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testGenericUpdate
 #{ a <- TRUE; a[[2]] <- FALSE; a; }
