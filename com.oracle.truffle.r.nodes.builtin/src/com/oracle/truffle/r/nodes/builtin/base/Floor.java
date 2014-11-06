@@ -40,6 +40,6 @@ public class Floor extends RWrapperBuiltinNode {
 
     @Override
     protected RNode createDelegate() {
-        return UnaryArithmeticNodeFactory.create(UnaryArithmetic.FLOOR, this.getArguments()[0]);
+        return UnaryArithmeticNodeFactory.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH, getArguments()[0]);
     }
 }

@@ -1734,6 +1734,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testUnaryMinusDimensions_82d8cc2dfa20802f3af03d30533599c1() {
+        assertEval("{ xx <- double(0); dim(xx) <- c(0,0); dim(-xx) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testUnaryMinusDimensions_1c0bc1dd2399b5dd2298ffe8d8da94c2() {
+        assertEval("{ xx <- double(1); dim(xx) <- c(1,1); dim(-xx) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testUnaryMinusErrors_c1f5e118009944a5b67f947745697a4a() {
         assertEvalError("{ z <- \"hello\" ; -z }");
     }
@@ -1766,6 +1776,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testUnaryNot_b79c4e77d1ff433f864e22550d675120() {
         assertEval("{ !NA }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testUnaryNotDimensions_c06858978ee19736bc28f17e7c3acf08() {
+        assertEval("{ xx <- double(0); dim(xx) <- c(0,0); dim(!xx) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testUnaryNotDimensions_e16c9de9476e28643ba613022602d2a6() {
+        assertEval("{ xx <- double(1); dim(xx) <- c(1,1); dim(!xx) }");
     }
 
     @Test
@@ -5684,6 +5704,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_5cd9f21c97025b5427f8244d0c0e0ffc() {
+        assertEvalNoNL("{ cat(1, sep=\"\\n\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_f48953c23109705840adb64bc147151b() {
         assertEvalNoNL("{ cat(1,2,3) }");
     }
@@ -5789,6 +5814,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_91de7df676b06ad665ce3584e334842c() {
+        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_1dcd33ce696ea60d54dd157e9d0dd76f() {
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
     }
@@ -5811,6 +5841,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCatIgnore_4949a7df83738286ea025e86159c9cdc() {
         assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_ff51d78a6902080ce5f8721aa9bd9932() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_a217c0f15c1bc137c95929aaed1c51f2() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_ca16199a5bf10ef8a2fccd05debcaf73() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCatVarargs_782dd61fabc4402b2636903c37f05fe6() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
     @Test
@@ -8451,6 +8501,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInherits_20d6545f67c653e20d3b612df41b64c2() {
         assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_34ff95edf55241d7710a1123747655e8() {
+        assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
     }
 
     @Test

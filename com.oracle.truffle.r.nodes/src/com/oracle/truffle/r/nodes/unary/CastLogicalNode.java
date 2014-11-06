@@ -26,7 +26,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,7 +44,7 @@ public abstract class CastLogicalNode extends CastNode {
     private Object castLogicalRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastLogical = insert(CastLogicalNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastLogical = insert(CastLogicalNodeFactory.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastLogical.executeLogical(frame, o);
     }
@@ -89,33 +88,22 @@ public abstract class CastLogicalNode extends CastNode {
         return RRuntime.raw2logical(operand);
     }
 
-    private byte[] dataFromString(RStringVector operand) {
-        naCheck.enable(operand);
-        byte[] ldata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            String value = operand.getDataAt(i);
-            ldata[i] = naCheck.convertStringToLogical(value);
-        }
-        return ldata;
+    @FunctionalInterface
+    private interface IntToByteFunction {
+        byte apply(int value);
     }
 
-    private byte[] dataFromComplex(RComplexVector operand) {
+    private RLogicalVector createResultVector(RAbstractVector operand, IntToByteFunction elementFunction) {
         naCheck.enable(operand);
-        byte[] ldata = new byte[operand.getLength()];
+        byte[] bdata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
-            RComplex value = operand.getDataAt(i);
-            ldata[i] = naCheck.convertComplexToLogical(value);
+            bdata[i] = elementFunction.apply(i);
         }
-        return ldata;
-    }
-
-    private static byte[] dataFromRaw(RRawVector operand) {
-        byte[] ldata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RRaw value = operand.getDataAt(i);
-            ldata[i] = RRuntime.raw2logical(value);
+        RLogicalVector ret = RDataFactory.createLogicalVector(bdata, naCheck.neverSeenNA(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
         }
-        return ldata;
+        return ret;
     }
 
     @Specialization
@@ -124,143 +112,28 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
-    protected RLogicalVector doIntVector(RIntVector operand) {
-        return performAbstractIntVector(operand);
+    protected RLogicalVector doIntVector(RAbstractIntVector operand) {
+        return createResultVector(operand, index -> naCheck.convertIntToLogical(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RLogicalVector doIntSequence(RIntSequence operand) {
-        return performAbstractIntVector(operand);
+    protected RLogicalVector doDoubleVector(RAbstractDoubleVector operand) {
+        return createResultVector(operand, index -> naCheck.convertDoubleToLogical(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RLogicalVector doDoubleVector(RDoubleVector operand) {
-        return performAbstractDoubleVector(operand);
-    }
-
-    @Specialization
-    protected RLogicalVector doDoubleSequence(RDoubleSequence operand) {
-        return performAbstractDoubleVector(operand);
-    }
-
-    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    protected RLogicalVector doStringVectorDims(RStringVector operand) {
-        byte[] ldata = dataFromString(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    protected RLogicalVector doStringVectorNames(RStringVector operand) {
-        byte[] ldata = dataFromString(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    protected RLogicalVector doStringVectorDimsNames(RStringVector operand) {
-        byte[] ldata = dataFromString(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     protected RLogicalVector doStringVector(RStringVector operand) {
-        byte[] ldata = dataFromString(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return createResultVector(operand, index -> naCheck.convertStringToLogical(operand.getDataAt(index)));
     }
 
-    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    protected RLogicalVector doComplexVectorDims(RComplexVector operand) {
-        byte[] ldata = dataFromComplex(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    protected RLogicalVector doComplexVectorNames(RComplexVector operand) {
-        byte[] ldata = dataFromComplex(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    protected RLogicalVector doComplexVectorDimsNames(RComplexVector operand) {
-        byte[] ldata = dataFromComplex(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization
     protected RLogicalVector doComplexVector(RComplexVector operand) {
-        byte[] ldata = dataFromComplex(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return createResultVector(operand, index -> naCheck.convertComplexToLogical(operand.getDataAt(index)));
     }
 
-    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization
     protected RLogicalVector doRawVectorDims(RRawVector operand) {
-        byte[] ldata = dataFromRaw(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    protected RLogicalVector doRawVectorNames(RRawVector operand) {
-        byte[] ldata = dataFromRaw(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    protected RLogicalVector doRawVectorDimsNames(RRawVector operand) {
-        byte[] ldata = dataFromRaw(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    protected RLogicalVector doRawVector(RRawVector operand) {
-        byte[] ldata = dataFromRaw(operand);
-        RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
+        return createResultVector(operand, index -> RRuntime.raw2logical(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -282,10 +155,10 @@ public abstract class CastLogicalNode extends CastNode {
                     } else if (logicalVector.getLength() == 0) {
                         result[i] = RRuntime.LOGICAL_NA;
                     } else {
-                        throw cannotCoerceListError();
+                        throw throwCannotCoerceListError("logical");
                     }
                 } else {
-                    throw cannotCoerceListError();
+                    throw throwCannotCoerceListError("logical");
                 }
             }
         }
@@ -294,10 +167,6 @@ public abstract class CastLogicalNode extends CastNode {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
-    }
-
-    private RError cannotCoerceListError() {
-        throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "logical");
     }
 
     @Specialization
@@ -314,51 +183,5 @@ public abstract class CastLogicalNode extends CastNode {
     @TruffleBoundary
     public int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
-    }
-
-    private RLogicalVector performAbstractIntVector(RAbstractIntVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            int value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertIntToLogical(value);
-        }
-        RLogicalVector ret;
-        if (preserveDimensions() && preserveNames()) {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
-        } else if (preserveDimensions()) {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getNames());
-        } else {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA());
-        }
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    private RLogicalVector performAbstractDoubleVector(RAbstractDoubleVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            double value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertDoubleToLogical(value);
-        }
-        RLogicalVector ret;
-        if (preserveDimensions() && preserveNames()) {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
-        } else if (preserveDimensions()) {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getNames());
-        } else {
-            ret = RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA());
-        }
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
     }
 }

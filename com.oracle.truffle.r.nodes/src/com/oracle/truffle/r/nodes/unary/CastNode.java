@@ -24,24 +24,28 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.runtime.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class),
-                @NodeField(name = "attrPreservation", type = boolean.class)})
+@NodeFields({@NodeField(name = "preserveNames", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class), @NodeField(name = "attrPreservation", type = boolean.class)})
 public abstract class CastNode extends UnaryNode {
+
+    private final BranchProfile listCoercionErrorBranch = BranchProfile.create();
 
     public abstract Object executeCast(VirtualFrame frame, Object value);
 
-    protected abstract boolean isNamesPreservation();
+    protected abstract boolean isPreserveNames();
 
     protected abstract boolean isDimensionsPreservation();
 
     protected abstract boolean isAttrPreservation();
 
-    protected boolean preserveNames() {
-        return isNamesPreservation();
+    protected boolean isPreserveDimensions() {
+        return isDimensionsPreservation();
     }
 
-    protected boolean preserveDimensions() {
-        return isDimensionsPreservation();
+    protected RError throwCannotCoerceListError(String type) {
+        listCoercionErrorBranch.enter();
+        throw RError.error(getSourceSection(), RError.Message.LIST_COERCION, type);
     }
 }

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FileFunctions {
 
@@ -485,6 +486,53 @@ public class FileFunctions {
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
             return doXyzName(vec, basePathFunction);
+        }
+    }
+
+    @RBuiltin(name = "dir.create", kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
+    public abstract static class DirCreate extends RInvisibleBuiltinNode {
+        @TruffleBoundary
+        @Specialization
+        protected byte dirCreate(RAbstractStringVector pathVec, byte showWarnings, byte recursive, RIntVector octMode) {
+            controlVisibility();
+            boolean ok = true;
+            if (pathVec.getLength() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
+            }
+            String path = Utils.tildeExpand(pathVec.getDataAt(0));
+            if (RRuntime.fromLogical(recursive)) {
+                ok = mkparentdirs(new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode.getDataAt(0));
+            }
+            if (ok) {
+                ok = mkdir(path, showWarnings, octMode.getDataAt(0));
+            }
+            return RRuntime.asLogical(ok);
+        }
+
+        protected boolean mkparentdirs(File file, byte showWarnings, int mode) {
+            if (file.isDirectory()) {
+                return true;
+            }
+            if (file.exists()) {
+                return false;
+            }
+            if (mkparentdirs(file.getParentFile(), showWarnings, mode)) {
+                return mkdir(file.getAbsolutePath(), showWarnings, mode);
+            } else {
+                return false;
+            }
+        }
+
+        protected boolean mkdir(String path, byte showWarnings, int mode) {
+            try {
+                RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, mode);
+                return true;
+            } catch (IOException ex) {
+                if (RRuntime.fromLogical(showWarnings)) {
+                    RContext.getInstance().setEvalWarning("cannot create dir '" + path + "'");
+                }
+                return false;
+            }
         }
     }
 }

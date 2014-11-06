@@ -90,7 +90,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RSymbol castSymbol(VirtualFrame frame, Object operand) {
         if (castSymbol == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castSymbol = insert(CastSymbolNodeFactory.create(null, false, false, false, false));
+            castSymbol = insert(CastSymbolNodeFactory.create(null, false, false, false));
         }
         return (RSymbol) castSymbol.executeSymbol(frame, operand);
     }

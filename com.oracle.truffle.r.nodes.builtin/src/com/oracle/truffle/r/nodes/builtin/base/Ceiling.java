@@ -40,6 +40,6 @@ public class Ceiling extends RWrapperBuiltinNode {
 
     @Override
     protected RNode createDelegate() {
-        return UnaryArithmeticNodeFactory.create(UnaryArithmetic.CEILING, this.getArguments()[0]);
+        return UnaryArithmeticNodeFactory.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, getArguments()[0]);
     }
 }

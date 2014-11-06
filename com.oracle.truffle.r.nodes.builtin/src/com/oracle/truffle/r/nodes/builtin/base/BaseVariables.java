@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
     private static final String[] VARS = new String[]{
-        ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Platform", ".Library", ".LibrarySite"
+        ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform", ".Library", ".LibrarySite"
     };
     // @formatter:on
 
@@ -50,6 +50,7 @@ public class BaseVariables implements RPackageVariables.Handler {
     };
     // @formatter:on
 
+    // @formatter:off
     private int initialized = -1;
 
     public BaseVariables() {
@@ -76,6 +77,9 @@ public class BaseVariables implements RPackageVariables.Handler {
                         // .Platform TODO be more accurate
                         String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
                         value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
+                        break;
+                    case ".Machine":
+                        value = createMachine();
                         break;
                     default:
                         continue;
@@ -108,6 +112,41 @@ public class BaseVariables implements RPackageVariables.Handler {
             }
         }
         initialized++;
+    }
+
+    private static final String[] MACHINE_NAMES = new String[] {
+        "double.eps",            "double.neg.eps",        "double.xmin",
+        "double.xmax",           "double.base",           "double.digits",
+        "double.rounding",       "double.guard",          "double.ulp.digits",
+        "double.neg.ulp.digits", "double.exponent",       "double.min.exp",
+        "double.max.exp",        "integer.max",           "sizeof.long",
+        "sizeof.longlong",       "sizeof.longdouble",     "sizeof.pointer"
+    };
+    // @formatter:on
+
+    private static RList createMachine() {
+        Object[] values = new Object[MACHINE_NAMES.length];
+        RAccuracyInfo acc = RAccuracyInfo.get();
+        values[0] = acc.eps;
+        values[1] = acc.epsneg;
+        values[2] = acc.xmin;
+        values[3] = acc.xmax;
+        values[4] = acc.ibeta;
+        values[5] = acc.it;
+        values[6] = acc.irnd;
+        values[7] = acc.ngrd;
+        values[8] = acc.machep;
+        values[9] = acc.negep;
+        values[10] = acc.iexp;
+        values[11] = acc.minexp;
+        values[12] = acc.maxexp;
+        values[13] = Integer.MAX_VALUE;
+        // TODO platform specific
+        values[14] = 8;
+        values[15] = 8;
+        values[16] = 16;
+        values[17] = 8;
+        return RDataFactory.createList(values, RDataFactory.createStringVector(MACHINE_NAMES, RDataFactory.COMPLETE_VECTOR));
     }
 
 }

@@ -72,5 +72,4 @@ public abstract class Complex extends RBuiltinNode {
     protected static boolean zeroLength(int lengthOut, double real, double imaginary, int modulus, int argument) {
         return lengthOut == 0;
     }
-
 }

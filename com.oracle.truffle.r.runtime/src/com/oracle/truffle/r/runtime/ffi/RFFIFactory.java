@@ -82,8 +82,8 @@ public abstract class RFFIFactory {
     }
 
     @TruffleBoundary
-    protected static IOException ioex() throws IOException {
-        throw new IOException();
+    protected static IOException ioex(String errMsg) throws IOException {
+        throw new IOException(errMsg);
     }
 
 }

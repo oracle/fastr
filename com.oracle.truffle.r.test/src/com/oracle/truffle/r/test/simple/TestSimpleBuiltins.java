@@ -965,6 +965,7 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCat() {
         assertEvalNoOutput("{ cat() }");
         assertEvalNoNL("{ cat(1) }");
+        assertEvalNoNL("{ cat(1, sep=\"\\n\") }");
         assertEvalNoNL("{ cat(1,2,3) }");
         assertEvalNoNL("{ cat(\"a\") }");
         assertEvalNoNL("{ cat(\"a\", \"b\") }");
@@ -986,9 +987,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoNL("{ cat(c(1L, 2L, 3L)) }");
         assertEvalNoNL("{ cat(1,2,sep=\".\") }");
         assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
         assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
         assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
+    }
+
+    @Test
+    public void testCatVarargs() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
     @Test
@@ -3297,6 +3307,7 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
         assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
+        assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
     }
 
     @Test

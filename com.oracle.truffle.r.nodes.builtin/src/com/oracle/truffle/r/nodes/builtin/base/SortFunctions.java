@@ -53,6 +53,7 @@ public class SortFunctions {
     // TODO Implement in R
     public abstract static class SortList extends RBuiltinNode {
         private final ConditionProfile orderProfile = ConditionProfile.createBinaryProfile();
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
