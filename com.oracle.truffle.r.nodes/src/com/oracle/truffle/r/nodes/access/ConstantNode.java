@@ -60,6 +60,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantVectorNode((RAbstractVector) value);
         } else if (value instanceof RDataFrame) {
             return new ConstantDataFrameNode((RDataFrame) value);
+        } else if (value instanceof RFactor) {
+            return new ConstantFactorNode((RFactor) value);
         } else if (value instanceof RRaw) {
             return new ConstantRawNode((RRaw) value);
         } else if (value instanceof RFunction) {
@@ -301,6 +303,27 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             return dataFrame;
+        }
+    }
+
+    private static final class ConstantFactorNode extends ConstantNode {
+
+        private final RFactor factor;
+
+        public ConstantFactorNode(RFactor factor) {
+            this.factor = factor;
+        }
+
+        @Override
+        public RFactor executeRFactor(VirtualFrame frame) {
+            controlVisibility();
+            return factor;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return factor;
         }
     }
 

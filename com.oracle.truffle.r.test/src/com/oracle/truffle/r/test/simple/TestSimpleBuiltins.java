@@ -3900,6 +3900,16 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
         assertEvalError("{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
         assertEvalError("{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x == \"a\" }");
+        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
+        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
+
+        assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
+        assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
     }
 
     @Test

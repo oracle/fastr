@@ -100,7 +100,7 @@ public abstract class BinaryCompare extends BooleanOperation {
         super(commutative, false);
     }
 
-    private static final class NotEqual extends BinaryCompare {
+    public static final class NotEqual extends BinaryCompare {
 
         public NotEqual() {
             super(true);
@@ -144,7 +144,7 @@ public abstract class BinaryCompare extends BooleanOperation {
         }
     }
 
-    private static final class Equal extends BinaryCompare {
+    public static final class Equal extends BinaryCompare {
 
         public Equal() {
             super(true);

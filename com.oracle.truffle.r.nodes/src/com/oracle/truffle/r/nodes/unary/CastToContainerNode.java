@@ -73,6 +73,11 @@ public abstract class CastToContainerNode extends CastNode {
     }
 
     @Specialization
+    protected RFactor cast(RFactor factor) {
+        return factor;
+    }
+
+    @Specialization
     protected RExpression cast(RExpression expression) {
         return expression;
     }

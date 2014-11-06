@@ -282,6 +282,7 @@ public final class REngine implements RContext.Engine {
             ConsoleHandler ch = singleton.context.getConsoleHandler();
             ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
                             Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
+            use.printStackTrace();
             return null;
         } catch (RecognitionException | RuntimeException e) {
             singleton.context.getConsoleHandler().println("Exception while parsing: " + e);

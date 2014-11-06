@@ -165,7 +165,7 @@ public abstract class TypeConvert extends RBuiltinNode {
             RIntVector res = RDataFactory.createIntVector(data, complete);
             res.setAttr("levels", RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
             res.setAttr("class", RDataFactory.createStringVector("factor"));
-            return res;
+            return RDataFactory.createFactor(res);
         }
     }
 }

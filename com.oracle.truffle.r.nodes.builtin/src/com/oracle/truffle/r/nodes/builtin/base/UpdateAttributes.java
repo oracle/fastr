@@ -179,11 +179,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     UpdateAttr.setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
                 }
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                if (value == RNull.instance) {
-                    resultVector.setRowNames(null);
-                } else {
-                    resultVector.setRowNames(castVector(virtualFrame, value));
-                }
+                resultVector.setRowNames(castVector(virtualFrame, value));
+            } else if (attrName.equals(RRuntime.LEVELS_ATTR_KEY)) {
+                resultVector.setLevels(castVector(virtualFrame, value));
             } else {
                 if (value == RNull.instance) {
                     resultVector.removeAttr(attrName);
