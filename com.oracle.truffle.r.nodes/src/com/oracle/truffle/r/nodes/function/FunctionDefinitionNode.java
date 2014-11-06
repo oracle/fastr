@@ -95,6 +95,8 @@ public final class FunctionDefinitionNode extends RRootNode {
             return ex.getResult();
         } finally {
             if (onExitProfile.profile(onExitSlot != null && onExitSlot.hasValue(vf))) {
+                // Must preserve the visibility state as it may be changed by the on.exit expression
+                boolean isVisible = RContext.isVisible();
                 ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
                 for (Object expr : current) {
                     if (!(expr instanceof RNode)) {
@@ -103,6 +105,7 @@ public final class FunctionDefinitionNode extends RRootNode {
                     RNode node = (RNode) expr;
                     onExitExpressionCache.execute(vf, node);
                 }
+                RContext.setVisible(isVisible);
             }
         }
     }
