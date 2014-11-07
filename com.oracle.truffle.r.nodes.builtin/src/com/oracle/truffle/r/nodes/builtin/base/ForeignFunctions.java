@@ -471,13 +471,25 @@ public class ForeignFunctions {
         return false;
     }
 
-    @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
-    public abstract static class DotExternal extends RBuiltinNode {
+    private static String isString(Object arg) {
+        if (arg instanceof String) {
+            return (String) arg;
+        } else if (arg instanceof RStringVector) {
+            if (((RStringVector) arg).getLength() == 0) {
+                return null;
+            } else {
+                return ((RStringVector) arg).getDataAt(0);
+            }
+        } else {
+            return null;
+        }
+    }
 
+    private abstract static class CastAdapter extends RBuiltinNode {
         @Child private CastLogicalNode castLogical;
         @Child private CastIntegerNode castInt;
 
-        private byte castLogical(VirtualFrame frame, Object operand) {
+        protected byte castLogical(VirtualFrame frame, Object operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
@@ -485,14 +497,19 @@ public class ForeignFunctions {
             return (byte) castLogical.executeCast(frame, operand);
         }
 
-        private int castInt(VirtualFrame frame, Object operand) {
+        protected int castInt(VirtualFrame frame, Object operand) {
             if (castInt == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castInt = insert(CastIntegerNodeFactory.create(null, false, false, false));
             }
             return (int) castInt.executeCast(frame, operand);
         }
+    }
 
+    @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    public abstract static class DotExternal extends CastAdapter {
+
+        // Transcribed from GnuR, library/utils/src/io.c
         @SuppressWarnings("unused")
         @TruffleBoundary
         @Specialization(guards = "isCountFields")
@@ -552,22 +569,91 @@ public class ForeignFunctions {
             }
         }
 
-        private static String isString(Object arg) {
-            if (arg instanceof String) {
-                return (String) arg;
-            } else if (arg instanceof RStringVector) {
-                if (((RStringVector) arg).getLength() == 0) {
-                    return null;
-                } else {
-                    return ((RStringVector) arg).getDataAt(0);
-                }
-            } else {
-                return null;
-            }
-        }
-
         public boolean isCountFields(RList f) {
             return matchName(f, "countfields");
+        }
+    }
+
+    @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
+    public abstract static class DotExternal2 extends CastAdapter {
+        // Transcribed from GnuR, library/utils/src/io.c
+        @TruffleBoundary
+        @Specialization(guards = "isWriteTable")
+        protected Object doWriteTable(VirtualFrame frame, RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            Object x = argValues[0];
+            Object con = argValues[1];
+            if (!(con instanceof RConnection)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
+            }
+            // TODO check connection writeable
+
+            int nr = castInt(frame, argValues[2]);
+            int nc = castInt(frame, argValues[3]);
+            Object rnamesArg = argValues[4];
+            Object sepArg = argValues[5];
+            Object eolArg = argValues[6];
+            Object naArg = argValues[7];
+            Object decArg = argValues[8];
+            Object quoteArg = argValues[9];
+            byte qmethod = castLogical(frame, argValues[10]);
+
+            String sep;
+            String eol;
+            String na;
+            String dec;
+
+            if (nr == RRuntime.INT_NA) {
+                invalidArgument("nr");
+            }
+            if (nc == RRuntime.INT_NA) {
+                invalidArgument("nc");
+            }
+            if (!(rnamesArg instanceof RNull) && isString(rnamesArg) == null) {
+                invalidArgument("rnames");
+            }
+            if ((sep = isString(sepArg)) == null) {
+                invalidArgument("sep");
+            }
+            if ((eol = isString(eolArg)) == null) {
+                invalidArgument("eol");
+            }
+            if ((na = isString(naArg)) == null) {
+                invalidArgument("na");
+            }
+            if ((dec = isString(decArg)) == null) {
+                invalidArgument("dec");
+            }
+            if (qmethod == RRuntime.LOGICAL_NA) {
+                invalidArgument("qmethod");
+            }
+            if (dec.length() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
+            }
+            char cdec = dec.charAt(0);
+            boolean[] quoteCol = new boolean[nc];
+            boolean quoteRn = false;
+            RIntVector quote = (RIntVector) quoteArg;
+            for (int i = 0; i < quote.getLength(); i++) {
+                int qi = quote.getDataAt(i);
+                if (qi == 0) {
+                    quoteRn = true;
+                }
+                if (qi > 0) {
+                    quoteCol[qi - 1] = true;
+                }
+            }
+            // TODO call WriteTable
+            return RNull.instance;
+        }
+
+        protected void invalidArgument(String name) throws RError {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+        }
+
+        public boolean isWriteTable(RList f) {
+            return matchName(f, "writetable");
         }
     }
 

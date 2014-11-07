@@ -502,6 +502,8 @@ public final class RError extends RuntimeException {
         CANNOT_ASSIGN_IN_EMPTY_ENV("cannot assign values in the empty environment"),
         CANNOT_OPEN_CONNECTION("cannot open the connection"),
         ERROR_READING_CONNECTION("error reading connection: %s"),
+        ERROR_WRITING_CONNECTION("error writing connection: %s"),
+        ERROR_FLUSHING_CONNECTION("error flushing connection: %s"),
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),

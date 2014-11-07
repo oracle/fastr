@@ -169,6 +169,18 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            checkOpen();
+            theConnection.writeLines(lines, sep);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            checkOpen();
+            theConnection.flush();
+        }
+
+        @Override
         public void close() throws IOException {
             isOpen = false;
             if (theConnection != null) {
@@ -203,6 +215,34 @@ public abstract class ConnectionFunctions {
         @Override
         public RStringVector getClassHierarchy() {
             return base.getClassHierarchy();
+        }
+    }
+
+    private abstract static class DelegateReadRConnection extends DelegateRConnection {
+        protected DelegateReadRConnection(BaseRConnection base) {
+            super(base);
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
+        }
+
+        @Override
+        public void flush() {
+            // nothing to do
+        }
+
+    }
+
+    private abstract static class DelegateWriteRConnection extends DelegateRConnection {
+        protected DelegateWriteRConnection(BaseRConnection base) {
+            super(base);
+        }
+
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
 
     }
@@ -294,6 +334,9 @@ public abstract class ConnectionFunctions {
                 case Read:
                     delegate = new FileReadTextRConnection(this);
                     break;
+                case Write:
+                    delegate = new FileWriteTextRConnection(this);
+                    break;
                 default:
                     throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
             }
@@ -301,7 +344,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private static class FileReadTextRConnection extends DelegateRConnection {
+    private static class FileReadTextRConnection extends DelegateReadRConnection {
         private BufferedInputStream inputStream;
         private BufferedReader bufferedReader;
 
@@ -335,6 +378,40 @@ public abstract class ConnectionFunctions {
         @Override
         public void close() throws IOException {
             bufferedReader.close();
+        }
+    }
+
+    private static class FileWriteTextRConnection extends DelegateWriteRConnection {
+        private BufferedOutputStream outputStream;
+        private BufferedWriter bufferedWriter;
+
+        FileWriteTextRConnection(FileRConnection base) throws IOException {
+            super(base);
+            outputStream = new BufferedOutputStream(new FileOutputStream(base.path));
+            bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                bufferedWriter.write(lines.getDataAt(i));
+                bufferedWriter.write(sep);
+            }
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void close() throws IOException {
+            bufferedWriter.close();
+        }
+
+        @Override
+        public void flush() throws IOException {
+            bufferedWriter.flush();
         }
     }
 
@@ -390,7 +467,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private static class GZIPInputRConnection extends DelegateRConnection {
+    private static class GZIPInputRConnection extends DelegateReadRConnection {
         private GZIPInputStream stream;
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
@@ -464,7 +541,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private static class TextReadRConnection extends DelegateRConnection {
+    private static class TextReadRConnection extends DelegateReadRConnection {
         private String[] lines;
         private int index;
 
@@ -491,6 +568,12 @@ public abstract class ConnectionFunctions {
             System.arraycopy(lines, index, result, 0, nlines);
             index += nlines;
             return result;
+        }
+
+        @SuppressWarnings("hiding")
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
         }
 
         @Override
@@ -564,6 +647,43 @@ public abstract class ConnectionFunctions {
         protected Object readLines(Object con, Object n, Object ok, Object warn, Object encoding, Object skipNul) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+        }
+    }
+
+    @RBuiltin(name = "writeLines", kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
+    public abstract static class WriteLines extends RInvisibleBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
+            controlVisibility();
+            try {
+                con.writeLines(text, sep.getDataAt(0));
+            } catch (IOException x) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+            }
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RNull writeLines(Object text, Object con, Object sep, Object useBytes) {
+            controlVisibility();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+        }
+    }
+
+    @RBuiltin(name = "flush", kind = INTERNAL, parameterNames = {"con"})
+    public abstract static class Flush extends RInvisibleBuiltinNode {
+        @TruffleBoundary
+        @Specialization
+        protected RNull flush(RConnection con) {
+            controlVisibility();
+            try {
+                con.flush();
+            } catch (IOException x) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_FLUSHING_CONNECTION, x.getMessage());
+            }
+            return RNull.instance;
         }
     }
 

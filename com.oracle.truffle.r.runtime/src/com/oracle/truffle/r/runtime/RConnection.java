@@ -170,4 +170,12 @@ public abstract class RConnection implements RClassHierarchy {
         pushBack = null;
     }
 
+    /**
+     * Write the {@code lines} to the connection, with {@code sep} appended after each "line". N.B.
+     * The output will only appear as a sequence of lines if {@code sep == "\n"}.
+     */
+    public abstract void writeLines(RAbstractStringVector lines, String sep) throws IOException;
+
+    public abstract void flush() throws IOException;
+
 }
