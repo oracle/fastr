@@ -123,9 +123,16 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     /**
-     * Return the underlying input stream (for internal use).
+     * Return the underlying input stream (for internal use). TODO Replace with a more principled
+     * solution.
      */
     public abstract InputStream getInputStream() throws IOException;
+
+    /**
+     * Return the underlying output stream (for internal use). TODO Replace with a more principled
+     * solution.
+     */
+    public abstract OutputStream getOutputStream() throws IOException;
 
     /**
      * Close the connection.

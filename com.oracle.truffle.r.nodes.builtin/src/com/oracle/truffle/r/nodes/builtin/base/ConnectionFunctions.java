@@ -169,6 +169,12 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public OutputStream getOutputStream() throws IOException {
+            checkOpen();
+            return theConnection.getOutputStream();
+        }
+
+        @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             checkOpen();
             theConnection.writeLines(lines, sep);
@@ -233,6 +239,10 @@ public abstract class ConnectionFunctions {
             // nothing to do
         }
 
+        @Override
+        public OutputStream getOutputStream() {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     private abstract static class DelegateWriteRConnection extends DelegateRConnection {
@@ -243,6 +253,11 @@ public abstract class ConnectionFunctions {
         @Override
         public String[] readLinesInternal(int n) throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            throw RInternalError.shouldNotReachHere();
         }
 
     }
@@ -282,6 +297,11 @@ public abstract class ConnectionFunctions {
 
         @Override
         public InputStream getInputStream() throws IOException {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public OutputStream getOutputStream() {
             throw RInternalError.shouldNotReachHere();
         }
 
@@ -400,8 +420,8 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        public InputStream getInputStream() throws IOException {
-            throw RInternalError.shouldNotReachHere();
+        public OutputStream getOutputStream() throws IOException {
+            return outputStream;
         }
 
         @Override
