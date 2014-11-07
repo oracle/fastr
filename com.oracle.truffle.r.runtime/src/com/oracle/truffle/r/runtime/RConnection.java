@@ -116,6 +116,13 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     /**
+     * Returns {@code true} if this is the "stdin" connection.
+     */
+    public boolean isStdin() {
+        return false;
+    }
+
+    /**
      * Return the underlying input stream (for internal use).
      */
     public abstract InputStream getInputStream() throws IOException;
@@ -162,5 +169,13 @@ public abstract class RConnection implements RClassHierarchy {
     public void pushBackClear() {
         pushBack = null;
     }
+
+    /**
+     * Write the {@code lines} to the connection, with {@code sep} appended after each "line". N.B.
+     * The output will only appear as a sequence of lines if {@code sep == "\n"}.
+     */
+    public abstract void writeLines(RAbstractStringVector lines, String sep) throws IOException;
+
+    public abstract void flush() throws IOException;
 
 }

@@ -130,4 +130,9 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ data.frame(c(1,2)) }");
         assertEval("{ data.frame(c(1,2), c(11,12)) }");
     }
+
+    @Test
+    public void testLapply() {
+        assertEval("{ x <- c(1, 2, 3); xa <- as.data.frame(x); lapply(xa, function(x) x > 1) }");
+    }
 }

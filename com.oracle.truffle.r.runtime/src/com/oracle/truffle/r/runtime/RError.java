@@ -502,6 +502,8 @@ public final class RError extends RuntimeException {
         CANNOT_ASSIGN_IN_EMPTY_ENV("cannot assign values in the empty environment"),
         CANNOT_OPEN_CONNECTION("cannot open the connection"),
         ERROR_READING_CONNECTION("error reading connection: %s"),
+        ERROR_WRITING_CONNECTION("error writing connection: %s"),
+        ERROR_FLUSHING_CONNECTION("error flushing connection: %s"),
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
@@ -553,7 +555,9 @@ public final class RError extends RuntimeException {
         FIRST_ELEMENT_USED("first element used of '%s' argument"),
         MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer"),
         DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'"),
-        ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object");
+        ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
+        IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
+        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors");
 
         public final String message;
         private final boolean hasArgs;

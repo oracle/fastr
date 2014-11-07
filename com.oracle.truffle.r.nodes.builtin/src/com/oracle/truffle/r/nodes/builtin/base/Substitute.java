@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -61,6 +62,7 @@ public abstract class Substitute extends RBuiltinNode {
 
     private Quote checkQuote() {
         if (quote == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             quote = insert(QuoteFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return quote;

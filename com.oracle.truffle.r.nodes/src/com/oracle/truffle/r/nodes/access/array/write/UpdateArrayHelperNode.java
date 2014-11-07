@@ -177,6 +177,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return CastToContainerNodeFactory.create(child, false, false, false, true);
     }
 
+    @Specialization
+    protected Object update(VirtualFrame frame, Object v, RFactor value, int recLevel, Object positions, Object vector) {
+        return updateRecursive(frame, v, value.getVector(), vector, positions, recLevel);
+    }
+
     @Specialization(guards = "emptyValue")
     protected RAbstractVector update(Object v, RAbstractVector value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (isSubset) {
