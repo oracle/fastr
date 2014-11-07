@@ -369,11 +369,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final int[] getDimensions() {
-        if (hasDimensions()) {
-            return dimensions;
-        } else {
-            return null;
-        }
+        return dimensions;
     }
 
     public final void setDimensions(int[] newDimensions) {

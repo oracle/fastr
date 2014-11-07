@@ -579,10 +579,9 @@ public class ForeignFunctions {
         // Transcribed from GnuR, library/utils/src/io.c
         @TruffleBoundary
         @Specialization(guards = "isWriteTable")
-        protected Object doWriteTable(VirtualFrame frame, RList f, RArgsValuesAndNames args) {
+        protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             Object[] argValues = args.getValues();
-            Object x = argValues[0];
             Object con = argValues[1];
             if (!(con instanceof RConnection)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
@@ -599,9 +598,6 @@ public class ForeignFunctions {
             Object quoteArg = argValues[9];
             byte qmethod = castLogical(frame, argValues[10]);
 
-            String sep;
-            String eol;
-            String na;
             String dec;
 
             if (nr == RRuntime.INT_NA) {
@@ -613,13 +609,13 @@ public class ForeignFunctions {
             if (!(rnamesArg instanceof RNull) && isString(rnamesArg) == null) {
                 invalidArgument("rnames");
             }
-            if ((sep = isString(sepArg)) == null) {
+            if (isString(sepArg) == null) {
                 invalidArgument("sep");
             }
-            if ((eol = isString(eolArg)) == null) {
+            if (isString(eolArg) == null) {
                 invalidArgument("eol");
             }
-            if ((na = isString(naArg)) == null) {
+            if (isString(naArg) == null) {
                 invalidArgument("na");
             }
             if ((dec = isString(decArg)) == null) {
@@ -631,15 +627,10 @@ public class ForeignFunctions {
             if (dec.length() != 1) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
             }
-            char cdec = dec.charAt(0);
             boolean[] quoteCol = new boolean[nc];
-            boolean quoteRn = false;
             RIntVector quote = (RIntVector) quoteArg;
             for (int i = 0; i < quote.getLength(); i++) {
                 int qi = quote.getDataAt(i);
-                if (qi == 0) {
-                    quoteRn = true;
-                }
                 if (qi > 0) {
                     quoteCol[qi - 1] = true;
                 }

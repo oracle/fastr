@@ -8358,6 +8358,36 @@ Warning message:
 In Ops.factor(x, c("a", "b")) : > not meaningful for factors
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[1] }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[2] }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[[1]] }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[[2]] }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[c(1,2)] }
+[1] a b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[c(1,2,3,4)] }
+[1] a    b    a    <NA>
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a", "c")); x == c("a", "b") }
 [1]  TRUE  TRUE  TRUE FALSE
 
@@ -16240,6 +16270,20 @@ $x
 [1] FALSE  TRUE  TRUE
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
+#{ n = c(2, 3, 5); s = c("aa", "bb", "cc"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }
+   n  s
+1 22 aa
+2 33 bb
+3 55 cc
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ n = c(2, 3, 5); s = c(TRUE, FALSE, TRUE); df = data.frame(n, s); df }
+  n     s
+1 2  TRUE
+2 3 FALSE
+3 5  TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-c(1,2); class(x)<-"data.frame"; row.names(x)<-integer(); x }
 NULL
@@ -16256,6 +16300,13 @@ NULL
    x
 1  7
 2 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-data.frame(n=c("2", "3", "5"), s=c("TRUE", "FALSE", "TRUE"), check.names=FALSE, row.names=c("1", "2", "3")); x }
+  n     s
+1 2  TRUE
+2 3 FALSE
+3 5  TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-integer(); class(x)<-"data.frame"; x }
@@ -16953,6 +17004,33 @@ Error in f(h = 1) : argument 1 matches multiple formal arguments
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }
 Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f<-function(..., val=1) { c(list(...), val) }; f(v=7, 2) }
+$v
+[1] 7
+
+[[2]]
+[1] 2
+
+[[3]]
+[1] 1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f<-function(er=1, ..., val=1) { c(list(...), val, er) }; f(v=7, 2, e=8) }
+$v
+[1] 7
+
+[[2]]
+[1] 2
+
+[[3]]
+[1] 1
+
+[[4]]
+[1] 8
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }

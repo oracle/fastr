@@ -28,6 +28,8 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy {
 
     int getLength();
 
+    boolean hasDimensions();
+
     int[] getDimensions();
 
     Class<?> getElementClass();

@@ -122,6 +122,8 @@ public class TestSimpleDataFrames extends TestBase {
 
         assertEval("{ x<-c(1,2); y<-data.frame(x); y }");
         assertEval("{ x<-c(7,42); y<-data.frame(x); y }");
+        assertEval("{ n = c(2, 3, 5); s = c(TRUE, FALSE, TRUE); df = data.frame(n, s); df }");
+        assertEval("{ x<-data.frame(n=c(\"2\", \"3\", \"5\"), s=c(\"TRUE\", \"FALSE\", \"TRUE\"), check.names=FALSE, row.names=c(\"1\", \"2\", \"3\")); x }");
     }
 
     @Test
@@ -135,4 +137,10 @@ public class TestSimpleDataFrames extends TestBase {
     public void testLapply() {
         assertEval("{ x <- c(1, 2, 3); xa <- as.data.frame(x); lapply(xa, function(x) x > 1) }");
     }
+
+    @Test
+    public void testMisc() {
+        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
+    }
+
 }

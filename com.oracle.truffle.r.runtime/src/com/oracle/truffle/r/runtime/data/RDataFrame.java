@@ -72,6 +72,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public boolean hasDimensions() {
+        return vector.hasDimensions();
+    }
+
+    @Override
     public int[] getDimensions() {
         return vector.getDimensions();
     }

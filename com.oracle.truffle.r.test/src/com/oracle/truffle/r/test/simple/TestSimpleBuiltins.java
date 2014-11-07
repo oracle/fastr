@@ -3910,6 +3910,13 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[1] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[1]] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[2] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[2]] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[c(1,2)] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[c(1,2,3,4)] }");
     }
 
     @Test
