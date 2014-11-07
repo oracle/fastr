@@ -22,17 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-public abstract class ConvertNode extends UnaryNode {
+/** Thrown by a convert node. Indicates that a parent node must rewrite itself. */
+public final class ConversionFailedException extends RuntimeException {
 
-    /** Thrown by a convert node. Indicates that a parent node must rewrite itself. */
-    public static final class ConversionFailedException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
-        private static final long serialVersionUID = 1L;
-
-        public ConversionFailedException(String message) {
-            super(message);
-        }
-
+    public ConversionFailedException(String message) {
+        super(message);
     }
-
 }

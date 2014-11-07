@@ -28,15 +28,14 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastSymbolNode extends CastNode {
-    @Child private ToStringNode toString = ToStringNodeFactory.create(null);
+
+    @Child private ToStringNode toString = ToStringNodeFactory.create(null, true, ToStringNode.DEFAULT_SEPARATOR, false);
 
     public abstract Object executeSymbol(VirtualFrame frame, Object o);
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected RSymbol doNull(RNull value) {
+    protected RSymbol doNull(@SuppressWarnings("unused") RNull value) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
     }
 
@@ -61,7 +60,7 @@ public abstract class CastSymbolNode extends CastNode {
     }
 
     @Specialization
-    protected RSymbol doStringVector(@SuppressWarnings("unused") VirtualFrame frame, RStringVector value) {
+    protected RSymbol doStringVector(RStringVector value) {
         // Only element 0 interpreted
         return doString(value.getDataAt(0));
     }
@@ -85,5 +84,4 @@ public abstract class CastSymbolNode extends CastNode {
     private static RSymbol backQuote(String s) {
         return RDataFactory.createSymbol("`" + s + "`");
     }
-
 }

@@ -72,6 +72,11 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return length;
     }
 
+    public boolean hasDimensions() {
+        // TODO
+        return false;
+    }
+
     public int[] getDimensions() {
         // TODO
         return null;

@@ -308,7 +308,7 @@ public class ArgumentMatcher {
             }
 
             // Search for argument name inside formal arguments
-            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], callSrc, argsSrc);
+            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], callSrc, argsSrc, varArgIndex);
             if (fi >= 0) {
                 resultArgs[fi] = suppliedArgs[si];
                 matchedSuppliedArgs.set(si);
@@ -496,12 +496,13 @@ public class ArgumentMatcher {
      * @param debugArgNode
      * @param callSrc
      * @param argsSrc
+     * @param varArgIndex
      *
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
      */
     private static <T> int findParameterPosition(String[] formalNames, String suppliedName, BitSet matchedSuppliedArgs, int suppliedIndex, boolean hasVarArgs, T debugArgNode, SourceSection callSrc,
-                    SourceSection argsSrc) {
+                    SourceSection argsSrc, int varArgIndex) {
         int found = -1;
         for (int i = 0; i < formalNames.length; i++) {
             if (formalNames[i] == null) {
@@ -517,7 +518,8 @@ public class ArgumentMatcher {
                 }
                 matchedSuppliedArgs.set(found);
                 break;
-            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName)) {
+            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) && ((varArgIndex != FormalArguments.NO_VARARG && i < varArgIndex) || varArgIndex == FormalArguments.NO_VARARG)) {
+                // partial-match only if the formal argument is positioned before ...
                 if (found >= 0) {
                     throw RError.error(argsSrc, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
                 }

@@ -72,6 +72,12 @@ public abstract class WrapArgumentNode extends RProxyNode {
         return dataFrame;
     }
 
+    @Override
+    protected RFactor proxyFactor(RFactor factor) {
+        proxyVector(factor.getVector());
+        return factor;
+    }
+
     public abstract RNode getOperand();
 
     public static WrapArgumentNode create(RNode operand, boolean modeChange) {

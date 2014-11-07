@@ -123,6 +123,10 @@ public class RPairList implements RAttributable, RAbstractContainer {
         return result;
     }
 
+    public boolean hasDimensions() {
+        return true;
+    }
+
     public int[] getDimensions() {
         return new int[]{1};
     }

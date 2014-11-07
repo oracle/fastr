@@ -20,49 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-//@PolymorphicLimit(1)
-public abstract class ConvertIntExact extends UnaryNode {
+/*
+ * This closure is meant to be used only for implementation of the binary operators.
+ */
+public class RFactorToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
-    public abstract Object execute(VirtualFrame frame, Object operand);
+    private final RIntVector vector;
+    private final RAbstractStringVector levels;
 
-    public abstract int executeInteger(VirtualFrame frame, Object operand);
-
-    @Specialization
-    protected int doInt(int operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected int doLogical(byte operand) {
-        return RRuntime.logical2int(operand);
-    }
-
-    @Specialization
-    protected double doInt(RIntVector operand) {
-        if (operand.getLength() == 1) {
-            return operand.getDataAt(0);
-        } else {
-            throw fail(operand.getClass().getName());
+    public RFactorToStringVectorClosure(RFactor factor, NACheck naCheck) {
+        super(factor.getVector(), naCheck);
+        this.vector = factor.getVector();
+        this.levels = (RAbstractStringVector) vector.getAttr(RRuntime.LEVELS_ATTR_KEY);
+        if (this.levels == null) {
+            RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
         }
     }
 
-    @Fallback
-    public int doOther(Object operand) {
-        throw fail(operand.getClass().getName());
+    public String getDataAt(int index) {
+        if (levels == null) {
+            return RRuntime.STRING_NA;
+        } else {
+            return this.levels.getDataAt(vector.getDataAt(index) - 1);
+        }
     }
-
-    @TruffleBoundary
-    private static ConversionFailedException fail(String className) {
-        throw new ConversionFailedException(className);
-    }
-
 }

@@ -72,13 +72,18 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public boolean hasDimensions() {
+        return vector.hasDimensions();
+    }
+
+    @Override
     public int[] getDimensions() {
         return vector.getDimensions();
     }
 
     @Override
     public Class<?> getElementClass() {
-        return RVector.class;
+        return RDataFrame.class;
     }
 
     @Override
@@ -128,4 +133,13 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public RShareable materializeToShareable() {
         return this;
     }
+
+    public int getElementIndexByName(String name) {
+        return vector.getElementIndexByName(name);
+    }
+
+    public int getElementIndexByNameInexact(String name) {
+        return vector.getElementIndexByNameInexact(name);
+    }
+
 }

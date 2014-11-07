@@ -314,7 +314,7 @@ public class LaFunctions {
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
             modulusVec.setAttr("logarithm", useLogIn);
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
-            RList.setClassAttr(result, DET_CLASS, null);
+            RList.setClassAttr(result, DET_CLASS, null, null);
             return result;
         }
     }

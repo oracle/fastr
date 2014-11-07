@@ -59,6 +59,23 @@ public abstract class AccessFieldNode extends RNode {
         return RNull.instance;
     }
 
+    // TODO: this should ultimately be a generic function
+    @Specialization(guards = "hasNames")
+    protected Object accessField(RDataFrame object) {
+        int index = object.getElementIndexByName(getField());
+        if (index == -1) {
+            inexactMatch.enter();
+            index = object.getElementIndexByNameInexact(getField());
+            // TODO: add warning if index found (disabled by default using options)
+        }
+        return index == -1 ? RNull.instance : object.getDataAtAsObject(index);
+    }
+
+    @Specialization(guards = "!hasNames")
+    protected Object accessFieldNoNames(@SuppressWarnings("unused") RDataFrame object) {
+        return RNull.instance;
+    }
+
     @Specialization
     protected Object accessField(REnvironment env) {
         Object obj = env.get(getField());
@@ -70,7 +87,7 @@ public abstract class AccessFieldNode extends RNode {
         throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
-    protected static boolean hasNames(RList object) {
+    protected static boolean hasNames(RAbstractContainer object) {
         return object.getNames() != RNull.instance;
     }
 

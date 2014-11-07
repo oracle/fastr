@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.write;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -61,6 +62,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, Object vector);
 
+    @CompilationFinal private boolean recursiveIsSubset;
+
     @Child private UpdateArrayHelperNode updateRecursive;
     @Child private CastComplexNode castComplex;
     @Child private CastDoubleNode castDouble;
@@ -87,18 +90,30 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     public UpdateArrayHelperNode(boolean isSubset) {
         this.isSubset = isSubset;
+        this.recursiveIsSubset = isSubset;
     }
 
     public UpdateArrayHelperNode(UpdateArrayHelperNode other) {
         this.isSubset = other.isSubset;
+        this.recursiveIsSubset = other.recursiveIsSubset;
+    }
+
+    private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel, boolean forDataFrame) {
+        // for data frames, recursive update is the same as for lists but as if the [[]] operator
+        // was used
+        if (updateRecursive == null || (forDataFrame && isSubset) || (!forDataFrame && isSubset != recursiveIsSubset)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            boolean newIsSubset = this.isSubset;
+            if (forDataFrame && isSubset) {
+                newIsSubset = false;
+            }
+            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(newIsSubset, null, null, null, null, null));
+        }
+        return updateRecursive.executeUpdate(frame, v, value, recLevel, operand, vector);
     }
 
     private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel) {
-        if (updateRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(this.isSubset, null, null, null, null, null));
-        }
-        return executeUpdate(frame, v, value, recLevel, operand, vector);
+        return updateRecursive(frame, v, value, vector, operand, recLevel, false);
     }
 
     private Object castComplex(VirtualFrame frame, Object operand) {
@@ -178,6 +193,22 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
         return CastToContainerNodeFactory.create(child, false, false, false, true);
+    }
+
+    @Specialization
+    protected Object update(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RDataFrame vector) {
+        RVector inner = vector.getVector();
+        RVector res = (RVector) updateRecursive(frame, v, value, inner, positions, recLevel, true);
+        if (res != inner) {
+            return RDataFactory.createDataFrame(res);
+        } else {
+            return vector;
+        }
+    }
+
+    @Specialization
+    protected Object update(VirtualFrame frame, Object v, RFactor value, int recLevel, Object positions, Object vector) {
+        return updateRecursive(frame, v, value.getVector(), vector, positions, recLevel);
     }
 
     @Specialization(guards = "emptyValue")

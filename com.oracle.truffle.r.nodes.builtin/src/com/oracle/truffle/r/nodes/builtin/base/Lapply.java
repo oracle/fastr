@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -26,6 +27,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Lapply extends RBuiltinNode {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+    @Child private Lapply dataFrameLapply;
+
+    public abstract Object execute(VirtualFrame frame, RAbstractVector x, RFunction fun, RArgsValuesAndNames optionalArgs);
 
     @Override
     public RNode[] getParameterValues() {
@@ -75,5 +79,14 @@ public abstract class Lapply extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected boolean argMissing(RAbstractVector x, RFunction fun, RArgsValuesAndNames optionalArg) {
         return optionalArg.length() == 1 && optionalArg.getValues()[0] == RMissing.instance;
+    }
+
+    @Specialization
+    protected Object lapply(VirtualFrame frame, RDataFrame x, RFunction fun, RArgsValuesAndNames optionalArgs) {
+        if (dataFrameLapply == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dataFrameLapply = insert(LapplyFactory.create(new RNode[3], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return dataFrameLapply.execute(frame, x.getVector(), fun, optionalArgs);
     }
 }

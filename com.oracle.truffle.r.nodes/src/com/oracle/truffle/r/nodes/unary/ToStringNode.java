@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.function.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -29,51 +31,33 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
+@NodeFields({@NodeField(name = "quotes", type = boolean.class), @NodeField(name = "separator", type = String.class), @NodeField(name = "appendIntL", type = boolean.class)})
 public abstract class ToStringNode extends UnaryNode {
 
+    public static final String DEFAULT_SEPARATOR = ", ";
+
     @Child private ToStringNode recursiveToString;
+    @CompilationFinal private Boolean separatorContainsNewlineCache;
 
-    @CompilationFinal private boolean quotes = true;
+    protected abstract boolean isQuotes();
 
-    @CompilationFinal private String separator;
+    protected abstract String getSeparator();
 
-    @CompilationFinal private boolean intL = false;
+    protected abstract boolean isAppendIntL();
 
     private String toStringRecursive(VirtualFrame frame, Object o) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringNodeFactory.create(null));
-            recursiveToString.setSeparator(separator);
-            recursiveToString.setQuotes(quotes);
-            recursiveToString.setIntL(intL);
+            recursiveToString = insert(ToStringNodeFactory.create(null, isQuotes(), getSeparator(), isAppendIntL()));
         }
         return recursiveToString.executeString(frame, o);
     }
 
     // FIXME custom separators require breaking some rules
     // FIXME separator should be a @NodeField - not possible as default values cannot be set
-
-    public ToStringNode() {
-        this.separator = DEFAULT_SEPARATOR;
-    }
-
-    public ToStringNode(ToStringNode prev) {
-        this.separator = prev.separator;
-        this.quotes = prev.quotes;
-        this.intL = prev.intL;
-    }
-
-    public static final String DEFAULT_SEPARATOR = ", ";
-
-    public final void setSeparator(String separator) {
-        this.separator = separator;
-    }
-
-    public final void setIntL(boolean intL) {
-        this.intL = intL;
-    }
 
     @Override
     public abstract String execute(VirtualFrame frame);
@@ -87,7 +71,7 @@ public abstract class ToStringNode extends UnaryNode {
         if (RRuntime.isNA(value)) {
             return value;
         }
-        if (quotes) {
+        if (isQuotes()) {
             return RRuntime.quoteString(value);
         }
         return value;
@@ -116,7 +100,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @Specialization
     protected String toString(int operand) {
-        return RRuntime.intToString(operand, intL);
+        return RRuntime.intToString(operand, isAppendIntL());
     }
 
     @Specialization
@@ -130,132 +114,68 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @TruffleBoundary
-    @Specialization
-    protected String toString(RIntVector vector) {
+    private String createResultForVector(RAbstractVector vector, String empty, IntFunction<String> elementFunction) {
         int length = vector.getLength();
         if (length == 0) {
-            return "integer(0)";
+            return empty;
         }
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < length; i++) {
-            b.append(toString(vector.getDataAt(i)));
-            if (i < length - 1) {
-                b.append(separator);
+            if (i > 0) {
+                b.append(getSeparator());
             }
+            b.append(elementFunction.apply(i));
         }
         return RRuntime.toString(b);
+    }
+
+    @Specialization
+    protected String toString(RIntVector vector) {
+        return createResultForVector(vector, "integer(0)", index -> toString(vector.getDataAt(index)));
     }
 
     @TruffleBoundary
     @Specialization
     protected String toString(RDoubleVector vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "numeric(0)";
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            b.append(toString(vector.getDataAt(i)));
-            if (i < length - 1) {
-                b.append(separator);
-            }
-        }
-        return RRuntime.toString(b);
+        return createResultForVector(vector, "numeric(0)", index -> toString(vector.getDataAt(index)));
     }
 
     @TruffleBoundary
     @Specialization
     protected String toString(RStringVector vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "character(0)";
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; ++i) {
-            b.append(toString(vector.getDataAt(i)));
-            if (i < length - 1) {
-                b.append(separator);
-            }
-        }
-        return RRuntime.toString(b);
+        return createResultForVector(vector, "character(0)", index -> toString(vector.getDataAt(index)));
     }
 
-    @TruffleBoundary
     @Specialization
     protected String toString(RLogicalVector vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "logical(0)";
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; ++i) {
-            b.append(toString(vector.getDataAt(i)));
-            if (i < length - 1) {
-                b.append(separator);
-            }
-        }
-        return RRuntime.toString(b);
+        return createResultForVector(vector, "logical(0)", index -> toString(vector.getDataAt(index)));
     }
 
-    @TruffleBoundary
     @Specialization
     protected String toString(RRawVector vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "raw(0)";
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; ++i) {
-            b.append(toString(vector.getDataAt(i)));
-            if (i < length - 1) {
-                b.append(separator);
-            }
-        }
-        return RRuntime.toString(b);
+        return createResultForVector(vector, "raw(0)", index -> toString(vector.getDataAt(index)));
     }
 
-    @TruffleBoundary
     @Specialization
     protected String toString(RComplexVector vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "complex(0)";
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; ++i) {
-            b.append(toString(vector.getDataAt(i)));
-            if (i < length - 1) {
-                b.append(separator);
-            }
-        }
-        return RRuntime.toString(b);
+        return createResultForVector(vector, "complex(0)", index -> toString(vector.getDataAt(index)));
     }
 
-    @TruffleBoundary
     @Specialization
     protected String toString(VirtualFrame frame, RList vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "list()";
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; ++i) {
-            Object value = vector.getDataAt(i);
+        return createResultForVector(vector, "list()", index -> {
+            Object value = vector.getDataAt(index);
             if (value instanceof RList) {
                 RList l = (RList) value;
                 if (l.getLength() == 0) {
-                    b.append("list()");
+                    return "list()";
                 } else {
-                    b.append("list(").append(toStringRecursive(frame, l)).append(')');
+                    return "list(" + toStringRecursive(frame, l) + ')';
                 }
             } else {
-                b.append(toStringRecursive(frame, value));
+                return toStringRecursive(frame, value);
             }
-            if (i < length - 1) {
-                b.append(separator);
-            }
-        }
-        return RRuntime.toString(b);
+        });
     }
 
     @Specialization
@@ -271,9 +191,5 @@ public abstract class ToStringNode extends UnaryNode {
     @Specialization
     protected String toString(REnvironment env) {
         return env.toString();
-    }
-
-    public void setQuotes(boolean quotes) {
-        this.quotes = quotes;
     }
 }

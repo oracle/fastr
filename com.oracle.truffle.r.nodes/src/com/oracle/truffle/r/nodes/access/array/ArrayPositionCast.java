@@ -267,6 +267,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @Specialization
+        protected Object doFactor(VirtualFrame frame, RAbstractContainer container, RFactor factor) {
+            return convertOperatorRecursive(frame, container, factor.getVector());
+        }
+
+        @Specialization
         protected RList doList(RAbstractContainer container, RList operand) {
             return operand;
         }

@@ -362,7 +362,7 @@ public class RSerialize {
                     } else if (tag.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                         vec.setRowNames(car);
                     } else if (tag.equals(RRuntime.CLASS_ATTR_KEY)) {
-                        RVector.setClassAttr(vec, (RStringVector) car, null);
+                        RVector.setClassAttr(vec, (RStringVector) car, null, null);
                     } else {
                         vec.setAttr(tag, car);
                     }

@@ -180,7 +180,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             setRowNames(value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            setClassAttr(this, (RStringVector) value, null);
+            setClassAttr(this, (RStringVector) value, null, null);
         } else {
             attributes.put(name, value);
         }
@@ -204,7 +204,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 setRowNames(null);
             } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                setClassAttr(this, (RStringVector) null, null);
+                setClassAttr(this, (RStringVector) null, null, null);
             } else {
                 attributes.remove(name);
             }
@@ -214,6 +214,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
+    @TruffleBoundary
     public final void setLevels(Object newLevels) {
         if (attributes != null && newLevels == null) {
             // whether it's one dimensional array or not, assigning null always removes the "Levels"
@@ -368,11 +369,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final int[] getDimensions() {
-        if (hasDimensions()) {
-            return dimensions;
-        } else {
-            return null;
-        }
+        return dimensions;
     }
 
     public final void setDimensions(int[] newDimensions) {
@@ -399,7 +396,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public static RAbstractContainer setClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame) {
+    public static RAbstractContainer setClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame, RAbstractContainer enclosingFactor) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
         }
@@ -417,6 +414,19 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                     } else {
                         // it's a data frame now
                         return RDataFactory.createDataFrame(vector);
+                    }
+                } else if (RType.Factor.getName().equals(classAttr.getDataAt(i))) {
+                    if (vector.getElementClass() != RInt.class) {
+                        // TODO: add source section
+                        throw RError.error(null, RError.Message.ADDING_INVALID_CLASS, "factor");
+                    }
+                    vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
+                    if (enclosingFactor != null) {
+                        // was a factor and still is a factor
+                        return enclosingFactor;
+                    } else {
+                        // it's a factor now
+                        return RDataFactory.createFactor((RIntVector) vector);
                     }
                 }
             }
@@ -596,9 +606,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.names = null;
         this.dimNames = null;
         if (this.dimensions != null) {
-            if (this.attributes != null) {
-                this.attributes.clear();
-            }
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(this.dimensions, true));
         } else {
             // nullifying dimensions does not reset regular attributes

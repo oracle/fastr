@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.io.*;
+
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -401,24 +405,6 @@ public class ForeignFunctions {
             return RDataFactory.createComplexVector(z, zVec.isComplete(), zVec.getDimensions());
         }
 
-        /**
-         * This is an inefficient guard but it matters little unless there are many different calls
-         * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a
-         * more efficient basis.
-         */
-        private static boolean matchName(RList f, String name) {
-            if (f.getNames() == RNull.instance) {
-                return false;
-            }
-            RStringVector names = (RStringVector) f.getNames();
-            for (int i = 0; i < names.getLength(); i++) {
-                if (names.getDataAt(i).equals("name")) {
-                    return f.getDataAt(i).equals(name) ? true : false;
-                }
-            }
-            return false;
-        }
-
         public boolean fft(RList f) {
             return matchName(f, "fft");
         }
@@ -465,6 +451,215 @@ public class ForeignFunctions {
             }
         }
 
+    }
+
+    /**
+     * This is an inefficient guard but it matters little unless there are many different calls
+     * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a more
+     * efficient basis.
+     */
+    private static boolean matchName(RList f, String name) {
+        if (f.getNames() == RNull.instance) {
+            return false;
+        }
+        RStringVector names = (RStringVector) f.getNames();
+        for (int i = 0; i < names.getLength(); i++) {
+            if (names.getDataAt(i).equals("name")) {
+                return f.getDataAt(i).equals(name) ? true : false;
+            }
+        }
+        return false;
+    }
+
+    private static String isString(Object arg) {
+        if (arg instanceof String) {
+            return (String) arg;
+        } else if (arg instanceof RStringVector) {
+            if (((RStringVector) arg).getLength() == 0) {
+                return null;
+            } else {
+                return ((RStringVector) arg).getDataAt(0);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private abstract static class CastAdapter extends RBuiltinNode {
+        @Child private CastLogicalNode castLogical;
+        @Child private CastIntegerNode castInt;
+
+        protected byte castLogical(VirtualFrame frame, Object operand) {
+            if (castLogical == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
+            }
+            return (byte) castLogical.executeCast(frame, operand);
+        }
+
+        protected int castInt(VirtualFrame frame, Object operand) {
+            if (castInt == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castInt = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            }
+            return (int) castInt.executeCast(frame, operand);
+        }
+    }
+
+    @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    public abstract static class DotExternal extends CastAdapter {
+
+        // Transcribed from GnuR, library/utils/src/io.c
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization(guards = "isCountFields")
+        protected Object countFields(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            RConnection conn = (RConnection) argValues[0];
+            Object sepArg = argValues[1];
+            char sepChar;
+            Object quoteArg = argValues[2];
+            int nskip = castInt(frame, argValues[3]);
+            byte blskip = castLogical(frame, argValues[4]);
+            String commentCharArg = isString(argValues[5]);
+            char comChar;
+            if (!(commentCharArg != null && commentCharArg.length() == 1)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "comment.char");
+            } else {
+                comChar = commentCharArg.charAt(0);
+            }
+
+            if (nskip < 0 || nskip == RRuntime.INT_NA) {
+                nskip = 0;
+            }
+            if (blskip == RRuntime.LOGICAL_NA) {
+                blskip = RRuntime.LOGICAL_TRUE;
+            }
+
+            if (sepArg instanceof RNull) {
+                sepChar = 0;
+            } else {
+                String s = isString(sepArg);
+                if (s == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "sep");
+                } else {
+                    if (s.length() == 0) {
+                        sepChar = 0;
+                    } else {
+                        sepChar = s.charAt(0);
+                    }
+                }
+            }
+            String quoteSet;
+            if (quoteArg instanceof RNull) {
+                quoteSet = "";
+            } else {
+                String s = isString(quoteArg);
+                if (s == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "invalid quote symbol set");
+                } else {
+                    quoteSet = s;
+                }
+            }
+            try {
+                return CountFields.execute(conn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
+            } catch (IllegalStateException | IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
+        public boolean isCountFields(RList f) {
+            return matchName(f, "countfields");
+        }
+    }
+
+    @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
+    public abstract static class DotExternal2 extends CastAdapter {
+        // Transcribed from GnuR, library/utils/src/io.c
+        @TruffleBoundary
+        @Specialization(guards = "isWriteTable")
+        protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            Object conArg = argValues[1];
+            RConnection con;
+            if (!(conArg instanceof RConnection)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
+            } else {
+                con = (RConnection) conArg;
+            }
+            // TODO check connection writeable
+
+            int nr = castInt(frame, argValues[2]);
+            int nc = castInt(frame, argValues[3]);
+            Object rnamesArg = argValues[4];
+            Object sepArg = argValues[5];
+            Object eolArg = argValues[6];
+            Object naArg = argValues[7];
+            Object decArg = argValues[8];
+            Object quoteArg = argValues[9];
+            byte qmethod = castLogical(frame, argValues[10]);
+
+            String csep;
+            String ceol;
+            String cna;
+            String cdec;
+
+            if (nr == RRuntime.INT_NA) {
+                invalidArgument("nr");
+            }
+            if (nc == RRuntime.INT_NA) {
+                invalidArgument("nc");
+            }
+            if (!(rnamesArg instanceof RNull) && isString(rnamesArg) == null) {
+                invalidArgument("rnames");
+            }
+            if ((csep = isString(sepArg)) == null) {
+                invalidArgument("sep");
+            }
+            if ((ceol = isString(eolArg)) == null) {
+                invalidArgument("eol");
+            }
+            if ((cna = isString(naArg)) == null) {
+                invalidArgument("na");
+            }
+            if ((cdec = isString(decArg)) == null) {
+                invalidArgument("dec");
+            }
+            if (qmethod == RRuntime.LOGICAL_NA) {
+                invalidArgument("qmethod");
+            }
+            if (cdec.length() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
+            }
+            boolean[] quoteCol = new boolean[nc];
+            boolean quoteRn = false;
+            RIntVector quote = (RIntVector) quoteArg;
+            for (int i = 0; i < quote.getLength(); i++) {
+                int qi = quote.getDataAt(i);
+                if (qi == 0) {
+                    quoteRn = true;
+                }
+                if (qi > 0) {
+                    quoteCol[qi - 1] = true;
+                }
+            }
+            try {
+                WriteTable.execute(con, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
+            } catch (IOException | IllegalArgumentException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+            return RNull.instance;
+        }
+
+        protected void invalidArgument(String name) throws RError {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+        }
+
+        public boolean isWriteTable(RList f) {
+            return matchName(f, "writetable");
+        }
     }
 
 }

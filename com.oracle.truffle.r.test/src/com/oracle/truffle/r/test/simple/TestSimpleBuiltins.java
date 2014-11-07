@@ -965,6 +965,7 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCat() {
         assertEvalNoOutput("{ cat() }");
         assertEvalNoNL("{ cat(1) }");
+        assertEvalNoNL("{ cat(1, sep=\"\\n\") }");
         assertEvalNoNL("{ cat(1,2,3) }");
         assertEvalNoNL("{ cat(\"a\") }");
         assertEvalNoNL("{ cat(\"a\", \"b\") }");
@@ -986,9 +987,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoNL("{ cat(c(1L, 2L, 3L)) }");
         assertEvalNoNL("{ cat(1,2,sep=\".\") }");
         assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
         assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
         assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
+    }
+
+    @Test
+    public void testCatVarargs() {
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
     @Test
@@ -1592,6 +1602,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(...) typeof(...); f(1, 2)}");
         assertEval("{ f <- function(...) typeof(...); f(1, 2, 3)}");
         assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); typeof(x) }");
+        assertEval("{ x<-data.frame(c(\"a\", \"b\", \"a\")); typeof(x) }");
     }
 
     @Test
@@ -2524,6 +2537,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testQgamma() {
+        assertEval("{ qgamma(0.5, shape=1) }");
+        assertEval("{ p <- (1:9)/10 ; qgamma(p, shape=1) }");
+    }
+
+    @Test
     public void testDelayedAssign() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
         assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
@@ -3131,6 +3150,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
+        assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
     }
 
     @Test
@@ -3289,6 +3310,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
         assertEval("{ inherits(NULL, \"try-error\") }");
         assertEval("{ inherits(new.env(), \"try-error\") }");
+
+        assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
+        assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
+        assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
     }
 
     @Test
@@ -3869,6 +3894,29 @@ public class TestSimpleBuiltins extends TestBase {
         // Checkstyle: stop line length check
         assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order); } ");
         // Checkstyle: resume line length check
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-character(); as.character(x) }");
+        assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
+        assertEvalError("{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
+        assertEvalError("{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x == \"a\" }");
+        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
+        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
+
+        assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
+        assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[1] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[1]] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[2] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[2]] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[c(1,2)] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[c(1,2,3,4)] }");
     }
 
     @Test

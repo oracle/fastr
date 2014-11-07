@@ -161,6 +161,11 @@ public abstract class PrecedenceNode extends UnaryNode {
         return EXPRESSION_PRECEDENCE;
     }
 
+    @Specialization
+    protected int doFactor(RFactor val, byte recursive) {
+        return INT_PRECEDENCE;
+    }
+
     protected boolean isRecursive(RList val, byte recursive) {
         return recursive == RRuntime.LOGICAL_TRUE;
     }

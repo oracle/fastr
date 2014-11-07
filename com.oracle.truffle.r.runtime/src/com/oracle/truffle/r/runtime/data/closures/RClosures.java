@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RClosures {
@@ -99,6 +100,12 @@ public class RClosures {
 
     public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector, NACheck check) {
         return new RComplexToStringVectorClosure(vector, check);
+    }
+
+    // Factor to
+
+    public static RAbstractStringVector createFactorToStringVector(RFactor factor, NACheck check) {
+        return new RFactorToStringVectorClosure(factor, check);
     }
 
 }

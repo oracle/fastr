@@ -1407,6 +1407,14 @@ complex(0)
 #{ -c((1+0i)/0,2) }
 [1] NaN+NaNi  -2+  0i
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusDimensions
+#{ xx <- double(0); dim(xx) <- c(0,0); dim(-xx) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusDimensions
+#{ xx <- double(1); dim(xx) <- c(1,1); dim(-xx) }
+[1] 1 1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusErrors
 #{ f <- function(z) { -z } ; f(1:3) ; f("hello") }
 Error in -z : invalid argument to unary operator
@@ -1434,6 +1442,14 @@ Error in -z : invalid argument to unary operator
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNot
 #{ !TRUE }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotDimensions
+#{ xx <- double(0); dim(xx) <- c(0,0); dim(!xx) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotDimensions
+#{ xx <- double(1); dim(xx) <- c(1,1); dim(!xx) }
+[1] 1 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotError
 #{ l <- c("hello", "hi") ; !l }
@@ -3509,6 +3525,20 @@ a b
 1 2
 attr(,"myatt")
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
+#{ a <- c(1,2,3,4); attr(a, "x") <- "attrib"; dim(a) <- NULL; a }
+[1] 1 2 3 4
+attr(,"x")
+[1] "attrib"
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
+#{ a <- c(1,2,3,4); attr(a, "x") <- "attrib"; dim(a) <- c(2,2); a }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+attr(,"x")
+[1] "attrib"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
 #{ m <- 1:3 ; attr(m,"a") <- 1 ;  t(m) }
@@ -6076,6 +6106,12 @@ hi 1 2 3 hello
 #{ cat("hi",1[2],"hello",sep="-") }
 hi-NA-hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat("hi",1[2],"hello",sep="-\n") }
+hi-
+NA-
+hello
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat() }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
@@ -6084,6 +6120,10 @@ hi-NA-hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(1, "a") }
 1 a
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat(1, sep="\n") }
+1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(1,2,3) }
 1 2 3
@@ -6142,6 +6182,21 @@ hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }
 1 2 3 4 5 6
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-")}; f("a") }
+a
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-")}; f("a", "b") }
+a-b
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-\n")}; f("a") }
+a
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCatVarargs
+#{ f <- function(...) {cat(...,sep="-\n")}; f("a", "b") }
+a-
+b
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
 #{ cbind() }
 NULL
@@ -8256,6 +8311,103 @@ x
 [2,] -2+0i  0+0i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-c("1","2","3"); class(x)<-"factor"; x }
+Error in class(x) <- "factor" :
+  adding class "factor" to an invalid object
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-c(1,2,3); class(x)<-"factor"; x }
+Error in class(x) <- "factor" :
+  adding class "factor" to an invalid object
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-c(1L,2L,3L); class(x)<-"factor"; x }
+Error in print.factor(1:3) : replacement has length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); attr(x, "levels")<-NULL; as.character(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); attr(x, "levels")<-character(); as.character(x) }
+[1] NA NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x == "a" }
+[1]  TRUE FALSE  TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x == c("a", "b") }
+[1] TRUE TRUE TRUE
+Warning messages:
+1: In is.na(e1) | is.na(e2) :
+  longer object length is not a multiple of shorter object length
+2: In `==.default`(x, c("a", "b")) :
+  longer object length is not a multiple of shorter object length
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x > "a" }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, "a") : > not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x > c("a", "b") }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, c("a", "b")) : > not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[1] }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[2] }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[[1]] }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[[2]] }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[c(1,2)] }
+[1] a b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x[c(1,2,3,4)] }
+[1] a    b    a    <NA>
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a", "c")); x == c("a", "b") }
+[1]  TRUE  TRUE  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("c", "b", "a", "c")); y<-c(1); y[1]<-x; y }
+[1] 3
+Warning message:
+In y[1] <- x :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("c", "b", "a", "c")); y<-list(1); y[1]<-x; y }
+[[1]]
+[1] 3
+
+Warning message:
+In y[1] <- x :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}
  [1] I   II  II  III I   II  III III I   II  III III I
 Levels: I II III
@@ -8495,6 +8647,18 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{ inherits(new.env(), "try-error") }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(textConnection("abc"), "connection") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ x<-data.frame(c(1,2)); inherits(x, "data.frame") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ x<-factor("a", "b", "a"); inherits(x, "factor") }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{x <- 10; inherits(x, "a") ;}
@@ -11443,6 +11607,15 @@ a b
 #{prod(c(TRUE, TRUE))}
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQgamma
+#{ p <- (1:9)/10 ; qgamma(p, shape=1) }
+[1] 0.1053605 0.2231436 0.3566749 0.5108256 0.6931472 0.9162907 1.2039728
+[8] 1.6094379 2.3025851
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQgamma
+#{ qgamma(0.5, shape=1) }
+[1] 0.6931472
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
 #{ class(quote(x + y)) }
 [1] "call"
@@ -13092,6 +13265,14 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
 #{ x <- 200 ; rm("x") }
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x<-200; y<-100; rm("x", "y"); x }
+Error: object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x<-200; y<-100; rm("x", "y"); y }
+Error: object 'y' not found
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
 #{ sort(c(1L,10L,2L)) }
 [1]  1  2 10
@@ -14201,6 +14382,14 @@ Error in typeof(...) : unused arguments (2, 3, 4)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
 #{ typeof(typeof(NULL)) }
 [1] "character"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ x<-data.frame(c("a", "b", "a")); typeof(x) }
+[1] "list"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ x<-factor(c("a", "b", "a")); typeof(x) }
+[1] "integer"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ names(unlist(list(a=list(b=list("1"))))) }
@@ -16075,6 +16264,26 @@ $foo
 #{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-c("foo", "data.frame", "bar"); is.data.frame(x) }
 [1] TRUE
 
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testLapply
+#{ x <- c(1, 2, 3); xa <- as.data.frame(x); lapply(xa, function(x) x > 1) }
+$x
+[1] FALSE  TRUE  TRUE
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
+#{ n = c(2, 3, 5); s = c("aa", "bb", "cc"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }
+   n  s
+1 22 aa
+2 33 bb
+3 55 cc
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ n = c(2, 3, 5); s = c(TRUE, FALSE, TRUE); df = data.frame(n, s); df }
+  n     s
+1 2  TRUE
+2 3 FALSE
+3 5  TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-c(1,2); class(x)<-"data.frame"; row.names(x)<-integer(); x }
 NULL
@@ -16091,6 +16300,13 @@ NULL
    x
 1  7
 2 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-data.frame(n=c("2", "3", "5"), s=c("TRUE", "FALSE", "TRUE"), check.names=FALSE, row.names=c("1", "2", "3")); x }
+  n     s
+1 2  TRUE
+2 3 FALSE
+3 5  TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
 #{ x<-integer(); class(x)<-"data.frame"; x }
@@ -16788,6 +17004,33 @@ Error in f(h = 1) : argument 1 matches multiple formal arguments
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }
 Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f<-function(..., val=1) { c(list(...), val) }; f(v=7, 2) }
+$v
+[1] 7
+
+[[2]]
+[1] 2
+
+[[3]]
+[1] 1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f<-function(er=1, ..., val=1) { c(list(...), val, er) }; f(v=7, 2, e=8) }
+$v
+[1] 7
+
+[[2]]
+[1] 2
+
+[[3]]
+[1] 1
+
+[[4]]
+[1] 8
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }
@@ -50676,6 +50919,49 @@ Error in x$b : $ operator is invalid for atomic vectors
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
 #{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; x <- list(c=2,b=10) ; f(x) }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.1 }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.2 }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x$a$b<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x$a[["b"]]<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(a=list(b=7)); x[["a"]]$b<-42; x }
+$a
+$a$b
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-list(list(a=7), NULL); x[[1]]$a<-42; x }
+[[1]]
+[[1]]$a
+[1] 42
+
+
+[[2]]
+NULL
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testGenericUpdate
 #{ a <- TRUE; a[[2]] <- FALSE; a; }
