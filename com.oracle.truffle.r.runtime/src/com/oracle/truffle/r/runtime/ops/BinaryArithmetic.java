@@ -56,74 +56,15 @@ public abstract class BinaryArithmetic extends Operation {
     public static class PowBuiltin {
     }
 
-    public static final BinaryArithmeticFactory ADD = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Add();
-        }
-    };
-    public static final BinaryArithmeticFactory SUBTRACT = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Subtract();
-        }
-    };
-    public static final BinaryArithmeticFactory MULTIPLY = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Multiply();
-        }
-    };
-    public static final BinaryArithmeticFactory INTEGER_DIV = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new IntegerDiv();
-        }
-    };
-
-    public static final BinaryArithmeticFactory DIV = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Div();
-        }
-    };
-
-    public static final BinaryArithmeticFactory MOD = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Mod();
-        }
-    };
-
-    public static final BinaryArithmeticFactory POW = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Pow();
-        }
-    };
-
-    public static final BinaryArithmeticFactory MAX = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Max();
-        }
-    };
-
-    public static final BinaryArithmeticFactory MIN = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Min();
-        }
-    };
+    public static final BinaryArithmeticFactory ADD = Add::new;
+    public static final BinaryArithmeticFactory SUBTRACT = Subtract::new;
+    public static final BinaryArithmeticFactory MULTIPLY = Multiply::new;
+    public static final BinaryArithmeticFactory INTEGER_DIV = IntegerDiv::new;
+    public static final BinaryArithmeticFactory DIV = Div::new;
+    public static final BinaryArithmeticFactory MOD = Mod::new;
+    public static final BinaryArithmeticFactory POW = Pow::new;
+    public static final BinaryArithmeticFactory MAX = Max::new;
+    public static final BinaryArithmeticFactory MIN = Min::new;
 
     private final boolean supportsIntResult;
 
