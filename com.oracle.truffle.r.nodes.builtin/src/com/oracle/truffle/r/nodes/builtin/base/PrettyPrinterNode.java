@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -41,8 +42,10 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class), @NodeChild(value = "quote", type = RNode.class),
@@ -518,9 +521,13 @@ public abstract class PrettyPrinterNode extends RNode {
                 resultBuilder.append(vector.getLength() - maxPrint);
                 resultBuilder.append(" entries ]");
             }
-            RAttributes attributes = vector.getAttributes();
-            if (attributes != null) {
-                resultBuilder.append(printAttributes(vector, attributes));
+            if (!(vector instanceof RFactorToStringVectorClosure)) {
+                // it's a bit of a hack, but factors are meant to be printed using the S3 function
+                // anyway - the idea is to suppress attribute printing for factors nested in lists
+                RAttributes attributes = vector.getAttributes();
+                if (attributes != null) {
+                    resultBuilder.append(printAttributes(vector, attributes));
+                }
             }
             return builderToString(resultBuilder);
         }
@@ -1014,6 +1021,8 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @Child private PrettyPrinterNode prettyPrinter;
 
+        private final NACheck naCheck = NACheck.create();
+
         private void initCast(Object listElementName) {
             if (prettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1121,6 +1130,27 @@ public abstract class PrettyPrinterNode extends RNode {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
+        // TODO: this should be handled by an S3 function
+        @TruffleBoundary
+        @Specialization
+        protected String prettyPrintListElement(RFactor operand, Object listElementName, byte quote, byte right) {
+            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToStringVector(operand, naCheck), listElementName, RRuntime.LOGICAL_FALSE, right));
+            sb.append("\nLevels:");
+            Object attr = operand.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY);
+            if (attr != null) {
+                if (attr instanceof String) {
+                    sb.append(" ");
+                    sb.append(attr.toString());
+                } else {
+                    RAbstractStringVector vec = (RAbstractStringVector) attr;
+                    for (int i = 0; i < vec.getLength(); i++) {
+                        sb.append(" ");
+                        sb.append(vec.getDataAt(i));
+                    }
+                }
+            }
+            return sb.toString();
+        }
     }
 
     @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "isQuoted", type = RNode.class)})

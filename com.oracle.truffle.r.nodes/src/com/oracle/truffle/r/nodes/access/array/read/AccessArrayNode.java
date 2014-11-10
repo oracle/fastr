@@ -189,8 +189,7 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessFactor(VirtualFrame frame, RFactor factor, int recLevel, Object position, RAbstractLogicalVector dropDim) {
         RIntVector res = (RIntVector) castVector(frame, accessRecursive(frame, factor.getVector(), position, recLevel, dropDim));
         res.setLevels(factor.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY));
-        RVector.setClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
-        return RDataFactory.createFactor(res);
+        return RVector.setClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
     }
 
     @SuppressWarnings("unused")

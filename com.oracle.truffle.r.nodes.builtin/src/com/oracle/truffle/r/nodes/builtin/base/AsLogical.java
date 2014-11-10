@@ -101,8 +101,8 @@ public abstract class AsLogical extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector asLogical(VirtualFrame frame, RAbstractVector vector) {
+    protected RLogicalVector asLogical(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
-        return castLogicalVector(frame, vector);
+        return castLogicalVector(frame, container);
     }
 }
