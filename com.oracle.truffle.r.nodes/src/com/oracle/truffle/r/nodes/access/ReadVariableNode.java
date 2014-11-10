@@ -278,6 +278,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         RType getMode();
     }
 
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public static final class UnresolvedReadVariableNode extends ReadVariableNode implements HasMode {
 
         // TODO It seems a refactoring would be appropriate to encapsulate all fields (symbol, mode,
@@ -460,6 +461,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode implements HasMode {
         private final Symbol symbol;
         private final RType mode;

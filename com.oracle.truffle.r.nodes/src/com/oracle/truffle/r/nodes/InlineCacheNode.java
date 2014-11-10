@@ -74,6 +74,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
         return create(maxPicDepth, closure -> (RNode) closure.getExpr(), (frame, closure) -> RContext.getEngine().evalPromise(closure, frame.materialize()));
     }
 
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UninitializedInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
 
         private final int maxPicDepth;

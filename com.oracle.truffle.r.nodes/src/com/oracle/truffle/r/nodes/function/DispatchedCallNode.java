@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -49,6 +50,7 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
 
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
         private final int depth;
         private final String genericName;
