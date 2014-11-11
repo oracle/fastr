@@ -29,4 +29,8 @@ public interface RAbstractRawVector extends RAbstractVector {
     RRaw getDataAt(int index);
 
     RRawVector materialize();
+
+    default boolean checkCompleteness() {
+        return true;
+    }
 }

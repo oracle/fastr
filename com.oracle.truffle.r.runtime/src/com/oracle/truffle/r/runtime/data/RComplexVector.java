@@ -58,7 +58,15 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        StringBuilder str = new StringBuilder();
+        str.append('[');
+        for (int i = 0; i < getLength(); i++) {
+            if (i > 0) {
+                str.append(", ");
+            }
+            str.append(RRuntime.complexToString(getDataAt(i)));
+        }
+        return str.append(']').toString();
     }
 
     @Override

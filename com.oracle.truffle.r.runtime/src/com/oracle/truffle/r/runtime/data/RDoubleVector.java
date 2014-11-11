@@ -76,7 +76,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.doubleToString(v)).toArray(String[]::new));
     }
 
     public RIntVector trimToIntVector() {

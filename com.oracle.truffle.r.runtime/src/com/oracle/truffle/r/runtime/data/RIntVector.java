@@ -80,7 +80,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.intToString(v, false)).toArray(String[]::new));
     }
 
     @Override
