@@ -559,7 +559,8 @@ public final class RError extends RuntimeException {
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
         NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
         INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
-        MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'");
+        MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
+        NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors");
 
         public final String message;
         private final boolean hasArgs;

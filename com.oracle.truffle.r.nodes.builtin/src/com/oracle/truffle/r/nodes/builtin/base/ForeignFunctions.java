@@ -32,7 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.utils.CountFields;
+import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -579,13 +579,15 @@ public class ForeignFunctions {
         // Transcribed from GnuR, library/utils/src/io.c
         @TruffleBoundary
         @Specialization(guards = "isWriteTable")
-        protected Object doWriteTable(VirtualFrame frame, RList f, RArgsValuesAndNames args) {
+        protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             Object[] argValues = args.getValues();
-            Object x = argValues[0];
-            Object con = argValues[1];
-            if (!(con instanceof RConnection)) {
+            Object conArg = argValues[1];
+            RConnection con;
+            if (!(conArg instanceof RConnection)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
+            } else {
+                con = (RConnection) conArg;
             }
             // TODO check connection writeable
 
@@ -599,10 +601,10 @@ public class ForeignFunctions {
             Object quoteArg = argValues[9];
             byte qmethod = castLogical(frame, argValues[10]);
 
-            String sep;
-            String eol;
-            String na;
-            String dec;
+            String csep;
+            String ceol;
+            String cna;
+            String cdec;
 
             if (nr == RRuntime.INT_NA) {
                 invalidArgument("nr");
@@ -613,25 +615,24 @@ public class ForeignFunctions {
             if (!(rnamesArg instanceof RNull) && isString(rnamesArg) == null) {
                 invalidArgument("rnames");
             }
-            if ((sep = isString(sepArg)) == null) {
+            if ((csep = isString(sepArg)) == null) {
                 invalidArgument("sep");
             }
-            if ((eol = isString(eolArg)) == null) {
+            if ((ceol = isString(eolArg)) == null) {
                 invalidArgument("eol");
             }
-            if ((na = isString(naArg)) == null) {
+            if ((cna = isString(naArg)) == null) {
                 invalidArgument("na");
             }
-            if ((dec = isString(decArg)) == null) {
+            if ((cdec = isString(decArg)) == null) {
                 invalidArgument("dec");
             }
             if (qmethod == RRuntime.LOGICAL_NA) {
                 invalidArgument("qmethod");
             }
-            if (dec.length() != 1) {
+            if (cdec.length() != 1) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
             }
-            char cdec = dec.charAt(0);
             boolean[] quoteCol = new boolean[nc];
             boolean quoteRn = false;
             RIntVector quote = (RIntVector) quoteArg;
@@ -644,7 +645,11 @@ public class ForeignFunctions {
                     quoteCol[qi - 1] = true;
                 }
             }
-            // TODO call WriteTable
+            try {
+                WriteTable.execute(con, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
+            } catch (IOException | IllegalArgumentException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
             return RNull.instance;
         }
 

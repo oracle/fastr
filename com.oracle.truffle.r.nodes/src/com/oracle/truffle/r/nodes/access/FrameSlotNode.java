@@ -67,6 +67,7 @@ public abstract class FrameSlotNode extends Node {
         return new PresentFrameSlotNode(slot);
     }
 
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UnresolvedFrameSlotNode extends FrameSlotNode {
 
         private final Object identifier;

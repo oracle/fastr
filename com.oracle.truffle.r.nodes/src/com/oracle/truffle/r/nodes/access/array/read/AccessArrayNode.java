@@ -184,6 +184,14 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
     }
 
+    // TODO: ultimately factor accesses should be turned into generic function
+    @Specialization
+    protected Object accessFactor(VirtualFrame frame, RFactor factor, int recLevel, Object position, RAbstractLogicalVector dropDim) {
+        RIntVector res = (RIntVector) castVector(frame, accessRecursive(frame, factor.getVector(), position, recLevel, dropDim));
+        res.setLevels(factor.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY));
+        return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
+    }
+
     @SuppressWarnings("unused")
     @Specialization(guards = {"inRecursion", "isFirstPositionPositive"})
     protected RNull accessNullInRecursionPosPositive(RNull vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {

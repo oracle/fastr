@@ -89,7 +89,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector updateAttributes(VirtualFrame frame, RAbstractContainer container, RList list) {
+    protected RAbstractContainer updateAttributes(VirtualFrame frame, RAbstractContainer container, RList list) {
         controlVisibility();
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {
@@ -97,6 +97,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         }
         RStringVector listNames = (RStringVector) listNamesObject;
         RVector resultVector = container.materializeNonSharedVector();
+        RAbstractContainer res = resultVector;
         if (numAttributesProfile.profile(list.getLength() == 0)) {
             resultVector.resetAllAttributes(true);
         } else {
@@ -113,9 +114,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             // set the dim attribute first
             setDimAttribute(frame, resultVector, list);
             // set the remaining attributes in order
-            setRemainingAttributes(frame, container, resultVector, list);
+            res = setRemainingAttributes(frame, container, resultVector, list);
         }
-        return resultVector;
+        return res;
     }
 
     @TruffleBoundary
@@ -155,10 +156,11 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     }
 
     @ExplodeLoop
-    private void setRemainingAttributes(VirtualFrame virtualFrame, RAbstractContainer container, RVector resultVector, RList sourceList) {
+    private RAbstractContainer setRemainingAttributes(VirtualFrame virtualFrame, RAbstractContainer container, RVector resultVector, RList sourceList) {
         RStringVector listNames = (RStringVector) sourceList.getNames();
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
+        RAbstractContainer res = resultVector;
         for (int i = 0; i < sourceList.getLength(); i++) {
             Object value = sourceList.getDataAt(i);
             String attrName = listNames.getDataAt(i);
@@ -174,9 +176,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 }
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
-                    RVector.setClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
+                    res = RVector.setVectorClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
                 } else {
-                    UpdateAttr.setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
+                    res = UpdateAttr.setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
                 }
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 resultVector.setRowNames(castVector(virtualFrame, value));
@@ -190,6 +192,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 }
             }
         }
+        return res;
     }
 
     @Fallback

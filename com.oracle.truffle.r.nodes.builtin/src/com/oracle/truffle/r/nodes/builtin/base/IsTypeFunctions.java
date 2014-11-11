@@ -103,6 +103,12 @@ public class IsTypeFunctions {
             return arg.getElementClass() == Object.class;
         }
 
+        @Specialization
+        protected byte isAtomic(RFactor arg) {
+            controlVisibility();
+            return RRuntime.LOGICAL_TRUE;
+        }
+
     }
 
     @RBuiltin(name = "is.call", kind = PRIMITIVE, parameterNames = {"x"})

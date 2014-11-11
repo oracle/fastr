@@ -167,7 +167,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -248,10 +248,16 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    protected RStringVector format(VirtualFrame frame, RStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+    protected RStringVector format(RStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+                    RAbstractVector sciVec) {
         // TODO: implement full semantics
         return value;
+    }
+
+    @Specialization(guards = "!wrongArgs")
+    protected RStringVector format(RFactor value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+                    RAbstractVector sciVec) {
+        return format(value.getVector(), trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
     }
 
     // TruffleDSL bug - should not need multiple guards here
@@ -288,7 +294,7 @@ public abstract class Format extends RBuiltinNode {
         return false;
     }
 
-    protected boolean wrongArgs(RAbstractVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+    protected boolean wrongArgs(RAbstractContainer value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RAbstractVector sciVec) {
         return wrongArgsObject(value, trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
     }

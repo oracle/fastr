@@ -42,13 +42,24 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
         if (this.levels == null) {
             RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
         }
+        naCheck.enable(this.vector);
     }
 
     public String getDataAt(int index) {
-        if (levels == null) {
+        if (levels == null || levels.getLength() == 0) {
             return RRuntime.STRING_NA;
         } else {
-            return this.levels.getDataAt(vector.getDataAt(index) - 1);
+            int val = vector.getDataAt(index);
+            if (naCheck.check(val)) {
+                return RRuntime.STRING_NA;
+            } else {
+                String l = levels.getDataAt(val - 1);
+                if (naCheck.check(l)) {
+                    return "NA"; // for comparison
+                } else {
+                    return l;
+                }
+            }
         }
     }
 }

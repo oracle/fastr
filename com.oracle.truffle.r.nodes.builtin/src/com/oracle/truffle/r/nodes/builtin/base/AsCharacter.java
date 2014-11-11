@@ -161,7 +161,12 @@ public abstract class AsCharacter extends RBuiltinNode {
                 return RDataFactory.createStringVector(data, RDataFactory.INCOMPLETE_VECTOR);
             } else {
                 for (int i = 0; i < data.length; i++) {
-                    data[i] = vec.getDataAt(value.getVector().getDataAt(i) - 1);
+                    int val = value.getVector().getDataAt(i);
+                    if (RRuntime.isNA(val)) {
+                        data[i] = RRuntime.NA_HEADER;
+                    } else {
+                        data[i] = vec.getDataAt(val - 1);
+                    }
                 }
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }

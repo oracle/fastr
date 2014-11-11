@@ -136,6 +136,8 @@ public abstract class BinaryArithmetic extends Operation {
         return supportsIntResult;
     }
 
+    public abstract String opName();
+
     public abstract int op(int left, int right);
 
     public abstract double op(double left, double right);
@@ -176,6 +178,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Add() {
             super(true, true, true);
+        }
+
+        @Override
+        public String opName() {
+            return "+";
         }
 
         @Override
@@ -228,6 +235,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public String opName() {
+            return "-";
+        }
+
+        @Override
         public int op(int left, int right) {
             try {
                 return ExactMath.subtractExact(left, right);
@@ -273,6 +285,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Multiply() {
             super(true, true, true);
+        }
+
+        @Override
+        public String opName() {
+            return "*";
         }
 
         @Override
@@ -399,6 +416,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public String opName() {
+            return "/";
+        }
+
+        @Override
         public final int op(int left, int right) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -471,6 +493,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public String opName() {
+            return "%/%";
+        }
+
+        @Override
         public int op(int left, int right) {
             if (right != 0) {
                 return (int) Math.floor((double) left / (double) right);
@@ -508,6 +535,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Mod() {
             super(false, false, true);
+        }
+
+        @Override
+        public String opName() {
+            return "%%";
         }
 
         @Override
@@ -550,6 +582,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Pow() {
             super(false, false, false);
+        }
+
+        @Override
+        public String opName() {
+            return "^";
         }
 
         @Override
@@ -952,6 +989,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public String opName() {
+            throw Utils.nyi();
+        }
+
+        @Override
         public int op(int left, int right) {
             return Math.max(left, right);
         }
@@ -978,6 +1020,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Min() {
             super(true, true, true);
+        }
+
+        @Override
+        public String opName() {
+            throw Utils.nyi();
         }
 
         @Override

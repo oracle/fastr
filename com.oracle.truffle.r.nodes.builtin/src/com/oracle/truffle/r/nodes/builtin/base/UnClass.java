@@ -35,7 +35,7 @@ public abstract class UnClass extends RBuiltinNode {
             if (resultVector.isShared()) {
                 resultVector = resultVector.copy();
             }
-            return RVector.setClassAttr(resultVector, null, null, null);
+            return RVector.setVectorClassAttr(resultVector, null, null, null);
         }
         return arg;
     }
@@ -48,7 +48,7 @@ public abstract class UnClass extends RBuiltinNode {
         if (resultFrame.isShared()) {
             resultFrame = resultFrame.copy();
         }
-        return RVector.setClassAttr(resultFrame.getVector(), null, arg, null);
+        return RVector.setVectorClassAttr(resultFrame.getVector(), null, arg, null);
     }
 
     @Specialization
@@ -59,6 +59,6 @@ public abstract class UnClass extends RBuiltinNode {
         if (resultFrame.isShared()) {
             resultFrame = resultFrame.copy();
         }
-        return RVector.setClassAttr(resultFrame.getVector(), null, null, arg);
+        return RVector.setVectorClassAttr(resultFrame.getVector(), null, null, arg);
     }
 }
