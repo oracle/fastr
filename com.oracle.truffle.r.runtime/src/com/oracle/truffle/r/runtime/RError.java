@@ -557,7 +557,9 @@ public final class RError extends RuntimeException {
         DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'"),
         ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
-        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors");
+        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
+        INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
+        MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'");
 
         public final String message;
         private final boolean hasArgs;
