@@ -197,9 +197,9 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         if (startIndex == NOT_FOUND) {
             return getNullGraphicsDevice();
         }
-        GraphicsDevice foundDevice = findNotNullGraphicDevice(startIndex + 1, graphicsDevices.length, Direction.FORWARD);
+        GraphicsDevice foundDevice = findNotNullGraphicDevice(startIndex + 1, graphicsDevices.length, SearchDirection.FORWARD);
         if (foundDevice == null) {
-            foundDevice = findNotNullGraphicDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, Direction.BACKWARD);
+            foundDevice = findNotNullGraphicDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, SearchDirection.BACKWARD);
         }
         return foundDevice == null ? getNullGraphicsDevice() : foundDevice;
     }
@@ -212,9 +212,9 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         if (startIndex == NOT_FOUND) {
             return getNullGraphicsDevice();
         }
-        GraphicsDevice foundDevice = findNotNullGraphicDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, Direction.BACKWARD);
+        GraphicsDevice foundDevice = findNotNullGraphicDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, SearchDirection.BACKWARD);
         if (foundDevice == null) {
-            foundDevice = findNotNullGraphicDevice(startIndex + 1, graphicsDevices.length, Direction.FORWARD);
+            foundDevice = findNotNullGraphicDevice(startIndex + 1, graphicsDevices.length, SearchDirection.FORWARD);
         }
         return foundDevice == null ? getNullGraphicsDevice() : foundDevice;
     }
@@ -233,7 +233,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         return NOT_FOUND;
     }
 
-    private GraphicsDevice findNotNullGraphicDevice(int startIndexInclusive, int endIndexNotInclusive, Direction direction) {
+    private GraphicsDevice findNotNullGraphicDevice(int startIndexInclusive, int endIndexNotInclusive, SearchDirection direction) {
         switch (direction) {
             case FORWARD:
                 for (int i = startIndexInclusive; i < endIndexNotInclusive; i++) {
@@ -258,7 +258,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         return graphicsDevices[NULL_GRAPHICS_DEVICE_INDEX];
     }
 
-    private enum Direction {
+    private enum SearchDirection {
         FORWARD,
         BACKWARD
     }
