@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -174,6 +176,12 @@ public final class RDataFactory {
 
     public static RLogicalVector createLogicalVector(byte[] data, boolean complete, int[] dims, Object names) {
         return traceDataCreated(new RLogicalVector(data, complete, dims, names));
+    }
+
+    public static RLogicalVector createNAVector(int length) {
+        byte[] data = new byte[length];
+        Arrays.fill(data, RRuntime.LOGICAL_NA);
+        return createLogicalVector(data, INCOMPLETE_VECTOR);
     }
 
     public static RIntSequence createAscendingRange(int start, int end) {

@@ -99,7 +99,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            return RVector.setClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
+            return RVector.setVectorClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(null);
         } else if (name.equals(RRuntime.LEVELS_ATTR_KEY)) {
@@ -114,11 +114,11 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     @TruffleBoundary
     public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
         if (value instanceof RStringVector) {
-            return RVector.setClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RDataFrame.class ? container : null,
+            return RVector.setVectorClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RDataFrame.class ? container : null,
                             container.getElementClass() == RFactor.class ? container : null);
         }
         if (value instanceof String) {
-            return RVector.setClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RDataFrame.class ? container : null,
+            return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RDataFrame.class ? container : null,
                             container.getElementClass() == RFactor.class ? container : null);
         }
         throw RError.error(sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);

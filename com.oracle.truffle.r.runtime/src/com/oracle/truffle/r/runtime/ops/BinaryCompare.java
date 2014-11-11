@@ -52,49 +52,12 @@ public abstract class BinaryCompare extends BooleanOperation {
     public static class LessBuiltin {
     }
 
-    public static final BooleanOperationFactory NOT_EQUAL = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new NotEqual();
-        }
-    };
-
-    public static final BooleanOperationFactory EQUAL = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new Equal();
-        }
-    };
-    public static final BooleanOperationFactory GREATER_EQUAL = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new GreaterEqual();
-        }
-    };
-    public static final BooleanOperationFactory GREATER_THAN = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new GreaterThan();
-        }
-    };
-    public static final BooleanOperationFactory LESS_EQUAL = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new LessEqual();
-        }
-    };
-    public static final BooleanOperationFactory LESS_THAN = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new LessThan();
-        }
-    };
+    public static final BooleanOperationFactory NOT_EQUAL = NotEqual::new;
+    public static final BooleanOperationFactory EQUAL = Equal::new;
+    public static final BooleanOperationFactory GREATER_EQUAL = GreaterEqual::new;
+    public static final BooleanOperationFactory GREATER_THAN = GreaterThan::new;
+    public static final BooleanOperationFactory LESS_EQUAL = LessEqual::new;
+    public static final BooleanOperationFactory LESS_THAN = LessThan::new;
 
     public BinaryCompare(boolean commutative) {
         super(commutative, false);

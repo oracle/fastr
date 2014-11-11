@@ -559,7 +559,8 @@ public final class RError extends RuntimeException {
         NOT_DEBUGGED("argument is not being debugged"),
         ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
-        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors");
+        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
+        NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors");
 
         public final String message;
         private final boolean hasArgs;

@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-public abstract class OperationFactory {
+@FunctionalInterface
+public interface OperationFactory {
 
-    public abstract Operation create();
+    Operation create();
 
 }

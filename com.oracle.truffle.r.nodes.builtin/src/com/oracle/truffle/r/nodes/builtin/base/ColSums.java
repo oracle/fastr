@@ -63,10 +63,12 @@ public abstract class ColSums extends RBuiltinNode {
         boolean isComplete = true;
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
+        double[] data = x.getDataWithoutCopying();
+        int pos = 0;
         nextCol: for (int c = 0; c < colNum; ++c) {
             double sum = 0;
             for (int i = 0; i < rowNum; ++i) {
-                double el = x.getDataAt(c * rowNum + i);
+                double el = data[pos++];
                 if (rna) {
                     if (!na.check(el) && !Double.isNaN(el)) {
                         sum = add.op(sum, el);
@@ -74,11 +76,13 @@ public abstract class ColSums extends RBuiltinNode {
                 } else {
                     if (na.check(el)) {
                         result[c] = RRuntime.DOUBLE_NA;
+                        pos += rowNum - i - 1;
                         continue nextCol;
                     }
                     if (Double.isNaN(el)) {
                         result[c] = Double.NaN;
                         isComplete = false;
+                        pos += rowNum - i - 1;
                         continue nextCol;
                     }
                     sum = add.op(sum, el);
@@ -95,10 +99,12 @@ public abstract class ColSums extends RBuiltinNode {
         double[] result = new double[colNum];
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
+        byte[] data = x.getDataWithoutCopying();
+        int pos = 0;
         nextCol: for (int c = 0; c < colNum; ++c) {
             double sum = 0;
             for (int i = 0; i < rowNum; ++i) {
-                byte el = x.getDataAt(c * rowNum + i);
+                byte el = data[pos++];
                 if (rna) {
                     if (!na.check(el)) {
                         sum = add.op(sum, el);
@@ -106,6 +112,7 @@ public abstract class ColSums extends RBuiltinNode {
                 } else {
                     if (na.check(el)) {
                         result[c] = RRuntime.DOUBLE_NA;
+                        pos += rowNum - i - 1;
                         continue nextCol;
                     }
                     sum = add.op(sum, el);
@@ -122,10 +129,12 @@ public abstract class ColSums extends RBuiltinNode {
         double[] result = new double[colNum];
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
+        int[] data = x.getDataWithoutCopying();
+        int pos = 0;
         nextCol: for (int c = 0; c < colNum; ++c) {
             double sum = 0;
             for (int i = 0; i < rowNum; ++i) {
-                int el = x.getDataAt(c * rowNum + i);
+                int el = data[pos++];
                 if (rna) {
                     if (!na.check(el)) {
                         sum = add.op(sum, el);
@@ -133,6 +142,7 @@ public abstract class ColSums extends RBuiltinNode {
                 } else {
                     if (na.check(el)) {
                         result[c] = RRuntime.DOUBLE_NA;
+                        pos += rowNum - i - 1;
                         continue nextCol;
                     }
                     sum = add.op(sum, el);
@@ -149,5 +159,4 @@ public abstract class ColSums extends RBuiltinNode {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }
-
 }

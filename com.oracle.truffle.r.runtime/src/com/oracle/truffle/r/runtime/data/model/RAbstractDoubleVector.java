@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractDoubleVector extends RAbstractVector {
@@ -29,4 +30,13 @@ public interface RAbstractDoubleVector extends RAbstractVector {
     double getDataAt(int index);
 
     RDoubleVector materialize();
+
+    default boolean checkCompleteness() {
+        for (int i = 0; i < getLength(); i++) {
+            if (RRuntime.isNA(getDataAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

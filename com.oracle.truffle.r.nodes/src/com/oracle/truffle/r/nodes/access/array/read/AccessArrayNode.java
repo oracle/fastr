@@ -205,7 +205,7 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessFactor(VirtualFrame frame, RFactor factor, int recLevel, Object position, RAbstractLogicalVector dropDim) {
         RIntVector res = (RIntVector) castVector(frame, accessRecursive(frame, factor.getVector(), position, recLevel, dropDim));
         res.setLevels(factor.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY));
-        return RVector.setClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
+        return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
     }
 
     @SuppressWarnings("unused")
@@ -384,7 +384,7 @@ public abstract class AccessArrayNode extends RNode {
             int accSrcDimensions = vector.getLength() / srcDimSize;
             int accDstDimensions = resLength / p.getLength();
 
-            elementNACheck.enable(!p.isComplete());
+            elementNACheck.enable(p);
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
@@ -1368,7 +1368,7 @@ public abstract class AccessArrayNode extends RNode {
             int accSrcDimensions = vector.getLength() / srcDimSize;
             int accDstDimensions = resLength / p.getLength();
 
-            elementNACheck.enable(!p.isComplete());
+            elementNACheck.enable(p);
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);

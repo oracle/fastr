@@ -47,7 +47,7 @@ public abstract class CombineBinaryNode extends BinaryNode {
             namesData[i++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             to++;
         }
-        naCheck.enable(!orgNames.isComplete());
+        naCheck.enable(orgNames);
         for (int j = 0; i < to; i++, j++) {
             namesData[i] = orgNames.getDataAt(j);
             naCheck.check(namesData[i]);
