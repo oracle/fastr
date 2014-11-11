@@ -228,4 +228,8 @@ public final class RList extends RVector implements RAbstractVector {
     protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(new String[]{RType.List.getName()}, implicitClassHrDyn);
     }
+
+    public boolean checkCompleteness() {
+        return true;
+    }
 }
