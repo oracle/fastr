@@ -364,6 +364,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testColIgnore_8406be06fb724e25d072bc0cda3c46f9() {
+        assertEval("{ col(c(1,2,3)) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testColMeansIgnore_1e146b3cdde30114bb9bdd12bbfd4a51() {
         assertEval("{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
     }
@@ -1551,6 +1556,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSource_e52eebdb86410e47576dc1c11b4690b0() {
         assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSplitIgnore_d2ccf1c31b984c75491ff8fbb39ab104() {
+        assertEval("{ n <- 2; nn <- 4 ; g <- factor(round(n * runif(n * nn))) ; x <- rnorm(n * nn) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
+        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
     }
 
     @Ignore

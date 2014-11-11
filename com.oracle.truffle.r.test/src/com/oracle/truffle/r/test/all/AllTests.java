@@ -6044,6 +6044,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCol_96f5c5aecdd0b8a3d2888f918ea77f7f() {
+        assertEval("{ ma <- matrix(1:12, 3, 4) ; col(ma) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCol_2aed206e17a5da2a3c6f617daeeacca0() {
+        assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; col(ma) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testColIgnore_8406be06fb724e25d072bc0cda3c46f9() {
+        assertEval("{ col(c(1,2,3)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testColMeans_e6a4306e7b057179d8d3f30f3161484e() {
         assertEval("{colMeans(matrix(c(3,4,2,5)))}");
     }
@@ -8571,6 +8586,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInheritsIgnore_89e7444d88aeaed136ad761742bfd5e4() {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInteraction_cc946aa5f7a0393338bf3a58fefb26a7() {
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInteraction_f0540e2d1f6d9ab64d558ef96133818f() {
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
     }
 
     @Test
@@ -13621,6 +13646,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSource_e52eebdb86410e47576dc1c11b4690b0() {
         assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSplit_54724c7a16d9d337779ddd57f66b9fe9() {
+        assertEval("{ split(1:10, 1:2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSplit_fe14a6d85fd278368fa7d655f817309e() {
+        assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; split(ma, col(ma)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSplit_3209000db7f5918307889e642d7e1e57() {
+        assertEval("{ fu <- c(1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,1) ; split(1:20,fu) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSplitIgnore_d2ccf1c31b984c75491ff8fbb39ab104() {
+        assertEval("{ n <- 2; nn <- 4 ; g <- factor(round(n * runif(n * nn))) ; x <- rnorm(n * nn) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
+        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
     }
 
     @Test
