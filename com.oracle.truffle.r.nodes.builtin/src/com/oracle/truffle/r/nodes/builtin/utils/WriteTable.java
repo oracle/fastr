@@ -34,7 +34,7 @@ public class WriteTable {
             /* handle factors internally, check integrity */
             RStringVector[] levels = new RStringVector[nc];
             for (int j = 0; j < nc; j++) {
-                RAbstractVector xj = (RAbstractVector) x.getDataAtAsObject(j);
+                RAbstractContainer xj = (RAbstractContainer) x.getDataAtAsObject(j);
                 if (xj.getLength() != nr) {
                     throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
                 }
@@ -51,23 +51,16 @@ public class WriteTable {
                     os.write(csep.getBytes());
                 }
                 for (int j = 0; j < nc; j++) {
-                    RAbstractVector xj = (RAbstractVector) x.getDataAtAsObject(j);
+                    RAbstractContainer xj = (RAbstractContainer) x.getDataAtAsObject(j);
                     if (j > 0)
                         os.write(csep.getBytes());
                     if (isna(xj, i)) {
                         tmp = cna;
                     } else {
                         if (levels[j] != null) {
-                            /*
-                             * We do not assume factors have integer levels, although they should.
-                             */
-                            if (xj instanceof RIntVector || xj instanceof RDoubleVector) {
-                                tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
-                            } else {
-                                throw new IllegalArgumentException("column " + (j + 1) + " claims to be a factor but does not have numeric codes");
-                            }
+                            tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
                         } else {
-                            tmp = encodeElement2(xj, i, quoteCol[j], qmethod, cdec);
+                            tmp = encodeElement2((RAbstractVector) xj, i, quoteCol[j], qmethod, cdec);
                         }
                         /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
                     }
@@ -138,7 +131,7 @@ public class WriteTable {
         return encodeElement(x, indx, quote ? '"' : 0, cdec);
     }
 
-    private static boolean isna(RAbstractVector x, int indx) {
+    private static boolean isna(RAbstractContainer x, int indx) {
         if (x instanceof RLogicalVector) {
             return RRuntime.isNA(((RLogicalVector) x).getDataAt(indx));
         } else if (x instanceof RDoubleVector) {
@@ -161,7 +154,7 @@ public class WriteTable {
         throw RInternalError.unimplemented();
     }
 
-    private static boolean isFactor(RAbstractVector v) {
+    private static boolean isFactor(RAbstractContainer v) {
         for (int i = 0; i < v.getClassHierarchy().getLength(); i++) {
             if (v.getClassHierarchy().getDataAt(i).equals("factor")) {
                 return true;
