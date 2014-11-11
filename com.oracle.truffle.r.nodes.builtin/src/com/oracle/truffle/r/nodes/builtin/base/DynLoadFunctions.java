@@ -100,14 +100,14 @@ public class DynLoadFunctions {
                 data[i] = dllInfo;
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            RVector.setClassAttr(result, RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS), null, null);
+            RVector.setVectorClassAttr(result, RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS), null, null);
             return result;
         }
     }
 
     private static RList createDLLInfoList(Object[] data) {
         RList dllInfo = RDataFactory.createList(data, RDataFactory.createStringVector(DLLInfo.NAMES, RDataFactory.COMPLETE_VECTOR));
-        RVector.setClassAttr(dllInfo, RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), null, null);
+        RVector.setVectorClassAttr(dllInfo, RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), null, null);
         return dllInfo;
     }
 

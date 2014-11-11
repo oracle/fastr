@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -293,12 +295,39 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     // null
 
     @Specialization
-    protected RLogicalVector doNull(RNull left, Object right) {
+    protected RLogicalVector doNull(RNull left, RNull right) {
         return RDataFactory.createLogicalVector(0);
     }
 
-    @Specialization
-    protected RLogicalVector doNull(Object left, RNull right) {
+    @Specialization(guards = "!isFactor")
+    protected RLogicalVector doNull(RNull left, RAbstractContainer right) {
+        return RDataFactory.createLogicalVector(0);
+    }
+
+    @Specialization(guards = "!isFactor")
+    protected RLogicalVector doNull(RAbstractContainer left, RNull right) {
+        return RDataFactory.createLogicalVector(0);
+    }
+
+    @Specialization(guards = "!meaningfulOp")
+    protected RLogicalVector doFactorOpError(RFactor left, RNull right) {
+        RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
+        return RDataFactory.createNAVector(left.getLength() == 0 ? 1 : left.getLength());
+    }
+
+    @Specialization(guards = "!meaningfulOp")
+    protected RLogicalVector doFactorOpError(RNull left, RFactor right) {
+        RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
+        return RDataFactory.createNAVector(right.getLength() == 0 ? 1 : right.getLength());
+    }
+
+    @Specialization(guards = "meaningfulOp")
+    protected RLogicalVector doFactorOp(RFactor left, RNull right) {
+        return RDataFactory.createLogicalVector(0);
+    }
+
+    @Specialization(guards = "meaningfulOp")
+    protected RLogicalVector doFactorOp(RNull left, RFactor right) {
         return RDataFactory.createLogicalVector(0);
     }
 
@@ -702,16 +731,6 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     // factor and scalar
-
-    @Specialization(guards = "!meaningfulOp")
-    protected RLogicalVector doFactorOp(RFactor left, Object right) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
-    }
-
-    @Specialization(guards = "!meaningfulOp")
-    protected RLogicalVector doFactorOp(Object left, RFactor right) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
-    }
 
     @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, int right) {
@@ -1251,6 +1270,18 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return performStringVectorOpSameLength(RClosures.createRawToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
+    @Specialization(guards = "!meaningfulOp")
+    protected RLogicalVector doFactorOp(RFactor left, RAbstractContainer right) {
+        RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
+        return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
+    }
+
+    @Specialization(guards = "!meaningfulOp")
+    protected RLogicalVector doFactorOp(RAbstractContainer left, RFactor right) {
+        RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
+        return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
+    }
+
     // complex vector and vectors
 
     @Specialization(guards = "!areSameLength")
@@ -1338,8 +1369,40 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // guards
 
+    public boolean isFactor(RAbstractContainer left, RNull right) {
+        return left.getElementClass() == RFactor.class;
+    }
+
+    public boolean isFactor(RNull left, RAbstractContainer right) {
+        return right.getElementClass() == RFactor.class;
+    }
+
+    public boolean isFactor(RFactor left, RAbstractContainer right) {
+        return right.getElementClass() == RFactor.class;
+    }
+
+    public boolean isFactor(RAbstractContainer left, RFactor right) {
+        return left.getElementClass() == RFactor.class;
+    }
+
     public boolean meaningfulOp(RFactor left, RFactor right) {
         return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || (left.isOrdered() && right.isOrdered());
+    }
+
+    public boolean meaningfulOp(RFactor left, RNull right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || left.isOrdered();
+    }
+
+    public boolean meaningfulOp(RNull left, RFactor right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || right.isOrdered();
+    }
+
+    public boolean meaningfulOp(RFactor left, RAbstractContainer right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || left.isOrdered();
+    }
+
+    public boolean meaningfulOp(RAbstractContainer left, RFactor right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || right.isOrdered();
     }
 
     public boolean meaningfulOp(RFactor left, Object right) {

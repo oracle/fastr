@@ -79,10 +79,18 @@ public abstract class Structure extends RBuiltinNode {
         for (int i = 0; i < values.length; i++) {
             Object value = fixupValue(values[i]);
             String attrName = fixupAttrName(argNames[i + 1]);
-            if (value == RNull.instance) {
-                res.removeAttr(attrName);
+            if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (value == RNull.instance) {
+                    res = (RAbstractContainer) res.setClassAttr(null);
+                } else {
+                    res = (RAbstractContainer) res.setClassAttr((RStringVector) value);
+                }
             } else {
-                res = (RAbstractContainer) res.setAttr(attrName, value);
+                if (value == RNull.instance) {
+                    res.removeAttr(attrName);
+                } else {
+                    res.setAttr(attrName, value);
+                }
             }
         }
         return res;
