@@ -4027,10 +4027,9 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testSplitIgnore() {
-        // requires as.double support for factors
-        assertEval("{ n <- 2; nn <- 4 ; g <- factor(round(n * runif(n * nn))) ; x <- rnorm(n * nn) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
-        // requires first-class levels access in factors
+        // these require first-class levels access in factors
         assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
+        assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
     }
 
     @Test
