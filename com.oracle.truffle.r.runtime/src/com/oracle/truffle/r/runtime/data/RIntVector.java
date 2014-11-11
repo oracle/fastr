@@ -209,8 +209,8 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RIntVector other = (RIntVector) fromVector;
-        data[toIndex] = other.data[fromIndex];
+        RAbstractIntVector other = (RAbstractIntVector) fromVector;
+        data[toIndex] = other.getDataAt(fromIndex);
     }
 
     public Class<?> getElementClass() {
