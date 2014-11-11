@@ -69,24 +69,24 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!empty"})
-    protected int anyDuplicatedFromStart(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
+    protected int anyDuplicatedFromStart(VirtualFrame frame, RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
         initChildren();
         RType xType = typeof.execute(frame, x);
         if (fromLastProfile.profile(fromLast == RRuntime.LOGICAL_TRUE)) {
-            return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+            return getIndexFromLast(x, (RAbstractContainer) (castTypeNode.execute(frame, incomparables, xType)));
         } else {
-            return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+            return getIndexFromStart(x, (RAbstractContainer) (castTypeNode.execute(frame, incomparables, xType)));
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "empty")
-    protected int anyDuplicatedEmpty(RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
+    protected int anyDuplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
         return 0;
     }
 
     @TruffleBoundary
-    private static int getIndexFromStart(RAbstractVector x, RAbstractVector incomparables) {
+    private static int getIndexFromStart(RAbstractContainer x, RAbstractContainer incomparables) {
         HashSet<Object> incompContents = new HashSet<>();
         HashSet<Object> vectorContents = new HashSet<>();
         for (int i = 0; i < incomparables.getLength(); i++) {
@@ -106,7 +106,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int getIndexFromStart(RAbstractVector x) {
+    private static int getIndexFromStart(RAbstractContainer x) {
         HashSet<Object> vectorContents = new HashSet<>();
         vectorContents.add(x.getDataAtAsObject(0));
         for (int i = 1; i < x.getLength(); i++) {
@@ -120,7 +120,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    public static int getIndexFromLast(RAbstractVector x, RAbstractVector incomparables) {
+    public static int getIndexFromLast(RAbstractContainer x, RAbstractContainer incomparables) {
         HashSet<Object> incompContents = new HashSet<>();
         HashSet<Object> vectorContents = new HashSet<>();
         for (int i = 0; i < incomparables.getLength(); i++) {
@@ -140,7 +140,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int getIndexFromLast(RAbstractVector x) {
+    private static int getIndexFromLast(RAbstractContainer x) {
         HashSet<Object> vectorContents = new HashSet<>();
         vectorContents.add(x.getDataAtAsObject(x.getLength() - 1));
         for (int i = x.getLength() - 2; i >= 0; i--) {
@@ -154,11 +154,11 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    protected boolean isIncomparable(RAbstractVector x, byte incomparables, byte fromLast) {
+    protected boolean isIncomparable(RAbstractContainer x, byte incomparables, byte fromLast) {
         return incomparables == RRuntime.LOGICAL_TRUE;
     }
 
-    protected boolean empty(RAbstractVector x) {
+    protected boolean empty(RAbstractContainer x) {
         return x.getLength() == 0;
     }
 

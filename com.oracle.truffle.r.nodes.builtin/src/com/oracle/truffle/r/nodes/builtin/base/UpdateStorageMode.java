@@ -64,7 +64,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                     if (attrs != null) {
                         RAttributable rresult = (RAttributable) result;
                         for (RAttribute attr : attrs) {
-                            rresult.setAttr(attr.getName(), attr.getValue());
+                            rresult = rresult.setAttr(attr.getName(), attr.getValue());
                         }
                     }
                 }

@@ -3907,9 +3907,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
         assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x > \"a\" }");
+
+        assertEval("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+        assertEvalError("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
 
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
+        assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[[1]]<-x; y }");
+        assertEvalError("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[[1]]<-x; y }");
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[1] }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[1]] }");
@@ -3917,6 +3923,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[2]] }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[c(1,2)] }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[c(1,2,3,4)] }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.atomic(x) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); is.atomic(x) }");
+
+        assertEval("{ as.logical(factor(c(\"a\", \"b\", \"a\"))) }");
+        assertEval("{ as.logical(factor(integer())) }");
     }
 
     @Test

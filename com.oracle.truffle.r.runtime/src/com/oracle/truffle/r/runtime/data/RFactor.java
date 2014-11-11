@@ -28,12 +28,19 @@ public final class RFactor implements RShareable, RAbstractContainer {
 
     private RIntVector vector;
 
-    public RFactor(RIntVector vector) {
+    private final boolean ordered;
+
+    public RFactor(RIntVector vector, boolean ordered) {
         this.vector = vector;
+        this.ordered = ordered;
     }
 
     public RIntVector getVector() {
         return vector;
+    }
+
+    public boolean isOrdered() {
+        return ordered;
     }
 
     @Override
@@ -63,7 +70,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
 
     @Override
     public RFactor copy() {
-        return RDataFactory.createFactor((RIntVector) vector.copy());
+        return RDataFactory.createFactor((RIntVector) vector.copy(), ordered);
     }
 
     @Override
