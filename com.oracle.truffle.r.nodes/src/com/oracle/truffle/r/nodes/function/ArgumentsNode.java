@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 
@@ -59,6 +60,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     /**
      * @return {@link #arguments}
      */
+    @CreateWrapper
     public RNode[] getArguments() {
         return arguments;
     }
@@ -66,6 +68,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     /**
      * @return {@link #names}
      */
+    @CreateWrapper
     public String[] getNames() {
         return names;
     }
@@ -73,6 +76,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     /**
      * @return {@link #nameCount}
      */
+    @CreateWrapper
     public int getNameCount() {
         return nameCount;
     }
@@ -95,4 +99,15 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
         state.append(')');
 
     }
+
+    /**
+     * No-arg constructor for subclass wrapper.
+     */
+    protected ArgumentsNode() {
+        arguments = new RNode[0];
+        names = null;
+        nameCount = 0;
+    }
+
+
 }

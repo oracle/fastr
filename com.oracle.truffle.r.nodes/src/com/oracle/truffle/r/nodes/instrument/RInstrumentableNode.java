@@ -30,11 +30,12 @@ import com.oracle.truffle.r.nodes.*;
 
 /**
  * Denotes an {@link RNode} that can be instrumented using the {@link Instrumentable}.
+ * By default all {@link RNode} instances are instrumentable.
  */
 public interface RInstrumentableNode {
 
     default boolean isInstrumentable() {
-        return (this instanceof RSyntaxNode) && ((RSyntaxNode) this).isSyntax();
+        return true;
     }
 
     default Probe probe() {

@@ -25,9 +25,12 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
+//import com.oracle.truffle.r.nodes.ReadArgumentsNodeWrapper;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
@@ -130,11 +133,19 @@ public abstract class AccessArgumentNode extends RNode {
         return promise;
     }
 
-    public static final class ReadArgumentNode extends RNode {
+    @CreateWrapper
+    public static class ReadArgumentNode extends RNode {
         private final int index;
 
         private ReadArgumentNode(int index) {
             this.index = index;
+        }
+
+        /**
+         * for WrapperNode subclass.
+         */
+        protected ReadArgumentNode() {
+            index = 0;
         }
 
         @Override
@@ -144,6 +155,11 @@ public abstract class AccessArgumentNode extends RNode {
 
         public int getIndex() {
             return index;
+        }
+
+        @Override
+        public ProbeNode.WrapperNode createWrapperNode(RNode node) {
+            return new ReadArgumentNodeWrapper((ReadArgumentNode) node);
         }
     }
 }

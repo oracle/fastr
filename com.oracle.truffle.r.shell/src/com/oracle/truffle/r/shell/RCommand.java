@@ -29,6 +29,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.env.*;
@@ -100,6 +101,8 @@ public class RCommand {
                 fileArg = null;
             }
         }
+
+        FastROptions.initialize();
 
         if (DEBUGGER.getValue() != null) {
             REngine.setInstrumentAll(true);

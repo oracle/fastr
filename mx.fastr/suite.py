@@ -215,7 +215,10 @@ suite = {
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
-      "annotationProcessors" : ["com.oracle.truffle.dsl.processor"],
+      "annotationProcessors" : [
+          "com.oracle.truffle.dsl.processor",
+          "com.oracle.truffle.r.nodes.wrapper.processor"
+      ],
       "workingSets" : "Truffle,FastR",
     },
 
@@ -230,6 +233,7 @@ suite = {
       "annotationProcessors" : [
         "com.oracle.truffle.dsl.processor",
         "com.oracle.truffle.r.nodes.builtin.processor",
+        "com.oracle.truffle.r.nodes.wrapper.processor",
       ],
       "workingSets" : "Truffle,FastR",
     },
@@ -332,7 +336,9 @@ suite = {
 
     "com.oracle.truffle.r.options" : {
       "sourceDirs" : ["src"],
-      "dependencies" : ["com.oracle.graal.options"],
+      "dependencies" : [
+        "com.oracle.graal.options",
+      ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",
@@ -345,6 +351,14 @@ suite = {
         "com.oracle.truffle.debug",
         "com.oracle.truffle.r.shell",
         ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "Truffle,FastR",
+    },
+
+    "com.oracle.truffle.r.nodes.wrapper.processor" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : ["JDK_TOOLS"],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR",

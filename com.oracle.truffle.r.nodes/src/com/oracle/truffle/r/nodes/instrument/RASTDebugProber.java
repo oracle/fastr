@@ -8,6 +8,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
@@ -38,24 +39,34 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
     public boolean visit(Node node) {
         if (node instanceof RInstrumentableNode) {
             RInstrumentableNode iNode = (RInstrumentableNode) node;
+            boolean instrumentable = false;
             if (iNode.isInstrumentable()) {
-                Probe probe = iNode.probe();
+                instrumentable = true;
                 if (iNode instanceof RCallNode) {
-                    probe.tagAs(CALL, RASTUtils.findFunctionName(node, false));
+                    iNode.probe().tagAs(CALL, RASTUtils.findFunctionName(node, false));
                 } else if (iNode instanceof FunctionStatementsNode) {
-                    probe.tagAs(START_METHOD, getFunctionDefinitionNode((Node) iNode).getUUID());
+                    iNode.probe().tagAs(START_METHOD, getFunctionDefinitionNode((Node) iNode).getUUID());
                 } else if (iNode instanceof FunctionBodyNode) {
-                    probe.tagAs(RSyntaxTag.FUNCTION_BODY, getFunctionDefinitionNode((Node) iNode).getUUID());
+                    iNode.probe().tagAs(RSyntaxTag.FUNCTION_BODY, getFunctionDefinitionNode((Node) iNode).getUUID());
                 }
                 if (iNode instanceof SequenceNode) {
                     RNode[] sequence = ((SequenceNode) iNode).getSequence();
                     for (RNode n : sequence) {
-                        if (n.isSyntax()) {
+                        boolean tag = false;
+                         if (n.isSyntax()) {
                             n.probe().tagAs(STATEMENT, null);
+                            tag = true;
+                        }
+                        if (FastROptions.Debug.getValue()) {
+                            System.out.printf("Tag %s as STATEMENT: %b%n", n.toString(), tag);
                         }
                     }
 
                 }
+            } else {
+            }
+            if (FastROptions.Debug.getValue()) {
+                System.out.printf("Node %s is instrumentable: %b%n", iNode.toString(), instrumentable);
             }
         }
         return true;
@@ -70,4 +81,5 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
             return getFunctionDefinitionNode(node.getParent());
         }
     }
+
 }

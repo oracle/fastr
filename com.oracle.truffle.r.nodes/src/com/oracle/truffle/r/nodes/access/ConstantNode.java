@@ -42,7 +42,9 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     @Override
     @TruffleBoundary
     public void deparse(State state) {
-        RDeparse.deparse2buff(state, getValue());
+        if (!(this instanceof ConstantMissingNode)) {
+            RDeparse.deparse2buff(state, getValue());
+        }
     }
 
     @Override

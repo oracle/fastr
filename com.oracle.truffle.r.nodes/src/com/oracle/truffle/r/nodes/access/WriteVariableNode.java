@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -32,7 +33,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeFactory;
-import com.oracle.truffle.r.nodes.instrument.WriteVariableNodeWrapper;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.env.*;
 @NodeFields({
     @NodeField(name = "argWrite", type = boolean.class),
     @NodeField(name = "name", type = String.class)})
+@CreateWrapper
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
     public enum Mode {

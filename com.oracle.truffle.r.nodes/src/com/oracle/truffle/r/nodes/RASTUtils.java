@@ -29,7 +29,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.RNodeWrapper;
+import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -46,8 +46,8 @@ public class RASTUtils {
     public static Node unwrap(Object node) {
         if (node instanceof WrapArgumentNode) {
             return unwrap(((WrapArgumentNode) node).getOperand());
-        } else if (node instanceof RNodeWrapper) {
-            return ((RNodeWrapper) node).getChild();
+        } else if (node instanceof RInstrumentableNode) {
+            return ((RInstrumentableNode) node).unwrap();
         } else {
             return (Node) node;
         }

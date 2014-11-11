@@ -109,7 +109,6 @@ public final class REngine implements RContext.Engine {
         if (initialized) {
             REnvironment.resetForTest(globalFrame);
         } else {
-            FastROptions.initialize();
             instrumentingEnabled = !FastROptions.DisableInstrumentation.getValue();
             if (instrumentingEnabled) {
                 RInstrument.initialize();

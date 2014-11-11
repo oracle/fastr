@@ -27,6 +27,8 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
@@ -45,7 +47,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
+@CreateWrapper
+public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
     @Child private ReadVariableNode varArgsSlotNode;
 
@@ -357,4 +360,14 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
 
     }
 
+    @Override
+    public ProbeNode.WrapperNode createWrapperNode(RNode node) {
+        return new CallArgumentsNodeWrapper((CallArgumentsNode) node);
+    }
+
+    protected CallArgumentsNode() {
+        this.varArgsSymbolIndices = null;
+        this.modeChange = false;
+        this.modeChangeForAll = false;
+    }
 }

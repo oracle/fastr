@@ -231,12 +231,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         for (int i = 0; i < exprs.length; i++) {
             rexprs[i] = exprs[i].accept(this);
         }
-        if (rexprs.length == 1) {
-            return rexprs[0];
-        } else {
-            return new SequenceNode(seq.getSource(), rexprs);
-        }
-    }
+        // For (deparse) consistency we do not special case a sequence of length 1
+        return new SequenceNode(seq.getSource(), rexprs);
+     }
 
     @Override
     public RNode visit(ASTNode n) {
