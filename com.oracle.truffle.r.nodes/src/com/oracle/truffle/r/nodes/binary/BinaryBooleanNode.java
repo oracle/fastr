@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -45,6 +46,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     private final NACheck leftNACheck = NACheck.create();
     private final NACheck rightNACheck = NACheck.create();
+
+    private final NAProfile resultNAProfile = NAProfile.create();
 
     public BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
@@ -1483,19 +1486,27 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // int vector and scalar implementation
 
+    private RLogicalVector createResult(RAbstractVector left, byte[] result, boolean naResult) {
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
+    }
+
     private RLogicalVector performIntVectorOp(RAbstractIntVector left, double rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performIntVectorOp(RAbstractIntVector left, String rightValue, boolean reverse) {
@@ -1503,14 +1514,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.intToString(left.getDataAt(i), false);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performIntVectorOp(RAbstractIntVector left, RComplex rightValue, boolean reverse) {
@@ -1518,9 +1531,13 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.int2complex(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
@@ -1535,14 +1552,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performDoubleVectorOp(RAbstractDoubleVector left, String rightValue, boolean reverse) {
@@ -1550,14 +1569,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.doubleToString(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performDoubleVectorOp(RAbstractDoubleVector left, RComplex rightValue, boolean reverse) {
@@ -1565,9 +1586,13 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.double2complex(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
@@ -1582,14 +1607,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             byte leftValue = left.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performLogicalVectorOp(RAbstractLogicalVector left, String rightValue, boolean reverse) {
@@ -1597,9 +1624,13 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.logicalToString(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
@@ -1612,14 +1643,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.logical2complex(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     // string vector and scalar implementation
@@ -1629,14 +1662,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = left.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     // complex vector and scalar implementation
@@ -1646,14 +1681,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performComplexVectorOp(RAbstractComplexVector left, String rightValue, boolean reverse) {
@@ -1661,14 +1698,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.complexToString(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performRawVectorOp(RAbstractRawVector left, double rightValue, boolean reverse) {
@@ -1676,14 +1715,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             double leftValue = RRuntime.raw2double(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performRawVectorOp(RAbstractRawVector left, String rightValue, boolean reverse) {
@@ -1691,14 +1732,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.rawToString(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RLogicalVector performRawVectorOp(RAbstractRawVector left, RComplex rightValue, boolean reverse) {
@@ -1706,14 +1749,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.raw2complex(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+        return createResult(left, result, naResult);
     }
 
     private RRawVector performRawVectorOp(RAbstractRawVector left, RRaw rightValue, boolean reverse) {
@@ -1737,13 +1782,18 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
             int rightValue = right.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.hasDimensions() ? left.getDimensions() : right.getDimensions());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
+                        left.hasDimensions() ? left.getDimensions() : right.getDimensions());
         ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
         return ret;
     }
@@ -1758,17 +1808,21 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         rightNACheck.enable(right);
         int l = 0;
         int r = 0;
+        boolean naResult = false;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             int leftValue = left.getDataAt(l);
             int rightValue = right.getDataAt(r);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
             RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
         ret.copyNamesFrom(leftLength == resultLength ? left : right);
         return ret;
@@ -1782,13 +1836,18 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
             double rightValue = right.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.hasDimensions() ? left.getDimensions() : right.getDimensions());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
+                        left.hasDimensions() ? left.getDimensions() : right.getDimensions());
         ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
         return ret;
     }
@@ -1803,17 +1862,21 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         rightNACheck.enable(right);
         int l = 0;
         int r = 0;
+        boolean naResult = false;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             double leftValue = left.getDataAt(l);
             double rightValue = right.getDataAt(r);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
             RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
         ret.copyNamesFrom(leftLength == resultLength ? left : right);
         return ret;
@@ -1827,13 +1890,18 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             String leftValue = left.getDataAt(i);
             String rightValue = right.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.hasDimensions() ? left.getDimensions() : right.getDimensions());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
+                        left.hasDimensions() ? left.getDimensions() : right.getDimensions());
         ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
         return ret;
     }
@@ -1848,17 +1916,21 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         rightNACheck.enable(right);
         int l = 0;
         int r = 0;
+        boolean naResult = false;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             String leftValue = left.getDataAt(l);
             String rightValue = right.getDataAt(r);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
             RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
         ret.copyNamesFrom(leftLength == resultLength ? left : right);
         return ret;
@@ -1872,13 +1944,18 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         byte[] result = new byte[length];
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
             RComplex rightValue = right.getDataAt(i);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.hasDimensions() ? left.getDimensions() : right.getDimensions());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
+                        left.hasDimensions() ? left.getDimensions() : right.getDimensions());
         ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
         return ret;
     }
@@ -1893,17 +1970,21 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         rightNACheck.enable(right);
         int l = 0;
         int r = 0;
+        boolean naResult = false;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             RComplex leftValue = left.getDataAt(l);
             RComplex rightValue = right.getDataAt(r);
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : logic.op(leftValue, rightValue);
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
             RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
         ret.copyNamesFrom(leftLength == resultLength ? left : right);
         return ret;
@@ -1915,10 +1996,14 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         assert areSameLength(left, right);
         int length = left.getLength();
         byte[] result = new byte[length];
+        boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RRaw leftValue = left.getDataAt(i);
             RRaw rightValue = right.getDataAt(i);
             byte resultValue = logic.op(leftValue, rightValue).getValue();
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
             result[i] = resultValue;
         }
         RRawVector ret = RDataFactory.createRawVector(result, left.hasDimensions() ? left.getDimensions() : right.getDimensions());
