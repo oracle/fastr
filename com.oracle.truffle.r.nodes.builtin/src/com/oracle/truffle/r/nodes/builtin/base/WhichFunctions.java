@@ -47,12 +47,12 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
  */
 public class WhichFunctions {
 
-    @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x", "arr.ind", "useNames"})
+    @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x"})
     public abstract static class Which extends RBuiltinNode {
 
         @Override
         public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
 
         @Specialization
@@ -69,7 +69,7 @@ public class WhichFunctions {
             for (int i = 0; i < result.length; ++i) {
                 result[i] = w.get(i) + 1;
             }
-            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, x.getNames());
         }
     }
 
