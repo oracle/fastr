@@ -368,7 +368,7 @@ public abstract class AccessArrayNode extends RNode {
             int accSrcDimensions = vector.getLength() / srcDimSize;
             int accDstDimensions = resLength / p.getLength();
 
-            elementNACheck.enable(!p.isComplete());
+            elementNACheck.enable(p);
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
@@ -1352,7 +1352,7 @@ public abstract class AccessArrayNode extends RNode {
             int accSrcDimensions = vector.getLength() / srcDimSize;
             int accDstDimensions = resLength / p.getLength();
 
-            elementNACheck.enable(!p.isComplete());
+            elementNACheck.enable(p);
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);

@@ -1486,7 +1486,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performIntVectorOp(RAbstractIntVector left, double rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
@@ -1501,7 +1501,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performIntVectorOp(RAbstractIntVector left, String rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.intToString(left.getDataAt(i), false);
@@ -1516,7 +1516,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performIntVectorOp(RAbstractIntVector left, RComplex rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.int2complex(left.getDataAt(i));
@@ -1533,7 +1533,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performDoubleVectorOp(RAbstractDoubleVector left, double rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
@@ -1548,7 +1548,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performDoubleVectorOp(RAbstractDoubleVector left, String rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.doubleToString(left.getDataAt(i));
@@ -1563,7 +1563,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performDoubleVectorOp(RAbstractDoubleVector left, RComplex rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.double2complex(left.getDataAt(i));
@@ -1580,7 +1580,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performLogicalVectorOp(RAbstractLogicalVector left, double rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             byte leftValue = left.getDataAt(i);
@@ -1595,7 +1595,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performLogicalVectorOp(RAbstractLogicalVector left, String rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.logicalToString(left.getDataAt(i));
@@ -1610,7 +1610,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performLogicalVectorOp(RAbstractLogicalVector left, RComplex rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.logical2complex(left.getDataAt(i));
@@ -1627,7 +1627,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performStringVectorOp(RAbstractStringVector left, String rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             String leftValue = left.getDataAt(i);
@@ -1644,7 +1644,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performComplexVectorOp(RAbstractComplexVector left, RComplex rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
@@ -1659,7 +1659,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performComplexVectorOp(RAbstractComplexVector left, String rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.complexToString(left.getDataAt(i));
@@ -1674,7 +1674,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performRawVectorOp(RAbstractRawVector left, double rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             double leftValue = RRuntime.raw2double(left.getDataAt(i));
@@ -1689,7 +1689,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performRawVectorOp(RAbstractRawVector left, String rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             String leftValue = RRuntime.rawToString(left.getDataAt(i));
@@ -1704,7 +1704,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private RLogicalVector performRawVectorOp(RAbstractRawVector left, RComplex rightValue, boolean reverse) {
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
+        leftNACheck.enable(left);
         rightNACheck.enable(rightValue);
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.raw2complex(left.getDataAt(i));
@@ -1735,8 +1735,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         assert areSameLength(left, right);
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
             int rightValue = right.getDataAt(i);
@@ -1754,8 +1754,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         int rightLength = right.getLength();
         int resultLength = Math.max(leftLength, rightLength);
         byte[] result = new byte[resultLength];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int l = 0;
         int r = 0;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
@@ -1780,8 +1780,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         assert areSameLength(left, right);
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
             double rightValue = right.getDataAt(i);
@@ -1799,8 +1799,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         int rightLength = right.getLength();
         int resultLength = Math.max(leftLength, rightLength);
         byte[] result = new byte[resultLength];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int l = 0;
         int r = 0;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
@@ -1825,8 +1825,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         assert areSameLength(left, right);
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         for (int i = 0; i < length; ++i) {
             String leftValue = left.getDataAt(i);
             String rightValue = right.getDataAt(i);
@@ -1844,8 +1844,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         int rightLength = right.getLength();
         int resultLength = Math.max(leftLength, rightLength);
         byte[] result = new byte[resultLength];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int l = 0;
         int r = 0;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
@@ -1870,8 +1870,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         assert areSameLength(left, right);
         int length = left.getLength();
         byte[] result = new byte[length];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
             RComplex rightValue = right.getDataAt(i);
@@ -1889,8 +1889,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         int rightLength = right.getLength();
         int resultLength = Math.max(leftLength, rightLength);
         byte[] result = new byte[resultLength];
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         int l = 0;
         int r = 0;
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
