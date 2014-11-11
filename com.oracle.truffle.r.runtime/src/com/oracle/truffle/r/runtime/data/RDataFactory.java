@@ -304,8 +304,8 @@ public final class RDataFactory {
         return traceDataCreated(new RExpression(list));
     }
 
-    public static RFactor createFactor(RIntVector vector) {
-        return traceDataCreated(new RFactor(vector));
+    public static RFactor createFactor(RIntVector vector, boolean ordered) {
+        return traceDataCreated(new RFactor(vector, ordered));
     }
 
     public static RVector createObjectVector(Object[] data, boolean completeVector) {

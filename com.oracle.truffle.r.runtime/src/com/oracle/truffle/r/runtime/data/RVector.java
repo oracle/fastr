@@ -163,10 +163,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     @TruffleBoundary
-    public final void setAttr(String name, Object value) {
+    public final RAbstractContainer setAttr(String name, Object value) {
         if (attributes == null) {
             initAttributes();
         }
+        RAbstractContainer res = this;
         if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
             setNames(value);
         } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
@@ -180,10 +181,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             setRowNames(value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            setClassAttr(this, (RStringVector) value, null, null);
+            res = setClassAttr(this, (RStringVector) value, null, null);
         } else {
             attributes.put(name, value);
         }
+        return res;
     }
 
     public final Object getAttr(String name) {
@@ -405,8 +407,15 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             // class attribute removed - no longer a data frame (even if it was before)
             return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
+            boolean ordered = false;
             for (int i = 0; i < classAttr.getLength(); i++) {
-                if (RType.DataFrame.getName().equals(classAttr.getDataAt(i))) {
+                String attr = classAttr.getDataAt(i);
+                if (RRuntime.CLASS_ORDERED.equals(attr)) {
+                    // "ordered" must be specified before "factor" - hence it's enough to do the
+                    // check only before encountering the "factor"
+                    ordered = true;
+                }
+                if (RType.DataFrame.getName().equals(attr)) {
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (enclosingDataFrame != null) {
                         // was a frame and still is a frame
@@ -415,7 +424,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                         // it's a data frame now
                         return RDataFactory.createDataFrame(vector);
                     }
-                } else if (RType.Factor.getName().equals(classAttr.getDataAt(i))) {
+                } else if (RType.Factor.getName().equals(attr)) {
                     if (vector.getElementClass() != RInt.class) {
                         // TODO: add source section
                         throw RError.error(null, RError.Message.ADDING_INVALID_CLASS, "factor");
@@ -426,7 +435,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                         return enclosingFactor;
                     } else {
                         // it's a factor now
-                        return RDataFactory.createFactor((RIntVector) vector);
+                        return RDataFactory.createFactor((RIntVector) vector, ordered);
                     }
                 }
             }

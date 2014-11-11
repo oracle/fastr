@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.api.instrument.ProbeNode;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -190,6 +191,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     public abstract void execute(VirtualFrame frame, Object value);
 
     @NodeField(name = "mode", type = Mode.class)
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
         @Override

@@ -703,72 +703,72 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // factor and scalar
 
-    @Specialization(guards = "!isEq")
+    @Specialization(guards = "!meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, Object right) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
     }
 
-    @Specialization(guards = "!isEq")
+    @Specialization(guards = "!meaningfulOp")
     protected RLogicalVector doFactorOp(Object left, RFactor right) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, int right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(left, leftNACheck), RRuntime.intToString(right, false), false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(int left, RFactor right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(right, leftNACheck), RRuntime.intToString(left, false), true);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, double right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(left, leftNACheck), RRuntime.doubleToString(right), false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(double left, RFactor right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(right, leftNACheck), RRuntime.doubleToString(left), true);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, byte right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(left, leftNACheck), RRuntime.logicalToString(right), false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(byte left, RFactor right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(right, leftNACheck), RRuntime.logicalToString(left), false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, String right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(left, leftNACheck), right, false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(String left, RFactor right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(right, leftNACheck), left, true);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, RComplex right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(left, leftNACheck), RRuntime.complexToString(right), false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RComplex left, RFactor right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(right, leftNACheck), RRuntime.complexToString(left), true);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RFactor left, RRaw right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(left, leftNACheck), RRuntime.rawToString(right), false);
     }
 
-    @Specialization(guards = "isEq")
+    @Specialization(guards = "meaningfulOp")
     protected RLogicalVector doFactorOp(RRaw left, RFactor right) {
         return performStringVectorOp(RClosures.createFactorToStringVector(right, leftNACheck), RRuntime.rawToString(left), true);
     }
@@ -863,22 +863,22 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return performStringVectorOpSameLength(left, RClosures.createIntToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RFactor right) {
         return performStringVectorOpDifferentLength(RClosures.createIntToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, leftNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RFactor right) {
         return performStringVectorOpSameLength(RClosures.createIntToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, leftNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doIntVectorDifferentLength(RFactor left, RAbstractIntVector right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, leftNACheck), RClosures.createIntToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doIntVectorSameLength(RFactor left, RAbstractIntVector right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, leftNACheck), RClosures.createIntToStringVector(right, rightNACheck));
     }
@@ -975,22 +975,22 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return performStringVectorOpSameLength(left, RClosures.createDoubleToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RFactor right) {
         return performStringVectorOpDifferentLength(RClosures.createDoubleToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, leftNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RFactor right) {
         return performStringVectorOpSameLength(RClosures.createDoubleToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, leftNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doDoubleVectorDifferentLength(RFactor left, RAbstractDoubleVector right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, leftNACheck), RClosures.createDoubleToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doDoubleVectorSameLength(RFactor left, RAbstractDoubleVector right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, leftNACheck), RClosures.createDoubleToStringVector(right, rightNACheck));
     }
@@ -1067,22 +1067,22 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return performStringVectorOpSameLength(left, RClosures.createLogicalToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RFactor right) {
         return performStringVectorOpDifferentLength(RClosures.createLogicalToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, leftNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RFactor right) {
         return performStringVectorOpSameLength(RClosures.createLogicalToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, leftNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doLogicalVectorDifferentLength(RFactor left, RAbstractLogicalVector right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, leftNACheck), RClosures.createLogicalToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doLogicalVectorSameLength(RFactor left, RAbstractLogicalVector right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, leftNACheck), RClosures.createLogicalToStringVector(right, rightNACheck));
     }
@@ -1139,22 +1139,22 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return performStringVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLength(RStringVector left, RFactor right) {
         return performStringVectorOpDifferentLength(left, RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLength(RStringVector left, RFactor right) {
         return performStringVectorOpSameLength(left, RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLength(RFactor left, RStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, rightNACheck), right);
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLength(RFactor left, RStringVector right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, rightNACheck), right);
     }
@@ -1201,52 +1201,52 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // factor and vectors
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLength(RFactor left, RFactor right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, rightNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLength(RFactor left, RFactor right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, rightNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLength(RFactor left, RAbstractComplexVector right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, rightNACheck), RClosures.createComplexToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLength(RFactor left, RAbstractComplexVector right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, rightNACheck), RClosures.createComplexToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLength(RAbstractComplexVector left, RFactor right) {
         return performStringVectorOpDifferentLength(RClosures.createComplexToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLength(RAbstractComplexVector left, RFactor right) {
         return performStringVectorOpSameLength(RClosures.createComplexToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLength(RFactor left, RRawVector right) {
         return performStringVectorOpDifferentLength(RClosures.createFactorToStringVector(left, rightNACheck), RClosures.createRawToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLength(RFactor left, RRawVector right) {
         return performStringVectorOpSameLength(RClosures.createFactorToStringVector(left, rightNACheck), RClosures.createRawToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "isEq"})
+    @Specialization(guards = {"!areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorDifferentLengthRRawVector(RRawVector left, RFactor right) {
         return performStringVectorOpDifferentLength(RClosures.createRawToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "isEq"})
+    @Specialization(guards = {"areSameLength", "meaningfulOp"})
     protected RLogicalVector doStringVectorSameLengthRRawVector(RRawVector left, RFactor right) {
         return performStringVectorOpSameLength(RClosures.createRawToStringVector(left, leftNACheck), RClosures.createFactorToStringVector(right, rightNACheck));
     }
@@ -1338,16 +1338,16 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // guards
 
-    public boolean isEq(RFactor left, RFactor right) {
-        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual;
+    public boolean meaningfulOp(RFactor left, RFactor right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || (left.isOrdered() && right.isOrdered());
     }
 
-    public boolean isEq(RFactor left, Object right) {
-        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual;
+    public boolean meaningfulOp(RFactor left, Object right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || left.isOrdered();
     }
 
-    public boolean isEq(Object left, RFactor right) {
-        return !(logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual);
+    public boolean meaningfulOp(Object left, RFactor right) {
+        return logic instanceof BinaryCompare.Equal || logic instanceof BinaryCompare.NotEqual || right.isOrdered();
     }
 
     private boolean isVectorizedLogicalOp() {

@@ -45,6 +45,7 @@ public abstract class CallInlineCacheNode extends Node {
         return new UninitializedCallInlineCacheNode(maxPicDepth);
     }
 
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UninitializedCallInlineCacheNode extends CallInlineCacheNode {
 
         private final int maxPicDepth;

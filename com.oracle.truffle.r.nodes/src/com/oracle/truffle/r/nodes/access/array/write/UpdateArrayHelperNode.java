@@ -206,7 +206,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization
+    @Specialization(guards = "isSubset")
     protected Object update(VirtualFrame frame, Object v, RFactor value, int recLevel, Object positions, Object vector) {
         return updateRecursive(frame, v, value.getVector(), vector, positions, recLevel);
     }

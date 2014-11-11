@@ -31,6 +31,8 @@ public abstract class CastTypeNode extends BinaryNode {
     @Child private CastToVectorNode castToVectorNode;
     @Child private TypeofNode typeof;
 
+    @Child private CastTypeNode castRecursive;
+
     public abstract Object execute(VirtualFrame frame, Object value, RType type);
 
     @SuppressWarnings("unused")
@@ -92,6 +94,12 @@ public abstract class CastTypeNode extends BinaryNode {
     @Specialization
     protected Object doCastUnknown(RAbstractVector value, RType type) {
         return null;
+    }
+
+    @Specialization
+    protected Object doCastDataFrame(VirtualFrame frame, RDataFrame value, RType type) {
+        initCastRecursive();
+        return castRecursive.execute(frame, value.getVector(), type);
     }
 
     @SuppressWarnings("unused")
@@ -190,4 +198,12 @@ public abstract class CastTypeNode extends BinaryNode {
             castListNode = insert(CastListNodeFactory.create(null, false, false, false));
         }
     }
+
+    private void initCastRecursive() {
+        if (castRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castRecursive = insert(CastTypeNodeFactory.create(null, null));
+        }
+    }
+
 }

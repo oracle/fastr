@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -177,6 +179,18 @@ public abstract class CastLogicalNode extends CastNode {
     @Specialization
     protected RMissing doMissing(RMissing missing) {
         return missing;
+    }
+
+    @Specialization
+    protected Object asLogical(VirtualFrame frame, RDataFrame dataFrame) {
+        return castLogicalRecursive(frame, dataFrame.getVector());
+    }
+
+    @Specialization
+    protected RLogicalVector asLogical(RFactor factor) {
+        byte[] data = new byte[factor.getLength()];
+        Arrays.fill(data, RRuntime.LOGICAL_NA);
+        return RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @Fallback

@@ -100,6 +100,8 @@ public class RRuntime {
     public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
     public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
 
+    public static final String CLASS_ORDERED = "ordered";
+
     public static final String WHICH = "which";
 
     public static final String WHAT = "what";

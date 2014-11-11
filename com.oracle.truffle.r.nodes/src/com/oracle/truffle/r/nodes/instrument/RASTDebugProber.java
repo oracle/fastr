@@ -63,11 +63,7 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
                     }
 
                 }
-            } else {
-            }
-            if (FastROptions.Debug.getValue()) {
-                System.out.printf("Node %s is instrumentable: %b%n", iNode.toString(), instrumentable);
-            }
+            } 
         }
         return true;
     }

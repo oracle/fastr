@@ -46,19 +46,20 @@ public interface RAttributable {
 
     /**
      * Set the attribute {@code name} to {@code value}, overwriting any existing value. This is
-     * generic; a class may need to override this to handle certain attributes specially,
+     * generic; a class may need to override this to handle certain attributes specially.
      */
-    default void setAttr(String name, Object value) {
+    default RAttributable setAttr(String name, Object value) {
         RAttributes attributes = getAttributes();
         if (attributes == null) {
             attributes = initAttributes();
         }
         attributes.put(name, value);
+        return this;
     }
 
     /**
      * Remove the attribute {@code name}. No error if {@code name} is not an attribute. This is
-     * generic; a class may need to override this to handle certain attributes specially,
+     * generic; a class may need to override this to handle certain attributes specially.
      */
     default void removeAttr(String name) {
         RAttributes attributes = getAttributes();
