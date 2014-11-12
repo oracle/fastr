@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.io.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
  */
 public class ForeignFunctions {
     public abstract static class FortranCAdapter extends RBuiltinNode {
-        protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
+        @CompilationFinal protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
         protected final BranchProfile errorProfile = BranchProfile.create();
 

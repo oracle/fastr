@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,7 +34,7 @@ public final class RError extends RuntimeException {
         private static final long serialVersionUID = 1L;
 
         private final RError.Message msg;
-        private final Object[] args;
+        @CompilationFinal private final Object[] args;
 
         protected RErrorException(RError.Message msg, Object[] args) {
             super(RError.formatMessage(msg, args));

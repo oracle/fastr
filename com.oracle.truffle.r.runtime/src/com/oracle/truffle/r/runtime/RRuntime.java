@@ -14,7 +14,7 @@ package com.oracle.truffle.r.runtime;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -77,7 +77,7 @@ public class RRuntime {
     public static final String CLASS_LANGUAGE = new String("call");
     public static final String CLASS_EXPRESSION = new String("expression");
 
-    public static final String[] STRING_ARRAY_SENTINEL = new String[0];
+    @CompilationFinal public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
 
     public static final String NAMES_ATTR_KEY = new String("names");
@@ -97,8 +97,8 @@ public class RRuntime {
     public static final String PREVIOUS_ATTR_KEY = "previous";
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
-    public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
-    public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
+    @CompilationFinal public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
+    @CompilationFinal public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
 
     public static final String CLASS_ORDERED = "ordered";
 

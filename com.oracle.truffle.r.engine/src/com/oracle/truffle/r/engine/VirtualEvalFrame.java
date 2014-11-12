@@ -24,6 +24,7 @@ package com.oracle.truffle.r.engine;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
 
     private final MaterializedFrame originalFrame;
-    private final Object[] arguments;
+    @CompilationFinal private final Object[] arguments;
 
     private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
         this.originalFrame = originalFrame;

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -39,13 +40,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  */
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
-    private static final String[] VARS = new String[]{
+    @CompilationFinal private static final String[] VARS = new String[]{
         ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform", ".Library", ".LibrarySite"
     };
     // @formatter:on
 
     // @formatter:off
-    private static final String[] PLATFORM_NAMES = new String[] {
+    @CompilationFinal private static final String[] PLATFORM_NAMES = new String[] {
         "OS.type", "file.sep", "dynlib.ext", "GUI", "endian", "pkgType", "path.sep", "r_arch"
     };
     // @formatter:on
@@ -114,7 +115,7 @@ public class BaseVariables implements RPackageVariables.Handler {
         initialized++;
     }
 
-    private static final String[] MACHINE_NAMES = new String[] {
+    @CompilationFinal private static final String[] MACHINE_NAMES = new String[] {
         "double.eps",            "double.neg.eps",        "double.xmin",
         "double.xmax",           "double.base",           "double.digits",
         "double.rounding",       "double.guard",          "double.ulp.digits",

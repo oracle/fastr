@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -33,7 +33,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     private double[] data;
 
-    private static final String[] implicitClassHrDyn = new String[]{"", RType.Complex.getName()};
+    @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Complex.getName()};
 
     RComplexVector(double[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length >> 1, dims, names);

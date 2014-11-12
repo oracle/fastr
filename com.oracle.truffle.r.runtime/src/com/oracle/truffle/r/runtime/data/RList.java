@@ -34,7 +34,7 @@ public final class RList extends RVector implements RAbstractVector {
 
     private Object[] data;
 
-    private static final String[] implicitClassHrDyn = {"", RType.List.getName()};
+    @CompilationFinal private static final String[] implicitClassHrDyn = {"", RType.List.getName()};
 
     @CompilationFinal public String elementNamePrefix;
 

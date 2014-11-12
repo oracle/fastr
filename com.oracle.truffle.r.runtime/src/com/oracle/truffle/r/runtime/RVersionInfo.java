@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
+
 public enum RVersionInfo {
     // @formatter:off
     Platform(),
@@ -38,9 +40,9 @@ public enum RVersionInfo {
     VersionString("version.string", RVersionNumber.VERSION_STRING);
     // @formatter:on
 
-    private static final RVersionInfo[] VALUES = RVersionInfo.values();
-    private static final String[] LIST_VALUES = new String[VALUES.length];
-    private static final String[] LIST_NAMES = new String[VALUES.length];
+    @CompilationFinal private static final RVersionInfo[] VALUES = RVersionInfo.values();
+    @CompilationFinal private static final String[] LIST_VALUES = new String[VALUES.length];
+    @CompilationFinal private static final String[] LIST_NAMES = new String[VALUES.length];
 
     private final String listName;
     private String value;
