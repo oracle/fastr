@@ -20,9 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.shell.graphics;
 
-class MockGraphicsDevices implements GraphicsDevice {
+import com.oracle.truffle.r.shell.graphics.core.GraphicsDevice;
+
+public class MockGraphicsDevices implements GraphicsDevice {
     @Override
     public void deactivate() {
 
