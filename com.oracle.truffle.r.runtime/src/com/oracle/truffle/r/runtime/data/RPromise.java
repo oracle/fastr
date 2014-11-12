@@ -224,24 +224,28 @@ public class RPromise extends RLanguageRep {
         private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
 
         private final ValueProfile valueProfile = ValueProfile.createClassProfile();
+
+        // Eager
+        private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
+        private final BranchProfile fallbackProfile = BranchProfile.create();
     }
 
-    public boolean isInlined(PromiseProfile profile) {
+    public final boolean isInlined(PromiseProfile profile) {
         return profile.isInlinedProfile.profile(evalPolicy == EvalPolicy.INLINED);
     }
 
     /**
      * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
      */
-    public boolean isDefault(PromiseProfile profile) {
+    public final boolean isDefault(PromiseProfile profile) {
         return profile.isDefaultProfile.profile(type == PromiseType.ARG_DEFAULT);
     }
 
-    public boolean isNonArgument() {
+    public final boolean isNonArgument() {
         return type == PromiseType.NO_ARG;
     }
 
-    public boolean isNullFrame(PromiseProfile profile) {
+    public final boolean isNullFrame(PromiseProfile profile) {
         return profile.isFrameEnvProfile.profile(execFrame == null);
     }
 
@@ -256,7 +260,7 @@ public class RPromise extends RLanguageRep {
      * @param frame The {@link VirtualFrame} in which the evaluation of this promise is forced
      * @return The value this promise resolves to
      */
-    public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
+    public final Object evaluate(VirtualFrame frame, PromiseProfile profile) {
         SourceSection callSrc = null;
         if (frame != null) {
             callSrc = RArguments.getCallSourceSection(frame);
@@ -264,7 +268,7 @@ public class RPromise extends RLanguageRep {
         return doEvaluate(frame, profile, callSrc);
     }
 
-    protected Object doEvaluate(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
+    protected final Object doEvaluate(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
         CompilerAsserts.compilationConstant(profile);
         if (isEvaluated(profile)) {
             return value;
@@ -294,7 +298,7 @@ public class RPromise extends RLanguageRep {
      *
      * @param newValue
      */
-    public void setValue(Object newValue, PromiseProfile profile) {
+    public final void setValue(Object newValue, PromiseProfile profile) {
         Object profiledValue = profile.valueProfile.profile(newValue);
         this.value = profiledValue;
         this.isEvaluated = true;
@@ -315,21 +319,17 @@ public class RPromise extends RLanguageRep {
      * @return The value this Promise represents
      */
     protected final Object generateValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
-        switch (profile.optTypeProfile.profile(optType)) {
-            case DEFAULT:
-                return defaultGenerateValue(frame, profile, callSrc);
-
-            case PROMISED:
-            case EAGER:
-                EagerPromise eager = (EagerPromise) this;
-                return eager.eagerGenerateValue(frame, profile, callSrc);
-
-            case VARARG:
-                VarargPromise var = (VarargPromise) this;
-                return var.varargGenerateValue(profile, callSrc);
-
-            default:
-                throw RInternalError.shouldNotReachHere();
+        OptType profiledOptType = profile.optTypeProfile.profile(optType);
+        if (profiledOptType == OptType.DEFAULT) {
+            return defaultGenerateValue(frame, profile, callSrc);
+        } else if (profiledOptType == OptType.PROMISED || profiledOptType == OptType.EAGER) {
+            EagerPromise eager = (EagerPromise) this;
+            return eager.eagerGenerateValue(frame, profile, callSrc);
+        } else if (profiledOptType == OptType.VARARG) {
+            VarargPromise var = (VarargPromise) this;
+            return var.varargGenerateValue(profile, callSrc);
+        } else {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 
@@ -346,13 +346,13 @@ public class RPromise extends RLanguageRep {
     }
 
     @TruffleBoundary
-    protected Object doEvalArgument(SourceSection callSrc) {
+    protected final Object doEvalArgument(SourceSection callSrc) {
         assert execFrame != null;
         return RContext.getEngine().evalPromise(this, callSrc);
     }
 
     @TruffleBoundary
-    protected Object doEvalArgument(MaterializedFrame frame) {
+    protected final Object doEvalArgument(MaterializedFrame frame) {
         return RContext.getEngine().evalPromise(this, frame);
     }
 
@@ -389,6 +389,7 @@ public class RPromise extends RLanguageRep {
      *         {@link #deoptimize()}d.
      */
     @TruffleBoundary
+    // Deoptimize because of frame slot access
     public static boolean deoptimizeFrame(MaterializedFrame frame) {
         boolean deoptOne = false;
         for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
@@ -442,7 +443,7 @@ public class RPromise extends RLanguageRep {
      * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
      *         directly inside the AST.
      */
-    public boolean isInOriginFrame(VirtualFrame frame, PromiseProfile profile) {
+    public final boolean isInOriginFrame(VirtualFrame frame, PromiseProfile profile) {
         if (isInlined(profile)) {
             return true;
         }
@@ -462,14 +463,14 @@ public class RPromise extends RLanguageRep {
      *         is provided!
      */
     @Override
-    public Object getRep() {
+    public final Object getRep() {
         return super.getRep();
     }
 
     /**
      * @return {@link #closure}
      */
-    public Closure getClosure() {
+    public final Closure getClosure() {
         return closure;
     }
 
@@ -481,14 +482,14 @@ public class RPromise extends RLanguageRep {
      * @see #materialize()
      * @see #execFrame
      */
-    public MaterializedFrame getFrame() {
+    public final MaterializedFrame getFrame() {
         return execFrame;
     }
 
     /**
      * @return The raw {@link #value}.
      */
-    public Object getValue() {
+    public final Object getValue() {
         assert isEvaluated;
         return value;
     }
@@ -496,8 +497,12 @@ public class RPromise extends RLanguageRep {
     /**
      * Returns {@code true} if this promise has been evaluated?
      */
-    public boolean isEvaluated() {
+    public final boolean isEvaluated() {
         return isEvaluated;
+    }
+
+    public final OptType getOptType() {
+        return optType;
     }
 
     /**
@@ -527,7 +532,7 @@ public class RPromise extends RLanguageRep {
     @Override
     @TruffleBoundary
     public String toString() {
-        return "[" + evalPolicy + ", " + type + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + evalPolicy + ", " + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
     // TODO @ValueType annotation necessary here?
@@ -554,16 +559,17 @@ public class RPromise extends RLanguageRep {
         }
 
         protected Object eagerGenerateValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
-            if (deoptimized) {
+            if (profile.isDeoptimizedProfile.profile(deoptimized)) {
                 // execFrame already materialized, feedback already given. Now we're a
                 // plain'n'simple RPromise
                 return super.defaultGenerateValue(frame, profile, callSrc);
             } else if (assumption.isValid()) {
-                feedback.onSuccess();
+                feedback.onSuccess(this);
 
-                return genEagerValue(frame, profile, callSrc);
+                return genEagerValue(profile, callSrc);
             } else {
-                feedback.onFailure();
+                profile.fallbackProfile.enter();
+                feedback.onFailure(this);
 
                 // Fallback: eager evaluation failed, now take the slow path
                 materialize();
@@ -573,30 +579,23 @@ public class RPromise extends RLanguageRep {
             }
         }
 
-        private Object genEagerValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
-            switch (profile.optTypeProfile.profile(optType)) {
-                case EAGER:
-                    return eagerGenEagerValue(frame, profile);
-
-                case PROMISED:
-                    PromisedPromise p = (PromisedPromise) this;
-                    return p.promisedGenEagerValue(profile, callSrc);
-
-                default:
-                    throw RInternalError.shouldNotReachHere();
+        private Object genEagerValue(PromiseProfile profile, SourceSection callSrc) {
+            OptType profieldOptType = profile.optTypeProfile.profile(optType);
+            if (profieldOptType == OptType.EAGER) {
+                return eagerValue;  // eagerGenEagerValue(frame, profile);
+            } else if (profieldOptType == OptType.PROMISED) {
+                PromisedPromise p = (PromisedPromise) this;
+                return p.promisedGenEagerValue(profile, callSrc);
+            } else {
+                throw RInternalError.shouldNotReachHere();
             }
-        }
-
-        @SuppressWarnings("unused")
-        protected Object eagerGenEagerValue(VirtualFrame frame, PromiseProfile profile) {
-            return eagerValue;
         }
 
         @Override
         public boolean deoptimize() {
             if (!deoptimized) {
                 deoptimized = true;
-                feedback.onFailure();
+                feedback.onFailure(this);
                 materialize();
                 return false;
             }
@@ -648,9 +647,9 @@ public class RPromise extends RLanguageRep {
     }
 
     public interface EagerFeedback {
-        void onSuccess();
+        void onSuccess(RPromise promise);
 
-        void onFailure();
+        void onFailure(RPromise promise);
     }
 
     /**
@@ -702,7 +701,6 @@ public class RPromise extends RLanguageRep {
          *         {@link REnvironment} set!
          */
         public RPromise createPromiseDefault() {
-            assert type == PromiseType.ARG_SUPPLIED;
             return RPromise.create(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultClosure);
         }
 
@@ -732,13 +730,14 @@ public class RPromise extends RLanguageRep {
         }
 
         /**
+         * @param eagerValue The eagerly evaluated value
+         * @param assumption The {@link Assumption} that eagerValue is still valid
          * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
          *            until evaluation
-         * @return An {@link EagerPromise} (which needs to be fully fixed after the call!)
+         * @return An {@link EagerPromise}
          */
-        public RPromise createEagerDefaultPromise(int nFrameId, EagerFeedback feedback) {
-            // TODO Does this work??
-            return new EagerPromise(type, OptType.EAGER, defaultClosure, (Object) null, (Assumption) null, nFrameId, feedback);
+        public RPromise createEagerDefaultPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            return new EagerPromise(type, OptType.EAGER, defaultClosure, eagerValue, assumption, nFrameId, feedback);
         }
 
         public RPromise createVarargPromise(RPromise promisedVararg) {

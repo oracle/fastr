@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -31,18 +33,15 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.UnResolvedReadLocalVariableNode;
+import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
@@ -96,7 +95,7 @@ public abstract class PromiseNode extends RNode {
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
                     if (FastROptions.EagerEvalVariables.getValue() && isVariableArgument(expr)) {
-                        pn = new OptVariablePromiseNode(factory, (ReadVariableNode) expr);
+                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
                         break;
                     }
 
@@ -115,38 +114,6 @@ public abstract class PromiseNode extends RNode {
 
         pn.assignSourceSection(src);
         return pn;
-    }
-
-    private static RNode unfold(Object argObj) {
-        RNode arg = (RNode) argObj;
-        if (arg instanceof WrapArgumentNode) {
-            return ((WrapArgumentNode) arg).getOperand();
-        }
-        return arg;
-    }
-
-    /**
-     * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
-     * does not need to handle "..." as special case (which might result in a
-     * {@link ConstantMissingNode} if empty), see {@link #isVararg(RNode)} for that.
-     *
-     * @param expr
-     * @return Whether the given {@link RNode} is a {@link ConstantNode}
-     */
-    private static boolean isConstantArgument(RNode expr) {
-        return expr instanceof ConstantNode;
-    }
-
-    /**
-     * @param expr
-     * @return Whether the given {@link RNode} is a {@link ReadVariableNode}
-     *
-     * @see FastROptions#EagerEvalVariables
-     */
-    private static boolean isVariableArgument(RNode expr) {
-        // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
-        // complex (time and space)!
-        return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).getForcePromise();
     }
 
     /**
@@ -189,112 +156,28 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * A optimizing {@link PromiseNode}: It evaluates a constant directly.
-     */
-    private static final class OptConstantPromiseNode extends PromiseNode {
-
-        @Child private RNode constantExpr;
-        @CompilationFinal private boolean isEvaluated = false;
-        @CompilationFinal private Object constant = null;
-
-        private OptConstantPromiseNode(RPromiseFactory factory) {
-            super(factory);
-            this.constantExpr = (RNode) factory.getExpr();
-        }
-
-        /**
-         * Creates a new {@link RPromise} every time.
-         */
-        @Override
-        public Object execute(VirtualFrame frame) {
-            if (!isEvaluated) {
-                // Eval constant on first time and make it compile time constant afterwards
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                constant = constantExpr.execute(frame);
-                isEvaluated = true;
-            }
-
-            return factory.createArgEvaluated(constant);
-        }
-    }
-
-    /**
      * TODO Expand!
      */
-    private static final class OptVariablePromiseNode extends PromiseNode implements EagerFeedback {
-        @SuppressWarnings("unused") private final ReadVariableNode originalRvn;
-        @Child private FrameSlotNode frameSlotNode;
-        @Child private PromisedNode fallback = null;
-        @Child private ReadVariableNode readNode;
+    private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariablePromiseNode(RPromiseFactory factory, ReadVariableNode rvn) {
-            super(factory);
-            assert rvn.getForcePromise() == false;  // Should be caught by optimization check
-            this.originalRvn = rvn;
-            this.frameSlotNode = FrameSlotNode.create(rvn.getSymbolName(), false);
-            this.readNode = UnResolvedReadLocalVariableNode.create(rvn.getSymbol(), rvn.getMode(), rvn.getCopyValue(), rvn.getReadMissing());
+        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn) {
+            super(factory, rvn);
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            // If the frame slot we're looking for is not present yet, wait for it!
-            if (!frameSlotNode.hasValue(frame)) {
-                // We don't want to rewrite, as the the frame slot might show up later on (after 1.
-                // execution), which might still be worth to optimize
-                return checkFallback().execute(frame);
-            }
-            FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
-
-            // Check if we may apply eager evaluation on this frame slot
-            Assumption notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
-            if (!notChangedNonLocally.isValid()) {
-                // Cannot apply optimizations, as the value to it got invalidated
-                return rewriteToPromisedNode().execute(frame);
-            }
-
-            // Execute eagerly
-            Object result = null;
-            try {
-                // This reads only locally, and frameSlotNode.hasValue that there is the proper
-                // frameSlot there.
-                result = readNode.execute(frame);
-            } catch (Throwable t) {
-                // If any error occurred, we cannot be sure what to do. Instead of trying to be
-                // clever, we conservatively rewrite to default PromisedNode.
-                return rewriteToPromisedNode().execute(frame);
-            }
-
-            // Create EagerPromise with the eagerly evaluated value under the assumption that the
-            // value won't be altered until 1. read
-            int frameId = RArguments.getDepth(frame);
-            if (result instanceof RPromise) {
-                return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, frameId, this);
-            } else {
-                return factory.createEagerSuppliedPromise(result, notChangedNonLocally, frameId, this);
-            }
+        protected RNode createFallback() {
+            return new PromisedNode(factory);
         }
 
-        private PromisedNode checkFallback() {
-            if (fallback == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                insert(fallback = new PromisedNode(factory));
-            }
-            return fallback;
+// @TruffleBoundary
+        public void onSuccess(RPromise promise) {
+// System.err.println("Opt SUCCESS: " + promise.getOptType());
         }
 
-        private PromiseNode rewriteToPromisedNode() {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            checkFallback();
-            return replace(fallback);
-        }
-
-        @TruffleBoundary
-        public void onSuccess() {
-// System.out.println("Successfully optimized read from '" + symbol.getName() + "'");
-        }
-
-        public void onFailure() {
-
+// @TruffleBoundary
+        public void onFailure(RPromise promise) {
+// System.err.println("Opt FAILURE: " + promise.getOptType());
+            rewriteToFallback();
         }
     }
 

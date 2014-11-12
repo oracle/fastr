@@ -77,7 +77,30 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
+    public static void checkAndInvalidate(VirtualFrame curFrame, FrameSlot slot, BranchProfile invalidateProfile) {
+        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
+
+        // Check whether current frame is used outside a regular stack
+        if (RArguments.getIsIrregular(curFrame)) {
+            // False positive: Also invalidates a slot in the current active frame if that one is
+            // used inside eval or the like
+            invalidateProfile.enter();
+            getMonitor(slot).invalidate();
+        }
+    }
+
     public static void checkAndInvalidate(Frame curFrame, FrameSlot slot) {
+        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
+
+        // Check whether current frame is used outside a regular stack
+        if (RArguments.getIsIrregular(curFrame)) {
+            // False positive: Also invalidates a slot in the current active frame if that one is
+            // used inside eval or the like
+            getMonitor(slot).invalidate();
+        }
+    }
+
+    public static void checkAndInvalidate(VirtualFrame curFrame, FrameSlot slot) {
         assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
 
         // Check whether current frame is used outside a regular stack

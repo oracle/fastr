@@ -44,7 +44,11 @@ public class PromiseHelper {
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
     public static Object evaluate(VirtualFrame frame, InlineCacheNode<VirtualFrame, RNode> expressionInlineCache, RPromise promise, PromiseProfile profile) {
-        if (promise.isEvaluated(profile) || promise.isEagerPromise(profile) || !promise.isInOriginFrame(frame, profile)) {
+        if (promise.isEvaluated(profile)) {
+            return promise.getValue();
+        }
+
+        if (promise.isEagerPromise(profile) || !promise.isInOriginFrame(frame, profile)) {
             // Evaluate eager Promises directly; at the risk that its assumption does not hold and
             // expensive evaluation is necessary
             return promise.evaluate(frame, profile);

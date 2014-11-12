@@ -40,8 +40,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariable
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
