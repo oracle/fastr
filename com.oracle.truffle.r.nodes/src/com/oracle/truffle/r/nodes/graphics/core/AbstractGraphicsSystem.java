@@ -20,30 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Map;
+public abstract class AbstractGraphicsSystem implements GraphicsSystem {
+    private final GraphicsSystemParameters graphicsSystemParameters = new GraphicsSystemParameters();
 
-class GraphicsSystemParameters {
-    private final Map<GraphicsDevice, HashMap<String, Object>> parametersByDevices = new IdentityHashMap<>();
-
-    void addParameterForDevice(GraphicsDevice graphicsDevice, String parameterName, Object parameterValue) {
-        HashMap<String, Object> parameters = parametersByDevices.get(graphicsDevice);
-        if (parameters == null) {
-            parameters = new HashMap<>();
-            parametersByDevices.put(graphicsDevice, parameters);
-        }
-        parameters.put(parameterName, parameterValue);
-    }
-
-    Object getParameterForDevice(GraphicsDevice graphicsDevice, int parameterName) {
-        HashMap<String, Object> parameters = parametersByDevices.get(graphicsDevice);
-        return parameters == null ? null : parameters.get(parameterName);
-    }
-
-    void removeAllParametersForDevice(GraphicsDevice graphicsDevice) {
-        parametersByDevices.remove(graphicsDevice);
+    protected GraphicsSystemParameters getGraphicsSystemParameters() {
+        return graphicsSystemParameters;
     }
 }

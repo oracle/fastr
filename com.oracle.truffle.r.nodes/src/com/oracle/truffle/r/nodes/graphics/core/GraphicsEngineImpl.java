@@ -20,13 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core;
 
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.shell.graphics.MockGraphicsDevices;
+import com.oracle.truffle.r.nodes.graphics.MockGraphicsDevices;
 
-import static com.oracle.truffle.r.shell.graphics.core.GraphicsEvent.GE_FINAL_STATE;
-import static com.oracle.truffle.r.shell.graphics.core.GraphicsEvent.GE_INIT_STATE;
+import static com.oracle.truffle.r.nodes.graphics.core.GraphicsEvent.GE_FINAL_STATE;
+import static com.oracle.truffle.r.nodes.graphics.core.GraphicsEvent.GE_INIT_STATE;
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {
@@ -177,7 +177,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     public GraphicsDevice getCurrentGraphicsDevice() {
-        if (currentGraphicsDevice == null) {
+        if (isNullDeviceIsCurrent()) {
             try {
                 // todo transcribe device installation from GNUR GEcurrentDevice (devices.c)
                 installCurrentGraphicsDevice();
@@ -186,6 +186,10 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
             }
         }
         return currentGraphicsDevice;
+    }
+
+    private boolean isNullDeviceIsCurrent(){
+        return currentGraphicsDevice == getNullGraphicsDevice();
     }
 
     private void installCurrentGraphicsDevice() throws Exception {

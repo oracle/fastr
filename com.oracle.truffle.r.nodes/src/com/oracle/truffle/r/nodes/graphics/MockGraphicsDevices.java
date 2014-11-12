@@ -20,9 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.graphics;
 
-public enum GraphicsEvent {
-    GE_INIT_STATE,
-    GE_FINAL_STATE
+import com.oracle.truffle.r.nodes.graphics.core.GraphicsDevice;
+
+public class MockGraphicsDevices implements GraphicsDevice {
+    @Override
+    public void deactivate() {
+
+    }
+
+    @Override
+    public void activate() {
+
+    }
+
+    @Override
+    public void close() {
+
+    }
 }

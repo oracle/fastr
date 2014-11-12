@@ -20,12 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core;
 
-public interface GraphicsDevice {
-    void deactivate();
+final class NullGraphicsDevice implements GraphicsDevice {
+    private static final NullGraphicsDevice instance = new NullGraphicsDevice();
 
-    void activate();
+    static NullGraphicsDevice getInstance() {
+        return instance;
+    }
 
-    void close();
+    @Override
+    public void deactivate() {
+        throw new IllegalStateException("Call to 'deactivate' of Null-device");
+    }
+
+    @Override
+    public void activate() {
+        throw new IllegalStateException("Call to 'activate' of Null-device");
+    }
+
+    @Override
+    public void close() {
+        throw new IllegalStateException("Call to 'close' of Null-device");
+    }
 }

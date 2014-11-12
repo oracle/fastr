@@ -20,12 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core;
 
-public abstract class AbstractGraphicsSystem implements GraphicsSystem {
-    private final GraphicsSystemParameters graphicsSystemParameters = new GraphicsSystemParameters();
+public interface GraphicsDevice {
+    void deactivate();
 
-    protected GraphicsSystemParameters getGraphicsSystemParameters() {
-        return graphicsSystemParameters;
-    }
+    void activate();
+
+    void close();
 }

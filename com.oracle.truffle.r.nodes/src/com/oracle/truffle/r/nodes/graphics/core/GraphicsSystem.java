@@ -20,23 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics;
+package com.oracle.truffle.r.nodes.graphics.core;
 
-import com.oracle.truffle.r.shell.graphics.core.GraphicsDevice;
+public interface GraphicsSystem {
+    GraphicsEventsListener getGraphicsEventsListener();
 
-public class MockGraphicsDevices implements GraphicsDevice {
-    @Override
-    public void deactivate() {
-
-    }
-
-    @Override
-    public void activate() {
-
-    }
-
-    @Override
-    public void close() {
-
+    public interface GraphicsEventsListener {
+        void onEvent(GraphicsEvent graphicsEvent, GraphicsDevice graphicsDevice);
     }
 }

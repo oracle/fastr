@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.builtin.graphics;
 
-final class NullGraphicsDevice implements GraphicsDevice {
-    private static final NullGraphicsDevice instance = new NullGraphicsDevice();
+import com.oracle.truffle.r.nodes.graphics.core.AbstractGraphicsSystem;
 
-    static NullGraphicsDevice getInstance() {
-        return instance;
-    }
-
-    @Override
-    public void deactivate() {
-        throw new IllegalStateException("Call to 'deactivate' of Null-device");
-    }
+/**
+ * Denotes to the 'base' in GNUR terms graphics system
+ */
+public class BaseGraphicsSystem extends AbstractGraphicsSystem {
+    private final GraphicsEventsListener graphicsEventsListener = (graphicsEvent, graphicsDevice) -> {};
 
     @Override
-    public void activate() {
-        throw new IllegalStateException("Call to 'activate' of Null-device");
-    }
-
-    @Override
-    public void close() {
-        throw new IllegalStateException("Call to 'close' of Null-device");
+    public GraphicsEventsListener getGraphicsEventsListener() {
+        return graphicsEventsListener;
     }
 }

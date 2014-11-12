@@ -20,36 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core;
 
-public interface GraphicsEngine {
-    int registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception;
-
-    // todo replace index with object ?
-    void unRegisterGraphicsSystem(int graphicsSystemId);
-
-    void registerGraphicsDevice(GraphicsDevice newGraphicsDevice) throws Exception;
-
-    void unRegisterGraphicsDevice(GraphicsDevice deviceToUnregister);
-
-    int getGraphicsDevicesAmount();
-
-    boolean noGraphicsDevices();
-
-    /**
-     * Tries to install one if there is no current device
-     *
-     * @return current {@link GraphicsDevice}
-     */
-    GraphicsDevice getCurrentGraphicsDevice();
-
-    /**
-     * @return {@link NullGraphicsDevice} if unable to find other
-     */
-    GraphicsDevice getGraphicsDeviceNextTo(GraphicsDevice graphicsDevice);
-
-    /**
-     * @return {@link NullGraphicsDevice} if unable to find other
-     */
-    GraphicsDevice getGraphicsDevicePrevTo(GraphicsDevice graphicsDevice);
+public enum GraphicsEvent {
+    GE_INIT_STATE,
+    GE_FINAL_STATE
 }

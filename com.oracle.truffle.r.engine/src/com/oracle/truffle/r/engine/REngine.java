@@ -26,6 +26,10 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.*;
 
+import com.oracle.truffle.r.nodes.builtin.graphics.BaseGraphicsSystem;
+import com.oracle.truffle.r.nodes.builtin.graphics.GraphicsPackage;
+import com.oracle.truffle.r.nodes.graphics.core.GraphicsEngine;
+import com.oracle.truffle.r.nodes.graphics.core.GraphicsEngineImpl;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -66,6 +70,8 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
     @CompilationFinal private RFunction evalFunction;
+
+    private static final GraphicsEngine graphicsEngine = new GraphicsEngineImpl();
 
     private REngine() {
     }
@@ -113,7 +119,17 @@ public final class REngine implements RContext.Engine {
         if (userProfile != null) {
             singleton.parseAndEval("<user_profile>", userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
         }
+        registerBaseGraphicsSystem();
         return globalFrame;
+    }
+
+    private static void registerBaseGraphicsSystem() {
+        try {
+            graphicsEngine.registerGraphicsSystem(new BaseGraphicsSystem());
+        } catch (Exception e) {
+            ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
+            consoleHandler.println("Unable to register base graphics system");
+        }
     }
 
     public static REngine getInstance() {
