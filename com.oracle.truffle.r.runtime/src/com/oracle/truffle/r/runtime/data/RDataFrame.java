@@ -142,4 +142,9 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         return vector.getElementIndexByNameInexact(name);
     }
 
+    @Override
+    public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        return RVector.setVectorClassAttr(vector, classAttr, this, null);
+    }
+
 }

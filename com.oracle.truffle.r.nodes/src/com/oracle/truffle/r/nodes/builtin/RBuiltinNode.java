@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -252,7 +252,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         @Children protected final RNode[] arguments;
 
         private final RBuiltinFactory builtin;
-        private final String[] suppliedArgsNames;
+        @CompilationFinal private final String[] suppliedArgsNames;
 
         public RCustomBuiltinNode(RBuiltinNode prev) {
             this(prev.getArguments(), prev.getBuiltin(), prev.getSuppliedArgsNames());

@@ -153,4 +153,9 @@ public final class RFactor implements RShareable, RAbstractContainer {
         vector.setLevels(newLevels);
     }
 
+    @Override
+    public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        return RVector.setVectorClassAttr(vector, classAttr, null, this);
+    }
+
 }

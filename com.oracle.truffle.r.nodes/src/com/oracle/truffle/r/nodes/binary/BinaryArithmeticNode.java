@@ -89,6 +89,28 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization
+    protected RLogicalVector doFactorOp(RFactor left, @SuppressWarnings("unused") RNull right) {
+        if (left.isOrdered()) {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
+
+        } else {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
+        }
+        return RDataFactory.createNAVector(left.getLength() == 0 ? 1 : left.getLength());
+    }
+
+    @Specialization
+    protected RLogicalVector doFactorOp(@SuppressWarnings("unused") RNull left, RFactor right) {
+        if (right.isOrdered()) {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
+
+        } else {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
+        }
+        return RDataFactory.createNAVector(right.getLength() == 0 ? 1 : right.getLength());
+    }
+
+    @Specialization
     protected RDoubleVector doLeftNull(RNull left, RAbstractIntVector right) {
         return doRightNull(right, left);
     }
@@ -101,6 +123,12 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @Specialization
     protected RDoubleVector doLeftNull(RNull left, RAbstractLogicalVector right) {
         return doRightNull(right, left);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "nonNumeric")
+    protected RComplexVector doLeftNull(RNull left, RAbstractVector right) {
+        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     @Specialization
@@ -133,30 +161,36 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
+    @Specialization(guards = "nonNumeric")
+    protected RComplexVector doRightNull(RAbstractVector left, RNull right) {
+        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+    }
+
+    @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector doRightNull(RNull left, RNull right) {
         return RDataFactory.createEmptyDoubleVector();
     }
 
-    @Specialization
-    protected Object doLeftString(RAbstractStringVector left, Object right) {
+    @Specialization(guards = "!isFactorRight")
+    protected Object doLeftString(RAbstractStringVector left, RAbstractContainer right) {
         return doRightString(right, left);
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected Object doRightString(Object left, RAbstractStringVector right) {
+    @Specialization(guards = "!isFactorLeft")
+    protected Object doRightString(RAbstractContainer left, RAbstractStringVector right) {
         throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
-    @Specialization
-    protected Object doLeftRaw(RAbstractRawVector left, Object right) {
+    @Specialization(guards = "!isFactorRight")
+    protected Object doLeftRaw(RAbstractRawVector left, RAbstractContainer right) {
         return doRightRaw(right, left);
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected Object doRightRaw(Object left, RAbstractRawVector right) {
+    @Specialization(guards = "!isFactorLeft")
+    protected Object doRightRaw(RAbstractContainer left, RAbstractRawVector right) {
         throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
@@ -490,6 +524,50 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return performComplexVectorOpSameLength(left, right);
     }
 
+    // factors
+
+    @Specialization
+    protected RLogicalVector doFactorOp(RFactor left, RAbstractContainer right) {
+        if (left.isOrdered()) {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
+
+        } else {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
+        }
+        return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
+    }
+
+    @Specialization
+    protected RLogicalVector doFactorOp(RAbstractContainer left, RFactor right) {
+        if (right.isOrdered()) {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
+
+        } else {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
+        }
+        return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
+    }
+
+    protected boolean nonNumeric(@SuppressWarnings("unused") RNull left, RAbstractContainer right) {
+        return right.getElementClass() == RString.class || right.getElementClass() == RRaw.class;
+    }
+
+    protected boolean nonNumeric(RAbstractContainer left) {
+        return left.getElementClass() == RString.class || left.getElementClass() == RRaw.class;
+    }
+
+    protected boolean isFactorLeft(RAbstractContainer left) {
+        return left.getElementClass() == RFactor.class;
+    }
+
+    protected boolean isFactorRight(@SuppressWarnings("unused") RAbstractStringVector left, RAbstractContainer right) {
+        return right.getElementClass() == RFactor.class;
+    }
+
+    protected boolean isFactorRight(@SuppressWarnings("unused") RAbstractRawVector left, RAbstractContainer right) {
+        return right.getElementClass() == RFactor.class;
+    }
+
     // implementation
 
     private void copyAttributes(RVector ret, RAbstractVector left, RAbstractVector right) {
@@ -672,8 +750,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);

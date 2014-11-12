@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  */
 public class EvalFunctions {
     public abstract static class EvalAdapter extends RBuiltinNode {
-        protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir", "enclosing"};
+        @CompilationFinal protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir", "enclosing"};
 
         @CompilationFinal private RFunction function;
 

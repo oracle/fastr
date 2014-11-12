@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -380,6 +381,7 @@ public final class REngine implements RContext.Engine {
             } catch (ControlFlowException cfe) {
                 throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
+            assert !FastROptions.CheckResultCompleteness.getValue() || checkResult(result);
             if (printResult) {
                 printResult(result);
             }
@@ -396,6 +398,13 @@ public final class REngine implements RContext.Engine {
             reportImplementationError(e);
         }
         return result;
+    }
+
+    private static boolean checkResult(Object result) {
+        if (result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+            assert ((RAbstractVector) result).checkCompleteness() : "vector: " + result + " is not complete, but isComplete flag is true";
+        }
+        return true;
     }
 
     private static final PromiseProfile globalPromiseProfile = new PromiseProfile();

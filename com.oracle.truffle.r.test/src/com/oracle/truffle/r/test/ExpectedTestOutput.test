@@ -6285,6 +6285,27 @@ character(0)
 #{ toupper(c()) }
 character(0)
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCol
+#{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; col(ma) }
+      [,1] [,2]
+ [1,]    1    2
+ [2,]    1    2
+ [3,]    1    2
+ [4,]    1    2
+ [5,]    1    2
+ [6,]    1    2
+ [7,]    1    2
+ [8,]    1    2
+ [9,]    1    2
+[10,]    1    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCol
+#{ ma <- matrix(1:12, 3, 4) ; col(ma) }
+     [,1] [,2] [,3] [,4]
+[1,]    1    2    3    4
+[2,]    1    2    3    4
+[3,]    1    2    3    4
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
 #{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}
 [1]  7 19 31 43
@@ -7416,6 +7437,22 @@ Error in print(x, y) :
 #{ m <- matrix(1:9, nrow=3) ; diag(m) }
 [1] 1 5 9
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiff
+#{ diff(1:10, 2) }
+[1] 2 2 2 2 2 2 2 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiff
+#{ diff(1:10, 2, 2) }
+[1] 0 0 0 0 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiff
+#{ x <- cumsum(cumsum(1:10)) ; diff(x, differences = 2) }
+[1]  3  4  5  6  7  8  9 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiff
+#{ x <- cumsum(cumsum(1:10)) ; diff(x, lag = 2) }
+[1]   9  16  25  36  49  64  81 100
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
 #{ NCOL(1) }
 [1] 1
@@ -8329,10 +8366,22 @@ Error in class(x) <- "factor" :
   adding class "factor" to an invalid object
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-c(1L, 2L, 1L); class(x)<-c("factor", "ordered"); levels(x)<-c("a", "b"); x + "a" }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, "a") : + not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-c(1L, 2L, 1L); class(x)<-c("factor", "ordered"); levels(x)<-c("a", "b"); x > "a" }
 [1] NA NA NA
 Warning message:
 In Ops.factor(x, "a") : > not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-c(1L, 2L, 1L); class(x)<-c("ordered", "factor"); levels(x)<-c("a", "b"); x + "a" }
+[1] NA NA NA
+Warning message:
+In Ops.ordered(x, "a") : '+' is not meaningful for ordered factors
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-c(1L, 2L, 1L); class(x)<-c("ordered", "factor"); levels(x)<-c("a", "b"); x > "a" }
@@ -8353,6 +8402,18 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a")); is.atomic(x) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x + "a" }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, "a") : + not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a")); x + c("a", "b") }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, c("a", "b")) : + not meaningful for factors
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a")); x == "a" }
@@ -8414,6 +8475,12 @@ Levels: a b
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-factor(c("a", "b", "a"), ordered=TRUE); x + "a" }
+[1] NA NA NA
+Warning message:
+In Ops.ordered(x, "a") : '+' is not meaningful for ordered factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a"), ordered=TRUE); x > "a" }
 [1] FALSE  TRUE FALSE
 
@@ -8447,6 +8514,45 @@ In y[1] <- x :
 [1] c b a c
 Levels: a b c
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); y<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); x+y }
+[1] NA NA NA
+Warning message:
+In Ops.factor(x, y) : + not meaningful for factors
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); y<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); x==y }
+[1] TRUE TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(1.1,2.2,1.1), .Label=c("a", "b"), class = c('factor')); attributes(x) }
+$levels
+[1] "a" "b"
+
+$class
+[1] "factor"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(1.1,2.2,1.1), .Label=c("a", "b"), class = c('factor')); x }
+[1] a b a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(1.2,2.2,1.1), .Label=c("a", "b"), class = c('factor')); x }
+[1] a b a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(2.2,3.2,2.1), .Label=c("a", "b"), class = c('factor')); as.integer(x) }
+[1] 2 3 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ x<-structure(factor(c("a","b","c")), class=NULL); x }
+[1] 1 2 3
+attr(,"levels")
+[1] "a" "b" "c"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}
@@ -13321,6 +13427,33 @@ Error: object 'y' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
 #{ sort(c(3,10,2)) }
 [1]  2  3 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSplit
+#{ fu <- c(1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,1) ; split(1:20,fu) }
+$`1`
+[1]  1  4  7 10 13 16 19 20
+
+$`2`
+ [1]  2  3  5  6  8  9 11 12 14 15 17 18
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSplit
+#{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; split(ma, col(ma)) }
+$`1`
+ [1]  1  2  3  4  5  6  7  8  9 10
+
+$`2`
+ [1] 16  9  4  1  0  1  4  9 16 25
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSplit
+#{ split(1:10, 1:2) }
+$`1`
+[1] 1 3 5 7 9
+
+$`2`
+[1]  2  4  6  8 10
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSprintf
 #{ sprintf("%03d", 1:3) }

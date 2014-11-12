@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -54,7 +55,7 @@ public abstract class UseMethod extends RBuiltinNode {
     private abstract static class UseMethodNode extends RNode {
 
         @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
-        protected final String[] suppliedArgsNames;
+        @CompilationFinal protected final String[] suppliedArgsNames;
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
 

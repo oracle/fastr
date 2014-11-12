@@ -21,6 +21,7 @@ package com.oracle.truffle.r.nodes.builtin.stats;
 import static com.oracle.truffle.r.nodes.builtin.stats.StatsUtil.*;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,13 +41,13 @@ public abstract class Qgamma extends RBuiltinNode {
     // This is derived from distn.c.
 
     @Specialization
-    public double qgamma(double p, double shape, double scale, byte lowerTail, byte logP) {
+    protected double qgamma(double p, double shape, double scale, byte lowerTail, byte logP) {
         controlVisibility();
         return qgamma(p, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
     }
 
     @Specialization
-    public RDoubleVector qgamma(RDoubleVector p, double shape, double scale, byte lowerTail, byte logP) {
+    protected RDoubleVector qgamma(RDoubleVector p, double shape, double scale, byte lowerTail, byte logP) {
         controlVisibility();
         // TODO if need be, support iteration over multiple vectors (not just p)
         // TODO support NA
@@ -83,7 +84,11 @@ public abstract class Qgamma extends RBuiltinNode {
     /*
      * error for 0, 0.5, 1.0, 1.5, ..., 14.5, 15.0.
      */
-    private static final double[] sferr_halves = new double[]{0.0, /* n=0 - wrong, place holder only */
+    @CompilationFinal private static final double[] sferr_halves = new double[]{0.0, /*
+                                                                                      * n=0 - wrong,
+                                                                                      * place holder
+                                                                                      * only
+                                                                                      */
     0.1534264097200273452913848, /* 0.5 */
     0.0810614667953272582196702, /* 1.0 */
     0.0548141210519176538961390, /* 1.5 */
@@ -146,7 +151,7 @@ public abstract class Qgamma extends RBuiltinNode {
     // lgammacor
     //
 
-    private static final double[] ALGMCS = new double[]{+.1666389480451863247205729650822e+0, -.1384948176067563840732986059135e-4, +.9810825646924729426157171547487e-8,
+    @CompilationFinal private static final double[] ALGMCS = new double[]{+.1666389480451863247205729650822e+0, -.1384948176067563840732986059135e-4, +.9810825646924729426157171547487e-8,
                     -.1809129475572494194263306266719e-10, +.6221098041892605227126015543416e-13, -.3399615005417721944303330599666e-15, +.2683181998482698748957538846666e-17,
                     -.2868042435334643284144622399999e-19, +.3962837061046434803679306666666e-21, -.6831888753985766870111999999999e-23, +.1429227355942498147573333333333e-24,
                     -.3547598158101070547199999999999e-26, +.1025680058010470912000000000000e-27, -.3401102254316748799999999999999e-29, +.1276642195630062933333333333333e-30};
@@ -179,7 +184,7 @@ public abstract class Qgamma extends RBuiltinNode {
     // gammafn
     //
 
-    private static final double[] GAMCS = new double[]{+.8571195590989331421920062399942e-2, +.4415381324841006757191315771652e-2, +.5685043681599363378632664588789e-1,
+    @CompilationFinal private static final double[] GAMCS = new double[]{+.8571195590989331421920062399942e-2, +.4415381324841006757191315771652e-2, +.5685043681599363378632664588789e-1,
                     -.4219835396418560501012500186624e-2, +.1326808181212460220584006796352e-2, -.1893024529798880432523947023886e-3, +.3606925327441245256578082217225e-4,
                     -.6056761904460864218485548290365e-5, +.1055829546302283344731823509093e-5, -.1811967365542384048291855891166e-6, +.3117724964715322277790254593169e-7,
                     -.5354219639019687140874081024347e-8, +.9193275519859588946887786825940e-9, -.1577941280288339761767423273953e-9, +.2707980622934954543266540433089e-10,
@@ -776,7 +781,7 @@ public abstract class Qgamma extends RBuiltinNode {
 
     /* coeffs[i] holds (zeta(i+2)-1)/(i+2) , i = 0:(N-1), N = 40 : */
     private static final int N = 40;
-    private static final double[] coeffs = new double[]{0.3224670334241132182362075833230126e-0, 0.6735230105319809513324605383715000e-1, 0.2058080842778454787900092413529198e-1,
+    @CompilationFinal private static final double[] coeffs = new double[]{0.3224670334241132182362075833230126e-0, 0.6735230105319809513324605383715000e-1, 0.2058080842778454787900092413529198e-1,
                     0.7385551028673985266273097291406834e-2, 0.2890510330741523285752988298486755e-2, 0.1192753911703260977113935692828109e-2, 0.5096695247430424223356548135815582e-3,
                     0.2231547584535793797614188036013401e-3, 0.9945751278180853371459589003190170e-4, 0.4492623673813314170020750240635786e-4, 0.2050721277567069155316650397830591e-4,
                     0.9439488275268395903987425104415055e-5, 0.4374866789907487804181793223952411e-5, 0.2039215753801366236781900709670839e-5, 0.9551412130407419832857179772951265e-6,
@@ -1071,10 +1076,14 @@ public abstract class Qgamma extends RBuiltinNode {
         }
     }
 
-    private static final double[] coefs_a = new double[]{-1e99, /* placeholder used for 1-indexing */
+    @CompilationFinal private static final double[] coefs_a = new double[]{-1e99, /*
+                                                                                   * placeholder
+                                                                                   * used for
+                                                                                   * 1-indexing
+                                                                                   */
     2 / 3., -4 / 135., 8 / 2835., 16 / 8505., -8992 / 12629925., -334144 / 492567075., 698752 / 1477701225.};
 
-    private static final double[] coefs_b = new double[]{-1e99, /* placeholder */
+    @CompilationFinal private static final double[] coefs_b = new double[]{-1e99, /* placeholder */
     1 / 12., 1 / 288., -139 / 51840., -571 / 2488320., 163879 / 209018880., 5246819 / 75246796800., -534703531 / 902961561600.};
 
     /*
@@ -1397,14 +1406,15 @@ public abstract class Qgamma extends RBuiltinNode {
 
     private static final double SIXTEN = 16; /* Cutoff allowing exact "*" and "/" */
 
-    private static final double[] pba = new double[]{2.2352520354606839287, 161.02823106855587881, 1067.6894854603709582, 18154.981253343561249, 0.065682337918207449113};
-    private static final double[] pbb = new double[]{47.20258190468824187, 976.09855173777669322, 10260.932208618978205, 45507.789335026729956};
-    private static final double[] pbc = new double[]{0.39894151208813466764, 8.8831497943883759412, 93.506656132177855979, 597.27027639480026226, 2494.5375852903726711, 6848.1904505362823326,
-                    11602.651437647350124, 9842.7148383839780218, 1.0765576773720192317e-8};
-    private static final double[] pbd = new double[]{22.266688044328115691, 235.38790178262499861, 1519.377599407554805, 6485.558298266760755, 18615.571640885098091, 34900.952721145977266,
-                    38912.003286093271411, 19685.429676859990727};
-    private static final double[] pbp = new double[]{0.21589853405795699, 0.1274011611602473639, 0.022235277870649807, 0.001421619193227893466, 2.9112874951168792e-5, 0.02307344176494017303};
-    private static final double[] pbq = new double[]{1.28426009614491121, 0.468238212480865118, 0.0659881378689285515, 0.00378239633202758244, 7.29751555083966205e-5};
+    @CompilationFinal private static final double[] pba = new double[]{2.2352520354606839287, 161.02823106855587881, 1067.6894854603709582, 18154.981253343561249, 0.065682337918207449113};
+    @CompilationFinal private static final double[] pbb = new double[]{47.20258190468824187, 976.09855173777669322, 10260.932208618978205, 45507.789335026729956};
+    @CompilationFinal private static final double[] pbc = new double[]{0.39894151208813466764, 8.8831497943883759412, 93.506656132177855979, 597.27027639480026226, 2494.5375852903726711,
+                    6848.1904505362823326, 11602.651437647350124, 9842.7148383839780218, 1.0765576773720192317e-8};
+    @CompilationFinal private static final double[] pbd = new double[]{22.266688044328115691, 235.38790178262499861, 1519.377599407554805, 6485.558298266760755, 18615.571640885098091,
+                    34900.952721145977266, 38912.003286093271411, 19685.429676859990727};
+    @CompilationFinal private static final double[] pbp = new double[]{0.21589853405795699, 0.1274011611602473639, 0.022235277870649807, 0.001421619193227893466, 2.9112874951168792e-5,
+                    0.02307344176494017303};
+    @CompilationFinal private static final double[] pbq = new double[]{1.28426009614491121, 0.468238212480865118, 0.0659881378689285515, 0.00378239633202758244, 7.29751555083966205e-5};
 
     private static void doDel(double xpar, double x, double temp, double[] cum, double[] ccum, boolean logp, boolean lower, boolean upper) {
         double xsq = (long) (xpar * SIXTEN) / SIXTEN;

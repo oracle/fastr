@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -56,7 +57,7 @@ public final class VarArgsSignature {
     public static final RNode NO_VARARGS = ConstantNode.create(RMissing.instance);
     public static final VarArgsSignature TAKES_NO_VARARGS = new VarArgsSignature(null, 0);
 
-    private final RNode[] expressions;
+    @CompilationFinal private final RNode[] expressions;
     private final int times;
 
     private VarArgsSignature(RNode[] expressions, int times) {

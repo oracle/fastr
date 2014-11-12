@@ -20,37 +20,10 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class UnaryArithmetic extends Operation {
 
-    public static final UnaryArithmeticFactory NEGATE = new UnaryArithmeticFactory() {
-
-        @Override
-        public UnaryArithmetic create() {
-            return new Negate();
-        }
-    };
-
-    public static final UnaryArithmeticFactory ROUND = new UnaryArithmeticFactory() {
-
-        @Override
-        public UnaryArithmetic create() {
-            return new Round();
-        }
-    };
-
-    public static final UnaryArithmeticFactory FLOOR = new UnaryArithmeticFactory() {
-
-        @Override
-        public UnaryArithmetic create() {
-            return new Floor();
-        }
-    };
-
-    public static final UnaryArithmeticFactory CEILING = new UnaryArithmeticFactory() {
-
-        @Override
-        public UnaryArithmetic create() {
-            return new Ceiling();
-        }
-    };
+    public static final UnaryArithmeticFactory NEGATE = Negate::new;
+    public static final UnaryArithmeticFactory ROUND = Round::new;
+    public static final UnaryArithmeticFactory FLOOR = Floor::new;
+    public static final UnaryArithmeticFactory CEILING = Ceiling::new;
 
     public UnaryArithmetic() {
         super(false, false);

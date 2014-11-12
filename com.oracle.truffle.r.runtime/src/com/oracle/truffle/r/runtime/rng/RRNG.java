@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -67,7 +67,7 @@ public class RRNG {
         KNUTH_TAOCP2(false),
         LECUYER_CMRG(false);
 
-        static final Kind[] VALUES = values();
+        @CompilationFinal static final Kind[] VALUES = values();
 
         private final boolean available;
         GeneratorPrivate generator;
@@ -94,7 +94,7 @@ public class RRNG {
         INVERSION,
         KINDERMAN_RAMAGE;
 
-        static final NormKind[] VALUES = values();
+        @CompilationFinal static final NormKind[] VALUES = values();
 
     }
 
@@ -106,7 +106,7 @@ public class RRNG {
     private static final String RANDOM_SEED = ".Random.seed";
     public static final double I2_32M1 = 2.3283064365386963e-10;
     private static final double UINT_MAX = (double) Integer.MAX_VALUE * 2;
-    private static final int[] NO_SEEDS = new int[0];
+    @CompilationFinal private static final int[] NO_SEEDS = new int[0];
 
     /**
      * The (logically private) interface that a random number generator must implement.

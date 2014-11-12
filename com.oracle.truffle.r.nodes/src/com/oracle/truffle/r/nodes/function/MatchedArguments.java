@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -42,7 +43,7 @@ public final class MatchedArguments extends Arguments<RNode> {
 
     public static final class MatchedArgumentsNode extends Node {
         @Children private final RNode[] arguments;
-        private final String[] names;
+        @CompilationFinal private final String[] names;
 
         private MatchedArgumentsNode(RNode[] arguments, String[] names) {
             this.arguments = arguments;

@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
+
 /**
  * Support for recording the set of default R packages.
  */
@@ -39,7 +41,9 @@ public class RPackages {
         }
     }
 
+    @CompilationFinal 
     public static final String[] DEFAULT_PACKAGES = new String[]{"methods", "fastr", "stats", "utils", "graphics"};
+
     private static ArrayList<RPackage> packages = new ArrayList<>();
 
     /**

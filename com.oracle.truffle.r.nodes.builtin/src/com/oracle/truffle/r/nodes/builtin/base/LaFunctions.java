@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -47,7 +47,7 @@ public class LaFunctions {
     @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"})
     public abstract static class Rg extends RBuiltinNode {
 
-        private static final String[] NAMES = new String[]{"values", "vectors"};
+        @CompilationFinal private static final String[] NAMES = new String[]{"values", "vectors"};
 
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -134,7 +134,7 @@ public class LaFunctions {
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"})
     public abstract static class Qr extends RBuiltinNode {
 
-        private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
+        @CompilationFinal private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -314,7 +314,7 @@ public class LaFunctions {
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
             modulusVec.setAttr("logarithm", useLogIn);
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
-            RList.setClassAttr(result, DET_CLASS, null, null);
+            RList.setVectorClassAttr(result, DET_CLASS, null, null);
             return result;
         }
     }

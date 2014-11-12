@@ -3902,15 +3902,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x == \"a\" }");
-        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
 
         assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
-        assertEvalError("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x > \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
 
         assertEval("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
-        assertEvalError("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
 
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
@@ -3929,6 +3934,17 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ as.logical(factor(c(\"a\", \"b\", \"a\"))) }");
         assertEval("{ as.logical(factor(integer())) }");
+
+        assertEval("{ x<-structure(c(1.1,2.2,1.1), .Label=c(\"a\", \"b\"), class = c('factor')); attributes(x) }");
+        assertEval("{ x<-structure(c(1.1,2.2,1.1), .Label=c(\"a\", \"b\"), class = c('factor')); x }");
+        assertEval("{ x<-structure(c(1.2,2.2,1.1), .Label=c(\"a\", \"b\"), class = c('factor')); x }");
+        assertEval("{ x<-structure(c(2.2,3.2,2.1), .Label=c(\"a\", \"b\"), class = c('factor')); as.integer(x) }");
+
+        assertEval("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x==y }");
+        assertEvalWarning("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
+
+        assertEval("{ x<-structure(factor(c(\"a\",\"b\",\"c\")), class=NULL); x }");
+
     }
 
     @Test
@@ -3985,4 +4001,48 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-gl(2, 1, 20); print(x)}");
         assertEval("{x<-gl(2, 2, 20); print(x)}");
     }
+
+    @Test
+    public void testDiff() {
+        assertEval("{ diff(1:10, 2) }");
+        assertEval("{ diff(1:10, 2, 2) }");
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, lag = 2) }");
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, differences = 2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testInteraction() {
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
+    }
+
+    @Test
+    public void testSplit() {
+        assertEval("{ split(1:10, 1:2) }");
+        assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; split(ma, col(ma)) }");
+        assertEval("{ fu <- c(1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,1) ; split(1:20,fu) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSplitIgnore() {
+        // these require first-class levels access in factors
+        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
+        assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    }
+
+    @Test
+    public void testCol() {
+        assertEval("{ ma <- matrix(1:12, 3, 4) ; col(ma) }");
+        assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; col(ma) }");
+    }
+
+    @Test
+    @Ignore
+    public void testColIgnore() {
+        // reports wrong source section
+        assertEval("{ col(c(1,2,3)) }");
+    }
+
 }

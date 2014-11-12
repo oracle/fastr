@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -55,7 +56,7 @@ public abstract class DispatchedCallNode extends RNode {
         private final int depth;
         private final String genericName;
         private final String dispatchType;
-        private final Object[] args;
+        @CompilationFinal private final Object[] args;
 
         public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, Object[] args) {
             this.genericName = genericName;
