@@ -85,8 +85,7 @@ public final class RArguments {
     private static final int INDEX_N_ARGS = 4;
     private static final int INDEX_DEPTH = 5;
     private static final int INDEX_N_NAMES = 6;
-    private static final int INDEX_STEPPING = 7;
-    private static final int INDEX_ARGUMENTS = 8;
+    private static final int INDEX_ARGUMENTS = 7;
 
     private static final int S3_VAR_COUNT = 8;
     /*
@@ -103,7 +102,7 @@ public final class RArguments {
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
      * names.
      */
-    public static final int MINIMAL_ARRAY_LENGTH = INDEX_STEPPING + 1;
+    public static final int MINIMAL_ARRAY_LENGTH = INDEX_N_NAMES + 1;
 
     private static final ValueProfile materializedFrameProfile = ValueProfile.createClassProfile();
 
@@ -363,16 +362,6 @@ public final class RArguments {
         if (arguments[INDEX_FUNCTION] != null) {
             ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
         }
-    }
-
-    private static final Object STEPPING = new Object();
-
-    public static void setStepping(Frame frame, boolean stepping) {
-        getArgumentsWithEvalCheck(frame)[INDEX_STEPPING] = stepping ? STEPPING : null;
-    }
-
-    public static boolean getStepping(Frame frame) {
-        return getArgumentsWithEvalCheck(frame)[INDEX_STEPPING] == null ? false : true;
     }
 
     /**
