@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.instrument.debug.DebugHandling;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.*;
@@ -102,6 +103,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
+            if (!substituteFrame && RContext.getEngine().instrumentingEnabled()) {
+                DebugHandling.checkStep(frame, this);
+            }
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();

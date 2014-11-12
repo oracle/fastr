@@ -317,7 +317,7 @@ public final class REngine implements RContext.Engine {
             ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
                             Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
             return null;
-        } catch (DebugExitException e) {
+        } catch (DebugExitException | BrowserQuitException e) {
             throw e;
         } catch (RecognitionException | RuntimeException e) {
             singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
@@ -417,7 +417,7 @@ public final class REngine implements RContext.Engine {
             }
         } catch (UnsupportedSpecializationException use) {
             throw use;
-        } catch (DebugExitException e) {
+        } catch (DebugExitException | BrowserQuitException e) {
             throw e;
         } catch (Throwable e) {
             reportImplementationError(e);

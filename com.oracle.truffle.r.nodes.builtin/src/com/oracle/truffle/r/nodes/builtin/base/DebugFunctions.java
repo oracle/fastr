@@ -24,22 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Instrument;
-import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
-import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import com.oracle.truffle.api.instrument.TruffleEventReceiver;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeVisitor;
-import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
+import com.oracle.truffle.r.nodes.instrument.debug.DebugHandling;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class DebugFunctions {
@@ -48,6 +35,15 @@ public class DebugFunctions {
 
         protected RError arg1Closure() throws RError {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARG_MUST_BE_CLOSURE);
+        }
+
+        protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
+            // GnuR does not generate an error for builtins, but debug (obviously) has no effect
+            if (!fun.isBuiltin()) {
+                if (!DebugHandling.enableDebug(fun, text, condition, once)) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
+                }
+            }
         }
     }
 
@@ -65,12 +61,7 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull doDebug(RFunction fun, Object text, Object condition) {
             controlVisibility();
-            // GnuR does not generate an error for builtins, but debug (obviously) has no effect
-            if (!fun.isBuiltin()) {
-                if (!enableDebug(fun, text, condition, false)) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
-                }
-            }
+            doDebug(fun, text, condition, false);
             return RNull.instance;
         }
     }
@@ -91,6 +82,7 @@ public class DebugFunctions {
         protected RNull debugonce(RFunction fun, Object text, Object condition) {
             // TODO implement
             controlVisibility();
+            doDebug(fun, text, condition, true);
             return RNull.instance;
         }
     }
@@ -108,11 +100,8 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
             controlVisibility();
-            Probe probe = findStartMethodProbe(func);
-            if (probe != null && probe.isTaggedAs(RSyntaxTag.DEBUGGED)) {
+            if (!DebugHandling.undebug(func)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_DEBUGGED);
-            } else {
-                // TDOD
             }
             return RNull.instance;
         }
@@ -131,104 +120,9 @@ public class DebugFunctions {
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
             controlVisibility();
-            Probe probe = findStartMethodProbe(func);
-            if (probe != null) {
-                return RRuntime.asLogical(probe.isTaggedAs(RSyntaxTag.DEBUGGED));
-            }
-            return RRuntime.LOGICAL_FALSE;
+            return RRuntime.asLogical(DebugHandling.isDebugged(func));
         }
     }
 
-    private static Probe findStartMethodProbe(RFunction func) {
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        return RInstrument.findSingleProbe(fdn.getUUID(), StandardSyntaxTag.START_METHOD);
-    }
-
-    /**
-     * Attach the DebugHandler instrument to the FunctionStatementsNode and all syntactic nodes.
-     */
-    @SuppressWarnings("unused")
-    private static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
-        Probe probe = findStartMethodProbe(func);
-        if (probe == null) {
-            return false;
-        }
-        probe.attach(DebugHandler.create());
-        attachToStatementNodes((FunctionDefinitionNode) func.getRootNode());
-        probe.tagAs(RSyntaxTag.DEBUGGED, null);
-        return true;
-    }
-
-    private static void attachToStatementNodes(FunctionDefinitionNode fdn) {
-        fdn.getBody().accept(new NodeVisitor() {
-            public boolean visit(Node node) {
-                if (node instanceof WrapperNode) {
-                    WrapperNode wrapper = (WrapperNode) node;
-                    Probe probe = wrapper.getProbe();
-                    if (probe.isTaggedAs(StandardSyntaxTag.STATEMENT)) {
-                        probe.attach(DebugHandler.create());
-                    }
-                }
-                return true;
-            }
-        });
-    }
-
-    private static final class DebugHandler {
-
-        @SuppressWarnings("unused") private Object text;
-        @SuppressWarnings("unused") private Object condition;
-        public final Instrument instrument;
-
-        static Instrument create() {
-            return (new DebugHandler()).instrument;
-        }
-
-        private DebugHandler() {
-            instrument = Instrument.create(new TruffleEventReceiver() {
-
-                @Override
-                public void enter(Node node, VirtualFrame frame) {
-                    RDeparse.State state = RDeparse.State.createPrintableState();
-                    ((RNode) node).deparse(state);
-
-                    boolean curly = false;
-                    ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-                    if (node instanceof FunctionStatementsNode) {
-                        ch.println("debugging in: TBD");
-                        curly = true;
-                    }
-                    ch.print("debug: ");
-                    if (curly) {
-                        ch.println("{");
-                    }
-                    ch.print(state.toString());
-                    if (curly) {
-                        ch.print("}");
-                    }
-                    ch.print("\n");
-
-                    BrowserFunctions.Browser.doBrowser(frame.materialize());
-                }
-
-                @Override
-                public void returnVoid(Node node, VirtualFrame frame) {
-                    System.console();
-                }
-
-                @Override
-                public void returnValue(Node node, VirtualFrame frame, Object result) {
-                    System.console();
-                }
-
-                @Override
-                public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
-                    System.console();
-                }
-            }, "R debug handler");
-
-        }
-
-    }
 
 }

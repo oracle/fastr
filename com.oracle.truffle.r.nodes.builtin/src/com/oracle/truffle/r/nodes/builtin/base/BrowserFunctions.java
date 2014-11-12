@@ -27,12 +27,11 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -53,7 +52,7 @@ public class BrowserFunctions {
     private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
     @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
-    public abstract static class Browser extends RInvisibleBuiltinNode {
+    public abstract static class BrowserNode extends RInvisibleBuiltinNode {
 
         @Override
         public RNode[] getParameterValues() {
@@ -69,7 +68,7 @@ public class BrowserFunctions {
                     helperState.add(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
                     RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", REnvironment.isGlobalEnvFrame(frame) ? "top level" : RArguments.getFunction(frame).getTarget());
-                    doBrowser(mFrame);
+                    Browser.interact(mFrame);
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }
@@ -77,64 +76,7 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
-        @TruffleBoundary
-        public static void doBrowser(MaterializedFrame frame) {
-            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-            REnvironment callerEnv = REnvironment.frameToEnvironment(frame);
-            String savedPrompt = ch.getPrompt();
-            ch.setPrompt(browserPrompt());
-            try {
-                LW: while (true) {
-                    String input = ch.readLine();
-                    if (input.length() == 0) {
-                        RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");
-                        if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
-                            break;
-                        }
-                    } else {
-                        input = input.trim();
-                    }
-                    switch (input) {
-                        case "c":
-                        case "cont":
-                        case "n":
-                            break LW;
 
-                        case "s":
-                        case "f":
-                            throw RError.nyi(null, notImplemented(input));
-
-                        case "where": {
-                            int ix = RArguments.getDepth(frame);
-                            Frame stackFrame;
-                            while (ix >= 0 && (stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
-                                RFunction fun = RArguments.getFunction(stackFrame);
-                                if (fun != null) {
-                                    ch.printf("where %d: %s%n", ix, fun.getTarget());
-                                }
-                                ix--;
-                            }
-                            ch.println("");
-                            break;
-                        }
-
-                        default:
-                            RContext.getEngine().parseAndEval("<browser_input>", input, frame.materialize(), callerEnv, true, false);
-                            break;
-                    }
-                }
-            } finally {
-                ch.setPrompt(savedPrompt);
-            }
-        }
-
-        private static String browserPrompt() {
-            return "Browse[" + (helperState.size()) + "]> ";
-        }
-
-        private static String notImplemented(String command) {
-            return "browser command: '" + command + "'";
-        }
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {

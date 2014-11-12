@@ -192,13 +192,17 @@ public class RCommand {
                     continue;
                 }
 
-                while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
-                    console.setPrompt(SLAVE.getValue() ? "" : "+ ");
-                    String additionalInput = console.readLine();
-                    if (additionalInput == null) {
-                        return;
+                try {
+                    while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                        console.setPrompt(SLAVE.getValue() ? "" : "+ ");
+                        String additionalInput = console.readLine();
+                        if (additionalInput == null) {
+                            return;
+                        }
+                        input = input + "\n" + additionalInput;
                     }
-                    input = input + "\n" + additionalInput;
+                } catch (BrowserQuitException ex) {
+                    // Q in browser
                 }
             }
         } catch (UserInterruptException e) {
