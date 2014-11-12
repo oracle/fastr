@@ -40,7 +40,7 @@ public interface GraphicsEngine {
     boolean noGraphicsDevices();
 
     /**
-     * Tries to install one if there is no current device
+     * Tries to install one if there is no current device.
      *
      * @return current {@link GraphicsDevice}
      */

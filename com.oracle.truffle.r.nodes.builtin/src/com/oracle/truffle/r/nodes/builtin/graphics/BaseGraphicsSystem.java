@@ -25,10 +25,10 @@ package com.oracle.truffle.r.nodes.builtin.graphics;
 import com.oracle.truffle.r.nodes.graphics.core.AbstractGraphicsSystem;
 
 /**
- * Denotes to the 'base' in GNUR terms graphics system
+ * Denotes to the 'base' in GNUR terms graphics system.
  */
 public class BaseGraphicsSystem extends AbstractGraphicsSystem {
-    private final GraphicsEventsListener graphicsEventsListener = (graphicsEvent, graphicsDevice) -> {};
+    private final GraphicsEventsListener graphicsEventsListener = (graphicsEvent, graphicsDevice) -> { };
 
     @Override
     public GraphicsEventsListener getGraphicsEventsListener() {

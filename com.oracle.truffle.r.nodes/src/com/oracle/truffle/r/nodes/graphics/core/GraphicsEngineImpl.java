@@ -34,15 +34,13 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     static final int MAX_GRAPHICS_DEVICES_AMOUNT = 64;
     private static final int NULL_GRAPHICS_DEVICE_INDEX = 0;
     private static final int LAST_GRAPHICS_DEVICE_INDEX = MAX_GRAPHICS_DEVICES_AMOUNT - 1;
+    private static final int NOT_FOUND = -1;
 
     /**
-     * According to GNUR devices.c:
-     * 0 - null device
-     * 63 - empty
+     * According to GNUR devices.c: 0 - null device, 63 - empty.
      */
     private final GraphicsDevice[] graphicsDevices = new GraphicsDevice[MAX_GRAPHICS_DEVICES_AMOUNT];
     private final GraphicsSystem[] graphicsSystems = new AbstractGraphicsSystem[MAX_GRAPHICS_SYSTEMS_AMOUNT];
-    private final int NOT_FOUND = -1;
 
     private int graphicsSystemsAmount = 0;
     private int devicesAmountWithoutNullDevice = 0;
@@ -54,7 +52,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     /**
-     * According to GNUR 0 index is for the Null graphics device
+     * According to GNUR 0 index is for the Null graphics device.
      */
     private void initNullGraphicsDevice() {
         graphicsDevices[NULL_GRAPHICS_DEVICE_INDEX] = NullGraphicsDevice.getInstance();
@@ -110,13 +108,13 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
 
     private void checkGraphicsSystemIndex(int graphicsSystemIndex) {
         if (graphicsSystemIndex < 0 || graphicsSystemIndex >= graphicsSystems.length) {
-            throw new IllegalArgumentException("Wrong graphics system index: "+graphicsSystemIndex);
+            throw new IllegalArgumentException("Wrong graphics system index: " + graphicsSystemIndex);
         }
     }
 
     // todo implement '.Devices' list related logic from GEaddDevices (devices.c)
     public void registerGraphicsDevice(GraphicsDevice newGraphicsDevice) throws Exception {
-        if(newGraphicsDevice == null) {
+        if (newGraphicsDevice == null) {
             throw new NullPointerException("Graphics device to register is null");
         }
         if (!noGraphicsDevices()) {
@@ -143,7 +141,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     public void unRegisterGraphicsDevice(GraphicsDevice deviceToUnregister) {
-        if(deviceToUnregister == null) {
+        if (deviceToUnregister == null) {
             throw new NullPointerException("Graphics device to unregister is null");
         }
         doUnregisterGraphicsDevice(deviceToUnregister);
@@ -188,7 +186,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         return currentGraphicsDevice;
     }
 
-    private boolean isNullDeviceIsCurrent(){
+    private boolean isNullDeviceIsCurrent() {
         return currentGraphicsDevice == getNullGraphicsDevice();
     }
 
@@ -197,7 +195,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     public GraphicsDevice getGraphicsDeviceNextTo(GraphicsDevice graphicsDevice) {
-        if(graphicsDevice == null) {
+        if (graphicsDevice == null) {
             throw new NullPointerException("Graphics device is null");
         }
         int startIndex = findElementIndexInArray(graphicsDevice, graphicsDevices);
@@ -212,7 +210,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     public GraphicsDevice getGraphicsDevicePrevTo(GraphicsDevice graphicsDevice) {
-        if(graphicsDevice == null) {
+        if (graphicsDevice == null) {
             throw new NullPointerException("Graphics device is null");
         }
         int startIndex = findElementIndexInArray(graphicsDevice, graphicsDevices);
