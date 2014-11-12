@@ -188,8 +188,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
+        int[] data = operand.getDataWithoutCopying();
         for (int i = 0; i < operand.getLength(); i++) {
-            int d = operand.getDataAt(i);
+            int d = data[i];
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -213,8 +214,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         double result = semantics.getDoubleStart();
         na.enable(operand);
         int opCount = 0;
+        double[] data = operand.getDataWithoutCopying();
         for (int i = 0; i < operand.getLength(); i++) {
-            double d = operand.getDataAt(i);
+            double d = data[i];
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -238,8 +240,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
+        byte[] data = operand.getDataWithoutCopying();
         for (int i = 0; i < operand.getLength(); i++) {
-            byte d = operand.getDataAt(i);
+            byte d = data[i];
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;

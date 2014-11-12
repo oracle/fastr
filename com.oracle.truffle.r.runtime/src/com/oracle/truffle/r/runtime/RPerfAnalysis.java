@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
+
 /**
  * Manage the creation/activation of handlers or performance analysis.
  */
@@ -37,7 +39,8 @@ public class RPerfAnalysis {
     }
 
     private static final ArrayList<Handler> handlers = new ArrayList<>();
-    private static final String[] enabledNames; // null == all analyses enabled
+
+    @CompilationFinal private static final String[] enabledNames; // null == all analyses enabled
 
     static {
         // Currently we use a system property to enable the perf analysis

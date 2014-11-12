@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
+
 /**
  * Support methods for regular expressions.
  */
 public class RegExp {
-    private static final String[] preDefinedClassesFrom = new String[]{"[:alpha:]", "[:alnum:]", "[:digit:]"};
-    private static final String[] preDefinedClassesTo = new String[]{"a-zA-Z", "0-9A-Za-z", "0-9"};
+
+    @CompilationFinal private static final String[] preDefinedClassesFrom = new String[]{"[:alpha:]", "[:alnum:]", "[:digit:]"};
+    @CompilationFinal private static final String[] preDefinedClassesTo = new String[]{"a-zA-Z", "0-9A-Za-z", "0-9"};
 
     /**
      * R defines some short forms of character classes. E.g. {@code [[:alnum:]]} means

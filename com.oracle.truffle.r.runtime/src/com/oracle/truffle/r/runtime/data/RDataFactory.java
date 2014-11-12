@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -40,8 +40,8 @@ public final class RDataFactory {
     private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(0);
     private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(0);
 
-    public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
-    public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
+    @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
+    @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
 
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;

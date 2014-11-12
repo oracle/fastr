@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access.array.read;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -279,7 +280,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     private static class DimsAndResultLength {
-        public final int[] dimensions;
+        @CompilationFinal public final int[] dimensions;
         public final int resLength;
 
         public DimsAndResultLength(int[] dimensions, int resLength) {
@@ -368,7 +369,7 @@ public abstract class AccessArrayNode extends RNode {
             int accSrcDimensions = vector.getLength() / srcDimSize;
             int accDstDimensions = resLength / p.getLength();
 
-            elementNACheck.enable(!p.isComplete());
+            elementNACheck.enable(p);
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
@@ -1352,7 +1353,7 @@ public abstract class AccessArrayNode extends RNode {
             int accSrcDimensions = vector.getLength() / srcDimSize;
             int accDstDimensions = resLength / p.getLength();
 
-            elementNACheck.enable(!p.isComplete());
+            elementNACheck.enable(p);
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);

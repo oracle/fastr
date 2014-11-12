@@ -750,8 +750,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        leftNACheck.enable(!left.isComplete());
-        rightNACheck.enable(!right.isComplete());
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);

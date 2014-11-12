@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.nodes.*;
 
 /**
@@ -40,7 +41,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
      * A list of arguments. Single names may be <code>null</code>; semantics have to be specified by
      * implementing classes
      */
-    protected final String[] names;
+    @CompilationFinal protected final String[] names;
 
     /**
      * The number of {@link #names} given (i.e., not <code>null</code>).

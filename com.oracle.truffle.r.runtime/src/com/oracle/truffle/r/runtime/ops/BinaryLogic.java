@@ -45,37 +45,10 @@ public abstract class BinaryLogic extends BooleanOperation {
     public static class OrBuiltin {
     }
 
-    public static final BooleanOperationFactory NON_VECTOR_AND = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new NonVectorAnd();
-        }
-    };
-
-    public static final BooleanOperationFactory NON_VECTOR_OR = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new NonVectorOr();
-        }
-    };
-
-    public static final BooleanOperationFactory AND = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new And();
-        }
-    };
-
-    public static final BooleanOperationFactory OR = new BooleanOperationFactory() {
-
-        @Override
-        public BooleanOperation create() {
-            return new Or();
-        }
-    };
+    public static final BooleanOperationFactory NON_VECTOR_AND = NonVectorAnd::new;
+    public static final BooleanOperationFactory NON_VECTOR_OR = NonVectorOr::new;
+    public static final BooleanOperationFactory AND = And::new;
+    public static final BooleanOperationFactory OR = Or::new;
 
     public BinaryLogic() {
         super(true, true);

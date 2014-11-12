@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,7 +35,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private String[] prefix;
     private boolean hasGroup;
     private boolean lastHasGroup;
-    private final Object[] args;
+    @CompilationFinal private final Object[] args;
 
     NextMethodDispatchNode(String genericName, RStringVector type, Object[] args) {
         this.genericName = genericName;

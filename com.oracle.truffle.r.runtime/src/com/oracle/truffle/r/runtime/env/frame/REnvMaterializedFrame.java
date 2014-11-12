@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.env.frame;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 public class REnvMaterializedFrame implements MaterializedFrame {
     private final Map<String, Object> map;
     private final FrameDescriptor descriptor;
-    private final Object[] arguments;
+    @CompilationFinal private final Object[] arguments;
     private byte[] tags;
 
     public REnvMaterializedFrame(UsesREnvMap env) {

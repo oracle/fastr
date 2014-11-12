@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.nodes.*;
 
 /**
@@ -35,12 +36,12 @@ public abstract class Arguments<T> implements ArgumentsTrait {
     /**
      * Array of arguments; semantics have to be specified by child classes.
      */
-    protected final T[] arguments;
+    @CompilationFinal protected final T[] arguments;
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
      */
-    protected final String[] names;
+    @CompilationFinal protected final String[] names;
 
     /**
      * Cache use for {@link #getNameCount()}.

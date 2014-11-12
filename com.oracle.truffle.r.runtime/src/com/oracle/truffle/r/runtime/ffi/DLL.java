@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.RError.RErrorException;
 public class DLL {
 
     public static class DLLInfo {
-        public static final String[] NAMES = new String[]{"DLL name", "Filename", "Dynamic lookup", "Handle"};
+        @CompilationFinal public static final String[] NAMES = new String[]{"DLL name", "Filename", "Dynamic lookup", "Handle"};
         public final String name;
         public final String path;
         public final boolean dynamicLookup;

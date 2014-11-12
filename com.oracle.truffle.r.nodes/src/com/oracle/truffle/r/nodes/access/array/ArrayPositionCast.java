@@ -664,7 +664,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             int logicalVectorLength = operand.getLength();
             int logicalVectorInd = 0;
             int[] data = new int[resultLength];
-            naCheck.enable(!operand.isComplete());
+            naCheck.enable(operand);
             int timesSeenFalse = 0;
             int timesSeenNA = 0;
             int i = 0;

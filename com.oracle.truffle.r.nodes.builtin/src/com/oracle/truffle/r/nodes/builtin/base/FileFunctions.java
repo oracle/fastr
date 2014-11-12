@@ -30,7 +30,7 @@ import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -85,7 +85,7 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn"})
     public abstract static class FileInfo extends RBuiltinNode {
-        private static final String[] NAMES = new String[]{"size", "isdir", "mode", "mtime", "ctime", "atime", "uid", "gid", "uname", "grname"};
+        @CompilationFinal private static final String[] NAMES = new String[]{"size", "isdir", "mode", "mtime", "ctime", "atime", "uid", "gid", "uname", "grname"};
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")

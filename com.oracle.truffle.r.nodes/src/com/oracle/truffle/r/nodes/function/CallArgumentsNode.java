@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -52,7 +52,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
      * field contains the index of the symbol. Otherwise it is an empty list.
      */
-    private final Integer[] varArgsSymbolIndices;
+    @CompilationFinal private final Integer[] varArgsSymbolIndices;
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 

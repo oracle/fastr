@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
@@ -29,11 +30,11 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
  * A simple wrapper class for passing the ... argument through RArguments
  */
 public class RArgsValuesAndNames {
-    private final Object[] values;
+    @CompilationFinal private final Object[] values;
     /**
      * May NOT be null.
      */
-    private final String[] names;
+    @CompilationFinal private final String[] names;
     private final boolean allNamesEmpty;
 
     public RArgsValuesAndNames(Object[] values, String[] names) {

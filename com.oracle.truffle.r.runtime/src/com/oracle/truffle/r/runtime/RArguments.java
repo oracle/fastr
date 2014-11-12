@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -75,8 +76,8 @@ import com.oracle.truffle.r.runtime.env.*;
 // @formatter:on
 public final class RArguments {
 
-    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    public static final String[] EMPTY_STRING_ARRAY = new String[0];
+    @CompilationFinal public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     private static final int INDEX_ENVIRONMENT = 0;
     private static final int INDEX_FUNCTION = 1;

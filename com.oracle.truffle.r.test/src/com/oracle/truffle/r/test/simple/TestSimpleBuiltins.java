@@ -4022,4 +4022,48 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-gl(2, 1, 20); print(x)}");
         assertEval("{x<-gl(2, 2, 20); print(x)}");
     }
+
+    @Test
+    public void testDiff() {
+        assertEval("{ diff(1:10, 2) }");
+        assertEval("{ diff(1:10, 2, 2) }");
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, lag = 2) }");
+        assertEval("{ x <- cumsum(cumsum(1:10)) ; diff(x, differences = 2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testInteraction() {
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
+    }
+
+    @Test
+    public void testSplit() {
+        assertEval("{ split(1:10, 1:2) }");
+        assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; split(ma, col(ma)) }");
+        assertEval("{ fu <- c(1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,1) ; split(1:20,fu) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSplitIgnore() {
+        // these require first-class levels access in factors
+        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
+        assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    }
+
+    @Test
+    public void testCol() {
+        assertEval("{ ma <- matrix(1:12, 3, 4) ; col(ma) }");
+        assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; col(ma) }");
+    }
+
+    @Test
+    @Ignore
+    public void testColIgnore() {
+        // reports wrong source section
+        assertEval("{ col(c(1,2,3)) }");
+    }
+
 }
