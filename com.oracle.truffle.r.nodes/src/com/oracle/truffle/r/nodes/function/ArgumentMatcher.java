@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -419,7 +419,7 @@ public class ArgumentMatcher {
         private static final int NO_MORE_ARGS = -1;
         private int si;
         private int lastSi;
-        private final T[] suppliedArgs;
+        @CompilationFinal private final T[] suppliedArgs;
         private final BitSet matchedSuppliedArgs;
 
         public UnmatchedSuppliedIterator(T[] suppliedArgs, BitSet matchedSuppliedArgs) {

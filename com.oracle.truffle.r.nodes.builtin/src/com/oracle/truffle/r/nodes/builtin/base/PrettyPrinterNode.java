@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintDim
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVector2DimNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVectorMultiDimNodeFactory;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -798,7 +799,11 @@ public abstract class PrettyPrinterNode extends RNode {
             if (RRuntime.fromLogical(quote)) {
                 values[i] = prettyPrint(data);
             } else {
-                values[i] = data;
+                if (RRuntime.isNA(data)) {
+                    values[i] = RRuntime.NA_HEADER;
+                } else {
+                    values[i] = data;
+                }
             }
         }
         return printVector(operand, values, true, false);
@@ -1019,6 +1024,7 @@ public abstract class PrettyPrinterNode extends RNode {
     abstract static class PrettyPrinterSingleListElementNode extends RNode {
 
         @Child private PrettyPrinterNode prettyPrinter;
+        @Child private CastStringNode castStringNode;
 
         private final NACheck naCheck = NACheck.create();
 
@@ -1026,6 +1032,13 @@ public abstract class PrettyPrinterNode extends RNode {
             if (prettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 prettyPrinter = insert(PrettyPrinterNodeFactory.create(null, null, null, null, false));
+            }
+        }
+
+        private void initCast() {
+            if (castStringNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
             }
         }
 
@@ -1132,20 +1145,15 @@ public abstract class PrettyPrinterNode extends RNode {
         // TODO: this should be handled by an S3 function
         @TruffleBoundary
         @Specialization
-        protected String prettyPrintListElement(RFactor operand, Object listElementName, byte quote, byte right) {
-            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToStringVector(operand, naCheck), listElementName, RRuntime.LOGICAL_FALSE, right));
+        protected String prettyPrintListElement(VirtualFrame frame, RFactor operand, Object listElementName, byte quote, byte right) {
+            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck), listElementName, RRuntime.LOGICAL_FALSE, right));
             sb.append("\nLevels:");
-            Object attr = operand.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY);
-            if (attr != null) {
-                if (attr instanceof String) {
+            RVector vec = operand.getVector().getLevels();
+            if (vec != null) {
+                for (int i = 0; i < vec.getLength(); i++) {
+                    initCast();
                     sb.append(" ");
-                    sb.append(attr.toString());
-                } else {
-                    RAbstractStringVector vec = (RAbstractStringVector) attr;
-                    for (int i = 0; i < vec.getLength(); i++) {
-                        sb.append(" ");
-                        sb.append(vec.getDataAt(i));
-                    }
+                    sb.append((String) castStringNode.executeString(frame, vec.getDataAtAsObject(i)));
                 }
             }
             return sb.toString();

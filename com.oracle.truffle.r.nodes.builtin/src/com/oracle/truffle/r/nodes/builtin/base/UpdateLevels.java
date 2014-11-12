@@ -28,6 +28,7 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     @Child private CastToVectorNode castVector;
+    @Child private CastStringNode castString;
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
@@ -35,6 +36,14 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
             castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
         }
         return (RAbstractVector) castVector.executeObject(frame, value);
+    }
+
+    private Object castString(VirtualFrame frame, Object operand) {
+        if (castString == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
+        }
+        return castString.executeCast(frame, operand);
     }
 
     @Specialization
@@ -66,7 +75,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected RFactor updateLevels(VirtualFrame frame, RFactor factor, Object levels) {
         controlVisibility();
-        factor.getVector().setLevels(castVector(frame, levels));
+        factor.getVector().setLevels(castString(frame, castVector(frame, levels)));
         return factor;
     }
 

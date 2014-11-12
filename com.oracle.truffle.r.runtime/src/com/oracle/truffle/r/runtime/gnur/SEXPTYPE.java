@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime.gnur;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -72,7 +73,7 @@ public enum SEXPTYPE {
     public final int code;
     public final Class<?> fastRClass;
 
-    private static final SEXPTYPE[] VALUES = values();
+    @CompilationFinal private static final SEXPTYPE[] VALUES = values();
 
     SEXPTYPE(int code, Class<?> fastRClass) {
         this.code = code;

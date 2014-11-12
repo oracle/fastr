@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -33,8 +33,8 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     private int[] data;
 
-    private static final String[] implicitClassHr = RRuntime.CLASS_INTEGER;
-    private static final String[] implicitClassHrDyn;
+    @CompilationFinal private static final String[] implicitClassHr = RRuntime.CLASS_INTEGER;
+    @CompilationFinal private static final String[] implicitClassHrDyn;
 
     static {
         implicitClassHrDyn = new String[implicitClassHr.length + 1];
@@ -209,8 +209,8 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RIntVector other = (RIntVector) fromVector;
-        data[toIndex] = other.data[fromIndex];
+        RAbstractIntVector other = (RAbstractIntVector) fromVector;
+        data[toIndex] = other.getDataAt(fromIndex);
     }
 
     public Class<?> getElementClass() {

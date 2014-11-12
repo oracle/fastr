@@ -414,7 +414,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Child private ReadVariableNode readNode;
         @Child private UnresolvedReadVariableNode unresolvedNode;
-        private final Assumption[] absentFrameSlotAssumptions;
+        @CompilationFinal private final Assumption[] absentFrameSlotAssumptions;
         private final String name;
 
         ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, String name) {

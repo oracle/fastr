@@ -107,8 +107,8 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
-        // return frame if it's one, otherwise return the vector
-        return container.getElementClass() == RDataFrame.class ? container : resultVector;
+        // return frame or factor if it's one, otherwise return the vector
+        return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
     }
 
     @TruffleBoundary
@@ -148,8 +148,8 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             // generic attribute
             resultVector.setAttr(name, value);
         }
-        // return frame if it's one, otherwise return the vector
-        return container.getElementClass() == RDataFrame.class ? container : resultVector;
+        // return frame or factor if it's one, otherwise return the vector
+        return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
     }
 
     @Specialization(guards = "!nullValue")

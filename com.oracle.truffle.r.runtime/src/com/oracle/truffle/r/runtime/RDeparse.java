@@ -100,7 +100,7 @@ public class RDeparse {
 
     // TODO COMPLETE THIS!
     // @formatter:off
-    private static final Func[] FUNCTAB = new Func[]{
+    @CompilationFinal private static final Func[] FUNCTAB = new Func[]{
         new Func("+", new PPInfo(PP.BINARY, PREC_SUM, false)),
         new Func("-", new PPInfo(PP.BINARY, PREC_SUM, false)),
         new Func("*", new PPInfo(PP.BINARY, 10, false)),
@@ -136,8 +136,6 @@ public class RDeparse {
         new Func("[", new PPInfo(PP.SUBSET, 17, false)),
         new Func("[[", new PPInfo(PP.SUBSET, 17, false)),
         new Func("$", new PPInfo(PP.DOLLAR, 15, false)),
-
-
     };
     // @formatter:on
 

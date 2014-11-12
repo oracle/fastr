@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -33,7 +33,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
 
     private byte[] data;
 
-    private static final String[] implicitClassHrDyn = new String[]{"", RType.Raw.getName()};
+    @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Raw.getName()};
 
     RRawVector(byte[] data, int[] dims, Object names) {
         super(true, data.length, dims, names);
