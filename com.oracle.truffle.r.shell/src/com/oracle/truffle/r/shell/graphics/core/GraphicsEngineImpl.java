@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.shell.graphics.core;
 
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.shell.graphics.MockGraphicsDevices;
+
 import static com.oracle.truffle.r.shell.graphics.core.GraphicsEvent.GE_FINAL_STATE;
 import static com.oracle.truffle.r.shell.graphics.core.GraphicsEvent.GE_INIT_STATE;
 
@@ -90,7 +93,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
 
     // todo implement in GNUR way
     private void issueWarning(String warningMessage) {
-        System.err.println(warningMessage);
+        Utils.warn(warningMessage);
     }
 
     public void unRegisterGraphicsSystem(int graphicsSystemId) {
