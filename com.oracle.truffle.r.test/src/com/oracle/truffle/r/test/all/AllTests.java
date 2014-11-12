@@ -13799,13 +13799,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSplitIgnore_d2ccf1c31b984c75491ff8fbb39ab104() {
-        assertEval("{ n <- 2; nn <- 4 ; g <- factor(round(n * runif(n * nn))) ; x <- rnorm(n * nn) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
+        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
-        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
+    public void TestSimpleBuiltins_testSplitIgnore_bb711f5c27cbd7b60881617bc02fb801() {
+        assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
     }
 
     @Test

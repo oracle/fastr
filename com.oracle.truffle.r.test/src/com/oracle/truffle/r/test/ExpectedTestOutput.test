@@ -8839,17 +8839,6 @@ NULL
 #{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b"), TRUE) ;}
 [1] 0 0 2
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInteraction
-#{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c("ctrl", "treat")) ; interaction(a, b) }
-[1] 1.ctrl  1.ctrl  1.treat 1.treat 2.ctrl  2.ctrl  2.treat 2.treat
-Levels: 1.ctrl 2.ctrl 1.treat 2.treat
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInteraction
-#{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c("ctrl", "treat")) ; s <- gl(2, 1, 8, labels = c("M", "F")) ; interaction(a, b, s, sep = ":") }
-[1] 1:ctrl:M  1:ctrl:F  1:treat:M 1:treat:F 2:ctrl:M  2:ctrl:F  2:treat:M
-[8] 2:treat:F
-8 Levels: 1:ctrl:M 2:ctrl:M 1:treat:M 2:treat:M 1:ctrl:F ... 2:treat:F
-
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
 #{ f <- function() { invisible(23) } ; f() }
 

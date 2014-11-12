@@ -799,6 +799,16 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testInteraction_cc946aa5f7a0393338bf3a58fefb26a7() {
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testInteraction_f0540e2d1f6d9ab64d558ef96133818f() {
+        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testInvisibleIgnore_d73dc3df8036b77c171c3b1e3e6abe2b() {
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }
@@ -1559,13 +1569,13 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSplitIgnore_d2ccf1c31b984c75491ff8fbb39ab104() {
-        assertEval("{ n <- 2; nn <- 4 ; g <- factor(round(n * runif(n * nn))) ; x <- rnorm(n * nn) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
+        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
-        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
+    public void TestSimpleBuiltins_testSplitIgnore_bb711f5c27cbd7b60881617bc02fb801() {
+        assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
     }
 
     @Ignore
