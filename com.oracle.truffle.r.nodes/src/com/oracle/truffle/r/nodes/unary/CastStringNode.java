@@ -70,6 +70,11 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization
+    protected String doRaw(VirtualFrame frame, RComplex value) {
+        return toString.executeString(frame, value);
+    }
+
+    @Specialization
     protected String doRaw(VirtualFrame frame, RRaw value) {
         return toString.executeString(frame, value);
     }

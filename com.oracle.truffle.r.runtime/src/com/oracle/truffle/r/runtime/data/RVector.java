@@ -225,6 +225,10 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
+    public final RVector getLevels() {
+        return (RVector) attributes.get(RRuntime.LEVELS_ATTR_KEY);
+    }
+
     public final void setNames(Object newNames) {
         setNames(newNames, null);
     }

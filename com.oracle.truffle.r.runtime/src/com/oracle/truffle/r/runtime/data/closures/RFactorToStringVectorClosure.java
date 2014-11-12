@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,10 +35,10 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
     private final RIntVector vector;
     private final RAbstractStringVector levels;
 
-    public RFactorToStringVectorClosure(RFactor factor, NACheck naCheck) {
+    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, NACheck naCheck) {
         super(factor.getVector(), naCheck);
         this.vector = factor.getVector();
-        this.levels = (RAbstractStringVector) vector.getAttr(RRuntime.LEVELS_ATTR_KEY);
+        this.levels = levels;
         if (this.levels == null) {
             RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
         }

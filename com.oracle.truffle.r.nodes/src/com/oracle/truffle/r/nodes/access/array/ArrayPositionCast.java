@@ -311,6 +311,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return operand;
         }
 
+        @Specialization
+        protected int doFactor(RNull vector, RFactor operand) {
+            return 0;
+        }
+
         @Specialization(guards = "isAssignment")
         protected RIntVector doStringNullVecAssignment(RNull vector, String operand) {
             RStringVector resNames = RDataFactory.createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
