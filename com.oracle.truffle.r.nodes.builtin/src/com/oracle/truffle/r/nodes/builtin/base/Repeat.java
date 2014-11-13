@@ -24,11 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -38,532 +34,177 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-// FIXME honour times in case length.out is given but NA
-// FIXME honour "each" parameter
-
+/**
+ * The {@code rep} builtin works as follows.
+ * <ol>
+ * <li>If {@code each} is greater than one, all elements of {@code x} are first replicated
+ * {@code each} times.
+ * <li>If {@code length.out} is given, the result of the first step is truncated or extended as
+ * required. In this case, {@code times} is ignored.
+ * <li>If {@code length.out} is not given, {@code times} is regarded:
+ * <ul>
+ * <li>If {@code times} is a one-element vector, the result of the first step is replicated
+ * {@code times} times.
+ * <li>If {@code times} is a vector longer than one, and {@code each} is greater than one, an error
+ * is issued.
+ * <li>If {@code times} is a vector longer than one, and {@code each} is one, and {@code times} is
+ * as long as {@code x}, each element of {@code x} is given the number of times indicated by the
+ * value at the same index of {@code times}. If {@code times} has a different length, an error is
+ * issued.
+ * </ul>
+ * </ol>
+ */
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
 public abstract class Repeat extends RBuiltinNode {
 
-    private final ConditionProfile noNames = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
+    private final BranchProfile errorBranch = BranchProfile.create();
+    private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile replicateOnce = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(1), ConstantNode.create(RMissing.instance), ConstantNode.create(1)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(1), ConstantNode.create(RRuntime.INT_NA), ConstantNode.create(1)};
     }
 
     @CreateCast("arguments")
-    protected RNode[] castTimesLength(RNode[] arguments) {
-        // times is at index 1; length.out, at 2
+    protected RNode[] castArguments(RNode[] arguments) {
+        // times is at index 1; length.out, at 2; each, at 3
         arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
+        arguments[2] = FirstIntNodeFactory.create(CastIntegerNodeFactory.create(arguments[2], true, false, false));
+        arguments[3] = CastIntegerNodeFactory.create(arguments[3], true, false, false);
         return arguments;
     }
 
-    @Specialization
     @SuppressWarnings("unused")
-    protected RNull repeat(VirtualFrame frame, RNull value, Object times, Object lengthOut, Object each) {
-        controlVisibility();
-        return RNull.instance;
+    protected static boolean eachGreaterOne(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+        return each > 1;
     }
 
-    //
-    // Specialisations for single values.
-    // For each value type, these specialisations are given:
-    // * if times is given but length.out is not,
-    // * if length.out is given (it supersedes times)
-    //
-
-    @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector repeat(int value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int[] array = new int[times];
-        Arrays.fill(array, value);
-        return RDataFactory.createIntVector(array, RRuntime.isComplete(value));
+    protected static boolean hasNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+        return x.getNames() != RNull.instance;
     }
 
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected int repeatLengthNA(int value, Object times, int lengthOut, Object each) {
-        return value;
+    private RError invalidTimes() {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "times");
     }
 
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RIntVector repeat(int value, Object times, int lengthOut, Object each) {
-        return repeat(value, lengthOut, RMissing.instance, each);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RDoubleVector repeat(double value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        double[] array = new double[times];
-        Arrays.fill(array, value);
-        return RDataFactory.createDoubleVector(array, RRuntime.isComplete(value));
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected double repeatLengthNA(double value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RDoubleVector repeat(double value, Object times, int lengthOut, Object each) {
-        return repeat(value, lengthOut, RMissing.instance, each);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RRawVector repeat(RRaw value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        byte[] array = new byte[times];
-        Arrays.fill(array, value.getValue());
-        return RDataFactory.createRawVector(array);
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RRaw repeatLengthNA(RRaw value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RRawVector repeat(RRaw value, Object times, int lengthOut, Object each) {
-        return repeat(value, lengthOut, RMissing.instance, each);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RComplexVector repeat(RComplex value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        double[] array = new double[times << 1];
-        for (int i = 0; i < times; ++i) {
-            int index = i << 1;
-            array[index] = value.getRealPart();
-            array[index + 1] = value.getImaginaryPart();
+    @Specialization(guards = {"eachGreaterOne", "!hasNames"})
+    public RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+        if (times.getLength() > 1) {
+            errorBranch.enter();
+            throw invalidTimes();
         }
-        return RDataFactory.createComplexVector(array, !value.isNA());
+        RAbstractVector input = handleEach(x, each);
+        if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
+            return handleLengthOut(input, lengthOut, false);
+        } else {
+            return handleTimes(input, times, false);
+        }
     }
 
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RComplex repeatLengthNA(RComplex value, Object times, int lengthOut, Object each) {
-        return value;
+    @Specialization(guards = {"!eachGreaterOne", "!hasNames"})
+    public RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+        if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
+            return handleLengthOut(x, lengthOut, true);
+        } else {
+            return handleTimes(x, times, true);
+        }
     }
 
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RComplexVector repeat(RComplex value, Object times, int lengthOut, Object each) {
-        return repeat(value, lengthOut, RMissing.instance, each);
+    @Specialization(guards = {"eachGreaterOne", "hasNames"})
+    public RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+        if (times.getLength() > 1) {
+            errorBranch.enter();
+            throw invalidTimes();
+        }
+        RAbstractVector input = handleEach(x, each);
+        RAbstractVector names = handleEach((RAbstractVector) x.getNames(), each);
+        if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
+            names = handleLengthOut(names, lengthOut, false);
+            RVector r = handleLengthOut(input, lengthOut, false);
+            r.setNames(names);
+            return r;
+        } else {
+            names = handleTimes(names, times, false);
+            RVector r = handleTimes(input, times, false);
+            r.setNames(names);
+            return r;
+        }
     }
 
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RStringVector repeat(String value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        String[] array = new String[times];
-        Arrays.fill(array, value);
-        return RDataFactory.createStringVector(array, !RRuntime.isNA(value));
+    @Specialization(guards = {"!eachGreaterOne", "hasNames"})
+    public RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+        if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
+            RAbstractVector names = handleLengthOut((RAbstractVector) x.getNames(), lengthOut, true);
+            RVector r = handleLengthOut(x, lengthOut, true);
+            r.setNames(names);
+            return r;
+        } else {
+            RAbstractVector names = handleTimes((RAbstractVector) x.getNames(), times, true);
+            RVector r = handleTimes(x, times, true);
+            r.setNames(names);
+            return r;
+        }
     }
 
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected String repeatLengthNA(String value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RStringVector repeat(String value, Object times, int lengthOut, Object each) {
-        return repeat(value, lengthOut, RMissing.instance, each);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RLogicalVector repeat(byte value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        byte[] array = new byte[times];
-        Arrays.fill(array, value);
-        return RDataFactory.createLogicalVector(array, value != RRuntime.LOGICAL_NA);
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected byte repeatLengthNA(byte value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RLogicalVector repeat(byte value, Object times, int lengthOut, Object each) {
-        return repeat(value, lengthOut, RMissing.instance, each);
-    }
-
-    //
-    // Specialisations for vector values.
-    // The specialisations given for each value type are as follows:
-    // * single times argument
-    // * single length.out argument (supersedes times)
-    //
-
-    @TruffleBoundary
-    private static RStringVector getNamesTimes(RAbstractVector value, int times) {
-        int oldLength = value.getLength();
-        int length = oldLength * times;
-        String[] names = new String[length];
-        RStringVector oldNames = (RStringVector) value.getNames();
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                names[i * oldLength + j] = oldNames.getDataAt(j);
+    /**
+     * Prepare the input vector by replicating its elements.
+     */
+    private static RVector handleEach(RAbstractVector x, int each) {
+        RVector r = x.createEmptySameType(x.getLength() * each, x.isComplete());
+        for (int i = 0; i < x.getLength(); ++i) {
+            for (int j = i * each; j < (i + 1) * each; ++j) {
+                r.transferElementSameType(j, x, i);
             }
         }
-        return RDataFactory.createStringVector(names, oldNames.isComplete());
+        return r;
     }
 
-    @TruffleBoundary
-    private static RStringVector getNamesLength(RAbstractVector value, int lengthOut) {
-        String[] names = new String[lengthOut];
-        RStringVector oldNames = (RStringVector) value.getNames();
-        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
-            names[i] = oldNames.getDataAt(j);
+    /**
+     * Extend or truncate the vector to a specified length.
+     */
+    private static RVector handleLengthOut(RAbstractVector x, int lengthOut, boolean copyIfSameSize) {
+        if (x.getLength() == lengthOut) {
+            return (RVector) (copyIfSameSize ? x.copy() : x);
         }
-        return RDataFactory.createStringVector(names, oldNames.isComplete());
+        return x.copyResized(lengthOut, false);
     }
 
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RIntVector repeat(RAbstractIntVector value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = oldLength * times;
-        int[] array = new int[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
+    /**
+     * Replicate the vector a given number of times.
+     */
+    private RVector handleTimes(RAbstractVector x, RAbstractIntVector times, boolean copyIfSameSize) {
+        if (oneTimeGiven.profile(times.getLength() == 1)) {
+            // only one times value is given
+            final int howManyTimes = times.getDataAt(0);
+            if (replicateOnce.profile(howManyTimes == 1)) {
+                return (RVector) (copyIfSameSize ? x.copy() : x);
+            } else {
+                return x.copyResized(x.getLength() * howManyTimes, false);
             }
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createIntVector(array, value.isComplete());
         } else {
-            return RDataFactory.createIntVector(array, value.isComplete(), getNamesTimes(value, times));
-        }
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RAbstractIntVector repeatLengthNA(RAbstractIntVector value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RIntVector repeat(RAbstractIntVector value, Object times, int lengthOut, Object each) {
-        controlVisibility();
-        int[] array = new int[lengthOut];
-        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createIntVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createIntVector(array, value.isComplete(), getNamesLength(value, lengthOut));
-        }
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RDoubleVector repeat(RAbstractDoubleVector value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        double[] array = new double[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
+            // times is a vector with several elements
+            if (x.getLength() != times.getLength()) {
+                errorBranch.enter();
+                invalidTimes();
             }
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createDoubleVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createDoubleVector(array, value.isComplete(), getNamesTimes(value, times));
-        }
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RAbstractDoubleVector repeatLengthNA(RAbstractDoubleVector value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RDoubleVector repeat(RAbstractDoubleVector value, Object times, int lengthOut, Object each) {
-        controlVisibility();
-        double[] array = new double[lengthOut];
-        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createDoubleVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createDoubleVector(array, value.isComplete(), getNamesLength(value, lengthOut));
-        }
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RRawVector repeat(RRawVector value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = oldLength * times;
-        byte[] array = new byte[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j).getValue();
+            // iterate once over the times vector to determine result vector size
+            int resultLength = 0;
+            for (int i = 0; i < times.getLength(); ++i) {
+                resultLength += times.getDataAt(i);
             }
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createRawVector(array);
-        } else {
-            return RDataFactory.createRawVector(array, getNamesTimes(value, times));
-        }
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RRawVector repeatLengthNA(RRawVector value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RRawVector repeat(RRawVector value, Object times, int lengthOut, Object each) {
-        controlVisibility();
-        byte[] array = new byte[lengthOut];
-        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j).getValue();
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createRawVector(array);
-        } else {
-            return RDataFactory.createRawVector(array, getNamesLength(value, lengthOut));
-        }
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RComplexVector repeat(RComplexVector value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        double[] array = new double[length << 1];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                RComplex complex = value.getDataAt(j);
-                int index = (i * oldLength + j) << 1;
-                array[index] = complex.getRealPart();
-                array[index + 1] = complex.getImaginaryPart();
+            // create and populate result vector
+            RVector r = x.createEmptySameType(resultLength, x.isComplete());
+            int wp = 0; // write pointer
+            for (int i = 0; i < x.getLength(); ++i) {
+                for (int j = 0; j < times.getDataAt(i); ++j, ++wp) {
+                    r.transferElementSameType(wp, x, i);
+                }
             }
+            return r;
         }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createComplexVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createComplexVector(array, value.isComplete(), getNamesTimes(value, times));
-        }
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RComplexVector repeatLengthNA(RComplexVector value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RComplexVector repeat(RComplexVector value, Object times, int lengthOut, Object each) {
-        controlVisibility();
-        int length = lengthOut << 1;
-        double[] array = new double[length];
-        for (int i = 0, j = 0; i < length; i += 2, j = Utils.incMod(j, value.getLength())) {
-            RComplex complex = value.getDataAt(j);
-            array[i] = complex.getRealPart();
-            array[i + 1] = complex.getImaginaryPart();
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createComplexVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createComplexVector(array, value.isComplete(), getNamesLength(value, lengthOut));
-        }
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RLogicalVector repeat(RAbstractLogicalVector value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        byte[] array = new byte[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createLogicalVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createLogicalVector(array, value.isComplete(), getNamesTimes(value, times));
-        }
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RAbstractLogicalVector repeatLengthNA(RAbstractLogicalVector value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RLogicalVector repeat(RAbstractLogicalVector value, Object times, int lengthOut, Object each) {
-        controlVisibility();
-        byte[] array = new byte[lengthOut];
-        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createLogicalVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createLogicalVector(array, value.isComplete(), getNamesLength(value, lengthOut));
-        }
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RStringVector repeat(RAbstractStringVector value, int times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        String[] array = new String[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createStringVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createStringVector(array, value.isComplete(), getNamesTimes(value, times));
-        }
-    }
-
-    @Specialization(guards = "lengthNA")
-    @SuppressWarnings("unused")
-    protected RAbstractStringVector repeatLengthNA(RAbstractStringVector value, Object times, int lengthOut, Object each) {
-        return value;
-    }
-
-    @Specialization(guards = "!lengthNA")
-    @SuppressWarnings("unused")
-    protected RStringVector repeat(RAbstractStringVector value, Object times, int lengthOut, Object each) {
-        controlVisibility();
-        String[] array = new String[lengthOut];
-        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        if (noNames.profile(value.getNames() == RNull.instance)) {
-            return RDataFactory.createStringVector(array, value.isComplete());
-        } else {
-            return RDataFactory.createStringVector(array, value.isComplete(), getNamesLength(value, lengthOut));
-        }
-    }
-
-    //
-    // abstract specialisation for vector times arguments
-    //
-
-    private static RStringVector getNamesTimes(RAbstractVector value, RIntVector times, int newLength) {
-        RStringVector oldNames = (RStringVector) value.getNames();
-        RStringVector names = oldNames.createEmptySameType(newLength, oldNames.isComplete());
-        int w = 0; // write index
-        for (int r = 0; r < oldNames.getLength(); ++r) {
-            for (int k = 0; k < times.getDataAt(r); ++k) {
-                names.transferElementSameType(w++, oldNames, r);
-            }
-        }
-        return names;
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RAbstractVector repeatTV(RAbstractVector value, RIntVector times, RMissing lengthOut, Object each) {
-        controlVisibility();
-        if (value.getLength() != times.getLength()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "times");
-        }
-        RVector valueMaterialized = value.materialize();
-        RVector result = valueMaterialized.createEmptySameType(resultLength(times), valueMaterialized.isComplete());
-
-        int w = 0; // write index
-        for (int r = 0; r < valueMaterialized.getLength(); ++r) {
-            for (int k = 0; k < times.getDataAt(r); ++k) {
-                result.transferElementSameType(w++, valueMaterialized, r);
-            }
-        }
-        if (!noNames.profile(value.getNames() == RNull.instance)) {
-            result.setNames(getNamesTimes(value, times, result.getLength()));
-        }
-
-        return result;
-    }
-
-    //
-    // auxiliary methods
-    //
-
-    private static int resultLength(RAbstractIntVector times) {
-        int l = 0;
-        for (int i = 0; i < times.getLength(); ++i) {
-            l += times.getDataAt(i);
-        }
-        return l;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(int value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(double value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(RRaw value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(RComplex value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(String value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(byte value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean lengthNA(RAbstractVector value, Object times, int lengthOut, Object each) {
-        return RRuntime.isNA(lengthOut);
     }
 
 }

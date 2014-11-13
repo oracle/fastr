@@ -8484,6 +8484,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGL_d821a80819d1b52f54bd312a5c895429() {
+        assertEval("{ a <- gl(2, 4, 8) ; print(a) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGL_2db3e43260651211be0babeb5de1ef64() {
+        assertEval("{ b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; print(b) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGet_17b5e1592125ebc43403174fb9611f19() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
     }
@@ -12671,6 +12681,41 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testRep_22a733041501c35c7d97a6acd643f991() {
         assertEval("{ x<-c(1,2); names(x)<-c(\"X\", \"Y\"); rep(x, c(3,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_281d10e359dc48f13431b09e01271833() {
+        assertEval("{ rep(c(1, 2), each = 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_78860088eb872d017d6b7ba5fbdd6596() {
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_8d38408da739ee804613c73085cc1173() {
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_eadbfd6270a37af31fcdc43c6f0b7d4e() {
+        assertEval("{ rep(c(1, 2), times = 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_ce92a8929168b5a8416e52dc227fe457() {
+        assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_e08a497002e162d00f7e17895214317f() {
+        assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_cb3f88c9bfe5eebaa8ec50c300ed2ac5() {
+        assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
     }
 
     @Test

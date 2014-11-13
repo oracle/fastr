@@ -8690,6 +8690,16 @@ $b
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGL
+#{ a <- gl(2, 4, 8) ; print(a) }
+[1] 1 1 1 1 2 2 2 2
+Levels: 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGL
+#{ b <- gl(2, 2, 8, labels = c("ctrl", "treat")) ; print(b) }
+[1] ctrl  ctrl  treat treat ctrl  ctrl  treat treat
+Levels: ctrl treat
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGL
 #{x<-gl(2, 1, 20); print(x)}
  [1] 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2
 Levels: 1 2
@@ -8912,6 +8922,17 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b"), TRUE) ;}
 [1] 0 0 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInteraction
+#{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c("ctrl", "treat")) ; interaction(a, b) }
+[1] 1.ctrl  1.ctrl  1.treat 1.treat 2.ctrl  2.ctrl  2.treat 2.treat
+Levels: 1.ctrl 2.ctrl 1.treat 2.treat
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInteraction
+#{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c("ctrl", "treat")) ; s <- gl(2, 1, 8, labels = c("M", "F")) ; interaction(a, b, s, sep = ":") }
+[1] 1:ctrl:M  1:ctrl:F  1:treat:M 1:treat:F 2:ctrl:M  2:ctrl:F  2:treat:M
+[8] 2:treat:F
+8 Levels: 1:ctrl:M 2:ctrl:M 1:treat:M 2:treat:M 1:ctrl:F ... 2:treat:F
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
 #{ f <- function() { invisible(23) } ; f() }
@@ -12505,6 +12526,35 @@ Error in Recall(10) : 'Recall' called from outside a closure
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep(as.raw(14), 4) }
 [1] 0e 0e 0e 0e
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), each = 2) }
+[1] 1 1 2 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), each = 2, length.out = 3) }
+[1] 1 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), each = 2, length.out = 5) }
+[1] 1 1 2 2 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), times = 3) }
+[1] 1 2 1 2 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), times = c(1, 2, 3)) }
+Error in rep(c(1, 2), times = c(1, 2, 3)) : invalid 'times' argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), times = c(2, 3)) }
+[1] 1 1 2 2 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(c(1, 2), times = c(2, 3), each = 2) }
+Error in rep(c(1, 2), times = c(2, 3), each = 2) :
+  invalid 'times' argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep(c(1,2),0) }

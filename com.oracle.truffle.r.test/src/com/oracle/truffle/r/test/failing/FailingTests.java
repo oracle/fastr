@@ -799,16 +799,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInteraction_cc946aa5f7a0393338bf3a58fefb26a7() {
-        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testInteraction_f0540e2d1f6d9ab64d558ef96133818f() {
-        assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testInvisibleIgnore_d73dc3df8036b77c171c3b1e3e6abe2b() {
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }

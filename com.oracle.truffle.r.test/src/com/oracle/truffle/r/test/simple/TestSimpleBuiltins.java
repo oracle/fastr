@@ -386,6 +386,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
 
         assertEval("{ x<-c(1,2); names(x)<-c(\"X\", \"Y\"); rep(x, c(3,2)) }");
+
+        assertEval("{ rep(c(1, 2), each = 2) }");
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 5) }");
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 3) }");
+        assertEval("{ rep(c(1, 2), times = 3) }");
+        assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
+        assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
+        assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
     }
 
     @Test
@@ -4021,6 +4029,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-gl(2, 8, labels = c(\"Control\", \"Treat\")); print(x)}");
         assertEval("{x<-gl(2, 1, 20); print(x)}");
         assertEval("{x<-gl(2, 2, 20); print(x)}");
+        assertEval("{ a <- gl(2, 4, 8) ; print(a) }");
+        assertEval("{ b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; print(b) }");
     }
 
     @Test
@@ -4032,7 +4042,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testInteraction() {
         assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
         assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
