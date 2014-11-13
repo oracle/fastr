@@ -236,12 +236,19 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
-    private static String[] getItems(LocalData data) throws IOException {
-        String[] str = data.con.readLines(1);
-        if (str == null || str.length == 0) {
-            return null;
-        } else {
-            return data.sepchar == null ? str[0].trim().split("\\s+") : str[0].trim().split(data.sepchar);
+    private static String[] getItems(LocalData data, boolean blSkip) throws IOException {
+        while (true) {
+            String[] str = data.con.readLines(1);
+            if (str == null || str.length == 0) {
+                return null;
+            } else {
+                String s = str[0].trim();
+                if (blSkip && s.length() == 0) {
+                    continue;
+                } else {
+                    return data.sepchar == null ? s.split("\\s+") : s.split(data.sepchar);
+                }
+            }
         }
 
     }
@@ -280,7 +287,7 @@ public abstract class Scan extends RBuiltinNode {
         int records = 0;
         while (true) {
             // TODO: does not do any fancy stuff, like handling comments
-            String[] strItems = getItems(data);
+            String[] strItems = getItems(data, blSkip);
             if (strItems == null) {
                 break;
             }
@@ -297,7 +304,7 @@ public abstract class Scan extends RBuiltinNode {
                     } else if (!multiLine) {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.LINE_ELEMENTS, lines + 1, nc);
                     } else {
-                        strItems = getItems(data);
+                        strItems = getItems(data, blSkip);
                         // Checkstyle: stop modified control variable check
                         i = 0;
                         // Checkstyle: resume modified control variable check
@@ -375,7 +382,7 @@ public abstract class Scan extends RBuiltinNode {
         int lines = 0;
         while (true) {
             // TODO: does not do any fancy stuff, like handling comments
-            String[] strItems = getItems(data);
+            String[] strItems = getItems(data, blSkip);
             if (strItems == null) {
                 break;
             }
@@ -467,7 +474,11 @@ public abstract class Scan extends RBuiltinNode {
             if (isNaString(buffer, 1, data)) {
                 return RRuntime.STRING_NA;
             } else {
-                return buffer;
+                if (buffer.length() > 1 && buffer.charAt(0) == '"' && buffer.charAt(buffer.length() - 1) == '"') {
+                    return buffer.substring(1, buffer.length() - 1);
+                } else {
+                    return buffer;
+                }
             }
         }
 
@@ -481,5 +492,4 @@ public abstract class Scan extends RBuiltinNode {
 
         throw RInternalError.shouldNotReachHere();
     }
-
 }
