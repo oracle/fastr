@@ -11,7 +11,6 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -85,7 +84,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
-    @TruffleBoundary
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -93,7 +91,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private void initFactorNode() {
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -101,7 +98,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private void initTypeOfNode() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -57,7 +57,6 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
         return setOldClass(arg, (RStringVector) result);
     }
 
-    @TruffleBoundary
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
