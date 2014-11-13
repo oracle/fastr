@@ -43,6 +43,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final REnvironment.FunctionDefinition funcEnv;
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
+    private final RNode uninitializedBody; // copy for "body" builtin
     private final String description;
     private final FunctionUID uuid;
 
@@ -76,6 +77,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         super(src, formals, funcEnv.getDescriptor());
         this.funcEnv = funcEnv;
         this.body = body;
+        this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.create(InternalFrameSlot.OnExit, false);
@@ -93,6 +95,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     public FunctionBodyNode getBody() {
         return (FunctionBodyNode) RASTUtils.unwrap(body);
+    }
+
+    public FunctionBodyNode getUninitializedBody() {
+        return (FunctionBodyNode) uninitializedBody;
     }
 
     /**
