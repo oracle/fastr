@@ -56,7 +56,6 @@ public abstract class Unlist extends RBuiltinNode {
             return recursiveLengthNode.executeInt(frame, operand);
         }
 
-        @TruffleBoundary
         private void initRecursiveLengthNode() {
             if (recursiveLengthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -97,7 +96,6 @@ public abstract class Unlist extends RBuiltinNode {
         return lengthNode.executeInt(frame, operand);
     }
 
-    @TruffleBoundary
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -110,7 +108,6 @@ public abstract class Unlist extends RBuiltinNode {
         return recursiveLengthNode.executeInt(frame, operand);
     }
 
-    @TruffleBoundary
     private void initRecursiveLengthNode() {
         if (recursiveLengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

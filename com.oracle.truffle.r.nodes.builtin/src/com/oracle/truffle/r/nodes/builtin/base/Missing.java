@@ -89,7 +89,6 @@ public abstract class Missing extends RBuiltinNode {
                 return RRuntime.LOGICAL_TRUE;
             }
 
-            assert level < 30;
             // This might be a promise...
             if (isPromiseProfile.profile(value instanceof RPromise)) {
                 RPromise promise = (RPromise) value;

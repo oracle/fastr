@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -41,21 +39,12 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
     @Child private DispatchedCallNode dcn;
-    @Child private CastToVectorNode castVector;
 
     private void initCast() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
         }
-    }
-
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
-        if (castVector == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
-        }
-        return (RAbstractVector) castVector.executeObject(frame, value);
     }
 
     private String castString(VirtualFrame frame, int o) {
@@ -133,47 +122,20 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization(guards = "isObject")
-    protected Object doObject(VirtualFrame frame, RAbstractVector vector) {
+    protected Object doObject(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(DispatchedCallNode.create("as.character", RRuntime.USE_METHOD, getSuppliedArgsNames()));
         }
         try {
-            return dcn.executeInternal(frame, vector.getClassHierarchy(), new Object[]{vector});
+            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
         } catch (RError e) {
-            return castStringVector(frame, vector);
+            return castStringVector(frame, container);
         }
     }
 
-    // TODO: this shold be handled by a generic function
-    @Specialization
-    protected Object doFactor(VirtualFrame frame, RFactor value) {
-        controlVisibility();
-        Object attr = value.getVector().getAttr(RRuntime.LEVELS_ATTR_KEY);
-        if (attr == null) {
-            return RNull.instance;
-        } else {
-            RAbstractStringVector vec = (RAbstractStringVector) castVector(frame, attr);
-            String[] data = new String[value.getLength()];
-            if (vec.getLength() == 0) {
-                Arrays.fill(data, RRuntime.STRING_NA);
-                return RDataFactory.createStringVector(data, RDataFactory.INCOMPLETE_VECTOR);
-            } else {
-                for (int i = 0; i < data.length; i++) {
-                    int val = value.getVector().getDataAt(i);
-                    if (RRuntime.isNA(val)) {
-                        data[i] = RRuntime.NA_HEADER;
-                    } else {
-                        data[i] = vec.getDataAt(val - 1);
-                    }
-                }
-                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-            }
-        }
-    }
-
-    protected boolean isObject(RAbstractVector vector) {
-        return vector.isObject();
+    protected boolean isObject(RAbstractContainer container) {
+        return container.isObject();
     }
 }

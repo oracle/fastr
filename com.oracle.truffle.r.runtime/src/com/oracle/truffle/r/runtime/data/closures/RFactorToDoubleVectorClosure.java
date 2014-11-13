@@ -30,36 +30,25 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /*
  * This closure is meant to be used only for implementation of the binary operators.
  */
-public class RFactorToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
+public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
     private final RIntVector vector;
-    private final RAbstractStringVector levels;
+    private final RAbstractDoubleVector levels;
 
-    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, NACheck naCheck) {
+    public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, NACheck naCheck) {
         super(factor.getVector(), naCheck);
         this.vector = factor.getVector();
+        assert levels != null;
         this.levels = levels;
-        if (this.levels == null) {
-            RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
-        }
         naCheck.enable(this.vector);
     }
 
-    public String getDataAt(int index) {
-        if (levels == null || levels.getLength() == 0) {
-            return RRuntime.STRING_NA;
+    public double getDataAt(int index) {
+        int val = vector.getDataAt(index);
+        if (naCheck.check(val)) {
+            return RRuntime.DOUBLE_NA;
         } else {
-            int val = vector.getDataAt(index);
-            if (naCheck.check(val)) {
-                return RRuntime.STRING_NA;
-            } else {
-                String l = levels.getDataAt(val - 1);
-                if (naCheck.check(l)) {
-                    return "NA"; // for comparison
-                } else {
-                    return l;
-                }
-            }
+            return levels.getDataAt(val - 1);
         }
     }
 }

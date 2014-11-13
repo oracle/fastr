@@ -102,10 +102,29 @@ public class RClosures {
         return new RComplexToStringVectorClosure(vector, check);
     }
 
-    // Factor to
+    // Factor to vector
 
-    public static RAbstractStringVector createFactorToStringVector(RFactor factor, NACheck check) {
-        return new RFactorToStringVectorClosure(factor, check);
+    public static RAbstractVector createFactorToVector(RFactor factor, NACheck check) {
+        RAbstractVector levels = factor.getVector().getLevels();
+        if (levels == null) {
+            return new RFactorToStringVectorClosure(factor, null, check);
+        } else {
+            if (levels.getElementClass() == RInt.class) {
+                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, check);
+            } else if (levels.getElementClass() == RDouble.class) {
+                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, check);
+            } else if (levels.getElementClass() == RLogical.class) {
+                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels, check), check);
+            } else if (levels.getElementClass() == RComplex.class) {
+                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, check);
+            } else if (levels.getElementClass() == RString.class) {
+                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, check);
+            } else {
+                assert levels.getElementClass() == RRaw.class;
+                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels, check), check);
+            }
+
+        }
     }
 
 }

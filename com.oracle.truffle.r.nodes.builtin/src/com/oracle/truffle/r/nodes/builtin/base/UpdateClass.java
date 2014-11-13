@@ -48,7 +48,6 @@ public abstract class UpdateClass extends RBuiltinNode {
         return setClass(arg, (RStringVector) result);
     }
 
-    @TruffleBoundary
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -102,8 +101,8 @@ public abstract class UpdateClass extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
-        return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg
-                        : null);
+        return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RDataFrame.class ? arg : null,
+                        arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     @Specialization
@@ -119,7 +118,6 @@ public abstract class UpdateClass extends RBuiltinNode {
         return arg;
     }
 
-    @TruffleBoundary
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -127,7 +125,6 @@ public abstract class UpdateClass extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
