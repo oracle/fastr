@@ -10,18 +10,18 @@ import com.oracle.truffle.api.instrument.Probe.ProbeListener;
 import com.oracle.truffle.api.instrument.StandardSyntaxTag;
 import com.oracle.truffle.api.instrument.SyntaxTag;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.nodes.function.FunctionUID;
 import com.oracle.truffle.r.options.FastROptions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Handles the initialization of the instrumentation system.
  */
 public class RInstrument {
 
-    private static Map<UUID, ArrayList<Probe>> probeMap = new HashMap<>();
+    private static Map<FunctionUID, ArrayList<Probe>> probeMap = new HashMap<>();
 
     private static class RProbeListener implements ProbeListener {
 
@@ -36,13 +36,13 @@ public class RInstrument {
         @Override
         public void probeTaggedAs(Probe probe, SyntaxTag tag, Object tagValue) {
             if (tag == RSyntaxTag.FUNCTION_BODY) {
-                putProbe((UUID) tagValue, probe);
+                putProbe((FunctionUID) tagValue, probe);
                 if (FastROptions.AddFunctionCounters.getValue()) {
-                    probe.attach(new REntryCounters.Function((UUID) tagValue).instrument);
+                    probe.attach(new REntryCounters.Function((FunctionUID) tagValue).instrument);
                 }
 
             } else if (tag == StandardSyntaxTag.START_METHOD) {
-                putProbe((UUID) tagValue, probe);
+                putProbe((FunctionUID) tagValue, probe);
             }
         }
 
@@ -52,11 +52,11 @@ public class RInstrument {
 
     }
 
-    private static void putProbe(UUID uuid, Probe probe) {
-        ArrayList<Probe> list = probeMap.get(uuid);
+    private static void putProbe(FunctionUID uid, Probe probe) {
+        ArrayList<Probe> list = probeMap.get(uid);
         if (list == null) {
             list = new ArrayList<>();
-            probeMap.put(uuid, list);
+            probeMap.put(uid, list);
         }
         list.add(probe);
     }
@@ -66,8 +66,8 @@ public class RInstrument {
         Probe.addProbeListener(new RProbeListener());
     }
 
-    public static Probe findSingleProbe(UUID uuid, SyntaxTag tag) {
-        ArrayList<Probe> list = probeMap.get(uuid);
+    public static Probe findSingleProbe(FunctionUID uid, SyntaxTag tag) {
+        ArrayList<Probe> list = probeMap.get(uid);
         if (list != null) {
             for (Probe probe : list) {
                 if (probe.isTaggedAs(tag)) {

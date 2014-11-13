@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.function.FunctionUID;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
@@ -95,7 +96,7 @@ public class DebugHandling {
     /**
      * Records all functions that have debug receivers installed.
      */
-    private static final WeakHashMap<UUID, StartFunctionEventReceiver> receiverMap = new WeakHashMap<>();
+    private static final WeakHashMap<FunctionUID, StartFunctionEventReceiver> receiverMap = new WeakHashMap<>();
 
     /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all
@@ -104,7 +105,7 @@ public class DebugHandling {
     @SuppressWarnings("unused")
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        StartFunctionEventReceiver fbr = receiverMap.get(fdn.getUUID());
+        StartFunctionEventReceiver fbr = receiverMap.get(fdn.getUID());
         if (fbr == null) {
             Probe probe = attachDebugHandler(fdn, text, condition, once);
             return probe != null;
@@ -115,7 +116,7 @@ public class DebugHandling {
     }
 
     public static boolean undebug(RFunction func) {
-        StartFunctionEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUUID());
+        StartFunctionEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
         if (fbr == null) {
             return false;
         } else {
@@ -125,7 +126,7 @@ public class DebugHandling {
     }
 
     public static boolean isDebugged(RFunction func) {
-        StartFunctionEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUUID());
+        StartFunctionEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
         return fbr != null && !fbr.disabled();
     }
 
@@ -134,7 +135,7 @@ public class DebugHandling {
     }
 
     private static Probe findStartMethodProbe(FunctionDefinitionNode fdn) {
-        return RInstrument.findSingleProbe(fdn.getUUID(), StandardSyntaxTag.START_METHOD);
+        return RInstrument.findSingleProbe(fdn.getUID(), StandardSyntaxTag.START_METHOD);
     }
 
     private static Probe attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once) {
@@ -149,7 +150,7 @@ public class DebugHandling {
     }
 
     private static void ensureSingleStep(FunctionDefinitionNode fdn) {
-        StartFunctionEventReceiver fbr = receiverMap.get(fdn.getUUID());
+        StartFunctionEventReceiver fbr = receiverMap.get(fdn.getUID());
         if (fbr == null) {
             attachDebugHandler(fdn, null, null, true);
         } else {
@@ -242,7 +243,7 @@ public class DebugHandling {
                     break;
                 case CONTINUE:
                     // Have to disable
-                    StartFunctionEventReceiver fdr = receiverMap.get(functionDefinitionNode.getUUID());
+                    StartFunctionEventReceiver fdr = receiverMap.get(functionDefinitionNode.getUID());
                     fdr.setContinuing();
                     break;
             }
@@ -269,7 +270,7 @@ public class DebugHandling {
 
         StartFunctionEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
             super(functionDefinitionNode, text, condition);
-            receiverMap.put(functionDefinitionNode.getUUID(), this);
+            receiverMap.put(functionDefinitionNode.getUID(), this);
             instruments.add(Instrument.create(this));
             statementReceiver = new StatementEventReceiver(functionDefinitionNode, text, condition);
             this.once = once;

@@ -9,7 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrument.Instrument;
 import com.oracle.truffle.api.instrument.impl.SimpleEventReceiver;
 import com.oracle.truffle.api.nodes.Node;
-import java.util.UUID;
+import com.oracle.truffle.r.nodes.function.FunctionUID;
 import java.util.WeakHashMap;
 
 public class REntryCounters {
@@ -50,7 +50,7 @@ public class REntryCounters {
 
     public static class Function extends Basic {
 
-        public Function(UUID uuid) {
+        public Function(FunctionUID uuid) {
             super(uuid);
         }
 

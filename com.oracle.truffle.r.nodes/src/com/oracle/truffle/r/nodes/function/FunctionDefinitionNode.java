@@ -44,7 +44,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final REnvironment.FunctionDefinition funcEnv;
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     private final String description;
-    private final UUID uuid;
+    private final FunctionUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
@@ -80,10 +80,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.create(InternalFrameSlot.OnExit, false);
         this.instrumentationApplied = substituteFrame;
-        this.uuid = substituteFrame ? null : UUID.randomUUID();
+        this.uuid = substituteFrame ? null : FunctionUIDFactory.get().createUID();
     }
 
-    public UUID getUUID() {
+    public FunctionUID getUID() {
         return uuid;
     }
 

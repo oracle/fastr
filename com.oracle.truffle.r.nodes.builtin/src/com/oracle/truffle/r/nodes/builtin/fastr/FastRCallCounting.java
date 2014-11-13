@@ -12,6 +12,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionUID;
 import com.oracle.truffle.r.nodes.instrument.REntryCounters;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
@@ -21,7 +22,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import java.util.UUID;
 
 /**
  *
@@ -48,7 +48,7 @@ public class FastRCallCounting {
             controlVisibility();
             if (!function.isBuiltin()) {
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) function.getRootNode();
-                UUID uuid = fdn.getUUID();
+                FunctionUID uuid = fdn.getUID();
                 if (REntryCounters.findCounter(uuid) == null) {
                     Probe probe = RInstrument.findSingleProbe(uuid, RSyntaxTag.FUNCTION_BODY);
                     if (probe == null) {
@@ -82,7 +82,7 @@ public class FastRCallCounting {
             controlVisibility();
             if (!function.isBuiltin()) {
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) function.getRootNode();
-                REntryCounters.Function counter = (REntryCounters.Function) REntryCounters.findCounter(fdn.getUUID());
+                REntryCounters.Function counter = (REntryCounters.Function) REntryCounters.findCounter(fdn.getUID());
                 if (counter == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "no associated counter");
                 }
