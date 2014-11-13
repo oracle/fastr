@@ -47,7 +47,6 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return castStringNode.executeCast(frame, o);
     }
 
-    @TruffleBoundary
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -60,7 +59,6 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return ((RAbstractVector) castVectorNode.executeObject(frame, value)).materialize();
     }
 
-    @TruffleBoundary
     private void initCastVectorNode() {
         if (castVectorNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
