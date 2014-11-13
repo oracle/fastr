@@ -26,9 +26,12 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -36,13 +39,17 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"})
 public abstract class Split extends RBuiltinNode {
 
+    @Child private CastStringNode castString;
+
+    private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
+
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
 
     @Specialization
-    protected RList split(RAbstractIntVector x, RFactor f) {
-        HashMap<Object, Integer> levelMapping = getLevelMapping(f);
-        final int nLevels = levelMapping.size();
+    protected RList split(VirtualFrame frame, RAbstractIntVector x, RFactor f) {
+        int[] factor = f.getVector().getDataWithoutCopying();
+        final int nLevels = f.getNLevels();
 
         // initialise result arrays
         int[][] collectResults = new int[nLevels][];
@@ -52,8 +59,8 @@ public abstract class Split extends RBuiltinNode {
         }
 
         // perform split
-        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, f.getLength())) {
-            int resultIndex = levelMapping.get(f.getDataAtAsObject(fi));
+        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+            int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
             int[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -63,22 +70,18 @@ public abstract class Split extends RBuiltinNode {
         }
 
         // assemble result vectors and level names
-        String[] names = new String[nLevels];
         Object[] results = new Object[nLevels];
-        for (HashMap.Entry<Object, Integer> e : levelMapping.entrySet()) {
-            Object level = e.getKey();
-            int index = e.getValue();
-            names[index] = RRuntime.toString(level);
-            results[index] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[index], 0, collectResultSize[index]), RDataFactory.COMPLETE_VECTOR);
+        for (int i = 0; i < nLevels; ++i) {
+            results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
-        return RDataFactory.createList(results, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+        return RDataFactory.createList(results, makeNames(frame, f));
     }
 
     @Specialization
-    protected RList split(RAbstractDoubleVector x, RFactor f) {
-        HashMap<Object, Integer> levelMapping = getLevelMapping(f);
-        final int nLevels = levelMapping.size();
+    protected RList split(VirtualFrame frame, RAbstractDoubleVector x, RFactor f) {
+        int[] factor = f.getVector().getDataWithoutCopying();
+        final int nLevels = f.getNLevels();
 
         // initialise result arrays
         double[][] collectResults = new double[nLevels][];
@@ -88,8 +91,8 @@ public abstract class Split extends RBuiltinNode {
         }
 
         // perform split
-        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, f.getLength())) {
-            int resultIndex = levelMapping.get(f.getDataAtAsObject(fi));
+        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+            int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
             double[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -99,33 +102,26 @@ public abstract class Split extends RBuiltinNode {
         }
 
         // assemble result vectors and level names
-        String[] names = new String[nLevels];
         Object[] results = new Object[nLevels];
-        for (HashMap.Entry<Object, Integer> e : levelMapping.entrySet()) {
-            Object level = e.getKey();
-            int index = e.getValue();
-            names[index] = RRuntime.toString(level);
-            results[index] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[index], 0, collectResultSize[index]), RDataFactory.COMPLETE_VECTOR);
+        for (int i = 0; i < nLevels; ++i) {
+            results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
-        return RDataFactory.createList(results, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+        return RDataFactory.createList(results, makeNames(frame, f));
     }
 
-    /**
-     * Obtain a mapping from factor levels to integers, in the order of appearance of the levels in
-     * the factor.
-     */
-    @TruffleBoundary
-    private static HashMap<Object, Integer> getLevelMapping(RFactor f) {
-        HashMap<Object, Integer> map = new HashMap<>();
-        int lastIndex = 0;
-        for (int i = 0; i < f.getLength(); ++i) {
-            Object level = f.getDataAtAsObject(i);
-            if (!map.containsKey(level)) {
-                map.put(level, lastIndex++);
+    private RStringVector makeNames(VirtualFrame frame, RFactor f) {
+        RVector levels = f.getLevels();
+        if (noStringLevels.profile(!(levels instanceof RStringVector))) {
+            if (castString == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castString = insert(CastStringNodeFactory.create(null, false, false, false, false));
             }
+            RStringVector slevels = (RStringVector) castString.executeString(frame, f.getLevels());
+            return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);
+        } else {
+            return RDataFactory.createStringVector(((RStringVector) levels).getDataCopy(), RDataFactory.COMPLETE_VECTOR);
         }
-        return map;
     }
 
 }

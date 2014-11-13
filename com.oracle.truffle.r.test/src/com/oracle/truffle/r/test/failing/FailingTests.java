@@ -1569,16 +1569,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
-        assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSplitIgnore_bb711f5c27cbd7b60881617bc02fb801() {
-        assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSqrtBroken_dda9ccdc11f9f5afbe9854145501c5e5() {
         assertEval("{ sqrt(c(a=9,b=81)) }");
     }
