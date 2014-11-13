@@ -105,7 +105,7 @@ public class RClosures {
     // Factor to vector
 
     public static RAbstractVector createFactorToVector(RFactor factor, NACheck check) {
-        RAbstractVector levels = factor.getVector().getLevels();
+        RAbstractVector levels = factor.getLevels();
         if (levels == null) {
             return new RFactorToStringVectorClosure(factor, null, check);
         } else {

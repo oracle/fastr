@@ -36,6 +36,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), multi.line=FALSE) }");
         assertEval("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), fill=TRUE, multi.line=FALSE) }");
 
+        assertEval("{ con<-textConnection(c(\"\\\"2\\\"\", \"\\\"11\\\"\")); scan(con, what=list(\"\")) }");
+        assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(\"\")) }");
+        assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(\"\"), blank.lines.skip=FALSE) }");
+        assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(integer()), blank.lines.skip=FALSE) }");
+
     }
 
     @Test
@@ -386,6 +391,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
 
         assertEval("{ x<-c(1,2); names(x)<-c(\"X\", \"Y\"); rep(x, c(3,2)) }");
+
+        assertEval("{ rep(c(1, 2), each = 2) }");
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 5) }");
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 3) }");
+        assertEval("{ rep(c(1, 2), times = 3) }");
+        assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
+        assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
+        assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
     }
 
     @Test
@@ -3469,12 +3482,17 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
         assertEval("{ x<-c(1,3,4);attr(x,\"names\")<-c(\"a\",\"b\",\"c\");lapply(x, function(x,y) { as.character(x*y) }, 2) }");
         assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+        assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
+        assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
     }
 
     @Test
     @Ignore
     public void testLapplyIgnore() {
-        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+        assertEval("{ lapply(1:3, sum) }");
+        assertEval("{ lapply(1:3, sum, 2) }");
+        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 
     @Test
@@ -4021,6 +4039,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-gl(2, 8, labels = c(\"Control\", \"Treat\")); print(x)}");
         assertEval("{x<-gl(2, 1, 20); print(x)}");
         assertEval("{x<-gl(2, 2, 20); print(x)}");
+        assertEval("{ a <- gl(2, 4, 8) ; print(a) }");
+        assertEval("{ b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; print(b) }");
     }
 
     @Test
@@ -4032,7 +4052,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testInteraction() {
         assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; interaction(a, b) }");
         assertEval("{ a <- gl(2, 4, 8) ; b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; s <- gl(2, 1, 8, labels = c(\"M\", \"F\")) ; interaction(a, b, s, sep = \":\") }");
@@ -4043,14 +4062,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ split(1:10, 1:2) }");
         assertEval("{ ma <- cbind(x = 1:10, y = (-4:5)^2) ; split(ma, col(ma)) }");
         assertEval("{ fu <- c(1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,2,2,1,1) ; split(1:20,fu) }");
-    }
-
-    @Test
-    @Ignore
-    public void testSplitIgnore() {
-        // these require first-class levels access in factors
         assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
         assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+        assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L) ; split(1:3, x) }");
     }
 
     @Test
@@ -4064,6 +4078,14 @@ public class TestSimpleBuiltins extends TestBase {
     public void testColIgnore() {
         // reports wrong source section
         assertEval("{ col(c(1,2,3)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTapply() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
 }

@@ -169,7 +169,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
                     newData[i] = RRuntime.INT_NA;
                 }
             } else {
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
                     newData[i] = oldData[j];
                 }
             }

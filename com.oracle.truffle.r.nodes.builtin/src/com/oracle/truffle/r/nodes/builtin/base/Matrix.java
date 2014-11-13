@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.MatrixFactory.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -44,21 +43,6 @@ public abstract class Matrix extends RBuiltinNode {
     private final BinaryConditionProfile nrowMissingNcolGiven = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile nrowGivenNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
-
-    @NodeChild("argument")
-    protected abstract static class FirstIntNode extends RNode {
-
-        @Specialization
-        protected int firstScalar(int argument) {
-            return argument;
-        }
-
-        @Specialization(contains = "firstScalar")
-        protected int firstVector(RAbstractIntVector argument) {
-            return argument.getDataAt(0);
-        }
-
-    }
 
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] args) {
