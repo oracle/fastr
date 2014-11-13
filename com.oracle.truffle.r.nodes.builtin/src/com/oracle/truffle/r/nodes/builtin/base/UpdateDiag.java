@@ -127,7 +127,6 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return updateDiag(resultVector, valueVector);
     }
 
-    @TruffleBoundary
     private void initCastDoubleNode() {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
