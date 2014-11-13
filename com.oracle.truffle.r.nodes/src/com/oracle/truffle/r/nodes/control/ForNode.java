@@ -63,6 +63,14 @@ public abstract class ForNode extends LoopNode {
         return fn;
     }
 
+    public WriteVariableNode getCvar() {
+        return cvar;
+    }
+
+    public RNode getBody() {
+        return body;
+    }
+
     @Override
     public boolean isSyntax() {
         return true;

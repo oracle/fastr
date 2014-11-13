@@ -309,9 +309,9 @@ public class DebugHandling {
                 RContext.getInstance().getConsoleHandler().print("debugging in: ");
                 printCall(frame);
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
-                boolean curly = fdn.toString().trim().endsWith("}");
-                if (curly) {
-                    printNode(node, curly);
+                boolean brace = fdn.hasBraces();
+                if (brace) {
+                    printNode(node, brace);
                     browserInteract(node, frame);
                 }
             }

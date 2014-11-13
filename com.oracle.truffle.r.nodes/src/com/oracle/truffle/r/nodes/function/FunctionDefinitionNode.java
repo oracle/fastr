@@ -206,4 +206,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
+    /**
+     * A workaround for not reflecting left brace as a function call.
+     */
+    public boolean hasBraces() {
+        return description.trim().endsWith("}");
+    }
+
 }

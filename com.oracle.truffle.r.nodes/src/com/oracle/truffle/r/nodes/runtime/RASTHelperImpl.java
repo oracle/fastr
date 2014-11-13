@@ -51,8 +51,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  *
  * Since the AST is a final field (and we assert) immutable in its syntactic essence, we can cache
  * information such as the length here. A Truffle AST has many nodes that are not part of the
- * syntactic essence and we ignore these. TODO consider some kind of tagging mechanism to
- * distinguish syntactic nodes from interpreter support nodes.
+ * syntactic essence and we ignore these.
+ *
+ * This implementation necessarily has to use a lot of {@code instanceof} checks on the node class.
+ * However, it is not important enough to warrant refactoring as an {@link RNode} method, (cf deparse).
  *
  * Some examples:
  *
@@ -70,6 +72,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 public class RASTHelperImpl implements RASTHelper {
 
     @TruffleBoundary
+    @Override
     public int getLength(RLanguage rl) {
         RNode root = (RNode) rl.getRep();
         // NodeUtil.printTree(System.out, root);
@@ -86,14 +89,31 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof IfNode) {
             // 3 or 4 with else part
             result = 3 + (((IfNode) node).getElsePart() != null ? 1 : 0);
+        } else if (node instanceof FunctionBodyNode) {
+            FunctionBodyNode fbn = (FunctionBodyNode) node;
+            boolean hasBrace = fbn.getFunctionDefinitionNode().hasBraces();
+            FunctionStatementsNode fsNode = fbn.getStatements();
+            result = hasBrace ? 1 : 0;
+            for (RNode s : fsNode.getSequence()) {
+                if (s.unwrap().isSyntax()) {
+                    result++;
+                }
+            }
+        } else if (node instanceof ForNode) {
+            return 4;
+        } else if (node instanceof WhileNode) {
+            return 3;
         } else {
+            // TODO fill out
             assert false;
         }
         return result;
     }
 
     @TruffleBoundary
+    @Override
     public Object getDataAtAsObject(RLanguage rl, int index) {
+        // index has already been range checked based on computeLength
         Node node = RASTUtils.unwrap(rl.getRep());
         if (node instanceof RCallNode || node instanceof DispatchedCallNode) {
             if (index == 0) {
@@ -116,7 +136,44 @@ public class RASTHelperImpl implements RASTHelper {
                 default:
                     assert false;
             }
-        } else {
+        } else if (node instanceof FunctionBodyNode) {
+            FunctionBodyNode fbn = (FunctionBodyNode) node;
+            boolean hasBrace = fbn.getFunctionDefinitionNode().hasBraces();
+            FunctionStatementsNode fsNode = fbn.getStatements();
+            int sIndex = hasBrace ? index - 1 : index;
+            if (hasBrace && index == 0) {
+                return RDataFactory.createSymbol("`{`");
+            } else {
+                return RASTUtils.createLanguageElement(fsNode.getSequence()[sIndex].unwrap());
+            }
+        } else if (node instanceof ForNode) {
+            ForNode forNode = (ForNode) node;
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("`for`");
+                case 1:
+                    return RASTUtils.createLanguageElement(forNode.getCvar());
+                case 2:
+                    return RASTUtils.createLanguageElement(forNode.getRange());
+                case 3:
+                    return RASTUtils.createLanguageElement(forNode.getBody());
+                default:
+                    assert false;
+            }
+         } else if (node instanceof WhileNode) {
+             WhileNode whileNode = (WhileNode) node;
+             switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("`while`");
+                case 1:
+                    return RASTUtils.createLanguageElement(whileNode.getCondition());
+                case 2:
+                    return RASTUtils.createLanguageElement(whileNode.getBody());
+                 default:
+                    assert false;
+             }
+         } else {
+           // TODO fill out
             assert false;
         }
         return null;
@@ -130,10 +187,12 @@ public class RASTHelperImpl implements RASTHelper {
         return RDataFactory.createList(data);
     }
 
+    @Override
     public void deparse(State state, RLanguage rl) {
         RASTDeparse.deparse(state, rl);
     }
 
+    @Override
     public void deparse(State state, RFunction f) {
         RASTDeparse.deparse(state, f);
     }
@@ -143,6 +202,7 @@ public class RASTHelperImpl implements RASTHelper {
     /**
      * A rather obscure piece of code used in package loading for lazy loading.
      */
+    @Override
     public REnvironment findNamespace(RStringVector name, int depth) {
         if (getNamespaceCall == null) {
             try {

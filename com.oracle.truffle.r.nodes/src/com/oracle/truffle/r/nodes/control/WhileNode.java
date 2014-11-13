@@ -54,6 +54,14 @@ public final class WhileNode extends LoopNode {
         return wn;
     }
 
+    public ConvertBooleanNode getCondition() {
+        return condition;
+    }
+
+    public RNode getBody() {
+        return body;
+    }
+
     @Override
     public boolean isSyntax() {
         return true;

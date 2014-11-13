@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Denotes a function body, which consists of a {@link SaveArgumentsNode}
  * and a {@link FunctionStatementsNode}.
  *
+ * Children are typed as {@link RNode} to avoid a custom instrumentation wrapper node.
+ *
  */
 public class FunctionBodyNode extends RNode {
 
@@ -54,8 +56,13 @@ public class FunctionBodyNode extends RNode {
         return statements.execute(frame);
     }
 
-   public FunctionDefinitionNode getFunctionDefinitionNode() {
-        return (FunctionDefinitionNode) RASTUtils.unwrapParent(this);
+    public FunctionStatementsNode getStatements() {
+        return (FunctionStatementsNode) statements.unwrap(); // statements may be wrapped
+    }
+
+
+    public FunctionDefinitionNode getFunctionDefinitionNode() {
+        return (FunctionDefinitionNode) unwrapParent();
     }
 
     @Override

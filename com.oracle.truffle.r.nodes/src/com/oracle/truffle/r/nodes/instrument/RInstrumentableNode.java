@@ -85,4 +85,13 @@ public interface RInstrumentableNode {
         }
     }
 
+    default Node unwrapParent() {
+        Node p = ((Node) this).getParent();
+        if (p instanceof WrapperNode) {
+            return p.getParent();
+        } else {
+            return p;
+        }
+    }
+
 }
