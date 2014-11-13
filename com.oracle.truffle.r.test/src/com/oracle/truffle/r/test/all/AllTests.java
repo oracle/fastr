@@ -13414,6 +13414,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testScan_0ff821104ddd08c3fa7cb745e8e56b56() {
+        assertEval("{ con<-textConnection(c(\"\\\"2\\\"\", \"\\\"11\\\"\")); scan(con, what=list(\"\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_371f0a86c95441f2e6869739e303757d() {
+        assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(\"\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_bfddbe9a3576d1b07d6937944054b2ef() {
+        assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(\"\"), blank.lines.skip=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_3e9be5b7630237bf05b9207280782cd6() {
+        assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(integer()), blank.lines.skip=FALSE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testScan_1a9f4a5c02250dbe595746a1b0656d70() {
         assertEvalError("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), multi.line=FALSE) }");
     }

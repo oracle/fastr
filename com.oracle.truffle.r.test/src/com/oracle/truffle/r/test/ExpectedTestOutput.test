@@ -13129,6 +13129,27 @@ NULL
 [1] 2 4 6
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("2 3 5", "", "11 13 17")); scan(con, what=list("")) }
+Read 6 records
+[[1]]
+[1] "2"  "3"  "5"  "11" "13" "17"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("2 3 5", "", "11 13 17")); scan(con, what=list(""), blank.lines.skip=FALSE) }
+Read 7 records
+[[1]]
+[1] "2"  "3"  "5"  ""   "11" "13" "17"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("2 3 5", "", "11 13 17")); scan(con, what=list(integer()), blank.lines.skip=FALSE) }
+Read 7 records
+[[1]]
+[1]  2  3  5 NA 11 13 17
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
 #{ con<-textConnection(c("HEADER", "7 2 3", "4 5 42")); scan(con, skip = 1) }
 Read 6 items
 [1]  7  2  3  4  5 42
@@ -13230,6 +13251,13 @@ Read 3 records
 
 [[3]]
 [1] "line" "5"    "17"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("\"2\"", "\"11\"")); scan(con, what=list("")) }
+Read 2 records
+[[1]]
+[1] "2"  "11"
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSd
