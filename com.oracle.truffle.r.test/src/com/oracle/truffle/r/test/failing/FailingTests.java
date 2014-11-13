@@ -874,8 +874,18 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_bb1b1b8299159a83c87fe6dc760e5b8b() {
-        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+    public void TestSimpleBuiltins_testLapplyIgnore_8aa9fed48ff3245ec5301cee82cf7f37() {
+        assertEval("{ lapply(1:3, sum) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLapplyIgnore_04025bf54d7281f9b2993d29590f8eea() {
+        assertEval("{ lapply(1:3, sum, 2) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLapplyIgnore_d3277d29613178c818f69335eb032a43() {
+        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 
     @Ignore
@@ -1706,6 +1716,21 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
         assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testTapply_627b7381fd149984429a34289adeba8f() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testTapply_8a748021dace19980a947a07fde93a96() {
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testTapply_56d04575049cc5fb09d7e8f4abbc6879() {
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
     @Ignore

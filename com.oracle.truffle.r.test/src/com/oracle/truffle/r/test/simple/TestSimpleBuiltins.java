@@ -3477,12 +3477,17 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
         assertEval("{ x<-c(1,3,4);attr(x,\"names\")<-c(\"a\",\"b\",\"c\");lapply(x, function(x,y) { as.character(x*y) }, 2) }");
         assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+        assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
+        assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
     }
 
     @Test
     @Ignore
     public void testLapplyIgnore() {
-        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+        assertEval("{ lapply(1:3, sum) }");
+        assertEval("{ lapply(1:3, sum, 2) }");
+        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 
     @Test
@@ -4068,6 +4073,14 @@ public class TestSimpleBuiltins extends TestBase {
     public void testColIgnore() {
         // reports wrong source section
         assertEval("{ col(c(1,2,3)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTapply() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
 }

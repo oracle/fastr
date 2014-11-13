@@ -9229,8 +9229,33 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testLapplyIgnore_bb1b1b8299159a83c87fe6dc760e5b8b() {
+    public void TestSimpleBuiltins_testLapply_bb1b1b8299159a83c87fe6dc760e5b8b() {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_c76c85ff170375ed7ec190d889689933() {
+        assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_923a6f07dad0ed634e23cfd00b6923fd() {
+        assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapplyIgnore_8aa9fed48ff3245ec5301cee82cf7f37() {
+        assertEval("{ lapply(1:3, sum) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapplyIgnore_04025bf54d7281f9b2993d29590f8eea() {
+        assertEval("{ lapply(1:3, sum, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapplyIgnore_d3277d29613178c818f69335eb032a43() {
+        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 
     @Test
@@ -15076,6 +15101,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testTabulate_0a6ec06d77c3ae8bad08fcaf7dbbb6ba() {
         assertEval("{tabulate(factor(letters[1:10]))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapply_627b7381fd149984429a34289adeba8f() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapply_8a748021dace19980a947a07fde93a96() {
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapply_56d04575049cc5fb09d7e8f4abbc6879() {
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
     @Test
