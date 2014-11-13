@@ -181,7 +181,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
                     newData[i] = oldData[j];
                 }
             }
