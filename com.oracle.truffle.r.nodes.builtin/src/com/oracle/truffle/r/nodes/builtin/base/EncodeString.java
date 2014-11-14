@@ -111,16 +111,18 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
+        boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
                 everSeenNA.enter();
                 result[i] = currentEl;
+                seenNA = true;
             } else {
                 result[i] = format(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
-        return RDataFactory.createStringVector(result, na.neverSeenNA());
+        return RDataFactory.createStringVector(result, !seenNA);
     }
 
     @SuppressWarnings("unused")
@@ -150,16 +152,18 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
+        boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
                 everSeenNA.enter();
                 result[i] = currentEl;
+                seenNA = true;
             } else {
                 result[i] = format(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
-        return RDataFactory.createStringVector(result, na.neverSeenNA());
+        return RDataFactory.createStringVector(result, !seenNA);
     }
 
     @SuppressWarnings("unused")
@@ -198,11 +202,13 @@ public abstract class EncodeString extends RBuiltinNode {
         final String[] result = new String[x.getLength()];
         final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
         final int padding = maxElWidth - quoteLength;
+        boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String curEl = x.getDataAt(i);
             if (RRuntime.isNA(curEl)) {
                 everSeenNA.enter();
                 result[i] = curEl;
+                seenNA = true;
             } else {
                 final int totalPadding = padding - curEl.length();
                 final int leftPadding = totalPadding >> 1;
@@ -210,7 +216,7 @@ public abstract class EncodeString extends RBuiltinNode {
                 result[i] = addPaddingIgnoreNA(curEl, leftPadding, rightPadding, quoteEl);
             }
         }
-        return RDataFactory.createStringVector(result, na.neverSeenNA());
+        return RDataFactory.createStringVector(result, !seenNA);
     }
 
     @TruffleBoundary
@@ -276,16 +282,18 @@ public abstract class EncodeString extends RBuiltinNode {
     protected RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final String[] result = new String[x.getLength()];
+        boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
                 everSeenNA.enter();
                 result[i] = currentEl;
+                seenNA = true;
             } else {
                 result[i] = concat(quoteEl, currentEl, quoteEl);
             }
         }
-        return RDataFactory.createStringVector(result, na.neverSeenNA());
+        return RDataFactory.createStringVector(result, !seenNA);
     }
 
     @SuppressWarnings("unused")
