@@ -83,7 +83,6 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
                             System.out.printf("Tag %s as STATEMENT: %b%n", n.toString(), tag);
                         }
                     }
-
                 }
             }
         }

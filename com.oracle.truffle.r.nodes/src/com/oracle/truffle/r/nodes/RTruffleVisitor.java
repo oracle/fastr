@@ -353,7 +353,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         return rhsSymbol;
     }
 
-    private static SequenceNode constructReplacementSuffix(RNode[] seq, RNode assignFromTemp, Object rhsSymbol, SourceSection source) {
+    private static ReplacementNode constructReplacementSuffix(RNode[] seq, RNode assignFromTemp, Object rhsSymbol, SourceSection source) {
         // remove var and rhs, returning rhs' value
         RemoveAndAnswerNode rmVar = RemoveAndAnswerNode.create(varSymbol);
         RemoveAndAnswerNode rmRhs = RemoveAndAnswerNode.create(rhsSymbol);
@@ -362,8 +362,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         seq[2] = assignFromTemp;
         seq[3] = rmVar;
         seq[4] = rmRhs;
-        SequenceNode replacement = new SequenceNode.Replacement(seq);
-        replacement.assignSourceSection(source);
+        ReplacementNode replacement = new ReplacementNode(source, seq);
         return replacement;
     }
 
