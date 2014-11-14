@@ -79,4 +79,8 @@ public final class RFunction extends RScalar {
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
     }
+
+    public RFunction copy() {
+        return new RFunction(name, target, builtin, enclosingFrame);
+    }
 }
