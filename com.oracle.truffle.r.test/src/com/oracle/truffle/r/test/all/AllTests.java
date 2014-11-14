@@ -15869,6 +15869,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUpdateClass_0b1304fdbea5cf9ec20fd7aa09a2b1f3() {
+        assertEval("{ x <- new.env(); class(x); class(x)<-\"abc\"; class(x); class(x)<-NULL; class(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_09a6255019410bff97b90186550dd534() {
+        assertEval("{ x <- new.env(); class(x); class(x)<-c(\"abc\", \"xyz\"); class(x); class(x)<-NULL; class(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_a6db2349ae67467e59f38db5682872bb() {
+        assertEval("{ x <- function() { }; class(x); class(x)<-\"abc\"; class(x); class(x)<-NULL; class(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_f405cf1a6f053ba521f8be9a07b64929() {
+        assertEval("{ x <- function() { }; class(x); class(x)<-c(\"abc\", \"xyz\"); class(x); class(x)<-NULL; class(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
     }
