@@ -90,9 +90,10 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
+        na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
             String currentEl = x.getDataAt(i);
-            if (RRuntime.isNA(currentEl)) {
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 if (quoteEl.isEmpty()) {
                     currentEl = concat("<", currentEl, ">");
@@ -111,10 +112,11 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
+        na.enable(x);
         boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
-            if (RRuntime.isNA(currentEl)) {
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 result[i] = currentEl;
                 seenNA = true;
@@ -131,9 +133,10 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
+        na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
             String currentEl = x.getDataAt(i);
-            if (RRuntime.isNA(currentEl)) {
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 if (quoteEl.isEmpty()) {
                     currentEl = concat("<", currentEl, ">");
@@ -152,10 +155,11 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
+        na.enable(x);
         boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
-            if (RRuntime.isNA(currentEl)) {
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 result[i] = currentEl;
                 seenNA = true;
@@ -175,10 +179,11 @@ public abstract class EncodeString extends RBuiltinNode {
         final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
         final int padding = maxElWidth - quoteLength;
 
+        na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
-            final String curEl = x.getDataAt(i);
-            int totalPadding = padding - curEl.length();
-            if (RRuntime.isNA(curEl)) {
+            final String currentEl = x.getDataAt(i);
+            int totalPadding = padding - currentEl.length();
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 if (quoteEl.isEmpty()) {
                     // Accounting for <> in <NA>
@@ -189,7 +194,7 @@ public abstract class EncodeString extends RBuiltinNode {
             }
             final int leftPadding = totalPadding >> 1;
             final int rightPadding = totalPadding - leftPadding;
-            result[i] = addPadding(curEl, leftPadding, rightPadding, quoteEl);
+            result[i] = addPadding(currentEl, leftPadding, rightPadding, quoteEl);
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
@@ -202,18 +207,19 @@ public abstract class EncodeString extends RBuiltinNode {
         final String[] result = new String[x.getLength()];
         final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
         final int padding = maxElWidth - quoteLength;
+        na.enable(x);
         boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
-            final String curEl = x.getDataAt(i);
-            if (RRuntime.isNA(curEl)) {
+            final String currentEl = x.getDataAt(i);
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
-                result[i] = curEl;
+                result[i] = currentEl;
                 seenNA = true;
             } else {
-                final int totalPadding = padding - curEl.length();
+                final int totalPadding = padding - currentEl.length();
                 final int leftPadding = totalPadding >> 1;
                 final int rightPadding = totalPadding - leftPadding;
-                result[i] = addPaddingIgnoreNA(curEl, leftPadding, rightPadding, quoteEl);
+                result[i] = addPaddingIgnoreNA(currentEl, leftPadding, rightPadding, quoteEl);
             }
         }
         return RDataFactory.createStringVector(result, !seenNA);
@@ -265,9 +271,10 @@ public abstract class EncodeString extends RBuiltinNode {
     protected RStringVector encodeStringNoJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final String[] result = new String[x.getLength()];
+        na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
-            if (RRuntime.isNA(currentEl)) {
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 result[i] = new String(currentEl);
             } else {
@@ -282,10 +289,11 @@ public abstract class EncodeString extends RBuiltinNode {
     protected RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final String[] result = new String[x.getLength()];
+        na.enable(x);
         boolean seenNA = false;
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
-            if (RRuntime.isNA(currentEl)) {
+            if (na.check(currentEl)) {
                 everSeenNA.enter();
                 result[i] = currentEl;
                 seenNA = true;
