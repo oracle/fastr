@@ -38,12 +38,13 @@ import com.oracle.truffle.r.runtime.*;
  * {@link #enclosingFrame}.
  * </ul>
  */
-public final class RFunction extends RScalar {
+public final class RFunction extends RScalar implements RAttributable {
 
     private final String name;
     private final RootCallTarget target;
     private final RBuiltin builtin;
     private MaterializedFrame enclosingFrame;
+    protected RAttributes attributes;
 
     public RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
@@ -78,5 +79,16 @@ public final class RFunction extends RScalar {
 
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
+    }
+
+    public RAttributes getAttributes() {
+        return attributes;
+    }
+
+    public RAttributes initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributes.create();
+        }
+        return attributes;
     }
 }

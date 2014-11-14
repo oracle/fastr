@@ -40,9 +40,14 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RFunction arg) {
+    protected Object getClass(RFunction arg) {
         controlVisibility();
-        return RType.Function.getName();
+        Object attr = arg.getAttr(RRuntime.CLASS_ATTR_KEY);
+        if (attr == null) {
+            return RType.Function.getName();
+        } else {
+            return attr;
+        }
     }
 
     @Specialization
@@ -64,15 +69,25 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getClass(@SuppressWarnings("unused") REnvironment arg) {
+    protected Object getClass(REnvironment arg) {
         controlVisibility();
-        return RType.Environment.getName();
+        Object attr = arg.getAttr(RRuntime.CLASS_ATTR_KEY);
+        if (attr == null) {
+            return RType.Environment.getName();
+        } else {
+            return attr;
+        }
     }
 
     @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RPairList arg) {
+    protected Object getClass(RPairList arg) {
         controlVisibility();
-        return RType.PairList.getName();
+        Object attr = arg.getAttr(RRuntime.CLASS_ATTR_KEY);
+        if (attr == null) {
+            return RType.PairList.getName();
+        } else {
+            return attr;
+        }
     }
 
     @Specialization

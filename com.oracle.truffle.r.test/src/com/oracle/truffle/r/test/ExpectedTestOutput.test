@@ -15095,6 +15095,22 @@ $x
    1    0    2    3    4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x <- function() { }; class(x); class(x)<-"abc"; class(x); class(x)<-NULL; class(x) }
+[1] "function"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x <- function() { }; class(x); class(x)<-c("abc", "xyz"); class(x); class(x)<-NULL; class(x) }
+[1] "function"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x <- new.env(); class(x); class(x)<-"abc"; class(x); class(x)<-NULL; class(x) }
+[1] "environment"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x <- new.env(); class(x); class(x)<-c("abc", "xyz"); class(x); class(x)<-NULL; class(x) }
+[1] "environment"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
 #{ x<-1; oldClass(x)<-"foo"; class(x) }
 [1] "foo"
 

@@ -84,7 +84,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * serialized package meta-data as will happen in due course.
  *
  */
-public abstract class REnvironment implements RAttributable {
+public abstract class REnvironment extends RAttributeStorage implements RAttributable {
     public enum PackageKind {
         PACKAGE,
         IMPORTS,
@@ -128,7 +128,6 @@ public abstract class REnvironment implements RAttributable {
     protected REnvironment parent;
     private final String name;
     final REnvFrameAccess frameAccess;
-    private RAttributes attributes;
     private boolean locked;
 
     /**
@@ -701,17 +700,6 @@ public abstract class REnvironment implements RAttributable {
 
     public boolean bindingIsLocked(String key) {
         return frameAccess.bindingIsLocked(key);
-    }
-
-    public RAttributes getAttributes() {
-        return attributes;
-    }
-
-    public RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
     }
 
     @Override

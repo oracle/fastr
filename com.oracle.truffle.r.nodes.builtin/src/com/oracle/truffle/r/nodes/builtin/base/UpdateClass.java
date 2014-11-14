@@ -24,6 +24,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
@@ -113,8 +114,41 @@ public abstract class UpdateClass extends RBuiltinNode {
         return RVector.setVectorClassAttr(resultVector, className, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
-    public Object setClass(RFunction arg, @SuppressWarnings("unused") Object className) {
+    @Specialization
+    public Object setClass(RFunction arg, String className) {
+        return setClass(arg, RDataFactory.createStringVectorFromScalar(className));
+    }
+
+    @Specialization
+    public Object setClass(RFunction arg, RStringVector className) {
         controlVisibility();
+        arg.setClassAttr(className);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(REnvironment arg, String className) {
+        return setClass(arg, RDataFactory.createStringVectorFromScalar(className));
+    }
+
+    @Specialization
+    public Object setClass(REnvironment arg, RStringVector className) {
+        controlVisibility();
+        arg.setClassAttr(className);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null);
         return arg;
     }
 
