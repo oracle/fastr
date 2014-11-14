@@ -851,9 +851,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-7; as.list(environment()) }");
         assertEval("{ x<-7; .y<-42; as.list(environment()) }");
         assertEval("{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }");
-        assertEval("{ x<-7; as.list(environment()) }");
-        assertEval("{ f<-function(x) as.list(environment()); f(7) }");
-        assertEval("{ f<-function(x) as.list(environment()); f() }");
         assertEval("{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[[\"f\"]]; f_copy(); x }");
 
         // as.matrix
