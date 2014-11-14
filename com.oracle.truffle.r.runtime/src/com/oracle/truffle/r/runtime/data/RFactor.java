@@ -158,4 +158,13 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return RVector.setVectorClassAttr(vector, classAttr, null, this);
     }
 
+    public RVector getLevels() {
+        return vector.getLevels();
+    }
+
+    public int getNLevels() {
+        RVector levels = vector.getLevels();
+        return levels == null ? 0 : levels.getLength();
+    }
+
 }

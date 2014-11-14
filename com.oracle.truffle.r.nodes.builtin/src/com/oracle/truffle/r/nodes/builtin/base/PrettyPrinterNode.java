@@ -1149,7 +1149,7 @@ public abstract class PrettyPrinterNode extends RNode {
         protected String prettyPrintListElement(VirtualFrame frame, RFactor operand, Object listElementName, byte quote, byte right) {
             StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck), listElementName, RRuntime.LOGICAL_FALSE, right));
             sb.append("\nLevels:");
-            RVector vec = operand.getVector().getLevels();
+            RVector vec = operand.getLevels();
             if (vec != null) {
                 for (int i = 0; i < vec.getLength(); i++) {
                     initCast();

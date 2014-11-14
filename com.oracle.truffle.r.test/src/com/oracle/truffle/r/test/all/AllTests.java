@@ -8484,6 +8484,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGL_d821a80819d1b52f54bd312a5c895429() {
+        assertEval("{ a <- gl(2, 4, 8) ; print(a) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGL_2db3e43260651211be0babeb5de1ef64() {
+        assertEval("{ b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; print(b) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGet_17b5e1592125ebc43403174fb9611f19() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
     }
@@ -9219,8 +9229,33 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testLapplyIgnore_bb1b1b8299159a83c87fe6dc760e5b8b() {
+    public void TestSimpleBuiltins_testLapply_bb1b1b8299159a83c87fe6dc760e5b8b() {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_c76c85ff170375ed7ec190d889689933() {
+        assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_923a6f07dad0ed634e23cfd00b6923fd() {
+        assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapplyIgnore_8aa9fed48ff3245ec5301cee82cf7f37() {
+        assertEval("{ lapply(1:3, sum) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapplyIgnore_04025bf54d7281f9b2993d29590f8eea() {
+        assertEval("{ lapply(1:3, sum, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapplyIgnore_d3277d29613178c818f69335eb032a43() {
+        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 
     @Test
@@ -12674,6 +12709,41 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRep_281d10e359dc48f13431b09e01271833() {
+        assertEval("{ rep(c(1, 2), each = 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_78860088eb872d017d6b7ba5fbdd6596() {
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_8d38408da739ee804613c73085cc1173() {
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_eadbfd6270a37af31fcdc43c6f0b7d4e() {
+        assertEval("{ rep(c(1, 2), times = 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_ce92a8929168b5a8416e52dc227fe457() {
+        assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_e08a497002e162d00f7e17895214317f() {
+        assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_cb3f88c9bfe5eebaa8ec50c300ed2ac5() {
+        assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRepInt_4ccfb2f0d566a28b506a769bb45eaa31() {
         assertEval("{ rep.int(1,3) }");
     }
@@ -13904,13 +13974,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSplitIgnore_4e3d6c8535597da99914e35ab11a6947() {
+    public void TestSimpleBuiltins_testSplit_4e3d6c8535597da99914e35ab11a6947() {
         assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSplitIgnore_bb711f5c27cbd7b60881617bc02fb801() {
+    public void TestSimpleBuiltins_testSplit_bb711f5c27cbd7b60881617bc02fb801() {
         assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSplit_a09a71c5f34dc078764ba7ce37e38a49() {
+        assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L) ; split(1:3, x) }");
     }
 
     @Test
@@ -15046,6 +15121,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testTabulate_0a6ec06d77c3ae8bad08fcaf7dbbb6ba() {
         assertEval("{tabulate(factor(letters[1:10]))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapply_627b7381fd149984429a34289adeba8f() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapply_8a748021dace19980a947a07fde93a96() {
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapply_56d04575049cc5fb09d7e8f4abbc6879() {
+        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
     @Test
