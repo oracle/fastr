@@ -132,7 +132,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     @Override
     public RLogicalVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete);
     }
 
