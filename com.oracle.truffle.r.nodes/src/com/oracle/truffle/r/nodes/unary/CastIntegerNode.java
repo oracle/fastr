@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class CastIntegerNode extends CastNode {
 
     private final NACheck naCheck = NACheck.create();
+    private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeInt(VirtualFrame frame, int o);
@@ -141,10 +142,17 @@ public abstract class CastIntegerNode extends CastNode {
     private RIntVector createResultVector(RAbstractVector operand, IntToIntFunction elementFunction) {
         naCheck.enable(operand);
         int[] idata = new int[operand.getLength()];
+        boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
-            idata[i] = elementFunction.apply(i);
+            int value = elementFunction.apply(i);
+            idata[i] = value;
+            seenNA = seenNA || naProfile.isNA(value);
         }
-        return createResultVector(operand, idata);
+        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -171,19 +179,23 @@ public abstract class CastIntegerNode extends CastNode {
     protected RIntVector doStringVector(RStringVector operand) {
         naCheck.enable(operand);
         int[] idata = new int[operand.getLength()];
-        boolean warning = false;
+        boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
             idata[i] = naCheck.convertStringToInt(value);
             if (RRuntime.isNA(idata[i])) {
-                warning = true;
+                seenNA = true;
             }
         }
-        if (warning) {
+        if (seenNA) {
             warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
-        return createResultVector(operand, idata);
+        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -206,20 +218,27 @@ public abstract class CastIntegerNode extends CastNode {
     protected RIntVector doList(VirtualFrame frame, RList list) {
         int length = list.getLength();
         int[] result = new int[length];
+        boolean seenNA = false;
         for (int i = 0; i < length; i++) {
             Object entry = list.getDataAt(i);
             if (entry instanceof RList) {
                 result[i] = RRuntime.INT_NA;
+                seenNA = true;
             } else {
                 Object castEntry = castIntegerRecursive(frame, entry);
                 if (castEntry instanceof Integer) {
-                    result[i] = (Integer) castEntry;
+                    int value = (Integer) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
                 } else if (castEntry instanceof RIntVector) {
                     RIntVector intVector = (RIntVector) castEntry;
                     if (intVector.getLength() == 1) {
-                        result[i] = intVector.getDataAt(0);
+                        int value = intVector.getDataAt(0);
+                        result[i] = value;
+                        seenNA = seenNA || RRuntime.isNA(value);
                     } else if (intVector.getLength() == 0) {
                         result[i] = RRuntime.INT_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("integer");
                     }
@@ -228,7 +247,7 @@ public abstract class CastIntegerNode extends CastNode {
                 }
             }
         }
-        RIntVector ret = RDataFactory.createIntVector(result, naCheck.neverSeenNA());
+        RIntVector ret = RDataFactory.createIntVector(result, !seenNA);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(list);
         }

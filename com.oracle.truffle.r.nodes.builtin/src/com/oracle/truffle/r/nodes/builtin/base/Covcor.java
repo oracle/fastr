@@ -21,7 +21,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
  */
 public abstract class Covcor extends RBuiltinNode {
 
-    protected final NACheck check = new NACheck();
+    private final NACheck check = new NACheck();
+    private final NAProfile naProfile = NAProfile.create();
 
     protected RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor) {
         boolean ansmat;
@@ -105,11 +106,19 @@ public abstract class Covcor extends RBuiltinNode {
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.SD_ZERO);
         }
 
+        boolean seenNA = false;
+        for (int i = 0; i < answerData.length; i++) {
+            if (naProfile.isNA(answerData[i])) {
+                seenNA = true;
+                break;
+            }
+        }
+
         RDoubleVector ans = null;
         if (x.isMatrix()) {
-            ans = RDataFactory.createDoubleVector(answerData, true, new int[]{ncx, ncy});
+            ans = RDataFactory.createDoubleVector(answerData, !seenNA, new int[]{ncx, ncy});
         } else {
-            ans = RDataFactory.createDoubleVector(answerData, false);
+            ans = RDataFactory.createDoubleVector(answerData, !seenNA);
         }
         return ans;
     }

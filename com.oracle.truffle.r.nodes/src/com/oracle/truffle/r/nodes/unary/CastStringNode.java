@@ -81,6 +81,7 @@ public abstract class CastStringNode extends CastNode {
 
     private RStringVector createResultVector(RAbstractVector operand, IntFunction<String> elementFunction) {
         String[] sdata = new String[operand.getLength()];
+        // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
             sdata[i] = elementFunction.apply(i);
         }
