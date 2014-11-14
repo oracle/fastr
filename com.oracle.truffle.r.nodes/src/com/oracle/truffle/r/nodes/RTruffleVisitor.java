@@ -603,7 +603,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     public RNode visit(While loop) {
         RNode condition = loop.getCondition().accept(this);
         RNode body = SequenceNode.ensureSequence(loop.getBody().accept(this));
-        return WhileNode.create(loop.getSource(), condition, body);
+        return WhileNode.create(loop.getSource(), condition, body, false);
     }
 
     @Override
@@ -619,7 +619,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(Repeat loop) {
         RNode body = loop.getBody().accept(this);
-        return WhileNode.create(loop.getSource(), ConstantNode.create(true), SequenceNode.ensureSequence(body));
+        return WhileNode.create(loop.getSource(), ConstantNode.create(true), SequenceNode.ensureSequence(body), true);
     }
 
     @Override

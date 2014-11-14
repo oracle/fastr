@@ -102,7 +102,7 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof ForNode) {
             return 4;
         } else if (node instanceof WhileNode) {
-            return 3;
+            return ((WhileNode) node).isRepeat() ? 2 : 3;
         } else {
             // TODO fill out
             assert false;
@@ -162,9 +162,12 @@ public class RASTHelperImpl implements RASTHelper {
             }
          } else if (node instanceof WhileNode) {
              WhileNode whileNode = (WhileNode) node;
+             if (whileNode.isRepeat() && index == 1) {
+                index = 2;
+             }
              switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol("`while`");
+                    return RDataFactory.createSymbol(whileNode.isRepeat() ? "`repeat`" : "`while`");
                 case 1:
                     return RASTUtils.createLanguageElement(whileNode.getCondition());
                 case 2:

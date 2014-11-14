@@ -39,17 +39,23 @@ public final class WhileNode extends LoopNode {
     @Child private ConvertBooleanNode condition;
     @Child private RNode body;
 
-    private WhileNode(RNode condition, RNode body) {
+    /**
+     * Also used for {@code repeat}, with a {@code TRUE} condition.
+     */
+    private final boolean isRepeat;
+
+    private WhileNode(RNode condition, RNode body, boolean isRepeat) {
         this.condition = ConvertBooleanNode.create(condition);
         this.body = body;
+        this.isRepeat = isRepeat;
     }
 
-    public static WhileNode create(RNode condition, RNode body) {
-        return new WhileNode(condition, body);
+    public static WhileNode create(RNode condition, RNode body, boolean isRepeat) {
+        return new WhileNode(condition, body, isRepeat);
     }
 
-    public static WhileNode create(SourceSection src, RNode condition, RNode body) {
-        WhileNode wn = create(condition, body);
+    public static WhileNode create(SourceSection src, RNode condition, RNode body, boolean isRepeat) {
+        WhileNode wn = create(condition, body, isRepeat);
         wn.assignSourceSection(src);
         return wn;
     }
@@ -62,6 +68,10 @@ public final class WhileNode extends LoopNode {
         return body;
     }
 
+    public boolean isRepeat() {
+        return isRepeat;
+    }
+
     @Override
     public boolean isSyntax() {
         return true;
@@ -69,9 +79,13 @@ public final class WhileNode extends LoopNode {
 
     @Override
     public void deparse(State state) {
-        state.append("while (");
-        condition.deparse(state);
-        state.append(") ");
+        if (isRepeat) {
+            state.append("repeat ");
+        } else {
+            state.append("while (");
+            condition.deparse(state);
+            state.append(") ");
+        }
         state.writeOpenCurlyNLIncIndent();
         body.deparse(state);
         state.decIndentWriteCloseCurly();
@@ -79,7 +93,7 @@ public final class WhileNode extends LoopNode {
 
     @Override
     public RNode substitute(REnvironment env) {
-        return create(condition.substitute(env), body.substitute(env));
+        return create(condition.substitute(env), body.substitute(env), isRepeat);
     }
 
     @Override
