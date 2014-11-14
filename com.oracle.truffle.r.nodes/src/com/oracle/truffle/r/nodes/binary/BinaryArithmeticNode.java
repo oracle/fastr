@@ -615,6 +615,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         int length = Math.max(leftLength, rightLength);
         double[] result = new double[length << 1];
         int j = 0;
@@ -647,6 +648,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         double[] result = new double[length];
         int j = 0;
         int k = 0;
@@ -674,6 +676,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         int length = Math.max(leftLength, rightLength);
         int[] result = new int[length];
         int j = 0;
@@ -702,6 +705,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         int length = Math.max(leftLength, rightLength);
         double[] result = new double[length];
         int j = 0;
@@ -730,6 +734,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         double[] result = new double[length << 1];
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
@@ -752,6 +757,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
@@ -771,6 +777,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         int[] result = new int[length];
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
@@ -790,6 +797,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
@@ -804,6 +812,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     private double performArithmeticDoubleEnableNACheck(double left, double right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         return performArithmeticDouble(left, right);
     }
 
@@ -829,12 +838,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             }
             return RRuntime.DOUBLE_NA;
         }
-        return arithmetic.op(left, right);
+        double value = arithmetic.op(left, right);
+        resultNACheck.check(value);
+        return value;
     }
 
     private RComplex performArithmeticComplexEnableNACheck(RComplex left, RComplex right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         return performArithmeticComplex(left, right);
     }
 
@@ -859,12 +871,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             }
             return RRuntime.createComplexNA();
         }
-        return arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
+        RComplex value = arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
+        resultNACheck.check(value);
+        return value;
     }
 
     private int performArithmeticEnableNACheck(int left, int right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         return performArithmetic(left, right);
     }
 
@@ -883,6 +898,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     private double performArithmeticIntIntDoubleEnableNACheck(int left, int right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
         return performArithmeticIntIntDouble(left, right);
     }
 
@@ -893,7 +909,9 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (rightNACheck.check(right)) {
             return RRuntime.DOUBLE_NA;
         }
-        return arithmetic.op(leftNACheck.convertIntToDouble(left), rightNACheck.convertIntToDouble(right));
+        double value = arithmetic.op(leftNACheck.convertIntToDouble(left), rightNACheck.convertIntToDouble(right));
+        resultNACheck.check(value);
+        return value;
     }
 
     private boolean isComplete() {
