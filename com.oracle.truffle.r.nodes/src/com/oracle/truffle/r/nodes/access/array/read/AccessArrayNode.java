@@ -1530,9 +1530,14 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DATA_FRAMES_SUBSET_ACCESS);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
     protected Object access(VirtualFrame frame, RExpression expression, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        return accessRecursive(frame, expression.getList(), position, recLevel, dropDim);
+        if (position < 1) {
+            error.enter();
+            throw RError.error(Message.SELECT_LESS_1);
+        }
+        return expression.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
