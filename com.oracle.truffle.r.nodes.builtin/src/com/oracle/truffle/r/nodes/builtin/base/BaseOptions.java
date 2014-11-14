@@ -120,8 +120,5 @@ public class BaseOptions implements ROptions.Handler {
     }
 
     public void addOptions() {
-        for (Name name : Name.values()) {
-            ROptions.addOption(name.rName, null);
-        }
     }
 }
