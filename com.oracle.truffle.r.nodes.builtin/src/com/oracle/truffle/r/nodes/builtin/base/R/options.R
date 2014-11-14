@@ -16,17 +16,14 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# temporarily substituted to get argument names
-#options <- function(...)
-#    .Internal(options(...))
+options <- function(...)
+	.Internal(options(...))
 
-# missing does not work correctly on parameters with default values
-# getOption <- function(x, default = NULL)
-getOption <- function(x, default)
-    {
-    ## To avoid always performing the %in%,
-    ## we use the original code if default is not specified.
-    if(missing(default)) return(options(x)[[1L]])
+getOption <- function(x, default = NULL)
+{
+	## To avoid always performing the %in%,
+	## we use the original code if default is not specified.
+	if(missing(default)) return(options(x)[[1L]])
 
-    if(x %in% names(options())) options(x)[[1L]] else default
+	if(x %in% names(options())) options(x)[[1L]] else default
 }

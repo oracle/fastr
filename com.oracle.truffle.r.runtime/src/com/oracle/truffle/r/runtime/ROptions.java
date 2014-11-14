@@ -24,15 +24,17 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.r.runtime.data.*;
+
 /**
  * Central location for all R options, that is for the {@code options(...)} and {@code getOption}
  * builtins. When a package is loaded, it must call {@link #registerHandler}, which will immediately
  * callback the {@code addOptions} method that should register the options for that package. The
  * {@code initialize} method will be called (later) which can set values based on the current
  * execution environment.
- * 
+ *
  * {@code null} is used to designate an unset option.
- * 
+ *
  */
 public class ROptions {
 
@@ -72,7 +74,11 @@ public class ROptions {
 
     public static Object setValue(String key, Object value) {
         Object previous = map.get(key);
-        map.put(key, value);
+        if (value == RNull.instance) {
+            map.remove(key);
+        } else {
+            map.put(key, value);
+        }
         return previous;
     }
 
