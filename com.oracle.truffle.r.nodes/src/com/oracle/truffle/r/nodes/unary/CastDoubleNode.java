@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class CastDoubleNode extends CastNode {
 
     private final NACheck naCheck = NACheck.create();
+    private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeDouble(VirtualFrame frame, int o);
@@ -117,10 +118,17 @@ public abstract class CastDoubleNode extends CastNode {
     private RDoubleVector createResultVector(RAbstractVector operand, IntToDoubleFunction elementFunction) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
+        boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
-            ddata[i] = elementFunction.applyAsDouble(i);
+            double value = elementFunction.applyAsDouble(i);
+            ddata[i] = value;
+            seenNA = seenNA || naProfile.isNA(value);
         }
-        return createResultVector(operand, ddata);
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -137,19 +145,23 @@ public abstract class CastDoubleNode extends CastNode {
     protected RDoubleVector doStringVector(RStringVector operand) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
-        boolean warning = false;
+        boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
             ddata[i] = naCheck.convertStringToDouble(value);
             if (RRuntime.isNA(ddata[i])) {
-                warning = true;
+                seenNA = true;
             }
         }
-        if (warning) {
+        if (seenNA) {
             warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
-        return createResultVector(operand, ddata);
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -190,20 +202,27 @@ public abstract class CastDoubleNode extends CastNode {
     protected RDoubleVector doList(VirtualFrame frame, RList list) {
         int length = list.getLength();
         double[] result = new double[length];
+        boolean seenNA = false;
         for (int i = 0; i < length; i++) {
             Object entry = list.getDataAt(i);
             if (entry instanceof RList) {
                 result[i] = RRuntime.DOUBLE_NA;
+                seenNA = true;
             } else {
                 Object castEntry = castDoubleRecursive(frame, entry);
                 if (castEntry instanceof Double) {
-                    result[i] = (Double) castEntry;
+                    double value = (Double) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
                 } else if (castEntry instanceof RDoubleVector) {
                     RDoubleVector doubleVector = (RDoubleVector) castEntry;
                     if (doubleVector.getLength() == 1) {
-                        result[i] = doubleVector.getDataAt(0);
+                        double value = doubleVector.getDataAt(0);
+                        result[i] = value;
+                        seenNA = seenNA || RRuntime.isNA(value);
                     } else if (doubleVector.getLength() == 0) {
                         result[i] = RRuntime.DOUBLE_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("numeric");
                     }
@@ -212,7 +231,7 @@ public abstract class CastDoubleNode extends CastNode {
                 }
             }
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, !seenNA);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(list);
         }

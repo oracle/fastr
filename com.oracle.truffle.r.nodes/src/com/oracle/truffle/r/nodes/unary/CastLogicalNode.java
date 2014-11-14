@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class CastLogicalNode extends CastNode {
 
     private final NACheck naCheck = NACheck.create();
+    private final NAProfile naProfile = NAProfile.create();
 
     public abstract Object executeByte(VirtualFrame frame, Object o);
 
@@ -98,10 +99,13 @@ public abstract class CastLogicalNode extends CastNode {
     private RLogicalVector createResultVector(RAbstractVector operand, IntToByteFunction elementFunction) {
         naCheck.enable(operand);
         byte[] bdata = new byte[operand.getLength()];
+        boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
-            bdata[i] = elementFunction.apply(i);
+            byte value = elementFunction.apply(i);
+            bdata[i] = value;
+            seenNA = seenNA || naProfile.isNA(value);
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(bdata, naCheck.neverSeenNA(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        RLogicalVector ret = RDataFactory.createLogicalVector(bdata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -142,20 +146,27 @@ public abstract class CastLogicalNode extends CastNode {
     protected RLogicalVector doList(VirtualFrame frame, RList list) {
         int length = list.getLength();
         byte[] result = new byte[length];
+        boolean seenNA = false;
         for (int i = 0; i < length; i++) {
             Object entry = list.getDataAt(i);
             if (entry instanceof RList) {
                 result[i] = RRuntime.LOGICAL_NA;
+                seenNA = true;
             } else {
                 Object castEntry = castLogicalRecursive(frame, entry);
                 if (castEntry instanceof Byte) {
-                    result[i] = (Byte) castEntry;
+                    byte value = (Byte) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
                 } else if (castEntry instanceof RLogicalVector) {
                     RLogicalVector logicalVector = (RLogicalVector) castEntry;
                     if (logicalVector.getLength() == 1) {
-                        result[i] = logicalVector.getDataAt(0);
+                        byte value = logicalVector.getDataAt(0);
+                        result[i] = value;
+                        seenNA = seenNA || RRuntime.isNA(value);
                     } else if (logicalVector.getLength() == 0) {
                         result[i] = RRuntime.LOGICAL_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("logical");
                     }
@@ -164,7 +175,7 @@ public abstract class CastLogicalNode extends CastNode {
                 }
             }
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, naCheck.neverSeenNA());
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !seenNA);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(list);
         }
