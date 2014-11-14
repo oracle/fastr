@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
@@ -39,26 +40,33 @@ import com.oracle.truffle.r.runtime.env.*;
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
     /**
-     * Identifies the lexical scope where this function is defined, through the "parent" field.
+     * Identifies the lexical scope where this function is defined, through the
+     * "parent" field.
      */
     private final REnvironment.FunctionDefinition funcEnv;
-    @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
+    @Child
+    private RNode body; // typed as RNode to avoid custom instrument wrapper
     private final RNode uninitializedBody; // copy for "body" builtin
     private final String description;
     private final FunctionUID uuid;
 
-    @Child private FrameSlotNode onExitSlot;
-    @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
+    @Child
+    private FrameSlotNode onExitSlot;
+    @Child
+    private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
     /**
-     * An instance of this node may be called from with the intention to have its execution leave a
-     * footprint behind in a specific frame/environment, e.g., during library loading, commands from
-     * the shell, or R's {@code eval} and its friends. In that case, {@code substituteFrame} is
-     * {@code true}, and the {@link #execute(VirtualFrame)} method must be invoked with one
-     * argument, namely the {@link VirtualFrame} to be side-effected. Execution will then proceed in
-     * the context of that frame. Note that passing only this one frame argument, strictly spoken,
-     * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
+     * An instance of this node may be called from with the intention to have
+     * its execution leave a footprint behind in a specific frame/environment,
+     * e.g., during library loading, commands from the shell, or R's
+     * {@code eval} and its friends. In that case, {@code substituteFrame} is
+     * {@code true}, and the {@link #execute(VirtualFrame)} method must be
+     * invoked with one argument, namely the {@link VirtualFrame} to be
+     * side-effected. Execution will then proceed in the context of that frame.
+     * Note that passing only this one frame argument, strictly spoken, violates
+     * the frame layout as set forth in {@link RArguments}. This is for internal
+     * use only.
      */
     private final boolean substituteFrame;
 
@@ -140,7 +148,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public String toString() {
-        return description;
+        return description == null ? "<no source>" : description;
     }
 
     public String parentToString() {
@@ -182,13 +190,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     /**
-     * Since a {@link FunctionDefinitionNode} is not a subclass of an {@link RNode}
-     * we cannot just override the {@link RSyntaxNode#substitute} method as that requires
-     * an {@link RNode} result. So we define this custom method.
-     * N.B. The formal arguments are <b>not</b> subject to substitution, just the body.
+     * Since a {@link FunctionDefinitionNode} is not a subclass of an
+     * {@link RNode} we cannot just override the {@link RSyntaxNode#substitute}
+     * method as that requires an {@link RNode} result. So we define this custom
+     * method. N.B. The formal arguments are <b>not</b> subject to substitution,
+     * just the body.
      */
     public FunctionDefinitionNode substituteFDN(REnvironment env) {
-        return new FunctionDefinitionNode(null, funcEnv, body.substitute(env), getFormalArguments(), description, substituteFrame);
+        return new FunctionDefinitionNode(null, funcEnv, body.substitute(env), getFormalArguments(), null, substituteFrame);
     }
 
     @Override
@@ -207,10 +216,36 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     /**
-     * A workaround for not reflecting left brace as a function call.
+     * A workaround for not representing left curly brace as a function call. We
+     * have to depend on the source section and "parse" the start of the function definition.
      */
+    @TruffleBoundary
     public boolean hasBraces() {
-        return description.trim().endsWith("}");
+        SourceSection src = getSourceSection();
+        if (src == null) {
+            return true; // statistcally probable (must be a substituted function)
+        }
+        String s = src.getCode();
+        int ix = s.indexOf('(') + 1;
+        int bdepth = 1;
+        while (ix < s.length() && bdepth > 0) {
+            char ch = s.charAt(ix);
+            if (ch == '(') {
+                bdepth++;
+            } else if (ch == ')') {
+                bdepth--;
+            }
+            ix++;
+        }
+        while (ix < s.length()) {
+            char ch = s.charAt(ix);
+            boolean whitespace = Character.isWhitespace(ch);
+            if (!whitespace) {
+                return ch == '{';
+            }
+            ix++;
+        }
+        return false;
     }
 
 }
