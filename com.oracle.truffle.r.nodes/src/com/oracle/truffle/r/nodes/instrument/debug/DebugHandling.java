@@ -29,13 +29,16 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrument.Instrument;
 import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.ProbeNode;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.instrument.StandardSyntaxTag;
 import static com.oracle.truffle.api.instrument.StandardSyntaxTag.STATEMENT;
 import com.oracle.truffle.api.instrument.SyntaxTag;
 import com.oracle.truffle.api.instrument.SyntaxTagTrap;
 import com.oracle.truffle.api.instrument.TruffleEventReceiver;
+import com.oracle.truffle.r.nodes.control.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
@@ -45,7 +48,6 @@ import com.oracle.truffle.r.nodes.function.FunctionUID;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RContext;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -63,11 +65,13 @@ import java.util.*;
  *
  * Two different receiver classes are defined:
  * <ul>
- * <li>{@link StartFunctionEventReceiver}: attaches to
+ * <li>{@link FunctionStatementsEventReceiver}: attaches to
  * {@link FunctionStatementsNode} and handles the special behavior on
  * entry/exit</li>
  * <li>{@link StatementEventReceiver}: attaches to all {@link STATEMENT} nodes
  * and handles "n" and "s" browser commands</li>
+ * <li>{@link LoopStatementEcventReceiver}: attaches to {@link LoopNode}
+ * instances and handles special "f" command behavior.
  * </ul>
  * <p>
  * Step Into is slightly tricky because, at the point the command is issued, we
@@ -81,7 +85,13 @@ import java.util.*;
  * <li></li>A callback from the {@code execute} method of
  * {@link FunctionDefinitionNode}, which acts as if {@code debugonce} had been
  * called by the user (unless debug was already enabled in which case there is
- * nothing to do).
+ * nothing to do). This has been prototyped but it is not clear it provides
+ * sufficient value.
+ * <p>
+ * When invoked from within a loop The "f" command continues the loop body without
+ * entry and the re-enables entry. This is handled by creating a {@link LoopStatementEventReceiver}
+ * per {@link LoopNode}. On a "f" every receiver <b>except</b> the one associated with that
+ * loop is disabled. On return from the loop, everything is re-enabled.
  * <p>
  * Currently, {@code debugonce} and {@code undebug} are handled by disabling the
  * receiver behavior. Any change in enabled state is managed by an
@@ -96,7 +106,7 @@ public class DebugHandling {
     /**
      * Records all functions that have debug receivers installed.
      */
-    private static final WeakHashMap<FunctionUID, StartFunctionEventReceiver> receiverMap = new WeakHashMap<>();
+    private static final WeakHashMap<FunctionUID, FunctionStatementsEventReceiver> receiverMap = new WeakHashMap<>();
 
     /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all
@@ -105,18 +115,18 @@ public class DebugHandling {
     @SuppressWarnings("unused")
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        StartFunctionEventReceiver fbr = receiverMap.get(fdn.getUID());
+        FunctionStatementsEventReceiver fbr = receiverMap.get(fdn.getUID());
         if (fbr == null) {
             Probe probe = attachDebugHandler(fdn, text, condition, once);
             return probe != null;
         } else {
-            fbr.enable(once);
+            fbr.enable();
             return true;
         }
     }
 
     public static boolean undebug(RFunction func) {
-        StartFunctionEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
+        FunctionStatementsEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
         if (fbr == null) {
             return false;
         } else {
@@ -126,8 +136,8 @@ public class DebugHandling {
     }
 
     public static boolean isDebugged(RFunction func) {
-        StartFunctionEventReceiver fbr = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
-        return fbr != null && !fbr.disabled();
+        FunctionStatementsEventReceiver fser = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
+        return fser != null && !fser.disabled();
     }
 
     private static Probe findStartMethodProbe(RFunction func) {
@@ -143,31 +153,36 @@ public class DebugHandling {
         if (probe == null) {
             return null;
         }
-        StartFunctionEventReceiver functionBodyEventReceiver = new StartFunctionEventReceiver(fdn, text, condition, once);
-        probe.attach(functionBodyEventReceiver.getInstrument());
-        attachToStatementNodes(functionBodyEventReceiver);
+        FunctionStatementsEventReceiver fser = new FunctionStatementsEventReceiver(fdn, text, condition, once);
+        probe.attach(fser.getInstrument());
+        attachToStatementNodes(fser);
         return probe;
     }
 
     private static void ensureSingleStep(FunctionDefinitionNode fdn) {
-        StartFunctionEventReceiver fbr = receiverMap.get(fdn.getUID());
+        FunctionStatementsEventReceiver fbr = receiverMap.get(fdn.getUID());
         if (fbr == null) {
             attachDebugHandler(fdn, null, null, true);
         } else {
             if (fbr.disabled()) {
-                fbr.enable(true);
+                fbr.enable();
             }
         }
     }
 
-    private static void attachToStatementNodes(StartFunctionEventReceiver functionBodyEventReceiver) {
-        functionBodyEventReceiver.getFunctionDefinitionNode().getBody().accept(new NodeVisitor() {
+    private static void attachToStatementNodes(FunctionStatementsEventReceiver functionStatementsEventReceiver) {
+        functionStatementsEventReceiver.getFunctionDefinitionNode().getBody().accept(new NodeVisitor() {
             public boolean visit(Node node) {
                 if (node instanceof ProbeNode.WrapperNode) {
                     ProbeNode.WrapperNode wrapper = (ProbeNode.WrapperNode) node;
                     Probe probe = wrapper.getProbe();
                     if (probe.isTaggedAs(StandardSyntaxTag.STATEMENT)) {
-                        probe.attach(functionBodyEventReceiver.getStatementInstrument());
+                        Node child = wrapper.getChild();
+                        if (child instanceof LoopNode) {
+                            probe.attach(functionStatementsEventReceiver.getLoopStatementInstrument(wrapper));
+                        } else {
+                            probe.attach(functionStatementsEventReceiver.getStatementInstrument());
+                        }
                     }
                 }
                 return true;
@@ -205,11 +220,6 @@ public class DebugHandling {
 
         @Override
         public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
-            if (!disabled()) {
-                if (exception instanceof BrowserQuitException) {
-                    // cleanup?
-                }
-            }
         }
 
         boolean disabled() {
@@ -220,7 +230,7 @@ public class DebugHandling {
             setDisabledState(true);
         }
 
-        void enable(boolean once) {
+        void enable() {
             setDisabledState(false);
         }
 
@@ -243,11 +253,24 @@ public class DebugHandling {
                     break;
                 case CONTINUE:
                     // Have to disable
-                    StartFunctionEventReceiver fdr = receiverMap.get(functionDefinitionNode.getUID());
-                    fdr.setContinuing();
+                    doContinue();
                     break;
+                case FINISH:
+                    // If in loop, continue to loop end, else act like CONTINUE
+                    LoopNode loopNode = inLoop(node);
+                    if (loopNode != null) {
+                        // Have to disable just the body of the loop
+                        FunctionStatementsEventReceiver fser = receiverMap.get(functionDefinitionNode.getUID());
+                        fser.setFinishing(loopNode);
+                    } else {
+                        doContinue();
+                    }
             }
+        }
 
+        private void doContinue() {
+            FunctionStatementsEventReceiver fser = receiverMap.get(functionDefinitionNode.getUID());
+            fser.setContinuing();
         }
 
     }
@@ -260,15 +283,16 @@ public class DebugHandling {
      * <@code {</code> to the first statement, otherwise it just stops at the
      * first statement.
      */
-    private static class StartFunctionEventReceiver extends DebugEventReceiver {
+    private static class FunctionStatementsEventReceiver extends DebugEventReceiver {
 
         private final List<Instrument> instruments = new ArrayList<>();
         private final StatementEventReceiver statementReceiver;
+        ArrayList<LoopStatementEventReceiver> loopStatementReceivers = new ArrayList<>();
 
         private boolean once;
         private boolean continuing;
 
-        StartFunctionEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
+        FunctionStatementsEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
             super(functionDefinitionNode, text, condition);
             receiverMap.put(functionDefinitionNode.getUID(), this);
             instruments.add(Instrument.create(this));
@@ -286,19 +310,58 @@ public class DebugHandling {
             return instrument;
         }
 
+        Instrument getLoopStatementInstrument(WrapperNode loopNodeWrapper) {
+            LoopStatementEventReceiver lser = new LoopStatementEventReceiver(functionDefinitionNode, text, condition, loopNodeWrapper, this);
+            loopStatementReceivers.add(lser);
+            Instrument instrument = Instrument.create(lser);
+            instruments.add(instrument);
+            return instrument;
+        }
+
+        @Override
         void disable() {
             super.disable();
             statementReceiver.disable();
-        }
+            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+                lser.disable();
+            }
+         }
 
-        void enable(boolean once) {
-            super.enable(once);
-            statementReceiver.disable();
+        @Override
+        void enable() {
+            super.enable();
+            statementReceiver.enable();
+             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+                lser.enable();
+            }
         }
 
         void setContinuing() {
             continuing = true;
             statementReceiver.disable();
+             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+                lser.disable();
+            }
+        }
+
+        void setFinishing(LoopNode loopNode) {
+            // Disable every statement receiver except that for loopNode
+            WrapperNode loopNodeWrapper = (WrapperNode) loopNode.getParent();
+            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+                if (lser.getLoopNodeWrapper() == loopNodeWrapper) {
+                    lser.setFinishing();
+                } else {
+                    lser.disable();
+                }
+            }
+            statementReceiver.disable();
+        }
+
+        void endFinishing() {
+            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+                lser.enable();
+            }
+            statementReceiver.enable();
         }
 
         @Override
@@ -320,14 +383,28 @@ public class DebugHandling {
         @Override
         public void returnValue(Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
-                RContext.getInstance().getConsoleHandler().print("exiting from: ");
-                printCall(frame);
-                if (once) {
-                    disable();
-                } else if (continuing) {
-                    statementReceiver.enable(false);
-                    continuing = false;
+                returnCleanup(frame);
+            }
+        }
+
+        @Override
+        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+            if (!disabled()) {
+                returnCleanup(frame);
+            }
+        }
+
+        private void returnCleanup(VirtualFrame frame) {
+            RContext.getInstance().getConsoleHandler().print("exiting from: ");
+            printCall(frame);
+            if (once) {
+                disable();
+            } else if (continuing) {
+                statementReceiver.enable();
+                for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+                    lser.enable();
                 }
+               continuing = false;
             }
         }
 
@@ -352,6 +429,9 @@ public class DebugHandling {
         consoleHandler.print("\n");
     }
 
+    /**
+     * Global trap for step into.
+     */
     private static class FastRSyntaxTagTrap extends SyntaxTagTrap {
 
         public FastRSyntaxTagTrap(SyntaxTag tag) {
@@ -389,6 +469,70 @@ public class DebugHandling {
         public void returnValue(Node node, VirtualFrame frame, Object result) {
         }
 
+    }
+
+    private static class LoopStatementEventReceiver extends StatementEventReceiver {
+
+        private boolean finishing;
+        /**
+         * The wrapper for the loop node is stable whereas the loop node
+         * itself will be replaced with a specialized node.
+         */
+        private final WrapperNode loopNodeWrapper;
+        private final FunctionStatementsEventReceiver fser;
+
+        LoopStatementEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, WrapperNode loopNodeWrapper, FunctionStatementsEventReceiver fser) {
+            super(functionDefinitionNode, text, condition);
+            this.loopNodeWrapper = loopNodeWrapper;
+            this.fser = fser;
+        }
+
+        @Override
+        public void enter(Node node, VirtualFrame frame) {
+            if (!disabled()) {
+                super.enter(node, frame);
+            }
+        }
+
+        WrapperNode getLoopNodeWrapper() {
+            return loopNodeWrapper;
+        }
+
+        void setFinishing() {
+            finishing = true;
+        }
+
+        @Override
+        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+            if (!disabled()) {
+                returnCleanup();
+            }
+        }
+
+        @Override
+        public void returnValue(Node node, VirtualFrame frame, Object result) {
+            if (!disabled()) {
+                returnCleanup();
+            }
+        }
+
+        private void returnCleanup() {
+            if (finishing) {
+                finishing = false;
+                fser.endFinishing();
+            }
+        }
+
+    }
+
+    private static LoopNode inLoop(Node node) {
+        while (!(node instanceof RootNode)) {
+            node = node.getParent();
+            if (node instanceof LoopNode) {
+                return (LoopNode) node;
+            }
+        }
+        return null;
     }
 
 }

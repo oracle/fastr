@@ -43,10 +43,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public class Browser {
 
     public enum ExitMode {
-
         STEP,
         NEXT,
         CONTINUE,
+        FINISH
     }
 
     @CompilerDirectives.TruffleBoundary
@@ -76,15 +76,14 @@ public class Browser {
                     case "n":
                         exitMode = ExitMode.NEXT;
                         break LW;
-
                     case "s":
                         exitMode = ExitMode.STEP;
                         break LW;
                     case "f":
-                        throw RError.nyi(null, notImplemented(input));
+                        exitMode = ExitMode.FINISH;
+                        break LW;
                     case "Q":
                         throw new BrowserQuitException();
-
                     case "where": {
                         int ix = RArguments.getDepth(frame);
                         Frame stackFrame;
