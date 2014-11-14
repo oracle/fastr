@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.nodes.function;
 
 /**
- *
- * @author mjj
+ * An abstract UID for a {@link FunctionDefinitionNode}, used by instrumentation code.
+ * There may be many clones of a {@link FunctionDefinitionNode}, but they all share
+ * the same UID.
  */
 public interface FunctionUID extends Comparable<FunctionUID> {
 
