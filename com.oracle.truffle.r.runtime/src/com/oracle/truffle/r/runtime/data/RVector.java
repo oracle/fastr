@@ -619,13 +619,13 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final void resizeWithNames(int size) {
-        this.complete = this.complete || this.getLength() <= size;
+        this.complete &= getLength() >= size;
         resizeInternal(size);
         // reset all atributes other than names;
-        this.setDimNames(null);
-        this.setDimensions(null);
-        if (this.names != null && this.names != RNull.instance) {
-            ((RStringVector) this.names).resizeWithEmpty(size);
+        setDimNames(null);
+        setDimensions(null);
+        if (names != null && names != RNull.instance) {
+            ((RStringVector) names).resizeWithEmpty(size);
         }
     }
 

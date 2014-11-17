@@ -6093,6 +6093,31 @@ $dim
 #{ x <- c(1,2); names(x) <- c("hello","hi") ; as.integer(x) }
 [1] 1 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
+#{ x<-7; .y<-42; as.list(environment()) }
+$x
+[1] 7
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
+#{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }
+$x
+[1] 7
+
+$.y
+[1] 42
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
+#{ x<-7; as.list(environment()) }
+$x
+[1] 7
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
+#{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[["f"]]; f_copy(); x }
+[1] 42
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat("a") }
 a

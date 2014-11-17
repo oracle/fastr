@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class CastComplexNode extends CastNode {
 
     private final NACheck naCheck = NACheck.create();
+    private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeComplex(VirtualFrame frame, int o);
@@ -93,13 +94,15 @@ public abstract class CastComplexNode extends CastNode {
     private RComplexVector createResultVector(RAbstractVector operand, IntFunction<RComplex> elementFunction) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength() << 1];
+        boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
             RComplex complexValue = elementFunction.apply(i);
             int index = i << 1;
             ddata[index] = complexValue.getRealPart();
             ddata[index + 1] = complexValue.getImaginaryPart();
+            seenNA = seenNA || naProfile.isNA(complexValue);
         }
-        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
