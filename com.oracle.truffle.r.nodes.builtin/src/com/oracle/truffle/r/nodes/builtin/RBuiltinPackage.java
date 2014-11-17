@@ -141,6 +141,7 @@ public abstract class RBuiltinPackage {
                 RContext.getEngine().parseAndEval(src.libName, src.libContents, frame, envForFrame, false, false);
             }
         }
+        envForFrame.export();
     }
 
     public abstract String getName();
