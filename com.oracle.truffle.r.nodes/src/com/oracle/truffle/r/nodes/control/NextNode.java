@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 
 public final class NextNode extends RNode {
 
@@ -38,5 +39,15 @@ public final class NextNode extends RNode {
     @Override
     public Object execute(VirtualFrame frame) {
         throw NextException.instance;
+    }
+
+    @Override
+    public void deparse(State state) {
+        state.append("next");
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
     }
 }
