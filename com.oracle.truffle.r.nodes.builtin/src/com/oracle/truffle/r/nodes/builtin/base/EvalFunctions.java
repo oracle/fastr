@@ -50,10 +50,42 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  * case of the "current" frame, instead than routinely converting it to an environment and following
  * the slow path.
  *
- * TODO handle the special {@code enclos} argument special case.
+ * TODO handle the special {@code enclos} argument special case. TODO convert to INTERNAL
  */
 public class EvalFunctions {
-    public abstract static class EvalAdapter extends RBuiltinNode {
+    /**
+     * Used by {@link WithVisible}.
+     */
+    public abstract static class FastPathEvalAdapter extends RBuiltinNode {
+        /**
+         * Fast path variant, eval in the caller frame.
+         */
+        protected Object doEvalBodyInCallerFrame(VirtualFrame frame, Object exprArg) {
+            Object expr = checkConvertSymbol(exprArg);
+
+            if (expr instanceof RExpression) {
+                return RContext.getEngine().eval((RExpression) exprArg, frame.materialize());
+            } else if (expr instanceof RLanguage) {
+                return RContext.getEngine().eval((RLanguage) exprArg, frame.materialize());
+            } else {
+                // just return value
+                return expr;
+            }
+        }
+
+        protected static Object checkConvertSymbol(Object expr) {
+            if (expr instanceof RSymbol) {
+                String symbolName = ((RSymbol) expr).getName();
+                // We have to turn the string value back into a RLanguage object
+                return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
+            } else {
+                return expr;
+            }
+        }
+
+    }
+
+    public abstract static class EvalAdapter extends FastPathEvalAdapter {
         @CompilationFinal protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir", "enclosing"};
 
         @CompilationFinal private RFunction function;
@@ -66,16 +98,6 @@ public class EvalFunctions {
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-        }
-
-        private static Object checkConvertSymbol(Object expr) {
-            if (expr instanceof RSymbol) {
-                String symbolName = ((RSymbol) expr).getName();
-                // We have to turn the string value back into a RLanguage object
-                return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
-            } else {
-                return expr;
-            }
         }
 
         /**
@@ -97,22 +119,6 @@ public class EvalFunctions {
                 } catch (PutException ex) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
                 }
-            } else {
-                // just return value
-                return expr;
-            }
-        }
-
-        /**
-         * Fast path variant, eval in the caller frame.
-         */
-        protected Object doEvalBodyInCallerFrame(VirtualFrame frame, Object exprArg) {
-            Object expr = checkConvertSymbol(exprArg);
-
-            if (expr instanceof RExpression) {
-                return RContext.getEngine().eval((RExpression) exprArg, frame.materialize());
-            } else if (expr instanceof RLanguage) {
-                return RContext.getEngine().eval((RLanguage) exprArg, frame.materialize());
             } else {
                 // just return value
                 return expr;
