@@ -405,7 +405,8 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public CallArgumentsNode getArgumentsNode() {
-            return currentNode.getArgumentsNode();
+            assert nextNode instanceof UninitializedCallNode;
+            return nextNode.getArgumentsNode();
         }
     }
 
