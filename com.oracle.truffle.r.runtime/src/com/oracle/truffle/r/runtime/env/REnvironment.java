@@ -478,11 +478,12 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * GnuR creates {@code Namespace} environments in {@code namespace.R} using {@code new.env} and
      * identifies them with the special element {@code .__NAMESPACE__.} which points to another
-     * environment with a {@code spec} element.
+     * environment with a {@code spec} element. N.B. the {@code base} namespace does <b>not</b> have
+     * a {@code .__NAMESPACE__.} entry.
      *
-     * The "built-in" packages are created as instances of {@link Namespace} without the
-     * {@code .__NAMESPACE__.} entry. It is not clear that this is sufficient (except perhaps for
-     * {@code base}.
+     * Currently, although this is scheduled to change, the "built-in" packages are created as
+     * instances of {@link Namespace}. We fabricate a fake {@code .__NAMESPACE__.} entry to keep
+     * {@code asNameSpace} in {@code namespace.R} happy.
      */
     public boolean isNamespaceEnv() {
         if (this instanceof Namespace) {
@@ -490,6 +491,17 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         } else {
             RStringVector spec = getNamespaceSpec();
             return spec != null;
+        }
+    }
+
+    /**
+     * Another artefact of not loading builtin packages using the R machinery is the need to add any
+     * defined functions to the "exports" environment of the namespace env. This matters for
+     * qualified invocation, e.g. "package::func".
+     */
+    public void export() {
+        if (this != baseEnv) {
+            ((Package) this).populateExports();
         }
     }
 
@@ -749,6 +761,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             super(parent, name, frame);
             this.importsEnv = new Imports(name, this.frameAccess);
             this.namespaceEnv = new Namespace(this.importsEnv, name, this.frameAccess);
+            this.namespaceEnv.safePut(NAMESPACE_KEY, createNAMESPACE(name));
             setName(name);
             setPath(path);
         }
@@ -759,6 +772,35 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
         private void setPath(String path) {
             setAttr(PATH_ATTR_KEY, path);
+        }
+
+        private static REnvironment createNAMESPACE(String name) {
+            REnvironment ns = new NewEnv(baseEnv, 0);
+            String[] data = new String[]{name, RVersionNumber.FULL};
+            String[] names = new String[]{"name", "version"};
+            RStringVector spec = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+            ns.safePut("spec", spec);
+            REnvironment exports = new NewEnv(baseEnv, 0);
+            // exports needs to be populated for "name::function" to work
+            ns.safePut("exports", exports);
+            ns.safePut("lazydata", new NewEnv(baseEnv, 0));
+            return ns;
+        }
+
+        void populateExports() {
+            REnvironment ns = (REnvironment) namespaceEnv.frameAccess.get(NAMESPACE_KEY);
+            REnvironment exports = (REnvironment) ns.frameAccess.get("exports");
+            RStringVector names = this.frameAccess.ls(true, null);
+            for (int i = 0; i < names.getLength(); i++) {
+                try {
+                    String name = names.getDataAt(i);
+                    if (!name.equals("NAMESPACE_KEY")) {
+                        exports.frameAccess.put(name, RDataFactory.createStringVector(name));
+                    }
+                } catch (PutException ex) {
+                    RInternalError.shouldNotReachHere();
+                }
+            }
         }
 
         /**

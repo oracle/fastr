@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 
 /**
  * This is a node abstraction for the functionality defined in
@@ -59,6 +60,9 @@ public abstract class GetMissingValueNode extends Node {
     private static final class ResolvedGetMissingValueNode extends GetMissingValueNode {
 
         private final FrameSlot slot;
+        private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
+
+        private static final Object NON_PROMISE_OBJECT = new Object();
 
         private ResolvedGetMissingValueNode(FrameSlot slot) {
             this.slot = slot;
@@ -69,10 +73,14 @@ public abstract class GetMissingValueNode extends Node {
             if (slot == null) {
                 return null;
             }
-            try {
-                return frame.getObject(slot);
-            } catch (FrameSlotTypeException e) {
-                return null;
+            if (isObjectProfile.profile(frame.isObject(slot))) {
+                try {
+                    return frame.getObject(slot);
+                } catch (FrameSlotTypeException e) {
+                    return null;
+                }
+            } else {
+                return NON_PROMISE_OBJECT;
             }
         }
     }

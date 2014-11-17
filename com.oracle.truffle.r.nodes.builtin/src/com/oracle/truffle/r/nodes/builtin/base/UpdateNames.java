@@ -82,7 +82,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
         String[] names = new String[v.getLength()];
         Arrays.fill(names, RRuntime.STRING_NA);
         names[0] = name;
-        RStringVector namesVector = RDataFactory.createStringVector(names, names.length > 1);
+        RStringVector namesVector = RDataFactory.createStringVector(names, names.length <= 1);
         v.setNames(namesVector, getEncapsulatingSourceSection());
         return v;
     }

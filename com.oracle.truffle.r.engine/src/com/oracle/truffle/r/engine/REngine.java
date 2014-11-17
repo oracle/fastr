@@ -37,8 +37,10 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.graphics.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.nodes.graphics.core.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
@@ -76,7 +78,6 @@ public final class REngine implements RContext.Engine {
      * {@link #setInstrumentAll}.
      */
     private static boolean instrumentingEnabled;
-
     /**
      * Only relevant if {@link #instrumentingEnabled} is {@code true}. Used to control whether AST
      * instrumenting is enabled. By default none of the code in the base packages nor the system
@@ -89,6 +90,8 @@ public final class REngine implements RContext.Engine {
      * to {@link #initialize}.
      */
     private static boolean initialized;
+
+    private static final GraphicsEngine graphicsEngine = new GraphicsEngineImpl();
 
     private REngine() {
     }
@@ -146,7 +149,17 @@ public final class REngine implements RContext.Engine {
         if (userProfile != null) {
             singleton.parseAndEval("<user_profile>", userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
         }
+        registerBaseGraphicsSystem();
         return globalFrame;
+    }
+
+    private static void registerBaseGraphicsSystem() {
+        try {
+            graphicsEngine.registerGraphicsSystem(new BaseGraphicsSystem());
+        } catch (Exception e) {
+            ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
+            consoleHandler.println("Unable to register base graphics system");
+        }
     }
 
     public static REngine getInstance() {

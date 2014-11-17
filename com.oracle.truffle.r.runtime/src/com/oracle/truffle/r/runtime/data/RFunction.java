@@ -86,14 +86,7 @@ public final class RFunction extends RScalar implements RAttributable {
         this.enclosingFrame = frame;
     }
 
-    public RAttributes getAttributes() {
-        return attributes;
-    }
-
-    public RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
+    public RFunction copy() {
+        return new RFunction(name, target, builtin, enclosingFrame);
     }
 }

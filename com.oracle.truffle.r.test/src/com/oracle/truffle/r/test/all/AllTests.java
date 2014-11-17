@@ -5664,6 +5664,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCasts_6216cbd3e70f60262cfbaf9d43297450() {
+        assertEval("{ x<-7; as.list(environment()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCasts_f43132a28a07c38222f028af147918e1() {
+        assertEval("{ x<-7; .y<-42; as.list(environment()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCasts_20b9c84392efad524c545a53bb8dc115() {
+        assertEval("{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCasts_f3c1e86abe3c098506d80d45b9315d31() {
+        assertEval("{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[[\"f\"]]; f_copy(); x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCasts_fd41615e647202e9a7f994c633674ca4() {
         assertEval("{ as.matrix(1) }");
     }

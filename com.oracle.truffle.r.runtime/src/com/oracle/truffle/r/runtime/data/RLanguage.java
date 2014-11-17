@@ -127,4 +127,10 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return RContext.getRASTHelper().asList(this);
     }
 
+    public RLanguage copy() {
+        RLanguage l = new RLanguage(getRep());
+        l.attributes = attributes;
+        return l;
+    }
+
 }
