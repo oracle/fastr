@@ -196,4 +196,9 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
         return 0;
     }
 
+    public UtsName uname() {
+        Utils.nyi();
+        return null;
+    }
+
 }
