@@ -31,6 +31,7 @@ import jnr.ffi.annotations.*;
 import jnr.posix.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -63,6 +64,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         long mkdtemp(@In @Out ByteBuffer template);
 
         long strtol(@In String dir, @In String end, int base);
+
+        int uname(@In long[] utsname);
     }
 
     private static class LibCXProvider {
@@ -180,6 +183,12 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
 
     public String dlerror() {
         return com.kenai.jffi.Library.getLastError();
+    }
+
+    public UtsName uname() {
+        // TODO have to create a StructLayout for utsname etc.
+        Utils.nyi();
+        return null;
     }
 
     /*

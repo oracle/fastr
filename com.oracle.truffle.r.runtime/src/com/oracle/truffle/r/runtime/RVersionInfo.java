@@ -28,7 +28,7 @@ public enum RVersionInfo {
     // @formatter:off
     Platform(),
     Arch(java.lang.System.getProperty("os.arch")),
-    OS(java.lang.System.getProperty("os.name")),
+    OS(),
     System(),
     Major(RVersionNumber.MAJOR),
     Minor(RVersionNumber.MINOR_PATCH), // GnuR compatibility
@@ -69,13 +69,17 @@ public enum RVersionInfo {
     }
 
     public static void initialize() {
+        // TODO use utsname as Java does not provide GnuR compatible information
+        // UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
+        String osName = java.lang.System.getProperty("os.name");
+        OS.value = osName.equals("Mac OS X") ? "darwin" : "linux";
         for (int i = 0; i < VALUES.length; i++) {
             RVersionInfo data = VALUES[i];
             LIST_NAMES[i] = data.listName;
             if (data.value == null) {
                 switch (data) {
                     case Platform:
-                        data.value = Arch.value + "-unknown-" + OS.value;
+                        String guess = data.value = Arch.value + "-" + OS.value;
                         break;
                     case System:
                         data.value = Arch.value + ", " + OS.value;
