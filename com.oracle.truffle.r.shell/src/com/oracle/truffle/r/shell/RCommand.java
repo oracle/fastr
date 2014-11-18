@@ -161,15 +161,20 @@ public class RCommand {
         if (!file.exists()) {
             Utils.fatalError("cannot open file '" + filePath + "': No such file or directory");
         }
+        String content = null;
         try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
             byte[] bytes = new byte[(int) file.length()];
             is.read(bytes);
-            String content = new String(bytes);
-            JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
-            VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(filePath, content, frame.materialize(), REnvironment.globalEnv(), false, false);
+            content = new String(bytes);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
+        }
+        try {
+            JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
+            VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
+            REngine.getInstance().parseAndEval(file, content, frame.materialize(), REnvironment.globalEnv(), false);
+        } catch (IOException ex) {
+            Utils.fail("unexpected error creating console");
         }
     }
 
