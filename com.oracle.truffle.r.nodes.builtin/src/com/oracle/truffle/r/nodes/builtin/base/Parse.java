@@ -74,7 +74,7 @@ public abstract class Parse extends RBuiltinNode {
     @Specialization(guards = "parseEntire")
     protected Object parse(RConnection conn, Object n, RAbstractStringVector textVec, String prompt, Object srcFile, String encoding) {
         controlVisibility();
-        String text = textVec.getDataAt(0);
+        String text = coalesce(((RStringVector) textVec).getDataWithoutCopying());
         if (text.length() == 0) {
             return RDataFactory.createExpression(RDataFactory.createList());
         }
