@@ -194,9 +194,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
-        @Override
-        public abstract String getName();
-
         public abstract Mode getMode();
 
         @Specialization
