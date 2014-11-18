@@ -103,6 +103,8 @@ public class RASTHelperImpl implements RASTHelper {
             return 4;
         } else if (node instanceof WhileNode) {
             return ((WhileNode) node).isRepeat() ? 2 : 3;
+        } else if (node instanceof WriteVariableNode) {
+            return 3;
         } else {
             // TODO fill out
             assert false;
@@ -175,6 +177,18 @@ public class RASTHelperImpl implements RASTHelper {
                  default:
                     assert false;
              }
+        } else if (node instanceof WriteVariableNode) {
+            WriteVariableNode wvn = (WriteVariableNode) node;
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("`<-`");
+                case 1:
+                    return RDataFactory.createSymbol(wvn.getName());
+                case 2:
+                    return RASTUtils.createLanguageElement(wvn.getRhs());
+                default:
+                    assert false;
+            }
          } else {
            // TODO fill out
             assert false;
