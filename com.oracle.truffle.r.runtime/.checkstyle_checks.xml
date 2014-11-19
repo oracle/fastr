@@ -9,6 +9,9 @@
     Description: none
 -->
 <module name="Checker">
+  <module name="SuppressionFilter">
+    <property name="file" value="${samedir}/.checkstyle_suppressions.xml"/>
+  </module>
   <property name="severity" value="error"/>
   <module name="TreeWalker">
     <property name="tabWidth" value="4"/>
