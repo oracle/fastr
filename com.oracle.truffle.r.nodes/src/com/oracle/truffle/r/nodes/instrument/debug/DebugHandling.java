@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.FunctionUID;
-import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -78,7 +77,7 @@ import java.util.*;
  * do not know what function the call will resolve to. There are two solutions
  * to this:
  * <ul>
- * <li></li>{@link USE_GLOBAL_TRAP == true}. Use the global trap mechanism of
+ * <li></li>Use the global trap mechanism of
  * the instrumentation framework to force entry to <b>any</b> function. This is
  * enabled on a step into command and immediately disabled on taking the trap
  * (cf hardware single step).
@@ -86,7 +85,7 @@ import java.util.*;
  * {@link FunctionDefinitionNode}, which acts as if {@code debugonce} had been
  * called by the user (unless debug was already enabled in which case there is
  * nothing to do). This has been prototyped but it is not clear it provides
- * sufficient value.
+ * sufficient value for the added complexity..
  * <p>
  * When invoked from within a loop The "f" command continues the loop body without
  * entry and the re-enables entry. This is handled by creating a {@link LoopStatementEventReceiver}
@@ -100,8 +99,6 @@ import java.util.*;
  * the receivers.
  */
 public class DebugHandling {
-
-    private static final boolean USE_GLOBAL_TRAP = true;
 
     /**
      * Records all functions that have debug receivers installed.
@@ -247,13 +244,14 @@ public class DebugHandling {
                 case NEXT:
                     break;
                 case STEP:
-                    if (USE_GLOBAL_TRAP && node instanceof RCallNode) {
-                        Probe.setTagTrap(fastRSyntaxTagTrap);
+                    if (this instanceof StatementEventReceiver) {
+                        StepIntoTagTrap.setTrap();
                     }
                     break;
                 case CONTINUE:
                     // Have to disable
                     doContinue();
+                    StepIntoTagTrap.clearTrap();
                     break;
                 case FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
@@ -265,6 +263,7 @@ public class DebugHandling {
                     } else {
                         doContinue();
                     }
+                    StepIntoTagTrap.clearTrap();
             }
         }
 
@@ -429,28 +428,6 @@ public class DebugHandling {
         consoleHandler.print("\n");
     }
 
-    /**
-     * Global trap for step into.
-     */
-    private static class FastRSyntaxTagTrap extends SyntaxTagTrap {
-
-        public FastRSyntaxTagTrap(SyntaxTag tag) {
-            super(tag);
-        }
-
-        @Override
-        public void tagTrappedAt(Node node, MaterializedFrame frame) {
-            FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
-            ensureSingleStep(fdn);
-            Probe.clearTagTrap();
-            // next stop will be the START_METHOD node
-        }
-
-    }
-
-    private static final FastRSyntaxTagTrap fastRSyntaxTagTrap = new FastRSyntaxTagTrap(RSyntaxTag.FUNCTION_BODY);
-
     private static class StatementEventReceiver extends DebugEventReceiver {
 
         StatementEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
@@ -460,6 +437,8 @@ public class DebugHandling {
         @Override
         public void enter(Node node, VirtualFrame frame) {
             if (!disabled()) {
+                // in case we did a step into that never called a function
+                StepIntoTagTrap.clearTrap();
                 printNode(node, false);
                 browserInteract(node, frame);
             }
@@ -534,5 +513,42 @@ public class DebugHandling {
         }
         return null;
     }
+
+    /**
+     * Global trap for step into.
+     */
+    private static class StepIntoTagTrap extends SyntaxTagTrap {
+
+        private static final StepIntoTagTrap fastRSyntaxTagTrap = new StepIntoTagTrap(RSyntaxTag.FUNCTION_BODY);
+
+        private static boolean set;
+
+        public StepIntoTagTrap(SyntaxTag tag) {
+            super(tag);
+        }
+
+        @Override
+        public void tagTrappedAt(Node node, MaterializedFrame frame) {
+            FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
+            ensureSingleStep(fdn);
+            clearTrap();
+            // next stop will be the START_METHOD node
+        }
+
+        static void setTrap() {
+            Probe.setTagTrap(fastRSyntaxTagTrap);
+            set = true;
+        }
+
+        static void clearTrap() {
+            if (set) {
+                Probe.clearTagTrap();
+                set = false;
+            }
+        }
+
+    }
+
 
 }
