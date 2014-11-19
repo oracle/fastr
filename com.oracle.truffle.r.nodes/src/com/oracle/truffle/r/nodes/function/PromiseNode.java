@@ -138,7 +138,7 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * A {@link PromiseNode} for supplied arguments
+     * A {@link PromiseNode} for supplied arguments.
      */
     private static final class PromisedNode extends PromiseNode {
 

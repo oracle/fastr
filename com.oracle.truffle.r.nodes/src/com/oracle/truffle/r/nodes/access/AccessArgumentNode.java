@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.*;
 public abstract class AccessArgumentNode extends RNode {
 
     /**
-     * The formal index of this argument
+     * The formal index of this argument.
      */
     private final int index;
 

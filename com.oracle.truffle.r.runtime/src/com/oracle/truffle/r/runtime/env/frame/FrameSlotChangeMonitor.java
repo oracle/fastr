@@ -19,14 +19,14 @@ public final class FrameSlotChangeMonitor {
     private static final String ASSUMPTION_NAME = "slot change monitor";
 
     /**
-     * @return TODO
+     * @return TODO comment
      */
     public static Assumption createMonitor() {
         return Truffle.getRuntime().createAssumption(ASSUMPTION_NAME);
     }
 
     /**
-     * TODO
+     * TODO comment.
      *
      * @param slot
      * @return The "not changed locally" assumption of the given {@link FrameSlot}
@@ -43,7 +43,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * Convenience method for {@link #getMonitor(FrameSlot)} and {@link Assumption#isValid()}
+     * Convenience method for {@link #getMonitor(FrameSlot)} and {@link Assumption#isValid()}.
      *
      * @param slot
      * @return Directly returns whether a {@link FrameSlot} has ever been updated from a non-local
@@ -59,7 +59,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * Assumes info to be an {@link Assumption} attached to a {@link FrameSlot} and invalidates it
+     * Assumes info to be an {@link Assumption} attached to a {@link FrameSlot} and invalidates it.
      *
      * @param curFrame
      * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an

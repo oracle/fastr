@@ -94,7 +94,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     /**
-     * Convenience constructor
+     * Convenience constructor.
      *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
@@ -143,7 +143,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
      */
     protected static final class ReadProperties {
         /**
-         * The {@link Symbol} this {@link ReadVariableNode} (hierarchy) is meant to read
+         * The {@link Symbol} this {@link ReadVariableNode} (hierarchy) is meant to read.
          */
         private final Symbol symbol;
 
