@@ -26,14 +26,13 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RContext;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -85,15 +84,13 @@ public class Browser {
                     case "Q":
                         throw new BrowserQuitException();
                     case "where": {
-                        int ix = RArguments.getDepth(frame);
-                        Frame stackFrame;
-                        while (ix >= 0 && (stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null) {
-                            RFunction fun = RArguments.getFunction(stackFrame);
-                            if (fun != null) {
-                                ch.printf("where %d: %s%n", ix, fun.getTarget());
-                            }
-                            ix--;
-                        }
+                        int ix = 0;
+                        Frame stackFrame = frame;
+                        do {
+                            SourceSection ss = RArguments.getCallSourceSection(stackFrame);
+                            ch.println(ss.getCode());
+                            ix++;
+                        } while ((stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);
                         ch.println("");
                         break;
                     }
