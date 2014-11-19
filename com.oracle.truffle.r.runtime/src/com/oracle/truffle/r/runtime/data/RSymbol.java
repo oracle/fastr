@@ -29,7 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
  * Truffle sense.
  */
 @ValueType
-public class RSymbol {
+public class RSymbol extends RAttributeStorage implements RAttributable {
 
     private final String name;
 

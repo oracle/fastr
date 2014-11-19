@@ -694,4 +694,18 @@ public class RRuntime {
         }
     }
 
+    /**
+     * Checks and converts an object into a String. Usefuk for non-fast path code, e.g. in
+     * {@code Fallback} specializations.
+     */
+    public static String asString(Object obj) {
+        if (obj instanceof String) {
+            return (String) obj;
+        } else if (obj instanceof RStringVector) {
+            return ((RStringVector) obj).getDataAt(0);
+        } else {
+            return null;
+        }
+    }
+
 }
