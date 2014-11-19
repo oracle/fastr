@@ -112,6 +112,13 @@ public class TestSimpleDataFrames extends TestBase {
     public void testAccess() {
         assertEval("{ x<-list(7,42); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; x[[1]] }");
         assertEval("{ x<-c(7,42); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); y[[1]] }");
+
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[1,2]] }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[1,2] }");
+        assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[[1,2]] }");
+        assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }");
+        assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
     }
 
     @Test

@@ -100,7 +100,7 @@ public abstract class Parse extends RBuiltinNode {
         return sb.toString();
     }
 
-    public static boolean parseEntire(RConnection conn, Object n, RAbstractStringVector textVec, String prompt, Object srcFile, String encoding) {
+    public static boolean parseEntire(Object n) {
         if (n == RNull.instance) {
             return true;
         } else if (n instanceof Double && (((Double) n == -1 || ((Double) n) == RRuntime.DOUBLE_NA))) {

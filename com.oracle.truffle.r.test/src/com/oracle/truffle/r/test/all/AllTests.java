@@ -17304,6 +17304,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testAccess_f81b2ec376f6d3741941c58da49f6468() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[1,2]] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_af7da5f5bad77c38c1891740e723bba0() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[1,2] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_1c5a7f63ea4401ffa3217f253cd5a481() {
+        assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[[1,2]] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_bca92f3ab80c7b72fbb577092302102e() {
+        assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_023461f3b848ea06b727493936ab0e49() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_3c751253c42329c6652cb02b6c064aa2() {
+        assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testAsDataFrame_425ea5f0ee3136cc38c973a338b83071() {
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(x) }");
     }

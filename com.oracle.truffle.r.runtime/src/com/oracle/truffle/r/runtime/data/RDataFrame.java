@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RDataFrame implements RShareable, RAbstractContainer {
@@ -73,12 +74,14 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public boolean hasDimensions() {
-        return vector.hasDimensions();
+        Utils.nyi("data frame's dimensions need to be obtained using builtins");
+        return false;
     }
 
     @Override
     public int[] getDimensions() {
-        return vector.getDimensions();
+        Utils.nyi("data frame's dimensions need to be obtained using builtins");
+        return null;
     }
 
     @Override

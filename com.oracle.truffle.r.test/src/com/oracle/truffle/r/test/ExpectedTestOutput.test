@@ -16427,6 +16427,31 @@ Error in x >= y : invalid comparison with complex values
 [1]  7 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(11,12)); x[1,2] }
+[1] 11
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[1,2]] }
+[1] 11
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }
+Error in col[[i, exact = exact]] :
+  attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }
+[1] 11 12
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=list(1,2), b=list(11,12)); x[[1,2]] }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-list(7,42); class(x)<-"data.frame"; row.names(x)<-"r1"; x[[1]] }
 [1] 7
 

@@ -79,7 +79,7 @@ public enum RVersionInfo {
             if (data.value == null) {
                 switch (data) {
                     case Platform:
-                        String guess = data.value = Arch.value + "-" + OS.value;
+                        data.value = Arch.value + "-" + OS.value;
                         break;
                     case System:
                         data.value = Arch.value + ", " + OS.value;
