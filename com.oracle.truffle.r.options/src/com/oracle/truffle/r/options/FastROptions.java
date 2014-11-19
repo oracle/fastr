@@ -49,10 +49,14 @@ public class FastROptions {
     public static final OptionValue<Boolean> Debug = new OptionValue<>(false);
 
     // Promises optimizations
+    @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")
+    public static final OptionValue<Boolean> EagerEval = new OptionValue<>(false);
     @Option(help = "Unconditionally evaluates constants before creating Promises")
     public static final OptionValue<Boolean> EagerEvalConstants = new OptionValue<>(false);
-    @Option(help = "Tries to eagerly evaluate variables reads before creating Promises")
+    @Option(help = "Enables optimistic eager evaluation of single variables reads")
     public static final OptionValue<Boolean> EagerEvalVariables = new OptionValue<>(false);
+    @Option(help = "Enables optimistic eager evaluation of trivial expressions")
+    public static final OptionValue<Boolean> EagerEvalExpressions = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();

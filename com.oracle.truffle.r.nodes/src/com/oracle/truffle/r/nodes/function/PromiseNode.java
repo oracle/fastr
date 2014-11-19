@@ -34,7 +34,6 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -86,7 +85,7 @@ public abstract class PromiseNode extends RNode {
             case PROMISED:
                 // For ARG_DEFAULT, expr == defaultExpr!
                 RNode expr = unfold(factory.getExpr());
-                if (FastROptions.EagerEvalConstants.getValue() && isConstantArgument(expr)) {
+                if (isOptimizableConstant(expr)) {
                     // As Constants don't care where they are evaluated, we don't need to
                     // distinguish between ARG_DEFAULT and ARG_SUPPLIED
                     pn = new OptConstantPromiseNode(factory);
@@ -94,7 +93,7 @@ public abstract class PromiseNode extends RNode {
                 }
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    if (FastROptions.EagerEvalVariables.getValue() && isVariableArgument(expr)) {
+                    if (isOptimizableVariable(expr)) {
                         pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
                         break;
                     }
@@ -103,6 +102,10 @@ public abstract class PromiseNode extends RNode {
                         pn = new VarargPromiseNode(factory, (VarArgNode) expr);
                         break;
                     }
+
+// if (isOptimizableExpression(expr)) {
+// System.err.println(" >>> SUP " + src.getCode());
+// }
                 }
 
                 pn = new PromisedNode(factory);

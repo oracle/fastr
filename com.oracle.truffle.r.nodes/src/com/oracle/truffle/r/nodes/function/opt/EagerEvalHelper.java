@@ -28,8 +28,51 @@ import com.oracle.truffle.r.nodes.access.ConstantNode.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.*;
 
+/**
+ * Provides small helper function for eager evaluation of arguments for the use in
+ * {@link PromiseNode} and {@link AccessArgumentNode}.
+ */
 public class EagerEvalHelper {
 
+    /**
+     * @return Whether to use optimizations for constants
+     */
+    public static boolean optConsts() {
+        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalConstants.getValue();
+    }
+
+    /**
+     * @return Whether to use optimizations for single variables
+     */
+    public static boolean optVars() {
+        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalVariables.getValue();
+    }
+
+    /**
+     * @return Whether to use optimizations for arbitrary expressions
+     */
+    public static boolean optExprs() {
+        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalExpressions.getValue();
+    }
+
+    public static boolean isOptimizableConstant(RNode expr) {
+        return optConsts() && isConstantArgument(expr);
+    }
+
+    public static boolean isOptimizableVariable(RNode expr) {
+        return optVars() && isVariableArgument(expr);
+    }
+
+    public static boolean isOptimizableExpression(RNode expr) {
+        return optExprs() && isCheapExpressionArgument(expr);
+    }
+
+    /**
+     * Unwraps the operand of a {@link WrapArgumentNode} if present.
+     *
+     * @param argObj
+     * @return The operand of a {@link WrapArgumentNode}, else the {@link RNode} itself
+     */
     public static RNode unfold(Object argObj) {
         RNode arg = (RNode) argObj;
         if (arg instanceof WrapArgumentNode) {
@@ -39,6 +82,8 @@ public class EagerEvalHelper {
     }
 
     /**
+     * Use {@link #unfold(Object)} first!!!
+     *
      * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
      * does not need to handle "..." as special case (which might result in a
      * {@link ConstantMissingNode} if empty).
@@ -51,6 +96,8 @@ public class EagerEvalHelper {
     }
 
     /**
+     * Use {@link #unfold(Object)} first!!!
+     *
      * @param expr
      * @return Whether the given {@link RNode} is a {@link ReadVariableNode}
      *
@@ -60,5 +107,14 @@ public class EagerEvalHelper {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
         return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).getForcePromise();
+    }
+
+    /**
+     * @param expr
+     * @return TODO comment
+     */
+    private static boolean isCheapExpressionArgument(RNode expr) {
+        // TODO Implement cheap eagerness analysis =)
+        return false;
     }
 }

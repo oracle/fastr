@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -31,10 +33,12 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index (
@@ -59,7 +63,7 @@ public abstract class AccessArgumentNode extends RNode {
     @CompilationFinal private FormalArguments formals = null;
     @CompilationFinal private RPromiseFactory factory = null;
     @CompilationFinal private boolean deoptimized = false;
-    @CompilationFinal private boolean defaultArgCanBeOptimized = FastROptions.EagerEvalConstants.getValue() || FastROptions.EagerEvalVariables.getValue();  // true;
+    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();  // true;
 
     private final BranchProfile strictEvaluation = BranchProfile.create();
     private final PromiseProfile promiseProfile = new PromiseProfile();
@@ -185,11 +189,14 @@ public abstract class AccessArgumentNode extends RNode {
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (FastROptions.EagerEvalVariables.getValue() && EagerEvalHelper.isVariableArgument(arg)) {
+            if (isOptimizableVariable(arg) && isVariableArgument(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg));
-            } else if (FastROptions.EagerEvalConstants.getValue() && EagerEvalHelper.isConstantArgument(arg)) {
+            } else if (isOptimizableConstant(arg) && isConstantArgument(arg)) {
                 optDefaultArgNode = new OptConstantPromiseNode(factory);
             }
+// else if (isOptimizableExpression(arg)) {
+// System.err.println(" >>> DEF " + arg.getSourceSection().getCode());
+// }
             if (optDefaultArgNode == null) {
                 // No success: Rewrite to default
                 return false;
