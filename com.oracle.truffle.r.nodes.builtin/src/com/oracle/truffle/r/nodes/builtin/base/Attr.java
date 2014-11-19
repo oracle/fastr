@@ -49,10 +49,8 @@ public abstract class Attr extends RBuiltinNode {
         return val;
     }
 
-    @Specialization(guards = "!isRowNamesAttr")
-    protected Object attr(RAbstractContainer container, String name) {
-        controlVisibility();
-        RAttributes attributes = container.getAttributes();
+    private static Object attrRA(RAttributable attributable, String name) {
+        RAttributes attributes = attributable.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
@@ -62,6 +60,12 @@ public abstract class Attr extends RBuiltinNode {
             }
             return result;
         }
+    }
+
+    @Specialization(guards = "!isRowNamesAttr")
+    protected Object attr(RAbstractContainer container, String name) {
+        controlVisibility();
+        return attrRA(container, name);
     }
 
     public static Object getFullRowNames(Object a) {
@@ -100,6 +104,23 @@ public abstract class Attr extends RBuiltinNode {
     protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
+    }
+
+    /**
+     * All other, non-performance centric, {@link RAttributable} types.
+     */
+    @Fallback
+    protected Object attr(Object object, Object name) {
+        controlVisibility();
+        String sname = RRuntime.asString(name);
+        if (sname == null) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_CHARACTER, "which");
+        }
+        if (object instanceof RAttributable) {
+            return attrRA((RAttributable) object, sname);
+        } else {
+            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+        }
     }
 
     protected boolean isRowNamesAttr(@SuppressWarnings("unused") RAbstractContainer container, String name) {

@@ -151,6 +151,15 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
+    public Object parseAndEval(File file, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult) {
+        try {
+            return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromFileName(file.getAbsolutePath()), frame, printResult, false);
+        } catch (IOException ex) {
+            // we have already read the file so this cannot happen (comes from Source.fromFileName).
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
     public Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, sourceDesc), frame, printResult, allowIncompleteSource);
     }
