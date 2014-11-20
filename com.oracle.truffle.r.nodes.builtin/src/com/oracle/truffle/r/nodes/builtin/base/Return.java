@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"})
 public abstract class Return extends RBuiltinNode {
 
-    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
+    @CompilationFinal private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
 
     @Override
     public RNode[] getParameterValues() {

@@ -11,7 +11,6 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
@@ -64,7 +63,17 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                     if (attrs != null) {
                         RAttributable rresult = (RAttributable) result;
                         for (RAttribute attr : attrs) {
-                            rresult.setAttr(attr.getName(), attr.getValue());
+                            String attrName = attr.getName();
+                            Object v = attr.getValue();
+                            if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+                                if (v == RNull.instance) {
+                                    rresult = rresult.setClassAttr(null);
+                                } else {
+                                    rresult = rresult.setClassAttr((RStringVector) v);
+                                }
+                            } else {
+                                rresult.setAttr(attrName, v);
+                            }
                         }
                     }
                 }
@@ -75,7 +84,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
-    @TruffleBoundary
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -83,7 +91,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private void initFactorNode() {
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -91,7 +98,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private void initTypeOfNode() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

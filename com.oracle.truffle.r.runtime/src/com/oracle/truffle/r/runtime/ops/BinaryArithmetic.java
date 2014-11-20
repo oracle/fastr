@@ -56,74 +56,15 @@ public abstract class BinaryArithmetic extends Operation {
     public static class PowBuiltin {
     }
 
-    public static final BinaryArithmeticFactory ADD = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Add();
-        }
-    };
-    public static final BinaryArithmeticFactory SUBTRACT = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Subtract();
-        }
-    };
-    public static final BinaryArithmeticFactory MULTIPLY = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Multiply();
-        }
-    };
-    public static final BinaryArithmeticFactory INTEGER_DIV = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new IntegerDiv();
-        }
-    };
-
-    public static final BinaryArithmeticFactory DIV = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Div();
-        }
-    };
-
-    public static final BinaryArithmeticFactory MOD = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Mod();
-        }
-    };
-
-    public static final BinaryArithmeticFactory POW = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Pow();
-        }
-    };
-
-    public static final BinaryArithmeticFactory MAX = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Max();
-        }
-    };
-
-    public static final BinaryArithmeticFactory MIN = new BinaryArithmeticFactory() {
-
-        @Override
-        public BinaryArithmetic create() {
-            return new Min();
-        }
-    };
+    public static final BinaryArithmeticFactory ADD = Add::new;
+    public static final BinaryArithmeticFactory SUBTRACT = Subtract::new;
+    public static final BinaryArithmeticFactory MULTIPLY = Multiply::new;
+    public static final BinaryArithmeticFactory INTEGER_DIV = IntegerDiv::new;
+    public static final BinaryArithmeticFactory DIV = Div::new;
+    public static final BinaryArithmeticFactory MOD = Mod::new;
+    public static final BinaryArithmeticFactory POW = Pow::new;
+    public static final BinaryArithmeticFactory MAX = Max::new;
+    public static final BinaryArithmeticFactory MIN = Min::new;
 
     private final boolean supportsIntResult;
 
@@ -135,6 +76,12 @@ public abstract class BinaryArithmetic extends Operation {
     public final boolean isSupportsIntResult() {
         return supportsIntResult;
     }
+
+    public boolean introducesNA() {
+        return false;
+    }
+
+    public abstract String opName();
 
     public abstract int op(int left, int right);
 
@@ -179,6 +126,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public String opName() {
+            return "+";
+        }
+
+        @Override
         public int op(int left, int right) {
             try {
                 return ExactMath.addExact(left, right);
@@ -209,6 +161,11 @@ public abstract class BinaryArithmetic extends Operation {
     private static final class AddOverflow extends Add {
 
         @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
         public int op(int left, int right) {
             // Borrowed from ExactMath.addExact
             int r = left + right;
@@ -225,6 +182,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Subtract() {
             super(false, false, true);
+        }
+
+        @Override
+        public String opName() {
+            return "-";
         }
 
         @Override
@@ -258,6 +220,11 @@ public abstract class BinaryArithmetic extends Operation {
     private static final class SubtractOverflow extends Subtract {
 
         @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
         public int op(int left, int right) {
             // Borrowed from ExactMath.removeExact
             int r = left - right;
@@ -273,6 +240,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Multiply() {
             super(true, true, true);
+        }
+
+        @Override
+        public String opName() {
+            return "*";
         }
 
         @Override
@@ -300,12 +272,10 @@ public abstract class BinaryArithmetic extends Operation {
             double[] res = new double[2];
             double[] interm = new double[4];
             complexMult(leftReal, leftImag, rightReal, rightImag, res, interm);
-            if (Double.isNaN(res[0]) && Double.isNaN(res[1])) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                MultiplyNaN multNaN = new MultiplyNaN();
-                replace(multNaN);
-                return multNaN.handleNaN(leftReal, leftImag, rightReal, rightImag, res, interm);
-            }
+            /*
+             * LStadler: removed the special code for handling NaNs in the result, since it works
+             * fine (and the tests are broken either way). to revive it, get it from the history.
+             */
             return RDataFactory.createComplex(res[0], res[1]);
         }
 
@@ -328,6 +298,11 @@ public abstract class BinaryArithmetic extends Operation {
     private static final class MultiplyOverflow extends Multiply {
 
         @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
         public int op(int left, int right) {
             // Borrowed from ExactMath.removeExact
             long r = (long) left * (long) right;
@@ -339,63 +314,15 @@ public abstract class BinaryArithmetic extends Operation {
 
     }
 
-    private static final class MultiplyNaN extends Multiply {
-
-        private final ConditionProfile inf1 = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile inf2 = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile inf3 = ConditionProfile.createBinaryProfile();
-
-        @Override
-        public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            double[] res = new double[2];
-            double[] interm = new double[4];
-            complexMult(leftReal, leftImag, rightReal, rightImag, res, interm);
-            if (Double.isNaN(res[0]) && Double.isNaN(res[1])) {
-                return handleNaN(leftReal, leftImag, rightReal, rightImag, res, interm);
-            }
-            return RDataFactory.createComplex(res[0], res[1]);
-        }
-
-        protected RComplex handleNaN(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
-            boolean recalc = false;
-            double ra = leftReal;
-            double rb = leftImag;
-            double rc = rightReal;
-            double rd = rightImag;
-            if (inf1.profile(Double.isInfinite(ra) || Double.isInfinite(rb))) {
-                ra = convertInf(ra);
-                rb = convertInf(rb);
-                rc = convertNaN(rc);
-                rd = convertNaN(rd);
-                recalc = true;
-            }
-            if (inf2.profile(Double.isInfinite(rc) || Double.isInfinite(rd))) {
-                rc = convertInf(rc);
-                rd = convertInf(rd);
-                ra = convertNaN(ra);
-                rb = convertNaN(rb);
-                recalc = true;
-            }
-            if (inf3.profile(!recalc && (Double.isInfinite(interm[0]) || Double.isInfinite(interm[1]) || Double.isInfinite(interm[2]) || Double.isInfinite(interm[3])))) {
-                ra = convertNaN(ra);
-                rb = convertNaN(rb);
-                rc = convertNaN(rc);
-                rd = convertNaN(rd);
-                recalc = true;
-            }
-            if (recalc) {
-                res[0] = Double.POSITIVE_INFINITY * (ra * rc - rb * rd);
-                res[1] = Double.POSITIVE_INFINITY * (ra * rd + rb * rc);
-            }
-            return RDataFactory.createComplex(res[0], res[1]);
-        }
-
-    }
-
     private static class Div extends BinaryArithmetic {
 
         public Div() {
             super(false, false, false);
+        }
+
+        @Override
+        public String opName() {
+            return "/";
         }
 
         @Override
@@ -471,6 +398,16 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
+        public String opName() {
+            return "%/%";
+        }
+
+        @Override
         public int op(int left, int right) {
             if (right != 0) {
                 return (int) Math.floor((double) left / (double) right);
@@ -508,6 +445,16 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Mod() {
             super(false, false, true);
+        }
+
+        @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
+        public String opName() {
+            return "%%";
         }
 
         @Override
@@ -550,6 +497,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Pow() {
             super(false, false, false);
+        }
+
+        @Override
+        public String opName() {
+            return "^";
         }
 
         @Override
@@ -871,6 +823,11 @@ public abstract class BinaryArithmetic extends Operation {
 
     private static final class PowFull extends Pow {
 
+        @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
         private final ConditionProfile pow2 = ConditionProfile.createBinaryProfile();
         private final ConditionProfile one = ConditionProfile.createBinaryProfile();
         private final ConditionProfile zero = ConditionProfile.createBinaryProfile();
@@ -952,6 +909,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public String opName() {
+            throw Utils.nyi();
+        }
+
+        @Override
         public int op(int left, int right) {
             return Math.max(left, right);
         }
@@ -978,6 +940,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Min() {
             super(true, true, true);
+        }
+
+        @Override
+        public String opName() {
+            throw Utils.nyi();
         }
 
         @Override

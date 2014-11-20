@@ -25,14 +25,18 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"})
 public abstract class Attributes extends RBuiltinNode {
+
+    private final BranchProfile rownamesBranch = BranchProfile.create();
 
     @Specialization(guards = "!hasAttributes")
     protected RNull attributesNull(@SuppressWarnings("unused") RAbstractVector vector) {
@@ -43,7 +47,30 @@ public abstract class Attributes extends RBuiltinNode {
     @Specialization(guards = "hasAttributes")
     protected RList attributes(RAbstractContainer container) {
         controlVisibility();
-        RAttributes attributes = container.getAttributes();
+        return createResult(container);
+    }
+
+    /**
+     * Unusual cases that it is not worth specializing on as they are not performance-centric,
+     * basically any type that is not an {@link RAbstractContainer} but is {@link RAttributable},
+     * e.g. {@link REnvironment}.
+     */
+    @Fallback
+    protected Object attributes(Object object) {
+        controlVisibility();
+        if (object instanceof RAttributable) {
+            if (!hasAttributesRA((RAttributable) object)) {
+                return RNull.instance;
+            } else {
+                return createResult((RAttributable) object);
+            }
+        } else {
+            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+        }
+    }
+
+    private RList createResult(RAttributable attributable) {
+        RAttributes attributes = attributable.getAttributes();
         int size = attributes.size();
         String[] names = new String[size];
         Object[] values = new Object[size];
@@ -51,6 +78,7 @@ public abstract class Attributes extends RBuiltinNode {
         for (RAttribute attr : attributes) {
             names[z] = attr.getName();
             if (names[z].equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                rownamesBranch.enter();
                 values[z] = Attr.getFullRowNames(attr.getValue());
             } else {
                 values[z] = attr.getValue();
@@ -63,6 +91,10 @@ public abstract class Attributes extends RBuiltinNode {
     }
 
     public static boolean hasAttributes(RAbstractContainer container) {
-        return container.getAttributes() != null && container.getAttributes().size() > 0;
+        return hasAttributesRA(container);
+    }
+
+    public static boolean hasAttributesRA(RAttributable attributable) {
+        return attributable.getAttributes() != null && attributable.getAttributes().size() > 0;
     }
 }

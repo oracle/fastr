@@ -146,4 +146,10 @@ public abstract class IsNA extends RBuiltinNode {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
+
+    @Specialization
+    protected RLogicalVector isNA(RFactor value) {
+        return isNA(value.getVector());
+    }
+
 }

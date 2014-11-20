@@ -26,20 +26,17 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "options", kind = SUBSTITUTE, parameterNames = {"..."})
+@RBuiltin(name = "options", kind = INTERNAL, parameterNames = {"..."})
 /**
- * N.B. In the general case of option assignment via parameter names, the value may be of any type (i.e. {@code Object},
- * so we cannot (currently) specialize on any specific types, owing to the "stuck specialization" bug.
- *
- * TODO Revert to {@code INTERNAL} when argument names available.
+ * This could be refactored using a recursive child node to handle simple cases, but it's unlikely to be the fast path.
  */
 public abstract class Options extends RBuiltinNode {
 
@@ -66,14 +63,14 @@ public abstract class Options extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isMissing")
+    @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
         Object[] values = args.getValues();
-        String[] argNames = getSuppliedArgsNames();
+        String[] argNames = args.getNames();
         Object[] data = new Object[values.length];
         String[] names = new String[values.length];
-        // getting
         for (int i = 0; i < values.length; i++) {
-            String argName = namedArgument(argNames, i);
+            String argName = argNames[i];
             Object value = values[i];
             if (argNameNull.profile(argName == null)) {
                 // getting
@@ -82,6 +79,42 @@ public abstract class Options extends RBuiltinNode {
                     optionName = ((RStringVector) value).getDataAt(0); // ignore rest (cf GnuR)
                 } else if (value instanceof String) {
                     optionName = (String) value;
+                } else if (value instanceof RList) {
+                    // setting
+                    RList list = (RList) value;
+                    RStringVector thisListnames = null;
+                    Object nn = list.getNames();
+                    if (nn instanceof RStringVector) {
+                        thisListnames = (RStringVector) nn;
+                    } else {
+                        assert false;
+                    }
+                    Object[] listData = new Object[list.getLength()];
+                    String[] listNames = new String[listData.length];
+                    for (int j = 0; j < listData.length; j++) {
+                        String name = thisListnames.getDataAt(j);
+                        Object previousVal = ROptions.getValue(name);
+                        listData[j] = previousVal == null ? RNull.instance : previousVal;
+                        listNames[j] = name;
+                        ROptions.setValue(name, list.getDataAtAsObject(j));
+                    }
+                    // if this is the only argument, no need to copy, can just return
+                    if (values.length == 1) {
+                        data = listData;
+                        names = listNames;
+                        break;
+                    } else {
+                        // resize and copy
+                        int newSize = values.length - 1 + listData.length;
+                        Object[] newData = new Object[newSize];
+                        String[] newNames = new String[newSize];
+                        System.arraycopy(data, 0, newData, 0, i);
+                        System.arraycopy(names, 0, newNames, 0, i);
+                        System.arraycopy(listData, 0, newData, i, listData.length);
+                        System.arraycopy(listNames, 0, newNames, i, listNames.length);
+                        data = newData;
+                        names = newNames;
+                    }
                 } else {
                     throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
                 }
@@ -99,38 +132,6 @@ public abstract class Options extends RBuiltinNode {
             }
         }
         return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-    }
-
-    private static String namedArgument(String[] argNames, int i) {
-        if (argNames == null) {
-            return null;
-        } else {
-            return argNames[i];
-        }
-    }
-
-    @Specialization
-    public RList options(RAbstractStringVector vec) {
-        String key = vec.getDataAt(0);
-        Object value = ROptions.getValue(key);
-        Object rObject = value == null ? RNull.instance : value;
-        return RDataFactory.createList(new Object[]{rObject}, RDataFactory.createStringVectorFromScalar(key));
-    }
-
-    @Specialization
-    public Object options(@SuppressWarnings("unused") double d) {
-        // HACK ALERT - just to allow b25 test, it doesn't do anything,
-        // as that would require the option name
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization
-    public Object options(@SuppressWarnings("unused") RFunction f) {
-        // HACK ALERT - just to allow b25 test, it doesn't do anything,
-        // as that would require the option name
-        controlVisibility();
-        return RNull.instance;
     }
 
     protected boolean isMissing(RArgsValuesAndNames args) {

@@ -90,7 +90,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RSymbol castSymbol(VirtualFrame frame, Object operand) {
         if (castSymbol == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castSymbol = insert(CastSymbolNodeFactory.create(null, false, false, false, false));
+            castSymbol = insert(CastSymbolNodeFactory.create(null, false, false, false));
         }
         return (RSymbol) castSymbol.executeSymbol(frame, operand);
     }
@@ -206,6 +206,12 @@ public abstract class AsVector extends RBuiltinNode {
         return result;
     }
 
+    @Specialization(guards = "modeIsAny")
+    protected RNull asVector(RNull x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return x;
+    }
+
     @Specialization(guards = "modeIsPairList")
     protected Object asVectorPairList(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -221,13 +227,6 @@ public abstract class AsVector extends RBuiltinNode {
     protected RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return x.copyWithNewDimensions(null);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "invalidMode")
-    protected RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
-        controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
     }
 
     protected boolean castToInt(RAbstractVector x, String mode) {
@@ -282,32 +281,18 @@ public abstract class AsVector extends RBuiltinNode {
         return RType.Any.getName().equals(mode);
     }
 
+    protected boolean modeIsAny(@SuppressWarnings("unused") RNull x, String mode) {
+        return RType.Any.getName().equals(mode);
+    }
+
     protected boolean modeIsPairList(@SuppressWarnings("unused") RAbstractVector x, String mode) {
         return RType.PairList.getName().equals(mode);
     }
 
-    protected boolean invalidMode(@SuppressWarnings("unused") RAbstractVector x, String mode) {
-        RType modeType = RType.fromString(mode);
-        if (modeType == null) {
-            return true;
-        }
-        switch (modeType) {
-            case Any:
-            case Array:
-            case Character:
-            case Complex:
-            case Double:
-            case Integer:
-            case List:
-            case Logical:
-            case Matrix:
-            case Numeric:
-            case PairList:
-            case Raw:
-            case Symbol:
-                return false;
-            default:
-                return true;
-        }
+    @SuppressWarnings("unused")
+    @Fallback
+    protected RAbstractVector asVectorWrongMode(Object x, Object mode) {
+        controlVisibility();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
     }
 }

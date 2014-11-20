@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public final class RStringVector extends RVector implements RAbstractStringVector {
 
     private String[] data;
-    private static final String[] implicitClassHrDyn = new String[]{"", RType.Character.getName()};
+    @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Character.getName()};
 
     RStringVector(String[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length, dims, names);
@@ -147,7 +147,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     public RStringVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
     }
 

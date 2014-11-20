@@ -90,7 +90,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         int nrow = resultVector.getDimensions()[0];
         int size = Math.min(nrow, resultVector.getDimensions()[1]);
         int pos = 0;
-        naCheck.enable(!resultVector.isComplete());
+        naCheck.enable(resultVector);
         for (int i = 0; i < size; i++) {
             resultVector.updateDataAt(pos, valueVector.getDataAt(i % valueVector.getLength()), naCheck);
             pos += nrow + 1;
@@ -110,7 +110,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
         int nrow = resultVector.getDimensions()[0];
         int pos = 0;
-        naCheck.enable(!resultVector.isComplete());
+        naCheck.enable(resultVector);
         for (int i = 0; i < size; i++) {
             resultVector.updateDataAt(pos, valueVector.getDataAt(i % valueVector.getLength()), naCheck);
             pos += nrow + 1;
@@ -127,7 +127,6 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return updateDiag(resultVector, valueVector);
     }
 
-    @TruffleBoundary
     private void initCastDoubleNode() {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

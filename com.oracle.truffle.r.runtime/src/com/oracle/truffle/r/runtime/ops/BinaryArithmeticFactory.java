@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-public abstract class BinaryArithmeticFactory extends OperationFactory {
+@FunctionalInterface
+public interface BinaryArithmeticFactory extends OperationFactory {
 
-    @Override
-    public abstract BinaryArithmetic create();
+    BinaryArithmetic create();
 }

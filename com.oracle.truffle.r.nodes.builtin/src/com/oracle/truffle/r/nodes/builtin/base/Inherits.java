@@ -58,7 +58,7 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    public boolean whichFalse(RAbstractVector x, RAbstractStringVector what, byte which) {
+    public boolean whichFalse(RAbstractContainer x, RAbstractStringVector what, byte which) {
         return which != RRuntime.LOGICAL_TRUE;
     }
 
@@ -68,7 +68,7 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @Specialization(guards = "whichFalse")
-    protected byte doInherits(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+    protected byte doInherits(VirtualFrame frame, RAbstractContainer x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 

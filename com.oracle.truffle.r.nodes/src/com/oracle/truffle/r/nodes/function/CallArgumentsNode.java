@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -52,7 +52,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
      * field contains the index of the symbol. Otherwise it is an empty list.
      */
-    private final Integer[] varArgsSymbolIndices;
+    @CompilationFinal private final Integer[] varArgsSymbolIndices;
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
@@ -160,31 +160,35 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
 
         // Unroll "..."s and insert their arguments into VarArgsSignature
         Object varArgContent = varArgsSlotNode.execute(frame);
-        RNode[] content;
+
+        int times = varArgsSymbolIndices.length;
+        return createSignature(varArgContent, times, false);
+    }
+
+    public static VarArgsSignature createSignature(Object varArgContent, int times, boolean allowConstants) {
+        Object[] content;
         if (varArgContent == RMissing.instance) {
-            content = new RNode[]{VarArgsSignature.NO_VARARGS};
+            content = new Object[]{VarArgsSignature.NO_VARARGS};
         } else {
             // Arguments wrapped into "..."
             Object[] varArgs = ((RArgsValuesAndNames) varArgContent).getValues();
-            content = new RNode[varArgs.length];
+            content = new Object[varArgs.length];
 
             // As we want to check on expression identity later on:
             for (int i = 0; i < varArgs.length; i++) {
                 Object varArg = varArgs[i];
                 if (varArg instanceof RPromise) {
                     // Unwrap expression (one instance per argument/call site)
-                    content[i] = (RNode) ((RPromise) varArg).getRep();
+                    content[i] = ((RPromise) varArg).getRep();
                 } else if (varArg == RMissing.instance) {
                     // Use static symbol for "missing" instead of ConstantNode.create
                     content[i] = VarArgsSignature.NO_VARARGS;
                 } else {
-                    assert false;
+                    assert allowConstants;
+                    content[i] = varArg;
                 }
             }
         }
-
-        // More then one "..."? Copy content!
-        int times = varArgsSymbolIndices.length;
         return VarArgsSignature.create(content, times);
     }
 
@@ -242,7 +246,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
     }
 
     @TruffleBoundary
-    private static RNode wrapVarArgValue(Object varArgValue) {
+    public static RNode wrapVarArgValue(Object varArgValue) {
         if (varArgValue instanceof RPromise) {
             return PromiseNode.createVarArg((RPromise) varArgValue);
         } else {

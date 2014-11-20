@@ -16,6 +16,7 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -26,6 +27,9 @@ import com.oracle.truffle.r.runtime.env.*;
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
  */
 public abstract class InheritsNode extends BinaryNode {
+
+    private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
+
     public abstract byte execute(VirtualFrame frame, Object x, Object what);
 
     @SuppressWarnings("unused")
@@ -40,9 +44,8 @@ public abstract class InheritsNode extends BinaryNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    // map operations lead to recursion resulting in compilation failure
     @Specialization
-    protected Object doesInherit(RAbstractVector x, RAbstractStringVector what) {
+    protected Object doesInherit(RAbstractContainer x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassHierarchy(), what);
     }
 
@@ -51,21 +54,31 @@ public abstract class InheritsNode extends BinaryNode {
         return checkDoesInherit(x.getClassHierarchy(), what);
     }
 
-    private static byte checkDoesInherit(RStringVector classHr, RAbstractStringVector what) {
-        Map<String, Integer> classToPos = initClassToPos(classHr);
-        for (int i = 0; i < what.getLength(); ++i) {
-            if (classToPos.get(what.getDataAt(i)) != null) {
-                return RRuntime.LOGICAL_TRUE;
+    private byte checkDoesInherit(RStringVector classHr, RAbstractStringVector what) {
+        if (sizeOneProfile.profile(what.getLength() == 1)) {
+            String whatString = what.getDataAt(0);
+            for (int i = 0; i < classHr.getLength(); ++i) {
+                if (whatString.equals(classHr.getDataAt(i))) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            }
+        } else {
+            Map<String, Integer> classToPos = initClassToPos(classHr);
+            for (int i = 0; i < what.getLength(); ++i) {
+                if (classToPos.get(what.getDataAt(i)) != null) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
             }
         }
         return RRuntime.LOGICAL_FALSE;
     }
 
+    // map operations lead to recursion resulting in compilation failure
     @TruffleBoundary
-    public static Map<String, Integer> initClassToPos(RStringVector classHr) {
+    public static HashMap<String, Integer> initClassToPos(RStringVector classHr) {
         // Create a mapping for elements to their respective positions
         // in the vector for faster lookup.
-        Map<String, Integer> classToPos = new HashMap<>();
+        HashMap<String, Integer> classToPos = new HashMap<>();
         for (int i = 0; i < classHr.getLength(); ++i) {
             classToPos.put(classHr.getDataAt(i), i);
         }

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -45,8 +46,19 @@ public interface RAttributable {
     RAttributes getAttributes();
 
     /**
+     * Get the value of an attribute. Returns {@code null} if not set.
+     */
+    default Object getAttr(String name) {
+        RAttributes attributes = getAttributes();
+        if (attributes == null) {
+            return null;
+        }
+        return attributes.get(name);
+    }
+
+    /**
      * Set the attribute {@code name} to {@code value}, overwriting any existing value. This is
-     * generic; a class may need to override this to handle certain attributes specially,
+     * generic; a class may need to override this to handle certain attributes specially.
      */
     default void setAttr(String name, Object value) {
         RAttributes attributes = getAttributes();
@@ -58,7 +70,7 @@ public interface RAttributable {
 
     /**
      * Remove the attribute {@code name}. No error if {@code name} is not an attribute. This is
-     * generic; a class may need to override this to handle certain attributes specially,
+     * generic; a class may need to override this to handle certain attributes specially.
      */
     default void removeAttr(String name) {
         RAttributes attributes = getAttributes();
@@ -66,4 +78,10 @@ public interface RAttributable {
             attributes.remove(name);
         }
     }
+
+    default RAttributable setClassAttr(RStringVector classAttr) {
+        setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
+        return this;
+    }
+
 }

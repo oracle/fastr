@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
@@ -35,7 +35,7 @@ public final class RError extends RuntimeException {
         private static final long serialVersionUID = 1L;
 
         private final RError.Message msg;
-        private final Object[] args;
+        @CompilationFinal private final Object[] args;
 
         protected RErrorException(RError.Message msg, Object[] args) {
             super(RError.formatMessage(msg, args));
@@ -503,6 +503,8 @@ public final class RError extends RuntimeException {
         CANNOT_ASSIGN_IN_EMPTY_ENV("cannot assign values in the empty environment"),
         CANNOT_OPEN_CONNECTION("cannot open the connection"),
         ERROR_READING_CONNECTION("error reading connection: %s"),
+        ERROR_WRITING_CONNECTION("error writing connection: %s"),
+        ERROR_FLUSHING_CONNECTION("error flushing connection: %s"),
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
@@ -553,7 +555,13 @@ public final class RError extends RuntimeException {
         UNEXPECTED("unexpected '%s' in \"%s\""),
         FIRST_ELEMENT_USED("first element used of '%s' argument"),
         MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer"),
-        DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'");
+        DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'"),
+        ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
+        IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
+        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
+        INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
+        MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
+        NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors");
 
         public final String message;
         private final boolean hasArgs;

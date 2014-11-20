@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -33,8 +34,8 @@ import com.oracle.truffle.r.runtime.env.*;
 @TypeSystemReference(RTypes.class)
 public abstract class RNode extends Node {
 
-    public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
-    protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
+    @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public abstract Object execute(VirtualFrame frame);
 
@@ -158,6 +159,10 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRDataFrame(execute(frame));
     }
 
+    public RFactor executeRFactor(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRFactor(execute(frame));
+    }
+
     public RSymbol executeRSymbol(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectRSymbol(execute(frame));
     }
@@ -190,7 +195,7 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRType(execute(frame));
     }
 
-    public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
+    public static boolean areSameLength(RAbstractContainer a, RAbstractContainer b) {
         return a.getLength() == b.getLength();
     }
 }

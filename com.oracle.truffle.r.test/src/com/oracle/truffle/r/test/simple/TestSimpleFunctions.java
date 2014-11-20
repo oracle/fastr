@@ -168,6 +168,10 @@ public class TestSimpleFunctions extends TestBase {
         assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }");
         assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
         assertEvalError("{ f <- function(a) { a } ; f(1,2) }");
+
+        // with ... partial-match only if formal parameter are before ...
+        assertEval("{ f<-function(..., val=1) { c(list(...), val) }; f(v=7, 2) }");
+        assertEval("{ f<-function(er=1, ..., val=1) { c(list(...), val, er) }; f(v=7, 2, e=8) }");
     }
 
     @Test

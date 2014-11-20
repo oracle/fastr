@@ -180,7 +180,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             setRowNames(value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            setClassAttr(this, (RStringVector) value, null);
+            throw Utils.nyi("The \"class\" attribute should be set using a separate method");
         } else {
             attributes.put(name, value);
         }
@@ -204,7 +204,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 setRowNames(null);
             } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                setClassAttr(this, (RStringVector) null, null);
+                throw Utils.nyi("The \"class\" attribute should be reset using a separate method");
             } else {
                 attributes.remove(name);
             }
@@ -214,6 +214,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
+    @TruffleBoundary
     public final void setLevels(Object newLevels) {
         if (attributes != null && newLevels == null) {
             // whether it's one dimensional array or not, assigning null always removes the "Levels"
@@ -222,6 +223,10 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         } else if (newLevels != null && newLevels != RNull.instance) {
             putAttribute(RRuntime.LEVELS_ATTR_KEY, newLevels);
         }
+    }
+
+    public final RVector getLevels() {
+        return (RVector) attributes.get(RRuntime.LEVELS_ATTR_KEY);
     }
 
     public final void setNames(Object newNames) {
@@ -368,11 +373,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final int[] getDimensions() {
-        if (hasDimensions()) {
-            return dimensions;
-        } else {
-            return null;
-        }
+        return dimensions;
     }
 
     public final void setDimensions(int[] newDimensions) {
@@ -399,17 +400,33 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public static RAbstractContainer setClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame) {
+    @Override
+    public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        return setClassAttrInternal(this, classAttr, null, null, true);
+    }
+
+    public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame, RAbstractContainer enclosingFactor) {
+        return setClassAttrInternal(vector, classAttr, enclosingDataFrame, enclosingFactor, false);
+    }
+
+    private static RAbstractContainer setClassAttrInternal(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame, RAbstractContainer enclosingFactor, boolean convertToInt) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
         }
         if (vector.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
             vector.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
-            // class attribute removed - no longer a data frame (even if it was before)
+            // class attribute removed - no longer a data frame or factor (even if it was before)
             return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
+            boolean ordered = false;
             for (int i = 0; i < classAttr.getLength(); i++) {
-                if (RType.DataFrame.getName().equals(classAttr.getDataAt(i))) {
+                String attr = classAttr.getDataAt(i);
+                if (RRuntime.CLASS_ORDERED.equals(attr)) {
+                    // "ordered" must be specified before "factor" - hence it's enough to do the
+                    // check only before encountering the "factor"
+                    ordered = true;
+                }
+                if (RType.DataFrame.getName().equals(attr)) {
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (enclosingDataFrame != null) {
                         // was a frame and still is a frame
@@ -417,6 +434,32 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                     } else {
                         // it's a data frame now
                         return RDataFactory.createDataFrame(vector);
+                    }
+                } else if (RType.Factor.getName().equals(attr)) {
+                    vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
+                    if (enclosingFactor != null) {
+                        // was a factor and still is a factor
+                        return enclosingFactor;
+                    } else {
+                        RIntVector resVector;
+                        if (vector.getElementClass() != RInt.class) {
+                            if (vector.getElementClass() == RDouble.class && convertToInt) {
+                                RAbstractDoubleVector sourceVector = (RAbstractDoubleVector) vector;
+                                int[] data = new int[sourceVector.getLength()];
+                                for (int j = 0; j < data.length; j++) {
+                                    data[j] = RRuntime.double2int(sourceVector.getDataAt(j));
+                                }
+                                resVector = RDataFactory.createIntVector(data, sourceVector.isComplete());
+                                resVector.copyAttributesFrom(sourceVector);
+                            } else {
+                                // TODO: add source section
+                                throw RError.error(null, RError.Message.ADDING_INVALID_CLASS, "factor");
+                            }
+                        } else {
+                            resVector = (RIntVector) vector;
+                        }
+                        // it's a factor now
+                        return RDataFactory.createFactor(resVector, ordered);
                     }
                 }
             }
@@ -576,13 +619,13 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final void resizeWithNames(int size) {
-        this.complete = this.complete || this.getLength() <= size;
+        this.complete &= getLength() >= size;
         resizeInternal(size);
         // reset all atributes other than names;
-        this.setDimNames(null);
-        this.setDimensions(null);
-        if (this.names != null && this.names != RNull.instance) {
-            ((RStringVector) this.names).resizeWithEmpty(size);
+        setDimNames(null);
+        setDimensions(null);
+        if (names != null && names != RNull.instance) {
+            ((RStringVector) names).resizeWithEmpty(size);
         }
     }
 

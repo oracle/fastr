@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import java.util.*;
+
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -37,6 +39,10 @@ public final class RDataFactory {
     private static final RStringVector EMPTY_STRING_VECTOR = createStringVector(0);
     private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(0);
     private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(0);
+
+    @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
+    @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
+
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
 
@@ -172,6 +178,12 @@ public final class RDataFactory {
         return traceDataCreated(new RLogicalVector(data, complete, dims, names));
     }
 
+    public static RLogicalVector createNAVector(int length) {
+        byte[] data = new byte[length];
+        Arrays.fill(data, RRuntime.LOGICAL_NA);
+        return createLogicalVector(data, INCOMPLETE_VECTOR);
+    }
+
     public static RIntSequence createAscendingRange(int start, int end) {
         assert start <= end;
         return traceDataCreated(new RIntSequence(start, 1, end - start + 1));
@@ -298,6 +310,10 @@ public final class RDataFactory {
 
     public static RExpression createExpression(RList list) {
         return traceDataCreated(new RExpression(list));
+    }
+
+    public static RFactor createFactor(RIntVector vector, boolean ordered) {
+        return traceDataCreated(new RFactor(vector, ordered));
     }
 
     public static RVector createObjectVector(Object[] data, boolean completeVector) {

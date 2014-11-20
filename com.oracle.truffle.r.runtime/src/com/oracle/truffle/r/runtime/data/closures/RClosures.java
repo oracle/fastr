@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RClosures {
@@ -99,6 +100,31 @@ public class RClosures {
 
     public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector, NACheck check) {
         return new RComplexToStringVectorClosure(vector, check);
+    }
+
+    // Factor to vector
+
+    public static RAbstractVector createFactorToVector(RFactor factor, NACheck check) {
+        RAbstractVector levels = factor.getLevels();
+        if (levels == null) {
+            return new RFactorToStringVectorClosure(factor, null, check);
+        } else {
+            if (levels.getElementClass() == RInt.class) {
+                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, check);
+            } else if (levels.getElementClass() == RDouble.class) {
+                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, check);
+            } else if (levels.getElementClass() == RLogical.class) {
+                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels, check), check);
+            } else if (levels.getElementClass() == RComplex.class) {
+                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, check);
+            } else if (levels.getElementClass() == RString.class) {
+                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, check);
+            } else {
+                assert levels.getElementClass() == RRaw.class;
+                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels, check), check);
+            }
+
+        }
     }
 
 }

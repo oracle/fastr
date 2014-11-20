@@ -46,7 +46,7 @@ public abstract class DoCall extends RBuiltinNode {
     private final PromiseProfile promiseProfile = new PromiseProfile();
 
     @Specialization(guards = "lengthOne")
-    protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
+    protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
         RFunction func = RContext.getEngine().lookupBuiltin(fname.getDataAt(0));
         if (func == null) {
             if (getNode == null) {
@@ -55,6 +55,11 @@ public abstract class DoCall extends RBuiltinNode {
             }
             func = (RFunction) getNode.execute(frame, fname.getDataAt(0), 0, RMissing.instance, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         }
+        return doDoCall(frame, func, argsAsList, env);
+    }
+
+    @Specialization()
+    protected Object doDoCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         Object[] argValues = argsAsList.getDataNonShared();
         Object n = argsAsList.getNames();
         String[] argNames = n == RNull.instance ? null : ((RStringVector) n).getDataNonShared();

@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ConstantNode extends RNode implements VisibilityController {
 
@@ -60,6 +61,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantVectorNode((RAbstractVector) value);
         } else if (value instanceof RDataFrame) {
             return new ConstantDataFrameNode((RDataFrame) value);
+        } else if (value instanceof RFactor) {
+            return new ConstantFactorNode((RFactor) value);
         } else if (value instanceof RRaw) {
             return new ConstantRawNode((RRaw) value);
         } else if (value instanceof RFunction) {
@@ -68,6 +71,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantFormulaNode((RFormula) value);
         } else if (value instanceof RSymbol) {
             return new ConstantStringScalarNode(((RSymbol) value).getName());
+        } else if (value instanceof REnvironment) {
+            return new ConstantREnvironmentNode((REnvironment) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -304,6 +309,27 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
+    private static final class ConstantFactorNode extends ConstantNode {
+
+        private final RFactor factor;
+
+        public ConstantFactorNode(RFactor factor) {
+            this.factor = factor;
+        }
+
+        @Override
+        public RFactor executeRFactor(VirtualFrame frame) {
+            controlVisibility();
+            return factor;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return factor;
+        }
+    }
+
     private static final class ConstantRawNode extends ConstantNode {
 
         private final RRaw data;
@@ -364,6 +390,21 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             return formula;
+        }
+    }
+
+    private static final class ConstantREnvironmentNode extends ConstantNode {
+
+        private final REnvironment envValue;
+
+        public ConstantREnvironmentNode(REnvironment envValue) {
+            this.envValue = envValue;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return envValue;
         }
     }
 }

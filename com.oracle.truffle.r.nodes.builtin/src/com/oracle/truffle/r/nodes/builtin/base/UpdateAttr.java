@@ -99,23 +99,27 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            return RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
+            return RVector.setVectorClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(null);
+        } else if (name.equals(RRuntime.LEVELS_ATTR_KEY)) {
+            resultVector.setLevels(null);
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
-        // return frame if it's one, otherwise return the vector
-        return container.getElementClass() == RVector.class ? container : resultVector;
+        // return frame or factor if it's one, otherwise return the vector
+        return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
     }
 
     @TruffleBoundary
     public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
         if (value instanceof RStringVector) {
-            return RVector.setClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RVector.class ? container : null);
+            return RVector.setVectorClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RDataFrame.class ? container : null,
+                            container.getElementClass() == RFactor.class ? container : null);
         }
         if (value instanceof String) {
-            return RVector.setClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RVector.class ? container : null);
+            return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RDataFrame.class ? container : null,
+                            container.getElementClass() == RFactor.class ? container : null);
         }
         throw RError.error(sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
     }
@@ -138,12 +142,14 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(castVector(frame, value));
+        } else if (name.equals(RRuntime.LEVELS_ATTR_KEY)) {
+            resultVector.setLevels(castVector(frame, value));
         } else {
             // generic attribute
             resultVector.setAttr(name, value);
         }
-        // return frame if it's one, otherwise return the vector
-        return container.getElementClass() == RVector.class ? container : resultVector;
+        // return frame or factor if it's one, otherwise return the vector
+        return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
     }
 
     @Specialization(guards = "!nullValue")
@@ -158,18 +164,27 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return value == RNull.instance;
     }
 
-    @Specialization(guards = "!nullValueforEnv")
-    protected REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, Object value) {
+    /**
+     * All other, non-performance centric, {@link RAttributable} types.
+     */
+    @Fallback
+    protected Object updateAttr(VirtualFrame frame, Object object, Object name, Object value) {
         controlVisibility();
-        env.setAttr(name, value);
-        return env;
-    }
-
-    @Specialization(guards = "nullValueforEnv")
-    protected REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, RNull value) {
-        controlVisibility();
-        env.removeAttr(name);
-        return env;
+        String sname = RRuntime.asString(name);
+        if (sname == null) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NONNULL_STRING, "name");
+        }
+        if (object instanceof RAttributable) {
+            RAttributable attributable = (RAttributable) object;
+            if (value == RNull.instance) {
+                attributable.removeAttr(sname);
+            } else {
+                attributable.setAttr(sname, value);
+            }
+            return object;
+        } else {
+            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+        }
     }
 
     public boolean nullValueforEnv(REnvironment env, String name, Object value) {

@@ -72,6 +72,11 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return length;
     }
 
+    public boolean hasDimensions() {
+        // TODO
+        return false;
+    }
+
     public int[] getDimensions() {
         // TODO
         return null;
@@ -120,6 +125,12 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
 
     public RList asList() {
         return RContext.getRASTHelper().asList(this);
+    }
+
+    public RLanguage copy() {
+        RLanguage l = new RLanguage(getRep());
+        l.attributes = attributes;
+        return l;
     }
 
 }

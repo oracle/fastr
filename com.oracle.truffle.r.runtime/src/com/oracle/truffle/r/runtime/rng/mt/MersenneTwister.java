@@ -63,7 +63,7 @@
  */
 package com.oracle.truffle.r.runtime.rng.mt;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 public final class MersenneTwister extends RNGInitAdapter implements RRNG.GeneratorPrivate {
@@ -154,7 +154,7 @@ public final class MersenneTwister extends RNGInitAdapter implements RRNG.Genera
         return RRNG.fixup((genrandInt32() & 0xffffffffL) * RRNG.I2_32M1);
     }
 
-    private static final int[] MAG01 = new int[]{0x0, MATRIXA};
+    @CompilationFinal private static final int[] MAG01 = new int[]{0x0, MATRIXA};
 
     /* generates a random number on [0,0xffffffff]-interval */
     private int genrandInt32() {

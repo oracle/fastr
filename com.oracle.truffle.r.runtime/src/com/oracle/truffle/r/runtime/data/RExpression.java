@@ -52,6 +52,10 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getLength();
     }
 
+    public boolean hasDimensions() {
+        return data.hasDimensions();
+    }
+
     public int[] getDimensions() {
         return data.getDimensions();
     }

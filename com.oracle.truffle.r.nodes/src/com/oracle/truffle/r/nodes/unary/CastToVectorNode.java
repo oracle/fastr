@@ -39,14 +39,12 @@ public abstract class CastToVectorNode extends CastNode {
     }
 
     @Specialization(guards = "preserveNonVector")
-    @SuppressWarnings("unused")
-    protected RNull castNull(RNull rnull) {
+    protected RNull castNull(@SuppressWarnings("unused") RNull rnull) {
         return RNull.instance;
     }
 
     @Specialization(guards = "!preserveNonVector")
-    @SuppressWarnings("unused")
-    protected RAbstractVector cast(RNull rnull) {
+    protected RAbstractVector cast(@SuppressWarnings("unused") RNull rnull) {
         return RDataFactory.createList();
     }
 
@@ -56,8 +54,7 @@ public abstract class CastToVectorNode extends CastNode {
     }
 
     @Specialization(guards = "!preserveNonVector")
-    @SuppressWarnings("unused")
-    protected RAbstractVector cast(RFunction f) {
+    protected RAbstractVector cast(@SuppressWarnings("unused") RFunction f) {
         return RDataFactory.createList();
     }
 
@@ -65,5 +62,4 @@ public abstract class CastToVectorNode extends CastNode {
     protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
     }
-
 }

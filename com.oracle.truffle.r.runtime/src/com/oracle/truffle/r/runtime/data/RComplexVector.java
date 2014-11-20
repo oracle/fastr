@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -33,7 +33,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     private double[] data;
 
-    private static final String[] implicitClassHrDyn = new String[]{"", RType.Complex.getName()};
+    @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Complex.getName()};
 
     RComplexVector(double[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length >> 1, dims, names);
@@ -58,7 +58,15 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        StringBuilder str = new StringBuilder();
+        str.append('[');
+        for (int i = 0; i < getLength(); i++) {
+            if (i > 0) {
+                str.append(", ");
+            }
+            str.append(RRuntime.complexToString(getDataAt(i)));
+        }
+        return str.append(']').toString();
     }
 
     @Override
@@ -169,7 +177,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     @Override
     public RComplexVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
     }
 

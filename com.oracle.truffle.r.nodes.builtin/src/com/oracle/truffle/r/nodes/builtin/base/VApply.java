@@ -24,46 +24,45 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"x", "fun", "..."})
+@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "...", "USE.NAMES"})
 public abstract class VApply extends RBuiltinNode {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+    private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
 
-    // TODO complete the implementation so that it works for all types of x and fun
+    @Child private Lapply lapply = LapplyFactory.create(EMTPY_RNODE_ARRAY, null, getSuppliedArgsNames());
+
+    // TODO complete implementation: useNames
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, RArgsValuesAndNames optionalArgs) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, Object optionalArgs, @SuppressWarnings("unused") Object useNames) {
         controlVisibility();
-        Object[] optionalArgValues = optionalArgs.getValues();
-        // The first element of optionalArgs is FUN_VALUE
-        Object funValue = optionalArgValues[0];
-        int optionalArgsLength = optionalArgValues.length - 1;
-        Object[] combinedArgs = new Object[optionalArgsLength + 1];
-        System.arraycopy(optionalArgValues, 0, combinedArgs, 1, optionalArgsLength);
-        RVector xMat = x.materialize();
-        Object[] applyResult;
-        if (x.getLength() > 0) {
-            applyResult = Lapply.applyHelper(frame, callCache, xMat, fun, combinedArgs);
-        } else {
-            applyResult = new Object[0];
-        }
+        return delegateToLapply(frame, vec, fun, funValue, optionalArgs);
+    }
+
+    private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, Object optionalArgs) {
+        Object[] applyResult = lapply.applyHelper(frame, vec.materialize(), fun, optionalArgs);
+
         Object result = null;
         boolean applyResultZeroLength = applyResult.length == 0;
+        Object funValue = funValueProfile.profile(funValueArg);
         if (funValue instanceof Integer) {
-            int[] data = applyResultZeroLength ? new int[0] : new int[]{(Integer) applyResult[0]};
+            int[] data = applyResultZeroLength ? new int[0] : convertInt(applyResult);
             result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValue instanceof Double) {
-            double[] data = applyResultZeroLength ? new double[0] : new double[]{(Double) applyResult[0]};
+            double[] data = applyResultZeroLength ? new double[0] : convertDouble(applyResult);
             result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValue instanceof Byte) {
-            byte[] data = applyResultZeroLength ? new byte[0] : new byte[]{(Byte) applyResult[0]};
+            byte[] data = applyResultZeroLength ? new byte[0] : convertByte(applyResult);
             result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             assert false;
@@ -71,4 +70,30 @@ public abstract class VApply extends RBuiltinNode {
         return result;
     }
 
+    @TruffleBoundary
+    private static double[] convertDouble(Object[] values) {
+        double[] newArray = new double[values.length];
+        for (int i = 0; i < values.length; i++) {
+            newArray[i] = (double) values[i];
+        }
+        return newArray;
+    }
+
+    @TruffleBoundary
+    private static int[] convertInt(Object[] values) {
+        int[] newArray = new int[values.length];
+        for (int i = 0; i < values.length; i++) {
+            newArray[i] = (int) values[i];
+        }
+        return newArray;
+    }
+
+    @TruffleBoundary
+    private static byte[] convertByte(Object[] values) {
+        byte[] newArray = new byte[values.length];
+        for (int i = 0; i < values.length; i++) {
+            newArray[i] = (byte) values[i];
+        }
+        return newArray;
+    }
 }

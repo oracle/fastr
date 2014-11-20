@@ -46,6 +46,7 @@ abstract class ArrayPositionsCastBase extends RNode {
     protected final boolean isSubset;
 
     private final BranchProfile errorProfile = BranchProfile.create();
+    @Child ContainerDimGet dimGetter = ContainerDimGetFactory.create(null);
 
     protected ArrayPositionsCastBase(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
         this.dimension = dimension;
@@ -61,8 +62,9 @@ abstract class ArrayPositionsCastBase extends RNode {
         this.isSubset = other.isSubset;
     }
 
-    protected void verifyDimensions(RAbstractContainer container) {
-        if ((container.getDimensions() == null && (dimension != 0 || numDimensions > 1)) || (container.getDimensions() != null && dimension >= container.getDimensions().length)) {
+    protected void verifyDimensions(VirtualFrame frame, RAbstractContainer container) {
+        if ((dimGetter.execute(frame, container) == null && (dimension != 0 || numDimensions > 1)) ||
+                        (dimGetter.execute(frame, container) != null && dimension >= ((int[]) dimGetter.execute(frame, container)).length)) {
             errorProfile.enter();
             if (assignment) {
                 if (isSubset) {
@@ -112,9 +114,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
     }
 
     @Specialization
-    protected RIntVector doMissingVector(Object op, RAbstractContainer container, RMissing operand) {
-        verifyDimensions(container);
-        int[] data = new int[numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension]];
+    protected RIntVector doMissingVector(VirtualFrame frame, Object op, RAbstractContainer container, RMissing operand) {
+        verifyDimensions(frame, container);
+        int[] data = new int[numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension]];
         for (int i = 0; i < data.length; i++) {
             data[i] = i + 1;
         }
@@ -267,6 +269,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @Specialization
+        protected Object doFactor(VirtualFrame frame, RAbstractContainer container, RFactor factor) {
+            return convertOperatorRecursive(frame, container, factor.getVector());
+        }
+
+        @Specialization
         protected RList doList(RAbstractContainer container, RList operand) {
             return operand;
         }
@@ -277,7 +284,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @Specialization
-        protected Object doMissingDimLengthOne(RAbstractContainer container, RMissing operand) {
+        protected Object doMissingDimLengthOne(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
             if (!isSubset) {
                 if (assignment) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
@@ -285,7 +292,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
                 }
             }
-            if (dimSizeOneProfile.profile(getDimensionSize(container) == 1)) {
+            if (dimSizeOneProfile.profile(getDimensionSize(frame, container) == 1)) {
                 return 1;
             } else {
                 return operand;
@@ -304,6 +311,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         @Specialization
         protected Object doFuncOp(RFunction vector, Object operand) {
             return operand;
+        }
+
+        @Specialization
+        protected int doFactor(RNull vector, RFactor operand) {
+            return 0;
         }
 
         @Specialization(guards = "isAssignment")
@@ -357,8 +369,8 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @Specialization(guards = "!indNA")
-        protected Object doInt(RAbstractContainer container, int operand) {
-            int dimSize = getDimensionSize(container);
+        protected Object doInt(VirtualFrame frame, RAbstractContainer container, int operand) {
+            int dimSize = getDimensionSize(frame, container);
 
             if (operand > dimSize) {
                 outOfBoundsPositive.enter();
@@ -383,7 +395,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     // no dimensions left
                     return 0;
                 } else {
-                    return doIntNegativeMultiDim(container, operand);
+                    return doIntNegativeMultiDim(frame, container, operand);
                 }
             } else {
                 nonNegative.enter();
@@ -391,11 +403,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             }
         }
 
-        protected Object doIntNegativeMultiDim(RAbstractContainer container, int operand) {
+        protected Object doIntNegativeMultiDim(VirtualFrame frame, RAbstractContainer container, int operand) {
             if (elementsCountProfile.profile(isSubset || container.getLength() <= 2)) {
                 // it's negative, but not out of bounds - pick all indexes apart from the negative
                 // one
-                int dimLength = numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension];
+                int dimLength = numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension];
                 int[] positions = new int[dimLength - 1];
                 int ind = 0;
                 for (int i = 1; i <= dimLength; i++) {
@@ -439,7 +451,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         @Specialization(guards = "indNA")
         protected Object doLogicalNA(VirtualFrame frame, RAbstractContainer container, byte operand) {
             if (isSubset && !assignment) {
-                int dimLength = numDimensions == 1 ? (container.getLength() == 0 ? 1 : container.getLength()) : container.getDimensions()[dimension];
+                int dimLength = numDimensions == 1 ? (container.getLength() == 0 ? 1 : container.getLength()) : ((int[]) dimGetter.execute(frame, container))[dimension];
                 int[] data = new int[dimLength];
                 Arrays.fill(data, RRuntime.INT_NA);
                 return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
@@ -449,8 +461,8 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @Specialization(guards = {"indTrue", "isSubset"})
-        protected RIntVector doLogicalIndTrue(RAbstractContainer container, byte operand) {
-            int dimLength = numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension];
+        protected RIntVector doLogicalIndTrue(VirtualFrame frame, RAbstractContainer container, byte operand) {
+            int dimLength = numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension];
             int[] data = new int[dimLength];
             for (int i = 0; i < dimLength; i++) {
                 data[i] = i + 1;
@@ -590,7 +602,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (emptyOperandProfile.profile(operand.getLength() == 0)) {
                     return 0;
                 } else {
-                    return transformIntoPositive(container, operand);
+                    return transformIntoPositive(frame, container, operand);
                 }
             } else {
                 if (emptyOperandProfile.profile(operand.getLength() == 0)) {
@@ -624,11 +636,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             } else {
                 opLong.enter();
                 if (isSubset) {
-                    if ((operand.getLength() > getDimensionSize(container)) && numDimensions != 1) {
+                    if ((operand.getLength() > getDimensionSize(frame, container)) && numDimensions != 1) {
                         error.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.LOGICAL_SUBSCRIPT_LONG);
                     }
-                    return doLogicalVectorInternal(container, operand);
+                    return doLogicalVectorInternal(frame, container, operand);
 
                 } else {
                     return convertOperatorRecursive(frame, container, castInteger(frame, operand));
@@ -649,12 +661,13 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return data;
         }
 
-        protected RIntVector doLogicalVectorInternal(RAbstractContainer container, RAbstractLogicalVector operand) {
-            int resultLength = numDimensions == 1 ? Math.max(operand.getLength(), container.getLength()) : container.getDimensions()[dimension];
+        protected RIntVector doLogicalVectorInternal(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
+            int dimLength = numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension];
+            int resultLength = Math.max(operand.getLength(), dimLength);
             int logicalVectorLength = operand.getLength();
             int logicalVectorInd = 0;
             int[] data = new int[resultLength];
-            naCheck.enable(!operand.isComplete());
+            naCheck.enable(operand);
             int timesSeenFalse = 0;
             int timesSeenNA = 0;
             int i = 0;
@@ -669,7 +682,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                         data[i] = -(i + 1);
                     }
                 } else if (b == RRuntime.LOGICAL_TRUE) {
-                    if (i >= container.getLength() && !assignment) {
+                    if (i >= dimLength && !assignment) {
                         data[i] = RRuntime.INT_NA;
                     } else {
                         data[i] = i + 1;
@@ -863,7 +876,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private final BranchProfile seenNegative = BranchProfile.create();
         private final BranchProfile seenNA = BranchProfile.create();
 
-        private RAbstractIntVector transformIntoPositive(RAbstractContainer container, RAbstractIntVector positions) {
+        private RAbstractIntVector transformIntoPositive(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector positions) {
             boolean hasSeenPositive = false;
             boolean hasSeenZero = false;
             boolean hasSeenNegative = false;
@@ -871,7 +884,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             int zeroCount = 0;
             positionNACheck.enable(positions);
             int positionsLength = positions.getLength();
-            int dimLength = numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension];
+            int dimLength = numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension];
             boolean outOfBounds = false;
             for (int i = 0; i < positionsLength; ++i) {
                 int pos = positions.getDataAt(i);
@@ -958,9 +971,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return operand.getElementClass() == RString.class;
         }
 
-        private int getDimensionSize(RAbstractContainer container) {
-            verifyDimensions(container);
-            return numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension];
+        private int getDimensionSize(VirtualFrame frame, RAbstractContainer container) {
+            verifyDimensions(frame, container);
+            return numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension];
         }
 
         protected boolean isVectorList(RAbstractContainer container) {
@@ -1006,7 +1019,5 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         protected boolean operandHasNames(RNull vector, RAbstractIntVector operand) {
             return operand.getNames() != RNull.instance;
         }
-
     }
-
 }

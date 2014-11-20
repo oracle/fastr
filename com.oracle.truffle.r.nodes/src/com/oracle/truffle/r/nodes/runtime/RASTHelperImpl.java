@@ -86,6 +86,8 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof IfNode) {
             // 3 or 4 with else part
             result = 3 + (((IfNode) node).getElsePart() != null ? 1 : 0);
+        } else if (node instanceof WriteVariableNode) {
+            return 3;
         } else {
             assert false;
         }
@@ -113,6 +115,18 @@ public class RASTHelperImpl implements RASTHelper {
                     return RASTUtils.createLanguageElement(ifNode.getThenPart());
                 case 3:
                     return RASTUtils.createLanguageElement(ifNode.getElsePart());
+                default:
+                    assert false;
+            }
+        } else if (node instanceof WriteVariableNode) {
+            WriteVariableNode wvn = (WriteVariableNode) node;
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("`<-`");
+                case 1:
+                    return RDataFactory.createSymbol(wvn.getName());
+                case 2:
+                    return RASTUtils.createLanguageElement(wvn.getRhs());
                 default:
                     assert false;
             }

@@ -73,16 +73,16 @@ public abstract class Dim extends RBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = "!hasDimensions")
-    protected RNull dim(RAbstractVector vector) {
+    @Specialization(guards = {"!isDataFrame", "!hasDimensions"})
+    protected RNull dim(RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = "hasDimensions")
-    protected RIntVector dimWithDimensions(RAbstractVector vector) {
+    @Specialization(guards = {"!isDataFrame", "hasDimensions"})
+    protected RIntVector dimWithDimensions(RAbstractContainer container) {
         controlVisibility();
-        return RDataFactory.createIntVector(vector.getDimensions(), RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createIntVector(container.getDimensions(), RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
@@ -91,8 +91,12 @@ public abstract class Dim extends RBuiltinNode {
         return RDataFactory.createIntVector(new int[]{dataFrameRowNames(frame, dataFrame), dataFrame.getLength()}, RDataFactory.COMPLETE_VECTOR);
     }
 
-    public static boolean hasDimensions(RAbstractVector vector) {
-        return vector.hasDimensions();
+    public static boolean isDataFrame(RAbstractContainer container) {
+        return container.getElementClass() == RDataFrame.class;
+    }
+
+    public static boolean hasDimensions(RAbstractContainer container) {
+        return container.hasDimensions();
     }
 
 }

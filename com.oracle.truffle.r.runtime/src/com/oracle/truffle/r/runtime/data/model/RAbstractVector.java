@@ -65,4 +65,6 @@ public interface RAbstractVector extends RAbstractContainer {
     boolean isMatrix();
 
     boolean isArray();
+
+    boolean checkCompleteness();
 }

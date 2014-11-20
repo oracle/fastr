@@ -20,19 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.nodes.builtin.graphics;
 
-public abstract class ConvertNode extends UnaryNode {
+import com.oracle.truffle.r.nodes.graphics.core.AbstractGraphicsSystem;
 
-    /** Thrown by a convert node. Indicates that a parent node must rewrite itself. */
-    public static final class ConversionFailedException extends RuntimeException {
+/**
+ * Denotes to the 'base' in GNUR terms graphics system.
+ */
+public class BaseGraphicsSystem extends AbstractGraphicsSystem {
+    private final GraphicsEventsListener graphicsEventsListener = (graphicsEvent, graphicsDevice) -> { };
 
-        private static final long serialVersionUID = 1L;
-
-        public ConversionFailedException(String message) {
-            super(message);
-        }
-
+    @Override
+    public GraphicsEventsListener getGraphicsEventsListener() {
+        return graphicsEventsListener;
     }
-
 }

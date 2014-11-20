@@ -42,6 +42,15 @@ public abstract class CoerceVector extends RNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastStringNode castString;
     @Child private CastListNode castList;
+    @Child private CoerceVector coerceRecursive;
+
+    private Object coerceRecursive(VirtualFrame frame, Object value, Object vector, Object operand) {
+        if (coerceRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            coerceRecursive = insert(CoerceVectorFactory.create(null, null, null));
+        }
+        return coerceRecursive.executeEvaluated(frame, value, vector, operand);
+    }
 
     private Object castComplex(VirtualFrame frame, Object vector) {
         if (castComplex == null) {
@@ -120,8 +129,8 @@ public abstract class CoerceVector extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "integer", "raw");
     }
 
-    @Specialization
-    protected RList coerce(VirtualFrame frame, RAbstractIntVector value, RList vector, Object operand) {
+    @Specialization(guards = "isVectorListOrDataFrame")
+    protected RAbstractContainer coerce(VirtualFrame frame, RAbstractIntVector value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
@@ -158,7 +167,7 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization
-    protected RList coerce(VirtualFrame frame, RAbstractDoubleVector value, RList vector, Object operand) {
+    protected RAbstractContainer coerce(VirtualFrame frame, RAbstractDoubleVector value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
@@ -194,8 +203,8 @@ public abstract class CoerceVector extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "logical", "raw");
     }
 
-    @Specialization
-    protected RList coerce(VirtualFrame frame, RAbstractLogicalVector value, RList vector, Object operand) {
+    @Specialization(guards = "isVectorListOrDataFrame")
+    protected RAbstractContainer coerce(VirtualFrame frame, RAbstractLogicalVector value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
@@ -231,8 +240,8 @@ public abstract class CoerceVector extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "character", "raw");
     }
 
-    @Specialization
-    protected RList coerce(VirtualFrame frame, RAbstractStringVector value, RList vector, Object operand) {
+    @Specialization(guards = "isVectorListOrDataFrame")
+    protected RAbstractContainer coerce(VirtualFrame frame, RAbstractStringVector value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
@@ -268,8 +277,8 @@ public abstract class CoerceVector extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "complex", "raw");
     }
 
-    @Specialization
-    protected RList coerce(VirtualFrame frame, RAbstractComplexVector value, RList vector, Object operand) {
+    @Specialization(guards = "isVectorListOrDataFrame")
+    protected RAbstractContainer coerce(VirtualFrame frame, RAbstractComplexVector value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
@@ -285,15 +294,15 @@ public abstract class CoerceVector extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "raw", RRuntime.classToString(vector.getElementClass(), false));
     }
 
-    @Specialization
-    protected RList coerce(VirtualFrame frame, RAbstractRawVector value, RList vector, Object operand) {
+    @Specialization(guards = "isVectorListOrDataFrame")
+    protected RAbstractContainer coerce(VirtualFrame frame, RAbstractRawVector value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
     // list vector value
 
-    @Specialization
-    protected RList coerce(VirtualFrame frame, RList value, RList vector, Object operand) {
+    @Specialization(guards = "isVectorListOrDataFrame")
+    protected RAbstractContainer coerce(VirtualFrame frame, RList value, RAbstractContainer vector, Object operand) {
         return vector;
     }
 
@@ -305,14 +314,21 @@ public abstract class CoerceVector extends RNode {
     // data frame value
 
     @Specialization
-    protected RList coerce(VirtualFrame frame, RDataFrame value, RAbstractVector vector, Object operand) {
+    protected RList coerce(VirtualFrame frame, RDataFrame value, RAbstractContainer vector, Object operand) {
         return (RList) castList(frame, vector);
+    }
+
+    // factor value
+
+    @Specialization
+    protected Object coerce(VirtualFrame frame, RFactor value, RAbstractContainer vector, Object operand) {
+        return coerceRecursive(frame, value.getVector(), vector, operand);
     }
 
     // function vector value
 
     @Specialization
-    protected RFunction coerce(RFunction value, RAbstractVector vector, Object operand) {
+    protected RFunction coerce(RFunction value, RAbstractContainer vector, Object operand) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "closure", RRuntime.classToString(vector.getElementClass(), false));
     }
 
@@ -338,8 +354,11 @@ public abstract class CoerceVector extends RNode {
         return vector;
     }
 
-    protected boolean isVectorList(RAbstractVector value, RAbstractVector vector) {
+    protected boolean isVectorList(RAbstractContainer value, RAbstractVector vector) {
         return vector.getElementClass() == Object.class;
     }
 
+    protected boolean isVectorListOrDataFrame(RAbstractContainer value, RAbstractContainer vector) {
+        return vector.getElementClass() == Object.class || vector.getElementClass() == RDataFrame.class;
+    }
 }

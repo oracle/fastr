@@ -375,6 +375,12 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
+    public void testUnaryNotDimensions() {
+        assertEval("{ xx <- double(0); dim(xx) <- c(0,0); dim(!xx) }");
+        assertEval("{ xx <- double(1); dim(xx) <- c(1,1); dim(!xx) }");
+    }
+
+    @Test
     public void testUnaryMinus() {
         assertEval("{ -3 }");
         assertEval("{ --3 }");
@@ -423,6 +429,12 @@ public class TestSimpleArithmetic extends TestBase {
         assertEvalError("{ z <- \"hello\" ; -z }");
         assertEvalError("{ z <- c(\"hello\",\"hi\") ; -z }");
         assertEvalError("{ f <- function(z) { -z } ; f(1:3) ; f(\"hello\") }");
+    }
+
+    @Test
+    public void testUnaryMinusDimensions() {
+        assertEval("{ xx <- double(0); dim(xx) <- c(0,0); dim(-xx) }");
+        assertEval("{ xx <- double(1); dim(xx) <- c(1,1); dim(-xx) }");
     }
 
     @Test

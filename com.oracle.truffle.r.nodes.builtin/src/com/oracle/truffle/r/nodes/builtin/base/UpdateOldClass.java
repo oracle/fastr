@@ -57,7 +57,6 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
         return setOldClass(arg, (RStringVector) result);
     }
 
-    @TruffleBoundary
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -76,7 +75,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setVectorClassAttr(resultVector, className, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     @Specialization
@@ -84,7 +83,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setVectorClassAttr(resultVector, null, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     @TruffleBoundary

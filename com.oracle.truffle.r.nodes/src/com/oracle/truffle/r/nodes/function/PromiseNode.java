@@ -340,8 +340,8 @@ public abstract class PromiseNode extends RNode {
      * This class is used for wrapping arguments into "..." ({@link RArgsValuesAndNames}).
      */
     private static final class VarArgsPromiseNode extends RNode {
-        protected final RNode[] nodes;
-        protected final String[] names;
+        @Children protected final RNode[] nodes;
+        @CompilationFinal protected final String[] names;
         protected final ClosureCache closureCache;
 
         public VarArgsPromiseNode(RNode[] nodes, String[] names, ClosureCache closureCache) {
@@ -369,7 +369,7 @@ public abstract class PromiseNode extends RNode {
      */
     public static final class InlineVarArgsPromiseNode extends RNode {
         @Children private final RNode[] varargs;
-        protected final String[] names;
+        @CompilationFinal protected final String[] names;
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
 

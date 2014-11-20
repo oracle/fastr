@@ -25,12 +25,14 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CastRawNode extends CastNode {
+
+    private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeRaw(VirtualFrame frame, int o);
 
@@ -49,6 +51,7 @@ public abstract class CastRawNode extends CastNode {
     protected RRaw doInt(int operand) {
         int intResult = RRuntime.int2rawIntValue(operand);
         if (intResult != operand) {
+            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return RDataFactory.createRaw((byte) intResult);
@@ -58,6 +61,7 @@ public abstract class CastRawNode extends CastNode {
     protected RRaw doDouble(double operand) {
         int intResult = RRuntime.double2rawIntValue(operand);
         if (intResult != (int) operand) {
+            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return RDataFactory.createRaw((byte) intResult);
@@ -67,9 +71,11 @@ public abstract class CastRawNode extends CastNode {
     protected RRaw doComplex(RComplex operand) {
         int intResult = RRuntime.complex2rawIntValue(operand);
         if (operand.getImaginaryPart() != 0) {
+            warningBranch.enter();
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         if (intResult != (int) operand.getRealPart()) {
+            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return RDataFactory.createRaw((byte) intResult);
@@ -92,36 +98,42 @@ public abstract class CastRawNode extends CastNode {
         // need to cast to int to catch conversion warnings
         int intVal = RRuntime.string2int(operand);
         if (RRuntime.isNA(intVal)) {
+            warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return doInt(intVal);
     }
 
-    private static byte[] dataFromComplex(RComplexVector operand) {
-        byte[] bdata = new byte[operand.getLength()];
-        boolean imaginaryDiscardedWarning = false;
-        boolean outOfRangeWarning = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex complexVal = operand.getDataAt(i);
-            int intRawValue = RRuntime.complex2rawIntValue(complexVal);
-            if (complexVal.getImaginaryPart() != 0.0) {
-                imaginaryDiscardedWarning = true;
-            }
-            if ((int) complexVal.getRealPart() != intRawValue) {
-                outOfRangeWarning = true;
+    private RRawVector createResultVector(RAbstractVector operand, byte[] bdata) {
+        RRawVector ret = RDataFactory.createRawVector(bdata, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
+    }
+
+    @Specialization
+    protected RRawVector doIntVector(RAbstractIntVector operand) {
+        int length = operand.getLength();
+        byte[] bdata = new byte[length];
+        boolean warning = false;
+        for (int i = 0; i < length; ++i) {
+            int intValue = operand.getDataAt(i);
+            int intRawValue = RRuntime.int2rawIntValue(intValue);
+            if (intRawValue != intValue) {
+                warning = true;
             }
             bdata[i] = (byte) intRawValue;
         }
-        if (imaginaryDiscardedWarning) {
-            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        if (outOfRangeWarning) {
+        if (warning) {
+            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
-        return bdata;
+        return createResultVector(operand, bdata);
     }
 
-    private static byte[] dataFromLogical(RLogicalVector operand) {
+    @Specialization
+    protected RRawVector doLogicalVector(RLogicalVector operand) {
         byte[] bdata = new byte[operand.getLength()];
         boolean warning = false;
         for (int i = 0; i < operand.getLength(); i++) {
@@ -133,12 +145,14 @@ public abstract class CastRawNode extends CastNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
+            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
-        return bdata;
+        return createResultVector(operand, bdata);
     }
 
-    private static byte[] dataFromString(RStringVector operand) {
+    @Specialization
+    protected RRawVector doStringVector(RStringVector operand) {
         byte[] bdata = new byte[operand.getLength()];
         boolean naCoercionWarning = false;
         boolean outOfRangeWarning = false;
@@ -154,152 +168,61 @@ public abstract class CastRawNode extends CastNode {
             bdata[i] = (byte) intRawValue;
         }
         if (naCoercionWarning) {
+            warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         if (outOfRangeWarning) {
+            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
-        return bdata;
+        return createResultVector(operand, bdata);
     }
 
     @Specialization
-    protected RRawVector doIntVector(RIntVector value) {
-        return performAbstractIntVector(value);
-    }
-
-    @Specialization
-    protected RRawVector doIntSequence(RIntSequence value) {
-        return performAbstractIntVector(value);
-    }
-
-    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    protected RRawVector doLogicalVectorDims(RLogicalVector operand) {
-        byte[] bdata = dataFromLogical(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    protected RRawVector doLogicalVectorNames(RLogicalVector operand) {
-        byte[] bdata = dataFromLogical(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    protected RRawVector doLogicalVectorDimsNames(RLogicalVector operand) {
-        byte[] bdata = dataFromLogical(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    protected RRawVector doLogicalVector(RLogicalVector operand) {
-        byte[] bdata = dataFromLogical(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    protected RRawVector doStringVectorDims(RStringVector operand) {
-        byte[] bdata = dataFromString(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    protected RRawVector doStringVectorNames(RStringVector operand) {
-        byte[] bdata = dataFromString(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    protected RRawVector doStringVectorDimsNames(RStringVector operand) {
-        byte[] bdata = dataFromString(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    protected RRawVector doStringVector(RStringVector operand) {
-        byte[] bdata = dataFromString(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    protected RRawVector doRawVectorDims(RComplexVector operand) {
-        byte[] bdata = dataFromComplex(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    protected RRawVector doComplexVectorNames(RComplexVector operand) {
-        byte[] bdata = dataFromComplex(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    protected RRawVector doComplexVectorDimsNames(RComplexVector operand) {
-        byte[] bdata = dataFromComplex(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     protected RRawVector doComplexVector(RComplexVector operand) {
-        byte[] bdata = dataFromComplex(operand);
-        RRawVector ret = RDataFactory.createRawVector(bdata);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
+        byte[] bdata = new byte[operand.getLength()];
+        boolean imaginaryDiscardedWarning = false;
+        boolean outOfRangeWarning = false;
+        for (int i = 0; i < operand.getLength(); i++) {
+            RComplex complexVal = operand.getDataAt(i);
+            int intRawValue = RRuntime.complex2rawIntValue(complexVal);
+            if (complexVal.getImaginaryPart() != 0.0) {
+                imaginaryDiscardedWarning = true;
+            }
+            if ((int) complexVal.getRealPart() != intRawValue) {
+                outOfRangeWarning = true;
+            }
+            bdata[i] = (byte) intRawValue;
         }
-        return ret;
+        if (imaginaryDiscardedWarning) {
+            warningBranch.enter();
+            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        }
+        if (outOfRangeWarning) {
+            warningBranch.enter();
+            RError.warning(RError.Message.OUT_OF_RANGE);
+        }
+        return createResultVector(operand, bdata);
     }
 
     @Specialization
-    protected RRawVector doDoubleVector(RDoubleVector value) {
-        return performAbstractDoubleVector(value);
-    }
-
-    @Specialization
-    protected RRawVector doDoubleSequence(RDoubleSequence value) {
-        return performAbstractDoubleVector(value);
+    protected RRawVector doDoubleVector(RAbstractDoubleVector operand) {
+        int length = operand.getLength();
+        byte[] bdata = new byte[length];
+        boolean warning = false;
+        for (int i = 0; i < length; ++i) {
+            double doubleValue = operand.getDataAt(i);
+            int intRawValue = RRuntime.double2rawIntValue(doubleValue);
+            if (intRawValue != (int) doubleValue) {
+                warning = true;
+            }
+            bdata[i] = (byte) intRawValue;
+        }
+        if (warning) {
+            warningBranch.enter();
+            RError.warning(RError.Message.OUT_OF_RANGE);
+        }
+        return createResultVector(operand, bdata);
     }
 
     @Specialization
@@ -311,67 +234,5 @@ public abstract class CastRawNode extends CastNode {
     @TruffleBoundary
     public int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
-    }
-
-    private RRawVector performAbstractIntVector(RAbstractIntVector value) {
-        int length = value.getLength();
-        byte[] array = new byte[length];
-        boolean warning = false;
-        for (int i = 0; i < length; ++i) {
-            int intValue = value.getDataAt(i);
-            int intRawValue = RRuntime.int2rawIntValue(intValue);
-            if (intRawValue != intValue) {
-                warning = true;
-            }
-            array[i] = (byte) intRawValue;
-        }
-        if (warning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
-        }
-        RRawVector ret;
-        if (preserveDimensions() && preserveNames()) {
-            ret = RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
-        } else if (preserveDimensions()) {
-            ret = RDataFactory.createRawVector(array, value.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createRawVector(array, value.getNames());
-        } else {
-            ret = RDataFactory.createRawVector(array);
-        }
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(value);
-        }
-        return ret;
-    }
-
-    private RRawVector performAbstractDoubleVector(RAbstractDoubleVector value) {
-        int length = value.getLength();
-        byte[] array = new byte[length];
-        boolean warning = false;
-        for (int i = 0; i < length; ++i) {
-            double doubleValue = value.getDataAt(i);
-            int intRawValue = RRuntime.double2rawIntValue(doubleValue);
-            if (intRawValue != (int) doubleValue) {
-                warning = true;
-            }
-            array[i] = (byte) intRawValue;
-        }
-        if (warning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
-        }
-        RRawVector ret;
-        if (preserveDimensions() && preserveNames()) {
-            ret = RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
-        } else if (preserveDimensions()) {
-            ret = RDataFactory.createRawVector(array, value.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createRawVector(array, value.getNames());
-        } else {
-            ret = RDataFactory.createRawVector(array);
-        }
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(value);
-        }
-        return ret;
     }
 }

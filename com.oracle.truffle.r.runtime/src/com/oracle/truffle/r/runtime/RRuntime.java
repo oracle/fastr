@@ -14,7 +14,7 @@ package com.oracle.truffle.r.runtime;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -77,7 +77,7 @@ public class RRuntime {
     public static final String CLASS_LANGUAGE = new String("call");
     public static final String CLASS_EXPRESSION = new String("expression");
 
-    public static final String[] STRING_ARRAY_SENTINEL = new String[0];
+    @CompilationFinal public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
 
     public static final String NAMES_ATTR_KEY = new String("names");
@@ -93,11 +93,14 @@ public class RRuntime {
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
     public static final String CLASS_ATTR_KEY = "class";
+    public static final String FACTOR_ATTR_KEY = "factor";
     public static final String PREVIOUS_ATTR_KEY = "previous";
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
-    public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
-    public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
+    @CompilationFinal public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
+    @CompilationFinal public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
+
+    public static final String CLASS_ORDERED = "ordered";
 
     public static final String WHICH = "which";
 
@@ -688,6 +691,20 @@ public class RRuntime {
             return FrameSlotKind.Double;
         } else {
             return FrameSlotKind.Object;
+        }
+    }
+
+    /**
+     * Checks and converts an object into a String. Usefuk for non-fast path code, e.g. in
+     * {@code Fallback} specializations.
+     */
+    public static String asString(Object obj) {
+        if (obj instanceof String) {
+            return (String) obj;
+        } else if (obj instanceof RStringVector) {
+            return ((RStringVector) obj).getDataAt(0);
+        } else {
+            return null;
         }
     }
 

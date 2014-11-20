@@ -58,8 +58,7 @@ public abstract class CastToContainerNode extends CastNode {
     }
 
     @Specialization(guards = "!preserveNonContainer")
-    @SuppressWarnings("unused")
-    protected RAbstractVector cast(RFunction f) {
+    protected RAbstractVector cast(@SuppressWarnings("unused") RFunction f) {
         return RDataFactory.createList();
     }
 
@@ -71,6 +70,11 @@ public abstract class CastToContainerNode extends CastNode {
     @Specialization
     protected RDataFrame cast(RDataFrame dataFrame) {
         return dataFrame;
+    }
+
+    @Specialization
+    protected RFactor cast(RFactor factor) {
+        return factor;
     }
 
     @Specialization
@@ -87,5 +91,4 @@ public abstract class CastToContainerNode extends CastNode {
     protected RPairList cast(RPairList pairlist) {
         return pairlist;
     }
-
 }

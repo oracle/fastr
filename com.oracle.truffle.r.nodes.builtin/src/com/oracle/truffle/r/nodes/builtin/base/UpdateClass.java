@@ -24,6 +24,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
@@ -48,7 +49,6 @@ public abstract class UpdateClass extends RBuiltinNode {
         return setClass(arg, (RStringVector) result);
     }
 
-    @TruffleBoundary
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -61,7 +61,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setVectorClassAttr(resultVector, null, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     @Specialization
@@ -102,7 +102,8 @@ public abstract class UpdateClass extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
-        return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RDataFrame.class ? arg : null,
+                        arg.getElementClass() == RFactor.class ? arg : null);
     }
 
     @Specialization
@@ -110,15 +111,47 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
+        return RVector.setVectorClassAttr(resultVector, className, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
-    public Object setClass(RFunction arg, @SuppressWarnings("unused") Object className) {
+    @Specialization
+    public Object setClass(RFunction arg, String className) {
+        return setClass(arg, RDataFactory.createStringVectorFromScalar(className));
+    }
+
+    @Specialization
+    public Object setClass(RFunction arg, RStringVector className) {
         controlVisibility();
+        arg.setClassAttr(className);
         return arg;
     }
 
-    @TruffleBoundary
+    @Specialization
+    public Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(REnvironment arg, String className) {
+        return setClass(arg, RDataFactory.createStringVectorFromScalar(className));
+    }
+
+    @Specialization
+    public Object setClass(REnvironment arg, RStringVector className) {
+        controlVisibility();
+        arg.setClassAttr(className);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null);
+        return arg;
+    }
+
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -126,7 +159,6 @@ public abstract class UpdateClass extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

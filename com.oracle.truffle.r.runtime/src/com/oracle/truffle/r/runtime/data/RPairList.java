@@ -30,11 +30,10 @@ import com.oracle.truffle.r.runtime.gnur.*;
 /**
  * Denotes the (rarely seen) {@code pairlist} type in R.
  */
-public class RPairList implements RAttributable, RAbstractContainer {
+public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
     private final Object car;
     private final Object cdr;
     private Object tag;
-    private RAttributes attributes;
 
     /**
      * Denotes the (GnuR) typeof entity that the pairlist represents.
@@ -100,17 +99,6 @@ public class RPairList implements RAttributable, RAbstractContainer {
         return type;
     }
 
-    public RAttributes getAttributes() {
-        return attributes;
-    }
-
-    public RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
-    }
-
     public int getLength() {
         int result = 1;
         Object tcdr = cdr;
@@ -121,6 +109,10 @@ public class RPairList implements RAttributable, RAbstractContainer {
             result++;
         }
         return result;
+    }
+
+    public boolean hasDimensions() {
+        return true;
     }
 
     public int[] getDimensions() {

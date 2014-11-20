@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -33,8 +33,8 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     private double[] data;
 
-    private static final String[] implicitClassHr = RRuntime.CLASS_DOUBLE;
-    private static final String[] implicitClassHrDyn;
+    @CompilationFinal private static final String[] implicitClassHr = RRuntime.CLASS_DOUBLE;
+    @CompilationFinal private static final String[] implicitClassHrDyn;
 
     static {
         implicitClassHrDyn = new String[implicitClassHr.length + 1];
@@ -76,7 +76,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.doubleToString(v)).toArray(String[]::new));
     }
 
     public RIntVector trimToIntVector() {
@@ -181,7 +181,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
                     newData[i] = oldData[j];
                 }
             }
@@ -201,7 +201,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     @Override
     public RDoubleVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
     }
 

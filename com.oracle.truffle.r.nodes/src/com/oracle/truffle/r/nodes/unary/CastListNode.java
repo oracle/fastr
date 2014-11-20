@@ -44,8 +44,7 @@ public abstract class CastListNode extends CastNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected RList doNull(RNull operand) {
+    protected RList doNull(@SuppressWarnings("unused") RNull operand) {
         return RDataFactory.createList();
     }
 
@@ -65,16 +64,7 @@ public abstract class CastListNode extends CastNode {
         for (int i = 0; i < data.length; ++i) {
             data[i] = operand.getDataAtAsObject(i);
         }
-        RList ret;
-        if (preserveDimensions() && preserveNames()) {
-            ret = RDataFactory.createList(data, operand.getDimensions(), operand.getNames());
-        } else if (preserveDimensions()) {
-            ret = RDataFactory.createList(data, operand.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createList(data, operand.getNames());
-        } else {
-            ret = RDataFactory.createList(data);
-        }
+        RList ret = RDataFactory.createList(data, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -95,5 +85,4 @@ public abstract class CastListNode extends CastNode {
     protected RList doDataFrame(VirtualFrame frame, RDataFrame operand) {
         return castList(frame, operand.getVector());
     }
-
 }

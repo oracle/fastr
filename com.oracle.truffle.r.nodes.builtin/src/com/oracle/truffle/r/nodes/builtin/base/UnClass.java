@@ -15,8 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFrame;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -36,7 +35,7 @@ public abstract class UnClass extends RBuiltinNode {
             if (resultVector.isShared()) {
                 resultVector = resultVector.copy();
             }
-            return RVector.setClassAttr(resultVector, null, null);
+            return RVector.setVectorClassAttr(resultVector, null, null, null);
         }
         return arg;
     }
@@ -49,7 +48,17 @@ public abstract class UnClass extends RBuiltinNode {
         if (resultFrame.isShared()) {
             resultFrame = resultFrame.copy();
         }
-        return RVector.setClassAttr(resultFrame.getVector(), null, arg);
+        return RVector.setVectorClassAttr(resultFrame.getVector(), null, arg, null);
     }
 
+    @Specialization
+    @TruffleBoundary
+    protected Object unClass(RFactor arg) {
+        controlVisibility();
+        RFactor resultFrame = arg;
+        if (resultFrame.isShared()) {
+            resultFrame = resultFrame.copy();
+        }
+        return RVector.setVectorClassAttr(resultFrame.getVector(), null, null, arg);
+    }
 }

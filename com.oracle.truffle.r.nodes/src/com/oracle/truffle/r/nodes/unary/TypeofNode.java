@@ -162,6 +162,16 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.Integer;
     }
 
+    @Specialization
+    protected RType typeof(RDataFrame frame) {
+        return RType.List;
+    }
+
+    @Specialization
+    protected RType typeof(RFactor factor) {
+        return RType.Integer;
+    }
+
     public static boolean isFunctionBuiltin(RFunction fun) {
         return fun.isBuiltin();
     }

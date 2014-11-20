@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -33,7 +33,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     private byte[] data;
 
-    private static final String[] implicitClassHrDyn = new String[]{"", RType.Logical.getName()};
+    @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Logical.getName()};
 
     RLogicalVector(byte[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length, dims, names);
@@ -70,7 +70,15 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        StringBuilder str = new StringBuilder();
+        str.append('[');
+        for (int i = 0; i < getLength(); i++) {
+            if (i > 0) {
+                str.append(", ");
+            }
+            str.append(RRuntime.logicalToString(getDataAt(i)));
+        }
+        return str.append(']').toString();
     }
 
     @Override
@@ -132,7 +140,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     @Override
     public RLogicalVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete);
     }
 

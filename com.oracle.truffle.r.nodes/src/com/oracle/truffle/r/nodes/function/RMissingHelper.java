@@ -34,30 +34,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.*;
  * would induce unnecessary dependencies otherwise.
  */
 public class RMissingHelper {
-    /**
-     * This function determines whether an arguments value - given as 'value' - is missing. An
-     * argument is missing when it has not been provided to the current function call (DEFAULTED or
-     * {@code value == RMissing.instance}, if argument has default value), OR if the value that has
-     * been provided once was a missing argument. (cp. R language definition and Internals 1.5.1
-     * Missingness).
-     *
-     * @param value The value that should be examined
-     * @return <code>true</code> iff this value is 'missing' in the definition of R
-     */
-    public static boolean isMissing(Object value, PromiseProfile promiseProfile) {
-        if (value == RMissing.instance) {
-            return true;
-        }
-
-        // This might be a promise...
-        if (value instanceof RPromise) {
-            RPromise promise = (RPromise) value;
-            if (promise.isDefault(promiseProfile) || isMissingSymbol(promise)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * This method determines whether a given {@link Symbol} is missing in the given frame. This is

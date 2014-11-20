@@ -24,19 +24,23 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.*;
 
 /**
  * This is a node abstraction for the functionality defined in
  * {@link RMissingHelper#getMissingValue(Frame,Symbol)}.
  */
-public abstract class GetMissingValueNode extends RNode {
+public abstract class GetMissingValueNode extends Node {
 
     public static GetMissingValueNode create(Symbol sym) {
         return new UninitializedGetMissingValueNode(sym);
     }
 
+    public abstract Object execute(Frame frame);
+
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UninitializedGetMissingValueNode extends GetMissingValueNode {
 
         private final Symbol sym;
@@ -46,11 +50,10 @@ public abstract class GetMissingValueNode extends RNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
+        public Object execute(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(sym.getName());
-            GetMissingValueNode gmvn = new ResolvedGetMissingValueNode(slot);
-            return replace(gmvn).execute(frame);
+            return replace(new ResolvedGetMissingValueNode(slot)).execute(frame);
         }
 
     }
@@ -58,20 +61,27 @@ public abstract class GetMissingValueNode extends RNode {
     private static final class ResolvedGetMissingValueNode extends GetMissingValueNode {
 
         private final FrameSlot slot;
+        private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
+
+        private static final Object NON_PROMISE_OBJECT = new Object();
 
         private ResolvedGetMissingValueNode(FrameSlot slot) {
             this.slot = slot;
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
+        public Object execute(Frame frame) {
             if (slot == null) {
                 return null;
             }
-            try {
-                return frame.getObject(slot);
-            } catch (FrameSlotTypeException e) {
-                return null;
+            if (isObjectProfile.profile(frame.isObject(slot))) {
+                try {
+                    return frame.getObject(slot);
+                } catch (FrameSlotTypeException e) {
+                    return null;
+                }
+            } else {
+                return NON_PROMISE_OBJECT;
             }
         }
     }

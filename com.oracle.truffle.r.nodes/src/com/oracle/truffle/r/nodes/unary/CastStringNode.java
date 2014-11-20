@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.function.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -30,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastNode {
 
-    @Child private ToStringNode toString = ToStringNodeFactory.create(null);
+    @Child private ToStringNode toString = ToStringNodeFactory.create(null, false, ToStringNode.DEFAULT_SEPARATOR, false);
 
     public abstract Object executeString(VirtualFrame frame, int o);
 
@@ -41,10 +43,6 @@ public abstract class CastStringNode extends CastNode {
     public abstract Object executeString(VirtualFrame frame, Object o);
 
     public abstract boolean isEmptyVectorConvertedToNull();
-
-    public CastStringNode() {
-        toString.setQuotes(false);
-    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -72,44 +70,26 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization
+    protected String doRaw(VirtualFrame frame, RComplex value) {
+        return toString.executeString(frame, value);
+    }
+
+    @Specialization
     protected String doRaw(VirtualFrame frame, RRaw value) {
         return toString.executeString(frame, value);
     }
 
-    private String[] dataFromLogical(VirtualFrame frame, RLogicalVector operand) {
+    private RStringVector createResultVector(RAbstractVector operand, IntFunction<String> elementFunction) {
         String[] sdata = new String[operand.getLength()];
+        // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
-            byte value = operand.getDataAt(i);
-            sdata[i] = toString.executeString(frame, value);
+            sdata[i] = elementFunction.apply(i);
         }
-        return sdata;
-    }
-
-    private String[] dataFromComplex(VirtualFrame frame, RComplexVector operand) {
-        String[] sdata = new String[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex value = operand.getDataAt(i);
-            sdata[i] = toString.executeString(frame, value);
+        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
         }
-        return sdata;
-    }
-
-    private String[] dataFromRaw(VirtualFrame frame, RRawVector operand) {
-        String[] sdata = new String[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RRaw value = operand.getDataAt(i);
-            sdata[i] = toString.executeString(frame, value);
-        }
-        return sdata;
-    }
-
-    private String[] dataFromList(VirtualFrame frame, RList operand) {
-        String[] sdata = new String[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            Object value = operand.getDataAt(i);
-            sdata[i] = toString.executeString(frame, value);
-        }
-        return sdata;
+        return ret;
     }
 
     @Specialization(guards = "isZeroLength")
@@ -123,183 +103,33 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = "!isZeroLength")
-    protected RStringVector doIntVector(VirtualFrame frame, RIntVector vector) {
-        return performAbstractIntVector(frame, vector);
+    protected RStringVector doIntVector(VirtualFrame frame, RAbstractIntVector operand) {
+        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
-    protected RStringVector doDoubleVector(VirtualFrame frame, RDoubleVector vector) {
-        return performAbstractDoubleVector(frame, vector);
+    protected RStringVector doDoubleVector(VirtualFrame frame, RAbstractDoubleVector operand) {
+        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
-    protected RStringVector doIntSequence(VirtualFrame frame, RIntSequence vector) {
-        return performAbstractIntVector(frame, vector);
+    protected RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector operand) {
+        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
-    protected RStringVector doDoubleSequence(VirtualFrame frame, RDoubleSequence vector) {
-        return performAbstractDoubleVector(frame, vector);
+    protected RStringVector doComplexVector(VirtualFrame frame, RComplexVector operand) {
+        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
     }
 
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    protected RStringVector doLogicalVectorDims(VirtualFrame frame, RLogicalVector vector) {
-        String[] result = dataFromLogical(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
+    @Specialization(guards = "!isZeroLength")
+    protected RStringVector doRawVector(VirtualFrame frame, RRawVector operand) {
+        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
     }
 
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    protected RStringVector doLogicalVectorNames(VirtualFrame frame, RLogicalVector vector) {
-        String[] result = dataFromLogical(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    protected RStringVector doLogicalVectorDimsNames(VirtualFrame frame, RLogicalVector vector) {
-        String[] result = dataFromLogical(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    protected RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector vector) {
-        String[] result = dataFromLogical(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    protected RStringVector doComplexVectorDims(VirtualFrame frame, RComplexVector vector) {
-        String[] result = dataFromComplex(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    protected RStringVector doComplexVectorNames(VirtualFrame frame, RComplexVector vector) {
-        String[] result = dataFromComplex(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    protected RStringVector doComplexVectorDimsNames(VirtualFrame frame, RComplexVector vector) {
-        String[] result = dataFromComplex(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    protected RStringVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
-        String[] result = dataFromComplex(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    protected RStringVector doRawVectorDims(VirtualFrame frame, RRawVector vector) {
-        String[] result = dataFromRaw(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    protected RStringVector doRawVectorNames(VirtualFrame frame, RRawVector vector) {
-        String[] result = dataFromRaw(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    protected RStringVector doRawVectorDimsNames(VirtualFrame frame, RRawVector vector) {
-        String[] result = dataFromRaw(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    protected RStringVector doRawVector(VirtualFrame frame, RRawVector vector) {
-        String[] result = dataFromRaw(frame, vector);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    protected RStringVector doListDims(VirtualFrame frame, RList list) {
-        String[] result = dataFromList(frame, list);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getDimensions());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(list);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    protected RStringVector doListNames(VirtualFrame frame, RList list) {
-        String[] result = dataFromList(frame, list);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(list);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    protected RStringVector doListDimsNames(VirtualFrame frame, RList list) {
-        String[] result = dataFromList(frame, list);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getDimensions(), list.getNames());
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(list);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    protected RStringVector doList(VirtualFrame frame, RList list) {
-        String[] result = dataFromList(frame, list);
-        RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(list);
-        }
-        return ret;
+    @Specialization(guards = "!isZeroLength")
+    protected RStringVector doList(VirtualFrame frame, RList operand) {
+        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
     }
 
     @Specialization
@@ -307,50 +137,7 @@ public abstract class CastStringNode extends CastNode {
         return s.getName();
     }
 
-    private RStringVector performAbstractIntVector(VirtualFrame frame, RAbstractIntVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
-        RStringVector ret;
-        if (preserveDimensions()) {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
-        } else {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        }
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
-    private RStringVector performAbstractDoubleVector(VirtualFrame frame, RAbstractDoubleVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
-        RStringVector ret;
-        if (preserveDimensions() && preserveNames()) {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
-        } else if (preserveDimensions()) {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
-        } else if (preserveNames()) {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
-        } else {
-            ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        }
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(vector);
-        }
-        return ret;
-    }
-
     protected boolean isZeroLength(RAbstractVector vector) {
         return vector.getLength() == 0;
     }
-
 }

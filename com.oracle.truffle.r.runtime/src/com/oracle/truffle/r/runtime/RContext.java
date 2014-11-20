@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -175,6 +176,13 @@ public final class RContext extends ExecutionContext {
          * @return the object returned by the evaluation or {@code null} if an error occurred.
          */
         Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
+
+        /**
+         * Similar to
+         * {@link #parseAndEval(String, String, MaterializedFrame, REnvironment, boolean, boolean)}
+         * but input is explicitly from a {@link File}.
+         */
+        Object parseAndEval(File file, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult);
 
         Object INCOMPLETE_SOURCE = new Object();
 

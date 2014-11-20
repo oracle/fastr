@@ -137,4 +137,10 @@ public abstract class AsDouble extends RBuiltinNode {
         controlVisibility();
         return castDoubleVector(frame, vector);
     }
+
+    @Specialization
+    protected RDoubleVector asDouble(VirtualFrame frame, RFactor vector) {
+        return asDouble(frame, vector.getVector());
+    }
+
 }

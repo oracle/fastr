@@ -37,7 +37,9 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.graphics.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.graphics.core.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
@@ -47,6 +49,7 @@ import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -66,6 +69,8 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
     @CompilationFinal private RFunction evalFunction;
+
+    private static final GraphicsEngine graphicsEngine = new GraphicsEngineImpl();
 
     private REngine() {
     }
@@ -113,7 +118,17 @@ public final class REngine implements RContext.Engine {
         if (userProfile != null) {
             singleton.parseAndEval("<user_profile>", userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
         }
+        registerBaseGraphicsSystem();
         return globalFrame;
+    }
+
+    private static void registerBaseGraphicsSystem() {
+        try {
+            graphicsEngine.registerGraphicsSystem(new BaseGraphicsSystem());
+        } catch (Exception e) {
+            ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
+            consoleHandler.println("Unable to register base graphics system");
+        }
     }
 
     public static REngine getInstance() {
@@ -134,6 +149,15 @@ public final class REngine implements RContext.Engine {
 
     public long[] childTimesInNanos() {
         return childTimes;
+    }
+
+    public Object parseAndEval(File file, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult) {
+        try {
+            return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromFileName(file.getAbsolutePath()), frame, printResult, false);
+        } catch (IOException ex) {
+            // we have already read the file so this cannot happen (comes from Source.fromFileName).
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     public Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
@@ -365,6 +389,7 @@ public final class REngine implements RContext.Engine {
             } catch (ControlFlowException cfe) {
                 throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
+            assert !FastROptions.CheckResultCompleteness.getValue() || checkResult(result);
             if (printResult) {
                 printResult(result);
             }
@@ -381,6 +406,13 @@ public final class REngine implements RContext.Engine {
             reportImplementationError(e);
         }
         return result;
+    }
+
+    private static boolean checkResult(Object result) {
+        if (result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+            assert ((RAbstractVector) result).checkCompleteness() : "vector: " + result + " is not complete, but isComplete flag is true";
+        }
+        return true;
     }
 
     private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
