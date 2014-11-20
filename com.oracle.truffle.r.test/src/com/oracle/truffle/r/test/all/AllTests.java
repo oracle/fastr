@@ -9294,17 +9294,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testLapplyIgnore_8aa9fed48ff3245ec5301cee82cf7f37() {
+    public void TestSimpleBuiltins_testLapply_8aa9fed48ff3245ec5301cee82cf7f37() {
         assertEval("{ lapply(1:3, sum) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testLapplyIgnore_04025bf54d7281f9b2993d29590f8eea() {
+    public void TestSimpleBuiltins_testLapply_04025bf54d7281f9b2993d29590f8eea() {
         assertEval("{ lapply(1:3, sum, 2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testLapplyIgnore_d3277d29613178c818f69335eb032a43() {
+    public void TestSimpleBuiltins_testLapply_d3277d29613178c818f69335eb032a43() {
         assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 

@@ -879,21 +879,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_8aa9fed48ff3245ec5301cee82cf7f37() {
-        assertEval("{ lapply(1:3, sum) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_04025bf54d7281f9b2993d29590f8eea() {
-        assertEval("{ lapply(1:3, sum, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_d3277d29613178c818f69335eb032a43() {
-        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testLogIgnore_052ed04e88403025c80c488866a0f346() {
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
     }

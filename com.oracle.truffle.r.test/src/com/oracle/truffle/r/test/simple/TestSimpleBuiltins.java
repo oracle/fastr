@@ -3502,11 +3502,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
         assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
         assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
-    }
-
-    @Test
-    @Ignore
-    public void testLapplyIgnore() {
         assertEval("{ lapply(1:3, sum) }");
         assertEval("{ lapply(1:3, sum, 2) }");
         assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
