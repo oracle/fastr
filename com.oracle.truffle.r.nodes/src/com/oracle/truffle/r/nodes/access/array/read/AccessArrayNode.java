@@ -62,6 +62,8 @@ public abstract class AccessArrayNode extends RNode {
     private final BranchProfile withDimensions = BranchProfile.create();
     private final ConditionProfile emptyResultProfile = ConditionProfile.createBinaryProfile();
 
+    @CompilationFinal private boolean recursiveIsSubset;
+
     @Child private AccessArrayNode accessRecursive;
     @Child private CastToVectorNode castVector;
     @Child private ArrayPositionCast castPosition;
@@ -69,6 +71,7 @@ public abstract class AccessArrayNode extends RNode {
     @Child private GetMultiDimDataNode getMultiDimData;
     @Child private GetNamesNode getNamesNode;
     @Child private GetDimNamesNode getDimNamesNode;
+    @Child ContainerDimGet dimGetter;
 
     protected abstract RNode getVector();
 
@@ -93,18 +96,26 @@ public abstract class AccessArrayNode extends RNode {
 
     public AccessArrayNode(boolean isSubset) {
         this.isSubset = isSubset;
+        this.recursiveIsSubset = isSubset;
     }
 
     public AccessArrayNode(AccessArrayNode other) {
         this.isSubset = other.isSubset;
+        this.recursiveIsSubset = other.recursiveIsSubset;
     }
 
-    private Object accessRecursive(VirtualFrame frame, Object vector, Object operand, int recLevel, RAbstractLogicalVector dropDim) {
-        if (accessRecursive == null) {
+    private Object accessRecursive(VirtualFrame frame, Object vector, Object operand, int recLevel, RAbstractLogicalVector dropDim, boolean forDataFrame) {
+        // for data frames, recursive update is the same as for lists but as if the [[]] operator
+        // was used
+        if (accessRecursive == null || (forDataFrame && isSubset) || (!forDataFrame && isSubset != recursiveIsSubset)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            accessRecursive = insert(AccessArrayNodeFactory.create(this.isSubset, null, null, null, null));
+            boolean newIsSubset = this.isSubset;
+            if (forDataFrame && isSubset) {
+                newIsSubset = false;
+            }
+            accessRecursive = insert(AccessArrayNodeFactory.create(newIsSubset, null, null, null, null));
         }
-        return executeAccess(frame, vector, recLevel, operand, dropDim);
+        return accessRecursive.executeAccess(frame, vector, recLevel, operand, dropDim);
     }
 
     private Object castVector(VirtualFrame frame, Object value) {
@@ -165,6 +176,14 @@ public abstract class AccessArrayNode extends RNode {
         return (RStringVector) getDimNamesNode.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
     }
 
+    private Object getDim(VirtualFrame frame, RAbstractContainer value) {
+        if (dimGetter == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dimGetter = insert(ContainerDimGetFactory.create(null));
+        }
+        return dimGetter.execute(frame, value);
+    }
+
     public static RIntVector popHead(RIntVector p, NACheck posNACheck) {
         int[] data = new int[p.getLength() - 1];
         posNACheck.enable(p);
@@ -204,7 +223,7 @@ public abstract class AccessArrayNode extends RNode {
     // TODO: ultimately factor accesses should be turned into generic function
     @Specialization
     protected Object accessFactor(VirtualFrame frame, RFactor factor, int recLevel, Object position, RAbstractLogicalVector dropDim) {
-        RIntVector res = (RIntVector) castVector(frame, accessRecursive(frame, factor.getVector(), position, recLevel, dropDim));
+        RIntVector res = (RIntVector) castVector(frame, accessRecursive(frame, factor.getVector(), position, recLevel, dropDim, false));
         res.setLevels(factor.getLevels());
         return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
     }
@@ -277,7 +296,7 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "wrongDimensions")
-    protected Object access(RAbstractContainer container, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+    protected Object access(RAbstractVector container, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
     }
 
@@ -494,14 +513,14 @@ public abstract class AccessArrayNode extends RNode {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error);
         Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
-        return accessRecursive(frame, newVector, newPosition, recLevel + 1, dropDim);
+        return accessRecursive(frame, newVector, newPosition, recLevel + 1, dropDim, false);
     }
 
     @Specialization(guards = {"hasNames", "!isSubset", "!twoPosition"})
     protected Object accessString(VirtualFrame frame, RList vector, int recLevel, RStringVector p, RAbstractLogicalVector dropDim) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error);
         RStringVector newP = popHead(p, posNACheck);
-        return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1, dropDim);
+        return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1, dropDim, false);
     }
 
     @SuppressWarnings("unused")
@@ -574,7 +593,7 @@ public abstract class AccessArrayNode extends RNode {
         position = getPositionInRecursion(vector, position, recLevel);
         Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
-        return accessRecursive(frame, newVector, newPosition, recLevel + 1, dropDim);
+        return accessRecursive(frame, newVector, newPosition, recLevel + 1, dropDim, false);
     }
 
     @Specialization(guards = {"!isSubset", "multiPos"})
@@ -582,7 +601,7 @@ public abstract class AccessArrayNode extends RNode {
         int position = p.getDataAt(0);
         position = getPositionInRecursion(vector, position, recLevel);
         RIntVector newP = popHead(p, posNACheck);
-        return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1, dropDim);
+        return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1, dropDim, false);
     }
 
     @SuppressWarnings("unused")
@@ -1537,13 +1556,35 @@ public abstract class AccessArrayNode extends RNode {
     // this should really be implemented in R
     @Specialization(guards = "!isSubset")
     protected Object access(VirtualFrame frame, RDataFrame dataFrame, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        return accessRecursive(frame, dataFrame.getVector(), position, recLevel, dropDim);
+        return accessRecursive(frame, dataFrame.getVector(), position, recLevel, dropDim, true);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isSubset")
     protected Object accessSubset(RDataFrame dataFrame, int recLevel, int position, RAbstractLogicalVector dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DATA_FRAMES_SUBSET_ACCESS);
+    }
+
+    @Specialization
+    protected Object access(VirtualFrame frame, RDataFrame dataFrame, int recLevel, Object[] position, RAbstractLogicalVector dropDim) {
+        // there should be error checks here, but since it will ultimately be implemented in R...
+        assert position.length > 1;
+        RIntVector firstIndVec = (RIntVector) position[0];
+        RIntVector secondIndVec = (RIntVector) position[1];
+        assert firstIndVec.getLength() > 0;
+        int firstInd = firstIndVec.getDataAt(0);
+        int firstDim = ((int[]) getDim(frame, dataFrame))[0];
+        if (firstDim == 1) {
+            // "flat" data frame
+            assert firstInd == 1;
+            return accessRecursive(frame, dataFrame.getVector(), secondIndVec, recLevel, dropDim, true);
+        } else {
+            RList l = (RList) dataFrame.getVector();
+            int secondInd = secondIndVec.getDataAt(0);
+            assert l.getLength() >= secondInd;
+            return accessRecursive(frame, l.getDataAt(secondInd - 1), firstIndVec, recLevel, dropDim, false);
+        }
+
     }
 
     @SuppressWarnings("unused")
@@ -1598,7 +1639,7 @@ public abstract class AccessArrayNode extends RNode {
         return container.getElementClass() == Object.class;
     }
 
-    protected boolean wrongDimensions(RAbstractContainer container, @SuppressWarnings("unused") int recLevel, Object[] positions) {
+    protected boolean wrongDimensions(RAbstractVector container, @SuppressWarnings("unused") int recLevel, Object[] positions) {
         return container.getDimensions() == null || container.getDimensions().length != positions.length;
     }
 

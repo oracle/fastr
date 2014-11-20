@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ConstantNode extends RNode implements VisibilityController {
 
@@ -86,6 +86,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantFormulaNode((RFormula) value);
         } else if (value instanceof RSymbol) {
             return new ConstantStringScalarNode(((RSymbol) value).getName());
+        } else if (value instanceof REnvironment) {
+            return new ConstantREnvironmentNode((REnvironment) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -408,6 +410,21 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             return formula;
+        }
+    }
+
+    private static final class ConstantREnvironmentNode extends ConstantNode {
+
+        private final REnvironment envValue;
+
+        public ConstantREnvironmentNode(REnvironment envValue) {
+            this.envValue = envValue;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return envValue;
         }
     }
 }

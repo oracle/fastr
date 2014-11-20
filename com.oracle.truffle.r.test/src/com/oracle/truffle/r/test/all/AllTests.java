@@ -5254,6 +5254,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsVector_ac3c8e11251b190796fc31c6d7d2420e() {
+        assertEval("{ as.vector(NULL) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsVector_e20c6558cca6aea70251347229e52bf5() {
         assertEvalWarning("{ as.vector(\"foo\", \"integer\") }");
     }
@@ -17301,6 +17306,36 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleDataFrames_testAccess_9beb2cd2f5ca48a9340798ab10f23fc8() {
         assertEval("{ x<-c(7,42); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); y[[1]] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_f81b2ec376f6d3741941c58da49f6468() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[1,2]] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_af7da5f5bad77c38c1891740e723bba0() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[1,2] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_1c5a7f63ea4401ffa3217f253cd5a481() {
+        assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[[1,2]] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_bca92f3ab80c7b72fbb577092302102e() {
+        assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_023461f3b848ea06b727493936ab0e49() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_3c751253c42329c6652cb02b6c064aa2() {
+        assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
     }
 
     @Test

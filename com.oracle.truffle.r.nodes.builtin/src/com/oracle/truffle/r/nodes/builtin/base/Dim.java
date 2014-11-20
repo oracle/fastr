@@ -73,13 +73,13 @@ public abstract class Dim extends RBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = {"!hasDimensions", "!isDataFrame"})
+    @Specialization(guards = {"!isDataFrame", "!hasDimensions"})
     protected RNull dim(RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = {"hasDimensions", "!isDataFrame"})
+    @Specialization(guards = {"!isDataFrame", "hasDimensions"})
     protected RIntVector dimWithDimensions(RAbstractContainer container) {
         controlVisibility();
         return RDataFactory.createIntVector(container.getDimensions(), RDataFactory.COMPLETE_VECTOR);

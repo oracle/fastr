@@ -405,7 +405,9 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public CallArgumentsNode getArgumentsNode() {
-            assert nextNode instanceof UninitializedCallNode;
+            // This relies on the fact that the top level of the cache consists only of Cs
+            // (maintained by UninitializedCallNode.specialize), where it's head is one of U/UV or
+            // G/GV - which are all RootCallNodes, and as such hold their own CallArgumentsNode.
             return nextNode.getArgumentsNode();
         }
     }

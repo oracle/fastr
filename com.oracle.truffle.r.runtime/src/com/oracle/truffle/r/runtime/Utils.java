@@ -105,7 +105,7 @@ public final class Utils {
                 continue;
             }
             SourceSection src = n.getSourceSection();
-            if (src == null) {
+            if (src == null || src instanceof NullSourceSection) {
                 continue;
             }
 

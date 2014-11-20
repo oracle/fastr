@@ -757,6 +757,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
 
         assertEval("{ as.vector(NULL, \"list\") }");
+        assertEval("{ as.vector(NULL) }");
     }
 
     @Test
