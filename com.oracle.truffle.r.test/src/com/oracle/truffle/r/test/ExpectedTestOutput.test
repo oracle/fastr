@@ -7391,6 +7391,10 @@ Error in print(x, y) :
 [1] "c(TRUE, FALSE)"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(expression(a+b, c+d)) }
+[1] "expression(a + b, c + d)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(round) }
 [1] ".Primitive(\"round\")"
 
@@ -7405,6 +7409,18 @@ Error in print(x, y) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }
 [1] "list(c(x = 1, 2))"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }
+[1] "list(7)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }
+[1] "list(7, 42)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }
+[1] "list(7, list(42))"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ k <- 2 ; deparse(k) }
@@ -9318,6 +9334,39 @@ $Y
 
 [[3]]
 [1] "13"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, sum) }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 2
+
+[[3]]
+[1] 3
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, sum, 2) }
+[[1]]
+[1] 3
+
+[[2]]
+[1] 4
+
+[[3]]
+[1] 5
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }
+$a
+[1] 55
+
+$b
+[1] 210
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply

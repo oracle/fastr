@@ -99,6 +99,11 @@ public abstract class Lapply extends RBuiltinNode {
 
             // The first parameter to the function call is named as defined by the function.
             String readVectorElementName = formalArgs.getNames()[0];
+            if (Arguments.VARARG_NAME.equals(readVectorElementName)) {
+                // "..." is no "supplied" name, instead the argument will match by position right
+                // away
+                readVectorElementName = null;
+            }
 
             // The remaining parameters are passed from {@code ...}. The call node will take care of
             // matching.
