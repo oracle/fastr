@@ -29,6 +29,8 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.debug.*;
 import com.oracle.truffle.debug.impl.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.RContext;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.shell.*;
 
 /**
@@ -61,7 +63,7 @@ public final class RDebugManager extends AbstractDebugManager {
 
     public Object eval(Source source, Node node, MaterializedFrame frame) {
         // TODO Auto-generated method stub
-        return null;
-    }
+        return RContext.getEngine().parseAndEval(source.getName(), source.getCode(), frame, REnvironment.frameToEnvironment(frame), true, false);
+     }
 
 }
