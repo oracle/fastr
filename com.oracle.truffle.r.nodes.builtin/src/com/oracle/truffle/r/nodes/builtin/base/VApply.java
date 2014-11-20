@@ -65,6 +65,9 @@ public abstract class VApply extends RBuiltinNode {
         } else if (funValue instanceof Byte) {
             byte[] data = applyResultZeroLength ? new byte[0] : new byte[]{(Byte) applyResult[0]};
             result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        } else if (funValue instanceof String) {
+            String[] data = applyResultZeroLength ? new String[0] : new String[]{(String) applyResult[0]};
+            result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             assert false;
         }

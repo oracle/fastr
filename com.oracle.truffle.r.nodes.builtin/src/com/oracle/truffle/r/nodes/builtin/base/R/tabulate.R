@@ -22,9 +22,7 @@ tabulate <- function(bin, nbins = max(1L, bin, na.rm = TRUE))
 		stop("'bin' must be numeric or a factor")
 	## avoid a copy for factors, since as.integer strips attributes
 	if (typeof(bin) != "integer") bin <- as.integer(bin)
-	## TODO
-	## if (nbins > .Machine$integer.max)
-	if (nbins > 2^31)
+	if (nbins > .Machine$integer.max)
 		stop("attempt to make a table with >= 2^31 elements")
 	nbins <- as.integer(nbins)
 	if (is.na(nbins)) stop("invalid value of 'nbins'")
