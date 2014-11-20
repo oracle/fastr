@@ -4818,6 +4818,10 @@ Warning messages:
   out-of-range values treated as 0 in coercion to raw
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsVector
+#{ as.vector(NULL) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsVector
 #{ as.vector(NULL, "list") }
 list()
 
