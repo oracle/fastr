@@ -57,10 +57,10 @@ public final class VarArgsSignature {
     public static final RNode NO_VARARGS = ConstantNode.create(RMissing.instance);
     public static final VarArgsSignature TAKES_NO_VARARGS = new VarArgsSignature(null, 0);
 
-    @CompilationFinal private final RNode[] expressions;
+    @CompilationFinal private final Object[] expressions;
     private final int times;
 
-    private VarArgsSignature(RNode[] expressions, int times) {
+    private VarArgsSignature(Object[] expressions, int times) {
         this.expressions = expressions;
         this.times = times;
     }
@@ -70,7 +70,7 @@ public final class VarArgsSignature {
      * @param times Must be <code>>= 1</code>
      * @return a fresh {@link VarArgsSignature}
      */
-    public static VarArgsSignature create(RNode[] expressions, int times) {
+    public static VarArgsSignature create(Object[] expressions, int times) {
         assert expressions != null && expressions.length > 0;
         assert times >= 1;
         return new VarArgsSignature(expressions, times);
