@@ -7079,6 +7079,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDeparse_1eedd480281ac304fc46f96e9b01e65a() {
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_7d465fa7df237db4dfe3d217a554d421() {
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_32131066b372b81cfdb4c8c8917216d4() {
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_fc48a12f463aff2ccf839051c3218f8a() {
+        assertEval("{ deparse(expression(a+b, c+d)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDeparseIgnore_9e5a5fc2f13f5ca564f74ada29302b9d() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
     }
@@ -7086,6 +7106,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testDeparseIgnore_ae0471e19b56e163c3b0f1d27722a535() {
         assertEval("{ deparse(nrow) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparseIgnore_dcfc3947162214c236e4caaf5dff89d7() {
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test

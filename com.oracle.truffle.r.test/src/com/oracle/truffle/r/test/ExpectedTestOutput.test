@@ -7391,6 +7391,10 @@ Error in print(x, y) :
 [1] "c(TRUE, FALSE)"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(expression(a+b, c+d)) }
+[1] "expression(a + b, c + d)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(round) }
 [1] ".Primitive(\"round\")"
 
@@ -7405,6 +7409,18 @@ Error in print(x, y) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }
 [1] "list(c(x = 1, 2))"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }
+[1] "list(7)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }
+[1] "list(7, 42)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }
+[1] "list(7, list(42))"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ k <- 2 ; deparse(k) }

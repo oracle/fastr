@@ -333,20 +333,21 @@ public class RDeparse {
             }
 
             case ENVSXP:
-            case VECSXP:
-                assert false;
+                state.append("<environment>");
                 break;
+
+            case VECSXP:
+                RList list = (RList) obj;
+                state.append("list(");
+                vec2buff(state, list);
+                state.append(')');
+                break;
+
             case EXPRSXP:
                 RExpression expr = (RExpression) obj;
                 state.append("expression(");
-                for (int i = 0; i < expr.getLength(); i++) {
-                    deparse2buff(state, expr.getDataAt(i));
-                    if (i == expr.getLength() - 1) {
-                        break;
-                    }
-                    state.append(", ");
-                }
-                state.append(")");
+                vec2buff(state, expr.getList());
+                state.append(')');
                 break;
 
             case LISTSXP: {
@@ -645,6 +646,32 @@ public class RDeparse {
         // TODO
         assert false;
         return false;
+    }
+
+    @TruffleBoundary
+    /** Handles {@link RList} and (@link RExpression}. Method name same as GnuR.
+     */
+    private static State vec2buff(State state, RList v) {
+        int n = v.getLength();
+        boolean lbreak = false;
+        Object names = v.getNames();
+        RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
+        for (int i = 0; i < n; i++) {
+            if (i > 0) {
+                state.append(", ");
+            }
+            lbreak = state.linebreak(lbreak);
+            String sname = (String) v.getNameAt(i);
+            if (snames != null && ((sname = snames.getDataAt(i)) != null)) {
+                state.append(sname);
+                state.append(" = ");
+            }
+            deparse2buff(state, v.getDataAt(i));
+        }
+        if (lbreak) {
+            state.decIndent();
+        }
+        return state;
     }
 
     @TruffleBoundary

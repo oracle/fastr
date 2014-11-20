@@ -2792,6 +2792,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+        assertEval("{ deparse(expression(a+b, c+d)) }");
     }
 
     @Test
@@ -2799,6 +2803,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testDeparseIgnore() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
         assertEval("{ deparse(nrow) }");
+        // should deparse as structure(...
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
