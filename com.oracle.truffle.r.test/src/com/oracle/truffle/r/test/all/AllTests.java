@@ -11289,6 +11289,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testNames_2859794d8c84c5c8a0e0d527e99ea979() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testNextMethod_4a05151b190f59933e5693d3e3fba9f1() {
         assertEval("{g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x)}; f.b<-function(x){cat(\"b\")}; f(x); }; g();}");
     }
@@ -15146,6 +15151,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
         assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTable_e6efb6b86abe525fe0fa7b37a41a3588() {
+        assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
     }
 
     @Test

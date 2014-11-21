@@ -11178,6 +11178,10 @@ Error in k() : argument "y" is missing, with no default
 #{ nchar(c(10,130)) }
 [1] 2 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNames
+#{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }
+[1] "11" "12" "13"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
 #{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
 ab
@@ -14568,6 +14572,15 @@ f(x = 2)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysParents
 #{ sys.parents() }
 integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTable
+#{ a<-c("a", "b", "c");  t<-table(a, sample(a)); dimnames(t) }
+$a
+[1] "a" "b" "c"
+
+[[2]]
+[1] "a" "b" "c"
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTabulate
 #{tabulate(c(-2,0,2,3,3,5))}

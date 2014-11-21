@@ -19,6 +19,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testTable() {
+        assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
+    }
+
+    @Test
     public void testScan() {
         // from scan's documentation
         assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
@@ -1704,6 +1709,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
+    }
+
+    @Test
+    public void testNames() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
     }
 
     @Test
