@@ -72,7 +72,7 @@ public class FastRComponent extends JComponent {
     public void addDrawableObject(DrawableObject drawableObject) {
         displayList.add(drawableObject);
         shouldDraw = true;
-        if(coordinateSystem != null) {
+        if (coordinateSystem != null) {
             drawableObject.recalculateForDrawingIn(coordinateSystem);
             repaint();
         }

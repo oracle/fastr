@@ -278,7 +278,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     @Override
     public void setCurrentGraphicsDeviceClipRect(double x1, double y1, double x2, double y2) {
         //todo transcribe from GESetClip() (engine.c)
-        getCurrentGraphicsDevice().setClipRect(0,0,0,0);
+        getCurrentGraphicsDevice().setClipRect(0, 0, 0, 0);
     }
 
     @Override

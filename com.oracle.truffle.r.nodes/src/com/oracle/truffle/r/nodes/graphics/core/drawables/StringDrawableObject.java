@@ -29,7 +29,7 @@ import java.awt.*;
 import java.util.stream.IntStream;
 
 /**
- * Able to render a text on {@link Graphics2D}
+ * Able to render a text on {@link Graphics2D}.
  */
 public class StringDrawableObject extends CoordinatesDrawableObject {
     private final String[] strings;
