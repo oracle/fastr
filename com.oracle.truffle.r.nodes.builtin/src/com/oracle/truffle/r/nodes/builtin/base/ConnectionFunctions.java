@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
+import java.net.*;
 import java.util.*;
 import java.util.zip.*;
 
@@ -88,27 +89,40 @@ public abstract class ConnectionFunctions {
     // TODO implement all open modes
     // TODO implement missing .Internal functions expected by connections.R
     // TODO revisit the use of InputStream for internal use, e.g. in RSerialize
+    // TODO Use channels to support blocking/non-blockng mode
 
     /**
      * Base class for all {@link RConnection} instances. It supports lazy opening, as required by
      * the R spec, through the {@link #theConnection} field, which ultimately holds the actual
-     * connection instance when opened. The default implementation of the {@link RConnection}
-     * methods check whether the connection is open and if not, calls
-     * {@link #createDelegateConnection()} and then forwards the operation. A subclass may choose
-     * not to use delegation by overriding the default implementations.
+     * connection instance when opened. The default implementations of the {@link RConnection}
+     * methods check whether the connection is open and if not, call
+     * {@link #createDelegateConnection()} and then forward the operation. The result of
+     * {@link #createDelegateConnection()} should be a subclass of {@link DelegateRConnection},
+     * which subclasses {@link RConnection} directly. A subclass may choose not to use delegation by
+     * overriding the default implementations of the methods in this class.
      *
      */
     private abstract static class BaseRConnection extends RConnection {
         private static final RStringVector DEFAULT_CLASSHR = RDataFactory.createStringVector(new String[]{"connection"}, RDataFactory.COMPLETE_VECTOR);
 
-        protected boolean isOpen;
         /**
-         * if {@link #isOpen} is {@code true} the {@link OpenMode} that this connection is opened
+         * {@code true} is the connection has been opened successfully. N.B. This supports lazy
+         * opening, in particular, {@code opened == false} does not mean {@code closed}.
+         */
+        protected boolean opened;
+
+        /**
+         * Returns {@code true} once the {@link #close()} method has been called.
+         */
+        protected boolean closed;
+
+        /**
+         * if {@link #opened} is {@code true} the {@link OpenMode} that this connection is opened
          * in, otherwise {@link OpenMode#Lazy}.
          */
         protected OpenMode mode;
         /**
-         * If {@link #isOpen} is {@code false} and {@link OpenMode} is {@link OpenMode#Lazy}, the
+         * If {@link #opened} is {@code false} and {@link OpenMode} is {@link OpenMode#Lazy}, the
          * mode the connection should eventually be opned in.
          */
         private OpenMode lazyMode;
@@ -134,7 +148,10 @@ public abstract class ConnectionFunctions {
         }
 
         protected void checkOpen() throws IOException {
-            if (!isOpen) {
+            if (closed) {
+                throw new IOException(RError.Message.INVALID_CONNECTION.message);
+            }
+            if (!opened) {
                 // closed or lazy
                 if (mode == OpenMode.Lazy) {
                     mode = lazyMode;
@@ -146,7 +163,7 @@ public abstract class ConnectionFunctions {
         protected void setDelegate(DelegateRConnection conn, String rClass) {
             this.theConnection = conn;
             setClass(rClass);
-            isOpen = true;
+            opened = true;
         }
 
         protected void setClass(String rClass) {
@@ -188,7 +205,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            isOpen = false;
+            closed = true;
             if (theConnection != null) {
                 theConnection.close();
             }
@@ -211,6 +228,27 @@ public abstract class ConnectionFunctions {
         protected abstract void createDelegateConnection() throws IOException;
     }
 
+    private static String[] readLinesHelper(BufferedReader bufferedReader, int n) throws IOException {
+        ArrayList<String> lines = new ArrayList<>();
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            lines.add(line);
+            if (n > 0 && lines.size() == n) {
+                break;
+            }
+        }
+        String[] result = new String[lines.size()];
+        lines.toArray(result);
+        return result;
+    }
+
+    private static void writeLinesHelper(BufferedWriter bufferedWriter, RAbstractStringVector lines, String sep) throws IOException {
+        for (int i = 0; i < lines.getLength(); i++) {
+            bufferedWriter.write(lines.getDataAt(i));
+            bufferedWriter.write(sep);
+        }
+    }
+
     private abstract static class DelegateRConnection extends RConnection {
         protected BaseRConnection base;
 
@@ -222,6 +260,7 @@ public abstract class ConnectionFunctions {
         public RStringVector getClassHierarchy() {
             return base.getClassHierarchy();
         }
+
     }
 
     private abstract static class DelegateReadRConnection extends DelegateRConnection {
@@ -243,6 +282,7 @@ public abstract class ConnectionFunctions {
         public OutputStream getOutputStream() {
             throw RInternalError.shouldNotReachHere();
         }
+
     }
 
     private abstract static class DelegateWriteRConnection extends DelegateRConnection {
@@ -269,7 +309,7 @@ public abstract class ConnectionFunctions {
 
         StdinConnection() {
             super(OpenMode.Read, null);
-            this.isOpen = true;
+            this.opened = true;
             setClass("terminal");
         }
 
@@ -307,7 +347,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            throw RInternalError.shouldNotReachHere();
+            throw new IOException(RError.Message.CANNOT_CLOSE_STANDARD_CONNECTIONS.message);
         }
 
         @Override
@@ -377,17 +417,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         @Override
         public String[] readLinesInternal(int n) throws IOException {
-            ArrayList<String> lines = new ArrayList<>();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                lines.add(line);
-                if (n > 0 && lines.size() == n) {
-                    break;
-                }
-            }
-            String[] result = new String[lines.size()];
-            lines.toArray(result);
-            return result;
+            return readLinesHelper(bufferedReader, n);
         }
 
         @Override
@@ -398,6 +428,8 @@ public abstract class ConnectionFunctions {
         @Override
         public void close() throws IOException {
             bufferedReader.close();
+            base.closed = true;
+
         }
     }
 
@@ -413,10 +445,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                bufferedWriter.write(lines.getDataAt(i));
-                bufferedWriter.write(sep);
-            }
+            writeLinesHelper(bufferedWriter, lines, sep);
         }
 
         @Override
@@ -427,6 +456,7 @@ public abstract class ConnectionFunctions {
         @Override
         public void close() throws IOException {
             bufferedWriter.close();
+            base.closed = true;
         }
 
         @Override
@@ -508,6 +538,7 @@ public abstract class ConnectionFunctions {
         @Override
         public void close() throws IOException {
             stream.close();
+            base.closed = true;
         }
 
     }
@@ -603,6 +634,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
+            base.closed = true;
         }
     }
 
@@ -620,6 +652,190 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    /**
+     * Base class for socket connections, which are not opened lazily.
+     */
+    private static class RSocketConnection extends BaseRConnection {
+        protected int port;
+        protected Socket socket;
+        protected InputStream inputStream;
+        protected OutputStream outputStream;
+        protected BufferedReader bufferedReader;
+        protected BufferedWriter bufferedWriter;
+
+        protected RSocketConnection(String modeString, int port) throws IOException {
+            super(modeString);
+            this.port = port;
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        protected void openStreams() throws IOException {
+            inputStream = socket.getInputStream();
+            outputStream = socket.getOutputStream();
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
+        }
+
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            checkOpen();
+            return readLinesHelper(bufferedReader, n);
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            checkOpen();
+            return inputStream;
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            checkOpen();
+            return outputStream;
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            checkOpen();
+            writeLinesHelper(bufferedWriter, lines, sep);
+            flush();
+        }
+
+        @Override
+        public void flush() throws IOException {
+            bufferedWriter.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            bufferedReader.close();
+            bufferedWriter.close();
+            socket.close();
+            closed = true;
+        }
+    }
+
+    private static class RServerSocketConnection extends RSocketConnection {
+        private ServerSocket serverSocket;
+
+        RServerSocketConnection(String modeString, int port) throws IOException {
+            super(modeString, port);
+            serverSocket = new ServerSocket(port);
+            socket = serverSocket.accept();
+            openStreams();
+            opened = true;
+        }
+    }
+
+    private static class RClientSocketConnection extends RSocketConnection {
+        private String host;
+
+        RClientSocketConnection(String modeString, String host, int port) throws IOException {
+            super(modeString, port);
+            socket = new Socket(host, port);
+            openStreams();
+            opened = true;
+        }
+    }
+
+    @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
+    public abstract static class SocketConnection extends RInvisibleBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected Object socketConnection(RAbstractStringVector host, double port, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, RAbstractIntVector timeout) {
+            return socketConnection(host, (int) port, server, blocking, open, encoding, timeout);
+        }
+
+        @SuppressWarnings("unused")
+        protected Object socketConnection(RAbstractStringVector host, int port, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, RAbstractIntVector timeout) {
+            controlVisibility();
+            try {
+                if (RRuntime.fromLogical(server)) {
+                    return new RServerSocketConnection(open.getDataAt(0), port);
+                } else {
+                    return new RClientSocketConnection(open.getDataAt(0), host.getDataAt(0), port);
+                }
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+        }
+    }
+
+    private static class URLRConnection extends BaseRConnection {
+        protected final String urlString;
+
+        protected URLRConnection(String url, String modeString) throws IOException {
+            super(modeString);
+            this.urlString = url;
+            if (mode != OpenMode.Lazy) {
+                createDelegateConnection();
+            }
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            DelegateRConnection delegate = null;
+            switch (mode) {
+                case Read:
+                    delegate = new URLReadRConnection(this);
+                    break;
+                default:
+                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
+            }
+            setDelegate(delegate, "url");
+        }
+    }
+
+    private static class URLReadRConnection extends DelegateReadRConnection {
+
+        private InputStream inputStream;
+        private BufferedReader bufferedReader;
+
+        protected URLReadRConnection(URLRConnection base) throws MalformedURLException, IOException {
+            super(base);
+            URL url = new URL(base.urlString);
+            inputStream = url.openStream();
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        }
+
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            return readLinesHelper(bufferedReader, n);
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return inputStream;
+        }
+
+        @Override
+        public void close() throws IOException {
+            bufferedReader.close();
+            base.closed = true;
+        }
+
+    }
+
+    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"})
+    public abstract static class URLConnection extends RInvisibleBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected Object urlConnection(RAbstractStringVector url, RAbstractStringVector open, byte blocking, RAbstractStringVector encoding) {
+            controlVisibility();
+            try {
+                return new URLRConnection(url.getDataAt(0), open.getDataAt(0));
+            } catch (MalformedURLException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNSUPPORTED_URL_SCHEME);
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+        }
+    }
+
     @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "..."})
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
@@ -629,8 +845,8 @@ public abstract class ConnectionFunctions {
             if (con instanceof RConnection) {
                 try {
                     ((RConnection) con).close();
-                } catch (IOException e) {
-                    throw RInternalError.unimplemented();
+                } catch (IOException ex) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
                 }
                 return RNull.instance;
             } else {
