@@ -20,29 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core.drawables;
 
+import com.oracle.truffle.r.nodes.graphics.core.geometry.CoordinateSystem;
 import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
 
-public interface GraphicsDevice {
-    void deactivate();
+import java.awt.*;
+import java.util.stream.IntStream;
 
-    void activate();
+/**
+ * Able to render a text on {@link Graphics2D}
+ */
+public class StringDrawableObject extends CoordinatesDrawableObject {
+    private final String[] strings;
 
-    void close();
+    public StringDrawableObject(CoordinateSystem coordinateSystem, Coordinates coordinates, String[] strings) {
+        super(coordinateSystem, coordinates);
+        this.strings = strings;
+    }
 
-    DrawingParameters getDrawingParameters();
-
-    void setMode(Mode newMode);
-
-    Mode getMode();
-
-    void setClipRect(double x1, double y1, double x2, double y2);
-
-    void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
-
-    public enum Mode {
-        GRAPHICS_ON,    // allow graphics output
-        GRAPHICS_OFF    // disable graphics output
+    @Override
+    public void drawOn(Graphics2D g2) {
+        Coordinates dstCoordinates = getDstCoordinates();
+        int[] xCoords = dstCoordinates.getXCoordinatesAsInts();
+        int[] yCoords = dstCoordinates.getYCoordinatesAsInts();
+        IntStream.range(0, strings.length).forEach(i -> g2.drawString(strings[i], xCoords[i], yCoords[i]));
     }
 }

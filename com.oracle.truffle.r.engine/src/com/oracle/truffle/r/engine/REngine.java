@@ -72,8 +72,6 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private RBuiltinLookup builtinLookup;
     @CompilationFinal private RFunction evalFunction;
 
-    private static final GraphicsEngine graphicsEngine = new GraphicsEngineImpl();
-
     private REngine() {
     }
 
@@ -126,11 +124,15 @@ public final class REngine implements RContext.Engine {
 
     private static void registerBaseGraphicsSystem() {
         try {
-            graphicsEngine.registerGraphicsSystem(new BaseGraphicsSystem());
+            getGraphicsEngine().registerGraphicsSystem(new BaseGraphicsSystem());
         } catch (Exception e) {
             ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
             consoleHandler.println("Unable to register base graphics system");
         }
+    }
+
+    private static GraphicsEngine getGraphicsEngine() {
+        return GraphicsEngineImpl.getInstance();
     }
 
     public static REngine getInstance() {

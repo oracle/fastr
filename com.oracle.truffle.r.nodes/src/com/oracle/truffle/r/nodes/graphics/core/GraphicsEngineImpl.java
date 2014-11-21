@@ -22,19 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.graphics.core;
 
+import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.nodes.graphics.MockGraphicsDevices;
+import com.oracle.truffle.r.nodes.graphics.MockGraphicsDevice;
 
 import static com.oracle.truffle.r.nodes.graphics.core.GraphicsEvent.GE_FINAL_STATE;
 import static com.oracle.truffle.r.nodes.graphics.core.GraphicsEvent.GE_INIT_STATE;
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {
-    static final int MAX_GRAPHICS_SYSTEMS_AMOUNT = 24;  //GNUR: GraphicsEngine.h
-    static final int MAX_GRAPHICS_DEVICES_AMOUNT = 64;
+    private static final int MAX_GRAPHICS_SYSTEMS_AMOUNT = 24;  //GNUR: GraphicsEngine.h
+    private static final int MAX_GRAPHICS_DEVICES_AMOUNT = 64;
     private static final int NULL_GRAPHICS_DEVICE_INDEX = 0;
     private static final int LAST_GRAPHICS_DEVICE_INDEX = MAX_GRAPHICS_DEVICES_AMOUNT - 1;
     private static final int NOT_FOUND = -1;
+    private static final GraphicsEngine instance = new GraphicsEngineImpl();
 
     /**
      * According to GNUR devices.c: 0 - null device, 63 - empty.
@@ -46,8 +48,11 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     private int devicesAmountWithoutNullDevice = 0;
     private GraphicsDevice currentGraphicsDevice = NullGraphicsDevice.getInstance();
 
+    public static GraphicsEngine getInstance() {
+        return instance;
+    }
 
-    public GraphicsEngineImpl() {
+    private GraphicsEngineImpl() {
         initNullGraphicsDevice();
     }
 
@@ -191,7 +196,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     private void installCurrentGraphicsDevice() throws Exception {
-        registerGraphicsDevice(new MockGraphicsDevices());
+        registerGraphicsDevice(new MockGraphicsDevice());
     }
 
     public GraphicsDevice getGraphicsDeviceNextTo(GraphicsDevice graphicsDevice) {
@@ -202,11 +207,19 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         if (startIndex == NOT_FOUND) {
             return getNullGraphicsDevice();
         }
-        GraphicsDevice foundDevice = findNotNullGraphicDevice(startIndex + 1, graphicsDevices.length, SearchDirection.FORWARD);
+        GraphicsDevice foundDevice = findNotNullGraphicsDevice(startIndex + 1, graphicsDevices.length, SearchDirection.FORWARD);
         if (foundDevice == null) {
-            foundDevice = findNotNullGraphicDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, SearchDirection.BACKWARD);
+            foundDevice = findNotNullGraphicsDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, SearchDirection.BACKWARD);
         }
         return foundDevice == null ? getNullGraphicsDevice() : foundDevice;
+    }
+
+    @Override
+    public void setCurrentGraphicsDeviceMode(GraphicsDevice.Mode newMode) {
+        GraphicsDevice currentDevice = getCurrentGraphicsDevice();
+        if (currentDevice.getMode() != newMode) {
+            currentDevice.setMode(newMode);
+        }
     }
 
     public GraphicsDevice getGraphicsDevicePrevTo(GraphicsDevice graphicsDevice) {
@@ -217,9 +230,9 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         if (startIndex == NOT_FOUND) {
             return getNullGraphicsDevice();
         }
-        GraphicsDevice foundDevice = findNotNullGraphicDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, SearchDirection.BACKWARD);
+        GraphicsDevice foundDevice = findNotNullGraphicsDevice(startIndex - 1, NULL_GRAPHICS_DEVICE_INDEX, SearchDirection.BACKWARD);
         if (foundDevice == null) {
-            foundDevice = findNotNullGraphicDevice(startIndex + 1, graphicsDevices.length, SearchDirection.FORWARD);
+            foundDevice = findNotNullGraphicsDevice(startIndex + 1, graphicsDevices.length, SearchDirection.FORWARD);
         }
         return foundDevice == null ? getNullGraphicsDevice() : foundDevice;
     }
@@ -238,7 +251,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         return NOT_FOUND;
     }
 
-    private GraphicsDevice findNotNullGraphicDevice(int startIndexInclusive, int endIndexNotInclusive, SearchDirection direction) {
+    private GraphicsDevice findNotNullGraphicsDevice(int startIndexInclusive, int endIndexNotInclusive, SearchDirection direction) {
         switch (direction) {
             case FORWARD:
                 for (int i = startIndexInclusive; i < endIndexNotInclusive; i++) {
@@ -261,6 +274,17 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
 
     private GraphicsDevice getNullGraphicsDevice() {
         return graphicsDevices[NULL_GRAPHICS_DEVICE_INDEX];
+    }
+
+    @Override
+    public void setCurrentGraphicsDeviceClipRect(double x1, double y1, double x2, double y2) {
+        //todo transcribe from GESetClip() (engine.c)
+        getCurrentGraphicsDevice().setClipRect(0,0,0,0);
+    }
+
+    @Override
+    public void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters) {
+        getCurrentGraphicsDevice().drawPolyline(coordinates, drawingParameters);
     }
 
     private enum SearchDirection {

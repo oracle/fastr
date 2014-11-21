@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.graphics.core;
 
+import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
+
 final class NullGraphicsDevice implements GraphicsDevice {
     private static final NullGraphicsDevice instance = new NullGraphicsDevice();
 
@@ -31,16 +33,45 @@ final class NullGraphicsDevice implements GraphicsDevice {
 
     @Override
     public void deactivate() {
-        throw new IllegalStateException("Call to 'deactivate' of Null-device");
+        throw createExceptionForMethod("deactivate");
     }
 
     @Override
     public void activate() {
-        throw new IllegalStateException("Call to 'activate' of Null-device");
+        throw createExceptionForMethod("activate");
     }
 
     @Override
     public void close() {
-        throw new IllegalStateException("Call to 'close' of Null-device");
+        throw createExceptionForMethod("close");
+    }
+
+    @Override
+    public DrawingParameters getDrawingParameters() {
+        throw createExceptionForMethod("getDrawingParameters");
+    }
+
+    @Override
+    public void setMode(Mode newMode) {
+        throw createExceptionForMethod("setMode");
+    }
+
+    @Override
+    public Mode getMode() {
+        throw createExceptionForMethod("getMode");
+    }
+
+    @Override
+    public void setClipRect(double x1, double y1, double x2, double y2) {
+        throw createExceptionForMethod("setClipRect");
+    }
+
+    @Override
+    public void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters) {
+        throw createExceptionForMethod("drawPolyline");
+    }
+
+    private RuntimeException createExceptionForMethod(String methodName) {
+        return new IllegalStateException("Call to " + methodName + " of Null-device");
     }
 }
