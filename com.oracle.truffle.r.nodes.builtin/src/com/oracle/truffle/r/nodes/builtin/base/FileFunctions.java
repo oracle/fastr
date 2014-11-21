@@ -42,6 +42,40 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FileFunctions {
 
+    @RBuiltin(name = "file.access", kind = INTERNAL, parameterNames = {"names", "mode"})
+    public abstract static class FileAccess extends RBuiltinNode {
+        private static final int EXECUTE = 1;
+        private static final int WRITE = 2;
+        private static final int READ = 4;
+
+        @Specialization
+        @TruffleBoundary
+        public Object fileAccess(RAbstractStringVector names, double modeD) {
+            int mode = (int) modeD;
+            if (mode == RRuntime.INT_NA || mode < 0 || mode > 7) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
+            }
+            int[] data = new int[names.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                File file = new File(Utils.tildeExpand(names.getDataAt(i)));
+                if (file.exists()) {
+                    if ((mode & EXECUTE) != 0 && !file.canExecute()) {
+                        data[i] = -1;
+                    }
+                    if ((mode & READ) != 0 && !file.canRead()) {
+                        data[i] = -1;
+                    }
+                    if ((mode & WRITE) != 0 && !file.canWrite()) {
+                        data[i] = -1;
+                    }
+                } else {
+                    data[i] = -1;
+                }
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
     @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"})
     public abstract static class FileCreate extends RBuiltinNode {
 
