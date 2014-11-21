@@ -189,7 +189,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     @Override
     public RIntVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete);
     }
 

@@ -237,7 +237,6 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         return foundDevice == null ? getNullGraphicsDevice() : foundDevice;
     }
 
-
     private <T> int findElementIndexInArray(T element, T[] array) {
         return findElementIndexInArray(0, array.length, element, array);
     }

@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Internal component of the {@code parse} base package function.
@@ -39,6 +40,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * <pre>
  * parse(file, n, text, prompt, srcfile, encoding)
  * </pre>
+ *
+ * TODO handle case when {@code srcFile != NULL};
  */
 @RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"})
 public abstract class Parse extends RBuiltinNode {
@@ -68,9 +71,10 @@ public abstract class Parse extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected Object parse(RConnection conn, RNull n, String text, String prompt, Object srcFile, String encoding) {
+    @Specialization(guards = "parseEntire")
+    protected Object parse(RConnection conn, Object n, RAbstractStringVector textVec, String prompt, Object srcFile, String encoding) {
         controlVisibility();
+        String text = coalesce(((RStringVector) textVec).getDataWithoutCopying());
         if (text.length() == 0) {
             return RDataFactory.createExpression(RDataFactory.createList());
         }
@@ -94,6 +98,18 @@ public abstract class Parse extends RBuiltinNode {
             sb.append('\n');
         }
         return sb.toString();
+    }
+
+    public static boolean parseEntire(Object n) {
+        if (n == RNull.instance) {
+            return true;
+        } else if (n instanceof Double && (((Double) n == -1 || ((Double) n) == RRuntime.DOUBLE_NA))) {
+            return true;
+        } else if (n instanceof Integer && (((Integer) n == -1 || ((Integer) n) == RRuntime.INT_NA))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

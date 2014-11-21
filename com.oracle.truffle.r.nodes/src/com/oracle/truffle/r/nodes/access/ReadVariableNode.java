@@ -314,8 +314,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (enclosingFrame != null) {
                 ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, FrameSlotNode.create(symbol.getName()), symbol) : ReadSuperVariableNodeFactory.create(
                                 null, FrameSlotNode.create(symbol.getName()), symbol);
-                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue), readMissing,
-                                forcePromise, mode);
+                ReadVariableNode nextInChainNode = new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue);
+                ReadVariableNode nextDescriptorNode = new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue);
+                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, nextInChainNode, nextDescriptorNode, readMissing, forcePromise, mode);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
                 return replace(resolveNonFrame()).execute(frame);
@@ -339,7 +340,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
                 ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(FrameSlotNode.create(symbol.getName()), symbol);
-                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue), mode, readMissing, forcePromise);
+                ReadVariableNode nextInChainNode = new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue);
+                ReadVariableNode nextDescriptorNode = new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue);
+                readNode = new ReadVariableVirtualNode(actualReadNode, nextInChainNode, nextDescriptorNode, mode, readMissing, forcePromise);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
                 readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue), symbol);
@@ -416,16 +419,18 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public static final class ReadVariableVirtualNode extends ReadVariableNode implements HasMode {
 
         @Child private ReadLocalVariableNode readNode;
-        @Child private ReadVariableNode nextNode;
+        @Child private ReadVariableNode nextInChainNode;
+        @Child private ReadVariableNode nextDescriptorNode;
         private final RType mode;
         private final boolean readMissing;
         private final boolean forcePromise;
 
         private final BranchProfile hasValueProfile = BranchProfile.create();
 
-        ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode, RType mode, boolean readMissing, boolean forcePromise) {
+        ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextInChainNode, ReadVariableNode nextDescriptorNode, RType mode, boolean readMissing, boolean forcePromise) {
             this.readNode = readNode;
-            this.nextNode = nextNode;
+            this.nextInChainNode = nextInChainNode;
+            this.nextDescriptorNode = nextDescriptorNode;
             this.mode = mode;
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
@@ -434,14 +439,20 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
-            if (readNode.getFrameSlotNode().hasValue(frame)) {
+
+            FrameSlotNode fsn = readNode.getFrameSlotNode();
+            if (fsn.isWrongDescriptor(frame.getFrameDescriptor())) {
+                return nextDescriptorNode.execute(frame);
+            }
+
+            if (fsn.hasValue(frame)) {
                 hasValueProfile.enter();
                 Object result = readNode.execute(frame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
                     return result;
                 }
             }
-            return nextNode.execute(frame, RArguments.getEnclosingFrame(frame));
+            return nextInChainNode.execute(frame, RArguments.getEnclosingFrame(frame));
         }
 
         @Override
@@ -452,7 +463,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Override
         public Symbol getSymbol() {
-            return nextNode.getSymbol();
+            return nextInChainNode.getSymbol();
         }
 
         @Override
@@ -544,7 +555,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public static final class ReadVariableMaterializedNode extends ReadVariableNode implements HasMode {
 
         @Child private ReadSuperVariableNode readNode;
-        @Child private ReadVariableNode nextNode;
+        @Child private ReadVariableNode nextInChainNode;
+        @Child private ReadVariableNode nextDescriptorNode;
+        @Child private ReadVariableNode nullNode;
         private final RType mode;
         private final boolean readMissing;
         private final boolean forcePromise;
@@ -552,9 +565,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final BranchProfile hasValueProfile = BranchProfile.create();
 
-        ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, boolean readMissing, boolean forcePromise, RType mode) {
+        ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextInChainNode, ReadVariableNode nextDescriptorNode, boolean readMissing, boolean forcePromise, RType mode) {
             this.readNode = readNode;
-            this.nextNode = nextNode;
+            this.nextInChainNode = nextInChainNode;
+            this.nextDescriptorNode = nextDescriptorNode;
             this.mode = mode;
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
@@ -569,20 +583,44 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             controlVisibility();
+
+            // Is this the end of the materialized frame chain?
+            if (enclosingFrame == null) {
+                return checkNullNode().execute(frame, null);
+            }
+
+            // Is this node responsible for the given materialized frame?
             MaterializedFrame typedEnclosingFrame = frameTypeProfile.profile(enclosingFrame);
-            if (readNode.getFrameSlotNode().hasValue(typedEnclosingFrame)) {
+            FrameSlotNode fsn = readNode.getFrameSlotNode();
+            if (fsn.isWrongDescriptor(enclosingFrame.getFrameDescriptor())) {
+                return nextDescriptorNode.execute(frame, typedEnclosingFrame);
+            }
+
+            MaterializedFrame nextFrame = RArguments.getEnclosingFrame(typedEnclosingFrame);
+
+            if (fsn.hasValue(typedEnclosingFrame)) {
                 hasValueProfile.enter();
+
                 Object result = readNode.execute(frame, typedEnclosingFrame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
                     return result;
                 }
             }
-            return nextNode.execute(frame, RArguments.getEnclosingFrame(typedEnclosingFrame));
+
+            return nextInChainNode.execute(frame, nextFrame);
+        }
+
+        private ReadVariableNode checkNullNode() {
+            if (nullNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                nullNode = UnknownVariableNodeFactory.create(getSymbol(), mode, readMissing, forcePromise);
+            }
+            return nullNode;
         }
 
         @Override
         public Symbol getSymbol() {
-            return nextNode.getSymbol();
+            return nextInChainNode.getSymbol();
         }
 
         @Override

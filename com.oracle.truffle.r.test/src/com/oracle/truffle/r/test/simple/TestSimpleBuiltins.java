@@ -19,6 +19,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testTable() {
+        assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
+    }
+
+    @Test
     public void testScan() {
         // from scan's documentation
         assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
@@ -757,6 +762,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
 
         assertEval("{ as.vector(NULL, \"list\") }");
+        assertEval("{ as.vector(NULL) }");
     }
 
     @Test
@@ -848,6 +854,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- c(x=1) ; as.list(l) }");
+        assertEval("{ x<-7; as.list(environment()) }");
+        assertEval("{ x<-7; .y<-42; as.list(environment()) }");
+        assertEval("{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }");
+        assertEval("{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[[\"f\"]]; f_copy(); x }");
 
         // as.matrix
         assertEval("{ as.matrix(1) }");
@@ -1699,6 +1709,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
+    }
+
+    @Test
+    public void testNames() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
     }
 
     @Test
@@ -2787,6 +2802,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+        assertEval("{ deparse(expression(a+b, c+d)) }");
     }
 
     @Test
@@ -2794,6 +2813,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testDeparseIgnore() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
         assertEval("{ deparse(nrow) }");
+        // should deparse as structure(...
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
@@ -3276,6 +3297,12 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; oldClass(x) }");
 
+        // test setting class on other types
+        assertEval("{ x <- new.env(); class(x); class(x)<-\"abc\"; class(x); class(x)<-NULL; class(x) }");
+        assertEval("{ x <- new.env(); class(x); class(x)<-c(\"abc\", \"xyz\"); class(x); class(x)<-NULL; class(x) }");
+
+        assertEval("{ x <- function() { }; class(x); class(x)<-\"abc\"; class(x); class(x)<-NULL; class(x) }");
+        assertEval("{ x <- function() { }; class(x); class(x)<-c(\"abc\", \"xyz\"); class(x); class(x)<-NULL; class(x) }");
     }
 
     @Test
@@ -3485,11 +3512,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
         assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
         assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
-    }
-
-    @Test
-    @Ignore
-    public void testLapplyIgnore() {
         assertEval("{ lapply(1:3, sum) }");
         assertEval("{ lapply(1:3, sum, 2) }");
         assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");

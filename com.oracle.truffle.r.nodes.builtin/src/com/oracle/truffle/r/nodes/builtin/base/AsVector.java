@@ -206,6 +206,12 @@ public abstract class AsVector extends RBuiltinNode {
         return result;
     }
 
+    @Specialization(guards = "modeIsAny")
+    protected RNull asVector(RNull x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return x;
+    }
+
     @Specialization(guards = "modeIsPairList")
     protected Object asVectorPairList(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -272,6 +278,10 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+        return RType.Any.getName().equals(mode);
+    }
+
+    protected boolean modeIsAny(@SuppressWarnings("unused") RNull x, String mode) {
         return RType.Any.getName().equals(mode);
     }
 

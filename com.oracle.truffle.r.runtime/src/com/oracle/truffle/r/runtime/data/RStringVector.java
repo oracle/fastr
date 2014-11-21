@@ -147,7 +147,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     public RStringVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
     }
 

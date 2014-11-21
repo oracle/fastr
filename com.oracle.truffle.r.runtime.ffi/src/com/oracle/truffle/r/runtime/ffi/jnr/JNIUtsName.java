@@ -20,29 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 
-/**
- * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
- * Truffle sense.
- */
-@ValueType
-public class RSymbol extends RAttributeStorage implements RAttributable {
+public class JNIUtsName implements UtsName {
+    String sysname;
+    String release;
+    String version;
+    String machine;
 
-    private final String name;
+    private static JNIUtsName singleton;
 
-    public RSymbol(String name) {
-        this.name = name;
+    public static UtsName get() {
+        if (singleton == null) {
+            singleton = new JNIUtsName();
+        }
+        singleton.getutsname();
+        return singleton;
     }
 
-    public String getName() {
-        return name;
+    public String sysname() {
+        return sysname;
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public String release() {
+        return release;
     }
+
+    public String version() {
+        return version;
+    }
+
+    public String machine() {
+        return machine;
+    }
+
+    private native void getutsname();
+
 }

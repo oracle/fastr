@@ -23,12 +23,14 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
+import com.oracle.truffle.r.runtime.ffi.*;
 
 public enum RVersionInfo {
     // @formatter:off
     Platform(),
     Arch(java.lang.System.getProperty("os.arch")),
-    OS(java.lang.System.getProperty("os.name")),
+    OS(),
     System(),
     Major(RVersionNumber.MAJOR),
     Minor(RVersionNumber.MINOR_PATCH), // GnuR compatibility
@@ -68,14 +70,22 @@ public enum RVersionInfo {
         return value;
     }
 
+    private static String toFirstLower(String s) {
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
+
     public static void initialize() {
+        UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
+        String osName = toFirstLower(utsname.sysname());
+        String vendor = osName.equals("darwin") ? "apple" : "unknown";
+        OS.value = osName + utsname.release();
         for (int i = 0; i < VALUES.length; i++) {
             RVersionInfo data = VALUES[i];
             LIST_NAMES[i] = data.listName;
             if (data.value == null) {
                 switch (data) {
                     case Platform:
-                        data.value = Arch.value + "-unknown-" + OS.value;
+                        data.value = Arch.value + "-" + vendor + "-" + OS.value;
                         break;
                     case System:
                         data.value = Arch.value + ", " + OS.value;

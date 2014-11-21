@@ -103,6 +103,7 @@ public class BaseOptions implements ROptions.Handler {
         ROptions.setValue(Name.Error.rName, RNull.instance);
         ROptions.setValue(Name.Expressions.rName, RDataFactory.createIntVectorFromScalar(5000));
         ROptions.setValue(Name.KeepSourcePkgs.rName, RDataFactory.createLogicalVectorFromScalar(false));
+        ROptions.setValue(Name.KeepSource.rName, RDataFactory.createLogicalVectorFromScalar(!RContext.isHeadless()));
         ROptions.setValue(Name.MaxPrint.rName, RDataFactory.createIntVectorFromScalar(99999));
         ROptions.setValue(Name.OutDec.rName, RDataFactory.createStringVector("."));
         ROptions.setValue(Name.Prompt.rName, RDataFactory.createStringVector("> "));
@@ -119,8 +120,5 @@ public class BaseOptions implements ROptions.Handler {
     }
 
     public void addOptions() {
-        for (Name name : Name.values()) {
-            ROptions.addOption(name.rName, null);
-        }
     }
 }

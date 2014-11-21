@@ -70,7 +70,15 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     @Override
     @TruffleBoundary
     public String toString() {
-        return Arrays.toString(data);
+        StringBuilder str = new StringBuilder();
+        str.append('[');
+        for (int i = 0; i < getLength(); i++) {
+            if (i > 0) {
+                str.append(", ");
+            }
+            str.append(RRuntime.logicalToString(getDataAt(i)));
+        }
+        return str.append(']').toString();
     }
 
     @Override
@@ -132,7 +140,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     @Override
     public RLogicalVector copyResized(int size, boolean fillNA) {
-        boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
+        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete);
     }
 

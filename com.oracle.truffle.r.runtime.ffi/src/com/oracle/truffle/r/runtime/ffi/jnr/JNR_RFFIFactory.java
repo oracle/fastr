@@ -63,6 +63,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         long mkdtemp(@In @Out ByteBuffer template);
 
         long strtol(@In String dir, @In String end, int base);
+
+        int uname(@In long[] utsname);
     }
 
     private static class LibCXProvider {
@@ -180,6 +182,11 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
 
     public String dlerror() {
         return com.kenai.jffi.Library.getLastError();
+    }
+
+    public UtsName uname() {
+        // TODO do the grunt work to make this a first class JNR call?
+        return JNIUtsName.get();
     }
 
     /*

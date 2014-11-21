@@ -1309,6 +1309,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
+        elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
             if (seenNaOrNegative(p, value)) {
@@ -1498,6 +1499,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
+        elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
             if (seenNaOrNegative(p, value)) {
@@ -1612,6 +1614,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
+        elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
             if (seenNaOrNegative(p, value)) {
@@ -1762,6 +1765,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
+        elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
             if (seenNaOrNegative(p, value)) {
@@ -1945,6 +1949,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RIntVector p = (RIntVector) positions[positions.length - 1];
         int accDstDimensions = replacementLength / p.getLength();
         posNACheck.enable(p);
+        elementNACheck.enable(value);
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
@@ -1982,6 +1987,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
+        elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
             if (seenNaOrNegative(p, value)) {

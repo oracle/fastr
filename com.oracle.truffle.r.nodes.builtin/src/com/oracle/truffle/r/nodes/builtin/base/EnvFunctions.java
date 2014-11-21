@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -31,8 +32,10 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -362,4 +365,94 @@ public class EnvFunctions {
             return RDataFactory.createLogicalVectorFromScalar(false);
         }
     }
+
+    @RBuiltin(name = "env2list", kind = INTERNAL, parameterNames = {"x", "all.names"})
+    public abstract static class EnvToList extends RBuiltinNode {
+
+        @Child private CopyNode copy;
+
+        private Object copy(VirtualFrame frame, Object operand) {
+            if (copy == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                copy = insert(CopyNodeFactory.create(null));
+            }
+            return copy.execute(frame, operand);
+        }
+
+        @Specialization
+        protected RList envToListAllNames(VirtualFrame frame, REnvironment env, RAbstractLogicalVector allNamesVec) {
+            // according to the docs it is expected to be slow as it creates a copy of environment
+            // objects
+            controlVisibility();
+            boolean allNames = allNamesVec.getLength() == 0 || allNamesVec.getDataAt(0) == RRuntime.LOGICAL_FALSE ? false : true;
+            RStringVector keys = env.ls(allNames, null);
+            Object[] data = new Object[keys.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                // TODO: not all types are handled (e.g. copying environments)
+                Object o = env.get(keys.getDataAt(i));
+                data[i] = copy(frame, o);
+            }
+            return RDataFactory.createList(data, keys.getLength() == 0 ? null : keys.copy());
+        }
+
+    }
+
+    @NodeChild("operand")
+    protected abstract static class CopyNode extends RNode {
+
+        protected abstract Object execute(VirtualFrame frame, Object o);
+
+        @Child private CopyNode recursiveCopy;
+        private final PromiseProfile promiseProfile = new PromiseProfile();
+
+        private Object recursiveCopy(VirtualFrame frame, Object operand) {
+            if (recursiveCopy == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                recursiveCopy = insert(CopyNodeFactory.create(null));
+            }
+            return recursiveCopy.execute(frame, operand);
+        }
+
+        @Specialization
+        RNull copy(RNull n) {
+            return n;
+        }
+
+        @Specialization
+        RAbstractVector copy(RAbstractVector v) {
+            return v.copy();
+        }
+
+        @Specialization
+        RLanguage copy(RLanguage l) {
+            return l.copy();
+        }
+
+        @Specialization
+        RFunction copy(RFunction f) {
+            return f.copy();
+        }
+
+        @Specialization
+        RSymbol copy(RSymbol s) {
+            return s;
+        }
+
+        @Specialization
+        RSymbol copy(@SuppressWarnings("unused") RMissing m) {
+            return RDataFactory.createSymbol(" ");
+        }
+
+        @Specialization
+        Object copy(VirtualFrame frame, RPromise promise) {
+            return recursiveCopy(frame, promise.evaluate(frame, promiseProfile));
+        }
+
+        @Fallback
+        Object copy(@SuppressWarnings("unused") Object o) {
+            throw Utils.nyi("copying of object in the environment not supported");
+        }
+
+    }
+
 }

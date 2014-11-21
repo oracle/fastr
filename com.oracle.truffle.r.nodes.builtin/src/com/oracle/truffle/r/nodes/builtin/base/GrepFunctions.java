@@ -42,7 +42,7 @@ public class GrepFunctions {
      * Temporary adapter class that handles the check for all the arguments that we don't yet
      * implement.
      */
-    public abstract static class ExtraArgsChecker extends RBuiltinNode {
+    public abstract static class CommonCodeAdapter extends RBuiltinNode {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -86,7 +86,7 @@ public class GrepFunctions {
     }
 
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
-    public abstract static class Grep extends ExtraArgsChecker {
+    public abstract static class Grep extends CommonCodeAdapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -134,7 +134,7 @@ public class GrepFunctions {
     }
 
     @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"})
-    public abstract static class GrepL extends ExtraArgsChecker {
+    public abstract static class GrepL extends CommonCodeAdapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -143,9 +143,9 @@ public class GrepFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
 
-        @Specialization
+        @Specialization(guards = "!isFixed")
         @SuppressWarnings("unused")
-        protected Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected Object grepl(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);
@@ -155,10 +155,27 @@ public class GrepFunctions {
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
+
+        @Specialization(guards = "isFixed")
+        @SuppressWarnings("unused")
+        protected Object greplFixed(String pattern, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+            controlVisibility();
+            checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
+            byte[] data = new byte[vector.getLength()];
+            for (int i = 0; i < vector.getLength(); i++) {
+                data[i] = RRuntime.asLogical(vector.getDataAt(i).contains(pattern));
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @SuppressWarnings("unused")
+        protected boolean isFixed(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+            return RRuntime.fromLogical(fixed);
+        }
     }
 
     @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
-    public abstract static class Sub extends ExtraArgsChecker {
+    public abstract static class Sub extends CommonCodeAdapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -250,7 +267,7 @@ public class GrepFunctions {
     }
 
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
-    public abstract static class Regexp extends ExtraArgsChecker {
+    public abstract static class Regexp extends CommonCodeAdapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -324,7 +341,7 @@ public class GrepFunctions {
     }
 
     @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "value", "fixed", "useBytes"})
-    public abstract static class AGrep extends ExtraArgsChecker {
+    public abstract static class AGrep extends CommonCodeAdapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -360,7 +377,7 @@ public class GrepFunctions {
     }
 
     @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "fixed", "useBytes"})
-    public abstract static class AGrepL extends ExtraArgsChecker {
+    public abstract static class AGrepL extends CommonCodeAdapter {
 
         @Override
         public RNode[] getParameterValues() {

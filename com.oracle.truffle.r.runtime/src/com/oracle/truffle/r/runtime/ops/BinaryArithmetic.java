@@ -77,6 +77,10 @@ public abstract class BinaryArithmetic extends Operation {
         return supportsIntResult;
     }
 
+    public boolean introducesNA() {
+        return false;
+    }
+
     public abstract String opName();
 
     public abstract int op(int left, int right);
@@ -157,6 +161,11 @@ public abstract class BinaryArithmetic extends Operation {
     private static final class AddOverflow extends Add {
 
         @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
         public int op(int left, int right) {
             // Borrowed from ExactMath.addExact
             int r = left + right;
@@ -209,6 +218,11 @@ public abstract class BinaryArithmetic extends Operation {
     }
 
     private static final class SubtractOverflow extends Subtract {
+
+        @Override
+        public boolean introducesNA() {
+            return true;
+        }
 
         @Override
         public int op(int left, int right) {
@@ -282,6 +296,11 @@ public abstract class BinaryArithmetic extends Operation {
     }
 
     private static final class MultiplyOverflow extends Multiply {
+
+        @Override
+        public boolean introducesNA() {
+            return true;
+        }
 
         @Override
         public int op(int left, int right) {
@@ -379,6 +398,11 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public boolean introducesNA() {
+            return true;
+        }
+
+        @Override
         public String opName() {
             return "%/%";
         }
@@ -421,6 +445,11 @@ public abstract class BinaryArithmetic extends Operation {
 
         public Mod() {
             super(false, false, true);
+        }
+
+        @Override
+        public boolean introducesNA() {
+            return true;
         }
 
         @Override
@@ -793,6 +822,11 @@ public abstract class BinaryArithmetic extends Operation {
     }
 
     private static final class PowFull extends Pow {
+
+        @Override
+        public boolean introducesNA() {
+            return true;
+        }
 
         private final ConditionProfile pow2 = ConditionProfile.createBinaryProfile();
         private final ConditionProfile one = ConditionProfile.createBinaryProfile();

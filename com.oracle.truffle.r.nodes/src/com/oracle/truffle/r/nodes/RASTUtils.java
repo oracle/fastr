@@ -27,6 +27,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -73,6 +74,14 @@ public class RASTUtils {
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
+        } else if (argNode instanceof VarArgPromiseNode) {
+            RPromise p = ((VarArgPromiseNode) argNode).getPromise();
+            if (p.getRep() instanceof WrapArgumentNode) {
+                WrapArgumentNode n = (WrapArgumentNode) p.getRep();
+                return createLanguageElement(n.getOperand());
+            } else {
+                return createLanguageElement((RNode) p.getRep());
+            }
         } else {
             return RDataFactory.createLanguage(argNode);
         }

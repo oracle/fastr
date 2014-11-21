@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,41 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import java.nio.charset.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Names extends RBuiltinNode {
+public class LocaleFunctions {
 
-    private ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
-    private ConditionProfile hasDimNames = ConditionProfile.createBinaryProfile();
+    @RBuiltin(name = "Sys.getlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category"})
+    public abstract static class GetLocale extends RBuiltinNode {
+        @Specialization
+        protected Object getLocal(RAbstractStringVector categoryVec) {
+            controlVisibility();
+            String category = categoryVec.getDataAt(0);
+            switch (category) {
+                case "LC_CTYPE":
+                    return RDataFactory.createStringVector(Charset.defaultCharset().name());
+                default:
+                    RError.nyi(getEncapsulatingSourceSection(), "category not implemented: " + category);
 
-    @Specialization
-    protected Object getNames(RAbstractContainer container) {
-        controlVisibility();
-        if (hasNames.profile(container.getNames() != null && container.getNames() != RNull.instance)) {
-            return container.getNames();
-        } else if (hasDimNames.profile(container.getDimNames() != null && container.getDimNames().getLength() == 1)) {
-            return container.getDimNames().getDataAt(0);
-        } else {
+            }
+            return RNull.instance;
+        }
+
+    }
+
+    @RBuiltin(name = "Sys.setlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category, locale"})
+    public abstract static class SetLocale extends RBuiltinNode {
+        @Specialization
+        protected Object setLocal(@SuppressWarnings("unused") RAbstractStringVector category) {
+            controlVisibility();
+            RError.nyi(getEncapsulatingSourceSection(), "setlocale");
             return RNull.instance;
         }
     }
-
-    @Fallback
-    protected RNull getNames(@SuppressWarnings("unused") Object operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
 }

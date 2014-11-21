@@ -22,27 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
-
 /**
- * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
- * Truffle sense.
+ * An adaptor class for the several R types that are attributable. Only useful for classes that
+ * don't already inherit from another class, otherwise just cut and paste this code.
  */
-@ValueType
-public class RSymbol extends RAttributeStorage implements RAttributable {
+public abstract class RAttributeStorage {
+    protected RAttributes attributes;
 
-    private final String name;
-
-    public RSymbol(String name) {
-        this.name = name;
+    public RAttributes getAttributes() {
+        return attributes;
     }
 
-    public String getName() {
-        return name;
+    public RAttributes initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributes.create();
+        }
+        return attributes;
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
 }

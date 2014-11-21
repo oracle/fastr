@@ -104,4 +104,18 @@ public interface BaseRFFI {
      */
     long strtol(String s, int base) throws IllegalArgumentException;
 
+    public interface UtsName {
+        String sysname();
+
+        String release();
+
+        String version();
+
+        String machine();
+    }
+
+    /**
+     * Return {@code utsname} info.
+     */
+    UtsName uname();
 }

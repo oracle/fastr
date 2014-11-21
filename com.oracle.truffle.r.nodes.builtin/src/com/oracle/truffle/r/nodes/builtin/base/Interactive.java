@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Names extends RBuiltinNode {
-
-    private ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
-    private ConditionProfile hasDimNames = ConditionProfile.createBinaryProfile();
-
+@RBuiltin(name = "interactive", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+public abstract class Interactive extends RBuiltinNode {
     @Specialization
-    protected Object getNames(RAbstractContainer container) {
+    protected byte interactive() {
         controlVisibility();
-        if (hasNames.profile(container.getNames() != null && container.getNames() != RNull.instance)) {
-            return container.getNames();
-        } else if (hasDimNames.profile(container.getDimNames() != null && container.getDimNames().getLength() == 1)) {
-            return container.getDimNames().getDataAt(0);
-        } else {
-            return RNull.instance;
-        }
+        return RRuntime.asLogical(!RContext.isHeadless());
     }
-
-    @Fallback
-    protected RNull getNames(@SuppressWarnings("unused") Object operand) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
 }

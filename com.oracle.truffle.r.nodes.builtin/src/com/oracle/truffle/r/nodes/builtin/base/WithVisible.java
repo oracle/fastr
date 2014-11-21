@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Names extends RBuiltinNode {
-
-    private ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
-    private ConditionProfile hasDimNames = ConditionProfile.createBinaryProfile();
+@RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = -1)
+public abstract class WithVisible extends EvalFunctions.FastPathEvalAdapter {
+    private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
 
     @Specialization
-    protected Object getNames(RAbstractContainer container) {
+    protected RList withVisible(VirtualFrame frame, RPromise expr) {
         controlVisibility();
-        if (hasNames.profile(container.getNames() != null && container.getNames() != RNull.instance)) {
-            return container.getNames();
-        } else if (hasDimNames.profile(container.getDimNames() != null && container.getDimNames().getLength() == 1)) {
-            return container.getDimNames().getDataAt(0);
-        } else {
-            return RNull.instance;
-        }
-    }
-
-    @Fallback
-    protected RNull getNames(@SuppressWarnings("unused") Object operand) {
-        controlVisibility();
-        return RNull.instance;
+        Object result = doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep()));
+        Object[] data = new Object[]{result, RRuntime.asLogical(RContext.isVisible())};
+        // Visibility is changed by the evaluation (else this code would not work),
+        // so we have to force it back on.
+        RContext.setVisible(true);
+        return RDataFactory.createList(data, LISTNAMES);
     }
 
 }

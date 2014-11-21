@@ -26,10 +26,6 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.*;
 
-import com.oracle.truffle.r.nodes.builtin.graphics.BaseGraphicsSystem;
-import com.oracle.truffle.r.nodes.builtin.graphics.GraphicsPackage;
-import com.oracle.truffle.r.nodes.graphics.core.GraphicsEngine;
-import com.oracle.truffle.r.nodes.graphics.core.GraphicsEngineImpl;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -41,7 +37,9 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.graphics.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.graphics.core.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
@@ -153,6 +151,15 @@ public final class REngine implements RContext.Engine {
 
     public long[] childTimesInNanos() {
         return childTimes;
+    }
+
+    public Object parseAndEval(File file, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult) {
+        try {
+            return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromFileName(file.getAbsolutePath()), frame, printResult, false);
+        } catch (IOException ex) {
+            // we have already read the file so this cannot happen (comes from Source.fromFileName).
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     public Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {

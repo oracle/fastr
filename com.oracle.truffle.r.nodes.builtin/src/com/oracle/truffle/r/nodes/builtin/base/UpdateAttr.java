@@ -164,18 +164,27 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return value == RNull.instance;
     }
 
-    @Specialization(guards = "!nullValueforEnv")
-    protected REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, Object value) {
+    /**
+     * All other, non-performance centric, {@link RAttributable} types.
+     */
+    @Fallback
+    protected Object updateAttr(VirtualFrame frame, Object object, Object name, Object value) {
         controlVisibility();
-        env.setAttr(name, value);
-        return env;
-    }
-
-    @Specialization(guards = "nullValueforEnv")
-    protected REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, RNull value) {
-        controlVisibility();
-        env.removeAttr(name);
-        return env;
+        String sname = RRuntime.asString(name);
+        if (sname == null) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NONNULL_STRING, "name");
+        }
+        if (object instanceof RAttributable) {
+            RAttributable attributable = (RAttributable) object;
+            if (value == RNull.instance) {
+                attributable.removeAttr(sname);
+            } else {
+                attributable.setAttr(sname, value);
+            }
+            return object;
+        } else {
+            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+        }
     }
 
     public boolean nullValueforEnv(REnvironment env, String name, Object value) {
