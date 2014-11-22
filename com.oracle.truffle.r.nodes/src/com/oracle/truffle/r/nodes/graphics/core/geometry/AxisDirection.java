@@ -20,29 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core.geometry;
 
-import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
-
-public interface GraphicsDevice {
-    void deactivate();
-
-    void activate();
-
-    void close();
-
-    DrawingParameters getDrawingParameters();
-
-    void setMode(Mode newMode);
-
-    Mode getMode();
-
-    void setClipRect(double x1, double y1, double x2, double y2);
-
-    void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
-
-    public enum Mode {
-        GRAPHICS_ON,    // allow graphics output
-        GRAPHICS_OFF    // disable graphics output
-    }
+public enum AxisDirection {
+    NORTH,
+    SOUTH,
+    WEST,
+    EAST
 }

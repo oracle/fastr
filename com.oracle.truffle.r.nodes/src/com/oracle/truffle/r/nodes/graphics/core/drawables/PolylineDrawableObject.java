@@ -20,23 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.graphics;
+package com.oracle.truffle.r.nodes.graphics.core.drawables;
 
-import com.oracle.truffle.r.nodes.graphics.core.GraphicsDevice;
+import com.oracle.truffle.r.nodes.graphics.core.geometry.CoordinateSystem;
+import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
 
-public class MockGraphicsDevices implements GraphicsDevice {
-    @Override
-    public void deactivate() {
+import java.awt.*;
 
+/**
+ * Able to draw a polyline on {@link Graphics2D}.
+ */
+public class PolylineDrawableObject extends CoordinatesDrawableObject {
+    public PolylineDrawableObject(CoordinateSystem coordinateSystem, Coordinates coordinates) {
+        super(coordinateSystem, coordinates);
     }
 
     @Override
-    public void activate() {
-
-    }
-
-    @Override
-    public void close() {
-
+    public void drawOn(Graphics2D g2) {
+        Coordinates coords = getDstCoordinates();
+        int[] xCoords = coords.getXCoordinatesAsInts();
+        g2.drawPolyline(xCoords, coords.getYCoordinatesAsInts(), xCoords.length);
     }
 }
