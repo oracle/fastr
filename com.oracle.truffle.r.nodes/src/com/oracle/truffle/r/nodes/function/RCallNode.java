@@ -180,13 +180,24 @@ public abstract class RCallNode extends RNode {
         if (fname instanceof RSymbol) {
             String sfname = ((RSymbol) fname).getName();
             if (sfname.equals(":::") || sfname.equals("::")) {
-                // special infix
-                RCallNode colonCall = (RCallNode) getFunctionNode().unwrap();
-                RNode[] argValues = colonCall.getArgumentsNode().getArguments();
+                // special infix, could be a:::b() or a:::b
+                RNode fn = getFunctionNode().unwrap();
+                RCallNode colonCall;
+                RNode[] argValues;
+                if (fn instanceof RCallNode) {
+                    colonCall = (RCallNode) fn;
+                    argValues = colonCall.getArgumentsNode().getArguments();
+                } else {
+                    ReadVariableNode rvn = (ReadVariableNode) fn;
+                    colonCall = this;
+                    argValues = getArgumentsNode().getArguments();
+                }
                 argValues[0].deparse(state);
                 state.append(sfname);
                 argValues[1].deparse(state);
-                getArgumentsNode().deparse(state);
+                if (fn instanceof RCallNode) {
+                    getArgumentsNode().deparse(state);
+                }
                 return;
             }
         }
