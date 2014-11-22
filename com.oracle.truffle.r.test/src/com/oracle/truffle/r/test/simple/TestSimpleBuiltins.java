@@ -3087,6 +3087,19 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testIsRecursive() {
+        assertEval("{ is.recursive(1) }");
+        assertEval("{ is.recursive(1L) }");
+        assertEval("{ is.recursive(1:3) }");
+        assertEval("{ is.recursive(c(1,2,3)) }");
+        assertEval("{ is.recursive(NA) }");
+        assertEval("{ is.recursive(NULL) }");
+        assertEval("{ is.recursive(TRUE) }");
+        assertEval("{ !is.recursive(list()) }");
+        assertEval("{ !is.recursive(function() {}) }");
+    }
+
+    @Test
     public void testMatMult() {
         assertEval("{ matrix(c(1,2,3,4), 2) %*% matrix(c(5,6,7,8), 2) }");
         assertEval("{ matrix(c(3,1,2,0,1,2), 2) %*% matrix(c(1,0,4,2,1,0), 3) }");

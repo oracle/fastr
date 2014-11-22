@@ -99,7 +99,15 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final Object getNames() {
-        return names == null ? RNull.instance : names;
+        if (names == null) {
+            if (dimNames != null && dimNames.getLength() == 1) {
+                return dimNames.getDataAt(0);
+            } else {
+                return RNull.instance;
+            }
+        } else {
+            return names;
+        }
     }
 
     @TruffleBoundary

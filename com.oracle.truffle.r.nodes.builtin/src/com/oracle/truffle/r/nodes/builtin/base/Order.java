@@ -44,7 +44,7 @@ public abstract class Order extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    public abstract Object executeDoubleVector(VirtualFrame frame, Object vec, RMissing tie);
+    public abstract RIntVector executeDoubleVector(VirtualFrame frame, Object vec, RMissing tie);
 
     @Child private BooleanOperation eq = BinaryCompare.EQUAL.create();
     @Child private BooleanOperation lt = BinaryCompare.LESS_THAN.create();
@@ -62,8 +62,8 @@ public abstract class Order extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "oneElement")
-    protected int orderOneElement(RAbstractVector x, RMissing tie) {
-        return 1;
+    protected RIntVector orderOneElement(RAbstractVector x, RMissing tie) {
+        return RDataFactory.createIntVector(new int[]{1}, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(guards = {"!empty", "!oneElement"})
@@ -132,8 +132,8 @@ public abstract class Order extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "oneElement")
-    protected int orderOneElement(RAbstractVector x, RAbstractStringVector tie) {
-        return 1;
+    protected RIntVector orderOneElement(RAbstractVector x, RAbstractStringVector tie) {
+        return RDataFactory.createIntVector(new int[]{1}, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(guards = {"!empty", "!oneElement"})

@@ -9134,6 +9134,51 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsRecursive_377a05a3ae2344c6d22654f5352b5536() {
+        assertEval("{ is.recursive(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_90047cbc67c1e2d84411a7cf3ab9e59e() {
+        assertEval("{ is.recursive(1L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_9d7267fc157b80f504f819ad39271305() {
+        assertEval("{ is.recursive(1:3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_80bc5dca01765440f6a7cf78b3c5b9dd() {
+        assertEval("{ is.recursive(c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_c9ccafbdb3c587f10655c1f651b3e7c2() {
+        assertEval("{ is.recursive(NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_5d4babd30ae39f6694f96af9508316de() {
+        assertEval("{ is.recursive(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_2eb608993f1d2411438175573176025d() {
+        assertEval("{ is.recursive(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_d96fe1762b02584d65f100a94ef4c94d() {
+        assertEval("{ !is.recursive(list()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_0ad462ffcad3ea5bad663b92e2388a63() {
+        assertEval("{ !is.recursive(function() {}) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsTRUE_a8473f969e4f8b207e5f677194e23c40() {
         assertEval("{ isTRUE(NULL) }");
     }

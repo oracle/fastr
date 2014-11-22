@@ -35,15 +35,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Names extends RBuiltinNode {
 
     private ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
-    private ConditionProfile hasDimNames = ConditionProfile.createBinaryProfile();
 
     @Specialization
     protected Object getNames(RAbstractContainer container) {
         controlVisibility();
         if (hasNames.profile(container.getNames() != null && container.getNames() != RNull.instance)) {
             return container.getNames();
-        } else if (hasDimNames.profile(container.getDimNames() != null && container.getDimNames().getLength() == 1)) {
-            return container.getDimNames().getDataAt(0);
         } else {
             return RNull.instance;
         }

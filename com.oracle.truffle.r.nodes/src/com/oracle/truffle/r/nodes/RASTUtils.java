@@ -76,12 +76,7 @@ public class RASTUtils {
             return RASTUtils.createRSymbol(argNode);
         } else if (argNode instanceof VarArgPromiseNode) {
             RPromise p = ((VarArgPromiseNode) argNode).getPromise();
-            if (p.getRep() instanceof WrapArgumentNode) {
-                WrapArgumentNode n = (WrapArgumentNode) p.getRep();
-                return createLanguageElement(n.getOperand());
-            } else {
-                return createLanguageElement((RNode) p.getRep());
-            }
+            return createLanguageElement(unwrap(p.getRep()));
         } else {
             return RDataFactory.createLanguage(argNode);
         }

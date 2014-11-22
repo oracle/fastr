@@ -70,7 +70,7 @@ public class SortFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 order = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
             }
-            RIntVector result = (RIntVector) order.executeDoubleVector(frame, vec, RMissing.instance);
+            RIntVector result = order.executeDoubleVector(frame, vec, RMissing.instance);
             if (orderProfile.profile(RRuntime.fromLogical(decreasing))) {
                 int[] data = result.getDataWithoutCopying();
                 int[] rdata = new int[data.length];
