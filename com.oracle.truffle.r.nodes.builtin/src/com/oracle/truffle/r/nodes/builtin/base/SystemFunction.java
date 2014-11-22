@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "system", kind = RBuiltinKind.INTERNAL, parameterNames = {"command", "intern"})
-public abstract class System extends RBuiltinNode {
+public abstract class SystemFunction extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     public Object system(RAbstractStringVector command, byte intern) {
