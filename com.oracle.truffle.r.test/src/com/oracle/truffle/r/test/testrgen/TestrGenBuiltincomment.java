@@ -41,3 +41,4 @@ public class TestrGenBuiltincomment extends TestBase {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4, comment = c(\'This is my very important data from experiment #0234\', \'Jun 5, 1998\'))); .Internal(comment(argv[[1]]))");
     }
 }
+

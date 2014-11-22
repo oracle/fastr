@@ -35,3 +35,4 @@ public class TestrGenBuiltinmaxcol extends TestBase {
         assertEval("argv <- list(structure(list(), .Dim = 0:1), 1L); .Internal(max.col(argv[[1]], argv[[2]]))");
     }
 }
+

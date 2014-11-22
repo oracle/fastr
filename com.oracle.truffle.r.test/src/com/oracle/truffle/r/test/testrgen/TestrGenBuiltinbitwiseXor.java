@@ -23,3 +23,4 @@ public class TestrGenBuiltinbitwiseXor extends TestBase {
         assertEval("argv <- list(-1L, 1L); .Internal(bitwiseXor(argv[[1]], argv[[2]]))");
     }
 }
+

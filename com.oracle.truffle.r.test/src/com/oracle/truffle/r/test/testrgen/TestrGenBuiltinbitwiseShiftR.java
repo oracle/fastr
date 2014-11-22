@@ -23,3 +23,4 @@ public class TestrGenBuiltinbitwiseShiftR extends TestBase {
         assertEval("argv <- list(-1, 1:31); .Internal(bitwiseShiftR(argv[[1]], argv[[2]]))");
     }
 }
+

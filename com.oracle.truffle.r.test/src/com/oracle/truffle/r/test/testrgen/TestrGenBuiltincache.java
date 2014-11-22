@@ -29,3 +29,4 @@ public class TestrGenBuiltincache extends TestBase {
         assertEval("argv <- list(\'numeric\', c(\'numeric\', \'vector\', \'atomicVector\'));.cache_class(argv[[1]],argv[[2]]);");
     }
 }
+

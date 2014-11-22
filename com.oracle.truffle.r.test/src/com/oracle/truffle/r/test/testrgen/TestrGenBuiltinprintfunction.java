@@ -47,3 +47,4 @@ public class TestrGenBuiltinprintfunction extends TestBase {
         assertEval("argv <- list(.Primitive(\'log\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 }
+

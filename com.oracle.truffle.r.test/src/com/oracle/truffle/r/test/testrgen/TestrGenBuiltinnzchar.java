@@ -67,4 +67,12 @@ public class TestrGenBuiltinnzchar extends TestBase {
     public void testnzchar10() {
         assertEval("argv <- list(logical(0));nzchar(argv[[1]]);");
     }
+
+	@Test
+	public void testnzchar12() {
+		assertEval("argv <- list(\'\');"+
+			"do.call(\'nzchar\', argv)");
+	}
+
 }
+

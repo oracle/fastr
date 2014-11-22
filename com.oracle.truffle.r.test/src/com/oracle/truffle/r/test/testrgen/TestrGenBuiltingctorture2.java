@@ -29,3 +29,4 @@ public class TestrGenBuiltingctorture2 extends TestBase {
         assertEval("argv <- list(FALSE, FALSE, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

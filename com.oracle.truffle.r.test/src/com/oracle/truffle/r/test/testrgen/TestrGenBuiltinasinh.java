@@ -41,3 +41,4 @@ public class TestrGenBuiltinasinh extends TestBase {
         assertEval("argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));asinh(argv[[1]]);");
     }
 }
+

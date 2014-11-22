@@ -29,3 +29,4 @@ public class TestrGenBuiltinflush extends TestBase {
         assertEval("argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(flush(argv[[1]]))");
     }
 }
+

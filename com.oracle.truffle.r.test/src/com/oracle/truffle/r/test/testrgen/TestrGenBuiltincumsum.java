@@ -100,3 +100,4 @@ public class TestrGenBuiltincumsum extends TestBase {
         assertEval("argv <- list(character(0));cumsum(argv[[1]]);");
     }
 }
+

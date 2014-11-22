@@ -29,3 +29,4 @@ public class TestrGenBuiltingetRestart extends TestBase {
         assertEval("argv <- list(1L); .Internal(.getRestart(argv[[1]]))");
     }
 }
+

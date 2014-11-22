@@ -56,4 +56,12 @@ public class TestrGenBuiltinischaracter extends TestBase {
     public void testischaracter8() {
         assertEval("argv <- list(structure(c(238L, 154L, 73L), .Dim = c(3L, 1L), .Dimnames = list(c(\'red\', \'green\', \'blue\'), NULL)));is.character(argv[[1]]);");
     }
+
+	@Test
+	public void testischaracter10() {
+		assertEval("argv <- list(\'\\'class\\' is a reserved slot name and cannot be redefined\');"+
+			"do.call(\'is.character\', argv)");
+	}
+
 }
+

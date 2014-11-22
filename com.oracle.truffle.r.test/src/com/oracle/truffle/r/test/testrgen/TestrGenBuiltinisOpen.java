@@ -29,3 +29,4 @@ public class TestrGenBuiltinisOpen extends TestBase {
         assertEval("argv <- list(FALSE, 2L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 }
+

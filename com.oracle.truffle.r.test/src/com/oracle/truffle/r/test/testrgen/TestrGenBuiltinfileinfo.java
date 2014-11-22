@@ -29,3 +29,4 @@ public class TestrGenBuiltinfileinfo extends TestBase {
         assertEval("argv <- list(character(0)); .Internal(file.info(argv[[1]]))");
     }
 }
+

@@ -23,3 +23,4 @@ public class TestrGenBuiltinsinknumber extends TestBase {
         assertEval("argv <- list(FALSE); .Internal(sink.number(argv[[1]]))");
     }
 }
+

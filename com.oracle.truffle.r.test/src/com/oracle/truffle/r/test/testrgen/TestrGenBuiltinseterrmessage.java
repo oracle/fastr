@@ -35,3 +35,4 @@ public class TestrGenBuiltinseterrmessage extends TestBase {
         assertEval("argv <- list(\'Error in validObject(.Object) : \\n  invalid class “trackCurve” object: Unequal x,y lengths: 20, 10\\n\'); .Internal(seterrmessage(argv[[1]]))");
     }
 }
+

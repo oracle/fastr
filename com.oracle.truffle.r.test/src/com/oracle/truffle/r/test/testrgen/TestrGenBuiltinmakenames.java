@@ -72,3 +72,4 @@ public class TestrGenBuiltinmakenames extends TestBase {
         assertEval("argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 }
+

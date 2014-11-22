@@ -23,3 +23,4 @@ public class TestrGenBuiltinPrimitive extends TestBase {
         assertEval("argv <- list(\'c\');.Primitive(argv[[1]]);");
     }
 }
+

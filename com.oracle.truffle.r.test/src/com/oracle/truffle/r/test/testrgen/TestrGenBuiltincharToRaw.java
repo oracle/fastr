@@ -23,3 +23,4 @@ public class TestrGenBuiltincharToRaw extends TestBase {
         assertEval("argv <- list(\'\'); .Internal(charToRaw(argv[[1]]))");
     }
 }
+

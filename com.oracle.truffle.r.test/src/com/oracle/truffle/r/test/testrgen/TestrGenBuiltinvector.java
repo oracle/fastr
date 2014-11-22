@@ -53,4 +53,13 @@ public class TestrGenBuiltinvector extends TestBase {
     public void testvector10() {
         assertEval("argv <- list(\'list\', structure(1L, .Names = \'\\\\c\')); .Internal(vector(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+    @Ignore
+	public void testvector11() {
+		assertEval("argv <- structure(list(mode = \'complex\', length = 7), .Names = c(\'mode\',     \'length\'));"+
+			"do.call(\'vector\', argv)");
+	}
+
 }
+

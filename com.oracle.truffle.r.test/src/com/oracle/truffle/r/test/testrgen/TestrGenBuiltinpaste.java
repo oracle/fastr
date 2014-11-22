@@ -76,3 +76,4 @@ public class TestrGenBuiltinpaste extends TestBase {
         assertEval("argv <- list(list(character(0)), \' \', \'\'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

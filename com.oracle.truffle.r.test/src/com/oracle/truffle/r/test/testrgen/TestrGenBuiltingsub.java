@@ -182,4 +182,21 @@ public class TestrGenBuiltingsub extends TestBase {
     public void testgsub28() {
         assertEval("argv <- list(\'([^\\\\])\\\\(\', \'\\\\1\\\\\\\\(\', \'^.*{n.*$\', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
+
+	@Test
+    @Ignore
+	public void testgsub30() {
+		assertEval("argv <- structure(list(pattern = \'a*\', replacement = \'x\', x = \'baaaac\',     perl = TRUE), .Names = c(\'pattern\', \'replacement\', \'x\', \'perl\'));"+
+			"do.call(\'gsub\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testgsub31() {
+		assertEval("argv <- structure(list(pattern = \'a*\', replacement = \'x\', x = \'baaaac\'),     .Names = c(\'pattern\', \'replacement\', \'x\'));"+
+			"do.call(\'gsub\', argv)");
+	}
+
 }
+

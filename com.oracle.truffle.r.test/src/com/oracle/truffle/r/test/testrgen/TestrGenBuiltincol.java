@@ -29,3 +29,4 @@ public class TestrGenBuiltincol extends TestBase {
         assertEval("argv <- list(c(1L, 0L)); .Internal(col(argv[[1]]))");
     }
 }
+

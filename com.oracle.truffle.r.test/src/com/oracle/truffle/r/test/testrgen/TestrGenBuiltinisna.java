@@ -271,3 +271,4 @@ public class TestrGenBuiltinisna extends TestBase {
         assertEval("argv <- list(integer(0));is.na(argv[[1]]);");
     }
 }
+

@@ -23,3 +23,4 @@ public class TestrGenBuiltinsysonexit extends TestBase {
         assertEval(" .Internal(sys.on.exit())");
     }
 }
+

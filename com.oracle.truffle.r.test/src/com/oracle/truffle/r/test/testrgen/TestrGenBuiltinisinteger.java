@@ -61,4 +61,12 @@ public class TestrGenBuiltinisinteger extends TestBase {
     public void testisinteger9() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1), .Dim = 1:3));is.integer(argv[[1]]);");
     }
+
+	@Test
+	public void testisinteger11() {
+		assertEval("argv <- list(c(1L, 0L, NA, 1L));"+
+			"do.call(\'is.integer\', argv)");
+	}
+
 }
+

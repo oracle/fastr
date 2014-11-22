@@ -87,3 +87,4 @@ public class TestrGenBuiltinaslogical extends TestBase {
         assertEval("argv <- list(c(1, 2, 3, 4, 5, NA, NA, 2, 3, 4, 5, 6));as.logical(argv[[1]]);");
     }
 }
+

@@ -73,4 +73,13 @@ public class TestrGenBuiltingrepl extends TestBase {
     public void testgrepl11() {
         assertEval("argv <- list(\'^prepare_Rd\', structure(character(0), class = \'checkRd\'), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
+
+	@Test
+    @Ignore
+	public void testgrepl12() {
+		assertEval("argv <- structure(list(pattern = \'length\', x = \'Lengths: 0, 1\',     ignore.case = TRUE), .Names = c(\'pattern\', \'x\', \'ignore.case\'));"+
+			"do.call(\'grepl\', argv)");
+	}
+
 }
+

@@ -86,4 +86,12 @@ public class TestrGenBuiltinisobject extends TestBase {
     public void testisobject14() {
         assertEval("argv <- list(c(TRUE, FALSE));is.object(argv[[1]]);");
     }
+
+	@Test
+	public void testisobject16() {
+		assertEval("argv <- list(1:3);"+
+			"do.call(\'is.object\', argv)");
+	}
+
 }
+

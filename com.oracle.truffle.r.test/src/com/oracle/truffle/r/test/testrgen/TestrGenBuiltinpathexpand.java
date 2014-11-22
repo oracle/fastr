@@ -31,4 +31,12 @@ public class TestrGenBuiltinpathexpand extends TestBase {
     public void testpathexpand3() {
         assertEval("argv <- list(character(0)); .Internal(path.expand(argv[[1]]))");
     }
+
+	@Test
+	public void testpathexpand5() {
+		assertEval("argv <- structure(list(path = \'/tmp/RtmpagC9oa/Pkgs/exNSS4\'),     .Names = \'path\');"+
+			"do.call(\'path.expand\', argv)");
+	}
+
 }
+

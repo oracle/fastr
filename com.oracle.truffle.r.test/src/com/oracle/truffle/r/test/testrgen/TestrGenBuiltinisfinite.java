@@ -156,3 +156,4 @@ public class TestrGenBuiltinisfinite extends TestBase {
         assertEval("argv <- list(structure(c(13991, 13995), class = \'Date\'));is.finite(argv[[1]]);");
     }
 }
+

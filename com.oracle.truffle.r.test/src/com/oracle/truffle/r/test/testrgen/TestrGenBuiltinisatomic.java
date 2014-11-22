@@ -179,3 +179,4 @@ public class TestrGenBuiltinisatomic extends TestBase {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1, 20, 1), class = \'ts\'));is.atomic(argv[[1]]);");
     }
 }
+

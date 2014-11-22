@@ -29,3 +29,4 @@ public class TestrGenBuiltinoldClassassign extends TestBase {
         assertEval("argv <- list(NULL, NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
     }
 }
+

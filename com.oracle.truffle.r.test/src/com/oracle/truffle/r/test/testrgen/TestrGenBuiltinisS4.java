@@ -119,3 +119,4 @@ public class TestrGenBuiltinisS4 extends TestBase {
         assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'));isS4(argv[[1]]);");
     }
 }
+
