@@ -8134,33 +8134,33 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testFactor_f7012f4504c2f627eaa3ade75f9a02cf() {
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);print(fdata,FALSE)}");
+    public void TestSimpleBuiltins_testFactor_cf2e7421db2753ba5a0fa31a9d732610() {
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);fdata}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testFactor_26a154792d14685911bb0d5635ea7048() {
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));print(rdata);}");
+    public void TestSimpleBuiltins_testFactor_bbb2a6268371cf328708ecceab8a5b40() {
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));rdata;}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testFactor_302cd109aff29c67a4eaf574e3a4cee1() {
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}");
+    public void TestSimpleBuiltins_testFactor_e4488cf571aa9791a9532981678882f8() {
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');fdata;}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testFactor_4f47cf29078a846fd7ad9fff6f229b0b() {
-        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12);}");
+    public void TestSimpleBuiltins_testFactor_6118896969c9412561227254bb3c82b5() {
+        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));l12;}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testFactor_abf1d7916ee00c86394f69fcf13574b7() {
-        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); print(schtyp.f);}");
+    public void TestSimpleBuiltins_testFactor_0089456931384930ab1a0df22af4533f() {
+        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); schtyp.f;}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testFactor_2a4bd6a2574754d2d3c8fe6ae0ac56cf() {
-        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order); } ");
+    public void TestSimpleBuiltins_testFactor_1e2057543d61234029778966ebbe7298() {
+        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order; } ");
     }
 
     @Test

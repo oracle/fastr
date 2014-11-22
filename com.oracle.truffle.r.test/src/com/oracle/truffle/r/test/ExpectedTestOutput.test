@@ -8646,35 +8646,35 @@ attr(,"levels")
 [1] "a" "b" "c"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}
- [1] I   II  II  III I   II  III III I   II  III III I
-Levels: I II III
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);print(fdata,FALSE)}
+#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);fdata}
  [1] 1 2 2 3 1 2 3 3 1 2 3 3 1
 Levels: 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c("I","II","III"));print(rdata);}
+#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');fdata;}
  [1] I   II  II  III I   II  III III I   II  III III I
 Levels: I II III
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ses <- c("low", "middle", "low", "low", "low", "low", "middle", "low", "middle", "middle", "middle", "middle", "middle", "high", "high", "low", "middle", "middle", "low", "high"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c("low", "middle", "high"));ses.order <- ordered(ses, levels = c("low", "middle", "high"));print(ses.order); } 
+#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c("I","II","III"));rdata;}
+ [1] I   II  II  III I   II  III III I   II  III III I
+Levels: I II III
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ses <- c("low", "middle", "low", "low", "low", "low", "middle", "low", "middle", "middle", "middle", "middle", "middle", "high", "high", "low", "middle", "middle", "low", "high"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c("low", "middle", "high"));ses.order <- ordered(ses, levels = c("low", "middle", "high"));ses.order; } 
  [1] low    middle low    low    low    low    middle low    middle middle
 [11] middle middle middle high   high   low    middle middle low    high
 Levels: low < middle < high
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c("private", "public")); print(schtyp.f);}
+#{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c("private", "public")); schtyp.f;}
  [1] private private public  private private private public  private public
 [10] private public  public  public  public  private private public  public
 [19] public  private
 Levels: private public
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12);}
+#{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));l12;}
  [1] c k n k f h p m x h c k n k f h p m x h
 Levels: c f h k m n p x
 
