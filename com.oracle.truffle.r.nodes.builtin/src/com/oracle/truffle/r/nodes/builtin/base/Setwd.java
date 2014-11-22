@@ -27,6 +27,7 @@ import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -38,9 +39,9 @@ public abstract class Setwd extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object setwd(String dir) {
+    protected Object setwd(RAbstractStringVector dirVec) {
         controlVisibility();
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);
+        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dirVec.getDataAt(0));
         if (conditionProfile.profile(rc != 0)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
