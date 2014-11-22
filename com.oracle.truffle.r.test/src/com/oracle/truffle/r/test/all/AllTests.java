@@ -7079,6 +7079,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDeparse_1eedd480281ac304fc46f96e9b01e65a() {
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_7d465fa7df237db4dfe3d217a554d421() {
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_32131066b372b81cfdb4c8c8917216d4() {
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparse_fc48a12f463aff2ccf839051c3218f8a() {
+        assertEval("{ deparse(expression(a+b, c+d)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDeparseIgnore_9e5a5fc2f13f5ca564f74ada29302b9d() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
     }
@@ -7086,6 +7106,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testDeparseIgnore_ae0471e19b56e163c3b0f1d27722a535() {
         assertEval("{ deparse(nrow) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDeparseIgnore_dcfc3947162214c236e4caaf5dff89d7() {
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
@@ -9106,6 +9131,51 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testIsObject_d734f214980ce3573bfcf525d400afa6() {
         assertEval("{ is.object(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_377a05a3ae2344c6d22654f5352b5536() {
+        assertEval("{ is.recursive(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_90047cbc67c1e2d84411a7cf3ab9e59e() {
+        assertEval("{ is.recursive(1L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_9d7267fc157b80f504f819ad39271305() {
+        assertEval("{ is.recursive(1:3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_80bc5dca01765440f6a7cf78b3c5b9dd() {
+        assertEval("{ is.recursive(c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_c9ccafbdb3c587f10655c1f651b3e7c2() {
+        assertEval("{ is.recursive(NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_5d4babd30ae39f6694f96af9508316de() {
+        assertEval("{ is.recursive(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_2eb608993f1d2411438175573176025d() {
+        assertEval("{ is.recursive(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_d96fe1762b02584d65f100a94ef4c94d() {
+        assertEval("{ !is.recursive(list()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsRecursive_0ad462ffcad3ea5bad663b92e2388a63() {
+        assertEval("{ !is.recursive(function() {}) }");
     }
 
     @Test
@@ -11261,6 +11331,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testNChar_2b2b116c81ddc47069b1a784ec550a25() {
         assertEval("{ nchar(c(10,130)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNames_2859794d8c84c5c8a0e0d527e99ea979() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
     }
 
     @Test
@@ -15121,6 +15196,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSysParentsIgnore_6117cb26d3f09dce59533ba94919f49a() {
         assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTable_e6efb6b86abe525fe0fa7b37a41a3588() {
+        assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
     }
 
     @Test

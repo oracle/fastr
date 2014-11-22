@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.graphics.core;
 
+import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
+
 public interface GraphicsEngine {
     int registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception;
 
@@ -55,4 +57,10 @@ public interface GraphicsEngine {
      * @return {@link NullGraphicsDevice} if unable to find other
      */
     GraphicsDevice getGraphicsDevicePrevTo(GraphicsDevice graphicsDevice);
+
+    void setCurrentGraphicsDeviceMode(GraphicsDevice.Mode mode);
+
+    void setCurrentGraphicsDeviceClipRect(double x1, double y1, double x2, double y2);
+
+    void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
 }

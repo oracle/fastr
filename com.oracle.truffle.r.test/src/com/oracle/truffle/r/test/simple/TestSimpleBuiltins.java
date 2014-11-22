@@ -19,6 +19,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testTable() {
+        assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
+    }
+
+    @Test
     public void testScan() {
         // from scan's documentation
         assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
@@ -1707,6 +1712,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testNames() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
+    }
+
+    @Test
     public void testUpdateNames() {
         assertEval("{ x <- c(1,2) ; names(x) <- c(\"hello\", \"hi\"); names(x) } ");
 
@@ -2792,6 +2802,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+        assertEval("{ deparse(expression(a+b, c+d)) }");
     }
 
     @Test
@@ -2799,6 +2813,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testDeparseIgnore() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
         assertEval("{ deparse(nrow) }");
+        // should deparse as structure(...
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
@@ -3068,6 +3084,19 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ is.atomic(TRUE) }");
         assertEval("{ !is.atomic(list()) }");
         assertEval("{ !is.atomic(function() {}) }");
+    }
+
+    @Test
+    public void testIsRecursive() {
+        assertEval("{ is.recursive(1) }");
+        assertEval("{ is.recursive(1L) }");
+        assertEval("{ is.recursive(1:3) }");
+        assertEval("{ is.recursive(c(1,2,3)) }");
+        assertEval("{ is.recursive(NA) }");
+        assertEval("{ is.recursive(NULL) }");
+        assertEval("{ is.recursive(TRUE) }");
+        assertEval("{ !is.recursive(list()) }");
+        assertEval("{ !is.recursive(function() {}) }");
     }
 
     @Test

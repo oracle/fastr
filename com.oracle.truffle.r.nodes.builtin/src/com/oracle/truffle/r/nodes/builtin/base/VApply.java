@@ -64,6 +64,9 @@ public abstract class VApply extends RBuiltinNode {
         } else if (funValue instanceof Byte) {
             byte[] data = applyResultZeroLength ? new byte[0] : convertByte(applyResult);
             result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        } else if (funValue instanceof String) {
+            String[] data = applyResultZeroLength ? new String[0] : convertString(applyResult);
+            result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             assert false;
         }
@@ -96,4 +99,14 @@ public abstract class VApply extends RBuiltinNode {
         }
         return newArray;
     }
+
+    @TruffleBoundary
+    private static String[] convertString(Object[] values) {
+        String[] newArray = new String[values.length];
+        for (int i = 0; i < values.length; i++) {
+            newArray[i] = (String) values[i];
+        }
+        return newArray;
+    }
+
 }
