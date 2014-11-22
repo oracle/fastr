@@ -50,9 +50,7 @@ public class FastROptions {
     @Option(help = "Turn on debugging output")
     public static final OptionValue<Boolean> Debug = new OptionValue<>(false);
     @Option(help = "Disable all Instrumentation")
-    public static final OptionValue<Boolean> DisableInstrumentation = new OptionValue<>(false);
-    @Option(help = "Instrument default packages")
-    public static final OptionValue<Boolean> InstrumentDefaultPackages = new OptionValue<>(false);
+    public static final OptionValue<Boolean> Instrumentation = new OptionValue<>(true);
     @Option(help = "Add function call counters")
     public static final OptionValue<Boolean> AddFunctionCounters = new OptionValue<>(false);
     //@formatter:on

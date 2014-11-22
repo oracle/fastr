@@ -74,16 +74,9 @@ public final class REngine implements RContext.Engine {
 
     /**
      * Controls whether ASTs are instrumented after parse. The default value controlled by
-     * {@link FastROptions#DisableInstrumentation}, but can be overridden by calling
-     * {@link #setInstrumentAll}.
+     * {@link FastROptions#Instrumentation}.
      */
     private static boolean instrumentingEnabled;
-    /**
-     * Only relevant if {@link #instrumentingEnabled} is {@code true}. Used to control whether AST
-     * instrumenting is enabled. By default none of the code in the base packages nor the system
-     * profile is instrumented, so this value is {@code false} during that phase. TODO relax this?
-     */
-    private static boolean instrumentingOn;
 
     /**
      * Only of relevance for in-process debugging, prevents most re-initialization on repeat calls
@@ -113,10 +106,9 @@ public final class REngine implements RContext.Engine {
         if (initialized) {
             REnvironment.resetForTest(globalFrame);
         } else {
-            instrumentingEnabled = !FastROptions.DisableInstrumentation.getValue();
+            instrumentingEnabled = FastROptions.Instrumentation.getValue();
             if (instrumentingEnabled) {
                 RInstrument.initialize();
-                instrumentingOn = FastROptions.InstrumentDefaultPackages.getValue();
             }
             Locale.setDefault(Locale.ROOT);
             Load_RFFIFactory.initialize();
@@ -142,7 +134,6 @@ public final class REngine implements RContext.Engine {
             if (siteProfile != null) {
                 singleton.parseAndEval("<site_profile>", siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
             }
-            instrumentingOn = true;
             initialized = true;
         }
         String userProfile = RProfile.userProfile();
@@ -183,11 +174,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public boolean instrumentingEnabled() {
-        return instrumentingEnabled && instrumentingOn;
-    }
-
-    public static void setInstrumentAll(boolean value) {
-        instrumentingEnabled = value;
+        return instrumentingEnabled;
     }
 
     public Object parseAndEval(File file, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult) {

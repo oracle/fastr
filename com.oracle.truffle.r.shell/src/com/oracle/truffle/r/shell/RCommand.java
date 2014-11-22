@@ -104,10 +104,6 @@ public class RCommand {
 
         FastROptions.initialize();
 
-        if (DEBUGGER.getValue() != null) {
-            REngine.setInstrumentAll(true);
-        }
-
         REnvVars.initialize();
 
         // Whether the input is from stdin, a file or an expression on the command line (-e)
