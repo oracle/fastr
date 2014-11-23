@@ -119,7 +119,7 @@ public class PromiseNode extends RNode {
      */
     private static final class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
 
         private final BranchProfile isMissingProfile = BranchProfile.create();
         private final BranchProfile isVarArgProfile = BranchProfile.create();
@@ -140,6 +140,10 @@ public class PromiseNode extends RNode {
                 isMissingProfile.enter();
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
+                }
+                if (promiseExpressionCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
                 }
                 RPromise promise = factory.createPromiseDefault();
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
