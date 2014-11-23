@@ -304,7 +304,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     if (e.getName() != null && e.getName().toString().equals(RRuntime.DROP_DIM_ARG_NAME) && dropDim == null) {
                         // first occurence of "drop" argument counts - the others are treated as
                         // indexes
-                        dropDim = e.getValue().accept(this);
+                        dropDim = CastLogicalNodeFactory.create(e.getValue().accept(this), false, false, false);
                     } else {
                         newArgs.add(e);
                     }
@@ -314,7 +314,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
         RNode castContainer = CastToContainerNodeFactory.create(vector, false, false, false, true);
         RNode positions = createPositions(args, argLength, a.isSubset(), false);
-        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castContainer, (PositionsArrayNode) positions, CastLogicalNodeFactory.create(dropDim, false, false, false));
+        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castContainer, (PositionsArrayNode) positions, dropDim);
         access.assignSourceSection(a.getSource());
         return access;
     }
