@@ -144,7 +144,7 @@ public class WrapperProcessor extends AbstractProcessor {
 
                     boolean isExecuteMethod = isExecuteMethod(methodName, formals);
                     if (isExecuteMethod) {
-                        wr.printf("%sprobeNode.enter(child, frame);%n", INDENT8);
+                        wr.printf("%sprobeNode.enter(child, %s);%n", INDENT8, formals.get(0));
                         wr.println();
                         if (!voidReturn) {
                             wr.printf("%s%s result;%n", INDENT8, returnType);
@@ -165,12 +165,12 @@ public class WrapperProcessor extends AbstractProcessor {
                     wr.println(");");
 
                     if (isExecuteMethod) {
-                        wr.printf("%sprobeNode.return%s(child, frame%s);%n", INDENT12, voidReturn ? "Void" : "Value", voidReturn ? "": ", result");
+                        wr.printf("%sprobeNode.return%s(child, %s%s);%n", INDENT12, voidReturn ? "Void" : "Value", formals.get(0), voidReturn ? "": ", result");
                         if (returnType.getKind() != TypeKind.VOID) {
                             wr.printf("%sreturn result;%n", INDENT12);
                         }
                         wr.printf("%s} catch (Exception e) {%n", INDENT8);
-                        wr.printf("%sprobeNode.returnExceptional(child, frame, e);%n", INDENT12);
+                        wr.printf("%sprobeNode.returnExceptional(child, %s, e);%n", INDENT12, formals.get(0));
                         wr.printf("%sthrow (e);%n", INDENT12);
                         wr.printf("%s}%n", INDENT8);
                     }
