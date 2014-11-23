@@ -275,6 +275,7 @@ public class PromiseNode extends RNode {
         @CompilationFinal protected final String[] names;
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
+        private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
         public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
             this.varargs = nodes;
@@ -289,7 +290,7 @@ public class PromiseNode extends RNode {
             int index = 0;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
-                if (argValue instanceof RArgsValuesAndNames) {
+                if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
                     RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
