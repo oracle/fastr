@@ -984,6 +984,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testNArgsIgnore_ee082d552ee9efa22803929c01c73692() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testOperatorsIgnore_dd8820aada824b55da8fce1b2069a4a8() {
         assertEval("{ `%*%`(3,5) }");
     }

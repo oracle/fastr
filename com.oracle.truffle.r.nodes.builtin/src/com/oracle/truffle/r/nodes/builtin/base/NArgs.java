@@ -33,6 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO Figure out how to distinguish f(,,a) from f(a) - RMissing is used in both contexts
 @RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {})
 public abstract class NArgs extends RBuiltinNode {
+    private final RPromise.PromiseProfile promiseProfile = new RPromise.PromiseProfile();
+
     @Specialization
     protected int doNArgs(VirtualFrame frame) {
         int result = 0;
@@ -42,7 +44,12 @@ public abstract class NArgs extends RBuiltinNode {
         int l = RArguments.getArgumentsLength(frame);
         for (int i = 0; i < l; i++) {
             Object arg = RArguments.getArgument(frame, i);
-            if (!(arg instanceof RMissing)) {
+            if (arg instanceof RPromise) {
+                RPromise promise = (RPromise) arg;
+                if (!promise.isDefault(promiseProfile)) {
+                    result++;
+                }
+            } else if (!(arg instanceof RMissing)) {
                 result++;
             }
         }

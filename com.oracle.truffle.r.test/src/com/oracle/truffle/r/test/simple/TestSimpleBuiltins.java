@@ -4123,4 +4123,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
+    @Test
+    public void testNargs() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f() }");
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
+     }
+
+    @Test
+    @Ignore
+    public void testNArgsIgnore() {
+       assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");       
+    }
+
 }

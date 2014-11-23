@@ -11319,6 +11319,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testNArgsIgnore_ee082d552ee9efa22803929c01c73692() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testNChar_495a7fd2d648682e65ccfb8cf57e8805() {
         assertEval("{ nchar(c(\"hello\", \"hi\")) }");
     }
@@ -11336,6 +11341,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testNames_2859794d8c84c5c8a0e0d527e99ea979() {
         assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNargs_93bea7d7244cdc6667541bda6d5c21eb() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNargs_87f5ad668b5b7c3c9c33b69b1ff0b07b() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNargs_af51626dde51926d69ba3aaa35c2e468() {
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNargs_22cf010cf5a8e031ea484a39f140b100() {
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
     }
 
     @Test
