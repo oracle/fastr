@@ -18364,6 +18364,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_a44322c82f1c8b92ed8b32dc0841d9d3() {
+        assertEval("{ f<-function(x, ...) { sum(x, ...) }; f(7) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_f6e7b7067ca509c5ee12be99b77e453f() {
+        assertEval("{ h<-function(x,...) f(x,...); f<-function(x, ...) { sum(x, ...) }; h(7) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_d0edba6b313cda53895fe203f3a80a55() {
+        assertEval("{ g <- function(x, ...) c(x, ...); g(1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_509bf0a028dfdc20113e605f5b2c83ec() {
+        assertEval("{ g <- function(x, ...) f(x,...); f <-function(x,...) c(x, ...); g(1) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDots_2a99369402e3625a074eafef17085ffa() {
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
     }

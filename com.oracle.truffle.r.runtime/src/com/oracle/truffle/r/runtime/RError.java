@@ -561,7 +561,9 @@ public final class RError extends RuntimeException {
         NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
         INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
         MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
-        NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors");
+        NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),
+        UNSUPPORTED_URL_SCHEME("unsupported URL scheme"),
+        CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections");
 
         public final String message;
         private final boolean hasArgs;

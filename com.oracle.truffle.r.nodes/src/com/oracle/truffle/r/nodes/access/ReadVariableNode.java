@@ -267,7 +267,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         final boolean forcePromise = props.forcePromise;
 
         Object obj = objArg;
-        if (obj == RMissing.instance && !readMissing && !getSymbol().isVarArg()) {
+        if (obj == RMissing.instance && !readMissing) {
             unexpectedMissingProfile.enter();
             SourceSection callSrc = RArguments.getCallSourceSection(frame);
             throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getSymbol());

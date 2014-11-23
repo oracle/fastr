@@ -210,12 +210,8 @@ public abstract class Substitute extends RBuiltinNode {
                 return node;
             }
         } else if (val instanceof RMissing) {
-            if (name.equals("...")) {
-                return new MissingDotsNode();
-            } else {
-                // strange special case, mimics GnuR behavior
-                return RASTUtils.createReadVariableNode("");
-            }
+            // strange special case, mimics GnuR behavior
+            return RASTUtils.createReadVariableNode("");
         } else if (val instanceof RPromise) {
             return RASTUtils.unwrap(((RPromise) val).getRep());
         } else if (val instanceof RLanguage) {
@@ -223,6 +219,9 @@ public abstract class Substitute extends RBuiltinNode {
         } else if (val instanceof RArgsValuesAndNames) {
             // this is '...'
             RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
+            if (rva.isEmpty()) {
+                return new MissingDotsNode();
+            }
             Object[] values = rva.getValues();
             RNode[] expandedNodes = new RNode[values.length];
             for (int i = 0; i < values.length; i++) {

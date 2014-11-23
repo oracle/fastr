@@ -54,10 +54,10 @@ public abstract class Switch extends RBuiltinNode {
         Object[] optionalArgValues = optionalArgs.getValues();
         Object currentDefaultValue = null;
         final String xStr = x.getDataAt(0);
-        final String[] suppliedArgsNames = this.getSuppliedArgsNames();
-        for (int i = 1; i < suppliedArgsNames.length; ++i) {
-            final String suppliedArgName = suppliedArgsNames[i];
-            final Object optionalArgValue = optionalArgValues[i - 1];
+        final String[] names = optionalArgs.getNames();
+        for (int i = 0; i < names.length; ++i) {
+            final String suppliedArgName = names[i];
+            final Object optionalArgValue = optionalArgValues[i];
             if (xStr.equals(suppliedArgName) && optionalArgValue != null) {
                 return returnNonNull(optionalArgValue);
             }

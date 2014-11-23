@@ -44,12 +44,12 @@ public abstract class VApply extends RBuiltinNode {
 
     // TODO complete implementation: useNames
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, Object optionalArgs, @SuppressWarnings("unused") Object useNames) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, RArgsValuesAndNames optionalArgs, @SuppressWarnings("unused") Object useNames) {
         controlVisibility();
         return delegateToLapply(frame, vec, fun, funValue, optionalArgs);
     }
 
-    private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, Object optionalArgs) {
+    private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, RArgsValuesAndNames optionalArgs) {
         Object[] applyResult = lapply.applyHelper(frame, vec.materialize(), fun, optionalArgs);
 
         Object result = null;

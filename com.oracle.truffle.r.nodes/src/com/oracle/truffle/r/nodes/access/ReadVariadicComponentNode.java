@@ -56,13 +56,12 @@ public class ReadVariadicComponentNode extends RNode {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_DOT_DOT, index + 1);
         }
-        RArgsValuesAndNames argsValuesAndNames = null;
-        if (args == RMissing.instance) {
+        RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
+        if (argsValuesAndNames.isMissing()) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_LIST_FOR_CDR);
         }
 
-        argsValuesAndNames = (RArgsValuesAndNames) args;
         if (argsValuesAndNames.length() <= index) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DOT_DOT_SHORT, index + 1);

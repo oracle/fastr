@@ -53,14 +53,14 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         return vec;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         ArrayList<String> dataList = new ArrayList<>(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             String s = vec.getDataAt(i);
@@ -204,7 +204,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         IntArray dataList = new IntArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             int val = vec.getDataAt(i);
@@ -218,7 +218,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         DoubleArray dataList = new DoubleArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             double val = vec.getDataAt(i);
@@ -232,7 +232,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             byte val = vec.getDataAt(i);
@@ -246,7 +246,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             RComplex s = vec.getDataAt(i);
@@ -260,7 +260,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             byte val = vec.getDataAt(i).getValue();

@@ -73,6 +73,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantStringScalarNode(((RSymbol) value).getName());
         } else if (value instanceof REnvironment) {
             return new ConstantREnvironmentNode((REnvironment) value);
+        } else if (value instanceof RArgsValuesAndNames) {
+            return new ConstantRArgsValuesAndNamesNode((RArgsValuesAndNames) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -405,6 +407,21 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             return envValue;
+        }
+    }
+
+    private static final class ConstantRArgsValuesAndNamesNode extends ConstantNode {
+
+        private final RArgsValuesAndNames value;
+
+        public ConstantRArgsValuesAndNamesNode(RArgsValuesAndNames value) {
+            this.value = value;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return value;
         }
     }
 }

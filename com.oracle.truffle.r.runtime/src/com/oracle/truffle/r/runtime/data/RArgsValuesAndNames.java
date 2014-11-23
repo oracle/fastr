@@ -30,11 +30,20 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
  * A simple wrapper class for passing the ... argument through RArguments
  */
 public class RArgsValuesAndNames {
+    /**
+     * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
+     * The {@link RMissing#instance} for "...".
+     */
+    public static final RArgsValuesAndNames EMPTY = new RArgsValuesAndNames(new Object[0], new String[0]);
+
     @CompilationFinal private final Object[] values;
     /**
-     * May NOT be null.
+     * May NOT be null. A single <code>null</code> name denotes "no name provided".
      */
     @CompilationFinal private final String[] names;
+    /**
+     * @see #isAllNamesEmpty()
+     */
     private final boolean allNamesEmpty;
 
     public RArgsValuesAndNames(Object[] values, String[] names) {
@@ -79,6 +88,9 @@ public class RArgsValuesAndNames {
         return names;
     }
 
+    /**
+     * @return Returns {@link #names} OR <code>null</code> if {@link #allNamesEmpty}
+     */
     public String[] getNamesNull() {
         if (allNamesEmpty) {
             return null;
@@ -91,7 +103,24 @@ public class RArgsValuesAndNames {
         return values.length;
     }
 
+    /**
+     * @return {@link #isAllNamesEmpty()}
+     */
     public boolean isAllNamesEmpty() {
         return allNamesEmpty;
+    }
+
+    /**
+     * @return The same as {@link #isMissing()}, kept for semantic context.
+     */
+    public boolean isEmpty() {
+        return length() == 0;
+    }
+
+    /**
+     * @return The same as {@link #isEmpty()}, kept for semantic context.
+     */
+    public boolean isMissing() {
+        return length() == 0;
     }
 }

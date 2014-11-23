@@ -139,7 +139,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     protected boolean missing(RArgsValuesAndNames args) {
-        return args.length() == 1 && args.getValues()[0] == RMissing.instance;
+        return args.isMissing();    // .length() == 1 && args.getValues()[0] == RMissing.instance;
     }
 
     protected boolean oneElement(RArgsValuesAndNames args) {

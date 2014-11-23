@@ -167,11 +167,18 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
 
     public static VarArgsSignature createSignature(Object varArgContent, int times, boolean allowConstants) {
         Object[] content;
-        if (varArgContent == RMissing.instance) {
+        if (!(varArgContent instanceof RArgsValuesAndNames)) {
+            throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+        }
+
+        // "..." empty?
+        RArgsValuesAndNames varArgsAndNames = (RArgsValuesAndNames) varArgContent;
+        if (varArgsAndNames.isEmpty()) {
             content = new Object[]{VarArgsSignature.NO_VARARGS};
         } else {
+
             // Arguments wrapped into "..."
-            Object[] varArgs = ((RArgsValuesAndNames) varArgContent).getValues();
+            Object[] varArgs = varArgsAndNames.getValues();
             content = new Object[varArgs.length];
 
             // As we want to check on expression identity later on:
@@ -180,7 +187,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                 if (varArg instanceof RPromise) {
                     // Unwrap expression (one instance per argument/call site)
                     content[i] = ((RPromise) varArg).getRep();
-                } else if (varArg == RMissing.instance) {
+                } else if (RMissingHelper.isMissing(varArg)) {
                     // Use static symbol for "missing" instead of ConstantNode.create
                     content[i] = VarArgsSignature.NO_VARARGS;
                 } else {
@@ -209,16 +216,14 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                     // passed "..." every time, as their content might change per call site each
                     // call!
                     Object varArgContent = varArgsSlotNode.execute(frame);
-                    if (varArgContent == RMissing.instance) {
-                        values[index] = arguments[i];   // Preserve "..." symbol!!! Needed during
-                        // matching to distinguish between missing argument and empty "..."
-                        newNames[index] = names[i];
-                        index++;
-                        vargsSymbolsIndex++;
+                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
+                    if (varArgInfo.isEmpty()) {
+                        // An empty "..." vanishes
+                        values = Utils.resizeArray(values, values.length - 1);
+                        newNames = Utils.resizeArray(newNames, newNames.length - 1);
                         continue;
                     }
 
-                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
                     // length == 0 cannot happen, in that case RMissing is caught above
                     values = Utils.resizeArray(values, values.length + varArgInfo.length() - 1);
                     newNames = Utils.resizeArray(newNames, newNames.length + varArgInfo.length() - 1);

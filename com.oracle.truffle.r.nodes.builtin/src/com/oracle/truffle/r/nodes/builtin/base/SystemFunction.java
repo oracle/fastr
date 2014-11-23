@@ -22,30 +22,37 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
+import java.io.*;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-
-@RBuiltin(name = "setwd", kind = INTERNAL, parameterNames = "path")
-public abstract class Setwd extends RInvisibleBuiltinNode {
-    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
-
+@RBuiltin(name = "system", kind = RBuiltinKind.INTERNAL, parameterNames = {"command", "intern"})
+public abstract class SystemFunction extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
-    protected Object setwd(RAbstractStringVector dirVec) {
-        controlVisibility();
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dirVec.getDataAt(0));
-        if (conditionProfile.profile(rc != 0)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_CHANGE_DIRECTORY);
-        } else {
-            return RFFIFactory.getRFFI().getBaseRFFI().getwd();
+    public Object system(RAbstractStringVector command, byte intern) {
+        if (RRuntime.fromLogical(intern)) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " intern");
         }
+        String shell = REnvVars.get("SHELL");
+        if (shell == null) {
+            shell = "/bin/sh";
+        }
+        ProcessBuilder pb = new ProcessBuilder(shell, "-c", command.getDataAt(0));
+        int rc;
+        try {
+            Process p = pb.start();
+            rc = p.waitFor();
+        } catch (InterruptedException | IOException ex) {
+            rc = 127;
+        }
+        RContext.setVisible(false);
+        return rc;
     }
+
 }

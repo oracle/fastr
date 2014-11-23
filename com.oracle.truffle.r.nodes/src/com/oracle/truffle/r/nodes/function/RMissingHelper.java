@@ -36,6 +36,17 @@ import com.oracle.truffle.r.runtime.data.RPromise.*;
 public class RMissingHelper {
 
     /**
+     * <code>true</code> if value == {@link RMissing#instance} OR value is an
+     * {@link RArgsValuesAndNames#isEmpty()} {@link RArgsValuesAndNames} (in case of "...").
+     *
+     * @param value
+     * @return Whether the given value represents an argument that has not been provided.
+     */
+    public static boolean isMissing(Object value) {
+        return value == RMissing.instance || (value instanceof RArgsValuesAndNames) && ((RArgsValuesAndNames) value).isMissing();
+    }
+
+    /**
      * This method determines whether a given {@link Symbol} is missing in the given frame. This is
      * used to determine whether an argument has to be replaced by its default value or not. In case
      * the given {@link Symbol} is associated with a promise, {@link #isMissingSymbol(RPromise)} is
@@ -51,7 +62,7 @@ public class RMissingHelper {
 
         // Check symbols value
         Object value = getMissingValue(frame, symbol);
-        if (value == RMissing.instance) {
+        if (isMissing(value)) {
             return true;
         }
 
