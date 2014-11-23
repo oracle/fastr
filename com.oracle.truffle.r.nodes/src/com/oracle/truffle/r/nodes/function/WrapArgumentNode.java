@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -80,9 +81,9 @@ public abstract class WrapArgumentNode extends RProxyNode {
 
     public abstract RNode getOperand();
 
-    public static WrapArgumentNode create(RNode operand, boolean modeChange) {
-        if (operand instanceof WrapArgumentNode) {
-            return (WrapArgumentNode) operand;
+    public static RNode create(RNode operand, boolean modeChange) {
+        if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
+            return operand;
         } else {
             WrapArgumentNode wan = WrapArgumentNodeFactory.create(modeChange, operand);
             wan.assignSourceSection(operand.getSourceSection());
