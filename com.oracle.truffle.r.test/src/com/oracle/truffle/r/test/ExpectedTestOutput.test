@@ -7431,6 +7431,10 @@ Error in print(x, y) :
 [1] "c(TRUE, FALSE)"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(expression(a+b, c+d)) }
+[1] "expression(a + b, c + d)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(round) }
 [1] ".Primitive(\"round\")"
 
@@ -7445,6 +7449,18 @@ Error in print(x, y) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }
 [1] "list(c(x = 1, 2))"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }
+[1] "list(7)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }
+[1] "list(7, 42)"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }
+[1] "list(7, list(42))"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ k <- 2 ; deparse(k) }
@@ -8686,35 +8702,35 @@ attr(,"levels")
 [1] "a" "b" "c"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}
- [1] I   II  II  III I   II  III III I   II  III III I
-Levels: I II III
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);print(fdata,FALSE)}
+#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);fdata}
  [1] 1 2 2 3 1 2 3 3 1 2 3 3 1
 Levels: 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c("I","II","III"));print(rdata);}
+#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');fdata;}
  [1] I   II  II  III I   II  III III I   II  III III I
 Levels: I II III
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ses <- c("low", "middle", "low", "low", "low", "low", "middle", "low", "middle", "middle", "middle", "middle", "middle", "high", "high", "low", "middle", "middle", "low", "high"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c("low", "middle", "high"));ses.order <- ordered(ses, levels = c("low", "middle", "high"));print(ses.order); } 
+#{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c("I","II","III"));rdata;}
+ [1] I   II  II  III I   II  III III I   II  III III I
+Levels: I II III
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ses <- c("low", "middle", "low", "low", "low", "low", "middle", "low", "middle", "middle", "middle", "middle", "middle", "high", "high", "low", "middle", "middle", "low", "high"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c("low", "middle", "high"));ses.order <- ordered(ses, levels = c("low", "middle", "high"));ses.order; } 
  [1] low    middle low    low    low    low    middle low    middle middle
 [11] middle middle middle high   high   low    middle middle low    high
 Levels: low < middle < high
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c("private", "public")); print(schtyp.f);}
+#{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c("private", "public")); schtyp.f;}
  [1] private private public  private private private public  private public
 [10] private public  public  public  public  private private public  public
 [19] public  private
 Levels: private public
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12);}
+#{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));l12;}
  [1] c k n k f h p m x h c k n k f h p m x h
 Levels: c f h k m n p x
 
@@ -9138,6 +9154,42 @@ Error: object 'f' not found
 #{ is.object(c(1,2,3)) }
 [1] FALSE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ !is.recursive(function() {}) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ !is.recursive(list()) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(1) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(1:3) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(1L) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(NA) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(TRUE) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsRecursive
+#{ is.recursive(c(1,2,3)) }
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
 #{ isTRUE(1) }
 [1] FALSE
@@ -9358,6 +9410,39 @@ $Y
 
 [[3]]
 [1] "13"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, sum) }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 2
+
+[[3]]
+[1] 3
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, sum, 2) }
+[[1]]
+[1] 3
+
+[[2]]
+[1] 4
+
+[[3]]
+[1] 5
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }
+$a
+[1] 55
+
+$b
+[1] 210
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
@@ -11168,6 +11253,10 @@ Error in k() : argument "y" is missing, with no default
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNChar
 #{ nchar(c(10,130)) }
 [1] 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNames
+#{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }
+[1] "11" "12" "13"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
 #{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
@@ -14559,6 +14648,15 @@ f(x = 2)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysParents
 #{ sys.parents() }
 integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTable
+#{ a<-c("a", "b", "c");  t<-table(a, sample(a)); dimnames(t) }
+$a
+[1] "a" "b" "c"
+
+[[2]]
+[1] "a" "b" "c"
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTabulate
 #{tabulate(c(-2,0,2,3,3,5))}

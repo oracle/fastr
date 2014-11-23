@@ -624,6 +624,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testDeparseIgnore_dcfc3947162214c236e4caaf5dff89d7() {
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testDet_0119e3eeb33ab4a029ba7826ddc06536() {
         assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
     }
@@ -871,21 +876,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testIsFactorIgnore_f50a4cd1b0417c209953249fed637957() {
         assertEval("{is.factor(c)}");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_8aa9fed48ff3245ec5301cee82cf7f37() {
-        assertEval("{ lapply(1:3, sum) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_04025bf54d7281f9b2993d29590f8eea() {
-        assertEval("{ lapply(1:3, sum, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLapplyIgnore_d3277d29613178c818f69335eb032a43() {
-        assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
     }
 
     @Ignore

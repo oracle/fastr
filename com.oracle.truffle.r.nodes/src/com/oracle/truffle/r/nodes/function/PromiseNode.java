@@ -187,7 +187,7 @@ public abstract class PromiseNode extends RNode {
     /**
      * TODO Expand!
      */
-    private static final class VarargPromiseNode extends PromiseNode {
+    public static final class VarargPromiseNode extends PromiseNode {
         @Child private VarArgNode varargNode;
 
         public VarargPromiseNode(RPromiseFactory factory, VarArgNode varargNode) {

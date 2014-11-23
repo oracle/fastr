@@ -45,8 +45,6 @@ public abstract class FrameSlotNode extends Node {
 
     public abstract boolean hasValue(Frame frame);
 
-    public abstract boolean isWrongDescriptor(FrameDescriptor otherDescriptor);
-
     public FrameSlot executeFrameSlot(@SuppressWarnings("unused") VirtualFrame frame) {
         throw new UnsupportedOperationException();
     }
@@ -111,34 +109,24 @@ public abstract class FrameSlotNode extends Node {
             if (frameSlot != null) {
                 newNode = new PresentFrameSlotNode(frameSlot);
             } else {
-                newNode = new AbsentFrameSlotNode(getAssumption(frame, identifier), frameDescriptor, identifier);
+                newNode = new AbsentFrameSlotNode(getAssumption(frame, identifier), identifier);
             }
             return replace(newNode);
-        }
-
-        @Override
-        public boolean isWrongDescriptor(FrameDescriptor otherDescriptor) {
-            // Not yet specialized, so none is wrong
-            return false;
         }
     }
 
     private static final class AbsentFrameSlotNode extends FrameSlotNode {
 
         @CompilationFinal private Assumption assumption;
-        private final FrameDescriptor frameDescriptor;  // The descriptor the assumption was made in
         private final Object identifier;
 
-        public AbsentFrameSlotNode(Assumption assumption, FrameDescriptor frameDescriptor, Object identifier) {
+        public AbsentFrameSlotNode(Assumption assumption, Object identifier) {
             this.assumption = assumption;
-            this.frameDescriptor = frameDescriptor;
             this.identifier = identifier;
         }
 
         @Override
         public boolean hasValue(Frame frame) {
-            assert frameDescriptor == frame.getFrameDescriptor();
-
             try {
                 assumption.check();
             } catch (InvalidAssumptionException e) {
@@ -150,11 +138,6 @@ public abstract class FrameSlotNode extends Node {
                 }
             }
             return false;
-        }
-
-        @Override
-        public boolean isWrongDescriptor(FrameDescriptor otherDescriptor) {
-            return frameDescriptor != otherDescriptor;
         }
     }
 
@@ -175,8 +158,6 @@ public abstract class FrameSlotNode extends Node {
         }
 
         private boolean isInitialized(Frame frame) {
-            assert frameSlot.getFrameDescriptor() == frame.getFrameDescriptor();
-
             try {
                 Frame typedFrame = frameTypeProfile.profile(frame);
                 return !typedFrame.isObject(frameSlot) || typedFrame.getObject(frameSlot) != null;
@@ -188,11 +169,6 @@ public abstract class FrameSlotNode extends Node {
         @Override
         public boolean hasValue(Frame frame) {
             return initializedProfile.profile(isInitialized(frame));
-        }
-
-        @Override
-        public boolean isWrongDescriptor(FrameDescriptor otherDescriptor) {
-            return otherDescriptor != frameSlot.getFrameDescriptor();
         }
     }
 }

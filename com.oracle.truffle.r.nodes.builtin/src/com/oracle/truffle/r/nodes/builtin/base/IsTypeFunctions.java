@@ -67,6 +67,24 @@ public class IsTypeFunctions {
         }
     }
 
+    protected abstract static class IsTrueAdapter extends ErrorAdapter {
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        }
+
+        @Specialization
+        protected byte isType(RMissing value) throws RError {
+            controlVisibility();
+            throw missingError();
+        }
+
+        @Fallback
+        protected byte isType(Object value) {
+            return RRuntime.LOGICAL_TRUE;
+        }
+    }
+
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsArray extends IsFalseAdapter {
 
@@ -74,6 +92,39 @@ public class IsTypeFunctions {
         protected byte isType(RAbstractVector vector) {
             controlVisibility();
             return RRuntime.asLogical(vector.isArray());
+        }
+
+    }
+
+    @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"})
+    public abstract static class IsRecursive extends IsTrueAdapter {
+
+        @Specialization
+        protected byte isRecursive(RNull arg) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Specialization(guards = "!isListVector")
+        protected byte isRecursive(RAbstractVector arg) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Specialization
+        protected byte isAtomic(RList arg) {
+            controlVisibility();
+            return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization
+        protected byte isAtomic(RFactor arg) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        protected boolean isListVector(RAbstractVector arg) {
+            return arg.getElementClass() == Object.class;
         }
 
     }

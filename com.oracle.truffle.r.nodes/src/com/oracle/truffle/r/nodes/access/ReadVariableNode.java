@@ -414,9 +414,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (enclosingFrame != null) {
                 ReadSuperVariableNode readSuper = props.copyValue ? ReadAndCopySuperVariableNodeFactory.create(props, (AccessEnclosingFrameNode) null, FrameSlotNode.create(getSymbolName()))
                                 : ReadSuperVariableNodeFactory.create(props, (AccessEnclosingFrameNode) null, FrameSlotNode.create(getSymbolName()));
-                ReadVariableNode nextInChainNode = new UnresolvedReadVariableNode(props);
-                ReadVariableNode nextDescriptorNode = new UnresolvedReadVariableNode(props);
-                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, nextInChainNode, nextDescriptorNode);
+                ReadVariableNode nextNode = new UnresolvedReadVariableNode(props);
+                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, nextNode);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
                 return replace(resolveNonFrame()).execute(frame);
@@ -440,9 +439,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
                 ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(props, FrameSlotNode.create(getSymbolName()));
-                ReadVariableNode nextInChainNode = new UnresolvedReadVariableNode(props);
-                ReadVariableNode nextDescriptorNode = new UnresolvedReadVariableNode(props);
-                readNode = new ReadVariableVirtualNode(actualReadNode, nextInChainNode, nextDescriptorNode);
+                ReadVariableNode nextNode = new UnresolvedReadVariableNode(props);
+                readNode = new ReadVariableVirtualNode(actualReadNode, nextNode);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
                 readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(props));
@@ -502,35 +500,27 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public static final class ReadVariableVirtualNode extends ReadVariableNode {
 
         @Child private ReadLocalVariableNode readNode;
-        @Child private ReadVariableNode nextInChainNode;
-        @Child private ReadVariableNode nextDescriptorNode;
+        @Child private ReadVariableNode nextNode;
 
         private final BranchProfile hasValueProfile = BranchProfile.create();
 
-        ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextInChainNode, ReadVariableNode nextDescriptorNode) {
+        ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode) {
             super(readNode.props);
             this.readNode = readNode;
-            this.nextInChainNode = nextInChainNode;
-            this.nextDescriptorNode = nextDescriptorNode;
+            this.nextNode = nextNode;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
-
-            FrameSlotNode fsn = readNode.getFrameSlotNode();
-            if (fsn.isWrongDescriptor(frame.getFrameDescriptor())) {
-                return nextDescriptorNode.execute(frame);
-            }
-
-            if (fsn.hasValue(frame)) {
+            if (readNode.getFrameSlotNode().hasValue(frame)) {
                 hasValueProfile.enter();
                 Object result = readNode.execute(frame);
                 if (checkType(frame, result)) {
                     return result;
                 }
             }
-            return nextInChainNode.execute(frame, RArguments.getEnclosingFrame(frame));
+            return nextNode.execute(frame, RArguments.getEnclosingFrame(frame));
         }
 
         @Override
@@ -603,18 +593,15 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public static final class ReadVariableMaterializedNode extends ReadVariableNode {
 
         @Child private ReadSuperVariableNode readNode;
-        @Child private ReadVariableNode nextInChainNode;
-        @Child private ReadVariableNode nextDescriptorNode;
-        @Child private ReadVariableNode nullNode;
+        @Child private ReadVariableNode nextNode;
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final BranchProfile hasValueProfile = BranchProfile.create();
 
-        protected ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextInChainNode, ReadVariableNode nextDescriptorNode) {
+        protected ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode) {
             super(readNode.getProps());
             this.readNode = readNode;
-            this.nextInChainNode = nextInChainNode;
-            this.nextDescriptorNode = nextDescriptorNode;
+            this.nextNode = nextNode;
         }
 
         @Override
@@ -625,22 +612,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             controlVisibility();
-
-            // Is this the end of the materialized frame chain?
-            if (enclosingFrame == null) {
-                return checkNullNode().execute(frame, null);
-            }
-
-            // Is this node responsible for the given materialized frame?
             MaterializedFrame typedEnclosingFrame = frameTypeProfile.profile(enclosingFrame);
-            FrameSlotNode fsn = readNode.getFrameSlotNode();
-            if (fsn.isWrongDescriptor(enclosingFrame.getFrameDescriptor())) {
-                return nextDescriptorNode.execute(frame, typedEnclosingFrame);
-            }
-
-            MaterializedFrame nextFrame = RArguments.getEnclosingFrame(typedEnclosingFrame);
-
-            if (fsn.hasValue(typedEnclosingFrame)) {
+            if (readNode.getFrameSlotNode().hasValue(typedEnclosingFrame)) {
                 hasValueProfile.enter();
 
                 Object result = readNode.execute(frame, typedEnclosingFrame);
@@ -648,16 +621,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     return result;
                 }
             }
-
-            return nextInChainNode.execute(frame, nextFrame);
-        }
-
-        private ReadVariableNode checkNullNode() {
-            if (nullNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nullNode = UnknownVariableNodeFactory.create(props);
-            }
-            return nullNode;
+            return nextNode.execute(frame, RArguments.getEnclosingFrame(typedEnclosingFrame));
         }
     }
 

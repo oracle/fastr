@@ -20,29 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core.geometry;
 
-import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
+/**
+ * Denotes X-Y coordinates.
+ * Instances must be immutable objects.
+ */
+public interface Coordinates {
+    double[] getXCoordinatesAsDoubles();
 
-public interface GraphicsDevice {
-    void deactivate();
+    double[] getYCoordinatesAsDoubles();
 
-    void activate();
+    int[] getXCoordinatesAsInts();
 
-    void close();
-
-    DrawingParameters getDrawingParameters();
-
-    void setMode(Mode newMode);
-
-    Mode getMode();
-
-    void setClipRect(double x1, double y1, double x2, double y2);
-
-    void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
-
-    public enum Mode {
-        GRAPHICS_ON,    // allow graphics output
-        GRAPHICS_OFF    // disable graphics output
-    }
+    int[] getYCoordinatesAsInts();
 }

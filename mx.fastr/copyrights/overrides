@@ -470,3 +470,6 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/testrgen/TestrGenBuiltin
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/testrgen/TestrGenBuiltinwhichmax.java,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/testrgen/TestrGenBuiltinwhichmin.java,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/testrgen/TestrGenBuiltinxtfrm.java,no.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/graphics/PlotXY.java,gnu_r_graphics.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/graphics/MockGraphicsDevice.java,gnu_r_graphics.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/graphics/core/DrawingParameters.java,gnu_r_graphics.copyright

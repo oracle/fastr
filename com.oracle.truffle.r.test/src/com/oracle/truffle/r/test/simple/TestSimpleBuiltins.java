@@ -19,6 +19,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testTable() {
+        assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
+    }
+
+    @Test
     public void testScan() {
         // from scan's documentation
         assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
@@ -1707,6 +1712,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testNames() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
+    }
+
+    @Test
     public void testUpdateNames() {
         assertEval("{ x <- c(1,2) ; names(x) <- c(\"hello\", \"hi\"); names(x) } ");
 
@@ -2792,6 +2802,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+        assertEval("{ deparse(expression(a+b, c+d)) }");
     }
 
     @Test
@@ -2799,6 +2813,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testDeparseIgnore() {
         assertEval("{ f <- function() 23 ; deparse(f) }");
         assertEval("{ deparse(nrow) }");
+        // should deparse as structure(...
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
@@ -3068,6 +3084,19 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ is.atomic(TRUE) }");
         assertEval("{ !is.atomic(list()) }");
         assertEval("{ !is.atomic(function() {}) }");
+    }
+
+    @Test
+    public void testIsRecursive() {
+        assertEval("{ is.recursive(1) }");
+        assertEval("{ is.recursive(1L) }");
+        assertEval("{ is.recursive(1:3) }");
+        assertEval("{ is.recursive(c(1,2,3)) }");
+        assertEval("{ is.recursive(NA) }");
+        assertEval("{ is.recursive(NULL) }");
+        assertEval("{ is.recursive(TRUE) }");
+        assertEval("{ !is.recursive(list()) }");
+        assertEval("{ !is.recursive(function() {}) }");
     }
 
     @Test
@@ -3496,11 +3525,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
         assertEval("{ f <- function(x) 2 * x ; lapply(1:3, f) }");
         assertEval("{ f <- function(x, y) x * y ; lapply(1:3, f, 2) }");
-    }
-
-    @Test
-    @Ignore
-    public void testLapplyIgnore() {
         assertEval("{ lapply(1:3, sum) }");
         assertEval("{ lapply(1:3, sum, 2) }");
         assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
@@ -3915,13 +3939,14 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testFactor() {
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);print(fdata,FALSE)}");
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));print(rdata);}");
-        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata);}");
-        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12);}");
-        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); print(schtyp.f);}");
+
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);fdata}");
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));rdata;}");
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');fdata;}");
+        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));l12;}");
+        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); schtyp.f;}");
         // Checkstyle: stop line length check
-        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order); } ");
+        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order; } ");
         // Checkstyle: resume line length check
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
@@ -3994,7 +4019,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); levels(x)<-c(7, 42); is.character(levels(x)) }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7+7i, 42+42i); is.complex(levels(x)) }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); is.raw(levels(x)) }");
-
     }
 
     @Test
