@@ -20,29 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core.drawables;
 
-import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
+import com.oracle.truffle.r.nodes.graphics.core.geometry.CoordinateSystem;
 
-public interface GraphicsDevice {
-    void deactivate();
+import java.awt.*;
 
-    void activate();
+/**
+ * Denotes an object defined in <code>srcCoordinateSystem</code> that can be drawn
+ * in <code>dstCoordinateSystem</code> on {@link Graphics2D}.
+ */
+public abstract class DrawableObject {
+    private final CoordinateSystem srcCoordinateSystem;
 
-    void close();
+    protected DrawableObject(CoordinateSystem srcCoordinateSystem) {
+        this.srcCoordinateSystem = srcCoordinateSystem;
+    }
 
-    DrawingParameters getDrawingParameters();
+    public abstract void drawOn(Graphics2D g2);
 
-    void setMode(Mode newMode);
+    /**
+     * Override to prepare coordinates given in <code>srcCoordinateSystem</code> to be drawn in
+     * <code>srcCoordinateSystem</code>.
+     */
+    public abstract void recalculateForDrawingIn(CoordinateSystem dstCoordinateSystem);
 
-    Mode getMode();
-
-    void setClipRect(double x1, double y1, double x2, double y2);
-
-    void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
-
-    public enum Mode {
-        GRAPHICS_ON,    // allow graphics output
-        GRAPHICS_OFF    // disable graphics output
+    protected final CoordinateSystem getSrcCoordinateSystem() {
+        return srcCoordinateSystem;
     }
 }

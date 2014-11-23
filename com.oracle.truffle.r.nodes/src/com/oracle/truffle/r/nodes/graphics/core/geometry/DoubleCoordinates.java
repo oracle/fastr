@@ -20,29 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.graphics.core;
+package com.oracle.truffle.r.nodes.graphics.core.geometry;
 
-import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
+import java.util.stream.DoubleStream;
 
-public interface GraphicsDevice {
-    void deactivate();
+public final class DoubleCoordinates implements Coordinates {
 
-    void activate();
+    private final double[] xCoords;
+    private final double[] yCoords;
 
-    void close();
+    public DoubleCoordinates(double[] xCoords, double[] yCoords) {
+        this.xCoords = xCoords;
+        this.yCoords = yCoords;
+    }
 
-    DrawingParameters getDrawingParameters();
+    public double[] getXCoordinatesAsDoubles() {
+        return xCoords;
+    }
 
-    void setMode(Mode newMode);
+    public double[] getYCoordinatesAsDoubles() {
+        return yCoords;
+    }
 
-    Mode getMode();
+    public int[] getXCoordinatesAsInts() {
+        return toInt(getXCoordinatesAsDoubles());
+    }
 
-    void setClipRect(double x1, double y1, double x2, double y2);
+    public int[] getYCoordinatesAsInts() {
+        return toInt(getYCoordinatesAsDoubles());
+    }
 
-    void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
-
-    public enum Mode {
-        GRAPHICS_ON,    // allow graphics output
-        GRAPHICS_OFF    // disable graphics output
+    private int[] toInt(double[] doubleArray) {
+        return DoubleStream.of(doubleArray).mapToInt(d -> (int) d).toArray();
     }
 }
