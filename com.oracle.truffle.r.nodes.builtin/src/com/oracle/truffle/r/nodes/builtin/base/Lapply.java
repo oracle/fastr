@@ -74,17 +74,16 @@ public abstract class Lapply extends RBuiltinNode {
      * @param frame
      * @param vecMat
      * @param fun
-     * @param varArgsArg May be {@link RMissing#instance} to indicate empty "..."!
+     * @param varArgs May be {@link RMissing#instance} to indicate empty "..."!
      * @return The results of applying fun to every vector element
      */
-    protected Object[] applyHelper(VirtualFrame frame, RVector vecMat, RFunction fun, Object varArgsArg) {
+    protected Object[] applyHelper(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
         /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
         Object[] result = new Object[vecMat.getLength()];
         FormalArguments formalArgs = ((RRootNode) fun.getTarget().getRootNode()).getFormalArguments();
 
         // TODO Poor man's caching, change to proper cache
-        VarArgsSignature signature = CallArgumentsNode.createSignature(varArgsArg, 1, true);
-        RArgsValuesAndNames varArgs = varArgsArg == RMissing.instance ? null : (RArgsValuesAndNames) varArgsArg;
+        VarArgsSignature signature = CallArgumentsNode.createSignature(varArgs, 1, true);
         if (fun.getTarget() != callTarget || signature.isNotEqualTo(oldSignature)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
 
@@ -109,7 +108,8 @@ public abstract class Lapply extends RBuiltinNode {
             // matching.
             RNode[] args;
             String[] names;
-            if (varArgs == null || (varArgs.length() == 1 && varArgs.getValues()[0] == RMissing.instance)) {
+            if (varArgs.isEmpty()) {    // == null || (varArgs.length() == 1 && varArgs.getValues()[0]
+// == RMissing.instance)) {
                 args = new RNode[]{readVectorElement};
                 names = new String[]{readVectorElementName};
             } else {

@@ -17457,6 +17457,10 @@ $names
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f<-function(x, ...) { sum(x, ...) }; f(7) }
+[1] 7
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f<-function(x, y) { print(missing(y)); } ; f(42) }
 [1] TRUE
 
@@ -17493,8 +17497,20 @@ $names
 [1] 14
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ g <- function(x, ...) c(x, ...); g(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ g <- function(x, ...) f(x,...); f <-function(x,...) c(x, ...); g(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }
 [1] 42  1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ h<-function(x,...) f(x,...); f<-function(x, ...) { sum(x, ...) }; h(7) }
+[1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ x<-7; y<-42; f<-function(...) { as.list(substitute(g(...))) }; f(x,y) }
