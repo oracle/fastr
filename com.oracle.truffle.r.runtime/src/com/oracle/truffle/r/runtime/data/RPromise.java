@@ -33,7 +33,10 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * Denotes an R {@code promise}.
+ * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise},
+ * {@link VarargPromise} and {@link PromisedPromise} - are merely for documentation reasons: Because
+ * Truffle cannot do proper function dispatch based on inheritance, an additional {@link #optType}
+ * is introduced, which is used for manual method dispatch.
  */
 @ValueType
 public class RPromise extends RLanguageRep {
@@ -84,6 +87,12 @@ public class RPromise extends RLanguageRep {
         NO_ARG;
     }
 
+    /**
+     * As Truffle cannot inline virtual methods properly, this type was introduced to tell all
+     * {@link RPromise} classes apart and to implement "virtual" method dispatch.
+     *
+     * @see RPromise
+     */
     private enum OptType {
         DEFAULT,
         EAGER,
@@ -303,9 +312,8 @@ public class RPromise extends RLanguageRep {
         this.value = profiledValue;
         this.isEvaluated = true;
 
-        // TODO Does this apply to other values, too?
+        // set NAMED = 2
         if (profiledValue instanceof RShareable) {
-            // set NAMED = 2
             ((RShareable) profiledValue).makeShared();
         }
     }
@@ -333,11 +341,18 @@ public class RPromise extends RLanguageRep {
         }
     }
 
+    /**
+     * @param frame
+     * @param profile
+     * @param callSrc
+     * @return The value of the expression and the frame this (default) {@link RPromise} represent
+     */
     protected final Object defaultGenerateValue(VirtualFrame frame, PromiseProfile profile, SourceSection callSrc) {
         // Evaluate this promise's value!
         // Performance: We can use frame directly
         if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
-// SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
+            // SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) :
+            // null;
             return doEvalArgument(callSrc);
         } else {
             assert isInOriginFrame(frame, profile);
@@ -514,6 +529,9 @@ public class RPromise extends RLanguageRep {
         return isEvaluated;
     }
 
+    /**
+     * @return This instance's {@link OptType}
+     */
     public final OptType getOptType() {
         return optType;
     }
@@ -548,7 +566,22 @@ public class RPromise extends RLanguageRep {
         return "[" + evalPolicy + ", " + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
-    // TODO @ValueType annotation necessary here?
+    /**
+     * This is a {@link RPromise} implementation that performs two optimizations:
+     * <ul>
+     * <li>1. It does not carry a {@link MaterializedFrame} ({@link RPromise#execFrame}) but knows
+     * how to retrieve the correct one if needed</li>
+     * <li>2. It carries a pre-evaluated value of the symbol-expression it is supposed to evaluate
+     * on first read</li>
+     * </ul>
+     * The 1. optimization is only possible if the {@link EagerPromise} does not leave the stack it
+     * was created in, e.g. by the means of "sys.frame", "function" or similar. If it needs to be
+     * present for any reason, {@link #materialize(PromiseProfile)} is called.<br/>
+     * The 2. optimization is only possible as long it can be guaranteed that the symbol it was
+     * originally read from has not been altered in the mean time. If this cannot be guaranteed for
+     * any reason, a Promise gets {@link #deoptimize(PromiseProfile)} (which includes
+     * {@link #materialize(PromiseProfile)}ion).
+     */
     private static class EagerPromise extends RPromise {
         protected final Object eagerValue;
 
@@ -592,6 +625,11 @@ public class RPromise extends RLanguageRep {
             }
         }
 
+        /**
+         * @param profile
+         * @param callSrc
+         * @return The eager value this class already contains.
+         */
         private Object genEagerValue(PromiseProfile profile, SourceSection callSrc) {
             OptType profieldOptType = profile.optTypeProfile.profile(optType);
             if (profieldOptType == OptType.EAGER) {
@@ -604,6 +642,10 @@ public class RPromise extends RLanguageRep {
             }
         }
 
+        /**
+         * @param profile
+         * @return {@link #deoptimize(PromiseProfile)}
+         */
         public boolean deoptimizeEager(PromiseProfile profile) {
             if (!deoptimized) {
                 deoptimized = true;
@@ -614,6 +656,9 @@ public class RPromise extends RLanguageRep {
             return true;
         }
 
+        /**
+         * @return {@link #materialize(PromiseProfile)}
+         */
         public boolean materializeEager() {
             if (execFrame == null) {
                 this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
@@ -642,7 +687,8 @@ public class RPromise extends RLanguageRep {
     }
 
     /**
-     * TODO Gero comment!
+     * A {@link RPromise} implementation that behaves like an {@link EagerPromise}, but knows that
+     * it's eager value is another {@link RPromise} that needs to be evaluated itself.
      */
     private static final class PromisedPromise extends EagerPromise {
 
@@ -657,9 +703,23 @@ public class RPromise extends RLanguageRep {
         }
     }
 
+    /**
+     * Used to allow feedback on {@link EagerPromise} evaluation.
+     */
     public interface EagerFeedback {
+        /**
+         * Called whenever an optimized {@link EagerPromise} has been evaluated successfully.
+         *
+         * @param promise
+         */
         void onSuccess(RPromise promise);
 
+        /**
+         * Whenever an optimized {@link EagerPromise} has been deoptimized, or it's assumption did
+         * not hold until evaluation.
+         *
+         * @param promise
+         */
         void onFailure(RPromise promise);
     }
 
