@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public class RASTUtils {
 
     /**
-     * Removes any {@link WrapArgumentNode}.
+     * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
     public static Node unwrap(Object node) {
@@ -61,7 +62,6 @@ public class RASTUtils {
         } else {
             return parent;
         }
-
     }
 
     /**
@@ -90,6 +90,9 @@ public class RASTUtils {
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
+        } else if (argNode instanceof VarArgPromiseNode) {
+            RPromise p = ((VarArgPromiseNode) argNode).getPromise();
+            return createLanguageElement(unwrap(p.getRep()));
         } else {
             return RDataFactory.createLanguage(argNode);
         }
