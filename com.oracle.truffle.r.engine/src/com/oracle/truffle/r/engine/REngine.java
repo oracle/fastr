@@ -275,7 +275,6 @@ public final class REngine implements RContext.Engine {
     public Object evalPromise(RPromise promise, SourceSection callSrc) {
         // have to do the full out eval
         try {
-            assert promise.materialize();
             MaterializedFrame frame = promise.getFrame().materialize();
             REnvironment env = REnvironment.frameToEnvironment(frame);
             assert env != null;

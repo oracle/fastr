@@ -184,6 +184,7 @@ public class EnvFunctions {
 
         private final ConditionProfile isFunctionProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
+        private final PromiseProfile promiseProfile = new PromiseProfile();
 
         @Override
         public RNode[] getParameterValues() {
@@ -195,7 +196,7 @@ public class EnvFunctions {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             MaterializedFrame matFrame = callerFrame.materialize();
-            RPromise.deoptimizeFrame(matFrame);
+            RPromise.deoptimizeFrame(matFrame, promiseProfile);
             return REnvironment.frameToEnvironment(matFrame);
         }
 

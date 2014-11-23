@@ -107,6 +107,7 @@ public abstract class Missing extends RBuiltinNode {
                     return RRuntime.LOGICAL_TRUE;
                 }
                 try {
+                    promise.materialize(promiseProfile);
                     promise.setUnderEvaluation(true);
                     Symbol symbol = RMissingHelper.unwrapSymbol((RNode) promise.getRep());
                     return isSymbolNullProfile.profile(symbol == null) ? RRuntime.LOGICAL_FALSE : recursive.execute(promise.getFrame(), symbol);

@@ -107,7 +107,7 @@ public class RPromise extends RLanguageRep {
 
     /**
      * @see #getFrame()
-     * @see #materialize()
+     * @see #materialize(PromiseProfile)
      */
     protected MaterializedFrame execFrame;
 
@@ -375,22 +375,28 @@ public class RPromise extends RLanguageRep {
      *
      * @return <code>true</code> if this was deoptimized before
      */
-    public boolean deoptimize() {
-        // Nothing to do here; already the generic and slow RPromise
-        return true;
+    public boolean deoptimize(PromiseProfile profile) {
+        OptType profiledOptType = profile.optTypeProfile.profile(optType);
+        if (profiledOptType == OptType.EAGER || profiledOptType == OptType.PROMISED) {
+            EagerPromise eager = (EagerPromise) this;
+            return eager.deoptimizeEager(profile);
+        } else {
+            // Nothing to do here; already the generic and slow RPromise
+            return true;
+        }
     }
 
     /**
-     * Guarantees, that all {@link RPromise}s in frame are {@link #deoptimize()}d and thus are safe
-     * to leave it's stack-branch.
+     * Guarantees, that all {@link RPromise}s in frame are {@link #deoptimize(PromiseProfile)}d and
+     * thus are safe to leave it's stack-branch.
      *
-     * @param frame The frame to check for {@link RPromise}s to {@link #deoptimize()}
+     * @param frame The frame to check for {@link RPromise}s to {@link #deoptimize(PromiseProfile)}
      * @return Whether there was at least on {@link RPromise} which needed to be
-     *         {@link #deoptimize()}d.
+     *         {@link #deoptimize(PromiseProfile)}d.
      */
     @TruffleBoundary
     // Deoptimize because of frame slot access
-    public static boolean deoptimizeFrame(MaterializedFrame frame) {
+    public static boolean deoptimizeFrame(MaterializedFrame frame, PromiseProfile profile) {
         boolean deoptOne = false;
         for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
             // We're only interested in RPromises
@@ -404,7 +410,7 @@ public class RPromise extends RLanguageRep {
 
                 // If it's a promise, deoptimize it!
                 if (value instanceof RPromise) {
-                    deoptOne |= ((RPromise) value).deoptimize();
+                    deoptOne |= ((RPromise) value).deoptimize(profile);
                 }
             } catch (FrameSlotTypeException err) {
                 // Should not happen after former check on FrameSlotKind!
@@ -421,8 +427,15 @@ public class RPromise extends RLanguageRep {
      * @see #execFrame
      * @see #getFrame()
      */
-    public boolean materialize() {
-        return true;
+    public boolean materialize(PromiseProfile profile) {
+        OptType profiledOptType = profile.optTypeProfile.profile(optType);
+        if (profiledOptType == OptType.EAGER || profiledOptType == OptType.PROMISED) {
+            EagerPromise eager = (EagerPromise) this;
+            return eager.materializeEager();
+        } else {
+            // Nothing to do here; already the generic and slow RPromise
+            return true;
+        }
     }
 
     /**
@@ -477,9 +490,9 @@ public class RPromise extends RLanguageRep {
     /**
      * @return {@link #execFrame}. This might be <code>null</code> if
      *         {@link #isEagerPromise(PromiseProfile)} == <code>true</code>!!! Materialize with
-     *         {@link #materialize()}.
+     *         {@link #materialize(PromiseProfile)}.
      *
-     * @see #materialize()
+     * @see #materialize(PromiseProfile)
      * @see #execFrame
      */
     public final MaterializedFrame getFrame() {
@@ -544,7 +557,7 @@ public class RPromise extends RLanguageRep {
         private final EagerFeedback feedback;
 
         /**
-         * Set to <code>true</code> by {@link #deoptimize()}. If this is true, the
+         * Set to <code>true</code> by {@link #deoptimize(PromiseProfile)}. If this is true, the
          * {@link RPromise#execFrame} is guaranteed to be set.
          */
         private boolean deoptimized = false;
@@ -572,7 +585,7 @@ public class RPromise extends RLanguageRep {
                 feedback.onFailure(this);
 
                 // Fallback: eager evaluation failed, now take the slow path
-                materialize();
+                materialize(profile);
 
                 // Call
                 return super.defaultGenerateValue(frame, profile, callSrc);
@@ -591,19 +604,17 @@ public class RPromise extends RLanguageRep {
             }
         }
 
-        @Override
-        public boolean deoptimize() {
+        public boolean deoptimizeEager(PromiseProfile profile) {
             if (!deoptimized) {
                 deoptimized = true;
                 feedback.onFailure(this);
-                materialize();
+                materialize(profile);
                 return false;
             }
             return true;
         }
 
-        @Override
-        public boolean materialize() {
+        public boolean materializeEager() {
             if (execFrame == null) {
                 this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
                 return false;

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 public abstract class FunctionExpressionNode extends RNode {
 
@@ -67,6 +68,7 @@ public abstract class FunctionExpressionNode extends RNode {
     public static final class DynamicFunctionExpressionNode extends FunctionExpressionNode {
 
         private final RootCallTarget callTarget;
+        private final PromiseProfile promiseProfile = new PromiseProfile();
 
         public DynamicFunctionExpressionNode(RootCallTarget callTarget) {
             this.callTarget = callTarget;
@@ -76,7 +78,7 @@ public abstract class FunctionExpressionNode extends RNode {
         public RFunction executeFunction(VirtualFrame frame) {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             MaterializedFrame matFrame = frame.materialize();
-            RPromise.deoptimizeFrame(matFrame);
+            RPromise.deoptimizeFrame(matFrame, promiseProfile);
             return new RFunction("", callTarget, matFrame);
         }
 

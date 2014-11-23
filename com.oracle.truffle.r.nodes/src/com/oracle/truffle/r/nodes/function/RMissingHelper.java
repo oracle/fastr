@@ -134,7 +134,7 @@ public class RMissingHelper {
                 }
 
                 try {
-                    promise.materialize();
+                    promise.materialize(globalMissingPromiseProfile);
                     promise.setUnderEvaluation(true);
                     result = isMissingArgument(promise.getFrame(), symbol);
                 } finally {

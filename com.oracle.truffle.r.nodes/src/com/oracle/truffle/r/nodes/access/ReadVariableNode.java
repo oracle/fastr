@@ -342,7 +342,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
             }
 
-            assert promise.materialize();
+            assert promise.materialize(promiseProfile);
             Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
             assert promiseFrame != null;
             SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
