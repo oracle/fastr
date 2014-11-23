@@ -51,6 +51,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile enclosingFrameProfile = ValueProfile.createIdentityProfile();
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -109,6 +110,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
+            RArguments.setEnclosingFrame(vf, enclosingFrameProfile.profile(RArguments.getEnclosingFrame(vf)));
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
