@@ -238,8 +238,8 @@ public final class Utils {
     }
 
     /**
-     * Retrieve a frame from the call stack. N.B. This method cannot not be used to get the current frame,
-     * use {@link #getActualCurrentFrame()} for that.
+     * Retrieve a frame from the call stack. N.B. This method cannot not be used to get the current
+     * frame, use {@link #getActualCurrentFrame()} for that.
      *
      * @param fa kind of access required to the frame
      * @param depth identifies which frame is required (> 0)

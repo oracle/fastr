@@ -57,7 +57,6 @@ public class TestrGenBuiltinisna extends TestBase {
         assertEval("argv <- list(structure(c(23L, 24L, 47L, 48L, 71L, 72L, 95L, 96L, 119L, 120L), .Dim = c(2L, 5L), .Dimnames = list(NULL, c(\'V5\', \'V6\', \'V7\', \'V8\', \'V9\'))));is.na(argv[[1]]);");
     }
 
-
     @Test
     @Ignore
     public void testisna10() {

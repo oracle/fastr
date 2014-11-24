@@ -851,7 +851,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "open", kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
-    public abstract static class Open  extends CheckIsConnAdapter {
+    public abstract static class Open extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
         protected Object open(RConnection con, RAbstractStringVector open, byte blocking) {
@@ -871,7 +871,7 @@ public abstract class ConnectionFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
             return RNull.instance;
-         }
+        }
 
         @Fallback
         @TruffleBoundary

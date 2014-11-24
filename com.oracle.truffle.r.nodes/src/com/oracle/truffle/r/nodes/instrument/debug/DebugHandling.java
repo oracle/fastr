@@ -57,45 +57,39 @@ import java.util.*;
 /**
  * The implementation of the R debug functions.
  *
- * When a function is enabled for debugging a set of {@link DebugEventReceivers}
- * are created and associated with {@link Instrument}s and attached to key nodes
- * in the AST body associated with the {@link FunctionDefinitionNode}
- * corresponding to the {@link RFunction} instance.
+ * When a function is enabled for debugging a set of {@link DebugEventReceivers} are created and
+ * associated with {@link Instrument}s and attached to key nodes in the AST body associated with the
+ * {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
  *
  * Two different receiver classes are defined:
  * <ul>
- * <li>{@link FunctionStatementsEventReceiver}: attaches to
- * {@link FunctionStatementsNode} and handles the special behavior on
- * entry/exit</li>
- * <li>{@link StatementEventReceiver}: attaches to all {@link STATEMENT} nodes
- * and handles "n" and "s" browser commands</li>
- * <li>{@link LoopStatementEcventReceiver}: attaches to {@link LoopNode}
- * instances and handles special "f" command behavior.
+ * <li>{@link FunctionStatementsEventReceiver}: attaches to {@link FunctionStatementsNode} and
+ * handles the special behavior on entry/exit</li>
+ * <li>{@link StatementEventReceiver}: attaches to all {@link STATEMENT} nodes and handles "n" and
+ * "s" browser commands</li>
+ * <li>{@link LoopStatementEcventReceiver}: attaches to {@link LoopNode} instances and handles
+ * special "f" command behavior.
  * </ul>
  * <p>
- * Step Into is slightly tricky because, at the point the command is issued, we
- * do not know what function the call will resolve to. There are two solutions
- * to this:
+ * Step Into is slightly tricky because, at the point the command is issued, we do not know what
+ * function the call will resolve to. There are two solutions to this:
  * <ul>
- * <li></li>Use the global trap mechanism of
- * the instrumentation framework to force entry to <b>any</b> function. This is
- * enabled on a step into command and immediately disabled on taking the trap
- * (cf hardware single step).
- * <li></li>A callback from the {@code execute} method of
- * {@link FunctionDefinitionNode}, which acts as if {@code debugonce} had been
- * called by the user (unless debug was already enabled in which case there is
- * nothing to do). This has been prototyped but it is not clear it provides
- * sufficient value for the added complexity..
+ * <li></li>Use the global trap mechanism of the instrumentation framework to force entry to
+ * <b>any</b> function. This is enabled on a step into command and immediately disabled on taking
+ * the trap (cf hardware single step).
+ * <li></li>A callback from the {@code execute} method of {@link FunctionDefinitionNode}, which acts
+ * as if {@code debugonce} had been called by the user (unless debug was already enabled in which
+ * case there is nothing to do). This has been prototyped but it is not clear it provides sufficient
+ * value for the added complexity..
  * <p>
- * When invoked from within a loop The "f" command continues the loop body without
- * entry and the re-enables entry. This is handled by creating a {@link LoopStatementEventReceiver}
- * per {@link LoopNode}. On a "f" every receiver <b>except</b> the one associated with that
- * loop is disabled. On return from the loop, everything is re-enabled.
+ * When invoked from within a loop The "f" command continues the loop body without entry and the
+ * re-enables entry. This is handled by creating a {@link LoopStatementEventReceiver} per
+ * {@link LoopNode}. On a "f" every receiver <b>except</b> the one associated with that loop is
+ * disabled. On return from the loop, everything is re-enabled.
  * <p>
- * Currently, {@code debugonce} and {@code undebug} are handled by disabling the
- * receiver behavior. Any change in enabled state is managed by an
- * {@link Assumption} which will invalidate the code of the receiver. In the
- * case where events are disabled there should be no compilation overhead from
+ * Currently, {@code debugonce} and {@code undebug} are handled by disabling the receiver behavior.
+ * Any change in enabled state is managed by an {@link Assumption} which will invalidate the code of
+ * the receiver. In the case where events are disabled there should be no compilation overhead from
  * the receivers.
  */
 public class DebugHandling {
@@ -106,8 +100,7 @@ public class DebugHandling {
     private static final WeakHashMap<FunctionUID, FunctionStatementsEventReceiver> receiverMap = new WeakHashMap<>();
 
     /**
-     * Attach the DebugHandling instrument to the FunctionStatementsNode and all
-     * syntactic nodes.
+     * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
      */
     @SuppressWarnings("unused")
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
@@ -189,13 +182,10 @@ public class DebugHandling {
 
     private abstract static class DebugEventReceiver implements TruffleEventReceiver {
 
-        @SuppressWarnings("unused")
-        protected final Object text;
-        @SuppressWarnings("unused")
-        protected final Object condition;
+        @SuppressWarnings("unused") protected final Object text;
+        @SuppressWarnings("unused") protected final Object condition;
         protected final FunctionDefinitionNode functionDefinitionNode;
-        @CompilationFinal
-        private boolean disabled;
+        @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
         protected DebugEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
@@ -275,12 +265,11 @@ public class DebugHandling {
     }
 
     /**
-     * This handles function entry and exit. We try to emulate GnuR behavior but
-     * since FastR does not (yet) handle <@code {</code> correctly, it is a bit
-     * heuristic. In particular, if a function is defined using <@code {
-     * }</code>, GnuR stops at the <@code {</code> and then "steps over" the
-     * <@code {</code> to the first statement, otherwise it just stops at the
-     * first statement.
+     * This handles function entry and exit. We try to emulate GnuR behavior but since FastR does
+     * not (yet) handle <@code {</code> correctly, it is a bit heuristic. In particular, if a
+     * function is defined using <@code { }</code>, GnuR stops at the <@code {</code> and then
+     * "steps over" the <@code {</code> to the first statement, otherwise it just stops at the first
+     * statement.
      */
     private static class FunctionStatementsEventReceiver extends DebugEventReceiver {
 
@@ -324,13 +313,13 @@ public class DebugHandling {
             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
                 lser.disable();
             }
-         }
+        }
 
         @Override
         void enable() {
             super.enable();
             statementReceiver.enable();
-             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
                 lser.enable();
             }
         }
@@ -338,7 +327,7 @@ public class DebugHandling {
         void setContinuing() {
             continuing = true;
             statementReceiver.disable();
-             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
+            for (LoopStatementEventReceiver lser : loopStatementReceivers) {
                 lser.disable();
             }
         }
@@ -403,7 +392,7 @@ public class DebugHandling {
                 for (LoopStatementEventReceiver lser : loopStatementReceivers) {
                     lser.enable();
                 }
-               continuing = false;
+                continuing = false;
             }
         }
 
@@ -454,8 +443,8 @@ public class DebugHandling {
 
         private boolean finishing;
         /**
-         * The wrapper for the loop node is stable whereas the loop node
-         * itself will be replaced with a specialized node.
+         * The wrapper for the loop node is stable whereas the loop node itself will be replaced
+         * with a specialized node.
          */
         private final WrapperNode loopNodeWrapper;
         private final FunctionStatementsEventReceiver fser;
@@ -549,6 +538,5 @@ public class DebugHandling {
         }
 
     }
-
 
 }

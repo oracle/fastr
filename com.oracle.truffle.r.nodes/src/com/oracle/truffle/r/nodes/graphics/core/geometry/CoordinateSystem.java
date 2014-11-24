@@ -25,23 +25,22 @@ package com.oracle.truffle.r.nodes.graphics.core.geometry;
 import java.util.stream.DoubleStream;
 
 /**
- * Denotes X-Y coordinate system by specifying max and min values for X-Y axis.
- * Able to convert coordinates given in another {@link CoordinateSystem}
+ * Denotes X-Y coordinate system by specifying max and min values for X-Y axis. Able to convert
+ * coordinates given in another {@link CoordinateSystem}
  */
 public final class CoordinateSystem {
     private final Axis xAxis;
     private final Axis yAxis;
 
     /**
-     * Uses Java graphics default axis orientation: x increases to the right,
-     * y increases to the bottom.
+     * Uses Java graphics default axis orientation: x increases to the right, y increases to the
+     * bottom.
      */
     public CoordinateSystem(double minX, double maxX, double minY, double maxY) {
         this(minX, maxX, minY, maxY, AxisDirection.EAST, AxisDirection.SOUTH);
     }
 
-    public CoordinateSystem(double minX, double maxX, double minY, double maxY, AxisDirection xDirection,
-                            AxisDirection yDirection) {
+    public CoordinateSystem(double minX, double maxX, double minY, double maxY, AxisDirection xDirection, AxisDirection yDirection) {
         this(new Axis(minX, maxX, xDirection), new Axis(minY, maxY, yDirection));
     }
 
@@ -51,19 +50,12 @@ public final class CoordinateSystem {
     }
 
     /**
-     * Transforms <code> otherCoordinates </code> given in <code> otherCoordinateSystem</code> to this coordinate system.
-     * Also applies the affine transformation defined by ratio and shifts.
+     * Transforms <code> otherCoordinates </code> given in <code> otherCoordinateSystem</code> to
+     * this coordinate system. Also applies the affine transformation defined by ratio and shifts.
      */
-    public Coordinates convertCoordinatesFrom(CoordinateSystem otherCoordinateSystem, Coordinates otherCoordinates,
-                                              double ratio, double xAxisShift, double yAxisShift) {
-        double[] resultX = convertCoordinatesBetweenAxises(getXAxis(),
-                otherCoordinateSystem.getXAxis(),
-                otherCoordinates.getXCoordinatesAsDoubles(),
-                ratio, xAxisShift);
-        double[] resultY = convertCoordinatesBetweenAxises(getYAxis(),
-                otherCoordinateSystem.getYAxis(),
-                otherCoordinates.getYCoordinatesAsDoubles(),
-                ratio, yAxisShift);
+    public Coordinates convertCoordinatesFrom(CoordinateSystem otherCoordinateSystem, Coordinates otherCoordinates, double ratio, double xAxisShift, double yAxisShift) {
+        double[] resultX = convertCoordinatesBetweenAxises(getXAxis(), otherCoordinateSystem.getXAxis(), otherCoordinates.getXCoordinatesAsDoubles(), ratio, xAxisShift);
+        double[] resultY = convertCoordinatesBetweenAxises(getYAxis(), otherCoordinateSystem.getYAxis(), otherCoordinates.getYCoordinatesAsDoubles(), ratio, yAxisShift);
         return new DoubleCoordinates(resultX, resultY);
     }
 
@@ -73,8 +65,7 @@ public final class CoordinateSystem {
         return convertCoordinatesFrom(otherCoordinateSystem, otherCoordinates, noRatio, noShift, noShift);
     }
 
-    private static double[] convertCoordinatesBetweenAxises(Axis toAxis, Axis fromAxis, double[] coords,
-                                                            double givenRatio, double givenShift) {
+    private static double[] convertCoordinatesBetweenAxises(Axis toAxis, Axis fromAxis, double[] coords, double givenRatio, double givenShift) {
         boolean sameDirection = toAxis.getDirection() == fromAxis.getDirection();
         double ratio = toAxis.getRange() / fromAxis.getRange();
         ratio = sameDirection ? ratio : -ratio;

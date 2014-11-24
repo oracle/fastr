@@ -32,7 +32,7 @@ public class MockGraphicsDevice implements GraphicsDevice {
     private static final Axis GNUR_DEFAULT_X_AXIS = new Axis(0, GNUR_DEFAULT_MAX_X, EAST);
     private static final Axis GNUR_DEFAULT_Y_AXIS = new Axis(0, 1, NORTH);
     private static final double MARGIN = GNUR_DEFAULT_MAX_X * 0.1; // the margin for each side of
-// 10% of a screen
+    // 10% of a screen
     // compress resulting image to have a small margin on all sides
     private static final double COMPRESS_RATION = 1. - MARGIN * 1.8;
 
@@ -94,7 +94,7 @@ public class MockGraphicsDevice implements GraphicsDevice {
 
     private void drawXYLabelsFor(Coordinates coordinates) {
         drawLabelsForCoordinates(coordinates.getXCoordinatesAsDoubles(), MARGIN, 0.01, // just small
-// shift
+                        // shift
                         d -> CoordinatesFactory.createWithSameY(d, 0));
         drawLabelsForCoordinates(coordinates.getYCoordinatesAsDoubles(), 0, MARGIN, d -> CoordinatesFactory.createWithSameX(0, d));
     }

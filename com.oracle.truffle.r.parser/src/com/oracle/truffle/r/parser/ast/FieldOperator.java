@@ -11,5 +11,6 @@
 package com.oracle.truffle.r.parser.ast;
 
 public enum FieldOperator {
-    FIELD, AT
+    FIELD,
+    AT
 }

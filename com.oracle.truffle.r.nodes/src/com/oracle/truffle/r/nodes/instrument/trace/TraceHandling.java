@@ -60,8 +60,7 @@ public class TraceHandling {
     private abstract static class TraceEventReceiver implements TruffleEventReceiver {
 
         protected final FunctionDefinitionNode functionDefinitionNode;
-        @CompilationFinal
-        private boolean disabled;
+        @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
 
         protected TraceEventReceiver(FunctionDefinitionNode functionDefinitionNode) {
@@ -127,8 +126,8 @@ public class TraceHandling {
             if (!disabled()) {
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
                 RContext.getInstance().getConsoleHandler().printf("trace: %s%n", RArguments.getCallSourceSection(frame).getCode());
-             }
+            }
         }
-}
+    }
 
 }

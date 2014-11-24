@@ -59,14 +59,14 @@ public class WrapperProcessor extends AbstractProcessor {
             }
             note("CreateWrapperProcessor: analyzing classes");
             createWrapperElement = processingEnv.getElementUtils().getTypeElement("com.oracle.truffle.r.nodes.instrument.CreateWrapper");
-             for (Element element : roundEnv.getElementsAnnotatedWith(createWrapperElement)) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(createWrapperElement)) {
                 if (element instanceof TypeElement) {
                     TypeElement classElement = (TypeElement) element;
                     PackageElement packageElement = getPackage(classElement);
                     WrappedClassVisitor methodVisitor = new WrappedClassVisitor(classElement);
                     classElement.accept(methodVisitor, null);
                     generate(packageElement, classElement, methodVisitor.wrappedMethods);
-             }
+                }
             }
         } catch (Exception ex) {
             error("error generating Wrapper classes: " + ex);
@@ -79,131 +79,131 @@ public class WrapperProcessor extends AbstractProcessor {
     }
 
     private void generate(PackageElement packageElement, TypeElement classElement, Set<ExecutableElement> wrappedMethods) throws IOException {
-            String packageName = packageElement.getQualifiedName().toString();
-            String className = classElement.getSimpleName().toString();
-            String qualClassName = classElement.getQualifiedName().toString();
-            String wrapperClassName = classElement.getSimpleName().toString() + "Wrapper";
-            JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + "." + wrapperClassName);
-            try (PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()))) {
-                wr.println("// DO NOT EDIT, generated automatically");
-                wr.printf("package %s;%n", packageName);
-                wr.println();
-                wr.printf("import com.oracle.truffle.api.instrument.Probe;%n");
-                wr.printf("import com.oracle.truffle.api.instrument.ProbeNode;%n");
-                wr.printf("import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;%n");
-                wr.printf("import com.oracle.truffle.api.nodes.Node;%n");
-                wr.printf("import com.oracle.truffle.r.nodes.RNode;%n");
-                wr.printf("import com.oracle.truffle.r.runtime.RDeparse;%n");
-                wr.printf("import com.oracle.truffle.r.runtime.env.REnvironment;%n");
-                wr.println();
-                wr.printf("public final class %s  extends %s implements WrapperNode {%n", wrapperClassName, qualClassName);
-                wr.printf("%s@Child %s child;%n", INDENT4, qualClassName);
-                wr.printf("%s@Child private ProbeNode probeNode;%n", INDENT4);
-                wr.println();
-                wr.printf("%spublic %s(%s child) {%n", INDENT4, wrapperClassName, qualClassName);
-                wr.printf("%sassert child != null;%n", INDENT8);
-                wr.printf("%sassert !(child instanceof %s);%n", INDENT8, wrapperClassName);
-                wr.printf("%sthis.child = child;%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.printf("%spublic String instrumentationInfo() {%n", INDENT4);
-                wr.printf("%sreturn \"Wrapper node for %s\";%n", INDENT8, qualClassName);
-                wr.printf("%s}%n", INDENT4);
-                wr.println();
-                wr.printf("%spublic Node getChild() {%n", INDENT4);
-                wr.printf("%sreturn child;%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.println();
-                wr.printf("%spublic Probe getProbe() {%n", INDENT4);
-                wr.printf("%stry {%n", INDENT8);
-                wr.printf("%s    return probeNode.getProbe();%n", INDENT8);
-                wr.printf("%s} catch (IllegalStateException e) {%n", INDENT8);
-                wr.printf("%sthrow new IllegalStateException(\"A lite-Probed wrapper has no explicit Probe\");%n", INDENT12);
-                wr.printf("%s}%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.printf("%spublic void insertProbe(ProbeNode newProbeNode) {%n", INDENT4);
-                wr.printf("%sthis.probeNode = newProbeNode;%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.println();
+        String packageName = packageElement.getQualifiedName().toString();
+        String className = classElement.getSimpleName().toString();
+        String qualClassName = classElement.getQualifiedName().toString();
+        String wrapperClassName = classElement.getSimpleName().toString() + "Wrapper";
+        JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + "." + wrapperClassName);
+        try (PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()))) {
+            wr.println("// DO NOT EDIT, generated automatically");
+            wr.printf("package %s;%n", packageName);
+            wr.println();
+            wr.printf("import com.oracle.truffle.api.instrument.Probe;%n");
+            wr.printf("import com.oracle.truffle.api.instrument.ProbeNode;%n");
+            wr.printf("import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;%n");
+            wr.printf("import com.oracle.truffle.api.nodes.Node;%n");
+            wr.printf("import com.oracle.truffle.r.nodes.RNode;%n");
+            wr.printf("import com.oracle.truffle.r.runtime.RDeparse;%n");
+            wr.printf("import com.oracle.truffle.r.runtime.env.REnvironment;%n");
+            wr.println();
+            wr.printf("public final class %s  extends %s implements WrapperNode {%n", wrapperClassName, qualClassName);
+            wr.printf("%s@Child %s child;%n", INDENT4, qualClassName);
+            wr.printf("%s@Child private ProbeNode probeNode;%n", INDENT4);
+            wr.println();
+            wr.printf("%spublic %s(%s child) {%n", INDENT4, wrapperClassName, qualClassName);
+            wr.printf("%sassert child != null;%n", INDENT8);
+            wr.printf("%sassert !(child instanceof %s);%n", INDENT8, wrapperClassName);
+            wr.printf("%sthis.child = child;%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.printf("%spublic String instrumentationInfo() {%n", INDENT4);
+            wr.printf("%sreturn \"Wrapper node for %s\";%n", INDENT8, qualClassName);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
+            wr.printf("%spublic Node getChild() {%n", INDENT4);
+            wr.printf("%sreturn child;%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
+            wr.printf("%spublic Probe getProbe() {%n", INDENT4);
+            wr.printf("%stry {%n", INDENT8);
+            wr.printf("%s    return probeNode.getProbe();%n", INDENT8);
+            wr.printf("%s} catch (IllegalStateException e) {%n", INDENT8);
+            wr.printf("%sthrow new IllegalStateException(\"A lite-Probed wrapper has no explicit Probe\");%n", INDENT12);
+            wr.printf("%s}%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.printf("%spublic void insertProbe(ProbeNode newProbeNode) {%n", INDENT4);
+            wr.printf("%sthis.probeNode = newProbeNode;%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
 
-                for (ExecutableElement wrappedMethod : wrappedMethods) {
-                    String methodName = wrappedMethod.getSimpleName().toString();
-                    TypeMirror returnType = wrappedMethod.getReturnType();
-                    boolean voidReturn = returnType.getKind() == TypeKind.VOID;
-                    List<? extends VariableElement> formals = wrappedMethod.getParameters();
-                    wr.printf("%s@Override%n", INDENT4);
-                    wr.printf("%spublic %s %s(", INDENT4, returnType, methodName);
-                    if (formals.size() > 0) {
-                        for (int i = 0; i < formals.size(); i++) {
-                            wr.printf("%s %s", formals.get(i).asType(), formals.get(i));
-                            if (i != formals.size() - 1) {
-                                wr.print(", ");
-                            }
+            for (ExecutableElement wrappedMethod : wrappedMethods) {
+                String methodName = wrappedMethod.getSimpleName().toString();
+                TypeMirror returnType = wrappedMethod.getReturnType();
+                boolean voidReturn = returnType.getKind() == TypeKind.VOID;
+                List<? extends VariableElement> formals = wrappedMethod.getParameters();
+                wr.printf("%s@Override%n", INDENT4);
+                wr.printf("%spublic %s %s(", INDENT4, returnType, methodName);
+                if (formals.size() > 0) {
+                    for (int i = 0; i < formals.size(); i++) {
+                        wr.printf("%s %s", formals.get(i).asType(), formals.get(i));
+                        if (i != formals.size() - 1) {
+                            wr.print(", ");
                         }
                     }
-                    wr.println(") {");
+                }
+                wr.println(") {");
 
-                    boolean isExecuteMethod = isExecuteMethod(methodName, formals);
-                    if (isExecuteMethod) {
-                        wr.printf("%sprobeNode.enter(child, %s);%n", INDENT8, formals.get(0));
-                        wr.println();
-                        if (!voidReturn) {
-                            wr.printf("%s%s result;%n", INDENT8, returnType);
-                        }
-                        wr.printf("%stry {%n", INDENT8);
-                    }
-
-                    String prefix = isExecuteMethod ? (voidReturn ? "" : "result = ") : "return ";
-                    wr.printf("%s%schild.%s(", isExecuteMethod ? INDENT12 : INDENT8, prefix , methodName);
-                    if (formals.size() > 0) {
-                        for (int i = 0; i < formals.size(); i++) {
-                            wr.printf("%s", formals.get(i));
-                            if (i != formals.size() - 1) {
-                                wr.print(", ");
-                            }
-                        }
-                    }
-                    wr.println(");");
-
-                    if (isExecuteMethod) {
-                        wr.printf("%sprobeNode.return%s(child, %s%s);%n", INDENT12, voidReturn ? "Void" : "Value", formals.get(0), voidReturn ? "": ", result");
-                        if (returnType.getKind() != TypeKind.VOID) {
-                            wr.printf("%sreturn result;%n", INDENT12);
-                        }
-                        wr.printf("%s} catch (Exception e) {%n", INDENT8);
-                        wr.printf("%sprobeNode.returnExceptional(child, %s, e);%n", INDENT12, formals.get(0));
-                        wr.printf("%sthrow (e);%n", INDENT12);
-                        wr.printf("%s}%n", INDENT8);
-                    }
-
-                    wr.printf("%s}%n", INDENT4);
+                boolean isExecuteMethod = isExecuteMethod(methodName, formals);
+                if (isExecuteMethod) {
+                    wr.printf("%sprobeNode.enter(child, %s);%n", INDENT8, formals.get(0));
                     wr.println();
+                    if (!voidReturn) {
+                        wr.printf("%s%s result;%n", INDENT8, returnType);
+                    }
+                    wr.printf("%stry {%n", INDENT8);
                 }
 
-                // FastR specific
-                wr.printf("%s@Override%n", INDENT4);
-                wr.printf("%spublic void deparse(RDeparse.State state) {%n", INDENT4);
-                wr.printf("%schild.deparse(state);%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.println();
-                wr.printf("%s@Override%n", INDENT4);
-                wr.printf("%spublic boolean isInstrumentable() {%n", INDENT4);
-                wr.printf("%sreturn false;%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.println();
-                wr.printf("%s@Override%n", INDENT4);
-                wr.printf("%spublic boolean isSyntax() {%n", INDENT4);
-                wr.printf("%sreturn false;%n", INDENT8);
-                wr.printf("%s}%n", INDENT4);
-                wr.println();
-                wr.printf("%s@Override%n", INDENT4);
-                wr.printf("%spublic RNode substitute(REnvironment env) {%n", INDENT4);
-                wr.printf("%s%s wrapperSub = new %s((%s) child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName, qualClassName);
-                wr.printf("%sProbeNode.insertProbe(wrapperSub);%n", INDENT8);
-                wr.printf("%sreturn wrapperSub;%n", INDENT8);
-                wr.printf("%s}%n", INDENT8);
+                String prefix = isExecuteMethod ? (voidReturn ? "" : "result = ") : "return ";
+                wr.printf("%s%schild.%s(", isExecuteMethod ? INDENT12 : INDENT8, prefix, methodName);
+                if (formals.size() > 0) {
+                    for (int i = 0; i < formals.size(); i++) {
+                        wr.printf("%s", formals.get(i));
+                        if (i != formals.size() - 1) {
+                            wr.print(", ");
+                        }
+                    }
+                }
+                wr.println(");");
 
-                wr.println("}");
+                if (isExecuteMethod) {
+                    wr.printf("%sprobeNode.return%s(child, %s%s);%n", INDENT12, voidReturn ? "Void" : "Value", formals.get(0), voidReturn ? "" : ", result");
+                    if (returnType.getKind() != TypeKind.VOID) {
+                        wr.printf("%sreturn result;%n", INDENT12);
+                    }
+                    wr.printf("%s} catch (Exception e) {%n", INDENT8);
+                    wr.printf("%sprobeNode.returnExceptional(child, %s, e);%n", INDENT12, formals.get(0));
+                    wr.printf("%sthrow (e);%n", INDENT12);
+                    wr.printf("%s}%n", INDENT8);
+                }
+
+                wr.printf("%s}%n", INDENT4);
+                wr.println();
             }
+
+            // FastR specific
+            wr.printf("%s@Override%n", INDENT4);
+            wr.printf("%spublic void deparse(RDeparse.State state) {%n", INDENT4);
+            wr.printf("%schild.deparse(state);%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
+            wr.printf("%s@Override%n", INDENT4);
+            wr.printf("%spublic boolean isInstrumentable() {%n", INDENT4);
+            wr.printf("%sreturn false;%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
+            wr.printf("%s@Override%n", INDENT4);
+            wr.printf("%spublic boolean isSyntax() {%n", INDENT4);
+            wr.printf("%sreturn false;%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
+            wr.printf("%s@Override%n", INDENT4);
+            wr.printf("%spublic RNode substitute(REnvironment env) {%n", INDENT4);
+            wr.printf("%s%s wrapperSub = new %s((%s) child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName, qualClassName);
+            wr.printf("%sProbeNode.insertProbe(wrapperSub);%n", INDENT8);
+            wr.printf("%sreturn wrapperSub;%n", INDENT8);
+            wr.printf("%s}%n", INDENT8);
+
+            wr.println("}");
+        }
 
     }
 
@@ -264,7 +264,7 @@ public class WrapperProcessor extends AbstractProcessor {
         @Override
         public Void visitExecutable(ExecutableElement element, Void p) {
             Set<Modifier> modifiers = element.getModifiers();
-             for (Modifier m : modifiers) {
+            for (Modifier m : modifiers) {
                 if (m == Modifier.ABSTRACT || hasCreateWrapper(element)) {
                     wrappedMethods.add(element);
                 }
@@ -279,7 +279,8 @@ public class WrapperProcessor extends AbstractProcessor {
 
         @Override
         public Void visitType(TypeElement element, Void p) {
-            // note("visit: " + element.getSimpleName().toString() + " nkind " + element.getNestingKind());
+            // note("visit: " + element.getSimpleName().toString() + " nkind " +
+            // element.getNestingKind());
             if (element == root || element.getNestingKind() == NestingKind.TOP_LEVEL) {
                 // visit superclass
                 TypeMirror superClassMirror = element.getSuperclass();
@@ -288,8 +289,8 @@ public class WrapperProcessor extends AbstractProcessor {
                     superClassElement.accept(this, p);
                 }
                 // visit this class
-                return super.visitType(element, p);}
-            else {
+                return super.visitType(element, p);
+            } else {
                 // ignore nested classes
                 return null;
             }

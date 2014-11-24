@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
 /**
- * Holds the sequence of nodes created for R's replacement assignment.
- * Allows custom deparse and debug handling.
+ * Holds the sequence of nodes created for R's replacement assignment. Allows custom deparse and
+ * debug handling.
  */
 public class ReplacementNode extends RNode {
 
@@ -67,9 +67,9 @@ public class ReplacementNode extends RNode {
     public void deparse(RDeparse.State state) {
         WriteVariableNode valueStoreNode = (WriteVariableNode) sequence[0];
         /*
-         * The rhs of valueStoreNode is the rhs of our result. sequence[1] is the copy of the
-         * object being updated. sequence[2] is the interesting part and varies depending on the
-         * type of update.
+         * The rhs of valueStoreNode is the rhs of our result. sequence[1] is the copy of the object
+         * being updated. sequence[2] is the interesting part and varies depending on the type of
+         * update.
          */
         WriteVariableNode tmpAssignNode = (WriteVariableNode) sequence[1];
         WriteVariableNode updateNode = (WriteVariableNode) sequence[2];
@@ -102,4 +102,3 @@ public class ReplacementNode extends RNode {
         }
     }
 }
-

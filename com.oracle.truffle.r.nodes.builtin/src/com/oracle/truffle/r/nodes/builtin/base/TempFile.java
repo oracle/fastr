@@ -40,8 +40,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"})
 public abstract class TempFile extends RBuiltinNode {
-    @CompilationFinal
-    private int stringVectorsAmount;
+    @CompilationFinal private int stringVectorsAmount;
 
     private static Random rand = new Random();
 
@@ -80,7 +79,8 @@ public abstract class TempFile extends RBuiltinNode {
         return RDataFactory.createStringVector(createTempFilesPaths(argVecs, maxL), true);
     }
 
-    @ExplodeLoop //sure that array not empty
+    @ExplodeLoop
+    // sure that array not empty
     @TruffleBoundary
     private int findMaxLengthIn(RStringVector[] stringVectors) {
         int maxLength = 0;
@@ -123,7 +123,7 @@ public abstract class TempFile extends RBuiltinNode {
     @TruffleBoundary
     @ExplodeLoop
     private static String[] createTempFilesPaths(RStringVector[] stringVectors, int pathsAmount) {
-        //pathsAmount must be equals to length of vector. All vectors must be same length
+        // pathsAmount must be equals to length of vector. All vectors must be same length
         String[] paths = new String[pathsAmount];
         for (int i = 0; i < pathsAmount; i++) {
             paths[i] = createNonExistedFilePath(stringVectors[0].getDataAt(i), stringVectors[1].getDataAt(i), stringVectors[2].getDataAt(i));

@@ -76,7 +76,6 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
-
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {

@@ -68,7 +68,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
             throw new NullPointerException("Graphics system to register is null");
         }
         int index = findElementIndexInArray(null, graphicsSystems); // find null in the
-// graphicsSystems
+        // graphicsSystems
         if (NOT_FOUND == index) {
             throw handleErrorAndMakeException("too many graphics systems registered");
         }
@@ -153,7 +153,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         doUnregisterGraphicsDevice(deviceToUnregister);
         makeItCurrent(getGraphicsDeviceNextTo(deviceToUnregister));
         // todo Interesting that in GNUR a GraphicsSystem is not notified when a GraphicsDevice is
-// killed
+        // killed
     }
 
     private void doUnregisterGraphicsDevice(GraphicsDevice deviceToUnregister) {

@@ -40,6 +40,7 @@ public class UUIDFunctionUIDFactory extends FunctionUIDFactory {
         }
 
     }
+
     @Override
     public FunctionUID createUID() {
         return new UUIDFunctionUID(UUID.randomUUID());

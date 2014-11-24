@@ -56,8 +56,7 @@ public class Browser {
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         ExitMode exitMode = ExitMode.NEXT;
         try {
-            LW:
-            while (true) {
+            LW: while (true) {
                 String input = ch.readLine();
                 if (input.length() == 0) {
                     RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");

@@ -54,7 +54,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  * syntactic essence and we ignore these.
  *
  * This implementation necessarily has to use a lot of {@code instanceof} checks on the node class.
- * However, it is not important enough to warrant refactoring as an {@link RNode} method, (cf deparse).
+ * However, it is not important enough to warrant refactoring as an {@link RNode} method, (cf
+ * deparse).
  *
  * Some examples:
  *
@@ -162,21 +163,21 @@ public class RASTHelperImpl implements RASTHelper {
                 default:
                     assert false;
             }
-         } else if (node instanceof WhileNode) {
-             WhileNode whileNode = (WhileNode) node;
-             if (whileNode.isRepeat() && index == 1) {
+        } else if (node instanceof WhileNode) {
+            WhileNode whileNode = (WhileNode) node;
+            if (whileNode.isRepeat() && index == 1) {
                 index = 2;
-             }
-             switch (index) {
+            }
+            switch (index) {
                 case 0:
                     return RDataFactory.createSymbol(whileNode.isRepeat() ? "`repeat`" : "`while`");
                 case 1:
                     return RASTUtils.createLanguageElement(whileNode.getCondition());
                 case 2:
                     return RASTUtils.createLanguageElement(whileNode.getBody());
-                 default:
+                default:
                     assert false;
-             }
+            }
         } else if (node instanceof WriteVariableNode) {
             WriteVariableNode wvn = (WriteVariableNode) node;
             switch (index) {
@@ -189,8 +190,8 @@ public class RASTHelperImpl implements RASTHelper {
                 default:
                     assert false;
             }
-         } else {
-           // TODO fill out
+        } else {
+            // TODO fill out
             assert false;
         }
         return null;

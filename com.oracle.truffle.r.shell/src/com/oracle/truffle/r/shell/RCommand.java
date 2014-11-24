@@ -51,7 +51,7 @@ public class RCommand {
         Load_RFFIFactory.initialize();
     }
 
-// CheckStyle: stop system..print check
+    // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
         try {

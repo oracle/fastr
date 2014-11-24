@@ -29,8 +29,8 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
- * Denotes a function body, which consists of a {@link SaveArgumentsNode}
- * and a {@link FunctionStatementsNode}.
+ * Denotes a function body, which consists of a {@link SaveArgumentsNode} and a
+ * {@link FunctionStatementsNode}.
  *
  * Children are typed as {@link RNode} to avoid a custom instrumentation wrapper node.
  *
@@ -60,7 +60,6 @@ public class FunctionBodyNode extends RNode {
         return (FunctionStatementsNode) statements.unwrap(); // statements may be wrapped
     }
 
-
     public FunctionDefinitionNode getFunctionDefinitionNode() {
         return (FunctionDefinitionNode) unwrapParent();
     }
@@ -80,6 +79,6 @@ public class FunctionBodyNode extends RNode {
     @Override
     public void deparse(State state) {
         // Don't deparse the argument saving nodes
-         statements.deparse(state);
+        statements.deparse(state);
     }
 }

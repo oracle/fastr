@@ -75,7 +75,7 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
                     RNode[] sequence = ((SequenceNode) iNode).getSequence();
                     for (RNode n : sequence) {
                         boolean tag = false;
-                         if (n.isSyntax()) {
+                        if (n.isSyntax()) {
                             n.probe().tagAs(STATEMENT, null);
                             tag = true;
                         }

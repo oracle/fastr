@@ -40,9 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @NodeChild(value = "rhs", type = RNode.class)
-@NodeFields({
-    @NodeField(name = "argWrite", type = boolean.class),
-    @NodeField(name = "name", type = String.class)})
+@NodeFields({@NodeField(name = "argWrite", type = boolean.class), @NodeField(name = "name", type = String.class)})
 @CreateWrapper
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
@@ -232,9 +230,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
     }
 
-    @NodeFields({
-        @NodeField(name = "frameSlot", type = FrameSlot.class),
-        @NodeField(name = "mode", type = Mode.class)})
+    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
     public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
@@ -311,12 +307,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public static final class WriteSuperVariableConditionalNode extends AbstractWriteSuperVariableNode {
 
-        @Child
-        private WriteSuperVariableNode writeNode;
-        @Child
-        private AbstractWriteSuperVariableNode nextNode;
-        @Child
-        private RNode rhs;
+        @Child private WriteSuperVariableNode writeNode;
+        @Child private AbstractWriteSuperVariableNode nextNode;
+        @Child private RNode rhs;
 
         WriteSuperVariableConditionalNode(WriteSuperVariableNode writeNode, AbstractWriteSuperVariableNode nextNode, RNode rhs) {
             this.writeNode = writeNode;
@@ -364,8 +357,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public static final class UnresolvedWriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
-        @Child
-        private RNode rhs;
+        @Child private RNode rhs;
         private final String symbol;
         private final WriteVariableNode.Mode mode;
 
@@ -394,7 +386,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
                 writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)), this.isArgWrite(),
-                        getName(), mode);
+                                getName(), mode);
             } else {
                 WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), this.getName(), mode);
                 writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
@@ -422,9 +414,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     }
 
     @SuppressWarnings("unused")
-    @NodeChildren({
-        @NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class),
-        @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
+    @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
     @NodeField(name = "mode", type = Mode.class)
     public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 

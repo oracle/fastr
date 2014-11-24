@@ -1671,9 +1671,9 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testRegExprIgnore() {
         assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME: missing
-// attributes
+        // attributes
         assertEval("gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME:
-// missing attributes
+        // missing attributes
     }
 
     @Test
@@ -4135,12 +4135,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
-     }
+    }
 
     @Test
     @Ignore
     public void testNArgsIgnore() {
-       assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");       
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
 
 }

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.graphics;
 
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackage;
 
-public class GraphicsPackage extends RBuiltinPackage{
+public class GraphicsPackage extends RBuiltinPackage {
     public GraphicsPackage() {
         loadBuiltins();
     }

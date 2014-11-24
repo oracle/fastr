@@ -44,10 +44,10 @@ public interface RSyntaxNode {
     }
 
     /**
-     * Support for the {@code substitute} builtin function. Assert: {this.isSyntax() == true}.
-     * N.B. this method only needs to operate on pristine (uninitialized) ASTs.
-     * The AST is cloned prior to the substitution; therefore there is no need to create
-     * a new node if it can be determined that no changes were made.
+     * Support for the {@code substitute} builtin function. Assert: {this.isSyntax() == true}. N.B.
+     * this method only needs to operate on pristine (uninitialized) ASTs. The AST is cloned prior
+     * to the substitution; therefore there is no need to create a new node if it can be determined
+     * that no changes were made.
      */
     default RNode substitute(@SuppressWarnings("unused") REnvironment env) {
         throw RInternalError.unimplemented();

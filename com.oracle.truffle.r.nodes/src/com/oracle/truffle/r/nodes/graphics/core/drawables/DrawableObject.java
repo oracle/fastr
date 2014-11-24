@@ -27,8 +27,8 @@ import com.oracle.truffle.r.nodes.graphics.core.geometry.CoordinateSystem;
 import java.awt.*;
 
 /**
- * Denotes an object defined in <code>srcCoordinateSystem</code> that can be drawn
- * in <code>dstCoordinateSystem</code> on {@link Graphics2D}.
+ * Denotes an object defined in <code>srcCoordinateSystem</code> that can be drawn in
+ * <code>dstCoordinateSystem</code> on {@link Graphics2D}.
  */
 public abstract class DrawableObject {
     private final CoordinateSystem srcCoordinateSystem;

@@ -29,8 +29,8 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 
 /**
- * Denotes an {@link RNode} that can be instrumented using the {@link Instrumentable}.
- * By default all {@link RNode} instances are instrumentable.
+ * Denotes an {@link RNode} that can be instrumented using the {@link Instrumentable}. By default
+ * all {@link RNode} instances are instrumentable.
  */
 public interface RInstrumentableNode {
 

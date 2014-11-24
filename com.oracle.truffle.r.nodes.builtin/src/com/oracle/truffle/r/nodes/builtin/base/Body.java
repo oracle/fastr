@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name="body", kind = INTERNAL, parameterNames = {"fun"})
+@RBuiltin(name = "body", kind = INTERNAL, parameterNames = {"fun"})
 public abstract class Body extends RBuiltinNode {
     @Specialization
     public RLanguage doBody(RFunction fun) {
