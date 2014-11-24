@@ -54,7 +54,7 @@ public final class VarArgsSignature {
      * Important to allow identity checks on values of {@link RMissing} in
      * {@link #isEqualTo(VarArgsSignature)}. Never to be executed!
      */
-    public static final RNode NO_VARARGS = ConstantNode.create(RMissing.instance);
+    public static final RNode NO_VARARGS = ConstantNode.create(RArgsValuesAndNames.EMPTY);
     public static final VarArgsSignature TAKES_NO_VARARGS = new VarArgsSignature(null, 0);
 
     @CompilationFinal private final Object[] expressions;
