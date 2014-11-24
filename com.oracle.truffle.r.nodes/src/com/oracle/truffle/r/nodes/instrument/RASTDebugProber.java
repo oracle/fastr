@@ -61,9 +61,7 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
     public boolean visit(Node node) {
         if (node instanceof RInstrumentableNode) {
             RInstrumentableNode iNode = (RInstrumentableNode) node;
-            boolean instrumentable = false;
             if (iNode.isInstrumentable()) {
-                instrumentable = true;
                 if (iNode instanceof RCallNode) {
                     iNode.probe().tagAs(CALL, RASTUtils.findFunctionName(node, false));
                 } else if (iNode instanceof FunctionStatementsNode) {

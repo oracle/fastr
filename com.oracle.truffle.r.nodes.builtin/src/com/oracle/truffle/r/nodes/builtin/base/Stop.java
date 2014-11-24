@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 public abstract class Stop extends RBuiltinNode {
 
     @Specialization
-    @SuppressWarnings("unused")
     protected Object stop(byte call, RStringVector msgVec) {
         controlVisibility();
         assert msgVec.getLength() == 1;

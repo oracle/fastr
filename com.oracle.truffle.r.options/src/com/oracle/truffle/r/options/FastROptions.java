@@ -69,7 +69,7 @@ public class FastROptions {
                 } else {
                     switch (desc.getType().getSimpleName()) {
                         case "Boolean":
-                            boolean value = booleanOptionValue((String) prop);
+                            boolean value = booleanOptionValue(prop);
                             desc.getOptionValue().setValue(value);
                             break;
                         default:

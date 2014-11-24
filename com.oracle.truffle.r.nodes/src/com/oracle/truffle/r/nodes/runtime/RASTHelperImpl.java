@@ -166,6 +166,7 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof WhileNode) {
             WhileNode whileNode = (WhileNode) node;
             if (whileNode.isRepeat() && index == 1) {
+                // Checkstyle: stop parameter assignment check
                 index = 2;
             }
             switch (index) {

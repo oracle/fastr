@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.RBuiltinKind;
 
 @RBuiltin(name = "warning", kind = RBuiltinKind.INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"})
 public abstract class Warning extends RInvisibleBuiltinNode {
+    @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
     public String warning(byte call, byte immediate, byte noBreaks, Object message) {

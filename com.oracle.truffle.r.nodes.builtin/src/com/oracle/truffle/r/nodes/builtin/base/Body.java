@@ -27,7 +27,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -42,7 +44,7 @@ public abstract class Body extends RBuiltinNode {
     }
 
     @Fallback
-    public RNull doBody(Object fun) {
+    public RNull doBody(@SuppressWarnings("unused") Object fun) {
         return RNull.instance;
     }
 }

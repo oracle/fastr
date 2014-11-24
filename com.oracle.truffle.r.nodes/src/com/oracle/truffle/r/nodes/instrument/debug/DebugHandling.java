@@ -31,7 +31,6 @@ import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import static com.oracle.truffle.api.instrument.StandardSyntaxTag.STATEMENT;
 import com.oracle.truffle.api.instrument.SyntaxTag;
 import com.oracle.truffle.api.instrument.SyntaxTagTrap;
 import com.oracle.truffle.api.instrument.TruffleEventReceiver;
@@ -102,7 +101,6 @@ public class DebugHandling {
     /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
      */
-    @SuppressWarnings("unused")
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         FunctionStatementsEventReceiver fbr = receiverMap.get(fdn.getUID());
@@ -182,8 +180,8 @@ public class DebugHandling {
 
     private abstract static class DebugEventReceiver implements TruffleEventReceiver {
 
-        @SuppressWarnings("unused") protected final Object text;
-        @SuppressWarnings("unused") protected final Object condition;
+        protected final Object text;
+        protected final Object condition;
         protected final FunctionDefinitionNode functionDefinitionNode;
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");

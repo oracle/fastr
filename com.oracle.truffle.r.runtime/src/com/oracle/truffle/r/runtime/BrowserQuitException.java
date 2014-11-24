@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.runtime;
 
 /**
- * Thrown in response to the "Q" command in the browser
+ * Thrown in response to the "Q" command in the browser.
  */
 public class BrowserQuitException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
 
 }

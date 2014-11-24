@@ -854,7 +854,7 @@ public abstract class ConnectionFunctions {
     public abstract static class Open extends CheckIsConnAdapter {
         @Specialization
         @TruffleBoundary
-        protected Object open(RConnection con, RAbstractStringVector open, byte blocking) {
+        protected Object open(RConnection con, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking) {
             controlVisibility();
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
@@ -873,6 +873,7 @@ public abstract class ConnectionFunctions {
             return RNull.instance;
         }
 
+        @SuppressWarnings("unused")
         @Fallback
         @TruffleBoundary
         protected Object open(Object con, Object open, Object blocking) {
@@ -889,7 +890,7 @@ public abstract class ConnectionFunctions {
         protected Object close(RConnection con) {
             controlVisibility();
             try {
-                ((RConnection) con).close();
+                con.close();
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }

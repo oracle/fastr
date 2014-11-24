@@ -76,7 +76,6 @@ public class DebugFunctions {
             throw arg1Closure();
         }
 
-        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
         protected RNull debugonce(RFunction fun, Object text, Object condition) {

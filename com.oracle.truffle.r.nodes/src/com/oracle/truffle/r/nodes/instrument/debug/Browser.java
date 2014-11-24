@@ -109,8 +109,4 @@ public class Browser {
         return "Browse[" + depth + "]> ";
     }
 
-    private static String notImplemented(String command) {
-        return "browser command: '" + command + "'";
-    }
-
 }

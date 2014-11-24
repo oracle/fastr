@@ -21,6 +21,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RContext;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RFunction;
+
 import java.util.WeakHashMap;
 
 /**
@@ -67,6 +68,7 @@ public class TraceHandling {
             this.functionDefinitionNode = functionDefinitionNode;
         }
 
+        @SuppressWarnings("unused")
         FunctionDefinitionNode getFunctionDefinitionNode() {
             return functionDefinitionNode;
         }
@@ -90,6 +92,7 @@ public class TraceHandling {
             return disabled;
         }
 
+        @SuppressWarnings("unused")
         void disable() {
             setDisabledState(true);
         }
@@ -109,7 +112,7 @@ public class TraceHandling {
 
     private static class TraceFunctionEventReceiver extends TraceEventReceiver {
 
-        FunctionDefinitionNode fdn;
+        @SuppressWarnings("unused") FunctionDefinitionNode fdn;
         Instrument instrument;
 
         TraceFunctionEventReceiver(FunctionDefinitionNode fdn) {
@@ -124,6 +127,7 @@ public class TraceHandling {
         @Override
         public void enter(Node node, VirtualFrame frame) {
             if (!disabled()) {
+                @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
                 RContext.getInstance().getConsoleHandler().printf("trace: %s%n", RArguments.getCallSourceSection(frame).getCode());
             }
