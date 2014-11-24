@@ -4130,7 +4130,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testNargs() {
+        // TODO fix unexpected "WARNING: ignoring environment value of R_HOME" from GnuR
         assertEval("{  f <- function (a, b, c) { nargs() }; f() }");
         assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");

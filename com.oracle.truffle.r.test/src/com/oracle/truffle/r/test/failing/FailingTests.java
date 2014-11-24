@@ -989,6 +989,26 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testNargs_93bea7d7244cdc6667541bda6d5c21eb() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testNargs_87f5ad668b5b7c3c9c33b69b1ff0b07b() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testNargs_af51626dde51926d69ba3aaa35c2e468() {
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testNargs_22cf010cf5a8e031ea484a39f140b100() {
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testOperatorsIgnore_dd8820aada824b55da8fce1b2069a4a8() {
         assertEval("{ `%*%`(3,5) }");
     }
