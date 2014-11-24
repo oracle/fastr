@@ -451,6 +451,15 @@ public class ForeignFunctions {
             }
         }
 
+        @Specialization(guards = "isFlushconsole")
+        @TruffleBoundary
+        protected RNull flushConsole(VirtualFrame frame, RList f, Object[] args, RMissing packageName) {
+            return RNull.instance;
+        }
+
+        public static boolean isFlushconsole(RList f) {
+            return matchName(f, "flushconsole");
+        }
     }
 
     /**
