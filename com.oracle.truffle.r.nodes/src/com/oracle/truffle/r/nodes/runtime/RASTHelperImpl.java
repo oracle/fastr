@@ -115,9 +115,10 @@ public class RASTHelperImpl implements RASTHelper {
 
     @TruffleBoundary
     @Override
-    public Object getDataAtAsObject(RLanguage rl, int index) {
+    public Object getDataAtAsObject(RLanguage rl, final int indexArg) {
         // index has already been range checked based on computeLength
         Node node = RASTUtils.unwrap(rl.getRep());
+        int index = indexArg;
         if (node instanceof RCallNode || node instanceof DispatchedCallNode) {
             if (index == 0) {
                 return RASTUtils.findFunctionName(node, true);
@@ -166,7 +167,6 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof WhileNode) {
             WhileNode whileNode = (WhileNode) node;
             if (whileNode.isRepeat() && index == 1) {
-                // Checkstyle: stop parameter assignment check
                 index = 2;
             }
             switch (index) {

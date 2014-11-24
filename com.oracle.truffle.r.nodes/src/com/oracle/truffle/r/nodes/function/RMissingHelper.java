@@ -47,14 +47,13 @@ public class RMissingHelper {
     }
 
     /**
-     * This method determines whether a given {@link Symbol} is missing in the given frame. This is
-     * used to determine whether an argument has to be replaced by its default value or not. In case
-     * the given {@link Symbol} is associated with a promise, {@link #isMissingSymbol(RPromise)} is
-     * called.
+     * This method determines whether a given name is missing in the given frame. This is used to
+     * determine whether an argument has to be replaced by its default value or not. In case the
+     * given name is associated with a promise, {@link #isMissingName(RPromise)} is called.
      *
      * @param frame The frame in which to decide whether value is missing or not
      * @param name The name to check
-     * @return See {@link #isMissingSymbol(RPromise)}
+     * @return See {@link #isMissingName(RPromise)}
      */
     @TruffleBoundary
     public static boolean isMissingArgument(Frame frame, String name) {

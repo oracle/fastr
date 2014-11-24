@@ -56,7 +56,7 @@ import java.util.*;
 /**
  * The implementation of the R debug functions.
  *
- * When a function is enabled for debugging a set of {@link DebugEventReceivers} are created and
+ * When a function is enabled for debugging a set of {@link DebugEventReceiver}s are created and
  * associated with {@link Instrument}s and attached to key nodes in the AST body associated with the
  * {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
  *
@@ -64,9 +64,9 @@ import java.util.*;
  * <ul>
  * <li>{@link FunctionStatementsEventReceiver}: attaches to {@link FunctionStatementsNode} and
  * handles the special behavior on entry/exit</li>
- * <li>{@link StatementEventReceiver}: attaches to all {@link STATEMENT} nodes and handles "n" and
- * "s" browser commands</li>
- * <li>{@link LoopStatementEcventReceiver}: attaches to {@link LoopNode} instances and handles
+ * <li>{@link StatementEventReceiver}: attaches to all {@link StandardSyntaxTag#STATEMENT} nodes and
+ * handles "n" and "s" browser commands</li>
+ * <li>{@link LoopStatementEventReceiver}: attaches to {@link LoopNode} instances and handles
  * special "f" command behavior.
  * </ul>
  * <p>
@@ -126,10 +126,6 @@ public class DebugHandling {
     public static boolean isDebugged(RFunction func) {
         FunctionStatementsEventReceiver fser = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
         return fser != null && !fser.disabled();
-    }
-
-    private static Probe findStartMethodProbe(RFunction func) {
-        return findStartMethodProbe((FunctionDefinitionNode) func.getRootNode());
     }
 
     private static Probe findStartMethodProbe(FunctionDefinitionNode fdn) {
@@ -353,8 +349,6 @@ public class DebugHandling {
         @Override
         public void enter(Node node, VirtualFrame frame) {
             if (!disabled()) {
-                FunctionStatementsNode fsn = (FunctionStatementsNode) node;
-
                 RContext.getInstance().getConsoleHandler().print("debugging in: ");
                 printCall(frame);
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
@@ -394,7 +388,7 @@ public class DebugHandling {
             }
         }
 
-        private void printCall(VirtualFrame frame) {
+        private static void printCall(VirtualFrame frame) {
             RContext.getInstance().getConsoleHandler().println(RArguments.getCallSourceSection(frame).getCode());
         }
 
@@ -491,7 +485,8 @@ public class DebugHandling {
 
     }
 
-    private static LoopNode inLoop(Node node) {
+    private static LoopNode inLoop(final Node nodeArg) {
+        Node node = nodeArg;
         while (!(node instanceof RootNode)) {
             node = node.getParent();
             if (node instanceof LoopNode) {

@@ -80,7 +80,6 @@ public class WrapperProcessor extends AbstractProcessor {
 
     private void generate(PackageElement packageElement, TypeElement classElement, Set<ExecutableElement> wrappedMethods) throws IOException {
         String packageName = packageElement.getQualifiedName().toString();
-        String className = classElement.getSimpleName().toString();
         String qualClassName = classElement.getQualifiedName().toString();
         String wrapperClassName = classElement.getSimpleName().toString() + "Wrapper";
         JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + "." + wrapperClassName);
@@ -242,10 +241,6 @@ public class WrapperProcessor extends AbstractProcessor {
         if (trace) {
             diagnostic(Diagnostic.Kind.NOTE, msg);
         }
-    }
-
-    private String toFirstLower(String s) {
-        return s.substring(0, 1).toLowerCase() + s.substring(1);
     }
 
     private class WrappedClassVisitor extends ElementScanner8<Void, Void> {
