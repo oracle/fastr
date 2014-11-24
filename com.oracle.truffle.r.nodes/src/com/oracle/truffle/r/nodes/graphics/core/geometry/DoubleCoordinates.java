@@ -50,7 +50,7 @@ public final class DoubleCoordinates implements Coordinates {
         return toInt(getYCoordinatesAsDoubles());
     }
 
-    private int[] toInt(double[] doubleArray) {
+    private static int[] toInt(double[] doubleArray) {
         return DoubleStream.of(doubleArray).mapToInt(d -> (int) d).toArray();
     }
 }

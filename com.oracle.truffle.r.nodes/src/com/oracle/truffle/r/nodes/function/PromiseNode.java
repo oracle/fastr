@@ -298,8 +298,7 @@ public class PromiseNode extends RNode {
                         // Corner case: "f <- function(...) g(...); g <- function(...)"
                         // In this case, "..." gets evaluated, and its only content is "...", which
                         // itself is missing. Result: Both disappear!
-                        evaluatedArgs[index++] = RMissing.instance;
-                        continue;
+                        return RArgsValuesAndNames.EMPTY;
                     }
                     evaluatedArgs = Utils.resizeArray(evaluatedArgs, newLength);
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
@@ -312,6 +311,10 @@ public class PromiseNode extends RNode {
                 } else {
                     evaluatedArgs[index++] = RPromise.checkEvaluate(frame, argValue, promiseProfile);
                 }
+            }
+            if (evaluatedArgs.length == 0) {
+                // No need to create an extra object, already have one
+                return RArgsValuesAndNames.EMPTY;
             }
             return new RArgsValuesAndNames(evaluatedArgs, evaluatedNames);
         }

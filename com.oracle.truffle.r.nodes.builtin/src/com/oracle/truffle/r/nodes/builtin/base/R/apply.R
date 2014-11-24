@@ -17,7 +17,7 @@
 #  http://www.r-project.org/Licenses/
 
 # TODO; rename after it is actually made to work 
-applynew <- function(X, MARGIN, FUN, ...)
+apply <- function(X, MARGIN, FUN, ...)
 {
     FUN <- match.fun(FUN)
 

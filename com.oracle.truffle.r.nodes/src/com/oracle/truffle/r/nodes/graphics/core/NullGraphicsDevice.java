@@ -71,7 +71,7 @@ final class NullGraphicsDevice implements GraphicsDevice {
         throw createExceptionForMethod("drawPolyline");
     }
 
-    private RuntimeException createExceptionForMethod(String methodName) {
+    private static RuntimeException createExceptionForMethod(String methodName) {
         return new IllegalStateException("Call to " + methodName + " of Null-device");
     }
 }

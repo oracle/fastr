@@ -976,6 +976,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { sapply(c(\"a\",\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
+
+        assertEval("{ f <- function(v) { sapply(1:3, function(k) v)}; f(1); f(2) }");
     }
 
     @Test
@@ -4116,10 +4118,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testTapply() {
-        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTapplyIgnore() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 

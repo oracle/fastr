@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.Lapply.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -40,17 +41,18 @@ public abstract class VApply extends RBuiltinNode {
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
 
-    @Child private Lapply lapply = LapplyFactory.create(EMTPY_RNODE_ARRAY, null, getSuppliedArgsNames());
+    @Child private DoApplyNode doApply = new DoApplyNode();
 
     // TODO complete implementation: useNames
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, Object optionalArgs, @SuppressWarnings("unused") Object useNames) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, RArgsValuesAndNames optionalArgs, @SuppressWarnings("unused") Object useNames) {
         controlVisibility();
         return delegateToLapply(frame, vec, fun, funValue, optionalArgs);
     }
 
-    private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, Object optionalArgs) {
-        Object[] applyResult = lapply.applyHelper(frame, vec.materialize(), fun, optionalArgs);
+    private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, RArgsValuesAndNames optionalArgs) {
+        RVector vecMat = vec.materialize();
+        Object[] applyResult = doApply.execute(frame, vecMat, fun, optionalArgs);
 
         Object result = null;
         boolean applyResultZeroLength = applyResult.length == 0;

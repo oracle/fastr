@@ -135,7 +135,7 @@ public abstract class Options extends RBuiltinNode {
     }
 
     protected boolean isMissing(RArgsValuesAndNames args) {
-        return args.length() == 1 && args.getValues()[0] == RMissing.instance;
+        return args.isMissing();    // length() == 1 && args.getValues()[0] == RMissing.instance;
     }
 
 }

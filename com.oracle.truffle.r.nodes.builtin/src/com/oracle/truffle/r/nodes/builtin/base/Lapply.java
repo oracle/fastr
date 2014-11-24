@@ -34,16 +34,8 @@ public abstract class Lapply extends RBuiltinNode {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
-    @Child private RCallNode callNode = null;
-    @CompilationFinal private RootCallTarget callTarget = null;
-    private LapplyIteratorNode iterator = null;
-    @Child private WriteVariableNode writeVectorElement = null;
-    private final SourceSection writeSrc = new NullSourceSection("Lapply builtin", "write vector element");
-    @CompilationFinal private ReadVariableNode readVectorElement = null;
-    private final SourceSection readSrc = new NullSourceSection("Lapply builtin", "read vector element");
-    private VarArgsSignature oldSignature = null;
-
     @Child private Lapply dataFrameLapply;
+    @Child private DoApplyNode doApply = new DoApplyNode();
 
     public abstract Object execute(VirtualFrame frame, RAbstractVector vec, RFunction fun, RArgsValuesAndNames optionalArgs);
 
@@ -56,8 +48,8 @@ public abstract class Lapply extends RBuiltinNode {
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RArgsValuesAndNames varArgs) {
         controlVisibility();
         RVector vecMat = vec.materialize();
-        Object[] callResult = applyHelper(frame, vecMat, fun, varArgs);
-        return RDataFactory.createList(callResult, vecMat.getNames());
+        Object[] result = doApply.execute(frame, vecMat, fun, varArgs);
+        return RDataFactory.createList(result, vecMat.getNames());
     }
 
     @Specialization
@@ -70,100 +62,144 @@ public abstract class Lapply extends RBuiltinNode {
         return dataFrameLapply.execute(frame, x.getVector(), fun, optionalArgs);
     }
 
-    /**
-     * @param frame
-     * @param vecMat
-     * @param fun
-     * @param varArgsArg May be {@link RMissing#instance} to indicate empty "..."!
-     * @return The results of applying fun to every vector element
-     */
-    protected Object[] applyHelper(VirtualFrame frame, RVector vecMat, RFunction fun, Object varArgsArg) {
-        /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
-        Object[] result = new Object[vecMat.getLength()];
-        FormalArguments formalArgs = ((RRootNode) fun.getTarget().getRootNode()).getFormalArguments();
+    public static final class DoApplyNode extends RNode {
 
-        // TODO Poor man's caching, change to proper cache
-        VarArgsSignature signature = CallArgumentsNode.createSignature(varArgsArg, 1, true);
-        RArgsValuesAndNames varArgs = varArgsArg == RMissing.instance ? null : (RArgsValuesAndNames) varArgsArg;
-        if (fun.getTarget() != callTarget || signature.isNotEqualTo(oldSignature)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+        protected LapplyIteratorNode iterator = null;
+        @Child protected WriteVariableNode writeVectorElement = null;
+        private final SourceSection writeSrc = new NullSourceSection("Lapply builtin", "write vector element");
+        @CompilationFinal private ReadVariableNode readVectorElement = null;
+        private final SourceSection readSrc = new NullSourceSection("Lapply builtin", "read vector element");
 
-            // To extract the elements from the vector in the loop, we use a dedicated node that
-            // maintains an internal counter.
-            // TODO Revise copy semantics here!
-            readVectorElement = replace(readVectorElement, ReadVariableNode.create(LAPPLY_VEC_ELEM_ID, true));
-            readVectorElement.assignSourceSection(readSrc);
+        private final SourceSection funSrc = new NullSourceSection("Lapply builtin", "call node");
+        private LapplyFunctionNode functionNode = null;
+        @Child protected RCallNode callNode = null;
 
-            iterator = new LapplyIteratorNode();
-            writeVectorElement = replace(writeVectorElement, WriteVariableNode.create(writeSrc, LAPPLY_VEC_ELEM_ID, iterator, false, false));
+        @CompilationFinal private RootCallTarget callTarget = null;
+        @CompilationFinal private VarArgsSignature oldSignature = null;
 
-            // The first parameter to the function call is named as defined by the function.
-            String readVectorElementName = formalArgs.getNames()[0];
-            if (Arguments.VARARG_NAME.equals(readVectorElementName)) {
-                // "..." is no "supplied" name, instead the argument will match by position right
-                // away
-                readVectorElementName = null;
+        public Object[] execute(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
+            checkFunction(vecMat, fun, varArgs);
+
+            Object[] result = new Object[vecMat.getLength()];
+            for (int i = 0; i < result.length; ++i) {
+                // Write new vector element to LAPPLY_VEC_ELEME_ID frame slot
+                writeVectorElement.execute(frame);
+
+                result[i] = callNode.execute(frame);
             }
-
-            // The remaining parameters are passed from {@code ...}. The call node will take care of
-            // matching.
-            RNode[] args;
-            String[] names;
-            if (varArgs == null || (varArgs.length() == 1 && varArgs.getValues()[0] == RMissing.instance)) {
-                args = new RNode[]{readVectorElement};
-                names = new String[]{readVectorElementName};
-            } else {
-                // TODO Insert more arguments
-                args = new RNode[varArgs.length() + 1];
-                args[0] = readVectorElement;
-                for (int i = 0; i < varArgs.length(); i++) {
-                    args[i + 1] = CallArgumentsNode.wrapVarArgValue(varArgs.getValues()[i]);
-                }
-
-                names = new String[varArgs.length() + 1];
-                names[0] = readVectorElementName;
-                System.arraycopy(varArgs.getNames(), 0, names, 1, varArgs.length());
-            }
-            CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, names);
-            callNode = replace(callNode, RCallNode.createStaticCall(getEncapsulatingSourceSection(), fun, argsNode));
-            callTarget = fun.getTarget();
-            oldSignature = signature;
-        }
-
-        iterator.reset(vecMat);
-
-        for (int i = 0; i < result.length; ++i) {
-            // Write new vector element to LAPPLY_VEC_ELEME_ID frame slot
-            writeVectorElement.execute(frame);
-
-            result[i] = callNode.execute(frame);
-        }
-
-        // LAPPLY_VEC_ELEME_ID stays inside frame
-        return result;
-    }
-
-    private static class LapplyIteratorNode extends RNode {
-
-        private RVector vector;
-        private int index;
-
-        public void reset(RVector newVector) {
-            this.vector = newVector;
-            this.index = 0;
+            return result;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return vector.getDataAtAsObject(index++);
+            throw RInternalError.shouldNotReachHere();
         }
-    }
 
-    private <O extends Node, T extends Node> T replace(O oldNode, T newNode) {
-        if (oldNode == null) {
-            return insert(newNode);
-        } else {
-            return oldNode.replace(newNode);
+        /**
+         * @param vecMat
+         * @param fun
+         * @param varArgs May be {@link RMissing#instance} to indicate empty "..."!
+         */
+        private void checkFunction(RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
+            /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
+            FormalArguments formalArgs = ((RRootNode) fun.getTarget().getRootNode()).getFormalArguments();
+
+            // TODO Poor man's caching, change to proper cache
+            VarArgsSignature signature = CallArgumentsNode.createSignature(varArgs, 1, true);
+            if (fun.getTarget() != callTarget || signature.isNotEqualTo(oldSignature)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+
+                // To extract the elements from the vector in the loop, we use a dedicated node that
+                // maintains an internal counter.
+                // TODO Revise copy semantics here!
+                readVectorElement = replace(readVectorElement, ReadVariableNode.create(LAPPLY_VEC_ELEM_ID, true));
+                readVectorElement.assignSourceSection(readSrc);
+
+                iterator = new LapplyIteratorNode();
+                writeVectorElement = replace(writeVectorElement, WriteVariableNode.create(writeSrc, LAPPLY_VEC_ELEM_ID, iterator, false, false));
+
+                // The first parameter to the function call is named as defined by the function.
+                String readVectorElementName = formalArgs.getNames()[0];
+                if (Arguments.VARARG_NAME.equals(readVectorElementName)) {
+                    // "..." is no "supplied" name, instead the argument will match by position
+                    // right away
+                    readVectorElementName = null;
+                }
+
+                // The remaining parameters are passed from {@code ...}. The call node will take
+                // care of matching.
+                RNode[] args;
+                String[] names;
+                if (varArgs.isEmpty()) {    // == null || (varArgs.length() == 1 &&
+                    // varArgs.getValues()[0]
+                    // == RMissing.instance)) {
+                    args = new RNode[]{readVectorElement};
+                    names = new String[]{readVectorElementName};
+                } else {
+                    // Insert expressions found inside "..." as arguments
+                    args = new RNode[varArgs.length() + 1];
+                    args[0] = readVectorElement;
+                    for (int i = 0; i < varArgs.length(); i++) {
+                        args[i + 1] = CallArgumentsNode.wrapVarArgValue(varArgs.getValues()[i]);
+                    }
+
+                    names = new String[varArgs.length() + 1];
+                    names[0] = readVectorElementName;
+                    System.arraycopy(varArgs.getNames(), 0, names, 1, varArgs.length());
+                }
+                functionNode = new LapplyFunctionNode(fun);
+                CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, names);
+                callNode = replace(callNode, RCallNode.createCall(funSrc, functionNode, argsNode));
+                callTarget = fun.getTarget();
+                oldSignature = signature;
+            }
+
+            // Update
+            iterator.reset(vecMat);
+            functionNode.reset(fun);
+        }
+
+        private <O extends Node, T extends Node> T replace(O oldNode, T newNode) {
+            if (oldNode == null) {
+                return insert(newNode);
+            } else {
+                return oldNode.replace(newNode);
+            }
+        }
+
+        protected static class LapplyIteratorNode extends RNode {
+
+            private RVector vector;
+            private int index;
+
+            public void reset(RVector newVector) {
+                this.vector = newVector;
+                this.index = 0;
+            }
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return vector.getDataAtAsObject(index++);
+            }
+        }
+
+        protected static class LapplyFunctionNode extends RNode {
+
+            private RFunction function = null;
+
+            public LapplyFunctionNode(RFunction function) {
+                this.function = function;
+            }
+
+            public void reset(RFunction newFunction) {
+                this.function = newFunction;
+            }
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return function;
+            }
+
         }
     }
 }

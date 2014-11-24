@@ -85,7 +85,7 @@ public abstract class Missing extends RBuiltinNode {
                 return RRuntime.LOGICAL_FALSE;
             }
 
-            if (isMissingProfile.profile(value == RMissing.instance)) {
+            if (isMissingProfile.profile(RMissingHelper.isMissing(value))) {
                 return RRuntime.LOGICAL_TRUE;
             }
 
