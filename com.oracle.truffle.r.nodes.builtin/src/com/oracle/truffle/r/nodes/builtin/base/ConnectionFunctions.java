@@ -656,16 +656,14 @@ public abstract class ConnectionFunctions {
      * Base class for socket connections, which are not opened lazily.
      */
     private static class RSocketConnection extends BaseRConnection {
-        protected int port;
         protected Socket socket;
         protected InputStream inputStream;
         protected OutputStream outputStream;
         protected BufferedReader bufferedReader;
         protected BufferedWriter bufferedWriter;
 
-        protected RSocketConnection(String modeString, int port) throws IOException {
+        protected RSocketConnection(String modeString, @SuppressWarnings("unused") int port) throws IOException {
             super(modeString);
-            this.port = port;
         }
 
         @Override
@@ -732,8 +730,6 @@ public abstract class ConnectionFunctions {
     }
 
     private static class RClientSocketConnection extends RSocketConnection {
-        private String host;
-
         RClientSocketConnection(String modeString, String host, int port) throws IOException {
             super(modeString, port);
             socket = new Socket(host, port);
@@ -824,7 +820,7 @@ public abstract class ConnectionFunctions {
     public abstract static class URLConnection extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected Object urlConnection(RAbstractStringVector url, RAbstractStringVector open, byte blocking, RAbstractStringVector encoding) {
+        protected Object urlConnection(RAbstractStringVector url, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking, @SuppressWarnings("unused") RAbstractStringVector encoding) {
             controlVisibility();
             try {
                 return new URLRConnection(url.getDataAt(0), open.getDataAt(0));

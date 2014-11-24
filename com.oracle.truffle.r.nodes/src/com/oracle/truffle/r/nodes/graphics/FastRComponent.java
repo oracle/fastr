@@ -32,6 +32,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class FastRComponent extends JComponent {
+
+    private static final long serialVersionUID = 1L;
+
     private final List<DrawableObject> displayList = Collections.synchronizedList(new ArrayList<>());
 
     private boolean shouldDraw;
