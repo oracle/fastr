@@ -13589,6 +13589,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSapply_ffe24cf837a4127ce35a5ae2989f5295() {
+        assertEval("{ f <- function(v) { sapply(1:3, function(k) v)}; f(1); f(2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testScan_6ce38938957aa74ca8c5a4af6de949db() {
         assertEval("{ con<-textConnection(c(\"TITLE extra line\", \"2 3 5 7\", \"11 13 17\")); scan(con, skip = 1, quiet = TRUE) }");
     }
