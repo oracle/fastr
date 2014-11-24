@@ -228,6 +228,16 @@ public abstract class ConnectionFunctions {
         protected abstract void createDelegateConnection() throws IOException;
     }
 
+    private static BaseRConnection getBaseConnection(RConnection conn) {
+        if (conn instanceof BaseRConnection) {
+            return (BaseRConnection) conn;
+        } else if (conn instanceof DelegateReadRConnection) {
+            return ((DelegateReadRConnection) conn).base;
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
     private static String[] readLinesHelper(BufferedReader bufferedReader, int n) throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         String line;
@@ -836,22 +846,65 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "..."})
-    public abstract static class Close extends RInvisibleBuiltinNode {
-        @Specialization
-        @TruffleBoundary
-        protected Object close(Object con) {
-            controlVisibility();
-            if (con instanceof RConnection) {
-                try {
-                    ((RConnection) con).close();
-                } catch (IOException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                }
-                return RNull.instance;
-            } else {
+    private abstract static class CheckIsConnAdapter extends RInvisibleBuiltinNode {
+        protected void checkIsConnection(Object con) throws RError {
+            if (!(con instanceof RConnection)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_CONNECTION, "con");
             }
+        }
+    }
+
+    @RBuiltin(name = "open", kind = INTERNAL, parameterNames = {"con", "open", "blocking"})
+    public abstract static class Open  extends CheckIsConnAdapter {
+        @Specialization
+        @TruffleBoundary
+        protected Object open(RConnection con, RAbstractStringVector open, byte blocking) {
+            controlVisibility();
+            try {
+                BaseRConnection baseConn = getBaseConnection(con);
+                if (baseConn.closed) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
+                }
+                if (baseConn.opened) {
+                    RContext.getInstance().setEvalWarning(RError.Message.ALREADY_OPEN_CONNECTION.message);
+                    return RNull.instance;
+                }
+                baseConn.mode = OpenMode.getOpenMode(open.getDataAt(0));
+                baseConn.createDelegateConnection();
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+            return RNull.instance;
+         }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object open(Object con, Object open, Object blocking) {
+            checkIsConnection(con);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+        }
+
+    }
+
+    @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "type"})
+    public abstract static class Close extends CheckIsConnAdapter {
+        @Specialization
+        @TruffleBoundary
+        protected Object close(RConnection con) {
+            controlVisibility();
+            try {
+                ((RConnection) con).close();
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+            return RNull.instance;
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object open(Object con) {
+            checkIsConnection(con);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
         }
     }
 

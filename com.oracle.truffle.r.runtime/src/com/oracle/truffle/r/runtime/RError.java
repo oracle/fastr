@@ -504,6 +504,7 @@ public final class RError extends RuntimeException {
         ERROR_READING_CONNECTION("error reading connection: %s"),
         ERROR_WRITING_CONNECTION("error writing connection: %s"),
         ERROR_FLUSHING_CONNECTION("error flushing connection: %s"),
+        ALREADY_OPEN_CONNECTION("connection is already open"),
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
