@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.Lapply.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -40,7 +41,7 @@ public abstract class VApply extends RBuiltinNode {
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
 
-    @Child private Lapply lapply = LapplyFactory.create(EMTPY_RNODE_ARRAY, null, getSuppliedArgsNames());
+    @Child private DoApplyNode doApply = new DoApplyNode();
 
     // TODO complete implementation: useNames
     @Specialization
@@ -50,7 +51,8 @@ public abstract class VApply extends RBuiltinNode {
     }
 
     private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, RArgsValuesAndNames optionalArgs) {
-        Object[] applyResult = lapply.applyHelper(frame, vec.materialize(), fun, optionalArgs);
+        RVector vecMat = vec.materialize();
+        Object[] applyResult = doApply.execute(frame, vecMat, fun, optionalArgs);
 
         Object result = null;
         boolean applyResultZeroLength = applyResult.length == 0;
