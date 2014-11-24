@@ -92,7 +92,10 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
                 state.append(name);
                 state.append(" = ");
             }
-            argument.deparse(state);
+            if (argument != null) {
+                // e.g. not f(, foo)
+                argument.deparse(state);
+            }
             if (i != arguments.length - 1) {
                 state.append(", ");
             }
