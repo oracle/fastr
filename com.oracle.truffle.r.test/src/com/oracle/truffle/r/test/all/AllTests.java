@@ -15234,17 +15234,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTapply_627b7381fd149984429a34289adeba8f() {
-        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testTapply_8a748021dace19980a947a07fde93a96() {
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testTapply_56d04575049cc5fb09d7e8f4abbc6879() {
+    public void TestSimpleBuiltins_testTapplyIgnore_627b7381fd149984429a34289adeba8f() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTapplyIgnore_56d04575049cc5fb09d7e8f4abbc6879() {
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
