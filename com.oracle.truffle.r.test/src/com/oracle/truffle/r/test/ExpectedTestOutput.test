@@ -16566,11 +16566,6 @@ Error in col[[i, exact = exact]] :
 [1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
-#{ x<-1; class(x)<-"foo"; y<-as.data.frame(x) }
-Error in as.data.frame.default(x) :
-  cannot coerce class ""foo"" to a data.frame
-
-##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
 #{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm="x"); attributes(y); }
 $names
 [1] "x"

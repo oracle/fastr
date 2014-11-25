@@ -1859,6 +1859,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleDataFrames_testAsDataFrameIgnore_0f990604bed45f9a868ddd4f5616f9ee() {
+        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
+    }
+
+    @Ignore
     public void TestSimpleFunctions_testDefinitionsIgnore_b8d75a017c31d73d6dbf7c6a93953d67() {
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- \"sum\" ; sapply(1, x, 2) } ; f() }");
     }

@@ -17544,13 +17544,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleDataFrames_testAsDataFrame_0f990604bed45f9a868ddd4f5616f9ee() {
-        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
+    public void TestSimpleDataFrames_testAsDataFrame_bf5e0ec924e5d9b3c6ccdc1662b0a781() {
+        assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
     }
 
     @Test
-    public void TestSimpleDataFrames_testAsDataFrame_bf5e0ec924e5d9b3c6ccdc1662b0a781() {
-        assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
+    public void TestSimpleDataFrames_testAsDataFrameIgnore_0f990604bed45f9a868ddd4f5616f9ee() {
+        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
     }
 
     @Test
