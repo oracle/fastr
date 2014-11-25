@@ -2571,6 +2571,17 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testLgamma() {
+        assertEval("{ lgamma(1) }");
+        assertEval("{ lgamma(100) }");
+        assertEval("{ lgamma(as.double(NA)) }");
+        assertEval("{ lgamma(c(100, 2.2)) }");
+        assertEval("{ lgamma(FALSE) }");
+        assertEvalError("{ lgamma(as.raw(1)) }");
+        assertEvalError("{ lgamma(1+1i) }");
+    }
+
+    @Test
     public void testDelayedAssign() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
         assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");

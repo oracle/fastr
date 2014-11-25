@@ -9519,6 +9519,37 @@ NULL
 #{ x <- 5 ; levels(x)<-c(1,2,3); levels(x);}
 [1] 1 2 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(1) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(1+1i) }
+Error in lgamma(1 + (0+1i)) : unimplemented complex function
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(100) }
+[1] 359.1342
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(FALSE) }
+[1] Inf
+Warning message:
+value out of range in 'lgamma'
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(as.double(NA)) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(as.raw(1)) }
+Error in lgamma(as.raw(1)) :
+  non-numeric argument to mathematical function
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(c(100, 2.2)) }
+[1] 359.13420537   0.09694747
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testList
 #{ list(1, b=2) }
 [[1]]

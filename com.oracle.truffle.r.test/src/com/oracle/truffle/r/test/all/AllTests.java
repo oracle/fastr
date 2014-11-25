@@ -9479,6 +9479,41 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testLgamma_c7dd497a27a1c37243146bb3d2b6c759() {
+        assertEval("{ lgamma(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_549f2a4a8f780a9799784dabf88b8c91() {
+        assertEval("{ lgamma(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_0f90ac30eec12681e280449bd4c4da1a() {
+        assertEval("{ lgamma(as.double(NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_e7cc74b6fb6ef781ed689d2c295a4f75() {
+        assertEval("{ lgamma(c(100, 2.2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_fa33d65cccdd559d784d936af5f9d5db() {
+        assertEval("{ lgamma(FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_a60317b17368e8a7c062d785af03c4b5() {
+        assertEvalError("{ lgamma(as.raw(1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_ee1e46035160642c4b4b5a09c51ff6cf() {
+        assertEvalError("{ lgamma(1+1i) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testList_c74b9ee71e8970c28a28d0daff0eeb0f() {
         assertEval("{ list(a=1, b=2) }");
     }
