@@ -26,7 +26,7 @@ import java.util.UUID;
 
 public class UUIDFunctionUIDFactory extends FunctionUIDFactory {
 
-    private static class UUIDFunctionUID implements FunctionUID {
+    private static final class UUIDFunctionUID implements FunctionUID {
 
         private final UUID uuid;
 
