@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.tools.cmpr;
 
 import java.io.*;
+import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 
@@ -45,18 +46,18 @@ import com.oracle.truffle.r.runtime.*;
 public class CompareLibR {
 
     private static class FileContent {
-        String name;
+        Path path;
         String content;
         String flattened;
 
-        FileContent(String name, String content) {
-            this.name = name;
+        FileContent(Path path, String content) {
+            this.path = path;
             this.content = content;
         }
 
         @Override
         public String toString() {
-            return name;
+            return path.toString();
         }
     }
 
@@ -66,6 +67,7 @@ public class CompareLibR {
         String pkg = null;
         String path1 = null;
         String path2 = null;
+        boolean printPaths = false;
         int i = 0;
         while (i < args.length) {
             String arg = args[i];
@@ -88,6 +90,10 @@ public class CompareLibR {
                         usage();
                     }
                     break;
+                case "--paths":
+                    printPaths = true;
+                    break;
+
                 default:
                     usage();
             }
@@ -114,7 +120,11 @@ public class CompareLibR {
                     System.out.println("FastR has file: " + fileName + " not found in GnuR");
                 } else {
                     if (!fastR.flattened.equals(gnuR.flattened)) {
-                        System.out.println(fileName + " differs");
+                        if (printPaths) {
+                            System.out.printf("%s and %s differ%n", fastR.toString(), gnuR.toString());
+                        } else {
+                            System.out.println(fileName + " differs");
+                        }
                     } else {
                         System.out.println(fileName + " is identical (modulo formatting)");
                     }
@@ -145,7 +155,7 @@ public class CompareLibR {
                 String entryName = entry.getFileName().toString();
                 if (entryName.endsWith(".R") && (filter.get(entryName) != null)) {
                     File file = entry.toFile();
-                    result.put(entryName, new FileContent(entryName, readFileContent(file)));
+                    result.put(entryName, new FileContent(entry, readFileContent(file)));
                 }
             }
         }
@@ -169,8 +179,9 @@ public class CompareLibR {
                 if (line.endsWith(".r") || line.endsWith(".R")) {
                     String fileName = line.trim();
                     final String rResource = "R/" + fileName;
+                    URL url = klass.getResource(rResource);
                     String content = Utils.getResourceAsString(klass, rResource, true);
-                    result.put(fileName, new FileContent(fileName, content));
+                    result.put(fileName, new FileContent(FileSystems.getDefault().getPath(url.getPath()), content));
                 }
             }
         }
