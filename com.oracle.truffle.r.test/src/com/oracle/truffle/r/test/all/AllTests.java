@@ -7464,6 +7464,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDimensions_9330de6c625acab5a7ea6c7f251cd834() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); attributes(y) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDimensions_999f000321095e06ce4af15a0c503839() {
         assertEvalError("{ x <- 1:2 ; dim(x) <- c(1, 3) ; x }");
     }
@@ -12211,6 +12216,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testPrint_1e84c6bf83c3f2aa72f71298af011c89() {
         assertEval("{ y<-c(\"a\",\"b\",\"c\",\"d\");dim(y)<-c(1,2,2);print(y,quote=FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testPrint_a58cce800ee46c197ef0f7c4fa61b641() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }");
     }
 
     @Test

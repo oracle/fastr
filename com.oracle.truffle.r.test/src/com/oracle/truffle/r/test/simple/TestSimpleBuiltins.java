@@ -1222,6 +1222,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x <- 1:2 ; dim(x) <- c(1,2) ; x }");
         assertEval("{ x <- 1:2 ; attr(x, \"dim\") <- c(2,1) ; x }");
+
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); attributes(y) }");
     }
 
     @Test
@@ -3184,6 +3186,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ print(c(\"foo\"),quote=FALSE)}");
         assertEval("{ x<-matrix(c(\"a\",\"b\",\"c\",\"d\"),nrow=2);print(x,quote=FALSE)}");
         assertEval("{ y<-c(\"a\",\"b\",\"c\",\"d\");dim(y)<-c(1,2,2);print(y,quote=FALSE)}");
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }");
     }
 
     @Test
