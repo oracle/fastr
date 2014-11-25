@@ -30,7 +30,9 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class IfNode extends RNode implements VisibilityController {
 
@@ -71,6 +73,11 @@ public class IfNode extends RNode implements VisibilityController {
     @Override
     public boolean getVisibility() {
         return isVisible;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
     }
 
     @CreateCast({"condition"})
@@ -115,5 +122,30 @@ public class IfNode extends RNode implements VisibilityController {
 
     public RNode getElsePart() {
         return elsePart;
+    }
+
+    @Override
+    public void deparse(State state) {
+        /*
+         * We have a problem with { }, since they do not exist as AST nodes (functions), so we
+         * insert them routinely, which means we can't match GnuR output in simple cases.
+         */
+        state.append("if (");
+        condition.deparse(state);
+        state.append(") ");
+        state.writeOpenCurlyNLIncIndent();
+        thenPart.deparse(state);
+        state.decIndentWriteCloseCurly();
+        if (elsePart != null) {
+            state.append(" else ");
+            state.writeOpenCurlyNLIncIndent();
+            elsePart.deparse(state);
+            state.decIndentWriteCloseCurly();
+        }
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return IfNode.create(condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
     }
 }

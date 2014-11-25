@@ -25,7 +25,9 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class FunctionExpressionNode extends RNode {
 
@@ -78,6 +80,22 @@ public abstract class FunctionExpressionNode extends RNode {
 
         public RootCallTarget getCallTarget() {
             return callTarget;
+        }
+
+        @Override
+        public boolean isSyntax() {
+            return true;
+        }
+
+        @Override
+        public void deparse(State state) {
+            ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
+        }
+
+        @Override
+        public RNode substitute(REnvironment env) {
+            FunctionDefinitionNode fdn = ((FunctionDefinitionNode) callTarget.getRootNode()).substituteFDN(env);
+            return new DynamicFunctionExpressionNode(Truffle.getRuntime().createCallTarget(fdn));
         }
     }
 }

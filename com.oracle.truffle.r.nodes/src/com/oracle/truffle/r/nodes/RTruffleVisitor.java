@@ -140,21 +140,23 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         RootCallTarget callTarget = null;
         try {
-            // Parse function body
+            // Parse function statements
             ASTNode astBody = func.getBody();
-            RNode body;
+            FunctionStatementsNode statements;
             if (astBody != null) {
-                body = astBody.accept(this);
+                // TODO fix
+                statements = new FunctionStatementsNode((astBody.accept(this)));
             } else {
-                body = new SequenceNode(RNode.EMTPY_RNODE_ARRAY);
+                statements = new FunctionStatementsNode(RNode.EMTPY_RNODE_ARRAY);
             }
 
             // Parse argument list
             List<ArgNode> argumentsList = func.getSignature();
             String[] argumentNames = new String[argumentsList.size()];
             RNode[] defaultValues = new RNode[argumentsList.size()];
+            SaveArgumentsNode saveArguments;
             if (!argumentsList.isEmpty()) {
-                RNode[] init = new RNode[argumentsList.size() + 1];
+                RNode[] init = new RNode[argumentsList.size()];
                 int index = 0;
                 for (ArgNode arg : argumentsList) {
                     // Parse argument's default value
@@ -167,7 +169,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     }
 
                     // Create an initialization statement
-                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index), true, false);
+                    init[index] = WriteVariableNode.create(RRuntime.toString(arg.getName()), AccessArgumentNode.create(index), true, false);
 
                     // Store formal arguments
                     argumentNames[index] = RRuntime.toString(arg.getName());
@@ -176,20 +178,20 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     index++;
                 }
 
-                // Set the initialization part in front of body
-                init[index] = body; // Body is the last block in the sequence
-                body = new SequenceNode(init);
+                saveArguments = new SaveArgumentsNode(init);
+            } else {
+                saveArguments = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
             }
 
             // Maintain SourceSection
-            if (astBody != null && body.getSourceSection() == null) {
-                body.assignSourceSection(astBody.getSource());
+            if (astBody != null && statements.getSourceSection() == null) {
+                statements.assignSourceSection(astBody.getSource());
             }
             FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
 
             String functionBody = func.getSource().getCode();
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, formals, functionBody.substring(0, Math.min(functionBody.length(), 50)).replace("\n",
-                            "\\n"), false);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, new FunctionBodyNode(saveArguments, statements), formals, functionBody.substring(0,
+                            Math.min(functionBody.length(), 50)).replace("\n", "\\n"), false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         } catch (Throwable err) {
             err.printStackTrace();
@@ -229,11 +231,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         for (int i = 0; i < exprs.length; i++) {
             rexprs[i] = exprs[i].accept(this);
         }
-        if (rexprs.length == 1) {
-            return rexprs[0];
-        } else {
-            return new SequenceNode(seq.getSource(), rexprs);
-        }
+        // For (deparse) consistency we do not special case a sequence of length 1
+        return new SequenceNode(seq.getSource(), rexprs);
     }
 
     @Override
@@ -345,7 +344,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         //@formatter:on
         final Object rhsSymbol = new Object();
 
-        WriteVariableNode rhsAssign = WriteVariableNode.create(rhsSymbol, rhs, false, false, rhsWriteMode);
+        WriteVariableNode rhsAssign = WriteVariableNode.create(rhsSymbol.toString(), rhs, false, false, rhsWriteMode);
         WriteVariableNode varAssign = WriteVariableNode.create(varSymbol, replacementArg, false, false, WriteVariableNode.Mode.TEMP);
 
         seq[0] = rhsAssign;
@@ -354,7 +353,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         return rhsSymbol;
     }
 
-    private static SequenceNode constructReplacementSuffix(RNode[] seq, RNode assignFromTemp, Object rhsSymbol, SourceSection source) {
+    private static ReplacementNode constructReplacementSuffix(RNode[] seq, RNode assignFromTemp, Object rhsSymbol, SourceSection source) {
         // remove var and rhs, returning rhs' value
         RemoveAndAnswerNode rmVar = RemoveAndAnswerNode.create(varSymbol);
         RemoveAndAnswerNode rmRhs = RemoveAndAnswerNode.create(rhsSymbol);
@@ -363,8 +362,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         seq[2] = assignFromTemp;
         seq[3] = rmVar;
         seq[4] = rmRhs;
-        SequenceNode replacement = new SequenceNode(seq);
-        replacement.assignSourceSection(source);
+        ReplacementNode replacement = new ReplacementNode(source, seq);
         return replacement;
     }
 
@@ -492,7 +490,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(SimpleAssignVariable n) {
         RNode expression = n.getExpr().accept(this);
-        return WriteVariableNode.create(n.getSource(), n.getVariable(), expression, false, n.isSuper());
+        return WriteVariableNode.create(n.getSource(), RRuntime.toString(n.getVariable()), expression, false, n.isSuper());
     }
 
     private RCallNode prepareReplacementCall(FunctionCall f, List<ArgNode> args, final Object rhsSymbol, boolean simpleReplacement) {
@@ -597,14 +595,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode condition = n.getCondition().accept(this);
         RNode thenPart = n.getTrueCase().accept(this);
         RNode elsePart = n.getFalseCase() != null ? n.getFalseCase().accept(this) : null;
-        return IfNode.create(n.getSource(), condition, thenPart, elsePart);
+        return IfNode.create(n.getSource(), condition, SequenceNode.ensureSequence(thenPart), SequenceNode.ensureSequence(elsePart));
     }
 
     @Override
     public RNode visit(While loop) {
         RNode condition = loop.getCondition().accept(this);
-        RNode body = loop.getBody().accept(this);
-        return WhileNode.create(loop.getSource(), condition, body);
+        RNode body = SequenceNode.ensureSequence(loop.getBody().accept(this));
+        return WhileNode.create(loop.getSource(), condition, body, false);
     }
 
     @Override
@@ -620,15 +618,15 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(Repeat loop) {
         RNode body = loop.getBody().accept(this);
-        return WhileNode.create(loop.getSource(), ConstantNode.create(true), body);
+        return WhileNode.create(loop.getSource(), ConstantNode.create(true), SequenceNode.ensureSequence(body), true);
     }
 
     @Override
     public RNode visit(For loop) {
-        WriteVariableNode cvar = WriteVariableNode.create(loop.getVariable(), null, false, false);
+        WriteVariableNode cvar = WriteVariableNode.create(RRuntime.toString(loop.getVariable()), null, false, false);
         RNode range = loop.getRange().accept(this);
         RNode body = loop.getBody().accept(this);
-        return ForNode.create(cvar, range, body);
+        return ForNode.create(cvar, range, SequenceNode.ensureSequence(body));
     }
 
     @Override

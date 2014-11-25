@@ -39,7 +39,7 @@ public abstract class PlotXY extends RInvisibleBuiltinNode {
         return RNull.instance;
     }
 
-    private void drawWithLines(RDoubleVector xyVector) {
+    private static void drawWithLines(RDoubleVector xyVector) {
         // todo implement coordinate systems units conversion like in GConvert (graphics.c)
         setClipRect();
         DrawingParameters adoptedParameters = adoptCurrentDeviceDrawingParameters();
@@ -47,21 +47,21 @@ public abstract class PlotXY extends RInvisibleBuiltinNode {
         getGraphicsEngine().drawPolyline(coordinates, adoptedParameters);
     }
 
-    private DrawingParameters adoptCurrentDeviceDrawingParameters() {
-        //todo Now adoption as for today. Transcribe from gcontextFromGM() (graphics.c)
+    private static DrawingParameters adoptCurrentDeviceDrawingParameters() {
+        // todo Now adoption as for today. Transcribe from gcontextFromGM() (graphics.c)
         return getCurrentGraphicsDevice().getDrawingParameters();
     }
 
-    private void setClipRect() {
-        //todo Transcrive from Gclip() (graphics.c)
+    private static void setClipRect() {
+        // todo Transcrive from Gclip() (graphics.c)
         getGraphicsEngine().setCurrentGraphicsDeviceClipRect(0, 0, 0, 0);
     }
 
-    private GraphicsDevice getCurrentGraphicsDevice() {
+    private static GraphicsDevice getCurrentGraphicsDevice() {
         return getGraphicsEngine().getCurrentGraphicsDevice();
     }
 
-    private GraphicsEngine getGraphicsEngine() {
+    private static GraphicsEngine getGraphicsEngine() {
         return GraphicsEngineImpl.getInstance();
     }
 }

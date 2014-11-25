@@ -22,14 +22,18 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * A collection of useful methods for working with {@code AST} instances.
@@ -37,14 +41,26 @@ import com.oracle.truffle.r.runtime.data.*;
 public class RASTUtils {
 
     /**
-     * Removes any {@link WrapArgumentNode}.
+     * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
     public static Node unwrap(Object node) {
         if (node instanceof WrapArgumentNode) {
-            return ((WrapArgumentNode) node).getOperand();
+            return unwrap(((WrapArgumentNode) node).getOperand());
+        } else if (node instanceof RInstrumentableNode) {
+            return ((RInstrumentableNode) node).unwrap();
         } else {
             return (Node) node;
+        }
+    }
+
+    @TruffleBoundary
+    public static Node unwrapParent(Node node) {
+        Node parent = node.getParent();
+        if (parent instanceof WrapperNode) {
+            return parent.getParent();
+        } else {
+            return parent;
         }
     }
 
@@ -87,7 +103,7 @@ public class RASTUtils {
      */
     @TruffleBoundary
     public static RSymbol createRSymbol(Node readVariableNode) {
-        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getSymbol().getName());
+        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getName());
     }
 
     @TruffleBoundary
@@ -98,7 +114,7 @@ public class RASTUtils {
      * <li>{@link ConstantFunctioNode}</li>
      * <li>{@link ConstantStringNode}</li>
      * <li>{@link ReadVariableNode}</li>
-     * <li>OpsGroupDispatchNode</li>
+     * <li>GroupDispatchNode</li>
      * </ul>
      */
     public static RNode createCall(Object fna, CallArgumentsNode callArgsNode) {
@@ -110,9 +126,9 @@ public class RASTUtils {
             return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
         } else if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
-        } else if (fn instanceof OpsGroupDispatchNode) {
-            OpsGroupDispatchNode ogdn = (OpsGroupDispatchNode) fn;
-            return DispatchedCallNode.create(ogdn.getGenericName(), RGroupGenerics.RDotGroup, null, callArgsNode);
+        } else if (fn instanceof GroupDispatchNode) {
+            GroupDispatchNode gdn = (GroupDispatchNode) fn;
+            return DispatchedCallNode.create(gdn.getGenericName(), RGroupGenerics.RDotGroup, null, callArgsNode);
         } else {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createStaticCall(null, rfn, callArgsNode);
@@ -158,7 +174,7 @@ public class RASTUtils {
      * @param quote TODO
      */
     public static Object findFunctionName(Node node, boolean quote) {
-        RNode child = findFunctionNode(node);
+        RNode child = (RNode) unwrap(findFunctionNode(node));
         if (child instanceof ReadVariableNode) {
             if (child instanceof BuiltinFunctionVariableNode) {
                 BuiltinFunctionVariableNode bvn = (BuiltinFunctionVariableNode) child;
@@ -166,21 +182,26 @@ public class RASTUtils {
             } else {
                 return createRSymbol(child);
             }
-        } else if (child instanceof OpsGroupDispatchNode) {
-            OpsGroupDispatchNode opsGroupDispatchNode = (OpsGroupDispatchNode) child;
-            String gname = opsGroupDispatchNode.getGenericName();
+        } else if (child instanceof GroupDispatchNode) {
+            GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
+            String gname = groupDispatchNode.getGenericName();
             if (quote) {
                 gname = "`" + gname + "`";
             }
             return RDataFactory.createSymbol(gname);
+        } else if (child instanceof RCallNode) {
+            return findFunctionName(child, quote);
+        } else {
+            // some more complicated expression, just deparse it
+            RDeparse.State state = RDeparse.State.createPrintableState();
+            child.deparse(state);
+            return RDataFactory.createSymbol(state.toString());
         }
-        assert false;
-        return null;
     }
 
     /**
      * Returns the {@link ReadVariableNode} associated with a {@link RCallNode} or the
-     * {@link OpsGroupDispatchNode} associated with a {@link DispatchedCallNode}.
+     * {@link GroupDispatchNode} associated with a {@link DispatchedCallNode}.
      */
     public static RNode findFunctionNode(Node node) {
         if (node instanceof RCallNode) {
@@ -188,7 +209,7 @@ public class RASTUtils {
         } else if (node instanceof DispatchedCallNode) {
             for (Node child : node.getChildren()) {
                 if (child != null) {
-                    if (child instanceof OpsGroupDispatchNode) {
+                    if (child instanceof GroupDispatchNode) {
                         return (RNode) child;
                     }
                 }
@@ -209,6 +230,101 @@ public class RASTUtils {
             }
         }
         return null;
+    }
+
+    @TruffleBoundary
+    public static RNode substituteName(String name, REnvironment env) {
+        Object val = env.get(name);
+        if (val == null) {
+            // not bound in env,
+            return null;
+        } else if (val instanceof RMissing) {
+            // strange special case, mimics GnuR behavior
+            return RASTUtils.createReadVariableNode("");
+        } else if (val instanceof RPromise) {
+            return (RNode) RASTUtils.unwrap(((RPromise) val).getRep());
+        } else if (val instanceof RLanguage) {
+            return (RNode) ((RLanguage) val).getRep();
+        } else if (val instanceof RArgsValuesAndNames) {
+            // this is '...'
+            RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
+            if (rva.isEmpty()) {
+                return new MissingDotsNode();
+            }
+            Object[] values = rva.getValues();
+            RNode[] expandedNodes = new RNode[values.length];
+            for (int i = 0; i < values.length; i++) {
+                Object argval = values[i];
+                if (argval instanceof RPromise) {
+                    RPromise promise = (RPromise) argval;
+                    expandedNodes[i] = (RNode) RASTUtils.unwrap(promise.getRep());
+                } else {
+                    expandedNodes[i] = ConstantNode.create(argval);
+                }
+            }
+            return values.length > 1 ? new ExpandedDotsNode(expandedNodes) : expandedNodes[0];
+        } else {
+            // An actual value
+            return ConstantNode.create(val);
+        }
+
+    }
+
+    @TruffleBoundary
+    public static String expectName(RNode node) {
+        if (node instanceof ConstantNode) {
+            Object c = ((ConstantNode) node).getValue();
+            if (c instanceof String) {
+                return (String) c;
+            } else if (c instanceof Double) {
+                return ((Double) c).toString();
+            } else {
+                throw RInternalError.unimplemented();
+            }
+        } else if (node instanceof ReadVariableNode) {
+            return ((ReadVariableNode) node).getName();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    /**
+     * Marker class for special '...' handling.
+     */
+    public abstract static class DotsNode extends RNode {
+    }
+
+    /**
+     * A temporary {@link RNode} type that exists only during substitution to hold the expanded
+     * array of values from processing '...'. Allows {@link RSyntaxNode#substitute} to always return
+     * a single node.
+     */
+    public static class ExpandedDotsNode extends DotsNode {
+
+        public final RNode[] nodes;
+
+        ExpandedDotsNode(RNode[] nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            assert false;
+            return null;
+        }
+
+    }
+
+    /**
+     * Denotes a '...' usage that was "missing".
+     */
+    public static class MissingDotsNode extends DotsNode {
+        @Override
+        public Object execute(VirtualFrame frame) {
+            assert false;
+            return null;
+        }
+
     }
 
 }

@@ -154,11 +154,11 @@ public class CountFields {
         /*
          * we might have a character that was unscanchar-ed. So pushback if possible
          */
-// if (data.save && !data.ttyflag && data.wasopen) {
-// char line[2] = " ";
-// line[0] = (char) data.save;
-// con_pushback(data.con, FALSE, line);
-// }
+        // if (data.save && !data.ttyflag && data.wasopen) {
+        // char line[2] = " ";
+        // line[0] = (char) data.save;
+        // con_pushback(data.con, FALSE, line);
+        // }
         data.checkClose();
 
         if (nlines < 0) {

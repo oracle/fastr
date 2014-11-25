@@ -34,8 +34,11 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariabl
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class denotes a call site to a function,e.g.:
@@ -74,13 +77,13 @@ import com.oracle.truffle.r.runtime.data.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -93,11 +96,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -105,7 +108,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -117,7 +120,7 @@ import com.oracle.truffle.r.runtime.data.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -166,6 +169,54 @@ public abstract class RCallNode extends RNode {
 
     public abstract CallArgumentsNode getArgumentsNode();
 
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        Object fname = RASTUtils.findFunctionName(this, false);
+        if (fname instanceof RSymbol) {
+            String sfname = ((RSymbol) fname).getName();
+            if (sfname.equals(":::") || sfname.equals("::")) {
+                // special infix, could be a:::b() or a:::b
+                RNode fn = getFunctionNode().unwrap();
+                RCallNode colonCall;
+                RNode[] argValues;
+                if (fn instanceof RCallNode) {
+                    colonCall = (RCallNode) fn;
+                    argValues = colonCall.getArgumentsNode().getArguments();
+                } else {
+                    colonCall = this;
+                    argValues = getArgumentsNode().getArguments();
+                }
+                argValues[0].deparse(state);
+                state.append(sfname);
+                argValues[1].deparse(state);
+                if (fn instanceof RCallNode) {
+                    getArgumentsNode().deparse(state);
+                }
+                return;
+            }
+        }
+        Func func = RASTDeparse.isInfixOperator(fname);
+        if (func != null) {
+            RASTDeparse.deparseInfixOperator(state, this, func);
+        } else {
+            getFunctionNode().deparse(state);
+            getArgumentsNode().deparse(state);
+        }
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode functionSub = getFunctionNode().substitute(env);
+        CallArgumentsNode argsSub = (CallArgumentsNode) getArgumentsNode().substitute(env);
+        // TODO check type of functionSub
+        return RASTUtils.createCall(functionSub, argsSub);
+    }
+
     public int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectInteger(execute(frame, function));
     }
@@ -179,8 +230,7 @@ public abstract class RCallNode extends RNode {
     }
 
     public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
-        Symbol symbol = Symbol.create(function.getName());
-        return RCallNode.createCall(src, BuiltinFunctionVariableNodeFactory.create(function, symbol), arguments);
+        return RCallNode.createCall(src, BuiltinFunctionVariableNodeFactory.create(function, function.getName()), arguments);
     }
 
     /**
@@ -192,11 +242,11 @@ public abstract class RCallNode extends RNode {
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
      *            {code .Internal}.
      * @param function the resolved {@link RFunction}.
-     * @param symbol The name of the function
+     * @param name The name of the function
      */
-    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, Symbol symbol) {
+    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerDirectives.transferToInterpreter();
-        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, symbol);
+        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, name);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
         current.assignSourceSection(src);
@@ -464,6 +514,7 @@ public abstract class RCallNode extends RNode {
         public CallArgumentsNode getClonedArgs() {
             return NodeUtil.cloneNode(args);
         }
+
     }
 
     /**

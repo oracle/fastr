@@ -104,7 +104,7 @@ public class RCmdOptionsParser {
         xargs[0] = "FastR";
         System.arraycopy(args, 0, xargs, 1, args.length);
         return new Result(xargs, firstNonOptionArgIndex < 0 ? xargs.length : firstNonOptionArgIndex + 1); // adj
-// for zeroth arg insert
+        // for zeroth arg insert
     }
 
     public static void printHelp(Client client, int exitCode) {

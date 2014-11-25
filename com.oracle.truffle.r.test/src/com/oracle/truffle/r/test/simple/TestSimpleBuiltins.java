@@ -976,6 +976,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { sapply(c(\"a\",\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
+
+        assertEval("{ f <- function(v) { sapply(1:3, function(k) v)}; f(1); f(2) }");
     }
 
     @Test
@@ -1669,9 +1671,9 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testRegExprIgnore() {
         assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME: missing
-// attributes
+        // attributes
         assertEval("gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME:
-// missing attributes
+        // missing attributes
     }
 
     @Test
@@ -4127,11 +4129,31 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testTapply() {
-        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTapplyIgnore() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
+    }
+
+    @Test
+    @Ignore
+    public void testNargs() {
+        // TODO fix unexpected "WARNING: ignoring environment value of R_HOME" from GnuR
+        assertEval("{  f <- function (a, b, c) { nargs() }; f() }");
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testNArgsIgnore() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
 
 }

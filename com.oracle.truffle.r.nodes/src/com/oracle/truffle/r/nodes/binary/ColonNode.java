@@ -28,12 +28,18 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.ColonNodeFactory.ColonCastNodeFactory;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
 public abstract class ColonNode extends RNode implements VisibilityController {
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
+
+    public abstract RNode getLeft();
+
+    public abstract RNode getRight();
 
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {
@@ -111,6 +117,23 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         return cn;
     }
 
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        getLeft().deparse(state);
+        state.append(':');
+        getRight().deparse(state);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return create(null, getLeft().substitute(env), getRight().substitute(env));
+    }
+
     public static boolean isSmaller(double left, double right) {
         return left <= right;
     }
@@ -131,6 +154,8 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     public abstract static class ColonCastNode extends RNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
+
+        public abstract RNode getOperand();
 
         @Specialization(guards = "isIntValue")
         protected int doDoubleToInt(double operand) {
@@ -190,6 +215,16 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
         public static boolean isFirstIntValue(RDoubleVector d) {
             return (((int) d.getDataAt(0))) == d.getDataAt(0);
+        }
+
+        @Override
+        public void deparse(State state) {
+            getOperand().deparse(state);
+        }
+
+        @Override
+        public RNode substitute(REnvironment env) {
+            return getOperand().substitute(env);
         }
     }
 }

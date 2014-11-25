@@ -673,9 +673,9 @@ public class ArgumentMatcher {
         @Override
         public boolean isVararg(RNode arg) {
             // Empty varargs get passed in as "...", and not unrolled. Thus we only have to check
-            // the RVNs symbol
-            Symbol symbol = RMissingHelper.unwrapSymbol(arg);
-            return symbol != null && symbol.isVarArg();
+            // the RVNs name
+            String name = RMissingHelper.unwrapName(arg);
+            return name != null && ArgumentsTrait.isVarArg(name);
         }
 
         @TruffleBoundary

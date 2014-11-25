@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -32,16 +34,19 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.*;
 
-public final class FunctionDefinitionNode extends RRootNode {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
     /**
      * Identifies the lexical scope where this function is defined, through the "parent" field.
      */
     private final REnvironment.FunctionDefinition funcEnv;
-    @Child private RNode body;
+    @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
+    private final RNode uninitializedBody; // copy for "body" builtin
     private final String description;
+    private final FunctionUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
@@ -73,13 +78,28 @@ public final class FunctionDefinitionNode extends RRootNode {
         super(src, formals, funcEnv.getDescriptor());
         this.funcEnv = funcEnv;
         this.body = body;
+        this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.create(InternalFrameSlot.OnExit, false);
+        this.instrumentationApplied = substituteFrame;
+        this.uuid = substituteFrame ? null : FunctionUIDFactory.get().createUID();
+    }
+
+    public FunctionUID getUID() {
+        return uuid;
     }
 
     public REnvironment.FunctionDefinition getEnv() {
         return funcEnv;
+    }
+
+    public FunctionBodyNode getBody() {
+        return (FunctionBodyNode) RASTUtils.unwrap(body);
+    }
+
+    public FunctionBodyNode getUninitializedBody() {
+        return (FunctionBodyNode) uninitializedBody;
     }
 
     /**
@@ -121,12 +141,103 @@ public final class FunctionDefinitionNode extends RRootNode {
 
     @Override
     public String toString() {
-        return description;
+        return description == null ? "<no source>" : description;
+    }
+
+    public String parentToString() {
+        return super.toString();
     }
 
     @Override
     public boolean isCloningAllowed() {
         return !substituteFrame;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    public void deparse(State state) {
+        // TODO linebreaks
+        state.append("function (");
+        FormalArguments formals = getFormalArguments();
+        String[] formalNames = formals.getNames();
+        RNode[] defaultArgs = formals.getDefaultArgs();
+        for (int i = 0; i < formalNames.length; i++) {
+            RNode defaultArg = defaultArgs[i];
+            state.append(formalNames[i]);
+            if (defaultArg != null) {
+                state.append(" = ");
+                defaultArg.deparse(state);
+            }
+            if (i != formalNames.length - 1) {
+                state.append(", ");
+            }
+        }
+        state.append(") ");
+        state.writeNLOpenCurlyIncIndent();
+        state.writeline();
+        body.deparse(state);
+        state.decIndentWriteCloseCurly();
+    }
+
+    /**
+     * Since a {@link FunctionDefinitionNode} is not a subclass of an {@link RNode} we cannot just
+     * override the {@link RSyntaxNode#substitute} method as that requires an {@link RNode} result.
+     * So we define this custom method. N.B. The formal arguments are <b>not</b> subject to
+     * substitution, just the body.
+     */
+    public FunctionDefinitionNode substituteFDN(REnvironment env) {
+        return new FunctionDefinitionNode(null, funcEnv, body.substitute(env), getFormalArguments(), null, substituteFrame);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    private boolean instrumentationApplied = false;
+
+    @Override
+    public void applyInstrumentation() {
+        if (RContext.getEngine().instrumentingEnabled() && !instrumentationApplied) {
+            Probe.applyASTProbers(body);
+            instrumentationApplied = true;
+        }
+    }
+
+    /**
+     * A workaround for not representing left curly brace as a function call. We have to depend on
+     * the source section and "parse" the start of the function definition.
+     */
+    @TruffleBoundary
+    public boolean hasBraces() {
+        SourceSection src = getSourceSection();
+        if (src == null) {
+            return true; // statistcally probable (must be a substituted function)
+        }
+        String s = src.getCode();
+        int ix = s.indexOf('(') + 1;
+        int bdepth = 1;
+        while (ix < s.length() && bdepth > 0) {
+            char ch = s.charAt(ix);
+            if (ch == '(') {
+                bdepth++;
+            } else if (ch == ')') {
+                bdepth--;
+            }
+            ix++;
+        }
+        while (ix < s.length()) {
+            char ch = s.charAt(ix);
+            boolean whitespace = Character.isWhitespace(ch);
+            if (!whitespace) {
+                return ch == '{';
+            }
+            ix++;
+        }
+        return false;
     }
 
 }

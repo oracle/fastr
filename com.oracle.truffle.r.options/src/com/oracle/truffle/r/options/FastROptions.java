@@ -49,38 +49,58 @@ public class FastROptions {
     public static final OptionValue<Boolean> CheckResultCompleteness = new OptionValue<>(true);
     @Option(help = "Turn on debugging output")
     public static final OptionValue<Boolean> Debug = new OptionValue<>(false);
+    @Option(help = "Disable all Instrumentation")
+    public static final OptionValue<Boolean> Instrumentation = new OptionValue<>(false);
+    @Option(help = "Add function call counters")
+    public static final OptionValue<Boolean> AddFunctionCounters = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();
 
-    public static final void initialize() {
-
-        Iterator<OptionDescriptor> iter = options.iterator();
-        while (iter.hasNext()) {
-            OptionDescriptor desc = iter.next();
-            String name = desc.getName();
-            Entry<Object, Object> propEntry = propEntry(name);
-            if (propEntry != null) {
-                switch (desc.getType().getSimpleName()) {
-                    case "Boolean":
-                        boolean value = booleanOptionValue((String) propEntry.getKey());
-                        desc.getOptionValue().setValue(value);
-                        break;
-                    default:
-                        assert false;
+    public static void initialize() {
+        for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            String prop = (String) entry.getKey();
+            if (prop.startsWith("R:")) {
+                String optName = optionName(prop);
+                OptionDescriptor desc = findOption(optName);
+                if (desc == null) {
+                    System.err.println(prop + " is not a valid FastR option");
+                    System.exit(2);
+                } else {
+                    switch (desc.getType().getSimpleName()) {
+                        case "Boolean":
+                            boolean value = booleanOptionValue(prop);
+                            desc.getOptionValue().setValue(value);
+                            break;
+                        default:
+                            assert false;
+                    }
                 }
             }
         }
     }
 
-    private static Entry<Object, Object> propEntry(String name) {
-        for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-            String prop = (String) entry.getKey();
-            if (prop.startsWith("R:") && prop.contains(name)) {
-                return entry;
+    private static OptionDescriptor findOption(String key) {
+        Iterator<OptionDescriptor> iter = options.iterator();
+        while (iter.hasNext()) {
+            OptionDescriptor desc = iter.next();
+            String name = desc.getName();
+            if (name.equals(key)) {
+                return desc;
             }
         }
         return null;
+    }
+
+    private static String optionName(String key) {
+        String s = key.substring(2);
+        if (s.charAt(0) == '+' || s.charAt(0) == '-') {
+            return s.substring(1);
+        } else if (s.indexOf('=') > 0) {
+            return s.substring(0, s.indexOf('='));
+        } else {
+            return s;
+        }
     }
 
     private static boolean booleanOptionValue(String option) {

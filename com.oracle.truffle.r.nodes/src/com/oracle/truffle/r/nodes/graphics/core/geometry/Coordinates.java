@@ -23,8 +23,7 @@
 package com.oracle.truffle.r.nodes.graphics.core.geometry;
 
 /**
- * Denotes X-Y coordinates.
- * Instances must be immutable objects.
+ * Denotes X-Y coordinates. Instances must be immutable objects.
  */
 public interface Coordinates {
     double[] getXCoordinatesAsDoubles();

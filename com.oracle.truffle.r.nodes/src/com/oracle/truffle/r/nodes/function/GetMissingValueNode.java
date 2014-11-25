@@ -26,16 +26,15 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.access.*;
 
 /**
  * This is a node abstraction for the functionality defined in
- * {@link RMissingHelper#getMissingValue(Frame,Symbol)}.
+ * {@link RMissingHelper#getMissingValue(Frame,String)}.
  */
 public abstract class GetMissingValueNode extends Node {
 
-    public static GetMissingValueNode create(Symbol sym) {
-        return new UninitializedGetMissingValueNode(sym);
+    public static GetMissingValueNode create(String name) {
+        return new UninitializedGetMissingValueNode(name);
     }
 
     public abstract Object execute(Frame frame);
@@ -43,16 +42,16 @@ public abstract class GetMissingValueNode extends Node {
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UninitializedGetMissingValueNode extends GetMissingValueNode {
 
-        private final Symbol sym;
+        private final String name;
 
-        private UninitializedGetMissingValueNode(Symbol sym) {
-            this.sym = sym;
+        private UninitializedGetMissingValueNode(String sym) {
+            this.name = sym;
         }
 
         @Override
         public Object execute(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(sym.getName());
+            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
             return replace(new ResolvedGetMissingValueNode(slot)).execute(frame);
         }
 

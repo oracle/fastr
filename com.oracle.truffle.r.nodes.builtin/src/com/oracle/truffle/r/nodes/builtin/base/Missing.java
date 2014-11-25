@@ -31,7 +31,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,17 +41,17 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 @RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = {0})
 public abstract class Missing extends RBuiltinNode {
 
-    @Child private InlineCacheNode<Frame, Symbol> repCache;
+    @Child private InlineCacheNode<Frame, String> repCache;
 
     private final ConditionProfile isSymbolNullProfile = ConditionProfile.createBinaryProfile();
 
-    private static InlineCacheNode<Frame, Symbol> createRepCache(int level) {
-        Function<Symbol, RNode> reify = symbol -> createNodeForRep(symbol, level);
-        BiFunction<Frame, Symbol, Object> generic = (frame, symbol) -> RRuntime.asLogical(RMissingHelper.isMissingArgument(frame, symbol));
+    private static InlineCacheNode<Frame, String> createRepCache(int level) {
+        Function<String, RNode> reify = symbol -> createNodeForRep(symbol, level);
+        BiFunction<Frame, String, Object> generic = (frame, symbol) -> RRuntime.asLogical(RMissingHelper.isMissingArgument(frame, symbol));
         return InlineCacheNode.create(3, reify, generic);
     }
 
-    private static RNode createNodeForRep(Symbol symbol, int level) {
+    private static RNode createNodeForRep(String symbol, int level) {
         if (symbol == null) {
             return ConstantNode.create(RRuntime.LOGICAL_FALSE);
         }
@@ -61,7 +61,7 @@ public abstract class Missing extends RBuiltinNode {
     private static class MissingCheckLevel extends RNode {
 
         @Child private GetMissingValueNode getMissingValue;
-        @Child private InlineCacheNode<Frame, Symbol> recursive;
+        @Child private InlineCacheNode<Frame, String> recursive;
 
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
@@ -70,7 +70,7 @@ public abstract class Missing extends RBuiltinNode {
         private final PromiseProfile promiseProfile = new PromiseProfile();
         private final int level;
 
-        public MissingCheckLevel(Symbol symbol, int level) {
+        public MissingCheckLevel(String symbol, int level) {
             this.level = level;
             this.getMissingValue = GetMissingValueNode.create(symbol);
         }
@@ -108,7 +108,7 @@ public abstract class Missing extends RBuiltinNode {
                 }
                 try {
                     promise.setUnderEvaluation(true);
-                    Symbol symbol = RMissingHelper.unwrapSymbol((RNode) promise.getRep());
+                    String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
                     return isSymbolNullProfile.profile(symbol == null) ? RRuntime.LOGICAL_FALSE : recursive.execute(promise.getFrame(), symbol);
                 } finally {
                     promise.setUnderEvaluation(false);
@@ -125,7 +125,7 @@ public abstract class Missing extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             repCache = insert(createRepCache(0));
         }
-        Symbol symbol = RMissingHelper.unwrapSymbol((RNode) promise.getRep());
+        String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
         return isSymbolNullProfile.profile(symbol == null) ? RRuntime.LOGICAL_FALSE : (byte) repCache.execute(frame, symbol);
     }
 

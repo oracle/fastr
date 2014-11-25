@@ -28,14 +28,15 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.runtime.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})
-public class PositionsArrayNodeValue extends RNode {
-    @Children private final ArrayPositionCast[] elements;
-    @Children private final RNode[] positions;
-    @Children private final OperatorConverterNode[] operatorConverters;
-    @Children private final MultiDimPosConverterValueNode[] multiDimOperatorConverters;
+public class PositionsArrayNodeValue extends PositionsArrayNodeAdapter {
+    @Children protected final MultiDimPosConverterValueNode[] multiDimOperatorConverters;
+
+    public PositionsArrayNodeValue(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
+        super(elements, positions, operatorConverters);
+        this.multiDimOperatorConverters = multiDimOperatorConverters;
+    }
 
     @ExplodeLoop
     public Object executeEval(VirtualFrame frame, Object vector, Object value) {
@@ -53,18 +54,4 @@ public class PositionsArrayNodeValue extends RNode {
         return elements.length == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        // this node is meant to be used only for evaluation by "executeWith" that uses
-        // executeEvaluated method above
-        Utils.fail("should never be executed");
-        return null;
-    }
-
-    public PositionsArrayNodeValue(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
-        this.elements = elements;
-        this.positions = positions;
-        this.operatorConverters = operatorConverters;
-        this.multiDimOperatorConverters = multiDimOperatorConverters;
-    }
 }

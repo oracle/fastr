@@ -28,6 +28,8 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -40,11 +42,14 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseN
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@CreateWrapper
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
 
     protected final PromiseProfile promiseProfile = new PromiseProfile();
@@ -52,6 +57,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
+
+    public abstract String getName();
 
     /**
      * Convenience method.
@@ -102,7 +109,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     /**
      * Creates every {@link ReadVariableNode} out there.
      *
-     * @param symbolStr The symbol the {@link ReadVariableNode} is meant to resolve
+     * @param name The symbol the {@link ReadVariableNode} is meant to resolve
      * @param mode The mode of the variable
      * @param shouldCopyValue Copy semantics
      * @param isSuper Whether the variable resides in the local frame or not
@@ -111,17 +118,15 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
      * @param forcePromise Whether to force {@link RPromise} for type-checking or not
      * @return The appropriate implementation of {@link ReadVariableNode}
      */
-    public static ReadVariableNode create(String symbolStr, RType mode, boolean shouldCopyValue, boolean isSuper, boolean readMissing, boolean forcePromise) {
-        Symbol symbol = Symbol.create(symbolStr);
-
+    public static ReadVariableNode create(String name, RType mode, boolean shouldCopyValue, boolean isSuper, boolean readMissing, boolean forcePromise) {
         ReadVariableNode rvn = null;
         if (isSuper) {
-            rvn = new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, shouldCopyValue);
+            rvn = new UnresolvedReadVariableNode(name, mode, readMissing, forcePromise, shouldCopyValue);
         } else {
-            rvn = new UnResolvedReadLocalVariableNode(symbol, mode, readMissing, forcePromise);
+            rvn = new UnResolvedReadLocalVariableNode(name, mode, readMissing, forcePromise);
         }
 
-        return ResolvePromiseNodeFactory.create(rvn, symbol);
+        return ResolvePromiseNodeFactory.create(rvn, name);
     }
 
     /**
@@ -151,7 +156,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         if (obj == RMissing.instance && !readMissing) {
             unexpectedMissingProfile.enter();
             SourceSection callSrc = RArguments.getCallSourceSection(frame);
-            throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getSymbol());
+            throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getName());
         }
         if (type == RType.Any) {
             return true;
@@ -185,15 +190,35 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         return false;
     }
 
-    public abstract Symbol getSymbol();
+    @Override
+    public void deparse(State state) {
+        state.append(getName());
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode result = RASTUtils.substituteName(getName(), env);
+        if (result == null) {
+            if (this instanceof ResolvePromiseNode) {
+                result = ((ResolvePromiseNode) this).getReadNode();
+            } else {
+                result = this;
+            }
+            result = NodeUtil.cloneNode(result);
+        }
+        return result;
+    }
 
     @NodeChild(value = "readNode", type = ReadVariableNode.class)
-    @NodeField(name = "symbol", type = Symbol.class)
+    @NodeField(name = "name", type = String.class)
     public abstract static class ResolvePromiseNode extends ReadVariableNode {
 
         private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
         public abstract ReadVariableNode getReadNode();
+
+        @Override
+        public abstract String getName();
 
         @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
         @Child private InlineCacheNode<Frame, Closure> promiseClosureCache = InlineCacheNode.createPromise(3);
@@ -272,6 +297,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public boolean isPromise(Object obj) {
             return obj instanceof RPromise;
         }
+
+        @Override
+        public boolean isSyntax() {
+            return true;
+        }
+
     }
 
     private interface HasMode {
@@ -284,7 +315,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         // TODO It seems a refactoring would be appropriate to encapsulate all fields (symbol, mode,
         // readMissing, forcePromise, copyValue) into a single class to reduce clutter and
         // repetition throughout RVN hierarchy
-        private final Symbol symbol;
+        private final String name;
         private final RType mode;
         private final boolean readMissing;
         private final boolean forcePromise;
@@ -296,12 +327,17 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
          */
         @CompilationFinal private boolean copyValue;
 
+        @Override
+        public boolean isSyntax() {
+            return !(getParent() instanceof ResolvePromiseNode);
+        }
+
         public void setCopyValue(boolean c) {
             copyValue = c;
         }
 
-        public UnresolvedReadVariableNode(Symbol symbol, RType mode, boolean readMissing, boolean forcePromise, boolean copyValue) {
-            this.symbol = symbol;
+        public UnresolvedReadVariableNode(String name, RType mode, boolean readMissing, boolean forcePromise, boolean copyValue) {
+            this.name = name;
             this.mode = mode;
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
@@ -312,9 +348,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (enclosingFrame != null) {
-                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, FrameSlotNode.create(symbol.getName()), symbol) : ReadSuperVariableNodeFactory.create(
-                                null, FrameSlotNode.create(symbol.getName()), symbol);
-                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue), readMissing,
+                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, FrameSlotNode.create(name), name) : ReadSuperVariableNodeFactory.create(null,
+                                FrameSlotNode.create(name), name);
+                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(name, mode, readMissing, forcePromise, copyValue), readMissing,
                                 forcePromise, mode);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
@@ -323,11 +359,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         private ReadVariableNode resolveNonFrame() {
-            RFunction lookupResult = RContext.getEngine().lookupBuiltin(RRuntime.toString(symbol));
+            RFunction lookupResult = RContext.getEngine().lookupBuiltin(RRuntime.toString(name));
             if (lookupResult != null) {
-                return BuiltinFunctionVariableNodeFactory.create(lookupResult, symbol);
+                return BuiltinFunctionVariableNodeFactory.create(lookupResult, name);
             } else {
-                return UnknownVariableNodeFactory.create(symbol, mode, readMissing, forcePromise);
+                return UnknownVariableNodeFactory.create(name, mode, readMissing, forcePromise);
             }
         }
 
@@ -338,11 +374,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             ReadVariableNode readNode;
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
-                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(FrameSlotNode.create(symbol.getName()), symbol);
-                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue), mode, readMissing, forcePromise);
+                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(FrameSlotNode.create(name), name);
+                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(name, mode, readMissing, forcePromise, copyValue), mode, readMissing, forcePromise);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
-                readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(symbol, mode, readMissing, forcePromise, copyValue), symbol);
+                readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(name, mode, readMissing, forcePromise, copyValue), name);
             }
             return replace(readNode).execute(frame);
         }
@@ -351,26 +387,27 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             ArrayList<Assumption> assumptions = new ArrayList<>();
             Frame currentFrame = frame;
             do {
-                FrameSlot frameSlot = FrameSlotNode.findFrameSlot(currentFrame, RRuntime.toString(symbol));
+                FrameSlot frameSlot = FrameSlotNode.findFrameSlot(currentFrame, RRuntime.toString(name));
                 if (frameSlot != null) {
                     assumptions = null;
                     break;
                 }
-                assumptions.add(FrameSlotNode.getAssumption(currentFrame, symbol.getName()));
+                assumptions.add(FrameSlotNode.getAssumption(currentFrame, name));
                 currentFrame = RArguments.getEnclosingFrame(currentFrame);
             } while (currentFrame != null);
             return assumptions;
         }
 
         @Override
-        public Symbol getSymbol() {
-            return symbol;
+        public String getName() {
+            return name;
         }
 
         @Override
         public RType getMode() {
             return mode;
         }
+
     }
 
     public static final class ReadVariableNonFrameNode extends ReadVariableNode {
@@ -378,12 +415,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Child private ReadVariableNode readNode;
         @Child private UnresolvedReadVariableNode unresolvedNode;
         @CompilationFinal private final Assumption[] absentFrameSlotAssumptions;
-        private final Symbol symbol;
+        private final String name;
 
-        ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, Symbol symbol) {
+        ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, String name) {
             this.readNode = readNode;
             this.unresolvedNode = unresolvedNode;
-            this.symbol = symbol;
+            this.name = name;
             this.absentFrameSlotAssumptions = assumptions.toArray(new Assumption[assumptions.size()]);
         }
 
@@ -408,9 +445,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         @Override
-        public Symbol getSymbol() {
-            return symbol;
+        public String getName() {
+            return name;
         }
+
     }
 
     public static final class ReadVariableVirtualNode extends ReadVariableNode implements HasMode {
@@ -451,8 +489,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         @Override
-        public Symbol getSymbol() {
-            return nextNode.getSymbol();
+        public String getName() {
+            return readNode.getName();
         }
 
         @Override
@@ -463,14 +501,14 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode implements HasMode {
-        private final Symbol symbol;
+        private final String name;
         private final RType mode;
         private final boolean readMissing;
         private final boolean forcePromise;
         @Child private ReadLocalVariableNode node;
 
-        UnResolvedReadLocalVariableNode(Symbol symbol, RType mode, boolean readMissing, boolean forcePromise) {
-            this.symbol = symbol;
+        UnResolvedReadLocalVariableNode(String name, RType mode, boolean readMissing, boolean forcePromise) {
+            this.name = name;
             this.mode = mode;
             this.readMissing = readMissing;
             this.forcePromise = forcePromise;
@@ -480,7 +518,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             controlVisibility();
-            node = insert(ReadLocalVariableNodeFactory.create(FrameSlotNode.create(symbol.getName()), symbol));
+            node = insert(ReadLocalVariableNodeFactory.create(FrameSlotNode.create(name), name));
             if (node.getFrameSlotNode().hasValue(frame)) {
                 Object result = node.execute(frame);
                 if (checkType(frame, result, mode, readMissing, forcePromise)) {
@@ -488,7 +526,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     return result;
                 }
             }
-            return replace(UnknownVariableNodeFactory.create(symbol, mode, readMissing, forcePromise)).execute(frame);
+            return replace(UnknownVariableNodeFactory.create(name, mode, readMissing, forcePromise)).execute(frame);
         }
 
         @Override
@@ -498,8 +536,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         @Override
-        public Symbol getSymbol() {
-            return symbol;
+        public String getName() {
+            return name;
         }
 
         @Override
@@ -508,7 +546,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    @NodeField(name = "symbol", type = Symbol.class)
     public static final class ReadVariableSuperMaterializedNode extends ReadVariableNode {
         @Child private ReadVariableNode readNode;
 
@@ -528,17 +565,17 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             throw new UnsupportedOperationException();
         }
 
-        public static ReadVariableNode create(SourceSection src, String symbolStr, RType mode) {
-            Symbol symbol = Symbol.create(symbolStr);
-            ReadVariableNode rvn = new UnresolvedReadVariableNode(symbol, mode, false, false, false);
+        public static ReadVariableNode create(SourceSection src, String name, RType mode) {
+            ReadVariableNode rvn = new UnresolvedReadVariableNode(name, mode, false, false, false);
             rvn.assignSourceSection(src);
-            return ResolvePromiseNodeFactory.create(new ReadVariableSuperMaterializedNode(rvn), symbol);
+            return ResolvePromiseNodeFactory.create(new ReadVariableSuperMaterializedNode(rvn), name);
         }
 
         @Override
-        public Symbol getSymbol() {
-            return readNode.getSymbol();
+        public String getName() {
+            return readNode.getName();
         }
+
     }
 
     public static final class ReadVariableMaterializedNode extends ReadVariableNode implements HasMode {
@@ -581,8 +618,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         @Override
-        public Symbol getSymbol() {
-            return nextNode.getSymbol();
+        public String getName() {
+            return readNode.getName();
         }
 
         @Override
@@ -592,7 +629,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)
-    @NodeField(name = "symbol", type = Symbol.class)
+    @NodeField(name = "name", type = String.class)
     public abstract static class ReadLocalVariableNode extends ReadVariableNode {
 
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
@@ -600,7 +637,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         protected abstract FrameSlotNode getFrameSlotNode();
 
         @Override
-        public abstract Symbol getSymbol();
+        public abstract String getName();
 
         @Specialization(guards = "isByte")
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) {
@@ -658,13 +695,13 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     @SuppressWarnings("unused")
     @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
-    @NodeField(name = "symbol", type = Symbol.class)
+    @NodeField(name = "name", type = String.class)
     public abstract static class ReadSuperVariableNode extends ReadVariableNode {
 
         protected abstract FrameSlotNode getFrameSlotNode();
 
         @Override
-        public abstract Symbol getSymbol();
+        public abstract String getName();
 
         @Specialization(guards = "isByte")
         protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
@@ -739,13 +776,13 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     }
 
-    @NodeFields(value = {@NodeField(name = "function", type = RFunction.class), @NodeField(name = "symbol", type = Symbol.class)})
+    @NodeFields(value = {@NodeField(name = "function", type = RFunction.class), @NodeField(name = "name", type = String.class)})
     public abstract static class BuiltinFunctionVariableNode extends ReadVariableNode {
 
         public abstract RFunction getFunction();
 
         @Override
-        public abstract Symbol getSymbol();
+        public abstract String getName();
 
         @Specialization
         protected Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
@@ -754,12 +791,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    @NodeFields({@NodeField(name = "symbol", type = Symbol.class), @NodeField(name = "mode", type = RType.class), @NodeField(name = "readMissing", type = Boolean.class),
+    @NodeFields({@NodeField(name = "name", type = String.class), @NodeField(name = "mode", type = RType.class), @NodeField(name = "readMissing", type = Boolean.class),
                     @NodeField(name = "forcePromise", type = Boolean.class)})
     public abstract static class UnknownVariableNode extends ReadVariableNode implements HasMode {
 
         @Override
-        public abstract Symbol getSymbol();
+        public abstract String getName();
 
         @Override
         public abstract RType getMode();
@@ -771,7 +808,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Specialization
         protected Object doObject() {
             controlVisibility();
-            throw RError.error(getMode() == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
+            throw RError.error(getMode() == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getName());
         }
+    }
+
+    @Override
+    public WrapperNode createWrapperNode(RNode node) {
+        return new ReadVariableNodeWrapper((ReadVariableNode) node);
     }
 }

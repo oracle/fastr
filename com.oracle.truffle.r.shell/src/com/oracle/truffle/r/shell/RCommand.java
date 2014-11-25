@@ -29,6 +29,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.env.*;
@@ -50,18 +51,23 @@ public class RCommand {
         Load_RFFIFactory.initialize();
     }
 
-// CheckStyle: stop system..print check
+    // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
-        RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
-        if (HELP.getValue()) {
-            RCmdOptionsParser.printHelp(RCmdOptions.Client.R, 0);
-        } else if (VERSION.getValue()) {
-            printVersionAndExit();
-        } else if (RHOME.getValue()) {
-            printRHomeAndExit();
+        try {
+            RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
+            if (HELP.getValue()) {
+                RCmdOptionsParser.printHelp(RCmdOptions.Client.R, 0);
+            } else if (VERSION.getValue()) {
+                printVersionAndExit();
+            } else if (RHOME.getValue()) {
+                printRHomeAndExit();
+            }
+            subMain(result.args);
+        } catch (Utils.DebugExitException ex) {
+            // running under in-process debugger, just return
+            return;
         }
-        subMain(result.args);
     }
 
     /**
@@ -95,6 +101,8 @@ public class RCommand {
                 fileArg = null;
             }
         }
+
+        FastROptions.initialize();
 
         REnvVars.initialize();
 
@@ -185,13 +193,17 @@ public class RCommand {
                     continue;
                 }
 
-                while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
-                    console.setPrompt(SLAVE.getValue() ? "" : "+ ");
-                    String additionalInput = console.readLine();
-                    if (additionalInput == null) {
-                        return;
+                try {
+                    while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                        console.setPrompt(SLAVE.getValue() ? "" : "+ ");
+                        String additionalInput = console.readLine();
+                        if (additionalInput == null) {
+                            return;
+                        }
+                        input = input + "\n" + additionalInput;
                     }
-                    input = input + "\n" + additionalInput;
+                } catch (BrowserQuitException ex) {
+                    // Q in browser
                 }
             }
         } catch (UserInterruptException e) {

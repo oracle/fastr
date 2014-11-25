@@ -25,14 +25,17 @@ package com.oracle.truffle.r.nodes;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RNode extends Node {
+@CreateWrapper
+public abstract class RNode extends Node implements RSyntaxNode, RInstrumentableNode {
 
     @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
     @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];

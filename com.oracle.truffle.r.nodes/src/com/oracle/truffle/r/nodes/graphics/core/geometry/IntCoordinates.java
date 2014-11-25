@@ -53,7 +53,7 @@ public final class IntCoordinates implements Coordinates {
         return yCoords;
     }
 
-    private double[] toDouble(int[] intArray) {
-        return IntStream.of(intArray).mapToDouble(i -> (double) i).toArray();
+    private static double[] toDouble(int[] intArray) {
+        return IntStream.of(intArray).mapToDouble(i -> i).toArray();
     }
 }

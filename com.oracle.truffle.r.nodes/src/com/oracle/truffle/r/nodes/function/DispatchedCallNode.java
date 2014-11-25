@@ -17,8 +17,11 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -50,6 +53,11 @@ public abstract class DispatchedCallNode extends RNode {
     public abstract Object execute(VirtualFrame frame, RStringVector type);
 
     public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
@@ -184,6 +192,30 @@ public abstract class DispatchedCallNode extends RNode {
         public ResolvedDispatchedCallNode(GroupDispatchNode dNode) {
             this.aDispatchNode = dNode;
             this.assignSourceSection(dNode.getSourceSection());
+        }
+
+        @Override
+        public boolean isSyntax() {
+            return true;
+        }
+
+        @Override
+        public void deparse(State state) {
+            String name = aDispatchNode.getGenericName();
+            RDeparse.Func func = RDeparse.getFunc(name);
+            if (func != null) {
+                // infix operator
+                RASTDeparse.deparseInfixOperator(state, this, func);
+            } else {
+                state.append(name);
+                aDispatchNode.callArgsNode.deparse(state);
+            }
+        }
+
+        @Override
+        public RNode substitute(REnvironment env) {
+            // TODO substitute aDispatchNode
+            return RASTUtils.createCall(aDispatchNode, (CallArgumentsNode) aDispatchNode.callArgsNode.substitute(env));
         }
 
         @Override

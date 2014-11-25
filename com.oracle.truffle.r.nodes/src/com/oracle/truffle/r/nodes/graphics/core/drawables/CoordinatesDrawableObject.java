@@ -27,8 +27,8 @@ import com.oracle.truffle.r.nodes.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.nodes.graphics.core.geometry.IntCoordinates;
 
 /**
- * Denotes an object which drawing depends only from {@link Coordinates}.
- * And automates conversion from <code>srcCoordinates</code> to <code>dstCoordinates</code>.
+ * Denotes an object which drawing depends only from {@link Coordinates}. And automates conversion
+ * from <code>srcCoordinates</code> to <code>dstCoordinates</code>.
  */
 public abstract class CoordinatesDrawableObject extends DrawableObject {
     private final Coordinates srcCoordinates;
