@@ -22,7 +22,7 @@
 #
 import tempfile, shutil, filecmp, platform, zipfile, sys, subprocess
 from os.path import join, sep, exists
-from argparse import ArgumentParser, REMAINDER
+from argparse import ArgumentParser
 import mx
 import mx_graal
 import os
@@ -58,7 +58,7 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
     return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
 
 def _check_debug(args):
-    if (len(args) > 1 and (args[0] == '--debugger' or args[0] == '-d')):
+    if len(args) > 1 and (args[0] == '--debugger' or args[0] == '-d'):
         debugger = args[1]
         args = args[2:]
         return debugger, args
