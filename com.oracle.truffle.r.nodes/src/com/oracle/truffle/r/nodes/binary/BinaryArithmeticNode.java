@@ -35,6 +35,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Multiply;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class BinaryArithmeticNode extends RBuiltinNode {
@@ -82,6 +84,60 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     public static BinaryArithmeticNode create(BinaryArithmeticFactory arithmetic) {
         return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null, null);
     }
+
+    // special cases for sequences
+
+    protected boolean isAdd() {
+        return arithmetic instanceof Add;
+    }
+
+    protected boolean isMul() {
+        return arithmetic instanceof Multiply;
+    }
+
+    @Specialization(guards = "isAdd")
+    protected RIntSequence doIntAdd(int left, RIntSequence right) {
+        // TODO: handle cases that exit the int range
+        return RDataFactory.createIntSequence(right.getStart() + left, right.getStride(), right.getLength());
+    }
+
+    @Specialization(guards = "isMul")
+    protected RIntSequence doIntMul(RIntSequence left, int right) {
+        // TODO: handle cases that exit the int range
+        return RDataFactory.createIntSequence(left.getStart() * right, left.getStride() * right, left.getLength());
+    }
+
+    @Specialization(guards = "isAdd")
+    protected RDoubleSequence doDoubleAdd(int left, RDoubleSequence right) {
+        return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
+    }
+
+    @Specialization(guards = "isMul")
+    protected RDoubleSequence doDoubleMul(RDoubleSequence left, int right) {
+        return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
+    }
+
+    @Specialization(guards = "isAdd")
+    protected RDoubleSequence doDoubleAdd(double left, RDoubleSequence right) {
+        return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
+    }
+
+    @Specialization(guards = "isMul")
+    protected RDoubleSequence doDoubleMul(RDoubleSequence left, double right) {
+        return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
+    }
+
+    @Specialization(guards = "isAdd")
+    protected RDoubleSequence doDoubleAdd(double left, RIntSequence right) {
+        return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
+    }
+
+    @Specialization(guards = "isMul")
+    protected RDoubleSequence doDoubleMul(RIntSequence left, double right) {
+        return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
+    }
+
+    //
 
     @Specialization
     protected Object doUnary(VirtualFrame frame, Object left, @SuppressWarnings("unused") RMissing right) {
@@ -202,27 +258,37 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Specialization(guards = {"supportsIntResult"})
     public int doInt(int left, int right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         return performArithmeticEnableNACheck(left, right);
     }
 
     @Specialization
     protected double doInt(int left, double right) {
-        return performArithmeticDoubleEnableNACheck(RRuntime.int2double(left), right);
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticDoubleEnableNACheck(leftNACheck.check(left) ? RRuntime.DOUBLE_NA : RRuntime.int2doubleNoCheck(left), right);
     }
 
     @Specialization
     public double doInt(double left, int right) {
-        return performArithmeticDoubleEnableNACheck(left, RRuntime.int2double(right));
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticDoubleEnableNACheck(left, rightNACheck.check(right) ? RRuntime.DOUBLE_NA : RRuntime.int2doubleNoCheck(right));
     }
 
     @Specialization(guards = {"supportsIntResult"})
     protected int doInt(int left, byte right) {
-        return performArithmeticEnableNACheck(left, RRuntime.logical2int(right));
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticEnableNACheck(left, rightNACheck.check(right) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(right));
     }
 
     @Specialization(guards = {"supportsIntResult"})
     protected int doInt(byte left, int right) {
-        return performArithmeticEnableNACheck(RRuntime.logical2int(left), right);
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticEnableNACheck(leftNACheck.check(left) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(left), right);
     }
 
     @Specialization
@@ -254,17 +320,23 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Specialization
     public double doDouble(double left, double right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
         return performArithmeticDoubleEnableNACheck(left, right);
     }
 
     @Specialization
     protected double doDouble(double left, byte right) {
-        return performArithmeticDoubleEnableNACheck(left, RRuntime.logical2double(right));
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticDoubleEnableNACheck(left, rightNACheck.check(right) ? RRuntime.DOUBLE_NA : RRuntime.logical2doubleNoCheck(right));
     }
 
     @Specialization
     protected double doDouble(byte left, double right) {
-        return performArithmeticDoubleEnableNACheck(RRuntime.logical2double(left), right);
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticDoubleEnableNACheck(leftNACheck.check(left) ? RRuntime.DOUBLE_NA : RRuntime.logical2doubleNoCheck(left), right);
     }
 
     @Specialization
@@ -281,7 +353,10 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Specialization(guards = {"supportsIntResult"})
     protected int doLogical(byte left, byte right) {
-        return performArithmeticEnableNACheck(RRuntime.logical2int(left), RRuntime.logical2int(right));
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticEnableNACheck(leftNACheck.check(left) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(left),
+                        rightNACheck.check(right) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(right));
     }
 
     @Specialization
@@ -810,8 +885,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     private double performArithmeticDoubleEnableNACheck(double left, double right) {
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
         return performArithmeticDouble(left, right);
     }
@@ -877,8 +950,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     private int performArithmeticEnableNACheck(int left, int right) {
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
         return performArithmetic(left, right);
     }

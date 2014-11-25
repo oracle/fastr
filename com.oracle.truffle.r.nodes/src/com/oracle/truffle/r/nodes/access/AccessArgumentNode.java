@@ -61,7 +61,7 @@ public abstract class AccessArgumentNode extends RNode {
     /**
      * Used to cache {@link RPromise} evaluations.
      */
-    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
 
     private final BranchProfile needsCalleeFrame = BranchProfile.create();
     private final BranchProfile strictEvaluation = BranchProfile.create();
@@ -124,6 +124,10 @@ public abstract class AccessArgumentNode extends RNode {
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promise.isInlined(promiseProfile)) {
             if (useExprExecNode) {
+                if (promiseExpressionCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
+                }
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             } else {
                 strictEvaluation.enter();

@@ -220,8 +220,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public abstract String getName();
 
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
-        @Child private InlineCacheNode<Frame, Closure> promiseClosureCache = InlineCacheNode.createPromise(3);
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
+        @Child private InlineCacheNode<Frame, Closure> promiseClosureCache;
 
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
@@ -230,6 +230,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             }
 
             if (promise.isInOriginFrame(frame, promiseProfile)) {
+                if (promiseExpressionCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
+                }
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
             }
 
@@ -246,6 +250,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             try {
                 promise.setUnderEvaluation(true);
                 RArguments.setCallSourceSection(promiseFrame, RArguments.getCallSourceSection(frame));
+
+                if (promiseClosureCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                }
 
                 newValue = promiseClosureCache.execute(promiseFrame, promise.getClosure());
 

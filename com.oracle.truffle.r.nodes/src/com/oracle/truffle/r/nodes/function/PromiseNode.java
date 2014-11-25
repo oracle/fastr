@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -68,15 +69,15 @@ public class PromiseNode extends RNode {
      *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
      */
     @TruffleBoundary
-    public static PromiseNode create(SourceSection src, RPromiseFactory factory) {
-        PromiseNode pn = null;
+    public static RNode create(SourceSection src, RPromiseFactory factory) {
+        RNode pn = null;
         assert factory.getType() != PromiseType.NO_ARG;
         switch (factory.getEvalPolicy()) {
             case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    pn = new InlinedSuppliedPromiseNode(factory);
+                    pn = factory.getExpr() instanceof ConstantNode ? (RNode) factory.getExpr() : new InlinedSuppliedPromiseNode(factory);
                 } else {
-                    pn = new InlinedPromiseNode(factory);
+                    pn = factory.getDefaultExpr() instanceof ConstantNode ? (RNode) factory.getDefaultExpr() : new InlinedPromiseNode(factory);
                 }
                 break;
 
@@ -119,7 +120,7 @@ public class PromiseNode extends RNode {
      */
     private static final class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
 
         private final BranchProfile isMissingProfile = BranchProfile.create();
         private final BranchProfile isVarArgProfile = BranchProfile.create();
@@ -140,6 +141,10 @@ public class PromiseNode extends RNode {
                 isMissingProfile.enter();
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
+                }
+                if (promiseExpressionCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
                 }
                 RPromise promise = factory.createPromiseDefault();
                 return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
@@ -275,6 +280,7 @@ public class PromiseNode extends RNode {
         @CompilationFinal protected final String[] names;
 
         private final PromiseProfile promiseProfile = new PromiseProfile();
+        private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
         public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
             this.varargs = nodes;
@@ -289,7 +295,7 @@ public class PromiseNode extends RNode {
             int index = 0;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
-                if (argValue instanceof RArgsValuesAndNames) {
+                if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
                     RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;

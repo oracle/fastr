@@ -129,8 +129,8 @@ public abstract class UseMethod extends RBuiltinNode {
         protected UseMethodCachedNode(String generic, int depth, String[] suppliedArgsNames) {
             super(suppliedArgsNames);
             this.generic = generic;
-            nextNode = new UninitializedUseMethodNode(depth + 1, suppliedArgsNames);
-            currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
+            this.nextNode = new UninitializedUseMethodNode(depth + 1, suppliedArgsNames);
+            this.currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
         }
 
         protected abstract Object executeDispatch(VirtualFrame frame, String gen, Object o);

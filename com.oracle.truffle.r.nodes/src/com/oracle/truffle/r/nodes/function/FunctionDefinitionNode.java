@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
@@ -49,8 +50,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final FunctionUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
-    @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache = InlineCacheNode.createExpression(3);
+    @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile enclosingFrameProfile = ValueProfile.createIdentityProfile();
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -109,12 +111,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
+            RArguments.setEnclosingFrame(vf, enclosingFrameProfile.profile(RArguments.getEnclosingFrame(vf)));
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
             return ex.getResult();
         } finally {
             if (onExitProfile.profile(onExitSlot != null && onExitSlot.hasValue(vf))) {
+                if (onExitExpressionCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
+                }
                 // Must preserve the visibility state as it may be changed by the on.exit expression
                 boolean isVisible = RContext.isVisible();
                 ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));

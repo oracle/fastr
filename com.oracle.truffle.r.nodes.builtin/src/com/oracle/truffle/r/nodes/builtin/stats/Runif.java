@@ -22,18 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.stats;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.RNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.rng.RRNG;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
+import java.util.function.*;
+
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.rng.*;
 
 /**
  * TODO GnuR checks/updates {@code .Random.seed} across this call.
@@ -41,27 +44,71 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 @RBuiltin(name = "runif", kind = SUBSTITUTE, parameterNames = {"n", "min", "max"})
 public abstract class Runif extends RBuiltinNode {
 
+    private final ValueProfile lengthProfile = ValueProfile.createPrimitiveProfile();
+    private final NAProfile naProfile = NAProfile.create();
+
     @Override
     public RNode[] getParameterValues() {
         // n, min = 0, max = 1
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(1)};
     }
 
-    @Specialization
-    @TruffleBoundary
-    protected RDoubleVector runif(int n) {
+    private RDoubleVector runif(int vectorLength, IntSupplier firstElement) {
         controlVisibility();
-        double[] result = new double[n];
-        for (int i = 0; i < n; i++) {
+        int length = lengthProfile.profile(vectorLength) == 1 ? firstElement.getAsInt() : vectorLength;
+
+        if (naProfile.isNA(length)) {
+            throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENTS);
+        }
+        double[] result = new double[length];
+        for (int i = 0; i < length; i++) {
             result[i] = RRNG.unifRand();
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
-    @TruffleBoundary
+    protected RDoubleVector runif(int n) {
+        return runif(1, () -> n);
+    }
+
+    @Specialization
     protected RDoubleVector runif(double d) {
-        controlVisibility();
-        return runif((int) d);
+        return runif(1, () -> RRuntime.double2int(d));
+    }
+
+    @Specialization
+    protected RDoubleVector runif(RAbstractIntVector v) {
+        return runif(v.getLength(), () -> v.getDataAt(0));
+    }
+
+    @Specialization
+    protected RDoubleVector runif(RAbstractDoubleVector v) {
+        return runif(v.getLength(), () -> RRuntime.double2int(v.getDataAt(0)));
+    }
+
+    @Specialization
+    protected RDoubleVector runif(RAbstractLogicalVector v) {
+        return runif(v.getLength(), () -> RRuntime.logical2int(v.getDataAt(0)));
+    }
+
+    @Specialization
+    protected RDoubleVector runif(RAbstractRawVector v) {
+        return runif(v.getLength(), () -> RRuntime.raw2int(v.getDataAt(0)));
+    }
+
+    @Specialization
+    protected RDoubleVector runif(RAbstractStringVector v) {
+        return runif(v.getLength(), () -> RRuntime.string2int(v.getDataAt(0)));
+    }
+
+    @Specialization
+    protected RDoubleVector runif(RAbstractComplexVector v) {
+        return runif(v.getLength(), () -> RRuntime.complex2int(v.getDataAt(0)));
+    }
+
+    @Fallback
+    protected RDoubleVector fallback(@SuppressWarnings("unused") Object v) {
+        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENTS);
     }
 }

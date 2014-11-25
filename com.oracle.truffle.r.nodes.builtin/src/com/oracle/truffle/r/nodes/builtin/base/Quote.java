@@ -55,7 +55,7 @@ public abstract class Quote extends RBuiltinNode {
         controlVisibility();
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();
-        RNode unode = ((WrapArgumentNode) node).getOperand();
+        RNode unode = node instanceof WrapArgumentNode ? ((WrapArgumentNode) node).getOperand() : node;
         SourceSection ss = node.getSourceSection();
         if (rvn.profile(unode instanceof ReadVariableNode)) {
             return RDataFactory.createSymbol(ss.toString());
