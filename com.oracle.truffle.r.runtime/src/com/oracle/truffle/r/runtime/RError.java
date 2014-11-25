@@ -325,6 +325,7 @@ public final class RError extends RuntimeException {
         OUT_OF_RANGE("out-of-range values treated as 0 in coercion to raw"),
         WRITE_ONLY_BINARY("can only write to a binary connection"),
         UNIMPLEMENTED_COMPLEX("unimplemented complex operation"),
+        UNIMPLEMENTED_COMPLEX_FUN("unimplemented complex function"),
         COMPARISON_COMPLEX("invalid comparison with complex values"),
         NON_NUMERIC_BINARY("non-numeric argument to binary operator"),
         RAW_SORT("raw vectors cannot be sorted"),
@@ -578,7 +579,8 @@ public final class RError extends RuntimeException {
         MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
         NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),
         UNSUPPORTED_URL_SCHEME("unsupported URL scheme"),
-        CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections");
+        CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections"),
+        FULL_PRECISION("full precision may not have been achieved in '%s'");
 
         public final String message;
         private final boolean hasArgs;
