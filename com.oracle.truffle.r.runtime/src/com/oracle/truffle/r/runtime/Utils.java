@@ -287,6 +287,9 @@ public final class Utils {
     @TruffleBoundary
     public static VirtualFrame getActualCurrentFrame() {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
+        if (frameInstance == null) {
+            return null;
+        }
         VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
         if (isSubstitutedFrame(frame)) {
             frame = (VirtualFrame) frame.getArguments()[0];
