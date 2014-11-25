@@ -206,6 +206,8 @@ public class RCommand {
                     // Q in browser
                 }
             }
+        } catch (BrowserQuitException e) {
+            // can happen if user profile invokes browser
         } catch (UserInterruptException e) {
             // interrupted
         } catch (IOException ex) {

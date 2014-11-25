@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
@@ -43,15 +44,8 @@ public final class RError extends RuntimeException {
         }
     }
 
-    private final SourceSection source;
-
-    private RError(SourceSection src, String msg) {
+    private RError(String msg) {
         super(msg);
-        source = src;
-    }
-
-    public SourceSection getSource() {
-        return source;
     }
 
     @Override
@@ -100,7 +94,9 @@ public final class RError extends RuntimeException {
      * However, the signature has a return type of {@link RError} to allow callers to use the idiom
      * {@code throw error(...)} to indicate the control transfer.
      *
-     * @param src source of the code throwing the error, or {@code null} if not available
+     * @param src source of the code throwing the error, or {@code null} if not available. If src is
+     *            {@code null} an attempt is made to identify the call context from the currently
+     *            active frame
      * @param msg a {@link Message} instance specifying the error
      * @param args arguments for format specifiers in the message string
      */
@@ -114,19 +110,33 @@ public final class RError extends RuntimeException {
         throw error0(src, msg, (Object[]) null);
     }
 
-    private static final RError MARKER_EXCEPTION = new RError(null, "<marker exception>");
+    private static final RError MARKER_EXCEPTION = new RError("<marker exception>");
 
-    private static RError error0(SourceSection src, Message msg, Object... args) {
+    private static RError error0(final SourceSection srcCandidate, Message msg, Object... args) {
         if (ignoreError) {
             throw MARKER_EXCEPTION;
         }
 
-        RError rError;
-        if (src != null) {
-            rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
-        } else {
-            rError = new RError(null, "Error: " + formatMessage(msg, args));
+        VirtualFrame frame = null;
+        SourceSection src = srcCandidate;
+        if (src == null) {
+            frame = Utils.getActualCurrentFrame();
+            if (frame != null) {
+                src = RArguments.getCallSourceSection(frame);
+            }
         }
+        String preamble = "Error";
+        String formattedMsg = formatMessage(msg, args);
+        String errorMsg = null;
+        if (src == null) {
+            // generally means top-level of shell or similar
+            preamble += ": ";
+            errorMsg = preamble + formattedMsg;
+        } else {
+            preamble += " in " + src.getCode() + " :";
+            errorMsg = wrapMessage(preamble, formattedMsg);
+        }
+        RError rError = new RError(errorMsg);
         RInternalError.reportError(rError, src);
 
         Object errorExpr = ROptions.getValue("error");
@@ -139,18 +149,21 @@ public final class RError extends RuntimeException {
                 errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                VirtualFrame frame = Utils.getActualCurrentFrame();
+                if (frame == null) {
+                    frame = Utils.getActualCurrentFrame();
+                }
+                MaterializedFrame materializedFrame = frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
                 if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, frame.materialize());
+                    RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
                 } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, frame.materialize());
+                    RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
                 }
             } else {
                 // GnuR checks this earlier when the option is set
-                throw new RError(null, Message.INVALID_ERROR.message);
+                throw new RError(Message.INVALID_ERROR.message);
             }
             // Control, transfer to top level, but suppress print
-            throw new RError(null, "");
+            throw new RError("");
         } else {
             throw rError;
         }
@@ -204,7 +217,7 @@ public final class RError extends RuntimeException {
      */
     @TruffleBoundary
     public static RError nyi(SourceSection src, String msg) {
-        throw new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
+        throw new RError("NYI: " + (src != null ? src.getCode() : "") + msg);
     }
 
     @TruffleBoundary
