@@ -107,6 +107,7 @@ public abstract class RConnection implements RClassHierarchy {
     /**
      * Read (n > 0 up to n else unlimited) lines on the connection.
      */
+    @TruffleBoundary
     public String[] readLines(int n) throws IOException {
         if (pushBack == null) {
             return readLinesInternal(n);
