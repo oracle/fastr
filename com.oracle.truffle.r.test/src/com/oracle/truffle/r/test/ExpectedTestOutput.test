@@ -13519,6 +13519,36 @@ Read 2 records
 [1] "2"  "11"
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("foo faz", "\"bar\" \"baz\"")); scan(con, what=list("", "")) }
+Read 2 records
+[[1]]
+[1] "foo" "bar"
+
+[[2]]
+[1] "faz" "baz"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("foo faz", "bar \"baz\"")); scan(con, what=list("", "")) }
+Read 2 records
+[[1]]
+[1] "foo" "bar"
+
+[[2]]
+[1] "faz" "baz"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("foo, faz", "bar, baz")); scan(con, what=list("", ""), sep=",") }
+Read 2 records
+[[1]]
+[1] "foo" "bar"
+
+[[2]]
+[1] " faz" " baz"
+
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSd
 #{ round(100*sd(c(1,2))^2) }
 [1] 50
