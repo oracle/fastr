@@ -247,30 +247,10 @@ public class EnvFunctions {
 
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"})
     public abstract static class NewEnv extends RBuiltinNode {
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RMissing.instance), ConstantNode.create(29)};
-        }
-
         @Specialization
-        @SuppressWarnings("unused")
-        protected REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
-            return newEnv(frame, hash, RNull.instance, size);
-        }
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected REnvironment newEnv(VirtualFrame frame, byte hash, RNull parent, int size) {
-            // TODO this will eventually go away when R code fixed when promises available
+        protected REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
-            // FIXME what if hash == FALSE?
-            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), size);
-        }
-
-        @Specialization
-        protected REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
-            controlVisibility();
-            // FIXME what if hash == FALSE?
+            // Ignore hash == FALSE
             return new REnvironment.NewEnv(parent, size);
         }
     }

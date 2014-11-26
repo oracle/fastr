@@ -24,11 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,84 +35,23 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
- * {@code eval}, {@code evalq} and {@code local} are implemented as SUBSTITUTEs to ensure that the
- * expression/envir arguments are not evaluated which, absent full promises, is only possible for
- * builtins.
+ * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.
  *
- * N.B. {@code eval}, in particular, can accept an argument of any type so, with the current issue
- * of not being able to mix specializations that take arguments of type {@code T <: Object} and
- * {@code Object}, we don't specialize on {@code RExpression} and {@code RLanguage} but do runtime
- * instance checks instead.
- *
- * The general case where the "envir" argument is an arbitrary environment cannot be optimized by
- * Truffle as it necessarily involves a {@link MaterializedFrame}. However, we break out the special
- * case of the "current" frame, instead than routinely converting it to an environment and following
- * the slow path.
- *
- * TODO handle the special {@code enclos} argument special case. TODO convert to INTERNAL
+ * TODO the {@code list} variants and the interpretation of the {@code enclos} argument.
  */
 public class EvalFunctions {
-    /**
-     * Used by {@link WithVisible}.
-     */
-    public abstract static class FastPathEvalAdapter extends RBuiltinNode {
-        /**
-         * Fast path variant, eval in the caller frame.
-         */
-        protected Object doEvalBodyInCallerFrame(VirtualFrame frame, Object exprArg) {
-            Object expr = checkConvertSymbol(exprArg);
+    public abstract static class EvalAdapter extends RBuiltinNode {
+        protected Object doEvalBody(VirtualFrame frame, Object exprArg, REnvironment envir, REnvironment enclos) {
+            Object expr = RASTUtils.checkForRSymbol(exprArg);
 
-            if (expr instanceof RExpression) {
-                return RContext.getEngine().eval((RExpression) exprArg, frame.materialize());
-            } else if (expr instanceof RLanguage) {
-                return RContext.getEngine().eval((RLanguage) exprArg, frame.materialize());
-            } else {
-                // just return value
-                return expr;
-            }
-        }
-
-        protected static Object checkConvertSymbol(Object expr) {
-            if (expr instanceof RSymbol) {
-                String symbolName = ((RSymbol) expr).getName();
-                // We have to turn the string value back into a RLanguage object
-                return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
-            } else {
-                return expr;
-            }
-        }
-
-    }
-
-    public abstract static class EvalAdapter extends FastPathEvalAdapter {
-        @CompilationFinal protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir", "enclosing"};
-
-        @CompilationFinal private RFunction function;
-
-        @Override
-        public String[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-        }
-
-        /**
-         * Slow path variant, eval in arbitrary environment/frame.
-         */
-        protected Object doEvalBody(VirtualFrame frame, Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
-            Object expr = checkConvertSymbol(exprArg);
-
-            if (expr instanceof RExpression || expr instanceof RLanguage) {
+            if (RASTUtils.isLanguageOrExpression(expr)) {
                 try {
                     Object result;
                     int depth = RArguments.getDepth(frame) + 1;
                     if (expr instanceof RExpression) {
-                        result = RContext.getEngine().eval(getFunction(), (RExpression) expr, envir, REnvironment.emptyEnv(), depth);
+                        result = RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
                     } else {
-                        result = RContext.getEngine().eval(getFunction(), (RLanguage) expr, envir, REnvironment.emptyEnv(), depth);
+                        result = RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
                     }
                     return result;
                 } catch (PutException ex) {
@@ -125,69 +63,50 @@ public class EvalFunctions {
             }
         }
 
-        protected RFunction getFunction() {
-            if (function == null) {
-                function = RContext.getEngine().lookupBuiltin(getRBuiltin().name());
-            }
-            return function;
-        }
     }
 
-    @RBuiltin(name = "eval", kind = SUBSTITUTE, parameterNames = {"expr", "envir", "enclosing"})
+    @RBuiltin(name = "eval", kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
     public abstract static class Eval extends EvalAdapter {
 
-        @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
-            return doEvalBodyInCallerFrame(frame, expr);
-        }
+        public abstract Object execute(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos);
 
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, RMissing enclos) {
+        @TruffleBoundary
+        protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos) {
             controlVisibility();
             return doEvalBody(frame, expr, envir, enclos);
         }
 
-    }
-
-    @RBuiltin(name = "evalq", nonEvalArgs = {0}, kind = SUBSTITUTE, parameterNames = {"expr", "envir", "enclosing"})
-    public abstract static class EvalQuote extends EvalAdapter {
-
         @Specialization
-        protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
-            return doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep()));
+        @TruffleBoundary
+        protected Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RNull envir, REnvironment enclos) {
+            controlVisibility();
+            return doEvalBody(frame, expr, REnvironment.emptyEnv(), enclos);
         }
 
-        @Specialization
-        protected Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
-            /*
-             * evalq does not evaluate it's first argument
-             */
-            controlVisibility();
-            return doEvalBody(frame, RDataFactory.createLanguage(expr.getRep()), envir, enclos);
+        @SuppressWarnings("unused")
+        @Fallback
+        @TruffleBoundary
+        protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " eval arg type");
         }
 
     }
 
-    @RBuiltin(name = "local", nonEvalArgs = {0}, kind = SUBSTITUTE, parameterNames = {"expr", "envir"})
-    public abstract static class Local extends EvalAdapter {
+    @RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = -1)
+    public abstract static class WithVisible extends EvalAdapter {
+        private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-        }
-
+        @TruffleBoundary
         @Specialization
-        protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir) {
-            return doEval(frame, expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), 0));
-        }
-
-        @Specialization
-        protected Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir) {
-            /*
-             * local does not evaluate it's first argument
-             */
+        protected RList withVisible(VirtualFrame frame, RPromise expr) {
             controlVisibility();
-            return doEvalBody(frame, RDataFactory.createLanguage(expr.getRep()), envir, null);
+            Object result = doEvalBody(frame, RDataFactory.createLanguage(expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()), REnvironment.emptyEnv());
+            Object[] data = new Object[]{result, RRuntime.asLogical(RContext.isVisible())};
+            // Visibility is changed by the evaluation (else this code would not work),
+            // so we have to force it back on.
+            RContext.setVisible(true);
+            return RDataFactory.createList(data, LISTNAMES);
         }
 
     }

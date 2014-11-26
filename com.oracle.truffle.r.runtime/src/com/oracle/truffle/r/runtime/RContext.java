@@ -193,35 +193,28 @@ public final class RContext extends ExecutionContext {
         Object parseAndEvalTest(String rscript, boolean printResult);
 
         /**
-         * Support for the {@code eval} family of builtin functions.
-         *
-         * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
-         *            {@code evalq} being invoked. The value {@code null} means plain {@code eval}.
-         *
-         * @param enclos normally {@code null}, but see <a
-         *            href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/eval.html">here
-         *            for details</a>.
+         * Support for the {@code eval} {@code .Internal}.
          */
-        Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
+        Object eval(RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
 
         /**
          * Convenience method for common case.
          */
         default Object eval(RExpression expr, REnvironment envir, int depth) throws PutException {
-            return eval(null, expr, envir, null, depth);
+            return eval(expr, envir, null, depth);
         }
 
         /**
-         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment, int)} for a
-         * single language element.
+         * Variant of {@link #eval(RExpression, REnvironment, REnvironment, int)} for a single
+         * language element.
          */
-        Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
+        Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
 
         /**
          * Convenience method for common case.
          */
         default Object eval(RLanguage expr, REnvironment envir, int depth) throws PutException {
-            return eval(null, expr, envir, null, depth);
+            return eval(expr, envir, null, depth);
         }
 
         /**

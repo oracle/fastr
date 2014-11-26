@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * A "fake" {@link VirtualFrame}, to be used by {@link REngine}.eval only!
@@ -38,16 +37,15 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
     private final MaterializedFrame originalFrame;
     @CompilationFinal private final Object[] arguments;
 
-    private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
+    private VirtualEvalFrame(MaterializedFrame originalFrame, SourceSection callSrc, int depth) {
         this.originalFrame = originalFrame;
         this.arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
         RArguments.setDepth(this, depth);
-        RArguments.setFunction(this, function);
         RArguments.setCallSourceSection(this, callSrc);
     }
 
-    protected static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
-        return new VirtualEvalFrame(originalFrame, function, callSrc, depth);
+    protected static VirtualEvalFrame create(MaterializedFrame originalFrame, SourceSection callSrc, int depth) {
+        return new VirtualEvalFrame(originalFrame, callSrc, depth);
     }
 
     public FrameDescriptor getFrameDescriptor() {
