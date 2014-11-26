@@ -66,7 +66,6 @@ def _check_debug(args):
         return None, args
 
 def setREnvironment():
-    os.environ['R_HOME'] = _fastr_suite.dir
     osname = platform.system()
     lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib', osname.lower())
     lib_value = lib_base
