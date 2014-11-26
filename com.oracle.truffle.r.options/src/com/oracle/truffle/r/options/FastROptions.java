@@ -53,6 +53,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> Instrumentation = new OptionValue<>(false);
     @Option(help = "Add function call counters")
     public static final OptionValue<Boolean> AddFunctionCounters = new OptionValue<>(false);
+    @Option(help = "Enable binding of builtins into package environment")
+    public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();

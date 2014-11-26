@@ -32,9 +32,11 @@ import com.oracle.truffle.r.nodes.builtin.graphics.GraphicsPackage;
 import com.oracle.truffle.r.nodes.builtin.methods.*;
 import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.nodes.builtin.utils.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Support for the default set of packages in an R session. Setup is a two-phase process. The
@@ -73,9 +75,30 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         RBuiltinPackage pkg = packages.get(name);
         if (pkg == null) {
             Utils.fail("unknown default package: " + name);
-        } else {
-            pkg.loadSources(frame, envForFrame);
         }
+        pkg.setEnv(envForFrame);
+        if (FastROptions.BindBuiltinNames.getValue()) {
+            /*
+             * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
+             * environment so that lookups through the environment work as expected.
+             */
+            Map<String, RBuiltinFactory> builtins = pkg.getBuiltins();
+            for (Map.Entry<String, RBuiltinFactory> entrySet : builtins.entrySet()) {
+                String methodName = entrySet.getKey();
+                RBuiltinFactory builtinFactory = entrySet.getValue();
+                builtinFactory.setEnv(envForFrame);
+                RBuiltin builtin = builtinFactory.getRBuiltin();
+                if (builtin.kind() != RBuiltinKind.INTERNAL) {
+                    RFunction function = createFunction(builtinFactory, methodName);
+                    try {
+                        envForFrame.put(methodName, function);
+                    } catch (PutException ex) {
+                        Utils.fail("failed to install builtin function: " + methodName);
+                    }
+                }
+            }
+        }
+        pkg.loadSources(frame, envForFrame);
     }
 
     @Override
