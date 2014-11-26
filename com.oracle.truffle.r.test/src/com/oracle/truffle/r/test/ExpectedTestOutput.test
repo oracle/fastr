@@ -14709,6 +14709,11 @@ $a
 #{ ind <- list(c(1, 2, 2), c("A", "A", "B")) ; tapply(1:3, ind) }
 [1] 1 2 4
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTapply
+#{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }
+ 1  2  3  4  5
+51 57 45 NA NA
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTranspose
 #{ m <- double() ; dim(m) <- c(0,4) ; t(m) }
 

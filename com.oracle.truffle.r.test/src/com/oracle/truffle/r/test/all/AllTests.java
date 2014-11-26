@@ -15309,7 +15309,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTapplyIgnore_627b7381fd149984429a34289adeba8f() {
+    public void TestSimpleBuiltins_testTapply_627b7381fd149984429a34289adeba8f() {
         assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
     }
 
