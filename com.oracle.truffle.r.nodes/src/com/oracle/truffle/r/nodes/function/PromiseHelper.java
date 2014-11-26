@@ -50,8 +50,7 @@ public class PromiseHelper {
 
         // Check for dependency cycle
         if (promise.isUnderEvaluation(profile)) {
-            SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
-            throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
+            throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
         // Evaluate guarded by underEvaluation
