@@ -70,7 +70,6 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private long[] childTimes;
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
-    @CompilationFinal private RFunction evalFunction;
 
     /**
      * Controls whether ASTs are instrumented after parse. The default value controlled by
@@ -116,7 +115,6 @@ public final class REngine implements RContext.Engine {
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
             VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
             REnvironment.baseInitialize(globalFrame, baseFrame);
-            singleton.evalFunction = singleton.lookupBuiltin("eval");
             RPackageVariables.initializeBase();
             RVersionInfo.initialize();
             RRNG.initialize();
@@ -220,25 +218,21 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
-        Object result = null;
-        RFunction ffunction = function;
-        if (ffunction == null) {
-            ffunction = evalFunction;
-        }
-        for (int i = 0; i < expr.getLength(); i++) {
-            RLanguage lang = (RLanguage) expr.getDataAt(i);
-            result = eval(ffunction, (RNode) lang.getRep(), envir, enclos, depth);
+    public Object eval(RExpression exprs, REnvironment envir, REnvironment enclos, int depth) throws PutException {
+        Object result = RNull.instance;
+        for (int i = 0; i < exprs.getLength(); i++) {
+            Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
+            if (obj instanceof RLanguage) {
+                result = evalNode((RNode) ((RLanguage) obj).getRep(), envir, enclos, depth);
+            } else {
+                result = obj;
+            }
         }
         return result;
     }
 
-    public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
-        RFunction ffunction = function;
-        if (ffunction == null) {
-            ffunction = evalFunction;
-        }
-        return eval(ffunction, (RNode) expr.getRep(), envir, enclos, depth);
+    public Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
+        return evalNode((RNode) expr.getRep(), envir, enclos, depth);
     }
 
     public Object eval(RExpression expr, MaterializedFrame frame) {
@@ -263,12 +257,12 @@ public final class REngine implements RContext.Engine {
 
     /**
      * @return @see
-     *         {@link #eval(RFunction, RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
+     *         {@link #evalTarget(RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
      */
-    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
+    private static Object evalNode(RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
         RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
         SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
-        return eval(function, callTarget, callSrc, envir, enclos, depth);
+        return evalTarget(callTarget, callSrc, envir, enclos, depth);
     }
 
     /**
@@ -281,11 +275,11 @@ public final class REngine implements RContext.Engine {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    private static Object eval(RFunction function, RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
+    private static Object evalTarget(RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, function, callSrc, depth);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, callSrc, depth);
         return runCall(callTarget, vFrame, false, false);
     }
 
@@ -303,7 +297,7 @@ public final class REngine implements RContext.Engine {
         REnvironment env = REnvironment.frameToEnvironment(frame);
         assert env != null;
         Closure closure = promise.getClosure();
-        return eval(lookupBuiltin("eval"), closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
+        return evalTarget(closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
     }
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {

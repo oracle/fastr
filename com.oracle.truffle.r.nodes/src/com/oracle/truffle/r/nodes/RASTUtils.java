@@ -106,6 +106,24 @@ public class RASTUtils {
         return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getName());
     }
 
+    /**
+     * Checks wheter {@code expr instanceof RSymbol} and, if so, wraps in an {@link RLanguage}
+     * instance.
+     */
+    @TruffleBoundary
+    public static Object checkForRSymbol(Object expr) {
+        if (expr instanceof RSymbol) {
+            String symbolName = ((RSymbol) expr).getName();
+            return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
+        } else {
+            return expr;
+        }
+    }
+
+    public static boolean isLanguageOrExpression(Object expr) {
+        return expr instanceof RExpression || expr instanceof RLanguage;
+    }
+
     @TruffleBoundary
     /**
      * Create an {@link RCallNode} where {@code fn} is either a:

@@ -11260,6 +11260,22 @@ Error in k() : argument "y" is missing, with no default
 #{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }
 [1] "11" "12" "13"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b, c) { nargs() }; f() }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b, c) { nargs() }; f(1, 2) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }
+[1] 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
 #{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
 ab
