@@ -201,8 +201,7 @@ public final class RPromise extends RLanguageRep {
 
         // Check for dependency cycle
         if (isUnderEvaluation(profile)) {
-            SourceSection callSrc = RArguments.getCallSourceSection(frame);
-            throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
+            throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
         Object newValue;

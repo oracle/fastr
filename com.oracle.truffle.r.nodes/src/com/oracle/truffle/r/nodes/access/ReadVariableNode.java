@@ -155,8 +155,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         Object obj = objArg;
         if (obj == RMissing.instance && !readMissing) {
             unexpectedMissingProfile.enter();
-            SourceSection callSrc = RArguments.getCallSourceSection(frame);
-            throw RError.error(callSrc, RError.Message.ARGUMENT_MISSING, getName());
+            throw RError.error(RError.Message.ARGUMENT_MISSING, getName());
         }
         if (type == RType.Any) {
             return true;
@@ -239,8 +238,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
             // Check for dependency cycle
             if (promise.isUnderEvaluation(promiseProfile)) {
-                SourceSection callSrc = RArguments.getCallSourceSection(frame);
-                throw RError.error(callSrc, RError.Message.PROMISE_CYCLE);
+                throw RError.error(RError.Message.PROMISE_CYCLE);
             }
 
             Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
