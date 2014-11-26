@@ -369,12 +369,15 @@ def rcmplib(args):
     parser = ArgumentParser(prog='mx rcmplib')
     parser.add_argument('--gnurhome', action='store', help='path to GnuR sources', required=True)
     parser.add_argument('--package', action='store', help='package to check', default="base")
+    parser.add_argument('--paths', action='store_true', help='print full paths of files that differ')
     args = parser.parse_args(args)
     cmpArgs = []
     cmpArgs.append("--gnurhome")
     cmpArgs.append(args.gnurhome)
     cmpArgs.append("--package")
     cmpArgs.append(args.package)
+    if args.paths:
+        cmpArgs.append("--paths")
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
