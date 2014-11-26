@@ -7535,6 +7535,17 @@ NULL
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); attributes(y) }
+$dim
+[1] 5
+
+$dimnames
+$dimnames[[1]]
+[1] "1" "2" "3" "4" "5"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
 #{ ncol(1) }
 NULL
 
@@ -11875,6 +11886,11 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{  x<-c(11, 7, 2222, 7, 33); print(x,quote=TRUE) }
 [1]   11    7 2222    7   33
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }
+ 1  2  3  4  5
+51 57 45 NA NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{ nql <- noquote(letters); nql[1:4] <- "oh"; print(nql)}

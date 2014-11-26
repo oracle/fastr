@@ -421,7 +421,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             return result;
         } else {
-            boolean printNamesHeader = (!vector.hasDimensions() && vector.getNames() != null && vector.getNames() != RNull.instance);
+            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames() != null && vector.getNames() != RNull.instance);
             RStringVector names = printNamesHeader ? (RStringVector) vector.getNames() : null;
             int maxWidth = 0;
             for (String s : values) {
