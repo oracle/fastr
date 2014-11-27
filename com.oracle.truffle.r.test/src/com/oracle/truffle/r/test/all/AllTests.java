@@ -17504,6 +17504,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testAccess_37e9715976a8a8b4201d6226000994c6() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; x[1, c(1,2)] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_7a3520b335504239e1a23ba08b018ad6() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; attributes(x[1, c(1,2)]) }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testAccess_3c751253c42329c6652cb02b6c064aa2() {
         assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
     }
@@ -17716,6 +17726,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleDataFrames_testMisc_41c31f4873ee11a67409c7646ea787b9() {
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testMisc_12f47d995e267400d26b5f5b04f037f7() {
+        assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
     }
 
     @Test

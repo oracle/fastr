@@ -16647,6 +16647,23 @@ Error in col[[i, exact = exact]] :
 [1] 11 12
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, "foo")<-"foo"; attributes(x[1, c(1,2)]) }
+$names
+[1] "a" "b"
+
+$row.names
+[1] 1
+
+$class
+[1] "data.frame"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, "foo")<-"foo"; x[1, c(1,2)] }
+  a b
+1 1 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }
 [1] 2
 
@@ -16931,6 +16948,10 @@ $x
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
 #{ y<-data.frame(c(1,2,3)); as.logical(y) }
 Error: (list) object cannot be coerced to type 'logical'
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
+#{ y<-data.frame(c(1,2,3)); length(y) }
+[1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
 #{ y<-data.frame(integer()); as.logical(y) }

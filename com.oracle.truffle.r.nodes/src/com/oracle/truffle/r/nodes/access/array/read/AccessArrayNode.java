@@ -1565,6 +1565,20 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DATA_FRAMES_SUBSET_ACCESS);
     }
 
+    // this is copied from Attr.java - can't use it directly due to dependence circularity and it
+    // does not seem worth doing refactoring considering that data frame access code should be
+    // ultimately supported in R
+    private static Object getFullRowNames(Object a) {
+        if (a == RNull.instance) {
+            return RNull.instance;
+        } else {
+            RAbstractVector rowNames = (RAbstractVector) a;
+            Object res = rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
+                            Math.abs(((RAbstractIntVector) rowNames).getDataAt(1))) : a;
+            return res;
+        }
+    }
+
     @Specialization
     protected Object access(VirtualFrame frame, RDataFrame dataFrame, int recLevel, Object[] position, RAbstractLogicalVector dropDim) {
         // there should be error checks here, but since it will ultimately be implemented in R...
@@ -1578,11 +1592,24 @@ public abstract class AccessArrayNode extends RNode {
             // "flat" data frame
             assert firstInd == 1;
             return accessRecursive(frame, dataFrame.getVector(), secondIndVec, recLevel, dropDim, true);
-        } else {
+        } else if (secondIndVec.getLength() == 1) {
             RList l = (RList) dataFrame.getVector();
             int secondInd = secondIndVec.getDataAt(0);
             assert l.getLength() >= secondInd;
             return accessRecursive(frame, l.getDataAt(secondInd - 1), firstIndVec, recLevel, dropDim, false);
+        } else {
+            RList l = (RList) dataFrame.getVector();
+            Object[] data = new Object[secondIndVec.getLength()];
+            for (int i = 0; i < secondIndVec.getLength(); i++) {
+                int secondInd = secondIndVec.getDataAt(i);
+                assert l.getLength() >= secondInd;
+                data[i] = accessRecursive(frame, l.getDataAt(secondInd - 1), firstIndVec, recLevel, dropDim, false);
+            }
+            RList resList = RDataFactory.createList(data, dataFrame.getNames());
+            Object newRowNames = accessRecursive(frame, getFullRowNames(dataFrame.getRowNames()), firstIndVec, 0,
+                            RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE}, RDataFactory.COMPLETE_VECTOR), false);
+            resList.setRowNames(newRowNames);
+            return resList.setClassAttr(RDataFactory.createStringVector("data.frame"));
         }
 
     }

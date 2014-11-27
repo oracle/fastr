@@ -125,6 +125,9 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }");
         assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }");
         assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
+
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; x[1, c(1,2)] }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; attributes(x[1, c(1,2)]) }");
     }
 
     @Test
@@ -158,6 +161,8 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ y<-data.frame(7); as.logical(y) }");
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
         assertEvalError("{ y<-data.frame(c(1,2,3)); as.logical(y) }");
+
+        assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 
     }
 
