@@ -180,10 +180,7 @@ public class TestSimpleArrays extends TestBase {
 
         // selection operator works for arrays
         assertEval("{ matrix(1,3,3)[[1,1]] }");
-    }
 
-    @Test
-    public void testMatrixSubsetAndSelectionIgnore() {
         // selection on multiple elements fails in matrices with empty selector
         assertEvalError("{ matrix(1,3,3)[[,]]; }");
 
@@ -197,10 +194,7 @@ public class TestSimpleArrays extends TestBase {
     public void testArrayUpdate() {
         // update to matrix works
         assertEval("{ a = matrix(1,2,2); a[1,2] = 3; a[1,2] == 3; }");
-    }
 
-    @Test
-    public void testArrayUpdateIgnore() {
         // update to an array works
         assertEval("{ a = array(1,c(3,3,3)); c(a[1,2,3],a[1,2,3]) }");
 
@@ -212,6 +206,10 @@ public class TestSimpleArrays extends TestBase {
 
         // update where rhs depends on the lhs
         assertEval("{ x <- array(c(1,2,3), dim=c(3,1,1)) ; x[1:2,1,1] <- sqrt(x[2:1]) ; c(x[1] == sqrt(2), x[2], x[3]) }");
+
+        // matrix update should preserve dimnames
+        assertEval("{ ansmat <- array(dim=c(2,2),dimnames=list(c(\"1\",\"2\"),c(\"A\",\"B\"))) ; ansmat }");
+        assertEval("{ ansmat <- array(dim=c(2,2),dimnames=list(c(\"1\",\"2\"),c(\"A\",\"B\"))) ; ansmat[c(1,2,4)] <- c(1,2,3) ; ansmat }");
     }
 
     @Test
@@ -282,10 +280,7 @@ public class TestSimpleArrays extends TestBase {
 
         // update matrix by vector, cols
         assertEval("{ a = matrix(1,3,3); a[,1] = c(3,4,5); c(a[1,1],a[2,1],a[3,1]) }");
-    }
 
-    @Test
-    public void testMultiDimensionalUpdateIgnore() {
         // update array by vector, dim 3
         assertEval("{ a = array(1,c(3,3,3)); a[1,1,] = c(3,4,5); c(a[1,1,1],a[1,1,2],a[1,1,3]) }");
 
@@ -297,7 +292,6 @@ public class TestSimpleArrays extends TestBase {
 
         // update array by matrix
         assertEval("{ a = array(1,c(3,3,3)); a[1,,] = matrix(1:9,3,3); c(a[1,1,1],a[1,3,1],a[1,3,3]) }");
-
     }
 
     @Test
@@ -313,10 +307,6 @@ public class TestSimpleArrays extends TestBase {
 
     @Test
     public void testDefinitions() {
-    }
-
-    @Test
-    public void testDefinitionsIgnore() {
         assertEval("{ matrix( as.raw(101:106), nrow=2 ) }");
         assertEval("{ m <- matrix(1:6, ncol=3, byrow=TRUE) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2, byrow=TRUE) ; m }");

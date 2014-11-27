@@ -2974,23 +2974,33 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArrays_testArrayUpdateIgnore_b143dfae9c4c5ae3489a82b375ca1361() {
+    public void TestSimpleArrays_testArrayUpdate_b143dfae9c4c5ae3489a82b375ca1361() {
         assertEval("{ a = array(1,c(3,3,3)); c(a[1,2,3],a[1,2,3]) }");
     }
 
     @Test
-    public void TestSimpleArrays_testArrayUpdateIgnore_fa399785b588c0934381a477dc943405() {
+    public void TestSimpleArrays_testArrayUpdate_fa399785b588c0934381a477dc943405() {
         assertEval("{ a = array(1,c(3,3,3)); a[1,2,3] = 3; a }");
     }
 
     @Test
-    public void TestSimpleArrays_testArrayUpdateIgnore_c8ec0a7ad6d6e5de78f3113e7eac4558() {
+    public void TestSimpleArrays_testArrayUpdate_c8ec0a7ad6d6e5de78f3113e7eac4558() {
         assertEval("{ a = array(1,c(3,3,3)); b = a; b[1,2,3] = 3; c(a[1,2,3],b[1,2,3]) }");
     }
 
     @Test
-    public void TestSimpleArrays_testArrayUpdateIgnore_74477ab1a1ca6b600db67b4629a76e8b() {
+    public void TestSimpleArrays_testArrayUpdate_74477ab1a1ca6b600db67b4629a76e8b() {
         assertEval("{ x <- array(c(1,2,3), dim=c(3,1,1)) ; x[1:2,1,1] <- sqrt(x[2:1]) ; c(x[1] == sqrt(2), x[2], x[3]) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArrayUpdate_2c6393d87463a3fdb5e3da8f4463de30() {
+        assertEval("{ ansmat <- array(dim=c(2,2),dimnames=list(c(\"1\",\"2\"),c(\"A\",\"B\"))) ; ansmat }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArrayUpdate_19ae9a9d778d02750701e2d3df57d230() {
+        assertEval("{ ansmat <- array(dim=c(2,2),dimnames=list(c(\"1\",\"2\"),c(\"A\",\"B\"))) ; ansmat[c(1,2,4)] <- c(1,2,3) ; ansmat }");
     }
 
     @Test
@@ -2999,32 +3009,32 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArrays_testDefinitionsIgnore_57b0a537728276c59318eff6c37f368e() {
+    public void TestSimpleArrays_testDefinitions_57b0a537728276c59318eff6c37f368e() {
         assertEval("{ matrix( as.raw(101:106), nrow=2 ) }");
     }
 
     @Test
-    public void TestSimpleArrays_testDefinitionsIgnore_acc2ff6e352fc26dfe6658d5d25a6581() {
+    public void TestSimpleArrays_testDefinitions_acc2ff6e352fc26dfe6658d5d25a6581() {
         assertEval("{ m <- matrix(1:6, ncol=3, byrow=TRUE) ; m }");
     }
 
     @Test
-    public void TestSimpleArrays_testDefinitionsIgnore_e2e3e47a6687353d12f0cfb25c473e24() {
+    public void TestSimpleArrays_testDefinitions_e2e3e47a6687353d12f0cfb25c473e24() {
         assertEval("{ m <- matrix(1:6, nrow=2, byrow=TRUE) ; m }");
     }
 
     @Test
-    public void TestSimpleArrays_testDefinitionsIgnore_3cde0982135f37c027f66e92df1feb34() {
+    public void TestSimpleArrays_testDefinitions_3cde0982135f37c027f66e92df1feb34() {
         assertEval("{ m <- matrix() ; m }");
     }
 
     @Test
-    public void TestSimpleArrays_testDefinitionsIgnore_f46772e8eabb18f95c6940feb557cadf() {
+    public void TestSimpleArrays_testDefinitions_f46772e8eabb18f95c6940feb557cadf() {
         assertEval("{ matrix( (1:6) * (1+3i), nrow=2 ) }");
     }
 
     @Test
-    public void TestSimpleArrays_testDefinitionsIgnore_a738f26a25596a33b702362864391c08() {
+    public void TestSimpleArrays_testDefinitions_a738f26a25596a33b702362864391c08() {
         assertEval("{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m }");
     }
 
@@ -3094,17 +3104,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArrays_testMatrixSubsetAndSelectionIgnore_143f74286d3b0c31c553f6eb924f1cf9() {
+    public void TestSimpleArrays_testMatrixSubsetAndSelection_143f74286d3b0c31c553f6eb924f1cf9() {
         assertEval("{  m <- matrix(1:6, nrow=2) ;  m[1,NULL] }");
     }
 
     @Test
-    public void TestSimpleArrays_testMatrixSubsetAndSelectionIgnore_f25c7ad49835429e017a36e857b420f0() {
+    public void TestSimpleArrays_testMatrixSubsetAndSelection_f25c7ad49835429e017a36e857b420f0() {
         assertEvalError("{ matrix(1,3,3)[[,]]; }");
     }
 
     @Test
-    public void TestSimpleArrays_testMatrixSubsetAndSelectionIgnore_ef9e65c0b7ef9fcfb532ed3b89735ebe() {
+    public void TestSimpleArrays_testMatrixSubsetAndSelection_ef9e65c0b7ef9fcfb532ed3b89735ebe() {
         assertEvalError("{ matrix(1,3,3)[[c(1,2),1]]; }");
     }
 
@@ -3119,22 +3129,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArrays_testMultiDimensionalUpdateIgnore_2880884c9d4299c1d6fc09ff8cad6ac1() {
+    public void TestSimpleArrays_testMultiDimensionalUpdate_2880884c9d4299c1d6fc09ff8cad6ac1() {
         assertEval("{ a = array(1,c(3,3,3)); a[1,1,] = c(3,4,5); c(a[1,1,1],a[1,1,2],a[1,1,3]) }");
     }
 
     @Test
-    public void TestSimpleArrays_testMultiDimensionalUpdateIgnore_a760b17b27d515ffd03bd8fcb9c9d596() {
+    public void TestSimpleArrays_testMultiDimensionalUpdate_a760b17b27d515ffd03bd8fcb9c9d596() {
         assertEval("{ a = array(1,c(3,3,3)); a[1,,1] = c(3,4,5); c(a[1,1,1],a[1,2,1],a[1,3,1]) }");
     }
 
     @Test
-    public void TestSimpleArrays_testMultiDimensionalUpdateIgnore_4254fad80bad98a95f88e1afedc060c2() {
+    public void TestSimpleArrays_testMultiDimensionalUpdate_4254fad80bad98a95f88e1afedc060c2() {
         assertEval("{ a = array(1,c(3,3,3)); a[,1,1] = c(3,4,5); c(a[1,1,1],a[2,1,1],a[3,1,1]) }");
     }
 
     @Test
-    public void TestSimpleArrays_testMultiDimensionalUpdateIgnore_3bd39d84ee2da13efb7fd25b042003fd() {
+    public void TestSimpleArrays_testMultiDimensionalUpdate_3bd39d84ee2da13efb7fd25b042003fd() {
         assertEval("{ a = array(1,c(3,3,3)); a[1,,] = matrix(1:9,3,3); c(a[1,1,1],a[1,3,1],a[1,3,3]) }");
     }
 
@@ -15314,7 +15324,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTapplyIgnore_56d04575049cc5fb09d7e8f4abbc6879() {
+    public void TestSimpleBuiltins_testTapply_56d04575049cc5fb09d7e8f4abbc6879() {
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
