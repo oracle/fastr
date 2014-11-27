@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
@@ -36,12 +36,12 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 public class ReadVariadicComponentNode extends RNode {
 
     @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RType.Any, false, true);
-    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+    @Child private PromiseHelperNode promiseHelper;
 
     private final int index;
 
-    private final PromiseProfile promiseProfile = new PromiseProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile errorBranch = BranchProfile.create();
+    private final BranchProfile promiseBranch = BranchProfile.create();
 
     public ReadVariadicComponentNode(int index) {
         this.index = index;
@@ -53,24 +53,29 @@ public class ReadVariadicComponentNode extends RNode {
         try {
             args = lookup.execute(frame);
         } catch (RError e) {
-            errorProfile.enter();
+            errorBranch.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_DOT_DOT, index + 1);
         }
         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
         if (argsValuesAndNames.isMissing()) {
-            errorProfile.enter();
+            errorBranch.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_LIST_FOR_CDR);
         }
 
         if (argsValuesAndNames.length() <= index) {
-            errorProfile.enter();
+            errorBranch.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DOT_DOT_SHORT, index + 1);
         }
         Object ret = argsValuesAndNames.getValues()[index];
         if (ret instanceof RPromise) {
+            promiseBranch.enter();
             // This might be the case, as lookup only checks for "..." to be a promise and forces it
             // eventually, NOT (all) of its content
-            ret = PromiseHelper.evaluate(frame, promiseExpressionCache, (RPromise) ret, promiseProfile);
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            ret = promiseHelper.evaluate(frame, (RPromise) ret);
         }
         return ret == null ? RMissing.instance : ret;
     }

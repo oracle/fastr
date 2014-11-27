@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
@@ -53,8 +52,6 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
     private final ConditionProfile emptyPromiseProfile = ConditionProfile.createBinaryProfile();
     private final NAProfile na = NAProfile.create();
 
-    private final PromiseProfile promiseProfile = new PromiseProfile();
-
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(false)};
@@ -69,10 +66,10 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
         }
 
         // the empty (RNull.instance) expression is used to clear on.exit
-        boolean empty = emptyPromiseProfile.profile(expr.isDefault(promiseProfile));
+        boolean empty = emptyPromiseProfile.profile(expr.isDefault());
 
         assert !empty || expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
-        assert empty || !expr.isEvaluated(promiseProfile) : "promise cannot already be evaluated";
+        assert empty || !expr.isEvaluated() : "promise cannot already be evaluated";
 
         ArrayList<Object> current;
         FrameSlot slot = onExitSlot.executeFrameSlot(frame);

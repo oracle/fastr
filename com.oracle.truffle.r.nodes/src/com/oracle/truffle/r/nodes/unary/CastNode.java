@@ -26,6 +26,8 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @NodeFields({@NodeField(name = "preserveNames", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class), @NodeField(name = "attrPreservation", type = boolean.class)})
 public abstract class CastNode extends UnaryNode {
@@ -47,5 +49,11 @@ public abstract class CastNode extends UnaryNode {
     protected RError throwCannotCoerceListError(String type) {
         listCoercionErrorBranch.enter();
         throw RError.error(getSourceSection(), RError.Message.LIST_COERCION, type);
+    }
+
+    protected void preserveDimensionNames(RAbstractVector operand, RVector ret) {
+        if (isPreserveDimensions() && operand.getDimNames() != null) {
+            ret.setDimNames((RList) operand.getDimNames().copy());
+        }
     }
 }

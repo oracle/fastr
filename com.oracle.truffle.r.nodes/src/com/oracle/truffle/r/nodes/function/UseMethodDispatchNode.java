@@ -19,11 +19,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    private final PromiseProfile promiseProfile = new PromiseProfile();
+    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
         this.genericName = generic;
@@ -111,7 +110,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         // ...and use them as 'supplied' arguments...
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseProfile);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
@@ -140,7 +139,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         // ...and use them as 'supplied' arguments...
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseProfile);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 

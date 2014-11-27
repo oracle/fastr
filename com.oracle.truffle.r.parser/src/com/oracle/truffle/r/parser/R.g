@@ -480,7 +480,8 @@ basic_expr returns [ASTNode v]
     ;
 
 expr_subset [ASTNode i] returns [ASTNode v]
-    : (t=FIELD n_ name=id                     { $v = FieldAccess.create(sourceSection("expr_subset/FIELD", $t, name), FieldOperator.FIELD, i, name.getText()); })
+    : (t=FIELD n_ name=id                     { $v = FieldAccess.create(sourceSection("expr_subset/FIELDid", $t, name), FieldOperator.FIELD, i, name.getText()); })
+    | (t=FIELD n_ sname=conststring           { $v = FieldAccess.create(sourceSection("expr_subset/FIELDst", $t, sname), FieldOperator.FIELD, i, sname); })
     | (t=AT n_ name=id                        { $v = FieldAccess.create(sourceSection("expr_subset/AT", $t, name), FieldOperator.AT, i, name.getText()); })
     | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); })
     | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); })

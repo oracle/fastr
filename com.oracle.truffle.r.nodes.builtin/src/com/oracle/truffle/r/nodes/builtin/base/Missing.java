@@ -31,12 +31,11 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 @RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = {0})
 public abstract class Missing extends RBuiltinNode {
@@ -62,12 +61,12 @@ public abstract class Missing extends RBuiltinNode {
 
         @Child private GetMissingValueNode getMissingValue;
         @Child private InlineCacheNode<Frame, String> recursive;
+        @Child private PromiseHelperNode promiseHelper;
 
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isSymbolNullProfile = ConditionProfile.createBinaryProfile();
-        private final PromiseProfile promiseProfile = new PromiseProfile();
         private final int level;
 
         public MissingCheckLevel(String symbol, int level) {
@@ -91,11 +90,15 @@ public abstract class Missing extends RBuiltinNode {
 
             // This might be a promise...
             if (isPromiseProfile.profile(value instanceof RPromise)) {
+                if (promiseHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseHelper = insert(new PromiseHelperNode());
+                }
                 RPromise promise = (RPromise) value;
-                if (level == 0 && promise.isDefault(promiseProfile)) {
+                if (level == 0 && promiseHelper.isDefault(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
-                if (level > 0 && promise.isEvaluated(promiseProfile)) {
+                if (level > 0 && promiseHelper.isEvaluated(promise)) {
                     return RRuntime.LOGICAL_FALSE;
                 }
                 if (recursive == null) {
@@ -103,7 +106,7 @@ public abstract class Missing extends RBuiltinNode {
                     recursive = insert(createRepCache(level + 1));
                 }
                 // Check: If there is a cycle, return true. (This is done like in GNU R)
-                if (promise.isUnderEvaluation(promiseProfile)) {
+                if (promiseHelper.isUnderEvaluation(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
                 try {

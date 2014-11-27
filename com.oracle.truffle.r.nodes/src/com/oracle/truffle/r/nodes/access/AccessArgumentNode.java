@@ -22,19 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
-import com.oracle.truffle.api.instrument.ProbeNode;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 //import com.oracle.truffle.r.nodes.ReadArgumentsNodeWrapper;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index (
@@ -44,6 +41,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 // Fully qualified type name to circumvent compiler bug..
 @NodeChild(value = "readArgNode", type = com.oracle.truffle.r.nodes.access.AccessArgumentNode.ReadArgumentNode.class)
 public abstract class AccessArgumentNode extends RNode {
+
+    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     /**
      * @return The {@link ReadArgumentNode} that does the actual extraction from
@@ -57,15 +56,6 @@ public abstract class AccessArgumentNode extends RNode {
     public Integer getIndex() {
         return getReadArgNode().getIndex();
     }
-
-    /**
-     * Used to cache {@link RPromise} evaluations.
-     */
-    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
-
-    private final BranchProfile needsCalleeFrame = BranchProfile.create();
-    private final BranchProfile strictEvaluation = BranchProfile.create();
-    private final PromiseProfile promiseProfile = new PromiseProfile();
 
     /**
      * @param index {@link #getIndex()}
@@ -82,7 +72,7 @@ public abstract class AccessArgumentNode extends RNode {
 
     @Specialization
     public Object doArgument(VirtualFrame frame, RPromise promise) {
-        return handlePromise(frame, promise, true);
+        return handlePromise(frame, promise);
     }
 
     @Specialization
@@ -91,7 +81,7 @@ public abstract class AccessArgumentNode extends RNode {
         for (int i = 0; i < varArgsContainer.length(); i++) {
             // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
             // "..." is a different expression
-            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i], false) : varArgs[i];
+            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i]) : varArgs[i];
         }
         return varArgsContainer;
     }
@@ -109,30 +99,19 @@ public abstract class AccessArgumentNode extends RNode {
         return obj instanceof RArgsValuesAndNames;
     }
 
-    private Object handlePromise(VirtualFrame frame, RPromise promise, boolean useExprExecNode) {
+    private Object handlePromise(VirtualFrame frame, RPromise promise) {
         assert !promise.isNonArgument();
-        CompilerAsserts.compilationConstant(useExprExecNode);
 
         // Check whether it is necessary to create a callee REnvironment for the promise
-        if (promise.needsCalleeFrame(promiseProfile)) {
-            needsCalleeFrame.enter();
+        if (promiseHelper.needsCalleeFrame(promise)) {
             // In this case the promise might lack the proper REnvironment, as it was created before
             // the environment was
-            promise.updateFrame(frame.materialize(), promiseProfile);
+            promiseHelper.updateFrame(frame.materialize(), promise);
         }
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
-        if (promise.isInlined(promiseProfile)) {
-            if (useExprExecNode) {
-                if (promiseExpressionCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
-                }
-                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
-            } else {
-                strictEvaluation.enter();
-                return promise.evaluate(frame, promiseProfile);
-            }
+        if (promiseHelper.isInlined(promise)) {
+            return promiseHelper.evaluate(frame, promise);
         }
         return promise;
     }

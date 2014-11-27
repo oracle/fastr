@@ -44,6 +44,12 @@ public final class FieldAccess extends ASTNode {
         throw new Error("No node implemented for: '" + op + "' (" + value + ": " + fieldName + ")");
     }
 
+    public static ASTNode create(SourceSection src, FieldOperator op, ASTNode value, ASTNode fieldName) {
+        Constant fnc = (Constant) fieldName;
+        assert fnc.getType() == Constant.ConstantType.STRING;
+        return create(src, op, value, fnc.getValues()[0]);
+    }
+
     public ASTNode getLhs() {
         return lhs;
     }

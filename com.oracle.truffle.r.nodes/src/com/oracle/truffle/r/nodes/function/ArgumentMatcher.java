@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
@@ -48,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
  * . The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
- * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseProfile)}
+ * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseHelperNode)}
  * for 'UseMethod' and
  * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
  * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
@@ -161,7 +160,7 @@ public class ArgumentMatcher {
      * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, PromiseProfile promiseProfile) {
+    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, PromiseHelperNode promiseHelper) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(), callSrc,
@@ -192,7 +191,7 @@ public class ArgumentMatcher {
                 }
             } else if (function.isBuiltin() && evaledArg instanceof RPromise) {
                 RPromise promise = (RPromise) evaledArg;
-                evaledArgs[fi] = promise.evaluate(frame, promiseProfile);
+                evaledArgs[fi] = promiseHelper.evaluate(frame, promise);
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getNames());

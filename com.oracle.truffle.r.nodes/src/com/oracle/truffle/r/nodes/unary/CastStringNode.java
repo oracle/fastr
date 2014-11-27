@@ -86,6 +86,7 @@ public abstract class CastStringNode extends CastNode {
             sdata[i] = elementFunction.apply(i);
         }
         RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }

@@ -103,6 +103,7 @@ public abstract class CastComplexNode extends CastNode {
             seenNA = seenNA || naProfile.isNA(complexValue);
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
