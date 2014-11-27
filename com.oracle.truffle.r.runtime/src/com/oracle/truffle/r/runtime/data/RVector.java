@@ -254,6 +254,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         setNames(newNames, null);
     }
 
+    @TruffleBoundary
     public final void setNames(Object newNames, SourceSection sourceSection) {
         if (attributes != null && (newNames == null || newNames == RNull.instance)) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
@@ -286,6 +287,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         setDimNames(newDimNames, null);
     }
 
+    @TruffleBoundary
     public final void setDimNames(RList newDimNames, SourceSection sourceSection) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);

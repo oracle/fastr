@@ -1669,11 +1669,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
-        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_f44ee9a6ea3efb3dd3af1c314ae8b266() {
         assertEval("{ (function() sys.call())() }");
     }

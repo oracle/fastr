@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -125,14 +126,19 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
+    void setEnv(REnvironment env) {
+        this.env = env;
+    }
+
     /**
      * Runtime component of the package initialization process.
      */
     public void loadSources(MaterializedFrame frame, REnvironment envForFrame) {
-        this.env = envForFrame;
-        for (RBuiltinFactory factory : builtins.values()) {
-            if (factory.getPackage() == this) {
-                factory.setEnv(env);
+        if (!FastROptions.BindBuiltinNames.getValue()) {
+            for (RBuiltinFactory factory : builtins.values()) {
+                if (factory.getPackage() == this) {
+                    factory.setEnv(env);
+                }
             }
         }
         ArrayList<Component> sources = rSources.get(getName());

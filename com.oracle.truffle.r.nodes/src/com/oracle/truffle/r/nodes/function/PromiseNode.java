@@ -31,11 +31,11 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
@@ -52,7 +52,6 @@ public class PromiseNode extends RNode {
      */
     protected final RPromiseFactory factory;
 
-    protected final PromiseProfile promiseProfile = new PromiseProfile();
     protected final ConditionProfile isDefaultArgProfile = ConditionProfile.createBinaryProfile();
 
     /**
@@ -120,7 +119,8 @@ public class PromiseNode extends RNode {
      */
     private static final class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
+        @Child private PromiseHelperNode promiseHelper;
+        @Child private PromiseCheckHelperNode promiseCheckHelper;
 
         private final BranchProfile isMissingProfile = BranchProfile.create();
         private final BranchProfile isVarArgProfile = BranchProfile.create();
@@ -142,18 +142,26 @@ public class PromiseNode extends RNode {
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
                 }
-                if (promiseExpressionCache == null) {
+                if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
+                    promiseHelper = insert(new PromiseHelperNode());
                 }
                 RPromise promise = factory.createPromiseDefault();
-                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
+                return promiseHelper.evaluate(frame, promise);
             } else if (obj instanceof RArgsValuesAndNames) {
                 isVarArgProfile.enter();
-                return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
+                if (promiseCheckHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseCheckHelper = insert(new PromiseCheckHelperNode());
+                }
+                return promiseCheckHelper.checkEvaluateArgs(frame, (RArgsValuesAndNames) obj);
             } else {
                 checkPromiseProfile.enter();
-                return RPromise.checkEvaluate(frame, obj, promiseProfile);
+                if (promiseCheckHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseCheckHelper = insert(new PromiseCheckHelperNode());
+                }
+                return promiseCheckHelper.checkEvaluate(frame, obj);
             }
         }
     }
@@ -189,8 +197,6 @@ public class PromiseNode extends RNode {
         private final RPromise promise;
         @CompilationFinal private boolean isEvaluated = false;
 
-        private final PromiseProfile promiseProfile = new PromiseProfile();
-
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
         }
@@ -201,8 +207,8 @@ public class PromiseNode extends RNode {
             // the correct frame anyway
             if (!isEvaluated) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                Object result = promise.evaluate(frame, promiseProfile);
-                isEvaluated = promise.isEvaluated(promiseProfile);
+                Object result = PromiseHelperNode.evaluateSlowPath(frame, promise);
+                isEvaluated = promise.isEvaluated();
                 return result;
             }
 
@@ -279,7 +285,7 @@ public class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
         @CompilationFinal protected final String[] names;
 
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
         public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
@@ -310,12 +316,12 @@ public class PromiseNode extends RNode {
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
                     for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index] = RPromise.checkEvaluate(frame, varargValues[j], promiseProfile);
+                        evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
                         evaluatedNames[index] = argsValuesAndNames.getNames()[j];
                         index++;
                     }
                 } else {
-                    evaluatedArgs[index++] = RPromise.checkEvaluate(frame, argValue, promiseProfile);
+                    evaluatedArgs[index++] = promiseCheckHelper.checkEvaluate(frame, argValue);
                 }
             }
             if (evaluatedArgs.length == 0) {

@@ -13689,6 +13689,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testScan_b8f3b1d9a56e8007f88901ad2eb60b2b() {
+        assertEval("{ con<-textConnection(c(\"foo faz\", \"\\\"bar\\\" \\\"baz\\\"\")); scan(con, what=list(\"\", \"\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_c3fa154225600cf3eb4f22771ad5faf4() {
+        assertEval("{ con<-textConnection(c(\"foo faz\", \"bar \\\"baz\\\"\")); scan(con, what=list(\"\", \"\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testScan_18238bac432cdfe34e2933d2a5ede19f() {
+        assertEval("{ con<-textConnection(c(\"foo, faz\", \"bar, baz\")); scan(con, what=list(\"\", \"\"), sep=\",\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testScan_1a9f4a5c02250dbe595746a1b0656d70() {
         assertEvalError("{ con<-textConnection(c(\"HEADER\", \"7 2 3\", \"4 5 42\")); scan(con, what = list(\"\",\"\",\"\"), multi.line=FALSE) }");
     }
@@ -15104,8 +15119,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
-        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
+    public void TestSimpleBuiltins_testSwitch_13cd706e2bd1788c59598e6bfc323ca5() {
+        assertEval("{ answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_d4faea251b8a58212027618ddf8607ae() {
+        assertEval("{ x <- \"<\"; v <- switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE); v }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_097323ef6ceeb6c2265f2899249c7836() {
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_ee2f25f8f83e08a229c342819daf69b5() {
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
     }
 
     @Test

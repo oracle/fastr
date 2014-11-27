@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -114,8 +113,7 @@ public final class RPromise extends RLanguageRep {
 
     /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
-     * {@link #setUnderEvaluation(boolean)} and can by checked via
-     * {@link #isUnderEvaluation(PromiseProfile)}.
+     * {@link #setUnderEvaluation(boolean)} and can by checked via {@link #isUnderEvaluation()}.
      */
     private boolean underEvaluation = false;
 
@@ -144,104 +142,6 @@ public final class RPromise extends RLanguageRep {
         return new RPromise(evalPolicy, type, execFrame, closure);
     }
 
-    /**
-     * This class contains a profile of a specific promise evaluation site, i.e., a specific point
-     * in the AST where promises are inspected.
-     *
-     * This is useful to keep the amount of code included in Truffle compilation for each promise
-     * operation to a minimum.
-     */
-    public static final class PromiseProfile {
-        private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile underEvaluationProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isFrameEnvProfile = ConditionProfile.createBinaryProfile();
-
-        private final ConditionProfile isInlinedProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
-
-        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
-    }
-
-    public boolean isInlined(PromiseProfile profile) {
-        return profile.isInlinedProfile.profile(evalPolicy == EvalPolicy.INLINED);
-    }
-
-    /**
-     * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
-     */
-    public boolean isDefault(PromiseProfile profile) {
-        return profile.isDefaultProfile.profile(type == PromiseType.ARG_DEFAULT);
-    }
-
-    public boolean isNonArgument() {
-        return type == PromiseType.NO_ARG;
-    }
-
-    public boolean isNullFrame(PromiseProfile profile) {
-        return profile.isFrameEnvProfile.profile(execFrame == null);
-    }
-
-    public boolean isEvaluated(PromiseProfile profile) {
-        return profile.isEvaluatedProfile.profile(isEvaluated);
-    }
-
-    /**
-     * Evaluates this promise. If it has already been evaluated ({@link #isEvaluated()}),
-     * {@link #getValue()} is returned.
-     *
-     * @param frame The {@link VirtualFrame} in which the evaluation of this promise is forced
-     * @return The value this promise resolves to
-     */
-    public Object evaluate(VirtualFrame frame, PromiseProfile profile) {
-        CompilerAsserts.compilationConstant(profile);
-        if (isEvaluated(profile)) {
-            return value;
-        }
-
-        // Check for dependency cycle
-        if (isUnderEvaluation(profile)) {
-            throw RError.error(RError.Message.PROMISE_CYCLE);
-        }
-
-        Object newValue;
-        try {
-            underEvaluation = true;
-
-            // Evaluate this promise's value!
-            // Performance: We can use frame directly
-            if (!isNullFrame(profile) && !isInOriginFrame(frame, profile)) {
-                SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
-                newValue = doEvalArgument(callSrc);
-            } else {
-                assert isInOriginFrame(frame, profile);
-                newValue = doEvalArgument(frame.materialize());
-            }
-
-            setValue(newValue, profile);
-        } finally {
-            underEvaluation = false;
-        }
-        return newValue;
-    }
-
-    /**
-     * Used in case the {@link RPromise} is evaluated outside.
-     *
-     * @param newValue
-     */
-    public void setValue(Object newValue, PromiseProfile profile) {
-        Object profiledValue = profile.valueProfile.profile(newValue);
-        this.value = profiledValue;
-        this.isEvaluated = true;
-
-        // TODO Does this apply to other values, too?
-        if (profiledValue instanceof RShareable) {
-            // set NAMED = 2
-            ((RShareable) profiledValue).makeShared();
-        }
-    }
-
     @TruffleBoundary
     protected Object doEvalArgument(SourceSection callSrc) {
         assert execFrame != null;
@@ -252,64 +152,42 @@ public final class RPromise extends RLanguageRep {
         return RContext.getEngine().evalPromise(this, frame);
     }
 
+    public boolean isNonArgument() {
+        return type == PromiseType.NO_ARG;
+    }
+
+    public boolean isInlined() {
+        return evalPolicy == EvalPolicy.INLINED;
+    }
+
     /**
-     * This method is necessary, as we have to create {@link RPromise}s before the actual function
-     * call, but the callee frame and environment get created _after_ the call happened. This update
-     * has to take place in AccessArgumentNode, just before arguments get stuffed into the fresh
-     * environment for the function. Whether a {@link RPromise} needs one is determined by
-     * {@link #needsCalleeFrame(PromiseProfile)}!
+     * @return The state of the {@link #underEvaluation} flag.
+     */
+    public boolean isUnderEvaluation() {
+        return underEvaluation;
+    }
+
+    /**
+     * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
+     */
+    public boolean isDefault() {
+        return type == PromiseType.ARG_DEFAULT;
+    }
+
+    /**
+     * Used in case the {@link RPromise} is evaluated outside.
      *
-     * @param newFrame The REnvironment this promise is to be evaluated in
+     * @param newValue
      */
-    public void updateFrame(MaterializedFrame newFrame, PromiseProfile profile) {
-        assert type == PromiseType.ARG_DEFAULT;
-        if (isNullFrame(profile) && !isEvaluated(profile)) {
-            execFrame = newFrame;
-        }
-    }
+    public void setValue(Object newValue) {
+        this.value = newValue;
+        this.isEvaluated = true;
 
-    /**
-     * @param obj
-     * @param profile
-     * @return If obj is a {@link RPromise}, it is evaluated and its result returned
-     */
-    public static Object checkEvaluate(VirtualFrame frame, Object obj, PromiseProfile profile) {
-        if (obj instanceof RPromise) {
-            return ((RPromise) obj).evaluate(frame, profile);
+        // TODO Does this apply to other values, too?
+        if (newValue instanceof RShareable) {
+            // set NAMED = 2
+            ((RShareable) newValue).makeShared();
         }
-        return obj;
-    }
-
-    /**
-     * Only to be called from AccessArgumentNode, and in combination with
-     * {@link #updateFrame(MaterializedFrame,PromiseProfile)}!
-     *
-     * @return Whether this promise needs a callee environment set (see
-     *         {@link #updateFrame(MaterializedFrame,PromiseProfile)})
-     */
-    public boolean needsCalleeFrame(PromiseProfile profile) {
-        return !isInlined(profile) && isDefault(profile) && isNullFrame(profile) && !isEvaluated(profile);
-    }
-
-    /**
-     * @param frame
-     * @param profile
-     * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
-     *         directly inside the AST.
-     */
-    public boolean isInOriginFrame(VirtualFrame frame, PromiseProfile profile) {
-        if (isInlined(profile)) {
-            return true;
-        }
-
-        if (isDefault(profile) && isNullFrame(profile)) {
-            return true;
-        }
-
-        if (frame == null) {
-            return false;
-        }
-        return profile.isFrameForEnvProfile.profile(frame == execFrame);
     }
 
     /**
@@ -351,19 +229,32 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
+     * @param frame
+     * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
+     *         directly inside the AST.
+     */
+    public boolean isInOriginFrame(VirtualFrame frame) {
+        if (isInlined()) {
+            return true;
+        }
+
+        if (isDefault() && getFrame() == null) {
+            return true;
+        }
+
+        if (frame == null) {
+            return false;
+        }
+        return frame == getFrame();
+    }
+
+    /**
      * Used to manipulate {@link #underEvaluation}.
      *
      * @param underEvaluation The new value to set
      */
     public void setUnderEvaluation(boolean underEvaluation) {
         this.underEvaluation = underEvaluation;
-    }
-
-    /**
-     * @return The state of the {@link #underEvaluation} flag.
-     */
-    public boolean isUnderEvaluation(PromiseProfile profile) {
-        return profile.underEvaluationProfile.profile(underEvaluation);
     }
 
     @Override
@@ -489,5 +380,9 @@ public final class RPromise extends RLanguageRep {
         public Object getExpr() {
             return expr;
         }
+    }
+
+    public void setFrame(MaterializedFrame newFrame) {
+        execFrame = newFrame;
     }
 }

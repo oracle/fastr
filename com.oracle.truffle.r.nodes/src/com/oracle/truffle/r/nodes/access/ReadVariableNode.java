@@ -28,7 +28,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -41,18 +40,18 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariab
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 @CreateWrapper
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
 
-    protected final PromiseProfile promiseProfile = new PromiseProfile();
+    @Child protected PromiseHelperNode promiseHelper;
+
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
 
@@ -162,13 +161,17 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
         if (isPromiseProfile.profile(obj instanceof RPromise)) {
             RPromise promise = (RPromise) obj;
-            if (!promise.isEvaluated(promiseProfile)) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            if (!promiseHelper.isEvaluated(promise)) {
                 if (!forcePromise) {
                     // since we do not know what type the evaluates to, it may match.
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    obj = promise.evaluate(frame, promiseProfile);
+                    obj = promiseHelper.evaluate(frame, promise);
                 }
             } else {
                 obj = promise.getValue();
@@ -212,56 +215,21 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     @NodeField(name = "name", type = String.class)
     public abstract static class ResolvePromiseNode extends ReadVariableNode {
 
-        private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
-
         public abstract ReadVariableNode getReadNode();
 
         @Override
         public abstract String getName();
 
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache;
-        @Child private InlineCacheNode<Frame, Closure> promiseClosureCache;
-
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
-            if (promise.isEvaluated(promiseProfile)) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            if (promiseHelper.isEvaluated(promise)) {
                 return promise.getValue();
             }
-
-            if (promise.isInOriginFrame(frame, promiseProfile)) {
-                if (promiseExpressionCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseExpressionCache = insert(InlineCacheNode.createExpression(3));
-                }
-                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
-            }
-
-            // Check for dependency cycle
-            if (promise.isUnderEvaluation(promiseProfile)) {
-                throw RError.error(RError.Message.PROMISE_CYCLE);
-            }
-
-            Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
-            assert promiseFrame != null;
-            SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
-            Object newValue;
-            try {
-                promise.setUnderEvaluation(true);
-                RArguments.setCallSourceSection(promiseFrame, RArguments.getCallSourceSection(frame));
-
-                if (promiseClosureCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
-                }
-
-                newValue = promiseClosureCache.execute(promiseFrame, promise.getClosure());
-
-                promise.setValue(newValue, promiseProfile);
-            } finally {
-                RArguments.setCallSourceSection(promiseFrame, oldCallSource);
-                promise.setUnderEvaluation(false);
-            }
-            return newValue;
+            return promiseHelper.evaluate(frame, promise);
         }
 
         @Specialization
