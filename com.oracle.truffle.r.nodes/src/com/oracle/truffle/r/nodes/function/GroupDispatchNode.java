@@ -20,9 +20,9 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 import edu.umd.cs.findbugs.annotations.*;
@@ -32,6 +32,7 @@ public class GroupDispatchNode extends S3DispatchNode {
     @Child private WriteVariableNode wvnGroup;
     @Child protected CallArgumentsNode callArgsNode;
     @Child private ReadVariableNode builtInNode;
+    @Child private PromiseCheckHelperNode promiseCheckHelper;
     @CompilationFinal private final String groupName;
     protected boolean writeGroup;
     private boolean isEnvSet;
@@ -178,8 +179,6 @@ public class GroupDispatchNode extends S3DispatchNode {
         return null;
     }
 
-    private final PromiseProfile promiseProfile = new PromiseProfile();
-
     @TruffleBoundary
     private void initFunCall(VirtualFrame frame, RFunction func) {
         // avoid re-evaluating arguments.
@@ -187,16 +186,20 @@ public class GroupDispatchNode extends S3DispatchNode {
             RNode[] argArray = new RNode[callArgsNode.getArguments().length];
             System.arraycopy(callArgsNode.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
             int index = 0;
+            if (promiseCheckHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseCheckHelper = insert(new PromiseCheckHelperNode());
+            }
             for (int i = 0; i < evaluatedArgs.length; ++i) {
                 if (evaluatedArgs[i] != null) {
                     if (evaluatedArgs[i] instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) evaluatedArgs[i];
                         if (argsValuesAndNames.length() == 1) {
-                            argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[0], promiseProfile));
+                            argArray[index++] = ConstantNode.create(promiseCheckHelper.checkEvaluate(frame, argsValuesAndNames.getValues()[0]));
                         } else {
                             argArray = new RNode[argArray.length + argsValuesAndNames.length() - 1];
                             for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                                argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[j], promiseProfile));
+                                argArray[index++] = ConstantNode.create(promiseCheckHelper.checkEvaluate(frame, argsValuesAndNames.getValues()[j]));
                             }
                         }
                     } else {

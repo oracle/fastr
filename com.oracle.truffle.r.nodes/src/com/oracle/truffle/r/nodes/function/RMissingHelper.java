@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -113,8 +112,6 @@ public class RMissingHelper {
         }
     }
 
-    public static final PromiseProfile globalMissingPromiseProfile = new PromiseProfile();
-
     /**
      * @param promise The {@link RPromise} which is checked whether it contains a
      *            {@link #isMissingArgument(Frame, String)}.
@@ -138,7 +135,7 @@ public class RMissingHelper {
                 ReadVariableNode rvn = (ReadVariableNode) exprObj;
 
                 // Check: If there is a cycle, return true. (This is done like in GNU R)
-                if (promise.isUnderEvaluation(globalMissingPromiseProfile)) {
+                if (promise.isUnderEvaluation()) {
                     return true;
                 }
                 try {

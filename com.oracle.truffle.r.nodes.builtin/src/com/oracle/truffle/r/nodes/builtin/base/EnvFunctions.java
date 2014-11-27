@@ -33,9 +33,9 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeFactory;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -383,7 +383,7 @@ public class EnvFunctions {
         protected abstract Object execute(VirtualFrame frame, Object o);
 
         @Child private CopyNode recursiveCopy;
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseHelperNode promiseHelper;
 
         private Object recursiveCopy(VirtualFrame frame, Object operand) {
             if (recursiveCopy == null) {
@@ -425,7 +425,11 @@ public class EnvFunctions {
 
         @Specialization
         Object copy(VirtualFrame frame, RPromise promise) {
-            return recursiveCopy(frame, promise.evaluate(frame, promiseProfile));
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return recursiveCopy(frame, promiseHelper.evaluate(frame, promise));
         }
 
         @Fallback

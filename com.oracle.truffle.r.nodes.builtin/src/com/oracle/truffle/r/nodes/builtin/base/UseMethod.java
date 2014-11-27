@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -22,9 +22,9 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 @RBuiltin(name = "UseMethod", kind = PRIMITIVE, parameterNames = {"generic", "object"})
 public abstract class UseMethod extends RBuiltinNode {
@@ -55,9 +55,8 @@ public abstract class UseMethod extends RBuiltinNode {
     private abstract static class UseMethodNode extends RNode {
 
         @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
+        @Child private PromiseCheckHelperNode promiseCheckHelper;
         @CompilationFinal protected final String[] suppliedArgsNames;
-
-        private final PromiseProfile promiseProfile = new PromiseProfile();
 
         public UseMethodNode(String[] suppliedArgsNames) {
             this.suppliedArgsNames = suppliedArgsNames;
@@ -83,8 +82,11 @@ public abstract class UseMethod extends RBuiltinNode {
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
                 enclosingArg = varArgs.getValues()[0];
             }
-
-            enclosingArg = RPromise.checkEvaluate(frame, enclosingArg, promiseProfile);
+            if (promiseCheckHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseCheckHelper = insert(new PromiseCheckHelperNode());
+            }
+            enclosingArg = promiseCheckHelper.checkEvaluate(frame, enclosingArg);
             return enclosingArg;
         }
     }

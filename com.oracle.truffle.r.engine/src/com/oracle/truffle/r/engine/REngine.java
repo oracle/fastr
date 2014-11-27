@@ -39,8 +39,8 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.graphics.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.graphics.core.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -437,13 +436,11 @@ public final class REngine implements RContext.Engine {
         return true;
     }
 
-    private static final PromiseProfile globalPromiseProfile = new PromiseProfile();
-
     @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
-            Object resultValue = RPromise.checkEvaluate(null, result, globalPromiseProfile);
+            Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
             RFunction function = (RFunction) REnvironment.baseEnv().get("print");
             function.getTarget().call(RArguments.create(function, null, 1, new Object[]{resultValue, RMissing.instance}));
         }

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -30,7 +31,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 /**
  * Temporary substitutions that just evaluate the expression for package loading and assume no
@@ -40,9 +40,7 @@ public class TryFunctions {
     @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "silent"}, nonEvalArgs = {0})
     public abstract static class Try extends RBuiltinNode {
 
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
-
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseHelperNode promiseHelper;
 
         @Override
         public RNode[] getParameterValues() {
@@ -52,7 +50,11 @@ public class TryFunctions {
         @Specialization
         protected Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
-            return PromiseHelper.evaluate(frame, promiseExpressionCache, expr, promiseProfile);
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper.evaluate(frame, expr);
         }
     }
 
@@ -60,9 +62,7 @@ public class TryFunctions {
     @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "..."}, nonEvalArgs = {-1})
     public abstract static class TryCatch extends RBuiltinNode {
 
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
-
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseHelperNode promiseHelper;
 
         @Override
         public RNode[] getParameterValues() {
@@ -78,7 +78,11 @@ public class TryFunctions {
         @Specialization
         protected Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
             controlVisibility();
-            return PromiseHelper.evaluate(frame, promiseExpressionCache, expr, promiseProfile);
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper.evaluate(frame, expr);
         }
     }
 }

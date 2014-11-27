@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -43,7 +42,7 @@ public abstract class DoCall extends RBuiltinNode {
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
     @Child private Get getNode;
 
-    private final PromiseProfile promiseProfile = new PromiseProfile();
+    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     @Specialization(guards = "lengthOne")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
@@ -64,7 +63,7 @@ public abstract class DoCall extends RBuiltinNode {
         Object n = argsAsList.getNames();
         String[] argNames = n == RNull.instance ? null : ((RStringVector) n).getDataNonShared();
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseProfile);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
         Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         return callCache.execute(frame, func.getTarget(), callArgs);
     }
