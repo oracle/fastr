@@ -14,14 +14,7 @@ package com.oracle.truffle.r.nodes.runtime;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.WriteVariableNode.UnresolvedWriteLocalVariableNode;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.binary.ColonNode.ColonCastNode;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,124 +27,26 @@ import com.oracle.truffle.r.runtime.data.*;
  * specification</a>: "To avoid the risk of a source attribute out of sync with the actual function
  * definition, the source attribute of a function will never be deparsed as an attribute."
  *
- * It would probably be a good idea to define a {@code deparse} method on {@link RNode} and move the
- * deparsing logic to the node itself.
- *
  * Parts transcribed from GnuR deparse.c
  */
 public class RASTDeparse {
     public static void deparse(State state, RLanguage rl) {
-        Node node = (Node) rl.getRep();
-        deparseNode(state, node);
+        RSyntaxNode node = (RSyntaxNode) rl.getRep();
+        node.deparse(state);
     }
 
     public static void deparse(State state, RFunction f) {
-        deparseNode(state, f.getTarget().getRootNode());
+        ((RSyntaxNode) f.getRootNode()).deparse(state);
     }
 
-    /**
-     * Deparse an AST node.
-     */
-    private static void deparseNode(State state, Node fnode) {
-        // This would me much easier if everything really was a function
-        Node node = RASTUtils.unwrap(fnode);
-        if (node instanceof UnresolvedWriteLocalVariableNode) {
-            UnresolvedWriteLocalVariableNode wvn = (UnresolvedWriteLocalVariableNode) node;
-            state.append(wvn.getName());
-            state.append(" <- ");
-            deparseNodeOrValue(state, wvn.getRhs());
-        } else if (node instanceof RCallNode || node instanceof DispatchedCallNode) {
-            Object fname = RASTUtils.findFunctionName(node, false);
-            Func func = isInfixOperator(fname);
-            if (func != null) {
-                deparseInfixOperator(state, node, func);
-            } else {
-                RDeparse.deparse2buff(state, fname);
-                state.append('(');
-                CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
-                String[] argNames = args.getNames();
-                RNode[] argValues = args.getArguments();
-                for (int i = 0; i < argValues.length; i++) {
-                    if (argNames[i] != null) {
-                        state.append(argNames[i]);
-                        state.append(" = ");
-                    }
-                    deparseNodeOrValue(state, argValues[i]);
-                    if (i == argValues.length - 1) {
-                        continue;
-                    }
-                    state.append(", ");
-                }
-                state.append(')');
-            }
-        } else if (node instanceof IfNode) {
-            /*
-             * We have a problem with { }, since they do not exist as AST nodes (functions), so we
-             * insert them routinely
-             */
-            IfNode ifNode = (IfNode) node;
-            state.append("if (");
-            deparseNodeOrValue(state, ifNode.getCondition());
-            state.append(") {");
-            state.writeline();
-            state.incIndent();
-            deparseNodeOrValue(state, ifNode.getThenPart());
-            state.writeline();
-            state.decIndent();
-            state.append('}');
-            RNode elsePart = ifNode.getElsePart();
-            if (elsePart != null) {
-                state.append(" else {");
-                state.writeline();
-                state.incIndent();
-                deparseNodeOrValue(state, elsePart);
-                state.writeline();
-                state.decIndent();
-                state.append('}');
-            }
-        } else if (node instanceof ConvertBooleanNode) {
-            // if condition
-            deparseNodeOrValue(state, RASTUtils.getChild(node, 0));
-        } else if (node instanceof ColonNode) {
-            // infix
-            deparseNodeOrValue(state, RASTUtils.getChild(node, 0));
-            state.append(':');
-            deparseNodeOrValue(state, RASTUtils.getChild(node, 1));
-        } else if (node instanceof ColonCastNode) {
-            deparseNodeOrValue(state, RASTUtils.getChild(node, 0));
-// } else if (node instanceof FunctionDefinitionNode) {
-// deparseFunctionDefinition(state, (FunctionDefinitionNode) node);
-        } else {
-            if (FastROptions.Debug.getValue()) {
-                Utils.debug("deparse: node type " + node.getClass().getSimpleName() + " unhandled, using source");
-            }
-            SourceSection ss = node.getSourceSection();
-            if (ss == null) {
-                state.append("<no source available>");
-            } else {
-                state.append(ss.getCode());
-            }
-
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static void deparseFunctionDefinition(State state, FunctionDefinitionNode node) {
-        // TODO
-    }
-
-    private static void deparseNodeOrValue(State state, Node arg) {
-        Object value = unwrapValue(arg);
-        if (value instanceof RNode) {
-            deparseNode(state, (RNode) value);
-        } else {
-            RDeparse.deparse2buff(state, value);
-        }
-    }
-
-    private static Func isInfixOperator(Object fname) {
+    public static Func isInfixOperator(Object fname) {
         if (fname instanceof RSymbol) {
-            return RDeparse.getFunc(((RSymbol) fname).getName());
+            Func func = RDeparse.getFunc(((RSymbol) fname).getName());
+            if (func == null) {
+                return null;
+            } else {
+                return func.info.kind == PP.RETURN ? null : func;
+            }
         }
         return null;
     }
@@ -165,7 +60,7 @@ public class RASTDeparse {
         }
     }
 
-    private static void deparseInfixOperator(RDeparse.State state, Node node, RDeparse.Func func) {
+    public static void deparseInfixOperator(RDeparse.State state, Node node, RDeparse.Func func) {
         CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
         RNode[] argValues = args.getArguments();
         PP kind = func.info.kind;
@@ -175,7 +70,7 @@ public class RASTDeparse {
         switch (kind) {
             case UNARY:
                 state.append(func.op);
-                deparseNodeOrValue(state, argValues[0]);
+                argValues[0].deparse(state);
                 break;
 
             case BINARY:
@@ -185,7 +80,7 @@ public class RASTDeparse {
                 if (parens) {
                     state.append('(');
                 }
-                deparseNodeOrValue(state, argValues[0]);
+                argValues[0].deparse(state);
                 if (parens) {
                     state.append(')');
                 }
@@ -196,7 +91,7 @@ public class RASTDeparse {
                 if (parens) {
                     state.append('(');
                 }
-                deparseNodeOrValue(state, argValues[1]);
+                argValues[1].deparse(state);
                 if (parens) {
                     state.append(')');
                 }
@@ -244,17 +139,6 @@ public class RASTDeparse {
             // TODO complex
         }
         return false;
-    }
-
-    private static Object unwrapValue(Node node) {
-        Node unode = RASTUtils.unwrap(node);
-        if (unode instanceof ConstantNode) {
-            return ((ConstantNode) unode).getValue();
-        } else if (unode instanceof ReadVariableNode) {
-            return RDataFactory.createSymbol(((ReadVariableNode) unode).getSymbol().getName());
-        } else {
-            return unode;
-        }
     }
 
 }

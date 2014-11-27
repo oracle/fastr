@@ -984,6 +984,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testNArgsIgnore_ee082d552ee9efa22803929c01c73692() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testOperatorsIgnore_dd8820aada824b55da8fce1b2069a4a8() {
         assertEval("{ `%*%`(3,5) }");
     }
@@ -1664,11 +1669,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
-        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_f44ee9a6ea3efb3dd3af1c314ae8b266() {
         assertEval("{ (function() sys.call())() }");
     }
@@ -1709,17 +1709,12 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testTapply_627b7381fd149984429a34289adeba8f() {
+    public void TestSimpleBuiltins_testTapplyIgnore_627b7381fd149984429a34289adeba8f() {
         assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testTapply_8a748021dace19980a947a07fde93a96() {
-        assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testTapply_56d04575049cc5fb09d7e8f4abbc6879() {
+    public void TestSimpleBuiltins_testTapplyIgnore_56d04575049cc5fb09d7e8f4abbc6879() {
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
     }
 
@@ -1836,6 +1831,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleComparison_testScalarsNAAsFunctionIgnore_c803d5d2a05362ff97b2237e3502ac08() {
         assertEval("{ f <- function(a,b) { a > b } ; f(1,2) ; f(1L,2) ; f(\"hello\"[2], \"hi\") }");
+    }
+
+    @Ignore
+    public void TestSimpleDataFrames_testAsDataFrameIgnore_0f990604bed45f9a868ddd4f5616f9ee() {
+        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
     }
 
     @Ignore

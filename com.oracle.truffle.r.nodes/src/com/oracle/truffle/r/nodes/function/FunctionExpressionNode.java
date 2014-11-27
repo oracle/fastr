@@ -25,8 +25,10 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class FunctionExpressionNode extends RNode {
 
@@ -68,7 +70,7 @@ public abstract class FunctionExpressionNode extends RNode {
     public static final class DynamicFunctionExpressionNode extends FunctionExpressionNode {
 
         private final RootCallTarget callTarget;
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         public DynamicFunctionExpressionNode(RootCallTarget callTarget) {
             this.callTarget = callTarget;
@@ -78,12 +80,28 @@ public abstract class FunctionExpressionNode extends RNode {
         public RFunction executeFunction(VirtualFrame frame) {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             MaterializedFrame matFrame = frame.materialize();
-            RPromise.deoptimizeFrame(matFrame, promiseProfile);
+            deoptFrameNode.deoptimizeFrame(matFrame);
             return new RFunction("", callTarget, matFrame);
         }
 
         public RootCallTarget getCallTarget() {
             return callTarget;
+        }
+
+        @Override
+        public boolean isSyntax() {
+            return true;
+        }
+
+        @Override
+        public void deparse(State state) {
+            ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
+        }
+
+        @Override
+        public RNode substitute(REnvironment env) {
+            FunctionDefinitionNode fdn = ((FunctionDefinitionNode) callTarget.getRootNode()).substituteFDN(env);
+            return new DynamicFunctionExpressionNode(Truffle.getRuntime().createCallTarget(fdn));
         }
     }
 }

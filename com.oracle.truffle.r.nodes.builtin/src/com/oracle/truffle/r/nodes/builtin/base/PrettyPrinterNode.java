@@ -222,7 +222,6 @@ public abstract class PrettyPrinterNode extends RNode {
             StringBuffer sb = new StringBuffer();
             sb.append("function (");
             for (int i = 0; i < formalNames.length; i++) {
-                String name = formalNames[i];
                 RNode defaultArg = formals.getDefaultArgOrNull(i);
                 sb.append(formalNames[i]);
                 if (defaultArg != null) {
@@ -422,7 +421,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             return result;
         } else {
-            boolean printNamesHeader = (!vector.hasDimensions() && vector.getNames() != null && vector.getNames() != RNull.instance);
+            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames() != null && vector.getNames() != RNull.instance);
             RStringVector names = printNamesHeader ? (RStringVector) vector.getNames() : null;
             int maxWidth = 0;
             for (String s : values) {

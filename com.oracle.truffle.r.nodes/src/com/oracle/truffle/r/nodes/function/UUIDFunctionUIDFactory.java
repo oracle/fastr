@@ -20,26 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import java.util.UUID;
 
-@RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = -1)
-public abstract class WithVisible extends EvalFunctions.FastPathEvalAdapter {
-    private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
+public class UUIDFunctionUIDFactory extends FunctionUIDFactory {
 
-    @Specialization
-    protected RList withVisible(VirtualFrame frame, RPromise expr) {
-        controlVisibility();
-        Object result = doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep()));
-        Object[] data = new Object[]{result, RRuntime.asLogical(RContext.isVisible())};
-        // Visibility is changed by the evaluation (else this code would not work),
-        // so we have to force it back on.
-        RContext.setVisible(true);
-        return RDataFactory.createList(data, LISTNAMES);
+    private static final class UUIDFunctionUID implements FunctionUID {
+
+        private final UUID uuid;
+
+        private UUIDFunctionUID(UUID uuid) {
+            this.uuid = uuid;
+        }
+
+        @Override
+        public int compareTo(FunctionUID o) {
+            return uuid.compareTo(((UUIDFunctionUID) o).uuid);
+        }
+
+    }
+
+    @Override
+    public FunctionUID createUID() {
+        return new UUIDFunctionUID(UUID.randomUUID());
     }
 
 }

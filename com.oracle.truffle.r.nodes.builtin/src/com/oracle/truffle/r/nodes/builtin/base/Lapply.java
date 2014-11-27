@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN", "..."})
 public abstract class Lapply extends RBuiltinNode {
 
-    public static final Object LAPPLY_VEC_ELEM_ID = new Object();
+    public static final String LAPPLY_VEC_ELEM_ID = new String("LAPPLY_VEC_ELEM_ID");
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 

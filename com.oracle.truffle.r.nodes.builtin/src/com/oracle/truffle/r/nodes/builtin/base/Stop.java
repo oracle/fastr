@@ -23,56 +23,23 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.RNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
-
-@RBuiltin(name = "stop", kind = SUBSTITUTE, parameterNames = {"message", "call.", "domain"})
-// TODO INTERNAL
+@RBuiltin(name = "stop", kind = RBuiltinKind.INTERNAL, parameterNames = {"call.", "message"})
 public abstract class Stop extends RBuiltinNode {
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RNull.instance)};
-    }
-
     @Specialization
-    @SuppressWarnings("unused")
-    protected Object stop(String msg, byte call, Object domain) {
+    protected Object stop(byte call, RStringVector msgVec) {
         controlVisibility();
+        assert msgVec.getLength() == 1;
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
-    }
-
-    @TruffleBoundary
-    private static String collapseStringVector(RStringVector v) {
-        if (v.getLength() == 0) {
-            return "";
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < v.getLength(); i++) {
-                sb.append(v.getDataAt(i));
-            }
-            return sb.toString();
-        }
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected Object stop(RStringVector msg, byte call, Object domain) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, collapseStringVector(msg));
+        throw RError.error(RRuntime.fromLogical(call) ? getEncapsulatingSourceSection() : null, RError.Message.GENERIC, msgVec.getDataAt(0));
     }
 
 }

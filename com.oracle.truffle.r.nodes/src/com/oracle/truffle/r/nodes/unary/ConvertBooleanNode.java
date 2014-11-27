@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
+@CreateWrapper
 public abstract class ConvertBooleanNode extends UnaryNode {
 
     private final NAProfile naProfile = NAProfile.create();
@@ -141,5 +144,10 @@ public abstract class ConvertBooleanNode extends UnaryNode {
             return (ConvertBooleanNode) node;
         }
         return ConvertBooleanNodeFactory.create(node);
+    }
+
+    @Override
+    public WrapperNode createWrapperNode(RNode node) {
+        return new ConvertBooleanNodeWrapper((ConvertBooleanNode) node);
     }
 }

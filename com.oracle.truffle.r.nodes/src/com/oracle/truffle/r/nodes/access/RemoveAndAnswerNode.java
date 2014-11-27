@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * perform checking; it is to be used for internal purposes. A sample use case is a
  * {@linkplain RTruffleVisitor#visit(Replacement) replacement}.
  */
-public abstract class RemoveAndAnswerNode extends RNode {
+public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
 
     public static RemoveAndAnswerNode create(String name) {
         return new RemoveAndAnswerUninitializedNode(name);

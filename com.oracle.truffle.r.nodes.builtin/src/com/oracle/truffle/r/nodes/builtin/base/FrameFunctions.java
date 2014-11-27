@@ -31,9 +31,9 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -176,7 +176,7 @@ public class FrameFunctions {
     public abstract static class SysFrame extends FrameHelper {
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -197,7 +197,7 @@ public class FrameFunctions {
             }
 
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
-            RPromise.deoptimizeFrame(result.getFrame(), promiseProfile);
+            deoptFrameNode.deoptimizeFrame(result.getFrame());
             return result;
         }
 

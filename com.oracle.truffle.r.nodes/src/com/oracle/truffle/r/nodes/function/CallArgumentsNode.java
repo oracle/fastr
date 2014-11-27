@@ -27,6 +27,8 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
@@ -34,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their {@link #getNames()}
@@ -44,13 +47,14 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
+@CreateWrapper
+public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
     @Child private ReadVariableNode varArgsSlotNode;
 
     /**
-     * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
-     * field contains the index of the symbol. Otherwise it is an empty list.
+     * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
+     * the index of the name. Otherwise it is an empty list.
      */
     @CompilationFinal private final Integer[] varArgsSymbolIndices;
 
@@ -110,7 +114,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                 if (arg instanceof ReadVariableNode) {
                     // Check for presence of "..." in the arguments
                     ReadVariableNode rvn = (ReadVariableNode) arg;
-                    if (rvn.getSymbol().isVarArg()) {
+                    if (ArgumentsTrait.isVarArg(rvn.getName())) {
                         varArgsSymbolIndices.add(i);
                     }
                 }
@@ -311,5 +315,68 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      */
     public boolean modeChangeForAll() {
         return modeChangeForAll;
+    }
+
+    @TruffleBoundary
+    @Override
+    public RNode substitute(REnvironment env) {
+        boolean changed = false;
+        RNode[] argNodesNew = new RNode[arguments.length];
+        int missingCount = 0;
+        int j = 0;
+        for (int i = 0; i < arguments.length; i++) {
+            RNode argNode = arguments[i];
+            RNode argNodeSubs = argNode.substitute(env);
+            if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
+                // in this case we remove the argument altogether, leave slot as null
+                missingCount++;
+                changed = true;
+            } else if (argNodeSubs instanceof RASTUtils.ExpandedDotsNode) {
+                // 2 or more
+                RASTUtils.ExpandedDotsNode expandedDotsNode = (RASTUtils.ExpandedDotsNode) argNodeSubs;
+                RNode[] argNodesNewer = new RNode[argNodesNew.length + expandedDotsNode.nodes.length - 1];
+                if (i > 0) {
+                    System.arraycopy(argNodesNew, 0, argNodesNewer, 0, j);
+                }
+                System.arraycopy(expandedDotsNode.nodes, 0, argNodesNewer, j, expandedDotsNode.nodes.length);
+                argNodesNew = argNodesNewer;
+                changed = true;
+                j += expandedDotsNode.nodes.length - 1;
+            } else {
+                argNodesNew[j] = argNodeSubs;
+                changed = changed || argNode != argNodeSubs;
+            }
+            j++;
+        }
+        if (!changed) {
+            return this;
+        } else {
+            if (missingCount > 0) {
+                // Strip out the Missing ... instances
+                RNode[] argNodesNewer = new RNode[argNodesNew.length - missingCount];
+                j = 0;
+                for (int i = 0; i < argNodesNew.length; i++) {
+                    RNode argNode = argNodesNew[i];
+                    if (argNode == null) {
+                        continue;
+                    }
+                    argNodesNewer[j++] = argNode;
+                }
+                argNodesNew = argNodesNewer;
+            }
+            return CallArgumentsNode.create(false, false, argNodesNew, names);
+        }
+
+    }
+
+    @Override
+    public ProbeNode.WrapperNode createWrapperNode(RNode node) {
+        return new CallArgumentsNodeWrapper((CallArgumentsNode) node);
+    }
+
+    protected CallArgumentsNode() {
+        this.varArgsSymbolIndices = null;
+        this.modeChange = false;
+        this.modeChangeForAll = false;
     }
 }

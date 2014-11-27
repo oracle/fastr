@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
@@ -59,6 +61,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     /**
      * @return {@link #arguments}
      */
+    @CreateWrapper
     public RNode[] getArguments() {
         return arguments;
     }
@@ -66,6 +69,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     /**
      * @return {@link #names}
      */
+    @CreateWrapper
     public String[] getNames() {
         return names;
     }
@@ -73,7 +77,40 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     /**
      * @return {@link #nameCount}
      */
+    @CreateWrapper
     public int getNameCount() {
         return nameCount;
     }
+
+    @Override
+    public void deparse(State state) {
+        state.append('(');
+        for (int i = 0; i < arguments.length; i++) {
+            RNode argument = arguments[i];
+            String name = names[i];
+            if (name != null) {
+                state.append(name);
+                state.append(" = ");
+            }
+            if (argument != null) {
+                // e.g. not f(, foo)
+                argument.deparse(state);
+            }
+            if (i != arguments.length - 1) {
+                state.append(", ");
+            }
+        }
+        state.append(')');
+
+    }
+
+    /**
+     * No-arg constructor for subclass wrapper.
+     */
+    protected ArgumentsNode() {
+        arguments = new RNode[0];
+        names = null;
+        nameCount = 0;
+    }
+
 }

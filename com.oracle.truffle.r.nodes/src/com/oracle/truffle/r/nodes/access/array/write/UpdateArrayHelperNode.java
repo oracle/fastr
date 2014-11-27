@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.Operator
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -54,6 +55,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private final NACheck namesNACheck = NACheck.create();
 
     protected abstract RNode getVector();
+
+    protected abstract RNode getPositions();
 
     protected abstract RNode getNewValue();
 
@@ -2504,5 +2507,16 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean emptyList(Object v, RNull value, int recLevel, int positions, RList vector) {
         return vector.getLength() == 0;
+    }
+
+    /**
+     * N.B. array updates are always part of a "replacement" so all that deparse does is handle the
+     * {@link #getPositions()}. See {@code SequenceNode.Replacement}.
+     */
+    @Override
+    public void deparse(State state) {
+        state.append(isSubset ? "[" : "[[");
+        getPositions().deparse(state);
+        state.append(isSubset ? "]" : "]]");
     }
 }

@@ -22,14 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
-public final class SequenceNode extends RNode {
+public class SequenceNode extends RNode {
 
-    @Children private final RNode[] sequence;
+    @Children protected final RNode[] sequence;
 
     public SequenceNode(RNode[] sequence) {
         this.sequence = sequence;
@@ -40,6 +43,40 @@ public final class SequenceNode extends RNode {
         assignSourceSection(src);
     }
 
+    /**
+     * Similar to {@link #ensureSequence} but for subclasses, where we have to extract any existing
+     * array.
+     *
+     * @param node
+     */
+    protected SequenceNode(RNode node) {
+        this(convert(node));
+    }
+
+    public RNode[] getSequence() {
+        return sequence;
+    }
+
+    /**
+     * Ensures that {@code node} is a {@link SequenceNode} by converting any other node to a single
+     * length sequence.
+     */
+    public static RNode ensureSequence(RNode node) {
+        if (node == null || node instanceof SequenceNode) {
+            return node;
+        } else {
+            return new SequenceNode(new RNode[]{node});
+        }
+    }
+
+    private static RNode[] convert(RNode node) {
+        if (node instanceof SequenceNode) {
+            return ((SequenceNode) node).sequence;
+        } else {
+            return new RNode[]{node};
+        }
+    }
+
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
@@ -48,6 +85,30 @@ public final class SequenceNode extends RNode {
             lastResult = sequence[i].execute(frame);
         }
         return lastResult;
+    }
+
+    @TruffleBoundary
+    @Override
+    public void deparse(State state) {
+        for (int i = 0; i < sequence.length; i++) {
+            state.mark();
+            sequence[i].deparse(state);
+            if (state.changed()) {
+                // not all nodes will produce output
+                state.writeline();
+                state.mark(); // in case last
+            }
+        }
+    }
+
+    @TruffleBoundary
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode[] sequenceSubs = new RNode[sequence.length];
+        for (int i = 0; i < sequence.length; i++) {
+            sequenceSubs[i] = sequence[i].substitute(env);
+        }
+        return new SequenceNode(sequenceSubs);
     }
 
 }

@@ -27,12 +27,11 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -40,6 +39,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class BrowserFunctions {
 
     private static final class HelperState {
+
         private final String text;
         private final Object condition;
 
@@ -52,7 +52,7 @@ public class BrowserFunctions {
     private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
     @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
-    public abstract static class Browser extends RInvisibleBuiltinNode {
+    public abstract static class BrowserNode extends RInvisibleBuiltinNode {
 
         @Override
         public RNode[] getParameterValues() {
@@ -66,7 +66,9 @@ public class BrowserFunctions {
             if (RRuntime.fromLogical(expr)) {
                 try {
                     helperState.add(new HelperState(text, condition));
-                    doBrowser(frame.materialize());
+                    MaterializedFrame mFrame = frame.materialize();
+                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", REnvironment.isGlobalEnvFrame(frame) ? "top level" : RArguments.getCallSourceSection(frame).getCode());
+                    Browser.interact(mFrame);
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }
@@ -74,68 +76,10 @@ public class BrowserFunctions {
             return RNull.instance;
         }
 
-        @TruffleBoundary
-        private static void doBrowser(MaterializedFrame frame) {
-            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-            REnvironment callerEnv = REnvironment.frameToEnvironment(frame.materialize());
-            ch.printf("Called from: %s%n", callerEnv == REnvironment.globalEnv() ? "top level" : RArguments.getFunction(frame).getTarget());
-            String savedPrompt = ch.getPrompt();
-            ch.setPrompt(browserPrompt());
-            try {
-                LW: while (true) {
-                    String input = ch.readLine();
-                    if (input.length() == 0) {
-                        RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");
-                        if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
-                            break;
-                        }
-                    } else {
-                        input = input.trim();
-                    }
-                    switch (input) {
-                        case "c":
-                        case "cont":
-                            break LW;
-
-                        case "s":
-                        case "f":
-                        case "n":
-                            throw RError.nyi(null, notImplemented(input));
-
-                        case "where": {
-                            int ix = RArguments.getDepth(frame);
-                            Frame stackFrame;
-                            while (ix >= 0 && (stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
-                                RFunction fun = RArguments.getFunction(stackFrame);
-                                if (fun != null) {
-                                    ch.printf("where %d: %s%n", ix, fun.getTarget());
-                                }
-                                ix--;
-                            }
-                            ch.println("");
-                            break;
-                        }
-
-                        default:
-                            RContext.getEngine().parseAndEval("<browser_input>", input, frame.materialize(), callerEnv, true, false);
-                            break;
-                    }
-                }
-            } finally {
-                ch.setPrompt(savedPrompt);
-            }
-        }
-
-        private static String browserPrompt() {
-            return "Browse[" + (helperState.size()) + "]> ";
-        }
-
-        private static String notImplemented(String command) {
-            return "browser command: '" + command + "'";
-        }
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(1)};
@@ -159,6 +103,7 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
+
         @Specialization
         @TruffleBoundary
         protected String browserText(int n) {
@@ -176,6 +121,7 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
+
         @Specialization
         @TruffleBoundary
         protected Object browserCondition(int n) {
@@ -193,6 +139,7 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
+
         @Specialization
         @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {

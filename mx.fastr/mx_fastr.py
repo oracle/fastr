@@ -32,10 +32,17 @@ _fastr_suite = None
 def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
-    os.environ['R_HOME'] = _fastr_suite.dir
-    _set_libpath()
-    # Set up path for Lapack libraries
-    vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    setREnvironment()
+    debugger, args = _check_debug(args)
+
+    if debugger:
+        if debugger != 'rrepl':
+            mx.abort("unknown debugger :" + debugger)
+        className = "com.oracle.truffle.r.repl.RREPLServer"
+        vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.repl")]
+    else:
+        vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.shell")]
+
     if runBench == False:
         vmArgs = vmArgs + ['-ea', '-esa']
     if extraVmArgs:
@@ -50,7 +57,15 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
     return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
 
-def _set_libpath():
+def _check_debug(args):
+    if len(args) > 1 and (args[0] == '--debugger' or args[0] == '-d'):
+        debugger = args[1]
+        args = args[2:]
+        return debugger, args
+    else:
+        return None, args
+
+def setREnvironment():
     osname = platform.system()
     lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib', osname.lower())
     lib_value = lib_base
@@ -224,7 +239,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    _set_libpath()
+    setREnvironment()
 
     return mx_graal.vm(vmArgs + junitArgs, vm="server", nonZeroIsFatal=False)
 
@@ -353,12 +368,15 @@ def rcmplib(args):
     parser = ArgumentParser(prog='mx rcmplib')
     parser.add_argument('--gnurhome', action='store', help='path to GnuR sources', required=True)
     parser.add_argument('--package', action='store', help='package to check', default="base")
+    parser.add_argument('--paths', action='store_true', help='print full paths of files that differ')
     args = parser.parse_args(args)
     cmpArgs = []
     cmpArgs.append("--gnurhome")
     cmpArgs.append(args.gnurhome)
     cmpArgs.append("--package")
     cmpArgs.append(args.package)
+    if args.paths:
+        cmpArgs.append("--paths")
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
@@ -372,6 +390,10 @@ def mx_post_parse_cmd_line(opts):
     bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
     if bm_suite:
         mx.build_suite(bm_suite)
+# disabled because causes endless rebuild on mx R
+#    debug_suite = _fastr_suite.import_suite('rdebug', version=None, alternate=alternate)
+#    if debug_suite:
+#        mx.build_suite(debug_suite)
 
 def mx_init(suite):
     global _fastr_suite

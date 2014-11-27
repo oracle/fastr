@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -36,6 +37,8 @@ import com.oracle.truffle.r.runtime.env.*;
 @NodeChild(value = "object", type = RNode.class)
 @NodeField(name = "field", type = String.class)
 public abstract class AccessFieldNode extends RNode {
+
+    public abstract RNode getObject();
 
     public abstract String getField();
 
@@ -86,6 +89,29 @@ public abstract class AccessFieldNode extends RNode {
 
     protected static boolean hasNames(RAbstractContainer object) {
         return object.getNames() != RNull.instance;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        getObject().deparse(state);
+        state.append('$');
+        state.append(getField());
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode object = getObject().substitute(env);
+        String field = getField();
+        RNode fieldSub = RASTUtils.substituteName(field, env);
+        if (fieldSub != null) {
+            field = RASTUtils.expectName(fieldSub);
+        }
+        return AccessFieldNodeFactory.create(object, field);
     }
 
 }

@@ -66,8 +66,7 @@ public final class CoordinatesFactory {
         return withRatioAndShift(coordinates, ratio, shift, shift);
     }
 
-    public static DoubleCoordinates withRatioAndShift(Coordinates coordinates, double ratio, double xShift,
-                                                      double yShift) {
+    public static DoubleCoordinates withRatioAndShift(Coordinates coordinates, double ratio, double xShift, double yShift) {
         double[] convertedX = applyRatioAndShiftTo(coordinates.getXCoordinatesAsDoubles(), ratio, xShift);
         double[] convertedY = applyRatioAndShiftTo(coordinates.getYCoordinatesAsDoubles(), ratio, yShift);
         return new DoubleCoordinates(convertedX, convertedY);

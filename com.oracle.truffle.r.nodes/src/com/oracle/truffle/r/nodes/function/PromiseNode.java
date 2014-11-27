@@ -33,12 +33,12 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
@@ -69,16 +69,18 @@ public abstract class PromiseNode extends RNode {
      *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
      */
     @TruffleBoundary
-    public static PromiseNode create(SourceSection src, RPromiseFactory factory) {
+    public static RNode create(SourceSection src, RPromiseFactory factory) {
         assert factory.getType() != PromiseType.NO_ARG;
 
-        PromiseNode pn = null;
+        RNode pn = null;
         switch (factory.getEvalPolicy()) {
             case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    pn = new InlinedSuppliedPromiseNode(factory);
+                    // TODO Correct??
+                    pn = factory.getExpr() instanceof ConstantNode ? (RNode) factory.getExpr() : new InlinedSuppliedPromiseNode(factory);
                 } else {
-                    pn = new InlinedPromiseNode(factory);
+                    // TODO Correct??
+                    pn = factory.getDefaultExpr() instanceof ConstantNode ? (RNode) factory.getDefaultExpr() : new InlinedPromiseNode(factory);
                 }
                 break;
 
@@ -212,8 +214,8 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseHelperNode promiseHelper;
+        @Child private PromiseCheckHelperNode promiseCheckHelper;
 
         private final BranchProfile isMissingProfile = BranchProfile.create();
         private final BranchProfile isVarArgProfile = BranchProfile.create();
@@ -235,14 +237,26 @@ public abstract class PromiseNode extends RNode {
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
                 }
+                if (promiseHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseHelper = insert(new PromiseHelperNode());
+                }
                 RPromise promise = factory.createPromiseDefault();
-                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
+                return promiseHelper.evaluate(frame, promise);
             } else if (obj instanceof RArgsValuesAndNames) {
                 isVarArgProfile.enter();
-                return ((RArgsValuesAndNames) obj).evaluate(frame, promiseProfile);
+                if (promiseCheckHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseCheckHelper = insert(new PromiseCheckHelperNode());
+                }
+                return promiseCheckHelper.checkEvaluateArgs(frame, (RArgsValuesAndNames) obj);
             } else {
                 checkPromiseProfile.enter();
-                return RPromise.checkEvaluate(frame, obj, promiseProfile);
+                if (promiseCheckHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseCheckHelper = insert(new PromiseCheckHelperNode());
+                }
+                return promiseCheckHelper.checkEvaluate(frame, obj);
             }
         }
     }
@@ -281,8 +295,6 @@ public abstract class PromiseNode extends RNode {
         private final RPromise promise;
         @CompilationFinal private boolean isEvaluated = false;
 
-        private final PromiseProfile promiseProfile = new PromiseProfile();
-
         private VarArgNode(RPromise promise) {
             this.promise = promise;
         }
@@ -293,8 +305,8 @@ public abstract class PromiseNode extends RNode {
             // the correct frame anyway
             if (!isEvaluated) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                Object result = promise.evaluate(frame, promiseProfile);
-                isEvaluated = promise.isEvaluated(promiseProfile);
+                Object result = PromiseHelperNode.evaluateSlowPath(frame, promise);
+                isEvaluated = promise.isEvaluated();
                 return result;
             }
 
@@ -371,7 +383,8 @@ public abstract class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
         @CompilationFinal protected final String[] names;
 
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
+        private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
         public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
             this.varargs = nodes;
@@ -386,7 +399,7 @@ public abstract class PromiseNode extends RNode {
             int index = 0;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
-                if (argValue instanceof RArgsValuesAndNames) {
+                if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
                     RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
@@ -401,12 +414,12 @@ public abstract class PromiseNode extends RNode {
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
                     for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index] = RPromise.checkEvaluate(frame, varargValues[j], promiseProfile);
+                        evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
                         evaluatedNames[index] = argsValuesAndNames.getNames()[j];
                         index++;
                     }
                 } else {
-                    evaluatedArgs[index++] = RPromise.checkEvaluate(frame, argValue, promiseProfile);
+                    evaluatedArgs[index++] = promiseCheckHelper.checkEvaluate(frame, argValue);
                 }
             }
             if (evaluatedArgs.length == 0) {

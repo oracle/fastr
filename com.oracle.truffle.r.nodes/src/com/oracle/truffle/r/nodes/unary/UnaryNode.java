@@ -25,7 +25,9 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeChildren({@NodeChild("operand")})
 public abstract class UnaryNode extends RNode {
@@ -50,5 +52,21 @@ public abstract class UnaryNode extends RNode {
 
     protected static boolean isNA(RComplex c) {
         return c.isNA();
+    }
+
+    @Override
+    public boolean isSyntax() {
+        // TODO check, may be bi-modal
+        return false;
+    }
+
+    @Override
+    public void deparse(State state) {
+        getOperand().deparse(state);
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return getOperand().substitute(env);
     }
 }

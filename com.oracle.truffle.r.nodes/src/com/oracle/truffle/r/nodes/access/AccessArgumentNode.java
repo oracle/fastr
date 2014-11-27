@@ -29,16 +29,15 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index (
@@ -47,6 +46,8 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  */
 @NodeChild(value = "readArgNode", type = ReadArgumentNode.class)
 public abstract class AccessArgumentNode extends RNode {
+
+    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     /**
      * The formal index of this argument.
@@ -65,9 +66,6 @@ public abstract class AccessArgumentNode extends RNode {
     @CompilationFinal private boolean deoptimized = false;
     @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();  // true;
 
-    private final BranchProfile strictEvaluation = BranchProfile.create();
-    private final PromiseProfile promiseProfile = new PromiseProfile();
-
     public AccessArgumentNode(int index) {
         this.index = index;
     }
@@ -84,9 +82,14 @@ public abstract class AccessArgumentNode extends RNode {
         return AccessArgumentNodeFactory.create(index, new ReadArgumentNode(index));
     }
 
+    @Override
+    public RNode substitute(REnvironment env) {
+        return this;
+    }
+
     @Specialization
     public Object doArgument(VirtualFrame frame, RPromise promise) {
-        return handlePromise(frame, promise, true);
+        return handlePromise(frame, promise);
     }
 
     @Specialization
@@ -95,23 +98,17 @@ public abstract class AccessArgumentNode extends RNode {
         for (int i = 0; i < varArgsContainer.length(); i++) {
             // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
             // "..." is a different expression
-            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i], false) : varArgs[i];
+            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i]) : varArgs[i];
         }
         return varArgsContainer;
     }
 
-    private Object handlePromise(VirtualFrame frame, RPromise promise, boolean useExprExecNode) {
+    private Object handlePromise(VirtualFrame frame, RPromise promise) {
         assert !promise.isNonArgument();
-        CompilerAsserts.compilationConstant(useExprExecNode);
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
-        if (promise.isInlined(promiseProfile)) {
-            if (useExprExecNode) {
-                return PromiseHelper.evaluate(frame, promiseExpressionCache, promise, promiseProfile);
-            } else {
-                strictEvaluation.enter();
-                return promise.evaluate(frame, promiseProfile);
-            }
+        if (promiseHelper.isInlined(promise)) {
+            return promiseHelper.evaluate(frame, promise);
         }
         return promise;
     }
@@ -222,8 +219,6 @@ public abstract class AccessArgumentNode extends RNode {
         }
 
         public void onSuccess(RPromise promise) {
-            // TODO Auto-generated method stub
-
         }
 
         public void onFailure(RPromise promise) {
@@ -251,21 +246,4 @@ public abstract class AccessArgumentNode extends RNode {
             throw RInternalError.shouldNotReachHere();
         }
     }
-
-// public static final class ReadArgumentNode extends RNode {
-// private final int index;
-//
-// private ReadArgumentNode(int index) {
-// this.index = index;
-// }
-//
-// @Override
-// public Object execute(VirtualFrame frame) {
-// return RArguments.getArgument(frame, index);
-// }
-//
-// public int getIndex() {
-// return index;
-// }
-// }
 }

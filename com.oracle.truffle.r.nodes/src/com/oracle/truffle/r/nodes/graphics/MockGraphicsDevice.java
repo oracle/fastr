@@ -31,7 +31,8 @@ public class MockGraphicsDevice implements GraphicsDevice {
     private static final double GNUR_DEFAULT_MAX_X = 1;
     private static final Axis GNUR_DEFAULT_X_AXIS = new Axis(0, GNUR_DEFAULT_MAX_X, EAST);
     private static final Axis GNUR_DEFAULT_Y_AXIS = new Axis(0, 1, NORTH);
-    private static final double MARGIN = GNUR_DEFAULT_MAX_X * 0.1; // the margin for each side of 10% of a screen
+    private static final double MARGIN = GNUR_DEFAULT_MAX_X * 0.1; // the margin for each side of
+    // 10% of a screen
     // compress resulting image to have a small margin on all sides
     private static final double COMPRESS_RATION = 1. - MARGIN * 1.8;
 
@@ -76,7 +77,7 @@ public class MockGraphicsDevice implements GraphicsDevice {
 
     @Override
     public void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters) {
-        //todo continue from GEPolyline() of engine.c
+        // todo continue from GEPolyline() of engine.c
         Coordinates convertedCoords = CoordinatesFactory.withRatioAndShift(coordinates, COMPRESS_RATION, MARGIN);
         addDrawableObject(new PolylineDrawableObject(currentCoordinateSystem, convertedCoords));
         drawBounds();
@@ -85,30 +86,20 @@ public class MockGraphicsDevice implements GraphicsDevice {
 
     private void drawBounds() {
         // x,y in range [0,1]
-        double[] boundsXYPairs = {
-                0, 0, 1, 0,
-                1, 0, 1, 1,
-                1, 1, 0, 1,
-                0, 1, 0, 0
-        };
+        double[] boundsXYPairs = {0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0};
         Coordinates bounds = CoordinatesFactory.createByXYPairs(boundsXYPairs);
         Coordinates compressedBounds = CoordinatesFactory.withRatioAndShift(bounds, COMPRESS_RATION, MARGIN);
         addDrawableObject(new PolylineDrawableObject(currentCoordinateSystem, compressedBounds));
     }
 
     private void drawXYLabelsFor(Coordinates coordinates) {
-        drawLabelsForCoordinates(coordinates.getXCoordinatesAsDoubles(),
-                MARGIN,
-                0.01, // just small shift
-                d -> CoordinatesFactory.createWithSameY(d, 0));
-        drawLabelsForCoordinates(coordinates.getYCoordinatesAsDoubles(),
-                0,
-                MARGIN,
-                d -> CoordinatesFactory.createWithSameX(0, d));
+        drawLabelsForCoordinates(coordinates.getXCoordinatesAsDoubles(), MARGIN, 0.01, // just small
+                        // shift
+                        d -> CoordinatesFactory.createWithSameY(d, 0));
+        drawLabelsForCoordinates(coordinates.getYCoordinatesAsDoubles(), 0, MARGIN, d -> CoordinatesFactory.createWithSameX(0, d));
     }
 
-    private void drawLabelsForCoordinates(double[] coordinates, double xShift, double yShift,
-                                          Function<double[], DoubleCoordinates> xYConverter) {
+    private void drawLabelsForCoordinates(double[] coordinates, double xShift, double yShift, Function<double[], DoubleCoordinates> xYConverter) {
         int length = coordinates.length;
         double[] sortedCoords = new double[length];
         // copy to avoid side-effects on a caller side
@@ -120,7 +111,7 @@ public class MockGraphicsDevice implements GraphicsDevice {
         addDrawableObject(new StringDrawableObject(currentCoordinateSystem, shiftedCoords, labels));
     }
 
-    private String[] composeLabelsFor(double[] doubles) {
+    private static String[] composeLabelsFor(double[] doubles) {
         return Arrays.stream(doubles).mapToObj(String::valueOf).toArray(String[]::new);
     }
 

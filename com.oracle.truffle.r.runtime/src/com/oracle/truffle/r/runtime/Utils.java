@@ -178,11 +178,25 @@ public final class Utils {
     }
 
     /**
+     * When running in "debug" mode, this exception is thrown rather than a call to System.exit, so
+     * that control can return to an in-process debugger.
+     */
+    public static class DebugExitException extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+    }
+
+    /**
      * All terminations should go through this method.
      */
     public static void exit(int status) {
         RPerfAnalysis.report();
-        System.exit(status);
+        if (RCmdOptions.DEBUGGER.getValue() != null) {
+            throw new DebugExitException();
+        } else {
+            System.exit(status);
+        }
     }
 
     public static void fail(String msg) {
@@ -224,11 +238,11 @@ public final class Utils {
     }
 
     /**
-     * Retrieve a frame from the call stack. The current frame is at depth 0, caller at depth 1,
-     * etc.
+     * Retrieve a frame from the call stack. N.B. This method cannot not be used to get the current
+     * frame, use {@link #getActualCurrentFrame()} for that.
      *
      * @param fa kind of access required to the frame
-     * @param depth identifies which frame is required
+     * @param depth identifies which frame is required (> 0)
      * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
      */
     @TruffleBoundary
@@ -271,16 +285,16 @@ public final class Utils {
      * {@code FunctionDefinitionNode.substituteFrame}.
      */
     @TruffleBoundary
-    public static Frame getActualCurrentFrame(FrameAccess frameAccess) {
+    public static VirtualFrame getActualCurrentFrame() {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         if (frameInstance == null) {
             // Might be the case during initialization, when envs are prepared before the actual
             // Truffle/R system has started
             return null;
         }
-        Frame frame = frameInstance.getFrame(frameAccess, true);
+        VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
         if (isSubstitutedFrame(frame)) {
-            frame = (Frame) frame.getArguments()[0];
+            frame = (VirtualFrame) frame.getArguments()[0];
         }
         return frame;
     }

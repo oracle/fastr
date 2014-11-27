@@ -177,12 +177,17 @@ public class RDeparse {
         private final int maxlines;
         private boolean active = true;
         @SuppressWarnings("unused") private int isS4;
+        private boolean changed;
 
         private State(int widthCutOff, boolean backtick, int maxlines, boolean needVector) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
             this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
             lines = needVector ? new ArrayList<>() : null;
+        }
+
+        public static State createPrintableState() {
+            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, false);
         }
 
         private void preAppend() {
@@ -202,6 +207,14 @@ public class RDeparse {
             }
         }
 
+        public void mark() {
+            changed = false;
+        }
+
+        public boolean changed() {
+            return changed;
+        }
+
         public void incIndent() {
             indent++;
         }
@@ -214,12 +227,14 @@ public class RDeparse {
             preAppend();
             sb.append(s);
             len += s.length();
+            changed = true;
         }
 
         public void append(char ch) {
             preAppend();
             sb.append(ch);
             len++;
+            changed = true;
         }
 
         private boolean linebreak(boolean lbreak) {
@@ -250,6 +265,36 @@ public class RDeparse {
             /* reset */
             len = 0;
             startline = true;
+            changed = true;
+        }
+
+        public void writeOpenCurlyNLIncIndent() {
+            append('{');
+            writeline();
+            incIndent();
+        }
+
+        public void writeNLOpenCurlyIncIndent() {
+            writeline();
+            append('{');
+            incIndent();
+        }
+
+        public void writeNLDecIndentCloseCurly() {
+            writeline();
+            decIndent();
+            append('}');
+        }
+
+        public void decIndentWriteCloseCurly() {
+            decIndent();
+            append('}');
+        }
+
+        @Override
+        public String toString() {
+            // assumes needVector == false
+            return sb.toString();
         }
     }
 
@@ -780,8 +825,7 @@ public class RDeparse {
                 break;
             case INTSXP:
                 int i = (int) element;
-                String iRep = Integer.toString(i);
-                state.append(iRep);
+                state.append(Integer.toString(i));
                 break;
             default:
                 assert false;

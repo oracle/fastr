@@ -28,6 +28,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class FastRFrame extends JFrame {
+
+    private static final long serialVersionUID = 1L;
+
     private final Dimension framePreferredSize = new Dimension(500, 500);
     private final FastRComponent fastRComponent = new FastRComponent();
 

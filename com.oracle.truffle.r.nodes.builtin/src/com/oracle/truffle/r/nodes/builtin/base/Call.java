@@ -92,7 +92,8 @@ public abstract class Call extends RBuiltinNode {
                 args[i] = (RNode) l.getRep();
             } else if (a instanceof RPromise) {
                 // TODO: flatten nested promises?
-                args[i] = ((WrapArgumentNode) ((RPromise) a).getRep()).getOperand();
+                Object rep = ((RPromise) a).getRep();
+                args[i] = rep instanceof WrapArgumentNode ? ((WrapArgumentNode) rep).getOperand() : (RNode) rep;
             } else {
                 args[i] = ConstantNode.create(a);
             }

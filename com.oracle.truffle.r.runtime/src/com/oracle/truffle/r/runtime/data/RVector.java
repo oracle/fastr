@@ -61,17 +61,30 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.dimensions = dimensions;
         setMatrixDimensions(dimensions, length);
         this.names = names;
-        if (names != null) {
-            if (names != RNull.instance) {
-                // since this constructor is for internal use only, the assertion shouldn't fail
-                assert ((RStringVector) names).getLength() == length;
+        if (names != null && names != RNull.instance) {
+            // since this constructor is for internal use only, the assertion shouldn't fail
+            assert ((RStringVector) names).getLength() == length;
+            if (dimensions == null || dimensions.length != 1) {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, names);
+                if (dimensions != null) {
+                    putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
+                }
+                this.dimNames = null;
+            } else {
+                if (dimensions != null) {
+                    putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
+                }
+                // one-dimensional arrays do not have names, only dimnames with one value
+                RList newDimNames = RDataFactory.createList(new Object[]{names});
+                putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+                this.dimNames = newDimNames;
             }
+        } else {
+            if (dimensions != null) {
+                putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
+            }
+            this.dimNames = null;
         }
-        if (dimensions != null) {
-            putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
-        }
-        this.dimNames = null;
     }
 
     protected RVector(boolean complete, int length, int[] dimensions) {
@@ -241,6 +254,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         setNames(newNames, null);
     }
 
+    @TruffleBoundary
     public final void setNames(Object newNames, SourceSection sourceSection) {
         if (attributes != null && (newNames == null || newNames == RNull.instance)) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
@@ -273,6 +287,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         setDimNames(newDimNames, null);
     }
 
+    @TruffleBoundary
     public final void setDimNames(RList newDimNames, SourceSection sourceSection) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
@@ -570,7 +585,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         assert (this.dimNames == null);
         assert (this.dimensions == null);
         assert (this.attributes == null);
-        this.names = vector.getNames();
+        if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
+            // only assign name attribute if it's not represented as dimnames (as is the case for
+            // one-dimensional array)
+            this.names = vector.getNames();
+        }
         this.dimNames = vector.getDimNames();
         this.dimensions = vector.getDimensions();
         this.setMatrixDimensions(this.dimensions, this.getLength());
@@ -586,7 +605,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         assert (this.dimensions == null);
         assert (this.attributes == null);
         // for some reason, names is copied first, then dims, then dimnames
-        this.setNames(vector.getNames(), sourceSection);
+        if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
+            // only assign name attribute if it's not represented as dimnames (as is the case for
+            // one-dimensional arrasy)
+            this.setNames(vector.getNames(), sourceSection);
+        }
         this.setDimensions(vector.getDimensions(), sourceSection);
         this.setDimNames(vector.getDimNames(), sourceSection);
     }

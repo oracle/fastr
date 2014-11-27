@@ -55,27 +55,39 @@ public final class NACheck {
     }
 
     public void enable(byte logical) {
-        enable(RRuntime.isNA(logical));
+        if (state == NO_CHECK) {
+            enable(RRuntime.isNA(logical));
+        }
     }
 
     public void enable(int value) {
+        if (state == NO_CHECK) {
         enable(RRuntime.isNA(value));
+        }
     }
 
     public void enable(double value) {
+        if (state == NO_CHECK) {
         enable(RRuntime.isNA(value));
+        }
     }
 
     public void enable(RComplex value) {
+        if (state == NO_CHECK) {
         enable(value.isNA());
+        }
     }
 
     public void enable(RAbstractVector value) {
+        if (state == NO_CHECK) {
         enable(!value.isComplete());
+        }
     }
 
     public void enable(String operand) {
+        if (state == NO_CHECK) {
         enable(RRuntime.isNA(operand));
+        }
     }
 
     public boolean check(double value) {

@@ -11,11 +11,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
@@ -44,15 +45,8 @@ public final class RError extends RuntimeException {
         }
     }
 
-    private final SourceSection source;
-
-    private RError(SourceSection src, String msg) {
+    private RError(String msg) {
         super(msg);
-        source = src;
-    }
-
-    public SourceSection getSource() {
-        return source;
     }
 
     @Override
@@ -101,7 +95,9 @@ public final class RError extends RuntimeException {
      * However, the signature has a return type of {@link RError} to allow callers to use the idiom
      * {@code throw error(...)} to indicate the control transfer.
      *
-     * @param src source of the code throwing the error, or {@code null} if not available
+     * @param src source of the code throwing the error, or {@code null} if not available. If src is
+     *            {@code null} an attempt is made to identify the call context from the currently
+     *            active frame
      * @param msg a {@link Message} instance specifying the error
      * @param args arguments for format specifiers in the message string
      */
@@ -115,19 +111,33 @@ public final class RError extends RuntimeException {
         throw error0(src, msg, (Object[]) null);
     }
 
-    private static final RError MARKER_EXCEPTION = new RError(null, "<marker exception>");
+    private static final RError MARKER_EXCEPTION = new RError("<marker exception>");
 
-    private static RError error0(SourceSection src, Message msg, Object... args) {
+    private static RError error0(final SourceSection srcCandidate, Message msg, Object... args) {
         if (ignoreError) {
             throw MARKER_EXCEPTION;
         }
 
-        RError rError;
-        if (src != null) {
-            rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
-        } else {
-            rError = new RError(null, "Error: " + formatMessage(msg, args));
+        VirtualFrame frame = null;
+        SourceSection src = srcCandidate;
+        if (src == null) {
+            frame = Utils.getActualCurrentFrame();
+            if (frame != null) {
+                src = RArguments.getCallSourceSection(frame);
+            }
         }
+        String preamble = "Error";
+        String formattedMsg = formatMessage(msg, args);
+        String errorMsg = null;
+        if (src == null) {
+            // generally means top-level of shell or similar
+            preamble += ": ";
+            errorMsg = preamble + formattedMsg;
+        } else {
+            preamble += " in " + src.getCode() + " :";
+            errorMsg = wrapMessage(preamble, formattedMsg);
+        }
+        RError rError = new RError(errorMsg);
         RInternalError.reportError(rError, src);
 
         Object errorExpr = ROptions.getValue("error");
@@ -140,18 +150,21 @@ public final class RError extends RuntimeException {
                 errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                Frame frame = Utils.getActualCurrentFrame(FrameAccess.MATERIALIZE);
+                if (frame == null) {
+                    frame = Utils.getActualCurrentFrame();
+                }
+                MaterializedFrame materializedFrame = frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
                 if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, frame.materialize());
+                    RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
                 } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, frame.materialize());
+                    RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
                 }
             } else {
                 // GnuR checks this earlier when the option is set
-                throw new RError(null, Message.INVALID_ERROR.message);
+                throw new RError(Message.INVALID_ERROR.message);
             }
             // Control, transfer to top level, but suppress print
-            throw new RError(null, "");
+            throw new RError("");
         } else {
             throw rError;
         }
@@ -205,7 +218,7 @@ public final class RError extends RuntimeException {
      */
     @TruffleBoundary
     public static RError nyi(SourceSection src, String msg) {
-        throw new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
+        throw new RError("NYI: " + (src != null ? src.getCode() : "") + msg);
     }
 
     @TruffleBoundary
@@ -313,6 +326,7 @@ public final class RError extends RuntimeException {
         OUT_OF_RANGE("out-of-range values treated as 0 in coercion to raw"),
         WRITE_ONLY_BINARY("can only write to a binary connection"),
         UNIMPLEMENTED_COMPLEX("unimplemented complex operation"),
+        UNIMPLEMENTED_COMPLEX_FUN("unimplemented complex function"),
         COMPARISON_COMPLEX("invalid comparison with complex values"),
         NON_NUMERIC_BINARY("non-numeric argument to binary operator"),
         RAW_SORT("raw vectors cannot be sorted"),
@@ -505,6 +519,7 @@ public final class RError extends RuntimeException {
         ERROR_READING_CONNECTION("error reading connection: %s"),
         ERROR_WRITING_CONNECTION("error writing connection: %s"),
         ERROR_FLUSHING_CONNECTION("error flushing connection: %s"),
+        ALREADY_OPEN_CONNECTION("connection is already open"),
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
@@ -556,6 +571,8 @@ public final class RError extends RuntimeException {
         FIRST_ELEMENT_USED("first element used of '%s' argument"),
         MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer"),
         DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'"),
+        ARG_MUST_BE_CLOSURE("argument must be a closure"),
+        NOT_DEBUGGED("argument is not being debugged"),
         ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
         NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
@@ -563,7 +580,8 @@ public final class RError extends RuntimeException {
         MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
         NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),
         UNSUPPORTED_URL_SCHEME("unsupported URL scheme"),
-        CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections");
+        CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections"),
+        FULL_PRECISION("full precision may not have been achieved in '%s'");
 
         public final String message;
         private final boolean hasArgs;

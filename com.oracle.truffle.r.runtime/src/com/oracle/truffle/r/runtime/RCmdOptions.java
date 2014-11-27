@@ -80,7 +80,7 @@ public class RCmdOptions {
     public static final Option<Boolean> SLAVE = newBooleanOption(true, "slave", false, "Make R run as quietly as possible");
     public static final Option<Boolean> INTERACTIVE = newBooleanOption(false, "interactive", false, "Force an interactive session");
     public static final Option<Boolean> VERBOSE = newBooleanOption(false, "verbose", false, "Print more information about progress");
-    public static final Option<String> DEBUGGER = newStringOption(false, "d", "debugger=NAME", null, "Run R through debugger NAME");
+    public static final Option<String> DEBUGGER = newStringOption(true, "d", "debugger=NAME", null, "Run R through debugger NAME");
     public static final Option<String> DEBUGGER_ARGS = newStringOption(false, null, "debugger-args=ARGS", null, "Pass ARGS as arguments to the debugger");
     public static final Option<String> GUI = newStringOption(false, "g TYPE", "gui=TYPE", null, "Use TYPE as GUI; possible values are 'X11' (default)\n" + "                          and 'Tk'.");
     public static final Option<String> ARCH = newStringOption(false, null, "arch=NAME", null, "Specify a sub-architecture");

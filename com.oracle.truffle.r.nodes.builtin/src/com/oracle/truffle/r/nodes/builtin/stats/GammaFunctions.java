@@ -26,7 +26,10 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
  * Java implementation of the qgamma function. The logic was derived from GNU R (see inline
@@ -35,28 +38,73 @@ import com.oracle.truffle.r.runtime.ops.*;
  * The original GNU R implementation treats this as a {@code .External} call. The FastR
  * implementation, until it supports {@code .External}, treats it as an {@code .Internal}.
  */
-@RBuiltin(name = "qgamma", kind = INTERNAL, parameterNames = {"p", "shape", "scale", "lower.tail", "log.p"})
-public abstract class Qgamma extends RBuiltinNode {
+public abstract class GammaFunctions {
 
     // This is derived from distn.c.
 
-    @Specialization
-    protected double qgamma(double p, double shape, double scale, byte lowerTail, byte logP) {
-        controlVisibility();
-        return qgamma(p, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+    @RBuiltin(name = "qgamma", kind = INTERNAL, parameterNames = {"p", "shape", "scale", "lower.tail", "log.p"})
+    public abstract static class Qgamma extends RBuiltinNode {
+
+        @Specialization
+        protected double qgamma(double p, double shape, double scale, byte lowerTail, byte logP) {
+            controlVisibility();
+            return GammaFunctions.qgamma(p, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+        }
+
+        @Specialization
+        protected RDoubleVector qgamma(RDoubleVector p, double shape, double scale, byte lowerTail, byte logP) {
+            controlVisibility();
+            // TODO if need be, support iteration over multiple vectors (not just p)
+            // TODO support NA
+            double[] result = new double[p.getLength()];
+            for (int i = 0; i < p.getLength(); ++i) {
+                double pv = p.getDataAt(i);
+                result[i] = GammaFunctions.qgamma(pv, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+            }
+            return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+        }
+
     }
 
-    @Specialization
-    protected RDoubleVector qgamma(RDoubleVector p, double shape, double scale, byte lowerTail, byte logP) {
-        controlVisibility();
-        // TODO if need be, support iteration over multiple vectors (not just p)
-        // TODO support NA
-        double[] result = new double[p.getLength()];
-        for (int i = 0; i < p.getLength(); ++i) {
-            double pv = p.getDataAt(i);
-            result[i] = qgamma(pv, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Lgamma extends RBuiltinNode {
+
+        private final NACheck naClosureCheck = NACheck.create();
+        private final NACheck naValCheck = NACheck.create();
+
+        @Specialization
+        protected RDoubleVector lgamma(RAbstractDoubleVector x) {
+            controlVisibility();
+            naValCheck.enable(true);
+            double[] result = new double[x.getLength()];
+            for (int i = 0; i < x.getLength(); ++i) {
+                double xv = x.getDataAt(i);
+                result[i] = GammaFunctions.lgammafn(xv);
+                naValCheck.check(result[i]);
+            }
+            return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
         }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+
+        @Specialization
+        protected RDoubleVector lgamma(RAbstractIntVector x) {
+            return lgamma(RClosures.createIntToDoubleVector(x, naClosureCheck));
+        }
+
+        @Specialization
+        protected RDoubleVector lgamma(RAbstractLogicalVector x) {
+            return lgamma(RClosures.createLogicalToDoubleVector(x, naClosureCheck));
+        }
+
+        @Specialization
+        protected Object lgamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
+            return RError.error(RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+        }
+
+        @Fallback
+        protected Object lgamma(@SuppressWarnings("unused") Object x) {
+            throw RError.error(RError.Message.NON_NUMERIC_MATH);
+        }
+
     }
 
     // The remainder of this file is derived from GNU R (mostly nmath): qgamma.c, nmath.h, lgamma.c,
@@ -360,7 +408,7 @@ public abstract class Qgamma extends RBuiltinNode {
         }
 
         if (x <= 0 && x == (long) x) { /* Negative integer argument */
-            // TODO ML_ERROR(ME_RANGE, "lgamma");
+            RError.warning(RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
             return Double.POSITIVE_INFINITY; /* +Inf, since lgamma(x) = log|gamma(x)| */
         }
 
@@ -377,7 +425,7 @@ public abstract class Qgamma extends RBuiltinNode {
          */
 
         if (y > gfn_sign_xmax) {
-            // ML_ERROR(ME_RANGE, "lgamma");
+            RError.warning(RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
             return Double.POSITIVE_INFINITY;
         }
 
@@ -410,7 +458,7 @@ public abstract class Qgamma extends RBuiltinNode {
              * integer.
              */
 
-            // ML_ERROR(ME_PRECISION, "lgamma");
+            RError.warning(RError.Message.FULL_PRECISION, "lgamma");
         }
 
         return ans;
@@ -502,7 +550,7 @@ public abstract class Qgamma extends RBuiltinNode {
     private static final double i2520 = 1 / 2520;
     private static final double i5040 = 1 / 5040;
 
-    private static double qgamma(double p, double alpha, double scale, boolean lowerTail, boolean logp) {
+    public static double qgamma(double p, double alpha, double scale, boolean lowerTail, boolean logp) {
         double pu;
         double a;
         double b;
@@ -1523,15 +1571,15 @@ public abstract class Qgamma extends RBuiltinNode {
                         /*
                          * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make
                          * use of Abramowitz & Stegun, 26.2.13, something like
-                         * 
+                         *
                          * xsq = x*x;
-                         * 
+                         *
                          * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) /
                          * (xsq+2.); else del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) +
                          * log1p(-del);ccum = log1p(-exp(*cum)); /.* ~ log(1) = 0 *./
-                         * 
+                         *
                          * swap_tail;
-                         * 
+                         *
                          * [Yes, but xsq might be infinite.]
                          */
                         || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {

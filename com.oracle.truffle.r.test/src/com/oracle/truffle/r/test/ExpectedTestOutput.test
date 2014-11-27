@@ -7575,6 +7575,17 @@ NULL
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); attributes(y) }
+$dim
+[1] 5
+
+$dimnames
+$dimnames[[1]]
+[1] "1" "2" "3" "4" "5"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
 #{ ncol(1) }
 NULL
 
@@ -9559,6 +9570,37 @@ NULL
 #{ x <- 5 ; levels(x)<-c(1,2,3); levels(x);}
 [1] 1 2 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(1) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(1+1i) }
+Error in lgamma(1 + (0+1i)) : unimplemented complex function
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(100) }
+[1] 359.1342
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(FALSE) }
+[1] Inf
+Warning message:
+value out of range in 'lgamma'
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(as.double(NA)) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(as.raw(1)) }
+Error in lgamma(as.raw(1)) :
+  non-numeric argument to mathematical function
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(c(100, 2.2)) }
+[1] 359.13420537   0.09694747
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testList
 #{ list(1, b=2) }
 [[1]]
@@ -11258,6 +11300,22 @@ Error in k() : argument "y" is missing, with no default
 #{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }
 [1] "11" "12" "13"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b, c) { nargs() }; f() }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b, c) { nargs() }; f(1, 2) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNargs
+#{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }
+[1] 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
 #{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
 ab
@@ -11868,6 +11926,11 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{  x<-c(11, 7, 2222, 7, 33); print(x,quote=TRUE) }
 [1]   11    7 2222    7   33
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }
+ 1  2  3  4  5
+51 57 45 NA NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{ nql <- noquote(letters); nql[1:4] <- "oh"; print(nql)}
@@ -13496,6 +13559,36 @@ Read 2 records
 [1] "2"  "11"
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("foo faz", "\"bar\" \"baz\"")); scan(con, what=list("", "")) }
+Read 2 records
+[[1]]
+[1] "foo" "bar"
+
+[[2]]
+[1] "faz" "baz"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("foo faz", "bar \"baz\"")); scan(con, what=list("", "")) }
+Read 2 records
+[[1]]
+[1] "foo" "bar"
+
+[[2]]
+[1] "faz" "baz"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testScan
+#{ con<-textConnection(c("foo, faz", "bar, baz")); scan(con, what=list("", ""), sep=",") }
+Read 2 records
+[[1]]
+[1] "foo" "bar"
+
+[[2]]
+[1] " faz" " baz"
+
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSd
 #{ round(100*sd(c(1,2))^2) }
 [1] 50
@@ -14527,6 +14620,10 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ answer<-"no";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ test1 <- function(type) { switch(type, mean = 1, median = 2, trimmed = 3) };test1("median")}
 [1] 2
 
@@ -14537,6 +14634,18 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ u <- "uiui" ; switch(u, "iuiu" = "ieps", "uiui" = "miep") }
 [1] "miep"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "<"; switch(x, "<=" =, "<" =, ">" = TRUE, FALSE) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "<"; switch(x, "<=" =, "<" =, ">" =, FALSE) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "<"; v <- switch(x, "<=" =, "<" =, ">" = TRUE, FALSE); v }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{switch(3,1,2,3)}
@@ -14681,6 +14790,10 @@ $a
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTabulate
 #{tabulate(factor(letters[1:10]))}
  [1] 1 1 1 1 1 1 1 1 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTapply
+#{ ind <- list(c(1, 2, 2), c("A", "A", "B")) ; tapply(1:3, ind) }
+[1] 1 2 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTranspose
 #{ m <- double() ; dim(m) <- c(0,4) ; t(m) }
@@ -16600,11 +16713,6 @@ Error in col[[i, exact = exact]] :
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-list(7,42); class(x)<-"data.frame"; row.names(x)<-"r1"; x[[1]] }
 [1] 7
-
-##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
-#{ x<-1; class(x)<-"foo"; y<-as.data.frame(x) }
-Error in as.data.frame.default(x) :
-  cannot coerce class ""foo"" to a data.frame
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
 #{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm="x"); attributes(y); }

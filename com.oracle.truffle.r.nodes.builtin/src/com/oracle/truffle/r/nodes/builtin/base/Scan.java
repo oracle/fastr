@@ -15,8 +15,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.*;
@@ -236,6 +238,71 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
+    private static String[] getQuotedItems(LocalData data, String s) {
+        LinkedList<String> items = new LinkedList<>();
+
+        String str = s;
+        StringBuilder sb = new StringBuilder();
+
+        while (true) {
+            int sepInd;
+            if (data.sepchar == null) {
+                int blInd = str.indexOf(' ');
+                int tabInd = str.indexOf('\t');
+                if (blInd == -1) {
+                    sepInd = tabInd;
+                } else if (tabInd == -1) {
+                    sepInd = blInd;
+                } else {
+                    sepInd = Math.min(blInd, tabInd);
+                }
+            } else {
+                assert data.sepchar.length() == 1;
+                sepInd = str.indexOf(data.sepchar.charAt(0));
+            }
+
+            int quoteInd = str.indexOf(data.quoteset.charAt(0));
+            char quoteChar = data.quoteset.charAt(0);
+            for (int i = 1; i < data.quoteset.length(); i++) {
+                int ind = str.indexOf(data.quoteset.charAt(i));
+                if (ind >= 0 && (quoteInd == -1 || (quoteInd >= 0 && ind < quoteInd))) {
+                    // update quoteInd if either the new index is smaller or the previous one (for
+                    // another separator) was not found
+                    quoteInd = ind;
+                    quoteChar = data.quoteset.charAt(i);
+                }
+            }
+
+            if (sepInd == -1 && quoteInd == -1) {
+                // no more separators and no more quotes - add the last item and return
+                sb.append(str);
+                items.add(sb.toString());
+                break;
+            }
+
+            if (quoteInd >= 0 && (sepInd == -1 || (sepInd >= 0 && quoteInd < sepInd))) {
+                // quote character was found before the separator character - everything from the
+                // beginning of str up to the end of quote becomes part of this item
+                sb.append(str.substring(0, quoteInd));
+                int nextQuoteInd = str.indexOf(quoteChar, quoteInd + 1);
+                sb.append(str.substring(quoteInd + 1, nextQuoteInd));
+                str = str.substring(nextQuoteInd + 1, str.length());
+            } else {
+                assert sepInd >= 0;
+                // everything from the beginning of str becomes part of this time and item
+                // processing is completed (also eat up separators)
+                String[] tuple = data.sepchar == null ? str.split("\\s+", 2) : str.split(data.sepchar, 2);
+                assert tuple.length == 2;
+                sb.append(tuple[0]);
+                str = tuple[1];
+                items.add(sb.toString());
+                sb = new StringBuilder();
+            }
+        }
+
+        return items.toArray(new String[items.size()]);
+    }
+
     private static String[] getItems(LocalData data, boolean blSkip) throws IOException {
         while (true) {
             String[] str = data.con.readLines(1);
@@ -246,7 +313,11 @@ public abstract class Scan extends RBuiltinNode {
                 if (blSkip && s.length() == 0) {
                     continue;
                 } else {
-                    return data.sepchar == null ? s.split("\\s+") : s.split(data.sepchar);
+                    if (data.quoteset.length() == 0) {
+                        return data.sepchar == null ? s.split("\\s+") : s.split(data.sepchar);
+                    } else {
+                        return getQuotedItems(data, s);
+                    }
                 }
             }
         }
@@ -260,6 +331,7 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
+    @TruffleBoundary
     private RVector scanFrame(VirtualFrame frame, RList what, int maxRecords, int maxLines, boolean flush, boolean fill, boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data)
                     throws IOException {
 
@@ -373,6 +445,7 @@ public abstract class Scan extends RBuiltinNode {
         return list;
     }
 
+    @TruffleBoundary
     private RVector scanVector(RAbstractVector what, int maxItems, int maxLines, boolean flush, boolean stripWhite, boolean blSkip, LocalData data) throws IOException {
         int blockSize = maxItems > 0 ? maxItems : SCAN_BLOCKSIZE;
         RVector vec = what.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR);
@@ -474,11 +547,7 @@ public abstract class Scan extends RBuiltinNode {
             if (isNaString(buffer, 1, data)) {
                 return RRuntime.STRING_NA;
             } else {
-                if (buffer.length() > 1 && buffer.charAt(0) == '"' && buffer.charAt(buffer.length() - 1) == '"') {
-                    return buffer.substring(1, buffer.length() - 1);
-                } else {
-                    return buffer;
-                }
+                return buffer;
             }
         }
 

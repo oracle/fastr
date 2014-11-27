@@ -31,7 +31,7 @@ import static com.oracle.truffle.r.nodes.graphics.core.GraphicsEvent.GE_INIT_STA
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {
-    private static final int MAX_GRAPHICS_SYSTEMS_AMOUNT = 24;  //GNUR: GraphicsEngine.h
+    private static final int MAX_GRAPHICS_SYSTEMS_AMOUNT = 24;  // GNUR: GraphicsEngine.h
     private static final int MAX_GRAPHICS_DEVICES_AMOUNT = 64;
     private static final int NULL_GRAPHICS_DEVICE_INDEX = 0;
     private static final int LAST_GRAPHICS_DEVICE_INDEX = MAX_GRAPHICS_DEVICES_AMOUNT - 1;
@@ -67,7 +67,8 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         if (newGraphicsSystem == null) {
             throw new NullPointerException("Graphics system to register is null");
         }
-        int index = findElementIndexInArray(null, graphicsSystems); // find null in the graphicsSystems
+        int index = findElementIndexInArray(null, graphicsSystems); // find null in the
+        // graphicsSystems
         if (NOT_FOUND == index) {
             throw handleErrorAndMakeException("too many graphics systems registered");
         }
@@ -90,12 +91,12 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     // todo transcribe error(_(msg)) from errors.c
-    private Exception handleErrorAndMakeException(String message) {
+    private static Exception handleErrorAndMakeException(String message) {
         return new Exception(message);
     }
 
     // todo implement in GNUR way
-    private void issueWarning(String warningMessage) {
+    private static void issueWarning(String warningMessage) {
         Utils.warn(warningMessage);
     }
 
@@ -151,7 +152,8 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         }
         doUnregisterGraphicsDevice(deviceToUnregister);
         makeItCurrent(getGraphicsDeviceNextTo(deviceToUnregister));
-        //todo Interesting that in GNUR a GraphicsSystem is not notified when a GraphicsDevice is killed
+        // todo Interesting that in GNUR a GraphicsSystem is not notified when a GraphicsDevice is
+        // killed
     }
 
     private void doUnregisterGraphicsDevice(GraphicsDevice deviceToUnregister) {
@@ -237,11 +239,11 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         return foundDevice == null ? getNullGraphicsDevice() : foundDevice;
     }
 
-    private <T> int findElementIndexInArray(T element, T[] array) {
+    private static <T> int findElementIndexInArray(T element, T[] array) {
         return findElementIndexInArray(0, array.length, element, array);
     }
 
-    private <T> int findElementIndexInArray(int startIndexInclusive, int endIndexNotInclusive, T element, T[] array) {
+    private static <T> int findElementIndexInArray(int startIndexInclusive, int endIndexNotInclusive, T element, T[] array) {
         for (int i = startIndexInclusive; i < endIndexNotInclusive; i++) {
             if (array[i] == element) {
                 return i;
@@ -277,7 +279,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
 
     @Override
     public void setCurrentGraphicsDeviceClipRect(double x1, double y1, double x2, double y2) {
-        //todo transcribe from GESetClip() (engine.c)
+        // todo transcribe from GESetClip() (engine.c)
         getCurrentGraphicsDevice().setClipRect(0, 0, 0, 0);
     }
 

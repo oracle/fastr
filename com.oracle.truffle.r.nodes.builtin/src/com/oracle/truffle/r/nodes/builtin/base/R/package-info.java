@@ -20,9 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
- /**
-  * This "package" contains R sources that correspond to (some of) the R functions
-  * in the "base" package. They are loaded using the {@link java.lang.Class#getResource}
-  * mechanism on system startup.
-  */
+/**
+ * This "package" contains R sources that correspond to (some of) the R functions
+ * in the "base" package. They are loaded using the {@link java.lang.Class#getResource}
+ * mechanism on system startup.
+ */
 package com.oracle.truffle.r.nodes.builtin.base.R;
+

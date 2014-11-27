@@ -25,12 +25,13 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.Child;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @SuppressWarnings("unused")
 public final class WhileNode extends LoopNode {
@@ -38,19 +39,61 @@ public final class WhileNode extends LoopNode {
     @Child private ConvertBooleanNode condition;
     @Child private RNode body;
 
-    private WhileNode(RNode condition, RNode body) {
+    /**
+     * Also used for {@code repeat}, with a {@code TRUE} condition.
+     */
+    private final boolean isRepeat;
+
+    private WhileNode(RNode condition, RNode body, boolean isRepeat) {
         this.condition = ConvertBooleanNode.create(condition);
         this.body = body;
+        this.isRepeat = isRepeat;
     }
 
-    public static WhileNode create(RNode condition, RNode body) {
-        return new WhileNode(condition, body);
+    public static WhileNode create(RNode condition, RNode body, boolean isRepeat) {
+        return new WhileNode(condition, body, isRepeat);
     }
 
-    public static WhileNode create(SourceSection src, RNode condition, RNode body) {
-        WhileNode wn = create(condition, body);
+    public static WhileNode create(SourceSection src, RNode condition, RNode body, boolean isRepeat) {
+        WhileNode wn = create(condition, body, isRepeat);
         wn.assignSourceSection(src);
         return wn;
+    }
+
+    public ConvertBooleanNode getCondition() {
+        return condition;
+    }
+
+    public RNode getBody() {
+        return body;
+    }
+
+    public boolean isRepeat() {
+        return isRepeat;
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
+
+    @Override
+    public void deparse(State state) {
+        if (isRepeat) {
+            state.append("repeat ");
+        } else {
+            state.append("while (");
+            condition.deparse(state);
+            state.append(") ");
+        }
+        state.writeOpenCurlyNLIncIndent();
+        body.deparse(state);
+        state.decIndentWriteCloseCurly();
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return create(condition.substitute(env), body.substitute(env), isRepeat);
     }
 
     @Override

@@ -36,22 +36,21 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 
 @RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = {0})
 public abstract class Missing extends RBuiltinNode {
 
-    @Child private InlineCacheNode<Frame, Symbol> repCache;
+    @Child private InlineCacheNode<Frame, String> repCache;
 
     private final ConditionProfile isSymbolNullProfile = ConditionProfile.createBinaryProfile();
 
-    private static InlineCacheNode<Frame, Symbol> createRepCache(int level) {
-        Function<Symbol, RNode> reify = symbol -> createNodeForRep(symbol, level);
-        BiFunction<Frame, Symbol, Object> generic = (frame, symbol) -> RRuntime.asLogical(RMissingHelper.isMissingArgument(frame, symbol));
+    private static InlineCacheNode<Frame, String> createRepCache(int level) {
+        Function<String, RNode> reify = symbol -> createNodeForRep(symbol, level);
+        BiFunction<Frame, String, Object> generic = (frame, symbol) -> RRuntime.asLogical(RMissingHelper.isMissingArgument(frame, symbol));
         return InlineCacheNode.create(3, reify, generic);
     }
 
-    private static RNode createNodeForRep(Symbol symbol, int level) {
+    private static RNode createNodeForRep(String symbol, int level) {
         if (symbol == null) {
             return ConstantNode.create(RRuntime.LOGICAL_FALSE);
         }
@@ -61,16 +60,16 @@ public abstract class Missing extends RBuiltinNode {
     private static class MissingCheckLevel extends RNode {
 
         @Child private GetMissingValueNode getMissingValue;
-        @Child private InlineCacheNode<Frame, Symbol> recursive;
+        @Child private InlineCacheNode<Frame, String> recursive;
+        @Child private PromiseHelperNode promiseHelper;
 
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isSymbolNullProfile = ConditionProfile.createBinaryProfile();
-        private final PromiseProfile promiseProfile = new PromiseProfile();
         private final int level;
 
-        public MissingCheckLevel(Symbol symbol, int level) {
+        public MissingCheckLevel(String symbol, int level) {
             this.level = level;
             this.getMissingValue = GetMissingValueNode.create(symbol);
         }
@@ -91,11 +90,15 @@ public abstract class Missing extends RBuiltinNode {
 
             // This might be a promise...
             if (isPromiseProfile.profile(value instanceof RPromise)) {
+                if (promiseHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseHelper = insert(new PromiseHelperNode());
+                }
                 RPromise promise = (RPromise) value;
-                if (level == 0 && promise.isDefault(promiseProfile)) {
+                if (level == 0 && promiseHelper.isDefault(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
-                if (level > 0 && promise.isEvaluated(promiseProfile)) {
+                if (level > 0 && promiseHelper.isEvaluated(promise)) {
                     return RRuntime.LOGICAL_FALSE;
                 }
                 if (recursive == null) {
@@ -103,13 +106,13 @@ public abstract class Missing extends RBuiltinNode {
                     recursive = insert(createRepCache(level + 1));
                 }
                 // Check: If there is a cycle, return true. (This is done like in GNU R)
-                if (promise.isUnderEvaluation(promiseProfile)) {
+                if (promiseHelper.isUnderEvaluation(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
                 try {
-                    promise.materialize(promiseProfile);
+                    promiseHelper.materialize(promise); // Ensure that promise holds a frame
                     promise.setUnderEvaluation(true);
-                    Symbol symbol = RMissingHelper.unwrapSymbol((RNode) promise.getRep());
+                    String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
                     return isSymbolNullProfile.profile(symbol == null) ? RRuntime.LOGICAL_FALSE : recursive.execute(promise.getFrame(), symbol);
                 } finally {
                     promise.setUnderEvaluation(false);
@@ -126,7 +129,7 @@ public abstract class Missing extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             repCache = insert(createRepCache(0));
         }
-        Symbol symbol = RMissingHelper.unwrapSymbol((RNode) promise.getRep());
+        String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
         return isSymbolNullProfile.profile(symbol == null) ? RRuntime.LOGICAL_FALSE : (byte) repCache.execute(frame, symbol);
     }
 

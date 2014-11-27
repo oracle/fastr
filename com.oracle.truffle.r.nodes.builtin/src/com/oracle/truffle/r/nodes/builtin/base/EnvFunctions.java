@@ -33,9 +33,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeFactory;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseProfile;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -184,7 +185,7 @@ public class EnvFunctions {
 
         private final ConditionProfile isFunctionProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Override
         public RNode[] getParameterValues() {
@@ -196,7 +197,7 @@ public class EnvFunctions {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             MaterializedFrame matFrame = callerFrame.materialize();
-            RPromise.deoptimizeFrame(matFrame, promiseProfile);
+            deoptFrameNode.deoptimizeFrame(matFrame);
             return REnvironment.frameToEnvironment(matFrame);
         }
 
@@ -250,30 +251,10 @@ public class EnvFunctions {
 
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"})
     public abstract static class NewEnv extends RBuiltinNode {
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RMissing.instance), ConstantNode.create(29)};
-        }
-
         @Specialization
-        @SuppressWarnings("unused")
-        protected REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
-            return newEnv(frame, hash, RNull.instance, size);
-        }
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected REnvironment newEnv(VirtualFrame frame, byte hash, RNull parent, int size) {
-            // TODO this will eventually go away when R code fixed when promises available
+        protected REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
-            // FIXME what if hash == FALSE?
-            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), size);
-        }
-
-        @Specialization
-        protected REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
-            controlVisibility();
-            // FIXME what if hash == FALSE?
+            // Ignore hash == FALSE
             return new REnvironment.NewEnv(parent, size);
         }
     }
@@ -406,7 +387,7 @@ public class EnvFunctions {
         protected abstract Object execute(VirtualFrame frame, Object o);
 
         @Child private CopyNode recursiveCopy;
-        private final PromiseProfile promiseProfile = new PromiseProfile();
+        @Child private PromiseHelperNode promiseHelper;
 
         private Object recursiveCopy(VirtualFrame frame, Object operand) {
             if (recursiveCopy == null) {
@@ -448,7 +429,11 @@ public class EnvFunctions {
 
         @Specialization
         Object copy(VirtualFrame frame, RPromise promise) {
-            return recursiveCopy(frame, promise.evaluate(frame, promiseProfile));
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return recursiveCopy(frame, promiseHelper.evaluate(frame, promise));
         }
 
         @Fallback

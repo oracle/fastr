@@ -46,6 +46,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(\"\"), blank.lines.skip=FALSE) }");
         assertEval("{ con<-textConnection(c(\"2 3 5\", \"\", \"11 13 17\")); scan(con, what=list(integer()), blank.lines.skip=FALSE) }");
 
+        assertEval("{ con<-textConnection(c(\"foo faz\", \"\\\"bar\\\" \\\"baz\\\"\")); scan(con, what=list(\"\", \"\")) }");
+        assertEval("{ con<-textConnection(c(\"foo faz\", \"bar \\\"baz\\\"\")); scan(con, what=list(\"\", \"\")) }");
+        assertEval("{ con<-textConnection(c(\"foo, faz\", \"bar, baz\")); scan(con, what=list(\"\", \"\"), sep=\",\") }");
+
     }
 
     @Test
@@ -1222,6 +1226,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x <- 1:2 ; dim(x) <- c(1,2) ; x }");
         assertEval("{ x <- 1:2 ; attr(x, \"dim\") <- c(2,1) ; x }");
+
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); attributes(y) }");
     }
 
     @Test
@@ -1671,9 +1677,9 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testRegExprIgnore() {
         assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME: missing
-// attributes
+        // attributes
         assertEval("gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME:
-// missing attributes
+        // missing attributes
     }
 
     @Test
@@ -2573,6 +2579,17 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testLgamma() {
+        assertEval("{ lgamma(1) }");
+        assertEval("{ lgamma(100) }");
+        assertEval("{ lgamma(as.double(NA)) }");
+        assertEval("{ lgamma(c(100, 2.2)) }");
+        assertEval("{ lgamma(FALSE) }");
+        assertEvalError("{ lgamma(as.raw(1)) }");
+        assertEvalError("{ lgamma(1+1i) }");
+    }
+
+    @Test
     public void testDelayedAssign() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
         assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
@@ -3173,6 +3190,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ print(c(\"foo\"),quote=FALSE)}");
         assertEval("{ x<-matrix(c(\"a\",\"b\",\"c\",\"d\"),nrow=2);print(x,quote=FALSE)}");
         assertEval("{ y<-c(\"a\",\"b\",\"c\",\"d\");dim(y)<-c(1,2,2);print(y,quote=FALSE)}");
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }");
     }
 
     @Test
@@ -3447,12 +3465,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{switch(4,1,2,3)}");
         assertEval("{ test1 <- function(type) { switch(type, mean = mean(c(1,2,3,4)), median = 2, trimmed = 3) };test1(\"mean\")}");
         assertEval("{ u <- \"uiui\" ; switch(u, \"iuiu\" = \"ieps\", \"uiui\" = \"miep\") }");
-    }
-
-    @Test
-    @Ignore
-    public void testSwitchIgnore() {
-        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
+        assertEval("{ answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }");
+        assertEval("{ x <- \"<\"; v <- switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE); v }");
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE) }");
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
     }
 
     @Test
@@ -4118,11 +4134,29 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testTapply() {
-        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTapplyIgnore() {
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; tapply(1:n, fac, sum) }");
         assertEval("{ ind <- list(c(1, 2, 2), c(\"A\", \"A\", \"B\")) ; tapply(1:3, ind, sum) }");
+    }
+
+    @Test
+    public void testNargs() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f() }");
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
+        assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testNArgsIgnore() {
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
 
 }

@@ -44,8 +44,8 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         super(factory);
         assert rvn.getForcePromise() == false;  // Should be caught by optimization check
         this.originalRvn = rvn;
-        this.frameSlotNode = FrameSlotNode.create(rvn.getSymbolName(), false);
-        this.readNode = UnResolvedReadLocalVariableNode.create(rvn.getSymbol(), rvn.getMode(), rvn.getCopyValue(), rvn.getReadMissing());
+        this.frameSlotNode = FrameSlotNode.create(rvn.getName(), false);
+        this.readNode = UnResolvedReadLocalVariableNode.create(rvn.getName(), rvn.getMode(), rvn.getCopyValue(), rvn.getReadMissing());
     }
 
     @Override

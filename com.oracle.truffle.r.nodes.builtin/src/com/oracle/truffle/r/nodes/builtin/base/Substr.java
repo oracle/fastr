@@ -108,30 +108,30 @@ public abstract class Substr extends RBuiltinNode {
         }
     }
 
-// protected static boolean rangeOk(String x, int start, int stop) {
-// return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
-// }
-//
-// protected String substr0(String x, int start, int stop) {
-// if (na.check(x) || na.check(start) || na.check(stop)) {
-// return RRuntime.STRING_NA;
-// }
-// int actualStart = start;
-// int actualStop = stop;
-// if (!rangeOk(x, start, stop)) {
-// everSeenIllegalRange.enter();
-// if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
-// return "";
-// }
-// if (start <= 0) {
-// actualStart = 1;
-// }
-// if (stop > x.length()) {
-// actualStop = x.length();
-// }
-// }
-// return x.substring(actualStart - 1, actualStop);
-// }
+    // protected static boolean rangeOk(String x, int start, int stop) {
+    // return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
+    // }
+    //
+    // protected String substr0(String x, int start, int stop) {
+    // if (na.check(x) || na.check(start) || na.check(stop)) {
+    // return RRuntime.STRING_NA;
+    // }
+    // int actualStart = start;
+    // int actualStop = stop;
+    // if (!rangeOk(x, start, stop)) {
+    // everSeenIllegalRange.enter();
+    // if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
+    // return "";
+    // }
+    // if (start <= 0) {
+    // actualStart = 1;
+    // }
+    // if (stop > x.length()) {
+    // actualStop = x.length();
+    // }
+    // }
+    // return x.substring(actualStart - 1, actualStop);
+    // }
 
     @SuppressWarnings("unused")
     protected boolean emptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {

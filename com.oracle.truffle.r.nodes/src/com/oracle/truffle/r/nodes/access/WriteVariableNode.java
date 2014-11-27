@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -33,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteL
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeFactory;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -41,9 +44,11 @@ import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.find
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeFields({@NodeField(name = "argWrite", type = boolean.class), @NodeField(name = "name", type = String.class)})
+@CreateWrapper
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
     public enum Mode {
+
         REGULAR,
         COPY,
         INVISIBLE,
@@ -65,6 +70,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
     @Override
+    public boolean isSyntax() {
+        return !isArgWrite();
+    }
+
+    @Override
     public final boolean getVisibility() {
         return false;
     }
@@ -75,11 +85,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     // "dimnames(x)<-list(1)", the assigned value list(1) must become list("1"), with the latter
     // value returned as a result of the call;
     // TODO: is there a better way than to eagerly create a copy of RHS?
-
     // the above, however, is not necessary for vector updates, which never coerces RHS to a
     // different type; in this case we set the mode parameter to INVISIBLE is meant to prevent
     // changing state altogether
-
     // setting value of the mode parameter to TEMP is meant to modify how the state is changed; this
     // is needed for the replacement forms of vector updates where a vector is assigned to a
     // temporary (visible) variable and then, again, to the original variable (which would cause the
@@ -129,6 +137,31 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         frame.setObject(frameSlot, newValue);
     }
 
+    protected void deparseHelper(State state, String op) {
+        if (!isArgWrite()) {
+            state.append(getName());
+            RNode rhs = getRhs();
+            if (rhs != null) {
+                state.append(op);
+                getRhs().deparse(state);
+            }
+        }
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        String name = getName();
+        RNode nameSub = RASTUtils.substituteName(name, env);
+        if (nameSub != null) {
+            name = RASTUtils.expectName(nameSub);
+        }
+        RNode rhsSub = null;
+        if (getRhs() != null) {
+            rhsSub = getRhs().substitute(env);
+        }
+        return create(name, rhsSub, false, this instanceof WriteSuperVariableNode);
+    }
+
     private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
         try {
             return !frame.isObject(frameSlot) || frame.getObject(frameSlot) != value;
@@ -137,29 +170,29 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
     }
 
-    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
+    public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(symbol), mode);
+            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(name), mode);
         } else {
             assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(symbol), mode);
+            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(name), mode);
         }
     }
 
-    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        return create(symbol, rhs, isArgWrite, isSuper, Mode.REGULAR);
+    public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
+        return create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
     }
 
-    public static WriteVariableNode create(SourceSection src, Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        WriteVariableNode wvn = create(symbol, rhs, isArgWrite, isSuper, Mode.REGULAR);
+    public static WriteVariableNode create(SourceSection src, String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
+        WriteVariableNode wvn = create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
         wvn.assignSourceSection(src);
         return wvn;
     }
 
     public abstract void execute(VirtualFrame frame, Object value);
 
-    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     @NodeField(name = "mode", type = Mode.class)
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
         public abstract Mode getMode();
@@ -192,6 +225,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), getName(), frameSlot, getMode())).execute(frame, value);
+        }
+
+        @Override
+        public void deparse(State state) {
+            deparseHelper(state, " <- ");
         }
     }
 
@@ -250,6 +288,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         protected boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
             return isDoubleKind(frameSlot);
         }
+
+        @Override
+        public void deparse(State state) {
+            deparseHelper(state, " <- ");
+        }
     }
 
     public abstract static class AbstractWriteSuperVariableNode extends WriteVariableNode {
@@ -262,6 +305,12 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             execute(frame, value);
             return value;
         }
+
+        @Override
+        public void deparse(State state) {
+            deparseHelper(state, " <<- ");
+        }
+
     }
 
     public static final class WriteSuperVariableConditionalNode extends AbstractWriteSuperVariableNode {
@@ -369,6 +418,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public boolean isArgWrite() {
             return false;
         }
+
     }
 
     @SuppressWarnings("unused")
@@ -455,4 +505,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
         return false;
     }
+
+    @Override
+    public ProbeNode.WrapperNode createWrapperNode(RNode child) {
+        return new WriteVariableNodeWrapper((WriteVariableNode) child);
+    }
+
 }
