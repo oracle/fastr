@@ -106,6 +106,7 @@ public abstract class CastRawNode extends CastNode {
 
     private RRawVector createResultVector(RAbstractVector operand, byte[] bdata) {
         RRawVector ret = RDataFactory.createRawVector(bdata, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }

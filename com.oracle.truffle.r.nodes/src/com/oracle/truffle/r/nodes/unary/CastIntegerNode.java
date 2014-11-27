@@ -128,6 +128,7 @@ public abstract class CastIntegerNode extends CastNode {
 
     private RIntVector createResultVector(RAbstractVector operand, int[] idata) {
         RIntVector ret = RDataFactory.createIntVector(idata, naCheck.neverSeenNA(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -149,6 +150,7 @@ public abstract class CastIntegerNode extends CastNode {
             seenNA = seenNA || naProfile.isNA(value);
         }
         RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -192,6 +194,7 @@ public abstract class CastIntegerNode extends CastNode {
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }

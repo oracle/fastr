@@ -106,6 +106,7 @@ public abstract class CastLogicalNode extends CastNode {
             seenNA = seenNA || naProfile.isNA(value);
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(bdata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }

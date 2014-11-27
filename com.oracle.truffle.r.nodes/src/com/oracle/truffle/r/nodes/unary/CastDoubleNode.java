@@ -109,6 +109,7 @@ public abstract class CastDoubleNode extends CastNode {
 
     private RDoubleVector createResultVector(RAbstractVector operand, double[] ddata) {
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -125,6 +126,7 @@ public abstract class CastDoubleNode extends CastNode {
             seenNA = seenNA || naProfile.isNA(value);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -158,6 +160,7 @@ public abstract class CastDoubleNode extends CastNode {
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
         }
