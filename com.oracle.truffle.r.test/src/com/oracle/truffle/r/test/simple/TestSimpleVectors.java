@@ -2036,6 +2036,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(a=list(b=7)); x[[\"a\"]]$b<-42; x }");
         assertEval("{ x<-list(a=list(b=7)); x$a[[\"b\"]]<-42; x }");
 
+        assertEval("{ e <- list(a=2) ; e$a }");
+        assertEval("{ e <- list(a=2) ; e$\"a\" }");
     }
 
     @Test

@@ -51599,6 +51599,14 @@ $c
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ e <- list(a=2) ; e$"a" }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ e <- list(a=2) ; e$a }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
 #{ f <- function(v) { v$x } ; f(list(xa=1, xb=2, hello=3)) ; f(list(y=2,x=3)) }
 [1] 3
 
