@@ -14580,6 +14580,10 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ answer<-"no";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ test1 <- function(type) { switch(type, mean = 1, median = 2, trimmed = 3) };test1("median")}
 [1] 2
 
@@ -14590,6 +14594,18 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ u <- "uiui" ; switch(u, "iuiu" = "ieps", "uiui" = "miep") }
 [1] "miep"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "<"; switch(x, "<=" =, "<" =, ">" = TRUE, FALSE) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "<"; switch(x, "<=" =, "<" =, ">" =, FALSE) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "<"; v <- switch(x, "<=" =, "<" =, ">" = TRUE, FALSE); v }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{switch(3,1,2,3)}

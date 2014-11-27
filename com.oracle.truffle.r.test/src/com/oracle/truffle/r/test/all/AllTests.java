@@ -15109,8 +15109,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
-        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
+    public void TestSimpleBuiltins_testSwitch_13cd706e2bd1788c59598e6bfc323ca5() {
+        assertEval("{ answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_d4faea251b8a58212027618ddf8607ae() {
+        assertEval("{ x <- \"<\"; v <- switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE); v }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_097323ef6ceeb6c2265f2899249c7836() {
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_ee2f25f8f83e08a229c342819daf69b5() {
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
     }
 
     @Test

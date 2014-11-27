@@ -3465,12 +3465,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{switch(4,1,2,3)}");
         assertEval("{ test1 <- function(type) { switch(type, mean = mean(c(1,2,3,4)), median = 2, trimmed = 3) };test1(\"mean\")}");
         assertEval("{ u <- \"uiui\" ; switch(u, \"iuiu\" = \"ieps\", \"uiui\" = \"miep\") }");
-    }
-
-    @Test
-    @Ignore
-    public void testSwitchIgnore() {
-        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
+        assertEval("{ answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }");
+        assertEval("{ x <- \"<\"; v <- switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE); v }");
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE) }");
+        assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
     }
 
     @Test

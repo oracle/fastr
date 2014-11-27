@@ -22,6 +22,7 @@ import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -32,6 +33,7 @@ public abstract class Switch extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
 
     private final BranchProfile suppliedArgNameIsNull = BranchProfile.create();
+    private final BranchProfile matchedArgIsMissing = BranchProfile.create();
     private final ConditionProfile currentDefaultValueProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile returnValueProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile notIntType = BranchProfile.create();
@@ -59,7 +61,23 @@ public abstract class Switch extends RBuiltinNode {
             final String suppliedArgName = names[i];
             final Object optionalArgValue = optionalArgValues[i];
             if (xStr.equals(suppliedArgName) && optionalArgValue != null) {
-                return returnNonNull(optionalArgValue);
+                if (RMissingHelper.isMissing(optionalArgValue)) {
+                    matchedArgIsMissing.enter();
+
+                    // Fall-through: If the matched value is missing, take the next non-missing
+                    for (int j = i + 1; j < optionalArgValues.length; j++) {
+                        Object val = optionalArgValues[j];
+                        if (!RMissingHelper.isMissing(val)) {
+                            return returnNonNull(val);
+                        }
+                    }
+
+                    // No non-missing value: invisible null
+                    return returnNull();
+                } else {
+                    // Default: Matched name has a value
+                    return returnNonNull(optionalArgValue);
+                }
             }
             if (suppliedArgName == null) {
                 suppliedArgNameIsNull.enter();
