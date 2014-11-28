@@ -52,4 +52,13 @@ public class TestrGenBuiltinArg extends TestBase {
     public void testArg6() {
         assertEval("argv <- list(FALSE);Arg(argv[[1]]);");
     }
+
+	@Test
+    @Ignore
+	public void testArg8() {
+		assertEval("argv <- list(-1);"+
+			"do.call(\'Arg\', argv)");
+	}
+
 }
+

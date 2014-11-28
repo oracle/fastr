@@ -34,4 +34,13 @@ public class TestrGenBuiltinSyssetenv extends TestBase {
     public void testSyssetenv3() {
         assertEval("argv <- list(c(\'BIBINPUTS\', \'add\'), c(\'.:.:/home/lzhao/hg/r-instrumented/share/texmf/bibtex/bib::/home/lzhao/hg/r-instrumented/share/texmf/bibtex/bib:\', \'TRUE\')); .Internal(Sys.setenv(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+    @Ignore
+	public void testSyssetenv5() {
+		assertEval("argv <- structure(list(TZ = \'EST5EDT\'), .Names = \'TZ\');"+
+			"do.call(\'Sys.setenv\', argv)");
+	}
+
 }
+

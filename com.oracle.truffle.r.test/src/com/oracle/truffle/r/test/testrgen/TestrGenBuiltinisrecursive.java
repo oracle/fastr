@@ -82,4 +82,13 @@ public class TestrGenBuiltinisrecursive extends TestBase {
     public void testisrecursive11() {
         assertEval("argv <- list(structure(list(Df = c(1L, 7L), `Sum Sq` = c(158.407612694902, 204.202165082876), `Mean Sq` = c(158.407612694902, 29.1717378689823), `F value` = c(5.43017400630538, NA), `Pr(>F)` = c(0.052592726218915, NA)), .Names = c(\'Df\', \'Sum Sq\', \'Mean Sq\', \'F value\', \'Pr(>F)\'), row.names = c(\'depression\', \'Residuals\'), class = c(\'anova\', \'data.frame\'), heading = c(\'Analysis of Variance Table\\n\', \'Response: weight\')));is.recursive(argv[[1]]);");
     }
+
+	@Test
+    @Ignore
+	public void testisrecursive13() {
+		assertEval("argv <- list(expression(quote(expression(4, 1.12837916709551))));"+
+			"do.call(\'is.recursive\', argv)");
+	}
+
 }
+

@@ -23,3 +23,4 @@ public class TestrGenBuiltinstderr extends TestBase {
         assertEval(" .Internal(stderr())");
     }
 }
+

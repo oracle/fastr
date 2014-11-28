@@ -52,4 +52,13 @@ public class TestrGenBuiltintabulate extends TestBase {
     public void testtabulate6() {
         assertEval("argv <- list(integer(0), 0L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+    @Ignore
+	public void testtabulate8() {
+		assertEval("argv <- structure(list(bin = numeric(0)), .Names = \'bin\');"+
+			"do.call(\'tabulate\', argv)");
+	}
+
 }
+

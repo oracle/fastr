@@ -51,3 +51,4 @@ public class TestrGenBuiltinatan extends TestBase {
         assertEval("argv <- list(-1.46941282670977e-16);atan(argv[[1]]);");
     }
 }
+

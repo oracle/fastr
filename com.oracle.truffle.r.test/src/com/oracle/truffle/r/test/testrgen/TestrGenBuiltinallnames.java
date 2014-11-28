@@ -47,3 +47,4 @@ public class TestrGenBuiltinallnames extends TestBase {
         assertEval("argv <- list(0.1, FALSE, -1L, TRUE); .Internal(all.names(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }
+

@@ -29,3 +29,4 @@ public class TestrGenBuiltingcinfo extends TestBase {
         assertEval("argv <- list(FALSE); .Internal(gcinfo(argv[[1]]))");
     }
 }
+

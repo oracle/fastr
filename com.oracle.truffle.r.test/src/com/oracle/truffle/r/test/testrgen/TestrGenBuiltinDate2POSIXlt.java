@@ -71,3 +71,4 @@ public class TestrGenBuiltinDate2POSIXlt extends TestBase {
         assertEval("argv <- list(structure(c(11354, 11382, 11413), class = \'Date\')); .Internal(Date2POSIXlt(argv[[1]]))");
     }
 }
+

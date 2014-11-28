@@ -50,4 +50,13 @@ public class TestrGenBuiltinwhichmax extends TestBase {
     public void testwhichmax6() {
         assertEval("argv <- list(list()); .Internal(which.max(argv[[1]]))");
     }
+
+	@Test
+    @Ignore
+	public void testwhichmax8() {
+		assertEval("argv <- structure(list(x = c(NA, NA)), .Names = \'x\');"+
+			"do.call(\'which.max\', argv)");
+	}
+
 }
+

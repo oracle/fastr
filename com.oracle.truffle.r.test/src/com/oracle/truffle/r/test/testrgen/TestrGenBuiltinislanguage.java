@@ -134,3 +134,4 @@ public class TestrGenBuiltinislanguage extends TestBase {
         assertEval("argv <- list(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\');is.language(argv[[1]]);");
     }
 }
+

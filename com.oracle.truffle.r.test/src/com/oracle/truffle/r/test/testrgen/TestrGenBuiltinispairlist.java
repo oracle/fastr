@@ -87,4 +87,12 @@ public class TestrGenBuiltinispairlist extends TestBase {
     public void testispairlist14() {
         assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.pairlist(argv[[1]]);");
     }
+
+	@Test
+	public void testispairlist16() {
+		assertEval("argv <- list(NULL);"+
+			"do.call(\'is.pairlist\', argv)");
+	}
+
 }
+

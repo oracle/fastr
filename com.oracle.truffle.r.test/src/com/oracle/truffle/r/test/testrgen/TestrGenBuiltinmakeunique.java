@@ -37,3 +37,4 @@ public class TestrGenBuiltinmakeunique extends TestBase {
         assertEval("argv <- list(character(0), \'.\'); .Internal(make.unique(argv[[1]], argv[[2]]))");
     }
 }
+

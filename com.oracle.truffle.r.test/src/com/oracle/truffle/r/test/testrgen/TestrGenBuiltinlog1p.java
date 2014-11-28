@@ -29,3 +29,4 @@ public class TestrGenBuiltinlog1p extends TestBase {
         assertEval("argv <- list(-7e-04);log1p(argv[[1]]);");
     }
 }
+

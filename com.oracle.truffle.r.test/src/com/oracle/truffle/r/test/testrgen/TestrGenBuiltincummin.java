@@ -63,3 +63,4 @@ public class TestrGenBuiltincummin extends TestBase {
         assertEval("argv <- list(FALSE);cummin(argv[[1]]);");
     }
 }
+

@@ -23,3 +23,4 @@ public class TestrGenBuiltinsummaryconnection extends TestBase {
         assertEval("argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(summary.connection(argv[[1]]))");
     }
 }
+

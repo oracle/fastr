@@ -59,3 +59,4 @@ public class TestrGenBuiltinstrtrim extends TestBase {
         assertEval("argv <- list(character(0), 40L); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 }
+

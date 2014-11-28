@@ -52,4 +52,13 @@ public class TestrGenBuiltintolower extends TestBase {
     public void testtolower6() {
         assertEval("argv <- list(character(0)); .Internal(tolower(argv[[1]]))");
     }
+
+	@Test
+    @Ignore
+	public void testtolower8() {
+		assertEval("argv <- structure(list(x = c(\'NA\', NA, \'BANANA\')), .Names = \'x\');"+
+			"do.call(\'tolower\', argv)");
+	}
+
 }
+

@@ -40,4 +40,13 @@ public class TestrGenBuiltinchartr extends TestBase {
     public void testchartr4() {
         assertEval("argv <- list(\'.\', \'.\', character(0)); .Internal(chartr(argv[[1]], argv[[2]], argv[[3]]))");
     }
+
+	@Test
+    @Ignore
+	public void testchartr6() {
+		assertEval("argv <- structure(list(old = \'NA\', new = \'na\', x = c(\'NA\', NA,     \'BANANA\')), .Names = c(\'old\', \'new\', \'x\'));"+
+			"do.call(\'chartr\', argv)");
+	}
+
 }
+

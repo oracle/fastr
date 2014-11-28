@@ -29,3 +29,4 @@ public class TestrGenBuiltinbitwiseAnd extends TestBase {
         assertEval("argv <- list(structure(integer(0), class = \'hexmode\'), structure(integer(0), class = \'hexmode\')); .Internal(bitwiseAnd(argv[[1]], argv[[2]]))");
     }
 }
+

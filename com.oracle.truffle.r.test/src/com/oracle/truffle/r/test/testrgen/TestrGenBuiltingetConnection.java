@@ -23,3 +23,4 @@ public class TestrGenBuiltingetConnection extends TestBase {
         assertEval("argv <- list(FALSE); .Internal(getConnection(argv[[1]]))");
     }
 }
+

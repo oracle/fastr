@@ -126,4 +126,12 @@ public class TestrGenBuiltinmin extends TestBase {
     public void testmin20() {
         assertEval("argv <- list(numeric(0));min(argv[[1]]);");
     }
+
+	@Test
+	public void testmin22() {
+		assertEval("argv <- list(2, 3, NA);"+
+			"do.call(\'min\', argv)");
+	}
+
 }
+

@@ -22,3 +22,4 @@ public class TestrGenBuiltinnargs extends TestBase {
         assertEval("nargs( );");
     }
 }
+

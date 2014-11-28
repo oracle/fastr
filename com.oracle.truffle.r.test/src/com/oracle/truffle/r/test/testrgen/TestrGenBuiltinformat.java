@@ -305,7 +305,15 @@ public class TestrGenBuiltinformat extends TestBase {
 
     @Test
     @Ignore
-    public void testformat55() {
+    public void testformat55(){
         assertEval("argv <- list(1e-11, FALSE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
+
+    @Test
+    @Ignore
+    public void testformat56() {
+        assertEval("argv <- structure(list(x = 0.04, digits = 3, nsmall = 3), .Names = c(\'x\',     \'digits\', \'nsmall\'));" + "do.call(\'format\', argv)");
+    }
+
 }
+

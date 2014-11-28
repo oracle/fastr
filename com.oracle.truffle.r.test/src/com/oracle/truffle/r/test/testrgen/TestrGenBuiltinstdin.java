@@ -23,3 +23,4 @@ public class TestrGenBuiltinstdin extends TestBase {
         assertEval(" .Internal(stdin())");
     }
 }
+

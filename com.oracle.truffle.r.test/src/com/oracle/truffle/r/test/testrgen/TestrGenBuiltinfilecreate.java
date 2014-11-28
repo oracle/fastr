@@ -26,4 +26,12 @@ public class TestrGenBuiltinfilecreate extends TestBase {
     public void testfilecreate2() {
         assertEval("argv <- list(character(0), TRUE); .Internal(file.create(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+	public void testfilecreate4() {
+		assertEval("argv <- structure(list(\'foo1\'), .Names = \'\');"+
+			"do.call(\'file.create\', argv)");
+	}
+
 }
+

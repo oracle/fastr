@@ -35,3 +35,4 @@ public class TestrGenBuiltincommentassign extends TestBase {
         assertEval("argv <- list(logical(0), NULL); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
     }
 }
+

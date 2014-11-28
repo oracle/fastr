@@ -29,3 +29,4 @@ public class TestrGenBuiltinbindtextdomain extends TestBase {
         assertEval("argv <- list(\'utils\', \'/home/lzhao/hg/r-instrumented/library/translations\'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
     }
 }
+

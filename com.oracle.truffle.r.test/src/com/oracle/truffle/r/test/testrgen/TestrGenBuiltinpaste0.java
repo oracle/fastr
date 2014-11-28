@@ -86,3 +86,4 @@ public class TestrGenBuiltinpaste0 extends TestBase {
         assertEval("argv <- list(list(\'cnstrO> \', \'constrOptim(c(2,-1,-1), fQP, gQP, ui = t(Amat), ci = bvec)\'), \'\\n\'); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 }
+

@@ -31,4 +31,13 @@ public class TestrGenBuiltinsample extends TestBase {
     public void testsample3() {
         assertEval("argv <- list(2L, 499, TRUE, c(0, 0.525)); .Internal(sample(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
+
+	@Test
+    @Ignore
+	public void testsample5() {
+		assertEval("argv <- structure(list(x = c(0, 0)), .Names = \'x\');"+
+			"do.call(\'sample\', argv)");
+	}
+
 }
+

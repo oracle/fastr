@@ -49,3 +49,4 @@ public class TestrGenBuiltingettext extends TestBase {
         assertEval("argv <- list(NULL, NULL); .Internal(gettext(argv[[1]], argv[[2]]))");
     }
 }
+

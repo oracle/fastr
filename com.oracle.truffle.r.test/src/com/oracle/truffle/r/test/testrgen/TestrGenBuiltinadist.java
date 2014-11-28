@@ -41,3 +41,4 @@ public class TestrGenBuiltinadist extends TestBase {
         assertEval("argv <- list(list(), list(), structure(c(1, 1, 1), .Names = c(\'insertions\', \'deletions\', \'substitutions\')), FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(adist(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 }
+

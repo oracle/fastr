@@ -87,4 +87,29 @@ public class TestrGenBuiltingregexpr extends TestBase {
     public void testgregexpr12() {
         assertEval("argv <- list(\'[[\', \'utils:::.show_help_on_topic_\', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
+
+	@Test
+    @Ignore
+	public void testgregexpr14() {
+		assertEval("argv <- structure(list(pattern = \'\', text = \'abc\', fixed = TRUE),     .Names = c(\'pattern\', \'text\', \'fixed\'));"+
+			"do.call(\'gregexpr\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testgregexpr15() {
+		assertEval("argv <- structure(list(pattern = \'\', text = \'abc\'), .Names = c(\'pattern\',     \'text\'));"+
+			"do.call(\'gregexpr\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testgregexpr16() {
+		assertEval("argv <- structure(list(pattern = \'\', text = \'abc\', perl = TRUE),     .Names = c(\'pattern\', \'text\', \'perl\'));"+
+			"do.call(\'gregexpr\', argv)");
+	}
+
 }
+

@@ -28,4 +28,21 @@ public class TestrGenBuiltinbeta extends TestBase {
     public void testbeta2() {
         assertEval("argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+    @Ignore
+	public void testbeta4() {
+		assertEval("argv <- structure(list(a = 0.01, b = 171), .Names = c(\'a\', \'b\'));"+
+			"do.call(\'beta\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testbeta5() {
+		assertEval("argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c(\'a\',     \'b\'));"+
+			"do.call(\'beta\', argv)");
+	}
+
 }
+
