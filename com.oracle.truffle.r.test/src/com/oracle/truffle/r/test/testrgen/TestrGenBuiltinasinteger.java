@@ -118,3 +118,4 @@ public class TestrGenBuiltinasinteger extends TestBase {
         assertEval("argv <- list(39);as.integer(argv[[1]]);");
     }
 }
+

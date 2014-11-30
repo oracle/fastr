@@ -199,4 +199,13 @@ public class TestrGenBuiltinunique extends TestBase {
     public void testunique31() {
         assertEval("argv <- list(c(2L, 1L, NA), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
+
+	@Test
+    @Ignore
+	public void testunique33() {
+		assertEval("argv <- structure(list(x = structure(c(15, 37, 30, 18, 8, 20,     42.7, 29.3), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c(\'very good\',     \'good\', \'bad\', \'very bad\'), Location = c(\'city centre\', \'suburbs\')),     .Names = c(\'Evaluation\', \'Location\')))), .Names = \'x\');"+
+			"do.call(\'unique\', argv)");
+	}
+
 }
+

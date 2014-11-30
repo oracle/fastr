@@ -74,3 +74,4 @@ public class TestrGenBuiltincumprod extends TestBase {
         assertEval("argv <- list(c(0.982149602642989, 0.91866776738084, 0.859369083800704, 0.921182928974104));cumprod(argv[[1]]);");
     }
 }
+

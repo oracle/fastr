@@ -156,4 +156,37 @@ public class TestrGenBuiltinseqint extends TestBase {
     public void testseqint24() {
         assertEval("argv <- list(1, 1, by = 1);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
+
+	@Test
+    @Ignore
+	public void testseqint26() {
+		assertEval("argv <- list(NaN, NaN);"+
+			"do.call(\'seq.int\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testseqint27() {
+		assertEval("argv <- structure(list(1.2, 1, by = 1), .Names = c(\'\', \'\', \'by\'));"+
+			"do.call(\'seq.int\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testseqint28() {
+		assertEval("argv <- structure(list(to = NaN), .Names = \'to\');"+
+			"do.call(\'seq.int\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testseqint29() {
+		assertEval("argv <- list(NaN);"+
+			"do.call(\'seq.int\', argv)");
+	}
+
 }
+

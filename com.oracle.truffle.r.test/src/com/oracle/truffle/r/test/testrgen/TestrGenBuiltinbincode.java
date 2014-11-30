@@ -53,3 +53,4 @@ public class TestrGenBuiltinbincode extends TestBase {
         assertEval("argv <- list(c(4L, 8L, 7L, 4L, 8L, 7L, NA, 7L, 6L, 7L, 7L, 8L, 8L, 6L, 7L, 8L, 5L, 4L, 8L, 7L, 5L, 6L, 5L, 6L, 5L, 6L, 7L, 6L, 5L, 7L, 4L, 6L, 6L, 5L, 7L, 5L, 5L, 6L, 6L, 6L, 5L, 7L, 5L, 7L, 5L, 3L, 7L, 6L, 5L, 5L, 6L, 5L, 5L, 6L, 10L, 10L, 6L, 3L, 5L, 8L, 7L, 5L, 6L, 5L, 5L, 5L, 6L, 5L, 6L, 5L, 5L, 6L, 7L, 7L, 6L, 7L, 7L, 8L, 9L, 7L, 8L, 6L, 4L, 7L, 7L, 6L, NA, 8L, 5L, 7L, 6L, 5L, NA, 7L, 6L, 7L, 7L, 9L, 5L, 8L, 6L, 8L, 9L, 6L, 6L, 7L, 8L, 8L, 8L, 7L, 8L, 7L, 6L, 6L, 9L, 7L, 6L, 8L, 5L, 7L, 8L, 8L, 7L, 7L, 7L, 8L, 5L, 6L, 6L, 5L, 7L, 5L, 7L, 7L, 4L, 5L, 8L, 5L, 5L, 6L, 7L, 5L, 9L, 5L, 6L, 7L), c(2, 5.5, 10), TRUE, FALSE); .Internal(bincode(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }
+

@@ -27,3 +27,4 @@ public class TestrGenBuiltinisloaded extends TestBase {
         assertEval("argv <- list(\'supsmu\', \'\', \'\'); .Internal(is.loaded(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

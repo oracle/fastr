@@ -76,4 +76,21 @@ public class TestrGenBuiltinregexpr extends TestBase {
     public void testregexpr10() {
         assertEval("argv <- list(\'package:\', \'environmental\', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
+
+	@Test
+    @Ignore
+	public void testregexpr12() {
+		assertEval("argv <- structure(list(pattern = \'\\d\', text = c(\'1\', \'B\', \'3\')),     .Names = c(\'pattern\', \'text\'));"+
+			"do.call(\'regexpr\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testregexpr13() {
+		assertEval("argv <- structure(list(pattern = \'[a-z]\', text = NA), .Names = c(\'pattern\',     \'text\'));"+
+			"do.call(\'regexpr\', argv)");
+	}
+
 }
+

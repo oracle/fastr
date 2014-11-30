@@ -140,3 +140,4 @@ public class TestrGenBuiltinisarray extends TestBase {
         assertEval("argv <- list(c(0.568, 1.432, -1.08, 1.08));is.array(argv[[1]]);");
     }
 }
+

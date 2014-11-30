@@ -130,4 +130,12 @@ public class TestrGenBuiltinsprintf extends TestBase {
     public void testsprintf19() {
         assertEval("argv <- list(\'%G\', 3.14159265358979e-06); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+	public void testsprintf21() {
+		assertEval("argv <- structure(list(fmt = \'%9.4g\', 12345.6789), .Names = c(\'fmt\',     \'\'));"+
+			"do.call(\'sprintf\', argv)");
+	}
+
 }
+

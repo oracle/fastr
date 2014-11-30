@@ -47,3 +47,4 @@ public class TestrGenBuiltindigamma extends TestBase {
         assertEval("argv <- list(c(1e+30, 1e+60, 1e+90, 1e+120, 1e+150, 1e+180, 1e+210, 1e+240, 1e+270, 1e+300));digamma(argv[[1]]);");
     }
 }
+

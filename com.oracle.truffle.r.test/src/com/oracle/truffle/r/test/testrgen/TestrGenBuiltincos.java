@@ -53,3 +53,4 @@ public class TestrGenBuiltincos extends TestBase {
         assertEval("argv <- list(logical(0));cos(argv[[1]]);");
     }
 }
+

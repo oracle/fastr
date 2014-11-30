@@ -53,3 +53,4 @@ public class TestrGenBuiltinpolyroot extends TestBase {
         assertEval("argv <- list(c(1, 8, 28, 56, 70, 56, 28, 8, 1)); .Internal(polyroot(argv[[1]]))");
     }
 }
+

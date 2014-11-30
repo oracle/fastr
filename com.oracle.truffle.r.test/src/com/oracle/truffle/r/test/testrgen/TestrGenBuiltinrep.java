@@ -130,4 +130,76 @@ public class TestrGenBuiltinrep extends TestBase {
     public void testrep19() {
         assertEval("argv <- list(FALSE, 1L); .Internal(rep_len(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+	public void testrep21() {
+		assertEval("argv <- structure(list(1:5, each = 2), .Names = c(\'\', \'each\'));"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testrep22() {
+		assertEval("argv <- list(structure(c(1L, 1L, 1L, 2L, 2L, 2L), .Label = c(\'Batch1\',     \'Batch2\'), class = \'factor\'), 2);"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep23() {
+		assertEval("argv <- list(structure(c(11.3164921459501, 9.56444166646261,     23.868524352596, 8.592077957758, 0.187318691429722, -11.3963997363604,     -6.26079624982537, 6.05560822307356, -6.03903226622761, 4.13503361306269),     .Names = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\', \'j\')),     15);"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep24() {
+		assertEval("argv <- list(0, 2000);"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep25() {
+		assertEval("argv <- list(0 - (0+2i), 13);"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep26() {
+		assertEval("argv <- list(c(1, 2, 3, 4, 7), c(3, 4, 5, 4, 2));"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep27() {
+		assertEval("argv <- list(1:14, c(3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4));"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep28() {
+		assertEval("argv <- structure(list(c(2, 2, -1, -1, -1, -1, 0, 0), each = 48),     .Names = c(\'\', \'each\'));"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep29() {
+		assertEval("argv <- list(c(\'A\', \'B\'), c(48L, 44L));"+
+			"do.call(\'rep\', argv)");
+	}
+
+
+	@Test
+	public void testrep30() {
+		assertEval("argv <- structure(list(c(\'a\', \'b\', \'c\'), each = 3), .Names = c(\'\',     \'each\'));"+
+			"do.call(\'rep\', argv)");
+	}
+
 }
+

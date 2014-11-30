@@ -97,4 +97,21 @@ public class TestrGenBuiltinanyDuplicated extends TestBase {
     public void testanyDuplicated16() {
         assertEval("argv <- list(c(\'1\', \'4\', \'6\', \'9\', \'11\', NA, \'15\', \'16\', \'17\', \'20\', \'21\', \'23\', \'29\', \'41\', \'45\', \'48\', \'55\', \'62\', \'63\', \'65\', \'70\', \'74\', \'82\', \'83\', \'85\', \'86\', \'92\', \'93\', \'97\', \'98\', \'99\', \'103\', \'104\', \'106\', \'108\', \'109\', \'112\', \'113\', \'120\', \'126\', \'127\', \'128\', \'132\', \'139\', \'142\', \'145\', \'148\', \'151\', \'159\', \'164\', \'165\', \'169\', \'171\', \'173\', \'175\', \'189\', \'191\', \'193\', \'194\', \'195\', \'198\', \'200\', \'202\', \'209\', \'212\', \'213\', \'215\', \'216\', \'221\', \'223\', \'224\', \'227\'), FALSE, FALSE); .Internal(anyDuplicated(argv[[1]], argv[[2]], argv[[3]]))");
     }
+
+	@Test
+    @Ignore
+	public void testanyDuplicated18() {
+		assertEval("argv <- structure(list(x = structure(c(3, 2, 7, 2, 6, 2, 7, 2),     .Dim = c(4L, 2L), .Dimnames = list(c(\'A\', \'B\', \'C\', \'D\'),         c(\'M\', \'F\'))), MARGIN = 0), .Names = c(\'x\', \'MARGIN\'));"+
+			"do.call(\'anyDuplicated\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testanyDuplicated19() {
+		assertEval("argv <- structure(list(x = c(1, NA, 3, NA, 3), incomparables = c(3,     NA)), .Names = c(\'x\', \'incomparables\'));"+
+			"do.call(\'anyDuplicated\', argv)");
+	}
+
 }
+

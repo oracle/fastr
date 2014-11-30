@@ -34,4 +34,21 @@ public class TestrGenBuiltinintToUtf8 extends TestBase {
     public void testintToUtf83() {
         assertEval("argv <- list(FALSE, FALSE); .Internal(intToUtf8(argv[[1]], argv[[2]]))");
     }
+
+	@Test
+    @Ignore
+	public void testintToUtf85() {
+		assertEval("argv <- structure(list(x = NA_integer_, multiple = TRUE), .Names = c(\'x\',     \'multiple\'));"+
+			"do.call(\'intToUtf8\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testintToUtf86() {
+		assertEval("argv <- structure(list(x = NA_integer_), .Names = \'x\');"+
+			"do.call(\'intToUtf8\', argv)");
+	}
+
 }
+

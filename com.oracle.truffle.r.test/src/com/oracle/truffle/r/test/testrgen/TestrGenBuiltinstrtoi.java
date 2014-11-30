@@ -47,3 +47,4 @@ public class TestrGenBuiltinstrtoi extends TestBase {
         assertEval("argv <- list(character(0), 8L); .Internal(strtoi(argv[[1]], argv[[2]]))");
     }
 }
+

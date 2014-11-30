@@ -42,4 +42,12 @@ public class TestrGenBuiltindirname extends TestBase {
     public void testdirname5() {
         assertEval("argv <- list(structure(\'/home/lzhao/hg/r-instrumented/library/utils\', .Names = \'Dir\')); .Internal(dirname(argv[[1]]))");
     }
+
+	@Test
+	public void testdirname7() {
+		assertEval("argv <- structure(list(path = character(0)), .Names = \'path\');"+
+			"do.call(\'dirname\', argv)");
+	}
+
 }
+

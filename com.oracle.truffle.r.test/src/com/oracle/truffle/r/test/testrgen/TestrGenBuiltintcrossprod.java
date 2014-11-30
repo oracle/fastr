@@ -65,3 +65,4 @@ public class TestrGenBuiltintcrossprod extends TestBase {
         assertEval("argv <- list(structure(c(1.1173625565162, 1.46907016195074, 1.1173625565162, -0.59596185089264, -1.32605913508878e-308, 0.595961850892641), .Dim = c(3L, 2L)), structure(c(0.517876924314756, 0.680886908762812, 0.517876924314755, -0.707106781186547, -1.57336481399136e-308, 0.707106781186548), .Dim = c(3L, 2L))); .Internal(tcrossprod(argv[[1]], argv[[2]]))");
     }
 }
+

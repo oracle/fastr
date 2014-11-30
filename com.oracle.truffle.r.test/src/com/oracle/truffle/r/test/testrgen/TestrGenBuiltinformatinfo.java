@@ -88,4 +88,21 @@ public class TestrGenBuiltinformatinfo extends TestBase {
     public void testformatinfo12() {
         assertEval("argv <- list(c(NaN, NA), NULL, 0L); .Internal(format.info(argv[[1]], argv[[2]], argv[[3]]))");
     }
+
+	@Test
+    @Ignore
+	public void testformatinfo14() {
+		assertEval("argv <- structure(list(x = complex(real = Inf, imaginary = Inf)),     .Names = \'x\');"+
+			"do.call(\'format.info\', argv)");
+	}
+
+
+	@Test
+    @Ignore
+	public void testformatinfo15() {
+		assertEval("argv <- structure(list(x = c(complex(real = NaN, imaginary = NaN),     NA)), .Names = \'x\');"+
+			"do.call(\'format.info\', argv)");
+	}
+
 }
+

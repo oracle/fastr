@@ -23,3 +23,4 @@ public class TestrGenBuiltinbitwiseOr extends TestBase {
         assertEval("argv <- list(15L, 7L); .Internal(bitwiseOr(argv[[1]], argv[[2]]))");
     }
 }
+

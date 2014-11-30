@@ -35,3 +35,4 @@ public class TestrGenBuiltinenc2native extends TestBase {
         assertEval("argv <- list(\'José Pinheiro [aut] (S version)\');enc2native(argv[[1]]);");
     }
 }
+

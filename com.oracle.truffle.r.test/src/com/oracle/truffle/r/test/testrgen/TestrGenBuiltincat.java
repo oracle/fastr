@@ -43,3 +43,4 @@ public class TestrGenBuiltincat extends TestBase {
         assertEval("argv <- list(\'head\\n\', file = \'foo2\');cat(argv[[1]],argv[[2]]);");
     }
 }
+

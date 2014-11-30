@@ -23,3 +23,4 @@ public class TestrGenBuiltinsetTimeLimit extends TestBase {
         assertEval("argv <- list(FALSE, Inf, FALSE); .Internal(setTimeLimit(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

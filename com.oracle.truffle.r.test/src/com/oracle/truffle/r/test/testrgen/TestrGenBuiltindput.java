@@ -65,3 +65,4 @@ public class TestrGenBuiltindput extends TestBase {
         assertEval("argv <- list(c(0.00508571428571428, 0.876285714285715), structure(1L, class = c(\'terminal\', \'connection\')), 69); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

@@ -83,3 +83,4 @@ public class TestrGenBuiltindimassign extends TestBase {
         assertEval("argv <- list(structure(NA, .Dim = c(1L, 1L)), value = c(1L, 1L));`dim<-`(argv[[1]],argv[[2]]);");
     }
 }
+

@@ -53,3 +53,4 @@ public class TestrGenBuiltinattributesassign extends TestBase {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), .Dimnames = list(NULL, c(\'I\', \'a\')), foo = \'bar\', class = \'matrix\'), value = structure(list(class = \'matrix\', foo = \'bar\', dimnames = list(NULL, c(\'I\', \'a\')), dim = c(3L, 2L)), .Names = c(\'class\', \'foo\', \'dimnames\', \'dim\')));`attributes<-`(argv[[1]],argv[[2]]);");
     }
 }
+

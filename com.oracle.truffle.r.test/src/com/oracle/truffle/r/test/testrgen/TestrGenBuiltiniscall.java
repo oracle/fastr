@@ -167,3 +167,4 @@ public class TestrGenBuiltiniscall extends TestBase {
         assertEval("argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
     }
 }
+

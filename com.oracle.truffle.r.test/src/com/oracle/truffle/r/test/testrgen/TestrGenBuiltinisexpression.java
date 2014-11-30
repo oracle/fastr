@@ -132,4 +132,12 @@ public class TestrGenBuiltinisexpression extends TestBase {
     public void testisexpression23() {
         assertEval("argv <- list(3.97376540705816e-12);is.expression(argv[[1]]);");
     }
+
+	@Test
+	public void testisexpression25() {
+		assertEval("argv <- list(expression(quote(expression(b = pi^3))));"+
+			"do.call(\'is.expression\', argv)");
+	}
+
 }
+

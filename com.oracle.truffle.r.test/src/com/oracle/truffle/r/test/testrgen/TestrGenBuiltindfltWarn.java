@@ -89,3 +89,4 @@ public class TestrGenBuiltindfltWarn extends TestBase {
         assertEval("argv <- list(\'incomplete final line found by readTableHeader on 'foo4'\', quote(read.table(\'foo4\', header = TRUE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 }
+

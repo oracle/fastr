@@ -129,4 +129,12 @@ public class TestrGenBuiltinismatrix extends TestBase {
     public void testismatrix21() {
         assertEval("argv <- list(structure(c(NA, NA, NA, NA), .Dim = c(1L, 4L), .Dimnames = list(\'x\', c(\'Estimate\', \'Std. Error\', \'t value\', \'Pr(>|t|)\'))));is.matrix(argv[[1]]);");
     }
+
+	@Test
+	public void testismatrix23() {
+		assertEval("argv <- list(0.0597289453377495);"+
+			"do.call(\'is.matrix\', argv)");
+	}
+
 }
+
