@@ -90,6 +90,25 @@ print.AsIs <- function (x, ...)
     invisible(x)
 }
 
+dim.data.frame <- function(x) c(.row_names_info(x, 2L), length(x))
+
+dimnames.data.frame <- function(x) list(row.names(x), names(x))
+
+`dimnames<-.data.frame` <- function(x, value)
+{
+	d <- dim(x)
+	if(!is.list(value) || length(value) != 2L)
+		stop("invalid 'dimnames' given for data frame")
+	## do the coercion first, as might change length
+	value[[1L]] <- as.character(value[[1L]])
+	value[[2L]] <- as.character(value[[2L]])
+	if(d[[1L]] != length(value[[1L]]) || d[[2L]] != length(value[[2L]]))
+		stop("invalid 'dimnames' given for data frame")
+	row.names(x) <- value[[1L]] # checks validity
+	names(x) <- value[[2L]]
+	x
+}
+
 as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
 {
     if(is.null(x)) # can't assign class to NULL

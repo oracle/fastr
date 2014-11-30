@@ -24,8 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -33,26 +36,46 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class DimNames extends RBuiltinNode {
 
+    @Child private DispatchedCallNode dcn;
+
     @Specialization
     protected RNull getDimNames(RNull operand) {
         controlVisibility();
         return operand;
     }
 
-    @Specialization(guards = "!isNull")
+    @Specialization(guards = {"!isNull", "!isObject"})
     protected RList getDimNames(RAbstractContainer container) {
         controlVisibility();
         return container.getDimNames();
     }
 
-    @Specialization(guards = "isNull")
+    @Specialization(guards = {"isNull", "!isObject"})
     protected RNull getDimNamesNull(@SuppressWarnings("unused") RAbstractContainer vector) {
         controlVisibility();
         return RNull.instance;
     }
 
+    @Specialization(guards = "isObject")
+    protected Object getDimNamesOnject(VirtualFrame frame, RAbstractContainer container) {
+        controlVisibility();
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(DispatchedCallNode.create("dimnames", RRuntime.USE_METHOD, getSuppliedArgsNames()));
+        }
+        try {
+            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
+        } catch (RError e) {
+            return isNull(container) ? RNull.instance : container.getDimNames();
+        }
+    }
+
     protected boolean isNull(RAbstractContainer container) {
         return container.getDimNames() == null;
+    }
+
+    protected boolean isObject(RAbstractContainer container) {
+        return container.isObject();
     }
 
 }

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Dim extends RBuiltinNode {
 
     @Child ShortRowNames shortRowNames;
+    @Child private DispatchedCallNode dcn;
 
     private int dataFrameRowNames(VirtualFrame frame, RDataFrame operand) {
         if (shortRowNames == null) {
@@ -73,30 +75,39 @@ public abstract class Dim extends RBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = {"!isDataFrame", "!hasDimensions"})
+    @Specialization(guards = {"!isObject", "!hasDimensions"})
     protected RNull dim(RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = {"!isDataFrame", "hasDimensions"})
-    protected RIntVector dimWithDimensions(RAbstractContainer container) {
+    @Specialization(guards = {"!isObject", "hasDimensions"})
+    protected Object dimWithDimensions(RAbstractContainer container) {
         controlVisibility();
         return RDataFactory.createIntVector(container.getDimensions(), RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RIntVector dim(VirtualFrame frame, RDataFrame dataFrame) {
+    @Specialization(guards = "isObject")
+    protected Object dimObject(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
-        return RDataFactory.createIntVector(new int[]{dataFrameRowNames(frame, dataFrame), dataFrame.getLength()}, RDataFactory.COMPLETE_VECTOR);
-    }
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(DispatchedCallNode.create("dim", RRuntime.USE_METHOD, getSuppliedArgsNames()));
+        }
+        try {
+            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
+        } catch (RError e) {
+            return hasDimensions(container) ? dimWithDimensions(container) : RNull.instance;
+        }
 
-    public static boolean isDataFrame(RAbstractContainer container) {
-        return container.getElementClass() == RDataFrame.class;
     }
 
     public static boolean hasDimensions(RAbstractContainer container) {
         return container.hasDimensions();
+    }
+
+    protected boolean isObject(RAbstractContainer container) {
+        return container.isObject();
     }
 
 }
