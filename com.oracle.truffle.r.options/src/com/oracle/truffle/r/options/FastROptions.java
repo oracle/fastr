@@ -47,8 +47,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> PrintErrorStacktraces = new OptionValue<>(false);
     @Option(help = "Assert completeness of results vectors after evaluating unit tests and R shell commands")
     public static final OptionValue<Boolean> CheckResultCompleteness = new OptionValue<>(true);
-    @Option(help = "Turn on debugging output")
-    public static final OptionValue<Boolean> Debug = new OptionValue<>(false);
+    @Option(help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")
+    public static final OptionValue<String> Debug = new OptionValue<>(null);
     @Option(help = "Disable all Instrumentation")
     public static final OptionValue<Boolean> Instrumentation = new OptionValue<>(false);
     @Option(help = "Add function call counters")
@@ -70,16 +70,47 @@ public class FastROptions {
                     System.exit(2);
                 } else {
                     switch (desc.getType().getSimpleName()) {
-                        case "Boolean":
+                        case "Boolean": {
                             boolean value = booleanOptionValue(prop);
                             desc.getOptionValue().setValue(value);
                             break;
+                        }
+
+                        case "String": {
+                            String value = stringOptionValue(prop);
+                            desc.getOptionValue().setValue(value);
+                            break;
+                        }
                         default:
                             assert false;
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Convenience function for matching aginst the Debug option.
+     *
+     * @param string string to match against {@link #Debug} value.
+     * @return {@code true} if {@link #Debug} is set with no {@code =value} component, or of
+     *         {@code string} matches an element, {@code false} otherwise.
+     */
+    public static boolean debugMatches(String string) {
+        String s = Debug.getValue();
+        if (s == null) {
+            return false;
+        } else if (s.length() == 0) {
+            return true;
+        } else {
+            String[] parts = s.split(",");
+            for (String part : parts) {
+                if (part.equals(string)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static OptionDescriptor findOption(String key) {
@@ -107,5 +138,14 @@ public class FastROptions {
 
     private static boolean booleanOptionValue(String option) {
         return option.charAt(2) == '+';
+    }
+
+    private static String stringOptionValue(String option) {
+        int ix = option.indexOf('=');
+        if (ix < 0) {
+            return "";
+        } else {
+            return option.substring(ix + 1);
+        }
     }
 }
