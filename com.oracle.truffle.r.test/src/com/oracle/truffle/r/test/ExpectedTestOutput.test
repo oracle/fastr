@@ -16703,6 +16703,10 @@ $class
 1 1 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(3,4)); x[,"b"] }
+[1] 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }
 [1] 2
 
