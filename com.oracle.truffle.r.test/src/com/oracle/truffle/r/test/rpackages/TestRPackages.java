@@ -29,6 +29,7 @@ import java.util.*;
 
 import org.junit.*;
 
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.*;
 
@@ -72,8 +73,9 @@ public class TestRPackages extends TestBase {
             // GnuR INSTALL sets JAVA_HOME to a 1.6 JRE
             env.put("FASTR_JAVA_HOME", javaHome);
             try {
-                // Uncomment the following to actually see the INSTALL output (debugging)
-                // pb.inheritIO();
+                if (FastROptions.debugMatches("TestRPackages")) {
+                    pb.inheritIO();
+                }
                 Process install = pb.start();
                 int rc = install.waitFor();
                 return rc == 0;
@@ -141,7 +143,6 @@ public class TestRPackages extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testLoadTestRFFI() {
         // tmp disable until OS name is fixed
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
