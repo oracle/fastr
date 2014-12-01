@@ -77,7 +77,7 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
                             n.probe().tagAs(STATEMENT, null);
                             tag = true;
                         }
-                        if (FastROptions.Debug.getValue() && tag) {
+                        if (FastROptions.debugMatches("RASTDebugProber") && tag) {
                             System.out.printf("Tag %s as STATEMENT: %b%n", n.toString(), tag);
                         }
                     }

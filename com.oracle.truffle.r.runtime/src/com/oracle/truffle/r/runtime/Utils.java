@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public final class Utils {
@@ -64,12 +63,6 @@ public final class Utils {
 
     public static boolean getProperty(String key, boolean dfltValue) {
         return Boolean.parseBoolean(getProperty(key, dfltValue ? "true" : "false"));
-    }
-
-    public static void debug(String msg) {
-        if (FastROptions.Debug.getValue()) {
-            System.err.println(msg);
-        }
     }
 
     public static boolean isIsoLatinDigit(char c) {
