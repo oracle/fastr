@@ -306,6 +306,20 @@ public final class RArguments {
         return (SourceSection) getArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC];
     }
 
+    /**
+     * Return a string describing the call that resulted in this frame. Ideally
+     * {@link #getCallSourceSection(Frame)} never returns {@code null}, but this method handles the
+     * case when it does (e.g. UseMethod dispatch).
+     */
+    public static String safeGetCallSourceString(Frame frame) {
+        SourceSection ss = getCallSourceSection(frame);
+        if (ss != null) {
+            return ss.getCode();
+        } else {
+            return getFunction(frame).getTarget().toString();
+        }
+    }
+
     public static int getDepth(Frame frame) {
         return (Integer) getArgumentsWithEvalCheck(frame)[INDEX_DEPTH];
     }

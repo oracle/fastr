@@ -389,7 +389,7 @@ public class DebugHandling {
         }
 
         private static void printCall(VirtualFrame frame) {
-            RContext.getInstance().getConsoleHandler().println(RArguments.getCallSourceSection(frame).getCode());
+            RContext.getInstance().getConsoleHandler().println(RArguments.safeGetCallSourceString(frame));
         }
 
     }

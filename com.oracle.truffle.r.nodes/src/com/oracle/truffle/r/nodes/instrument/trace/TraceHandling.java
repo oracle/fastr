@@ -142,7 +142,7 @@ public class TraceHandling {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
-                RContext.getInstance().getConsoleHandler().printf("trace: %s%n", RArguments.getCallSourceSection(frame).getCode());
+                RContext.getInstance().getConsoleHandler().printf("trace: %s%n", RArguments.safeGetCallSourceString(frame));
             }
         }
     }
