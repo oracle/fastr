@@ -192,7 +192,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
-        return CastToContainerNodeFactory.create(child, false, false, false, true);
+        return CastToContainerNodeFactory.create(child, false, false, false);
     }
 
     @Specialization
