@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * The (global) variables defined in the {@code base} package, e.g. {@code .Platform}. As per
@@ -52,10 +51,30 @@ public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:on
 
     // @formatter:off
-    private int initialized = -1;
+    private static final String[] FORTRAN_NAMES = new String[] {
+        "dchdc", "dqrcf", "dqrdc2", "dqrqty", "dqrqy", "dqrrsd", "dqrxb", "dtrco"
+    };
+    // @formatter: on
+
+    public static final RStringVector NAME = RDataFactory.createStringVectorFromScalar("name");
+
+private int initialized = -1;
 
     public BaseVariables() {
         RPackageVariables.registerHandler("base", this);
+    }
+
+    @Override
+    public void preInitialize(REnvironment baseEnv) {
+        // .Platform TODO be more accurate
+        String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
+        Object value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
+        baseEnv.safePut(".Platform", value);
+        REnvironment baseNamespaceEnv = REnvironment.baseNamespaceEnv();
+        baseEnv.safePut(".BaseNamespaceEnv", baseNamespaceEnv);
+        for (String f : FORTRAN_NAMES) {
+            baseNamespaceEnv.safePut(".F_" + f, RDataFactory.createList(new String[]{f}, NAME));
+        }
     }
 
     public void initialize(REnvironment env) {
@@ -68,16 +87,8 @@ public class BaseVariables implements RPackageVariables.Handler {
                     case ".GlobalEnv":
                         value = REnvironment.globalEnv();
                         break;
-                    case ".BaseNamespaceEnv":
-                        value = REnvironment.baseNamespaceEnv();
-                        break;
                     case ".AutoloadEnv":
                         value = REnvironment.autoloadEnv();
-                        break;
-                    case ".Platform":
-                        // .Platform TODO be more accurate
-                        String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
-                        value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
                         break;
                     case ".Machine":
                         value = createMachine();
@@ -85,11 +96,7 @@ public class BaseVariables implements RPackageVariables.Handler {
                     default:
                         continue;
                 }
-                try {
-                    env.put(var, value);
-                } catch (PutException ex) {
-                    Utils.fail("error initializing base variables");
-                }
+                env.safePut(var, value);
             }
         } else {
             for (String var : VARS) {
@@ -104,17 +111,14 @@ public class BaseVariables implements RPackageVariables.Handler {
                     default:
                         continue;
                 }
-                try {
-                    env.put(var, value);
-                } catch (PutException ex) {
-                    Utils.fail("error initializing base variables");
-                }
+                env.safePut(var, value);
 
             }
         }
         initialized++;
     }
 
+    // @formatter:off
     @CompilationFinal private static final String[] MACHINE_NAMES = new String[] {
         "double.eps",            "double.neg.eps",        "double.xmin",
         "double.xmax",           "double.base",           "double.digits",

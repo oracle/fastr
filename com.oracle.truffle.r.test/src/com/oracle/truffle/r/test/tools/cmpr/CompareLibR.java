@@ -68,6 +68,7 @@ public class CompareLibR {
         String path1 = null;
         String path2 = null;
         boolean printPaths = false;
+        String diffApp = "diff";
         int i = 0;
         while (i < args.length) {
             String arg = args[i];
@@ -94,6 +95,10 @@ public class CompareLibR {
                     printPaths = true;
                     break;
 
+                case "--diffapp":
+                    ++i;
+                    diffApp = args[i];
+                    break;
                 default:
                     usage();
             }
@@ -121,7 +126,7 @@ public class CompareLibR {
                 } else {
                     if (!fastR.flattened.equals(gnuR.flattened)) {
                         if (printPaths) {
-                            System.out.printf("%s and %s differ%n", fastR.toString(), gnuR.toString());
+                            System.out.printf("%s %s %s%n", diffApp, gnuR.toString(), replaceBin(fastR.toString()));
                         } else {
                             System.out.println(fileName + " differs");
                         }
@@ -186,6 +191,10 @@ public class CompareLibR {
             }
         }
         return result;
+    }
+
+    private static String replaceBin(String s) {
+        return s.replace("/bin/", "/src/");
     }
 
     private static String readFileContent(File file) throws IOException {

@@ -369,6 +369,7 @@ def rcmplib(args):
     parser.add_argument('--gnurhome', action='store', help='path to GnuR sources', required=True)
     parser.add_argument('--package', action='store', help='package to check', default="base")
     parser.add_argument('--paths', action='store_true', help='print full paths of files that differ')
+    parser.add_argument('--diffapp', action='store', help='diff application', default="diff")
     args = parser.parse_args(args)
     cmpArgs = []
     cmpArgs.append("--gnurhome")
@@ -377,6 +378,9 @@ def rcmplib(args):
     cmpArgs.append(args.package)
     if args.paths:
         cmpArgs.append("--paths")
+        cmpArgs.append("--diffapp")
+        cmpArgs.append(args.diffapp)
+
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 

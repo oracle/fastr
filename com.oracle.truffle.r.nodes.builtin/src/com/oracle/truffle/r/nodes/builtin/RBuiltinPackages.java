@@ -98,6 +98,10 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                 }
             }
         }
+        RPackageVariables.Handler varHandler = RPackageVariables.getHandler(name);
+        if (varHandler != null) {
+            varHandler.preInitialize(envForFrame);
+        }
         pkg.loadSources(frame, envForFrame);
     }
 
