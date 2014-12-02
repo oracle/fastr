@@ -125,10 +125,12 @@ public abstract class GammaFunctions {
                 if (naValCheck.check(xv)) {
                     result[i] = xv;
                 } else {
-                    MultiVal mVal = dpsifn(xv, 0, 1, new MultiVal());
-                    result[i] = mVal.ierr != 0 ? Double.NaN : -mVal.ans;
-                    if (Double.isNaN(result[i])) {
+                    double val = dpsifn(xv, 0, 1, 0);
+                    if (Double.isNaN(val)) {
+                        result[i] = val;
                         warnNaN = true;
+                    } else {
+                        result[i] = -val;
                     }
                 }
             }
@@ -1663,12 +1665,6 @@ public abstract class GammaFunctions {
 
     // the following is transcribed from polygamma.c
 
-    private static class MultiVal {
-        public double ans;
-        public int nz;
-        public int ierr;
-    }
-
     @CompilationFinal private static final double[] bvalues = new double[]{1.00000000000000000e+00, -5.00000000000000000e-01, 1.66666666666666667e-01, -3.33333333333333333e-02,
                     2.38095238095238095e-02, -3.33333333333333333e-02, 7.57575757575757576e-02, -2.53113553113553114e-01, 1.16666666666666667e+00, -7.09215686274509804e+00, 5.49711779448621554e+01,
                     -5.29124242424242424e+02, 6.19212318840579710e+03, -8.65802531135531136e+04, 1.42551716666666667e+06, -2.72982310678160920e+07, 6.01580873900642368e+08, -1.51163157670921569e+10,
@@ -1682,20 +1678,20 @@ public abstract class GammaFunctions {
 
     // TODO: it's recursive - turn into AST recursion
     @TruffleBoundary
-    static MultiVal dpsifn(double xOld, int n, int kode, MultiVal mValOld) {
+    static double dpsifn(double xOld, int n, int kode, double ansOld) {
 
         double x = xOld;
-        MultiVal mVal = mValOld;
+        double ans = ansOld;
 
         int i, j, k, mm, mx, nn, np, nx, fn;
         double arg, den, elim, eps, fln, rln, r1m4, r1m5, s, slope, t, tk, tt, t1, t2, wdtol, xdmln, xdmy, xinc, xln = 0.0, xm, xmin, yint;
         double[] trm = new double[23];
         double[] trmr = new double[n_max + 1];
 
-        mVal.ierr = 0;
+        // non-zero ierr always results in generating a NaN
+// mVal.ierr = 0;
         if (n < 0 || kode < 1 || kode > 2 || m < 1) {
-            mVal.ierr = 1;
-            return mVal;
+            return Double.NaN;
         }
         if (x <= 0.) {
             /*
@@ -1707,11 +1703,11 @@ public abstract class GammaFunctions {
 // for(j=0; j < m; j++) /* k = j + n : */
 // ans[j] = ((j+n) % 2) ? ML_POSINF : ML_NAN;
                 // m is always 1
-                mVal.ans = (n % 2) != 0 ? Double.POSITIVE_INFINITY : Double.NaN;
-                return mVal;
+                ans = (n % 2) != 0 ? Double.POSITIVE_INFINITY : Double.NaN;
+                return ans;
             }
             /* This could cancel badly */
-            mVal = dpsifn(1. - x, n, /* kode = */1, mVal);
+            ans = dpsifn(1. - x, n, /* kode = */1, ans);
             /*
              * ans[j] == (-1)^(k+1) / gamma(k+1) * psi(k, 1 - x) for j = 0:(m-1) , k = n + j
              */
@@ -1719,8 +1715,9 @@ public abstract class GammaFunctions {
             /* Cheat for now: only work for m = 1, n in {0,1,2,3} : */
             if (m > 1 || n > 3) {/* doesn't happen for digamma() .. pentagamma() */
                 /* not yet implemented */
-                mVal.ierr = 4;
-                return mVal;
+                // non-zero ierr always results in generating a NaN
+// mVal.ierr = 4;
+                return Double.NaN;
             }
             x *= Math.PI; /* pi * x */
             if (n == 0) {
@@ -1750,27 +1747,28 @@ public abstract class GammaFunctions {
                     assert j == 0;
 // ans[j] = s*(ans[j] + t1/t2 * tt);
                 // j must always be 0
-                mVal.ans = s * (mVal.ans + t1 / t2 * tt);
+                ans = s * (ans + t1 / t2 * tt);
             }
             if (n == 0 && kode == 2) /* unused from R, but "wrong": xln === 0 : */
 // ans[0] += xln;
-                mVal.ans += xln;
-            return mVal;
+                ans += xln;
+            return ans;
         } /* x <= 0 */
 
         /* else : x > 0 */
-        mVal.nz = 0;
+        // nz not used
+// mVal.nz = 0;
         xln = Math.log(x);
         if (kode == 1 /* && m == 1 */) {/* the R case --- for very large x: */
             double lrg = 1 / (2. * DBLEPSILON);
             if (n == 0 && x * xln > lrg) {
 // ans[0] = -xln;
-                mVal.ans = -xln;
-                return mVal;
+                ans = -xln;
+                return ans;
             } else if (n >= 1 && x > n * lrg) {
 // ans[0] = exp(-n * xln)/n; /* == x^-n / n == 1/(n * x^n) */
-                mVal.ans = Math.exp(-n * xln) / n;
-                return mVal;
+                ans = Math.exp(-n * xln) / n;
+                return ans;
             }
         }
         mm = m;
@@ -1792,14 +1790,16 @@ public abstract class GammaFunctions {
 
             if (Math.abs(t) > elim) {
                 if (t <= 0.0) {
-                    mVal.nz = 0;
-                    mVal.ierr = 2;
-                    return mVal;
+                    // nz not used
+// mVal.nz = 0;
+                    // non-zero ierr always results in generating a NaN
+// mVal.ierr = 2;
+                    return Double.NaN;
                 }
             } else {
                 if (x < wdtol) {
 // ans[0] = R_pow_di(x, -n-1);
-                    mVal.ans = Math.pow(x, -n - 1);
+                    ans = Math.pow(x, -n - 1);
                     if (mm != 1) {
 // for(k = 1; k < mm ; k++)
 // ans[k] = ans[k-1] / x;
@@ -1808,9 +1808,9 @@ public abstract class GammaFunctions {
                     }
                     if (n == 0 && kode == 2) {
 // ans[0] += xln;
-                        mVal.ans += xln;
+                        ans += xln;
                     }
-                    return mVal;
+                    return ans;
                 }
 
                 /* compute xmin and the number of terms of the series, fln+1 */
@@ -1854,15 +1854,16 @@ public abstract class GammaFunctions {
                 t2 = t + xdmln;
                 tk = Math.max(Math.abs(t), fmax2(Math.abs(t1), Math.abs(t2)));
                 if (tk <= elim) /* for all but large x */
-                    return l10(t, tk, xdmy, xdmln, x, nn, nx, wdtol, fn, trm, trmr, xinc, mm, kode, mVal);
+                    return l10(t, tk, xdmy, xdmln, x, nn, nx, wdtol, fn, trm, trmr, xinc, mm, kode, ans);
             }
-            mVal.nz++; /* underflow */
+            // nz not used
+// mVal.nz++; /* underflow */
             mm--;
 // ans[mm] = 0.;
             assert mm == 0;
-            mVal.ans = 0.;
+            ans = 0.;
             if (mm == 0) {
-                return mVal;
+                return ans;
             }
         } /* end{for()} */
         nn = (int) fln + 1;
@@ -1877,10 +1878,10 @@ public abstract class GammaFunctions {
             s += trm[i];
         }
 // ans[0] = s;
-        mVal.ans = s;
+        ans = s;
         if (n == 0 && kode == 2) {
 // ans[0] = s + xln;
-            mVal.ans = s + xln;
+            ans = s + xln;
         }
 
         if (mm != 1) { /* generate higher derivatives, j > n */
@@ -1902,16 +1903,17 @@ public abstract class GammaFunctions {
 // ans[j] = s;
 // }
         }
-        return mVal;
+        return ans;
 
     }
 
-    private static MultiVal l10(double oldT, double oldTk, double xdmy, double xdmln, double x, double nn, double oldNx, double wdtol, double oldFn, double[] trm, double[] trmr, double xinc,
-                    double mm, int kode, MultiVal mVal) {
+    private static double l10(double oldT, double oldTk, double xdmy, double xdmln, double x, double nn, double oldNx, double wdtol, double oldFn, double[] trm, double[] trmr, double xinc, double mm,
+                    int kode, double ansOld) {
         double t = oldT;
         double tk = oldTk;
         double nx = oldNx;
         double fn = oldFn;
+        double ans = ansOld;
 
         double tss = Math.exp(-t);
         double tt = 0.5 / xdmy;
@@ -1943,12 +1945,14 @@ public abstract class GammaFunctions {
             nx = (int) xinc;
             double np = nn + 1;
             if (nx > n_max) {
-                mVal.nz = 0;
-                mVal.ierr = 3;
-                return mVal;
+                // nz not used
+// mVal.nz = 0;
+                // non-zero ierr always results in generating a NaN
+// mVal.ierr = 3;
+                return Double.NaN;
             } else {
                 if (nn == 0) {
-                    return l20(xdmln, xdmy, x, s, nx, kode, mVal);
+                    return l20(xdmln, xdmy, x, s, nx, kode, ans);
                 }
                 double xm = xinc - 1.0;
                 double fx = x + xm;
@@ -1964,9 +1968,9 @@ public abstract class GammaFunctions {
         }
 // ans[mm-1] = s;
         assert (mm - 1) == 0;
-        mVal.ans = s;
+        ans = s;
         if (fn == 0) {
-            return l30(xdmln, xdmy, x, s, kode, mVal);
+            return l30(xdmln, xdmy, x, s, kode, ans);
         }
 
         /* generate lower derivatives, j < n+mm-1 */
@@ -1994,7 +1998,7 @@ public abstract class GammaFunctions {
             s = (s + t1) * tss;
             if (xinc != 0.0) {
                 if (fn == 0) {
-                    return l20(xdmln, xdmy, x, s, nx, kode, mVal);
+                    return l20(xdmln, xdmy, x, s, nx, kode, ans);
                 }
                 double xm = xinc - 1.0;
                 double fx = x + xm;
@@ -2007,35 +2011,36 @@ public abstract class GammaFunctions {
             }
 // ans[mm - j] = s;
             assert (mm - j) == 0;
-            mVal.ans = s;
+            ans = s;
             if (fn == 0) {
-                return l30(xdmln, xdmy, x, s, kode, mVal);
+                return l30(xdmln, xdmy, x, s, kode, ans);
             }
         }
-        return mVal;
+        return ans;
 
     }
 
-    private static MultiVal l20(double xdmln, double xdmy, double x, double oldS, double nx, int kode, MultiVal mVal) {
+    private static double l20(double xdmln, double xdmy, double x, double oldS, double nx, int kode, double ans) {
         double s = oldS;
         for (int i = 1; i <= nx; i++) {
             s += 1. / (x + (nx - i)); /* avoid disastrous cancellation, PR#13714 */
         }
 
-        return l30(xdmln, xdmy, x, s, kode, mVal);
+        return l30(xdmln, xdmy, x, s, kode, ans);
     }
 
-    private static MultiVal l30(double xdmln, double xdmy, double x, double s, int kode, MultiVal mVal) {
+    private static double l30(double xdmln, double xdmy, double x, double s, int kode, double ansOld) {
+        double ans = ansOld;
         if (kode != 2) {/* always */
 // ans[0] = s - xdmln;
-            mVal.ans = s - xdmln;
+            ans = s - xdmln;
         } else if (xdmy != x) {
             double xq;
             xq = xdmy / x;
 // ans[0] = s - log(xq);
-            mVal.ans = s - Math.log(xq);
+            ans = s - Math.log(xq);
         }
-        return mVal;
+        return ans;
     }
 
 }
