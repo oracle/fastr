@@ -1908,12 +1908,12 @@ methodsPackageMetaName <-
 #    else
 #        .requirePackage(package)
 #}
-#
-### cache and retrieve class definitions  If there is a conflict with
-### packages a list of  classes will be cached
-### See .cacheGeneric, etc. for analogous computations for generics
-#.classTable <- new.env(TRUE, baseenv())
-#assign("#HAS_DUPLICATE_CLASS_NAMES", FALSE, envir = .classTable)
+
+## cache and retrieve class definitions  If there is a conflict with
+## packages a list of  classes will be cached
+## See .cacheGeneric, etc. for analogous computations for generics
+.classTable <- new.env(TRUE, baseenv())
+assign("#HAS_DUPLICATE_CLASS_NAMES", FALSE, envir = .classTable)
 #.duplicateClassesExist <- function(on) {
 #    value <- get("#HAS_DUPLICATE_CLASS_NAMES", envir = .classTable)
 #    if(nargs())
@@ -2039,29 +2039,29 @@ methodsPackageMetaName <-
 #        assign(name, prev, envir  = .classTable)
 #    }
 #}
-#
-### the workhorse of class access
-### The underlying C code will return name if it is not a character vector
-### in the assumption this is a classRepresentation or subclass of that.
-### In principle, this could replace the checks on class(name) in getClassDef
-### and new(), which don't work for subclasses of classRepresentation anyway.
-#.getClassFromCache <- function(name, where) {
-#    value <- .Call(C_R_getClassFromCache, name, .classTable)
-#    if(is.list(value)) { ## multiple classes with this name
-#        pkg <- packageSlot(name)
-#        if(is.null(pkg))
-#            pkg <- if(is.character(where)) where else getPackageName(where, FALSE) # may be ""
-#        pkgs <- names(value)
-#        i <- match(pkg, pkgs, 0L)
-#        if(i == 0L) ## try 'methods':
-#            i <- match("methods", pkgs, 0L)
-#        if(i > 0L) value[[i]]
-#        else NULL
-#    }
-#    else #either a class definition or NULL
-#        value
-#}
-#
+
+## the workhorse of class access
+## The underlying C code will return name if it is not a character vector
+## in the assumption this is a classRepresentation or subclass of that.
+## In principle, this could replace the checks on class(name) in getClassDef
+## and new(), which don't work for subclasses of classRepresentation anyway.
+.getClassFromCache <- function(name, where) {
+    value <- .Call(C_R_getClassFromCache, name, .classTable)
+    if(is.list(value)) { ## multiple classes with this name
+        pkg <- packageSlot(name)
+        if(is.null(pkg))
+            pkg <- if(is.character(where)) where else getPackageName(where, FALSE) # may be ""
+        pkgs <- names(value)
+        i <- match(pkg, pkgs, 0L)
+        if(i == 0L) ## try 'methods':
+            i <- match("methods", pkgs, 0L)
+        if(i > 0L) value[[i]]
+        else NULL
+    }
+    else #either a class definition or NULL
+        value
+}
+
 #### insert superclass information into all the subclasses of this
 #### class.  Used to incorporate inheritance information from
 #### ClassUnions

@@ -21,3 +21,4 @@
 
 # object defined in the methods package describing native methodsPackageMetaName function
 C_R_methodsPackageMetaName <- list(name="R_methodsPackageMetaName")
+C_R_getClassFromCache <- list(name="R_getClassFromCache")

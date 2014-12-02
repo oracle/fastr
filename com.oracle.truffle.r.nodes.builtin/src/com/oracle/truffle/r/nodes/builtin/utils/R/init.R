@@ -22,3 +22,4 @@
 # object defined in the utils package describing native countfields function
 C_countfields <- list(name="countfields")
 C_writetable <- list(name="writetable")
+C_menu <- list(name="menu")

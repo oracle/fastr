@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -461,6 +462,49 @@ public class ForeignFunctions {
         public static boolean isFlushconsole(RList f) {
             return matchName(f, "flushconsole");
         }
+
+        // Translated from GnuR: library/utils/io.c
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isMenu")
+        @TruffleBoundary
+        protected int menu(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+            Object[] values = args.getValues();
+            String[] choices;
+            if (values[0] instanceof String) {
+                choices = new String[]{(String) values[0]};
+            } else if (values[0] instanceof RStringVector) {
+                choices = ((RStringVector) values[0]).getDataWithoutCopying();
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "choices");
+            }
+            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+            int first = choices.length + 1;
+            ch.print("Selection: ");
+            String response = ch.readLine().trim();
+            if (response.length() > 0) {
+                if (Character.isDigit(response.charAt(0))) {
+                    try {
+                        first = Integer.parseInt(response);
+                    } catch (NumberFormatException ex) {
+                        //
+                    }
+                } else {
+                    for (int i = 0; i < choices.length; i++) {
+                        String entry = choices[i];
+                        if (entry.equals(response)) {
+                            first = i + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            return first;
+        }
+
+        public static boolean isMenu(RList f) {
+            return matchName(f, "menu");
+        }
+
     }
 
     /**

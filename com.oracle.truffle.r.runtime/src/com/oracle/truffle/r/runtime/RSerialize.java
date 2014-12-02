@@ -169,7 +169,7 @@ public class RSerialize {
     protected Object readItem(Flags flags) {
         Object result = null;
 
-        SEXPTYPE type = SEXPTYPE.codeMap.get(flags.ptype);
+        SEXPTYPE type = SEXPTYPE.mapInt(flags.ptype);
         switch (type) {
             case NILVALUE_SXP:
                 return RNull.instance;
@@ -292,7 +292,7 @@ public class RSerialize {
                 result = pairList;
                 if (attrItem != null) {
                     assert false;
-                    // Can't attribute a RPairList
+                    // TODO figure out what attrItem is
                     // pairList.setAttr(name, value);
                 }
                 if (type == SEXPTYPE.CLOSXP) {
@@ -323,6 +323,11 @@ public class RSerialize {
                 String name = (String) readItem();
                 result = RDataFactory.createSymbol(name);
                 addReadRef(result);
+                break;
+            }
+
+            case BCODESXP: {
+                result = readBC();
                 break;
             }
 
@@ -396,6 +401,97 @@ public class RSerialize {
             data[i] = item;
         }
         return RDataFactory.createStringVector(data, complete);
+    }
+
+    /**
+     * Read GnuR bytecode. Not because we care, but it may be in there.
+     */
+    private Object readBC() {
+        int repsLength = stream.readInt();
+        Object[] reps = new Object[repsLength];
+        return readBC1(reps);
+    }
+
+    private Object readBC1(Object[] reps) {
+        Object car = readItem();
+        // TODO R_bcEncode(car) (if we care)
+        Object cdr = readBCConsts(reps);
+        return new RPairList(car, cdr, null, SEXPTYPE.BCODESXP);
+    }
+
+    private Object readBCConsts(Object[] reps) {
+        int n = stream.readInt();
+        Object[] ans = new Object[n];
+        for (int i = 0; i < n; i++) {
+            int intType = stream.readInt();
+            SEXPTYPE type = SEXPTYPE.mapInt(intType);
+            switch (type) {
+                case BCODESXP: {
+                    Object c = readBC1(reps);
+                    ans[i] = c;
+                    break;
+                }
+                case LANGSXP:
+                case LISTSXP:
+                case BCREPDEF:
+                case BCREPREF:
+                case ATTRLANGSXP:
+                case ATTRLISTSXP: {
+                    Object c = readBCLang(type, reps);
+                    ans[i] = c;
+                    break;
+                }
+
+                default:
+                    ans[i] = readItem();
+            }
+        }
+        return RDataFactory.createList(ans);
+    }
+
+    private Object readBCLang(final SEXPTYPE typeArg, Object[] reps) {
+        SEXPTYPE type = typeArg;
+        switch (type) {
+            case BCREPREF:
+                return reps[stream.readInt()];
+            case BCREPDEF:
+            case LANGSXP:
+            case LISTSXP:
+            case ATTRLANGSXP:
+            case ATTRLISTSXP: {
+                int pos = -1;
+                boolean hasattr = false;
+                if (type == SEXPTYPE.BCREPDEF) {
+                    pos = stream.readInt();
+                    type = SEXPTYPE.mapInt(stream.readInt());
+                }
+                switch (type) {
+                    case ATTRLANGSXP:
+                        type = SEXPTYPE.LANGSXP;
+                        hasattr = true;
+                        break;
+                    case ATTRLISTSXP:
+                        type = SEXPTYPE.LISTSXP;
+                        hasattr = true;
+                        break;
+                }
+                if (hasattr) {
+                    Object attrItem = readItem();
+                    assert false;
+                }
+                Object tag = readItem();
+                Object car = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
+                Object cdr = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
+                Object ans = new RPairList(car, cdr, tag, type);
+                if (pos >= 0)
+                    reps[pos] = ans;
+                return ans;
+            }
+            default: {
+                Object ans = readItem();
+                return ans;
+            }
+        }
     }
 
     private abstract static class PStream {
@@ -674,7 +770,7 @@ public class RSerialize {
         protected Object readItem() {
             // CheckStyle: stop system..print check
             Flags flags = Flags.decodeFlags(stream.readInt());
-            SEXPTYPE type = SEXPTYPE.codeMap.get(flags.ptype);
+            SEXPTYPE type = SEXPTYPE.mapInt(flags.ptype);
             for (int i = 0; i < depth; i++) {
                 System.out.print("  ");
             }
