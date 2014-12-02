@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
@@ -412,10 +413,10 @@ public class ForeignFunctions {
 
         // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
+        @TruffleBoundary
         @Specialization(guards = "methodsPackageMetaName")
-        protected String callMethodsPackageMetaName(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+        protected String callMethodsPackageMetaName(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
             Object[] argValues = args.getValues();
             // TODO proper error checks
             String prefixString = (String) argValues[0];
@@ -430,6 +431,32 @@ public class ForeignFunctions {
 
         public boolean methodsPackageMetaName(RList f) {
             return matchName(f, "R_methodsPackageMetaName");
+        }
+
+        // Translated from GnuR: library/methods/src/methods_list_dispatch.c
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization(guards = "getClassFromCache")
+        protected Object callGetClassFromCache(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            REnvironment table = (REnvironment) argValues[1];
+            String klassString = RRuntime.asString(argValues[0]);
+            if (klassString != null) {
+                Object value = table.get(klassString);
+                if (value == null) {
+                    return RNull.instance;
+                } else {
+                    // TODO check PACKAGE equality
+                    return value;
+                }
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+            }
+        }
+
+        public boolean getClassFromCache(RList f) {
+            return matchName(f, "R_getClassFromCache");
         }
 
         @Specialization

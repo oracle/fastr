@@ -331,6 +331,11 @@ public class RSerialize {
                 break;
             }
 
+            case PERSISTSXP: {
+                RStringVector sv = inStringVec(false);
+                result = persistentRestore(sv);
+            }
+
             default:
                 assert false;
         }
@@ -401,6 +406,11 @@ public class RSerialize {
             data[i] = item;
         }
         return RDataFactory.createStringVector(data, complete);
+    }
+
+    private Object persistentRestore(RStringVector sv) {
+        assert false;
+        return null;
     }
 
     /**

@@ -1255,12 +1255,12 @@
 #    attr(ext, "conflicts") <- conflicts
 #    ext
 #}
-#
-#classMetaName <-
-#        ## a name for the object storing this class's definition
-#        function(name)
-#    methodsPackageMetaName("C", name)
-#
+
+classMetaName <-
+        ## a name for the object storing this class's definition
+        function(name)
+    methodsPackageMetaName("C", name)
+
 ## regexp for matching class metanames; semi-general but assumes the
 ## meta pattern starts with "." and has no other special characters
 #.ClassMetaPattern <- function()
