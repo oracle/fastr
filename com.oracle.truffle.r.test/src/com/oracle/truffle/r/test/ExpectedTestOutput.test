@@ -8940,6 +8940,30 @@ NULL
 [1]  TRUE  TRUE FALSE FALSE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ e <- new.env(); class(e)<-"abc"; inherits(e, "abc") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ e <- new.env(); inherits(e, "abc") }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ e <- new.env(); inherits(e, "environment") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ f <- function() { }; class(f)<-"abc"; inherits(f, "abc") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ f <- function() { }; inherits(f, "abc") }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ f <- function() { }; inherits(f, "function") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{ inherits(NULL, "try-error") }
 [1] FALSE
 

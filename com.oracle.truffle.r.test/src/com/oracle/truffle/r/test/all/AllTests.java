@@ -8874,6 +8874,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInherits_cab5daa9c44b14d1ff74b7ae5eb7589c() {
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_0b7db22d1e412a9273969e48b85ecff3() {
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1f42b5fae505d7fcba01cf3f9b34891c() {
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_b2730989f0a4122893e227756f3ad6d4() {
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1c09db1038baff62d7860a62723b970f() {
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_e3e3f3bd3bd11391bf356a1816c8b30f() {
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInheritsIgnore_d0dc6389c924878311546ba61d753a22() {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
     }

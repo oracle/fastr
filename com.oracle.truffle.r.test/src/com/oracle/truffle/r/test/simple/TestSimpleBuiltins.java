@@ -3387,6 +3387,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
         assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
         assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
+
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
     }
 
     @Test

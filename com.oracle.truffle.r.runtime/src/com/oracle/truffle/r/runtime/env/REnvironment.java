@@ -473,6 +473,18 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     // END of static methods
 
+    private static final RStringVector ENVIRONMENT = RDataFactory.createStringVectorFromScalar("environment");
+
+    @Override
+    public RStringVector getClassAttr() {
+        RStringVector v = RAttributable.super.getClassAttr();
+        if (v == null) {
+            return ENVIRONMENT;
+        } else {
+            return v;
+        }
+    }
+
     private static final String NAMESPACE_KEY = ".__NAMESPACE__.";
 
     /**
