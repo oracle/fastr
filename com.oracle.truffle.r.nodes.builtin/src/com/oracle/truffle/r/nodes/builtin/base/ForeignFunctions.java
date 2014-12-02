@@ -96,7 +96,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrdc2")
-        protected RList fortranDqrdc2(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrdc2(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             Object[] argValues = args.getValues();
             try {
@@ -131,15 +131,15 @@ public class ForeignFunctions {
             }
         }
 
-        public boolean dqrdc2(String f) {
-            return f.equals("dqrdc2");
+        public boolean dqrdc2(RList f) {
+            return matchName(f, "dqrdc2");
         }
 
         private static final RStringVector DQRCF_NAMES = RDataFactory.createStringVector(new String[]{E, E, E, E, E, E, "coef", "info"}, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrcf")
-        protected RList fortranDqrcf(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrcf(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             Object[] argValues = args.getValues();
             try {
@@ -179,8 +179,8 @@ public class ForeignFunctions {
             }
         }
 
-        public boolean dqrcf(String f) {
-            return f.equals("dqrcf");
+        public boolean dqrcf(RList f) {
+            return matchName(f, "dqrcf");
         }
 
     }

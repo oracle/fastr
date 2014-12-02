@@ -36,13 +36,28 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 public class RPackageVariables {
 
     public interface Handler {
-        void initialize(REnvironment env);
+        /**
+         * Called before the package is loaded, to allow, say, critical variables to be established.
+         * Canonical example is {@code .Platform} in {@code base}.
+         */
+        default void preInitialize(@SuppressWarnings("unused") REnvironment env) {
+        }
+
+        /**
+         * Called after the package is loaded.
+         */
+        default void initialize(@SuppressWarnings("unused") REnvironment env) {
+        }
     }
 
     private static Map<String, Handler> map = new HashMap<>();
 
     public static void registerHandler(String name, Handler handler) {
         map.put(name, handler);
+    }
+
+    public static Handler getHandler(String packageName) {
+        return map.get(packageName);
     }
 
     public static void initializeBase() {
