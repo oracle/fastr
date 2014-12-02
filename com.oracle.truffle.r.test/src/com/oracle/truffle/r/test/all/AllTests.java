@@ -7139,6 +7139,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDiGamma_23dedcda854023019aede391b5794558() {
+        assertEval("{ digamma(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_2abd60f73f1e17cf2619450404e6cf24() {
+        assertEval("{ digamma(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_37ac55e4c79e9f12b05a13d608c3652b() {
+        assertEval("{ digamma(7.42) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_f679a840b7003cd94cb24e7b95a4903e() {
+        assertEval("{ digamma(as.double(NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_ee2a910f86ae1f7719dc57bd02ddebe0() {
+        assertEval("{ digamma(c(100, 2.2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_7b76289fa5ccc66afa5b8852bd97c25c() {
+        assertEvalError("{ digamma(as.raw(1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_076b15a53783e112df2b9de834d30871() {
+        assertEvalError("{ digamma(1+1i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_1fc730b20967c872717f252303f3560b() {
+        assertEvalWarning("{ digamma(FALSE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDiagnostics_f20f62c82be750e78cc720a71705d1f4() {
         assertEvalError("{ f <- function() { stop(\"hello\",\"world\") } ; f() }");
     }
@@ -9501,6 +9541,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLgamma_549f2a4a8f780a9799784dabf88b8c91() {
         assertEval("{ lgamma(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_8799a0cf34140ff3facc46d8824dbe57() {
+        assertEval("{ lgamma(7.42) }");
     }
 
     @Test
