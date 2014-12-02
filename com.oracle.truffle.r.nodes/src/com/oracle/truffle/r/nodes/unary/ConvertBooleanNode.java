@@ -46,6 +46,11 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public abstract byte executeByte(VirtualFrame frame, Object operandValue);
 
     @Specialization
+    protected byte doNull(@SuppressWarnings("unused") RNull value) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
+    }
+
+    @Specialization
     protected byte doInt(int value) {
         if (naProfile.isNA(value)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
