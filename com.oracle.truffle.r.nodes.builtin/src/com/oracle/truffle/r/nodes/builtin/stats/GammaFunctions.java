@@ -765,9 +765,9 @@ public abstract class GammaFunctions {
         /*
          * PR# 2214 : From: Morten Welinder <terra@diku.dk>, Fri, 25 Oct 2002 16:50 -------- To:
          * R-bugs@biostat.ku.dk Subject: qgamma precision
-         *
+         * 
          * With a final Newton step, double accuracy, e.g. for (p= 7e-4; nu= 0.9)
-         *
+         * 
          * Improved (MM): - only if rel.Err > EPS_N (= 1e-15); - also for lower_tail = FALSE or
          * log_p = TRUE - optionally *iterate* Newton
          */
@@ -828,7 +828,7 @@ public abstract class GammaFunctions {
     /*
      * Continued fraction for calculation of 1/i + x/(i+d) + x^2/(i+2*d) + x^3/(i+3*d) + ... =
      * sum_{k=0}^Inf x^k/(i+k*d)
-     *
+     * 
      * auxilary in log1pmx() and lgamma1p()
      */
     private static double logcf(double x, double i, double d, double eps /* ~ relative tolerance */) {
@@ -925,7 +925,7 @@ public abstract class GammaFunctions {
          * Abramowitz & Stegun 6.1.33 : for |x| < 2, <==> log(gamma(1+x)) = -(log(1+x) - x) -
          * gamma*x + x^2 * \sum_{n=0}^\infty c_n (-x)^n where c_n := (Zeta(n+2) - 1)/(n+2) =
          * coeffs[n]
-         *
+         * 
          * Here, another convergence acceleration trick is used to compute lgam(x) := sum_{n=0..Inf}
          * c_n (-x)^n
          */
@@ -1151,17 +1151,17 @@ public abstract class GammaFunctions {
 
     /*
      * Compute the following ratio with higher accuracy that would be had from doing it directly.
-     *
+     * 
      * dnorm (x, 0, 1, FALSE) ---------------------------------- pnorm (x, 0, 1, lower_tail, FALSE)
-     *
+     * 
      * Abramowitz & Stegun 26.2.12
      */
     private static double dpnorm(double x, boolean lowerTail, double lp) {
         /*
          * So as not to repeat a pnorm call, we expect
-         *
+         * 
          * lp == pnorm (x, 0, 1, lower_tail, TRUE)
-         *
+         * 
          * but use it only in the non-critical case where either x is small or p==exp(lp) is close
          * to 1.
          */
@@ -1630,24 +1630,24 @@ public abstract class GammaFunctions {
             /*
              * else |x| > sqrt(32) = 5.657 : the next two case differentiations were really for
              * lower=T, log=F Particularly *not* for log_p !
-             *
+             * 
              * Cody had (-37.5193 < x && x < 8.2924) ; R originally had y < 50
-             *
+             * 
              * Note that we do want symmetry(0), lower/upper -> hence use y
              */
         } else if ((logp && y < 1e170) /* avoid underflow below */
                         /*
                          * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make
                          * use of Abramowitz & Stegun, 26.2.13, something like
-                         *
+                         * 
                          * xsq = x*x;
-                         *
+                         * 
                          * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) /
                          * (xsq+2.); else del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) +
                          * log1p(-del);ccum = log1p(-exp(*cum)); /.* ~ log(1) = 0 *./
-                         *
+                         * 
                          * swap_tail;
-                         *
+                         * 
                          * [Yes, but xsq might be infinite.]
                          */
                         || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {
@@ -1711,8 +1711,35 @@ public abstract class GammaFunctions {
             double x = xOld;
             double ans = ansOld;
 
-            int i, j, k, mm, mx, nn, np, nx, fn;
-            double arg, den, elim, eps, fln, rln, r1m4, r1m5, s, slope, t, tk, tt, t1, t2, wdtol, xdmln, xdmy, xinc, xln = 0.0, xm, xmin, yint;
+            int mm;
+            int mx;
+            int nn;
+            int np;
+            int nx;
+            int fn;
+            double arg;
+            double den;
+            double elim;
+            double eps;
+            double fln;
+            double rln;
+            double r1m4;
+            double r1m5;
+            double s;
+            double slope;
+            double t;
+            double tk;
+            double tt;
+            double t1;
+            double t2;
+            double wdtol;
+            double xdmln;
+            double xdmy;
+            double xinc;
+            double xln = 0.0;
+            double xm;
+            double xmin;
+            double yint;
             double[] trm = new double[23];
             double[] trmr = new double[n_max + 1];
 
@@ -1741,7 +1768,7 @@ public abstract class GammaFunctions {
                  */
 
                 /* Cheat for now: only work for m = 1, n in {0,1,2,3} : */
-                if (m > 1 || n > 3) {/* doesn't happen for digamma() .. pentagamma() */
+                if (m > 1 || n > 3) { /* doesn't happen for digamma() .. pentagamma() */
                     /* not yet implemented */
                     // non-zero ierr always results in generating a NaN
 // mVal.ierr = 4;
@@ -1756,30 +1783,33 @@ public abstract class GammaFunctions {
                     tt = 2 * Math.cos(x) / Math.pow(Math.sin(x), 3);
                 } else if (n == 3) {
                     tt = -2 * (2 * Math.pow(Math.cos(x), 2) + 1.) / Math.pow(Math.sin(x), 4);
-                } else {/* can not happen! */
+                } else { /* can not happen! */
                     tt = RRuntime.DOUBLE_NA;
                 }
                 /* end cheat */
 
-                s = (n % 2) != 0 ? -1. : 1.;/* s = (-1)^n */
+                s = (n % 2) != 0 ? -1. : 1.; /* s = (-1)^n */
                 /*
                  * t := pi^(n+1) * d_n(x) / gamma(n+1) , where d_n(x) := (d/dx)^n cot(x)
                  */
                 t1 = t2 = s = 1.;
-                for (k = 0, j = k - n; j < m; k++, j++, s = -s) {
+                for (int k = 0, j = k - n; j < m; k++, j++, s = -s) {
                     /* k == n+j , s = (-1)^k */
-                    t1 *= Math.PI;/* t1 == pi^(k+1) */
-                    if (k >= 2)
-                        t2 *= k;/* t2 == k! == gamma(k+1) */
-                    if (j >= 0) /* by cheat above, tt === d_k(x) */
+                    t1 *= Math.PI; /* t1 == pi^(k+1) */
+                    if (k >= 2) {
+                        t2 *= k; /* t2 == k! == gamma(k+1) */
+                    }
+                    if (j >= 0) { /* by cheat above, tt === d_k(x) */
+                        // j must always be 0
                         assert j == 0;
 // ans[j] = s*(ans[j] + t1/t2 * tt);
-                    // j must always be 0
-                    ans = s * (ans + t1 / t2 * tt);
+                        ans = s * (ans + t1 / t2 * tt);
+                    }
                 }
-                if (n == 0 && kode == 2) /* unused from R, but "wrong": xln === 0 : */
+                if (n == 0 && kode == 2) { /* unused from R, but "wrong": xln === 0 : */
 // ans[0] += xln;
                     ans += xln;
+                }
                 return ans;
             } /* x <= 0 */
 
@@ -1787,7 +1817,7 @@ public abstract class GammaFunctions {
             // nz not used
 // mVal.nz = 0;
             xln = Math.log(x);
-            if (kode == 1 /* && m == 1 */) {/* the R case --- for very large x: */
+            if (kode == 1 /* && m == 1 */) { /* the R case --- for very large x: */
                 double lrg = 1 / (2. * DBLEPSILON);
                 if (n == 0 && x * xln > lrg) {
 // ans[0] = -xln;
@@ -1808,7 +1838,7 @@ public abstract class GammaFunctions {
             wdtol = fmax2(r1m4, 0.5e-18); /* 1.11e-16 */
 
             /* elim = approximate exponential over and underflow limit */
-            elim = 2.302 * (nx * r1m5 - 3.0);/* = 700.6174... */
+            elim = 2.302 * (nx * r1m5 - 3.0); /* = 700.6174... */
             for (;;) {
                 nn = n + mm - 1;
                 fn = nn;
@@ -1858,8 +1888,9 @@ public abstract class GammaFunctions {
                         arg = Math.min(0.0, arg);
                         eps = Math.exp(arg);
                         xm = 1.0 - eps;
-                        if (Math.abs(arg) < 1.0e-3)
+                        if (Math.abs(arg) < 1.0e-3) {
                             xm = -arg;
+                        }
                         fln = x * xm / eps;
                         xm = xmin - x;
                         if (xm > 7.0 && fln < 15.0) {
@@ -1882,8 +1913,9 @@ public abstract class GammaFunctions {
                     t1 = xdmln + xdmln;
                     t2 = t + xdmln;
                     tk = Math.max(Math.abs(t), fmax2(Math.abs(t1), Math.abs(t2)));
-                    if (tk <= elim) /* for all but large x */
+                    if (tk <= elim) { /* for all but large x */
                         return l10(t, tk, xdmy, xdmln, x, nn, nx, wdtol, fn, trm, trmr, xinc, mm, kode, ans);
+                    }
                 }
                 // nz not used
 // mVal.nz++; /* underflow */
@@ -1901,7 +1933,7 @@ public abstract class GammaFunctions {
             t = Math.exp(-t1);
             s = t;
             den = x;
-            for (i = 1; i <= nn; i++) {
+            for (int i = 1; i <= nn; i++) {
                 den += 1.;
                 trm[i] = Math.pow(den, -np);
                 s += trm[i];
@@ -1960,8 +1992,9 @@ public abstract class GammaFunctions {
                 for (int k = 4; k <= 22; k++) {
                     t = t * ((tk + fn + 1) / (tk + 1.0)) * ((tk + fn) / (tk + 2.0)) * rxsq;
                     trm[k] = t * bvalues[k - 1];
-                    if (Math.abs(trm[k]) < tst)
+                    if (Math.abs(trm[k]) < tst) {
                         break;
+                    }
                     s += trm[k];
                     tk += 2.;
                 }
@@ -2060,7 +2093,7 @@ public abstract class GammaFunctions {
 
         private static double l30(double xdmln, double xdmy, double x, double s, int kode, double ansOld) {
             double ans = ansOld;
-            if (kode != 2) {/* always */
+            if (kode != 2) { /* always */
 // ans[0] = s - xdmln;
                 ans = s - xdmln;
             } else if (xdmy != x) {
