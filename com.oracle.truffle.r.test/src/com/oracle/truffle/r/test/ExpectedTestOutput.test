@@ -7454,6 +7454,41 @@ Error in print(x, y) :
 #{ x<-expression(1); deparse(x) }
 [1] "expression(1)"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(1) }
+[1] -0.5772157
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(1+1i) }
+Error in digamma(1 + (0+1i)) : unimplemented complex function
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(100) }
+[1] 4.600162
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(7.42) }
+[1] 1.935283
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(FALSE) }
+[1] NaN
+Warning message:
+In digamma(FALSE) : NaNs produced
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(as.double(NA)) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(as.raw(1)) }
+Error in digamma(as.raw(1)) :
+  non-numeric argument to mathematical function
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiGamma
+#{ digamma(c(100, 2.2)) }
+[1] 4.6001619 0.5442934
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiagonal
 #{ diag(1, 2, 7) }
      [,1] [,2] [,3] [,4] [,5] [,6] [,7]
@@ -9589,6 +9624,10 @@ Error in lgamma(1 + (0+1i)) : unimplemented complex function
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
 #{ lgamma(100) }
 [1] 359.1342
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
+#{ lgamma(7.42) }
+[1] 7.379082
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLgamma
 #{ lgamma(FALSE) }
@@ -54449,6 +54488,10 @@ Error in `[[<-`(`*tmp*`, c(7, 8), value = c(42, 43)) :
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ v <- c(1,2,3,4,5,6,7,8,9); f <- function(k) v[k]; f(2:5); f(-1:-2) }
 [1] 3 4 5 6 7 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x <- NULL;  x[["names", exact=TRUE]] }
+NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x <- NULL; x[c("a", as.character(NA))] <- 7; x }

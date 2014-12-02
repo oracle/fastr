@@ -2582,11 +2582,24 @@ public class TestSimpleBuiltins extends TestBase {
     public void testLgamma() {
         assertEval("{ lgamma(1) }");
         assertEval("{ lgamma(100) }");
+        assertEval("{ lgamma(7.42) }");
         assertEval("{ lgamma(as.double(NA)) }");
         assertEval("{ lgamma(c(100, 2.2)) }");
         assertEval("{ lgamma(FALSE) }");
         assertEvalError("{ lgamma(as.raw(1)) }");
         assertEvalError("{ lgamma(1+1i) }");
+    }
+
+    @Test
+    public void testDiGamma() {
+        assertEval("{ digamma(1) }");
+        assertEval("{ digamma(100) }");
+        assertEval("{ digamma(7.42) }");
+        assertEval("{ digamma(as.double(NA)) }");
+        assertEval("{ digamma(c(100, 2.2)) }");
+        assertEvalWarning("{ digamma(FALSE) }");
+        assertEvalError("{ digamma(as.raw(1)) }");
+        assertEvalError("{ digamma(1+1i) }");
     }
 
     @Test

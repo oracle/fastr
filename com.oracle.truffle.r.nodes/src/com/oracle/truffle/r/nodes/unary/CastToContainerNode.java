@@ -27,39 +27,21 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 
-@NodeField(name = "nonContainerPreserved", type = boolean.class)
 public abstract class CastToContainerNode extends CastNode {
 
     public abstract RAbstractContainer executeRAbstractContainer(VirtualFrame frame, Object value);
 
     public abstract Object executeObject(VirtualFrame frame, Object value);
 
-    public abstract boolean isNonContainerPreserved();
-
-    protected boolean preserveNonContainer() {
-        return isNonContainerPreserved();
-    }
-
-    @Specialization(guards = "preserveNonContainer")
+    @Specialization
     @SuppressWarnings("unused")
     protected RNull castNull(RNull rnull) {
         return RNull.instance;
     }
 
-    @Specialization(guards = "!preserveNonContainer")
-    @SuppressWarnings("unused")
-    protected RAbstractVector cast(RNull rnull) {
-        return RDataFactory.createList();
-    }
-
-    @Specialization(guards = "preserveNonContainer")
+    @Specialization
     protected RFunction castFunction(RFunction f) {
         return f;
-    }
-
-    @Specialization(guards = "!preserveNonContainer")
-    protected RAbstractVector cast(@SuppressWarnings("unused") RFunction f) {
-        return RDataFactory.createList();
     }
 
     @Specialization
