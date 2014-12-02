@@ -58,10 +58,9 @@ public abstract class MultiDimPosConverterNode extends RNode {
         }
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"singleOpNA"})
     protected RAbstractIntVector doIntVectorNA(Object vector, RAbstractIntVector positions) {
-        if (isSubset) {
+        if (isSubset || vector == RNull.instance) {
             return positions;
         } else {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);

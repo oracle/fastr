@@ -22729,6 +22729,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_39ae441072428e7a7960ed8d1e870352() {
+        assertEval("{ x <- NULL;  x[[\"names\", exact=TRUE]] }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_23e220f9c43711417c97b6024e96b424() {
         assertEvalError("{ x<-c(1,2); x[[c(\"a\")]] }");
     }
