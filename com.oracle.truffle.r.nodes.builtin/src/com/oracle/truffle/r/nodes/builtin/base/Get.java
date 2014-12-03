@@ -24,104 +24,82 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@RBuiltin(name = "get", kind = SUBSTITUTE, parameterNames = {"x", "pos", "envir", "mode", "inherits"})
-// TODO INTERNAL
+/**
+ * assert: not expected to be fast even when called as {@code get("x")}.
+ */
+@RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
 public abstract class Get extends RBuiltinNode {
-
-    // TODO
-    // 1. handle mode parameter (we should perhaps guard against mode being set in call right now)
-    // 2. revert to .Internal using get.R
-
-    @Child private ReadVariableNode lookUpInherit;
-    @Child private ReadVariableNode lookUpNoInherit;
-
-    @CompilationFinal private String lastX;
-    @CompilationFinal private RType lastMode;
 
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile inheritsProfile = BranchProfile.create();
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName()),
-                        ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-    }
+    public abstract Object execute(VirtualFrame frame, RAbstractStringVector name, REnvironment envir, String mode, byte inherits);
 
-    public abstract Object execute(VirtualFrame frame, String name, int pos, RMissing envir, String mode, byte inherits);
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
+    @Specialization(guards = "!isInherits")
+    protected Object getNonInherit(RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
         controlVisibility();
-        boolean doesInherit = inherits == RRuntime.LOGICAL_TRUE;
-        ReadVariableNode lookup = null;
-        RType modeType = RType.fromString(modeProfile.profile(mode));
-        if (doesInherit) {
-            lookup = lookUpInherit = setLookUp(lookUpInherit, x, modeType, doesInherit);
-        } else {
-            lookup = lookUpNoInherit = setLookUp(lookUpNoInherit, x, modeType, doesInherit);
-        }
-        try {
-            // FIXME: this will not compile, since lookup is not compilation final
-            return lookup.execute(frame);
-        } catch (RError e) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
-        }
+        return getAndCheck(xv, envir, mode, true);
     }
 
-    private ReadVariableNode setLookUp(ReadVariableNode lookup, String x, RType mode, boolean inherits) {
-        if (lookup == null || !lastX.equals(x) || !lastMode.equals(mode)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lastX = x;
-            lastMode = mode;
-            ReadVariableNode rvn = ReadVariableNode.create(x, mode, false, inherits, true, false);
-            ReadVariableNode newLookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
-            return newLookup;
-        }
-        return lookup;
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+    @Specialization(guards = "isInherits")
+    protected Object getInherit(RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
         controlVisibility();
-        String sx = x.getDataAt(0);
-        REnvironment env = pos;
-        Object r = env.get(sx);
-        if (r == null && inherits == RRuntime.LOGICAL_TRUE) {
+        Object r = getAndCheck(xv, envir, mode, false);
+        if (r == null) {
             inheritsProfile.enter();
-            while (r == null && env != null) {
+            String x = xv.getDataAt(0);
+            RType modeType = RType.fromString(mode);
+            REnvironment env = envir;
+            while (env != null) {
                 env = env.getParent();
                 if (env != null) {
-                    r = env.get(sx);
+                    r = env.get(x);
+                    if (r != null && RRuntime.checkType(r, modeType)) {
+                        break;
+                    }
                 }
             }
-        }
-        if (r == null) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, sx);
+            if (r == null) {
+                unknownObject(x, modeType);
+            }
         }
         return r;
     }
 
-    @Specialization
-    @SuppressWarnings("unused")
-    protected Object get(RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
-        return get(x, envir, RMissing.instance, mode, inherits);
+    private void unknownObject(String x, RType modeType) throws RError {
+        errorProfile.enter();
+        if (modeType == RType.Any) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT_MODE, x, modeType.getName());
+        }
     }
+
+    private Object getAndCheck(RAbstractStringVector xv, REnvironment env, String mode, boolean fail) throws RError {
+        String x = xv.getDataAt(0);
+        RType modeType = RType.fromString(modeProfile.profile(mode));
+        Object obj = env.get(x);
+        if (obj != null && RRuntime.checkType(obj, modeType)) {
+            return obj;
+        } else {
+            if (fail) {
+                unknownObject(x, modeType);
+            }
+            return null;
+        }
+    }
+
+    public static boolean isInherits(@SuppressWarnings("unused") RAbstractStringVector x, @SuppressWarnings("unused") REnvironment envir, String mode, byte inherits) {
+        return inherits == RRuntime.LOGICAL_TRUE;
+    }
+
 }

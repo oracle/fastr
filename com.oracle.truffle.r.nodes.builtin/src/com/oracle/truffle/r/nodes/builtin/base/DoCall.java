@@ -50,9 +50,9 @@ public abstract class DoCall extends RBuiltinNode {
         if (func == null) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin(), getSuppliedArgsNames()));
+                getNode = insert(GetFactory.create(new RNode[4], this.getBuiltin(), getSuppliedArgsNames()));
             }
-            func = (RFunction) getNode.execute(frame, fname.getDataAt(0), 0, RMissing.instance, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+            func = (RFunction) getNode.execute(frame, fname, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         }
         return doDoCall(frame, func, argsAsList, env);
     }

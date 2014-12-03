@@ -202,7 +202,7 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; get(\"..1\") } ; f(1,2,3,4) }");
-        assertEval("{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
+        assertEvalError("{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
 
         assertEval("{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }");
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }");

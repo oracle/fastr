@@ -3424,18 +3424,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\",inherits=FALSE);get(\"y\",mode=\"integer\",inherits=FALSE)};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\",inherits=FALSE)};y();}");
-        assertEval("{ get(\"dummy\") }");
-        assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
-        assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
+        assertEvalError("{ get(\"dummy\") }");
+        assertEvalError("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
+        assertEvalError("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
         assertEval("{ get(\".Platform\", globalenv())$endian }");
         assertEval("{ get(\".Platform\")$endian }");
+        assertEvalError("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 
     @Test
     @Ignore
     public void testGetIgnore() {
         // Fails because of error message mismatch.
-        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 
     @Test
