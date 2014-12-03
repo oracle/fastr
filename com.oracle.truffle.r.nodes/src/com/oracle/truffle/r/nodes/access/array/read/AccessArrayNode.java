@@ -46,6 +46,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class AccessArrayNode extends RNode {
 
     private final boolean isSubset;
+    private final boolean exactInSource;
+    private final boolean dropInSource;
 
     private final NACheck elementNACheck = NACheck.create();
     private final NACheck posNACheck = NACheck.create();
@@ -78,6 +80,10 @@ public abstract class AccessArrayNode extends RNode {
 
     protected abstract RNode getPositions();
 
+    protected abstract RNode getExact();
+
+    protected abstract RNode getDropDim();
+
     public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, RAbstractLogicalVector dropDim);
 
     public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, int operand, RAbstractLogicalVector dropDim);
@@ -92,17 +98,29 @@ public abstract class AccessArrayNode extends RNode {
         getVector().deparse(state);
         state.append(isSubset ? "[" : "[[");
         getPositions().deparse(state);
+        if (exactInSource) {
+            state.append(", exact = ");
+            getExact().deparse(state);
+        }
+        if (dropInSource) {
+            state.append(", drop = ");
+            getDropDim().deparse(state);
+        }
         state.append(isSubset ? "]" : "]]");
     }
 
-    public AccessArrayNode(boolean isSubset) {
+    public AccessArrayNode(boolean isSubset, boolean exactInSource, boolean dropInSource) {
         this.isSubset = isSubset;
         this.recursiveIsSubset = isSubset;
+        this.exactInSource = exactInSource;
+        this.dropInSource = dropInSource;
     }
 
     public AccessArrayNode(AccessArrayNode other) {
         this.isSubset = other.isSubset;
         this.recursiveIsSubset = other.recursiveIsSubset;
+        this.exactInSource = other.exactInSource;
+        this.dropInSource = other.dropInSource;
     }
 
     private Object accessRecursive(VirtualFrame frame, Object vector, Object exact, Object operand, int recLevel, RAbstractLogicalVector dropDim, boolean forDataFrame) {
@@ -114,7 +132,7 @@ public abstract class AccessArrayNode extends RNode {
             if (forDataFrame && isSubset) {
                 newIsSubset = false;
             }
-            accessRecursive = insert(AccessArrayNodeFactory.create(newIsSubset, null, null, null, null, null));
+            accessRecursive = insert(AccessArrayNodeFactory.create(newIsSubset, false, false, null, null, null, null, null));
         }
         return accessRecursive.executeAccess(frame, vector, exact, recLevel, operand, dropDim);
     }
@@ -1759,8 +1777,8 @@ public abstract class AccessArrayNode extends RNode {
         return recLevel > 0;
     }
 
-    public static AccessArrayNode create(boolean isSubset, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
-        return AccessArrayNodeFactory.create(isSubset, vector, exact, ConstantNode.create(0), positions, dropDim);
+    public static AccessArrayNode create(boolean isSubset, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
+        return AccessArrayNodeFactory.create(isSubset, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
     }
 
 }
