@@ -38,9 +38,9 @@ public abstract class DispatchedCallNode extends RNode {
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "RDotGroup is intended to be used as an identity")
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, SourceSection callSrc, final CallArgumentsNode callArgsNode) {
+    public static DispatchNode create(final String genericName, final String dispatchType, SourceSection callSrc, final CallArgumentsNode callArgsNode) {
         if (dispatchType == RGroupGenerics.RDotGroup) {
-            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callSrc, callArgsNode));
+            return GroupDispatchNode.create(genericName, callSrc, callArgsNode);
         }
         throw new AssertionError();
     }
@@ -182,74 +182,6 @@ public abstract class DispatchedCallNode extends RNode {
                 return currentNode.executeInternal(frame, args);
             }
             return nextNode.executeInternal(frame, aType, args);
-        }
-    }
-
-    private static final class ResolvedDispatchedCallNode extends DispatchedCallNode {
-        @Child private RCallNode aCallNode;
-        @Child private GroupDispatchNode aDispatchNode;
-
-        public ResolvedDispatchedCallNode(GroupDispatchNode dNode) {
-            this.aDispatchNode = dNode;
-            this.assignSourceSection(dNode.getSourceSection());
-        }
-
-        @Override
-        public boolean isSyntax() {
-            return true;
-        }
-
-        @Override
-        public void deparse(State state) {
-            String name = aDispatchNode.getGenericName();
-            RDeparse.Func func = RDeparse.getFunc(name);
-            if (func != null) {
-                // infix operator
-                RASTDeparse.deparseInfixOperator(state, this, func);
-            } else {
-                state.append(name);
-                aDispatchNode.callArgsNode.deparse(state);
-            }
-        }
-
-        @Override
-        public RNode substitute(REnvironment env) {
-            // TODO substitute aDispatchNode
-            return RASTUtils.createCall(aDispatchNode, (CallArgumentsNode) aDispatchNode.callArgsNode.substitute(env));
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame);
-            return executeHelper(frame, aFuncCall);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RStringVector type) {
-            DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame, type);
-            return executeHelper(frame, aFuncCall);
-        }
-
-        @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
-            return Utils.nyi();
-        }
-
-        // TODO Insert PIC!
-        private Object executeHelper(VirtualFrame frame, DispatchNode.FunctionCall aFuncCall) {
-            if (aCallNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                aCallNode = insert(RCallNode.createCall(getSourceSection(), null, aFuncCall.args));
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                aCallNode.replace(RCallNode.createCall(getSourceSection(), null, aFuncCall.args));
-            }
-            try {
-                Object result = aCallNode.execute(frame, aFuncCall.function);
-                return result;
-            } finally {
-                aDispatchNode.unsetEnvironment();
-            }
         }
     }
 }

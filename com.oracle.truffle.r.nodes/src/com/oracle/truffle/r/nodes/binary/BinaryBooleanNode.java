@@ -766,92 +766,92 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // int vector and vectors
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorIntVectorSameLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpSameLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createIntToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractStringVector right) {
         return performStringVectorOpSameLength(RClosures.createIntToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractStringVector left, RAbstractIntVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createIntToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractStringVector left, RAbstractIntVector right) {
         return performStringVectorOpSameLength(left, RClosures.createIntToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorDifferentLength(RAbstractComplexVector left, RAbstractIntVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doIntVectorSameLength(RAbstractComplexVector left, RAbstractIntVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
@@ -878,72 +878,72 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // double vector and vectors
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createDoubleToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractStringVector right) {
         return performStringVectorOpSameLength(RClosures.createDoubleToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractStringVector left, RAbstractDoubleVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createDoubleToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractStringVector left, RAbstractDoubleVector right) {
         return performStringVectorOpSameLength(left, RClosures.createDoubleToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorDifferentLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty", "!differentDimensions"})
     protected RLogicalVector doDoubleVectorSameLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
@@ -970,52 +970,52 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // logical vector and vectors
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorDifferentLength(RLogicalVector left, RLogicalVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorSameLength(RLogicalVector left, RLogicalVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createLogicalToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractStringVector right) {
         return performStringVectorOpSameLength(RClosures.createLogicalToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorDifferentLength(RAbstractStringVector left, RAbstractLogicalVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createLogicalToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorSameLength(RAbstractStringVector left, RAbstractLogicalVector right) {
         return performStringVectorOpSameLength(left, RClosures.createLogicalToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorDifferentLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorSameLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
@@ -1042,32 +1042,32 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // string vector and vectors
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doStringVectorDifferentLength(RAbstractStringVector left, RAbstractStringVector right) {
         return performStringVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doStringVectorSameLength(RAbstractStringVector left, RAbstractStringVector right) {
         return performStringVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doStringVectorDifferentLength(RAbstractStringVector left, RAbstractComplexVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createComplexToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doStringVectorSameLength(RAbstractStringVector left, RAbstractComplexVector right) {
         return performStringVectorOpSameLength(left, RClosures.createComplexToStringVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doStringVectorDifferentLength(RAbstractComplexVector left, RAbstractStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createComplexToStringVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doStringVectorSameLength(RAbstractComplexVector left, RAbstractStringVector right) {
         return performStringVectorOpSameLength(RClosures.createComplexToStringVector(left, leftNACheck), right);
     }
@@ -1118,54 +1118,54 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     // complex vector and vectors
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "notEmpty"})
     protected RLogicalVector doComplexVectorDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doComplexVectorSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
+    @Specialization(guards = {"!areSameLength", "notEmpty", "convertRawToNumericVector"})
     protected RLogicalVector doComplexVectorDifferentLength(RAbstractComplexVector left, RAbstractRawVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createRawToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
+    @Specialization(guards = {"areSameLength", "notEmpty", "convertRawToNumericVector"})
     protected RLogicalVector doComplexVectorSameLength(RAbstractComplexVector left, RAbstractRawVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createRawToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
+    @Specialization(guards = {"!areSameLength", "notEmpty", "convertRawToNumericVector"})
     protected RLogicalVector doComplexVectorDifferentLength(RAbstractRawVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createRawToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
+    @Specialization(guards = {"areSameLength", "notEmpty", "convertRawToNumericVector"})
     protected RLogicalVector doComplexVectorSameLength(RAbstractRawVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createRawToComplexVector(left, leftNACheck), right);
     }
 
     // raw vector and vectors
 
-    @Specialization(guards = {"!areSameLength", "convertRawToNumeric"})
+    @Specialization(guards = {"!areSameLength", "notEmpty", "convertRawToNumeric"})
     protected RLogicalVector doRawVectorDifferentLengthLogical(RAbstractRawVector left, RAbstractRawVector right) {
         return performIntVectorOpDifferentLength(RClosures.createRawToIntVector(left, leftNACheck), RClosures.createRawToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "convertRawToNumeric"})
+    @Specialization(guards = {"areSameLength", "notEmpty", "convertRawToNumeric"})
     protected RLogicalVector doRawVectorSameLengthLogical(RAbstractRawVector left, RAbstractRawVector right) {
         return performIntVectorOpSameLength(RClosures.createRawToIntVector(left, leftNACheck), RClosures.createRawToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "!convertRawToNumeric"})
+    @Specialization(guards = {"!areSameLength", "notEmpty", "!convertRawToNumeric"})
     protected RAbstractRawVector doRawVectorDifferentLengthRaw(RAbstractRawVector left, RAbstractRawVector right) {
         return performRawVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = {"areSameLength", "!convertRawToNumeric"})
+    @Specialization(guards = {"areSameLength", "notEmpty", "!convertRawToNumeric"})
     protected RAbstractRawVector doRawVectorSameLengthRaw(RAbstractRawVector left, RAbstractRawVector right) {
         return performRawVectorOpSameLength(left, right);
     }
@@ -1173,14 +1173,22 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     // non-convertible raw - other cases are guarded with convertRawToNumeric and
     // convertRawToNumericVector
 
-    @Specialization
+    @Specialization(guards = "rightNotAVector")
     protected byte doRaw(RRaw left, Object right) {
         return logic.op(left, right);
     }
 
-    @Specialization
+    @Specialization(guards = "leftNotAVector")
     protected byte doRaw(Object left, RRaw right) {
         return logic.op(left, right);
+    }
+
+    protected static boolean rightNotAVector(RRawVector left, Object right) {
+        return !(right instanceof RRawVector);
+    }
+
+    protected static boolean leftNotAVector(Object left, RRawVector right) {
+        return !(left instanceof RRawVector);
     }
 
     @Specialization

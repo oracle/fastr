@@ -35,7 +35,7 @@ public class BasePackage extends RBuiltinPackage {
          * we fake it). N.B. UnaryNotNode is annotated, but not loaded automatically.
          */
         load(UnaryNotNode.class).setRBuiltin(UnaryNotNode.class);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.AddBuiltin.class).arguments(BinaryArithmetic.ADD, null);
+        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.AddBuiltin.class).arguments(BinaryArithmetic.ADD, UnaryArithmetic.PLUS);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.SubtractBuiltin.class).arguments(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.DivBuiltin.class).arguments(BinaryArithmetic.DIV, null);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.IntegerDivBuiltin.class).arguments(BinaryArithmetic.INTEGER_DIV, null);

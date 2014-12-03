@@ -393,37 +393,37 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     // int vector and vectors
 
-    @Specialization(guards = {"!areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"!areSameLength", "supportsIntResult", "!differentDimensions"})
     protected RIntVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = {"areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"areSameLength", "supportsIntResult", "!differentDimensions"})
     protected RIntVector doIntVectorSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "!differentDimensions"})
     protected RDoubleVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "!differentDimensions"})
     protected RDoubleVector doIntVectorSameLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = {"!areSameLength", "!differentDimensions"})
     protected RDoubleVector doIntVectorDifferentLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = {"areSameLength", "!differentDimensions"})
     protected RDoubleVector doIntVectorIntVectorSameLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"!areSameLength", "supportsIntResult", "!differentDimensions"})
     protected RIntVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }

@@ -1759,6 +1759,46 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testVapply_0912336e53c030afdbc87e97e686d791() {
+        assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_1ecd5d73f89477e7b4f1b620af35ef91() {
+        assertEval("{ vapply(c(10, 20, 30, 40), function(x) x/2, c(1)) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_6af44e73012b25c98cf50b2242c862df() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = FALSE) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_a2e4a980be9ca6c3aa6f1be2cf568841() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_3a016d2d2634bb34067c42ecf7f16d67() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_3ab8fddc638c3b0d5c9699be66448791() {
+        assertEval("{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_bbfbc58afeca8d05cfc8f7f3640e657b() {
+        assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) x, c(TRUE)) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapply_e76e668b13f0998f51f0c9fec11b2598() {
+        assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) FALSE, c(TRUE)) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testWhichIgnore_6d01b8ef11e5cdf979ca7122cd3de717() {
         assertEval("{ which(c(a=TRUE,b=FALSE,c=TRUE)) }");
     }

@@ -26,15 +26,22 @@ public class RGroupGenerics {
 
     private static Map<String, String> methodToGroup;
 
+    static {
+        initializeMethodToGroup();
+    }
+
     /*
      * Returns the group to which a given S-3 group generic method belongs to.
      */
     public static String getGroup(final String methodName) {
-        assert (methodName != null);
-        if (methodToGroup == null) {
-            initializeMethodToGroup();
-        }
         return methodToGroup.get(methodName);
+    }
+
+    /*
+     * Returns true if the method is group generic.
+     */
+    public static boolean isGroupGeneric(final String methodName) {
+        return methodToGroup.containsKey(methodName);
     }
 
     /*

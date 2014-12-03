@@ -51,7 +51,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         final String grpName = RGroupGenerics.getGroup(aGenericName);
         GroupDispatchNode result;
         if (grpName == RGroupGenerics.GROUP_OPS) {
-            result = new OpsGroupDispatchNode(aGenericName, grpName, callArgNode);
+            result = new BinarysOpsGroupDispatchNode(aGenericName, callArgNode);
         } else {
             result = new GroupDispatchNode(aGenericName, grpName, callArgNode);
         }

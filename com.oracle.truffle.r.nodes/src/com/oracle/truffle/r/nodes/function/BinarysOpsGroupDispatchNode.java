@@ -10,11 +10,17 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class OpsGroupDispatchNode extends GroupDispatchNode {
+public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
 
     private String targetFunctionNameR;
     private RFunction targetFunctionR;
@@ -23,22 +29,15 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     private RStringVector typeR;
     private boolean writeGroupR;
 
-    public OpsGroupDispatchNode(String genericName, String grpName, CallArgumentsNode callArgNode) {
-        super(genericName, grpName, callArgNode);
+    public BinarysOpsGroupDispatchNode(String genericName, CallArgumentsNode callArgNode) {
+        super(genericName, RGroupGenerics.GROUP_OPS, callArgNode);
     }
 
     private void initDispatchTypes(VirtualFrame frame) {
         // This is kind of tricky. We want to evaluate args before we know the function for which
         // arguments should be matched. But as OpsGroupDispatchNode is for BinaryOperators, we can
         // assume that arguments are in correct order!
-        RNode[] unevaluatedArgs = callArgsNode.getArguments();
-        Object[] evaledArgs = new Object[callArgsNode.getArguments().length];
-        for (int i = 0; i < evaledArgs.length; i++) {
-            evaledArgs[i] = unevaluatedArgs[i].execute(frame);
-        }
-        // Delay assignment to allow recursion
-        evaluatedArgs = evaledArgs;
-
+        evalArgs(frame);
         if (evaluatedArgs.length > 0) {
             this.typeL = getArgClass(evaluatedArgs[0]);
         }
@@ -46,6 +45,15 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
             this.typeR = getArgClass(evaluatedArgs[1]);
         }
     }
+
+// @Override
+// protected Object callBuiltin(VirtualFrame frame) {
+// initBuiltin(frame);
+// System.out.println(Arrays.toString(evaluatedArgs));
+// Object[] argObject = RArguments.create(builtinFunc, funCallNode.getSourceSection(),
+// evaluatedArgs, argNames);
+// return funCallNode.call(frame, builtinFunc.getTarget(), argObject);
+// }
 
     @Override
     public Object execute(VirtualFrame frame) {
