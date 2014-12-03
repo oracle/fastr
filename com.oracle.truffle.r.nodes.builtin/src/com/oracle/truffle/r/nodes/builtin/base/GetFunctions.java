@@ -43,12 +43,12 @@ public class GetFunctions {
         protected final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
         protected final BranchProfile inheritsProfile = BranchProfile.create();
 
-        protected void unknownObject(String x, RType modeType) throws RError {
+        protected void unknownObject(String x, RType modeType, String modeString) throws RError {
             unknownObjectErrorProfile.enter();
             if (modeType == RType.Any) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT_MODE, x, modeType.getName());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
             }
         }
 
@@ -89,7 +89,7 @@ public class GetFunctions {
                     }
                 }
                 if (r == null) {
-                    unknownObject(x, modeType);
+                    unknownObject(x, modeType, mode);
                 }
             }
             return r;
@@ -103,7 +103,7 @@ public class GetFunctions {
                 return obj;
             } else {
                 if (fail) {
-                    unknownObject(x, modeType);
+                    unknownObject(x, modeType, mode);
                 }
                 return null;
             }
