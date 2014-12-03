@@ -1,7 +1,7 @@
 #  File src/library/base/R/diff.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,22 +20,22 @@ diff <- function(x, ...) UseMethod("diff")
 
 diff.default <- function(x, lag = 1L, differences = 1L, ...)
 {
-        ismat <- is.matrix(x)
-        xlen <- if(ismat) dim(x)[1L] else length(x)
-        if (length(lag) > 1L || length(differences) > 1L ||
-                        lag < 1L || differences < 1L)
-                stop("'lag' and 'differences' must be integers >= 1")
-        if (lag * differences >= xlen)
-                return(x[0L]) # empty, but of proper mode
-        r <- unclass(x)  # don't want class-specific subset methods
-        i1 <- -seq_len(lag)
-        if (ismat)
-                for (i in seq_len(differences))
-                        r <- r[i1, , drop = FALSE] -
-                                        r[-nrow(r):-(nrow(r)-lag+1L), , drop = FALSE]
-        else
-                for (i in seq_len(differences))
-                        r <- r[i1] - r[-length(r):-(length(r)-lag+1L)]
-        class(r) <- oldClass(x)
-        r
+    ismat <- is.matrix(x)
+    xlen <- if(ismat) dim(x)[1L] else length(x)
+    if (length(lag) != 1L || length(differences) > 1L ||
+        lag < 1L || differences < 1L)
+	stop("'lag' and 'differences' must be integers >= 1")
+    if (lag * differences >= xlen)
+	return(x[0L]) # empty, but of proper mode
+    r <- unclass(x)  # don't want class-specific subset methods
+    i1 <- -seq_len(lag)
+    if (ismat)
+	for (i in seq_len(differences))
+	    r <- r[i1, , drop = FALSE] -
+                r[-nrow(r):-(nrow(r)-lag+1L), , drop = FALSE]
+    else
+        for (i in seq_len(differences))
+            r <- r[i1] - r[-length(r):-(length(r)-lag+1L)]
+    class(r) <- oldClass(x)
+    r
 }

@@ -16,7 +16,6 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# TODO; rename after it is actually made to work 
 apply <- function(X, MARGIN, FUN, ...)
 {
     FUN <- match.fun(FUN)

@@ -1,7 +1,7 @@
 #  File src/library/base/R/which.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ which <- function(x, arr.ind = FALSE, useNames = TRUE)
 {
     wh <- .Internal(which(x))
     if (arr.ind && !is.null(d <- dim(x)))
-        arrayInd(wh, d, dimnames(x), useNames=useNames) else wh
+	arrayInd(wh, d, dimnames(x), useNames=useNames) else wh
 }
 
 arrayInd <- function(ind, .dim, .dimnames = NULL, useNames = FALSE) {
@@ -29,18 +29,20 @@ arrayInd <- function(ind, .dim, .dimnames = NULL, useNames = FALSE) {
     rank <- length(.dim)
     wh1 <- ind - 1L
     ind <- 1L + wh1 %% .dim[1L]
-    ind <- matrix(ind, nrow = m, ncol = rank,
-                  dimnames = if(useNames)
-                  list(.dimnames[[1L]][ind],
-                       if(rank == 2L) c("row", "col") # for matrices
-                       else paste0("dim", seq_len(rank))))
+    dnms <- if(useNames) {
+	list(.dimnames[[1L]][ind],
+	     if(any(nzchar(nd <- names(.dimnames)))) nd else
+	     if(rank == 2L) c("row", "col") # for matrices
+	     else paste0("dim", seq_len(rank)))
+    }
+    ind <- matrix(ind, nrow = m, ncol = rank, dimnames = dnms)
     if(rank >= 2L) {
-        denom <- 1L
-        for (i in 2L:rank) {
-            denom <- denom * .dim[i-1L]
-            nextd1 <- wh1 %/% denom     # (next dim of elements) - 1
-            ind[,i] <- 1L + nextd1 %% .dim[i]
-        }
+	denom <- 1L
+	for (i in 2L:rank) {
+	    denom <- denom * .dim[i-1L]
+	    nextd1 <- wh1 %/% denom	# (next dim of elements) - 1
+	    ind[,i] <- 1L + nextd1 %% .dim[i]
+	}
     }
     storage.mode(ind) <- "integer"
     ind
