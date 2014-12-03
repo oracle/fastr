@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RContext;
@@ -86,8 +85,7 @@ public class Browser {
                         int ix = 0;
                         Frame stackFrame = frame;
                         do {
-                            SourceSection ss = RArguments.getCallSourceSection(stackFrame);
-                            ch.println(ss.getCode());
+                            ch.println(RArguments.safeGetCallSourceString(stackFrame));
                             ix++;
                         } while ((stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);
                         ch.println("");

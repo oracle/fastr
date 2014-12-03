@@ -37,10 +37,20 @@ import com.oracle.truffle.r.runtime.data.*;
  * errors or finally statements.
  */
 public class TryFunctions {
-    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "silent"}, nonEvalArgs = {0})
-    public abstract static class Try extends RBuiltinNode {
-
+    public abstract static class Adapter extends RBuiltinNode {
         @Child private PromiseHelperNode promiseHelper;
+
+        protected PromiseHelperNode initPromiseHelper() {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper;
+        }
+    }
+
+    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "silent"}, nonEvalArgs = {0})
+    public abstract static class Try extends Adapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -50,19 +60,13 @@ public class TryFunctions {
         @Specialization
         protected Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
-            return promiseHelper.evaluate(frame, expr);
+            return initPromiseHelper().evaluate(frame, expr);
         }
     }
 
     // Ignoring finally completely
     @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "..."}, nonEvalArgs = {-1})
-    public abstract static class TryCatch extends RBuiltinNode {
-
-        @Child private PromiseHelperNode promiseHelper;
+    public abstract static class TryCatch extends Adapter {
 
         @Override
         public RNode[] getParameterValues() {
@@ -71,18 +75,30 @@ public class TryFunctions {
 
         @Specialization
         protected Object doTryCatch(VirtualFrame frame, RPromise expr, RPromise arg) {
-            return doTryCatch(frame, expr, new Object[]{arg});
+            return doTryCatch(frame, expr, new RArgsValuesAndNames(new Object[]{arg}, null));
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
+        protected Object doTryCatch(VirtualFrame frame, RPromise expr, RArgsValuesAndNames args) {
             controlVisibility();
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
-            return promiseHelper.evaluate(frame, expr);
+            return initPromiseHelper().evaluate(frame, expr);
         }
+    }
+
+    // A temporary substitute that does not suppress warnings!
+    @RBuiltin(name = "suppressWarnings", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr"}, nonEvalArgs = {0})
+    public abstract static class SuppressWarningsBuiltin extends Adapter {
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        }
+
+        @Specialization
+        protected Object doSuppressWarnings(VirtualFrame frame, RPromise expr) {
+            controlVisibility();
+            return initPromiseHelper().evaluate(frame, expr);
+        }
+
     }
 }

@@ -8624,21 +8624,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testGet_f2c6b557e11aa719fe83073c7b60a966() {
-        assertEval("{ get(\"dummy\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testGet_1087991be7b199d7a0645e3ba9553805() {
-        assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testGet_5159e1fa2f3c3b1e9e2819e18d1aaed4() {
-        assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testGet_454f5be352adc770dd02ec79976ed693() {
         assertEval("{ get(\".Platform\", globalenv())$endian }");
     }
@@ -8646,6 +8631,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGet_1360e7f9c659eacd7ee24ef5ca6b274c() {
         assertEval("{ get(\".Platform\")$endian }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_f2c6b557e11aa719fe83073c7b60a966() {
+        assertEvalError("{ get(\"dummy\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_1087991be7b199d7a0645e3ba9553805() {
+        assertEvalError("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_5159e1fa2f3c3b1e9e2819e18d1aaed4() {
+        assertEvalError("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_64afee6cadb778dda13b25a2f3f9ecef() {
+        assertEvalError("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 
     @Test
@@ -8686,11 +8691,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGetClassIgnore_04e1bbb35c3306f6feb801b5cce80b88() {
         assertEval("{x<-seq(1,10);class(x)}");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testGetIgnore_64afee6cadb778dda13b25a2f3f9ecef() {
-        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 
     @Test
@@ -8911,6 +8911,36 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInherits_34ff95edf55241d7710a1123747655e8() {
         assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_cab5daa9c44b14d1ff74b7ae5eb7589c() {
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_0b7db22d1e412a9273969e48b85ecff3() {
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1f42b5fae505d7fcba01cf3f9b34891c() {
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_b2730989f0a4122893e227756f3ad6d4() {
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1c09db1038baff62d7860a62723b970f() {
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_e3e3f3bd3bd11391bf356a1816c8b30f() {
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
     }
 
     @Test
@@ -18384,11 +18414,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testDots_2ef740db3071df8b2c8b5452ac5beea4() {
-        assertEval("{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
-    }
-
-    @Test
     public void TestSimpleFunctions_testDots_a29c54a3c8cd1ee3e35a2aea432951cb() {
         assertEval("{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }");
     }
@@ -18521,6 +18546,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDots_affd9e814dfe7c1912794059804308fd() {
         assertEvalError("{ f <- function(...) { ..1 } ;  f() }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_2ef740db3071df8b2c8b5452ac5beea4() {
+        assertEvalError("{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
     }
 
     @Test

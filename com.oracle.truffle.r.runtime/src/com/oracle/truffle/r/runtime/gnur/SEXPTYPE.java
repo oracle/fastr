@@ -61,8 +61,12 @@ public enum SEXPTYPE {
     NAMESPACESXP(249, null),
     PACKAGESXP(248, null),
     PERSISTSXP(247, null),
+    BCREPDEF(244, null),
+    BCREPREF(243, null),
     EMPTYENV_SXP(242, null),
     BASEENV_SXP(241, null),
+    ATTRLANGSXP(240, null),
+    ATTRLISTSXP(239, null),
 
     // FastR scalar variants of GnuR vector types
     FASTR_DOUBLE(300, Double.class),
@@ -80,7 +84,11 @@ public enum SEXPTYPE {
         this.fastRClass = fastRClass;
     }
 
-    public static final Map<Integer, SEXPTYPE> codeMap = new HashMap<>();
+    private static final Map<Integer, SEXPTYPE> codeMap = new HashMap<>();
+
+    public static SEXPTYPE mapInt(int type) {
+        return codeMap.get(type);
+    }
 
     /**
      * Return the GnuR type for the FastR class. There are times when it is convenient to work with

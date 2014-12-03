@@ -3400,6 +3400,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
         assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
         assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
+
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
     }
 
     @Test
@@ -3417,18 +3424,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\",inherits=FALSE);get(\"y\",mode=\"integer\",inherits=FALSE)};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\",inherits=FALSE)};y();}");
-        assertEval("{ get(\"dummy\") }");
-        assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
-        assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
+        assertEvalError("{ get(\"dummy\") }");
+        assertEvalError("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
+        assertEvalError("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
         assertEval("{ get(\".Platform\", globalenv())$endian }");
         assertEval("{ get(\".Platform\")$endian }");
+        assertEvalError("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 
     @Test
     @Ignore
     public void testGetIgnore() {
         // Fails because of error message mismatch.
-        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 
     @Test

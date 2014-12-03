@@ -100,4 +100,17 @@ public final class RFunction extends RScalar implements RAttributable {
     public RAttributes getAttributes() {
         return attributes;
     }
+
+    private static final RStringVector FUNCTION = RDataFactory.createStringVectorFromScalar("function");
+
+    @Override
+    public RStringVector getClassAttr() {
+        RStringVector v = RAttributable.super.getClassAttr();
+        if (v == null) {
+            return FUNCTION;
+        } else {
+            return v;
+        }
+    }
+
 }

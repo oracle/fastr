@@ -46,18 +46,6 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doesInherit(REnvironment x, RAbstractStringVector what, byte which) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
     public boolean whichFalse(RAbstractContainer x, RAbstractStringVector what, byte which) {
         return which != RRuntime.LOGICAL_TRUE;
     }
@@ -67,23 +55,59 @@ public abstract class Inherits extends RBuiltinNode {
         return which != RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization(guards = "whichFalse")
-    protected byte doInherits(VirtualFrame frame, RAbstractContainer x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return initInheritsNode().execute(frame, x, what);
+    @SuppressWarnings("unused")
+    public boolean whichFalse(RFunction x, RAbstractStringVector what, byte which) {
+        return which != RRuntime.LOGICAL_TRUE;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean whichFalse(REnvironment x, RAbstractStringVector what, byte which) {
+        return which != RRuntime.LOGICAL_TRUE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization(guards = "whichFalse")
-    protected byte doInherits(VirtualFrame frame, RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+    protected Object doesInherit(VirtualFrame frame, REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return initInheritsNode().execute(frame, x, what);
+    }
+
+    @Specialization(guards = "!whichFalse")
+    protected Object doesInheritWT(REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return doDoesInherit(x.getClassAttr(), what);
+    }
+
+    @Specialization(guards = "whichFalse")
+    protected Object doesInherit(VirtualFrame frame, RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return initInheritsNode().execute(frame, x, what);
+    }
+
+    @Specialization(guards = "!whichFalse")
+    protected Object doesInheritWT(RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return doDoesInherit(x.getClassAttr(), what);
+    }
+
+    @Specialization(guards = "whichFalse")
+    protected byte doesInherit(VirtualFrame frame, RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return initInheritsNode().execute(frame, x, what);
+    }
+
+    @Specialization(guards = "!whichFalse")
+    protected Object doesInheritWT(RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return doDoesInherit(x.getClassHierarchy(), what);
+    }
+
+    @Specialization(guards = "whichFalse")
+    protected byte doesInherit(VirtualFrame frame, RAbstractContainer x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
     @Specialization(guards = "!whichFalse")
     protected Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassHierarchy(), what);
-    }
-
-    @Specialization(guards = "!whichFalse")
-    protected Object doesInherit(RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassHierarchy(), what);
     }
 
