@@ -698,8 +698,7 @@ loadingNamespaceInfo <- function() {
 topenv <- function(envir = parent.frame(),
         matchThisEnv = getOption("topLevelEnvironment")) {
     while (! identical(envir, emptyenv())) {
-#        nm <- attributes(envir)[["names", exact = TRUE]]
-        nm <- attributes(envir)[["names"]]
+        nm <- attributes(envir)[["names", exact = TRUE]]
 		if ((is.character(nm) && length(grep("^package:" , nm))) ||
                 ## matchThisEnv is used in sys.source
                 identical(envir, matchThisEnv) ||
