@@ -55,6 +55,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> AddFunctionCounters = new OptionValue<>(false);
     @Option(help = "Enable binding of builtins into package environment")
     public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(false);
+    @Option(help = "Trace all function calls")
+    public static final OptionValue<Boolean> TraceCalls = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();
@@ -90,7 +92,7 @@ public class FastROptions {
     }
 
     /**
-     * Convenience function for matching aginst the Debug option.
+     * Convenience function for matching against the Debug option.
      *
      * @param string string to match against {@link #Debug} value.
      * @return {@code true} if {@link #Debug} is set with no {@code =value} component, or of
