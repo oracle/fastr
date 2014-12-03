@@ -114,7 +114,8 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public RList getDimNames() {
-        return vector.getDimNames();
+        Utils.nyi("data frame's dimnames needs to be obtained using builtins");
+        return null;
     }
 
     @Override

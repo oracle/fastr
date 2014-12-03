@@ -2582,11 +2582,24 @@ public class TestSimpleBuiltins extends TestBase {
     public void testLgamma() {
         assertEval("{ lgamma(1) }");
         assertEval("{ lgamma(100) }");
+        assertEval("{ lgamma(7.42) }");
         assertEval("{ lgamma(as.double(NA)) }");
         assertEval("{ lgamma(c(100, 2.2)) }");
         assertEval("{ lgamma(FALSE) }");
         assertEvalError("{ lgamma(as.raw(1)) }");
         assertEvalError("{ lgamma(1+1i) }");
+    }
+
+    @Test
+    public void testDiGamma() {
+        assertEval("{ digamma(1) }");
+        assertEval("{ digamma(100) }");
+        assertEval("{ digamma(7.42) }");
+        assertEval("{ digamma(as.double(NA)) }");
+        assertEval("{ digamma(c(100, 2.2)) }");
+        assertEvalWarning("{ digamma(FALSE) }");
+        assertEvalError("{ digamma(as.raw(1)) }");
+        assertEvalError("{ digamma(1+1i) }");
     }
 
     @Test
@@ -3387,6 +3400,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
         assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
         assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
+
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
     }
 
     @Test

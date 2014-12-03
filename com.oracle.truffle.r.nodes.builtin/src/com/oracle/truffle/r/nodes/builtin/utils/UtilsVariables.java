@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class UtilsVariables implements RPackageVariables.Handler {
     // @formatter:off
     private static final String[] C_NAMES = new String[] {
-        "countfields", "writetable"
+        "countfields", "writetable", "menu"
     };
     // @formatter: on
 

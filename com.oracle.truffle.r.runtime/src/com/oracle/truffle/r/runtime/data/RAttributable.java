@@ -84,4 +84,8 @@ public interface RAttributable {
         return this;
     }
 
+    default RStringVector getClassAttr() {
+        return (RStringVector) getAttr(RRuntime.CLASS_ATTR_KEY);
+    }
+
 }

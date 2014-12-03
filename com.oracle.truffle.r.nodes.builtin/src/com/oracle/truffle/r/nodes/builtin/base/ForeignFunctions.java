@@ -35,9 +35,11 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
@@ -411,10 +413,10 @@ public class ForeignFunctions {
 
         // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
+        @TruffleBoundary
         @Specialization(guards = "methodsPackageMetaName")
-        protected String callMethodsPackageMetaName(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+        protected String callMethodsPackageMetaName(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
             Object[] argValues = args.getValues();
             // TODO proper error checks
             String prefixString = (String) argValues[0];
@@ -429,6 +431,32 @@ public class ForeignFunctions {
 
         public boolean methodsPackageMetaName(RList f) {
             return matchName(f, "R_methodsPackageMetaName");
+        }
+
+        // Translated from GnuR: library/methods/src/methods_list_dispatch.c
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization(guards = "getClassFromCache")
+        protected Object callGetClassFromCache(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            REnvironment table = (REnvironment) argValues[1];
+            String klassString = RRuntime.asString(argValues[0]);
+            if (klassString != null) {
+                Object value = table.get(klassString);
+                if (value == null) {
+                    return RNull.instance;
+                } else {
+                    // TODO check PACKAGE equality
+                    return value;
+                }
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+            }
+        }
+
+        public boolean getClassFromCache(RList f) {
+            return matchName(f, "R_getClassFromCache");
         }
 
         @Specialization
@@ -461,6 +489,49 @@ public class ForeignFunctions {
         public static boolean isFlushconsole(RList f) {
             return matchName(f, "flushconsole");
         }
+
+        // Translated from GnuR: library/utils/io.c
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isMenu")
+        @TruffleBoundary
+        protected int menu(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+            Object[] values = args.getValues();
+            String[] choices;
+            if (values[0] instanceof String) {
+                choices = new String[]{(String) values[0]};
+            } else if (values[0] instanceof RStringVector) {
+                choices = ((RStringVector) values[0]).getDataWithoutCopying();
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "choices");
+            }
+            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+            int first = choices.length + 1;
+            ch.print("Selection: ");
+            String response = ch.readLine().trim();
+            if (response.length() > 0) {
+                if (Character.isDigit(response.charAt(0))) {
+                    try {
+                        first = Integer.parseInt(response);
+                    } catch (NumberFormatException ex) {
+                        //
+                    }
+                } else {
+                    for (int i = 0; i < choices.length; i++) {
+                        String entry = choices[i];
+                        if (entry.equals(response)) {
+                            first = i + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            return first;
+        }
+
+        public static boolean isMenu(RList f) {
+            return matchName(f, "menu");
+        }
+
     }
 
     /**

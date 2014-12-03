@@ -131,6 +131,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "dtafile", "compressed", "envhook"})
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
         @Child private CastIntegerNode castIntNode;
 
         private void initCast() {
@@ -146,12 +147,8 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
-            return lazyLoadDBFetch(RArguments.getDepth(frame), key, datafile, compressed, envhook);
-        }
-
         @TruffleBoundary
-        private static Object lazyLoadDBFetch(int depth, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -184,7 +181,15 @@ public class HiddenInternalFunctions {
                     throw RError.error(Message.GENERIC, "zlib uncompress error");
                 }
                 try {
-                    Object result = RSerialize.unserialize(udata, envhook, depth);
+                    RSerialize.CallHook callHook = new RSerialize.CallHook() {
+
+                        public Object eval(Object arg) {
+                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, new Object[]{arg}, new String[0]);
+                            return callCache.execute(frame, envhook.getTarget(), callArgs);
+                        }
+
+                    };
+                    Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame));
                     return result;
                 } catch (IOException ex) {
                     // unexpected

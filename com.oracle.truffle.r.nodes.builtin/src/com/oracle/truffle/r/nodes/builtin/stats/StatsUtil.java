@@ -37,6 +37,10 @@ public class StatsUtil {
 
     public static final double M_SQRT_32 = 5.656854249492380195206754896838;
 
+    public static final double M_LOG10_2 = 0.301029995663981195213738894724;
+
+    public static final double DBL_MANT_DIG = 53;
+
     public static double rdtlog(double p, boolean lowerTail, boolean logp) {
         return lowerTail ? rdlog(p, logp) : rdlexp(p, logp);
     }

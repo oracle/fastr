@@ -645,6 +645,20 @@ public class RDeparse {
                 vector2buff(state, (RVector) obj);
                 break;
 
+            case BCODESXP: {
+                /*
+                 * This should only happen in a call from RSerialize when unserializing a CLOSXP.
+                 * There is no value in following GnuR and appending <bytecode>, as we need the
+                 * source., which is (we expect) in the RPaieLits cdr
+                 */
+                // state.append("<bytecode>");
+                RPairList pl = (RPairList) obj;
+                RList plcdr = (RList) pl.cdr();
+                assert plcdr.getLength() == 1;
+                deparse2buff(state, plcdr.getDataAtAsObject(0));
+                break;
+            }
+
             case FASTR_DOUBLE:
             case FASTR_INT:
             case FASTR_BYTE:
@@ -724,7 +738,8 @@ public class RDeparse {
         boolean lbreak = false;
         RPairList arglist = args;
         while (arglist != null) {
-            if (arglist.getTag() != null) {
+            Object argTag = arglist.getTag();
+            if (argTag != null && argTag != RNull.instance) {
                 state.append(((RSymbol) arglist.getTag()).getName());
                 if (formals) {
                     if (arglist.car() != RMissing.instance) {

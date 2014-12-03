@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.ContainerDimNamesGetFactory;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -190,6 +191,8 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Child private OperatorConverterNode operatorConvertRecursive;
         @Child private CastIntegerNode castInteger;
+        @Child ContainerDimNamesGet dimNamesGetter;
+
         private final NACheck naCheck = NACheck.create();
 
         private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
@@ -224,6 +227,14 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 operatorConvertRecursive = insert(OperatorConverterNodeFactory.create(this.dimension, this.numDimensions, this.assignment, this.isSubset, null, null));
             }
+        }
+
+        private RList getContainerDimNames(VirtualFrame frame, RAbstractContainer value) {
+            if (dimNamesGetter == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dimNamesGetter = insert(ContainerDimNamesGetFactory.create(null));
+            }
+            return dimNamesGetter.execute(frame, value);
         }
 
         private Object convertOperatorRecursive(VirtualFrame frame, RAbstractContainer container, int operand) {
@@ -541,54 +552,61 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         @TruffleBoundary
-        // retrieving vector components by name is likely OK on the slow path
-        @Specialization(guards = "!indNA")
-        protected Object doString(RAbstractContainer container, String operand) {
-            if (numDimensions == 1) {
-                // single-dimension access
-                if (assignment) {
-                    // with assignment, container's names can be set by the operand
-                    return findPositionWithNames(container, container.getNames(), operand);
-                } else if (container.getNames() != RNull.instance) {
-                    // with vector read, we need names to even try finding container components
-                    int result = findPosition(container, container.getNames(), operand);
+        private Object doStringOneDim(RAbstractContainer container, String operand) {
+            // single-dimension access
+            if (assignment) {
+                // with assignment, container's names can be set by the operand
+                return findPositionWithNames(container, container.getNames(), operand);
+            } else if (container.getNames() != RNull.instance) {
+                // with vector read, we need names to even try finding container components
+                int result = findPosition(container, container.getNames(), operand);
 
-                    if (container.getElementClass() == Object.class) {
-                        // container is a list
-                        if (!isSubset && RRuntime.isNA(result)) {
-                            return RNull.instance;
-                        }
-                    }
-                    return result;
-                } else {
-                    // container has no names
-                    if (isSubset) {
-                        return RRuntime.INT_NA;
-                    } else {
-                        if (container.getElementClass() == Object.class) {
-                            // container is a list
-                            return RNull.instance;
-                        } else {
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
-                        }
+                if (container.getElementClass() == Object.class) {
+                    // container is a list
+                    if (!isSubset && RRuntime.isNA(result)) {
+                        return RNull.instance;
                     }
                 }
+                return result;
             } else {
-                // multi-dimension access
-                if (container.getDimNames() != null) {
-                    if (assignment) {
-                        return findPositionWithNames(container, container.getDimNames().getDataAt(dimension), operand);
-                    } else {
-                        return findPosition(container, container.getDimNames().getDataAt(dimension), operand);
-                    }
+                // container has no names
+                if (isSubset) {
+                    return RRuntime.INT_NA;
                 } else {
-                    if (isSubset || container.getElementClass() == Object.class) {
-                        throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
+                    if (container.getElementClass() == Object.class) {
+                        // container is a list
+                        return RNull.instance;
                     } else {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
                     }
-
                 }
+            }
+        }
+
+        @TruffleBoundary
+        private Object doStringMultiDim(RAbstractContainer container, String operand, RList dimNames) {
+            if (dimNames != null) {
+                if (assignment) {
+                    return findPositionWithNames(container, dimNames.getDataAt(dimension), operand);
+                } else {
+                    return findPosition(container, dimNames.getDataAt(dimension), operand);
+                }
+            } else {
+                if (isSubset || container.getElementClass() == Object.class) {
+                    throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
+                } else {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                }
+
+            }
+        }
+
+        @Specialization(guards = "!indNA")
+        protected Object doString(VirtualFrame frame, RAbstractContainer container, String operand) {
+            if (numDimensions == 1) {
+                return doStringOneDim(container, operand);
+            } else {
+                return doStringMultiDim(container, operand, getContainerDimNames(frame, container));
             }
         }
 
@@ -1020,4 +1038,47 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return operand.getNames() != RNull.instance;
         }
     }
+
+    // TODO: this should not be necessary once data frame access operators are implemented in R
+    // which likely makes potential refactoring of this code redundant
+    @NodeChild(value = "op")
+    protected abstract static class ContainerDimNamesGet extends RNode {
+
+        @Child ContainerRowNamesGet rowNamesGetter;
+        @Child private CastStringNode castString;
+
+        public abstract RList execute(VirtualFrame frame, RAbstractContainer container);
+
+        private Object getContainerRowNames(VirtualFrame frame, RAbstractContainer value) {
+            if (rowNamesGetter == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                rowNamesGetter = insert(ContainerRowNamesGetFactory.create(null));
+            }
+            return rowNamesGetter.execute(frame, value);
+        }
+
+        private Object castString(VirtualFrame frame, Object operand) {
+            if (castString == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
+            }
+            return castString.executeCast(frame, operand);
+        }
+
+        @Specialization(guards = "!isDataFrame")
+        RList getDim(RAbstractContainer container) {
+            return container.getDimNames();
+        }
+
+        @Specialization(guards = "isDataFrame")
+        RList getDimDataFrame(VirtualFrame frame, RAbstractContainer container) {
+            return RDataFactory.createList(new Object[]{castString(frame, getContainerRowNames(frame, container)), container.getNames()});
+        }
+
+        protected boolean isDataFrame(RAbstractContainer container) {
+            return container.getElementClass() == RDataFrame.class;
+        }
+
+    }
+
 }

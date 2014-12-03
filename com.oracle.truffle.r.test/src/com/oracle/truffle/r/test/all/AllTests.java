@@ -7139,6 +7139,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDiGamma_23dedcda854023019aede391b5794558() {
+        assertEval("{ digamma(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_2abd60f73f1e17cf2619450404e6cf24() {
+        assertEval("{ digamma(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_37ac55e4c79e9f12b05a13d608c3652b() {
+        assertEval("{ digamma(7.42) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_f679a840b7003cd94cb24e7b95a4903e() {
+        assertEval("{ digamma(as.double(NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_ee2a910f86ae1f7719dc57bd02ddebe0() {
+        assertEval("{ digamma(c(100, 2.2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_7b76289fa5ccc66afa5b8852bd97c25c() {
+        assertEvalError("{ digamma(as.raw(1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_076b15a53783e112df2b9de834d30871() {
+        assertEvalError("{ digamma(1+1i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiGamma_1fc730b20967c872717f252303f3560b() {
+        assertEvalWarning("{ digamma(FALSE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDiagnostics_f20f62c82be750e78cc720a71705d1f4() {
         assertEvalError("{ f <- function() { stop(\"hello\",\"world\") } ; f() }");
     }
@@ -8874,6 +8914,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInherits_cab5daa9c44b14d1ff74b7ae5eb7589c() {
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_0b7db22d1e412a9273969e48b85ecff3() {
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1f42b5fae505d7fcba01cf3f9b34891c() {
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_b2730989f0a4122893e227756f3ad6d4() {
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1c09db1038baff62d7860a62723b970f() {
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_e3e3f3bd3bd11391bf356a1816c8b30f() {
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInheritsIgnore_d0dc6389c924878311546ba61d753a22() {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
     }
@@ -9501,6 +9571,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLgamma_549f2a4a8f780a9799784dabf88b8c91() {
         assertEval("{ lgamma(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLgamma_8799a0cf34140ff3facc46d8824dbe57() {
+        assertEval("{ lgamma(7.42) }");
     }
 
     @Test
@@ -17574,6 +17649,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testAccess_d224371f7cf6d58923222af52682a633() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); x[,\"b\"] }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testAccess_3c751253c42329c6652cb02b6c064aa2() {
         assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
     }
@@ -22711,6 +22791,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testMoreVectorsOther_155af36dde16ef9207a23abbb5a74bd5() {
         assertEval("{ v <- c(1,2,3,4,5,6,7,8,9); f <- function(k) v[k]; f(2:5); f(-1:-2) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_39ae441072428e7a7960ed8d1e870352() {
+        assertEval("{ x <- NULL;  x[[\"names\", exact=TRUE]] }");
     }
 
     @Test

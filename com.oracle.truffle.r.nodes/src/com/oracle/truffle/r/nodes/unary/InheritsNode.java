@@ -38,10 +38,14 @@ public abstract class InheritsNode extends BinaryNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     protected Object doesInherit(REnvironment x, RAbstractStringVector what) {
-        return RRuntime.LOGICAL_FALSE;
+        return checkDoesInherit(x.getClassAttr(), what);
+    }
+
+    @Specialization
+    protected Object doesInherit(RFunction x, RAbstractStringVector what) {
+        return checkDoesInherit(x.getClassAttr(), what);
     }
 
     @Specialization

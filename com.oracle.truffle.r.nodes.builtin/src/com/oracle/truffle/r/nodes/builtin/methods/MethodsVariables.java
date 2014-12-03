@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class MethodsVariables implements RPackageVariables.Handler {
     // @formatter:off
     private static final String[] C_NAMES = new String[] {
-        "R_methodsPackageMetaName"
+        "R_methodsPackageMetaName", "R_getClassFromCache"
     };
     // @formatter: on
 
