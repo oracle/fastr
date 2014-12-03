@@ -177,19 +177,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 obj = promise.getValue();
             }
         }
-        if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
-            return obj instanceof RFunction;
-        }
-        if (type == RType.Character) {
-            return obj instanceof String;
-        }
-        if (type == RType.Logical) {
-            return obj instanceof Byte;
-        }
-        if (type == RType.Integer || type == RType.Double || type == RType.Numeric) {
-            return obj instanceof Integer || obj instanceof Double;
-        }
-        return false;
+        return RRuntime.checkType(obj, type);
     }
 
     @Override
