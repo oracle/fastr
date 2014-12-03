@@ -3433,9 +3433,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testGetIgnore() {
-        // Fails because of error message mismatch.
+    public void testMGet() {
+        assertEval("{ a<- 1; b <- 2; mget(c(\"a\", \"b\")) }");
+        assertEval("{ a<- 1; b <- 2; f <- function() { mget(c(\"a\", \"b\"), inherits=TRUE)}; f() }");
+        assertEval("{ a<- 1; mget(c(\"a\", \"b\"), ifnotfound=list(100)) }");
+        assertEval("{ b <- 2; f <- function() { mget(c(\"a\", \"b\"), ifnotfound=list(100), inherits=TRUE)}; f() }");
+        assertEval("{ mget(c(\"a\", \"b\"), ifnotfound=list(100, 200)) }");
+        assertEval("{ a<- 1; b <- 2; mget(c(\"a\", \"b\"), mode=\"numeric\") }");
+        assertEval("{ a<- 1; b <- \"2\"; mget(c(\"a\", \"b\"), mode=c(\"numeric\", \"character\")) }");
     }
 
     @Test

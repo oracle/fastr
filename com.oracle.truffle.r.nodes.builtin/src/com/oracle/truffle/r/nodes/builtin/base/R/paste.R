@@ -17,17 +17,17 @@
 #  http://www.r-project.org/Licenses/
 
 paste <- function (..., sep = " ", collapse = NULL)
-  .Internal(paste(list(...), sep = sep, collapse = collapse))
+    .Internal(paste(list(...), sep, collapse))
 paste0 <- function(..., collapse = NULL)
-  .Internal(paste0(list(...), collapse = collapse))
+    .Internal(paste0(list(...), collapse))
 
 ##=== Could we extend  paste(.) to (optionally) accept a
-##    2-vector for collapse ?   With the following functionality
+##    2-vector for collapse ?	 With the following functionality
 
 ##- paste.extra <- function(r, collapse=c(", "," and ")) {
-##-      n <- length(r)
-##-      if(n <= 1) paste(r)
-##-      else
-##-        paste(paste(r[-n],collapse=collapse[1L]),
-##-        r[n], sep=collapse[min(2,length(collapse))])
+##-	    n <- length(r)
+##-	    if(n <= 1) paste(r)
+##-	    else
+##-	      paste(paste(r[-n],collapse=collapse[1L]),
+##-		    r[n], sep=collapse[min(2,length(collapse))])
 ##- }

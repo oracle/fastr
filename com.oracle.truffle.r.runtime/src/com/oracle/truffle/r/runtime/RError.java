@@ -497,6 +497,7 @@ public final class RError extends RuntimeException {
         COERCING_ARGUMENT("coercing argument of type '%s' to %s"),
         MUST_BE_TRUE_FALSE_ENVIRONMENT("'%s' must be TRUE, FALSE or an environment"),
         UNKNOWN_OBJECT_MODE("object '%s' of mode '%s' was not found"),
+        WRONG_LENGTH_ARG("wrong length for '%s' argument"),
         INVALID_TYPE_IN("invalid '%s' type in 'x %s y'"),
         DOT_DOT_MISSING("'..%d' is missing"),
         DOT_DOT_SHORT("the ... list does not contain %d elements"),

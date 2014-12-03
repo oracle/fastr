@@ -10304,6 +10304,69 @@ character(0)
 #{ f <- function(abc) { ls(pattern="[a-z]*") }; f(1) }
 [1] "abc"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ a<- 1; b <- "2"; mget(c("a", "b"), mode=c("numeric", "character")) }
+$a
+[1] 1
+
+$b
+[1] "2"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ a<- 1; b <- 2; f <- function() { mget(c("a", "b"), inherits=TRUE)}; f() }
+$a
+[1] 1
+
+$b
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ a<- 1; b <- 2; mget(c("a", "b")) }
+$a
+[1] 1
+
+$b
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ a<- 1; b <- 2; mget(c("a", "b"), mode="numeric") }
+$a
+[1] 1
+
+$b
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ a<- 1; mget(c("a", "b"), ifnotfound=list(100)) }
+$a
+[1] 1
+
+$b
+[1] 100
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ b <- 2; f <- function() { mget(c("a", "b"), ifnotfound=list(100), inherits=TRUE)}; f() }
+$a
+[1] 100
+
+$b
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMGet
+#{ mget(c("a", "b"), ifnotfound=list(100, 200)) }
+$a
+[1] 100
+
+$b
+[1] 200
+
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
 #{ make.names("$") }
 [1] "X."

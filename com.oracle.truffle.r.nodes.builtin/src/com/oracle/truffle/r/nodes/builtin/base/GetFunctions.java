@@ -1,0 +1,214 @@
+package com.oracle.truffle.r.nodes.builtin.base;
+
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
+
+/**
+ * assert: not expected to be fast even when called as, e.g., {@code get("x")}.
+ */
+public class GetFunctions {
+    public abstract static class Adapter extends RBuiltinNode {
+        private final BranchProfile unknownObjectErrorProfile = BranchProfile.create();
+        protected final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+        protected final BranchProfile inheritsProfile = BranchProfile.create();
+
+        protected void unknownObject(String x, RType modeType) throws RError {
+            unknownObjectErrorProfile.enter();
+            if (modeType == RType.Any) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT_MODE, x, modeType.getName());
+            }
+        }
+
+    }
+
+    @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
+    public abstract static class Get extends Adapter {
+
+        public abstract Object execute(VirtualFrame frame, RAbstractStringVector name, REnvironment envir, String mode, byte inherits);
+
+        @SuppressWarnings("unused")
+        public static boolean isInherits(RAbstractStringVector x, REnvironment envir, String mode, byte inherits) {
+            return inherits == RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization(guards = "!isInherits")
+        protected Object getNonInherit(RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
+            controlVisibility();
+            return getAndCheck(xv, envir, mode, true);
+        }
+
+        @Specialization(guards = "isInherits")
+        protected Object getInherit(RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
+            controlVisibility();
+            Object r = getAndCheck(xv, envir, mode, false);
+            if (r == null) {
+                inheritsProfile.enter();
+                String x = xv.getDataAt(0);
+                RType modeType = RType.fromString(mode);
+                REnvironment env = envir;
+                while (env != null) {
+                    env = env.getParent();
+                    if (env != null) {
+                        r = env.get(x);
+                        if (r != null && RRuntime.checkType(r, modeType)) {
+                            break;
+                        }
+                    }
+                }
+                if (r == null) {
+                    unknownObject(x, modeType);
+                }
+            }
+            return r;
+        }
+
+        protected Object getAndCheck(RAbstractStringVector xv, REnvironment env, String mode, boolean fail) throws RError {
+            String x = xv.getDataAt(0);
+            RType modeType = RType.fromString(modeProfile.profile(mode));
+            Object obj = env.get(x);
+            if (obj != null && RRuntime.checkType(obj, modeType)) {
+                return obj;
+            } else {
+                if (fail) {
+                    unknownObject(x, modeType);
+                }
+                return null;
+            }
+        }
+    }
+
+    @RBuiltin(name = "mget", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "ifnotfound", "inherits"})
+    public abstract static class MGet extends Adapter {
+        private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
+
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+
+        @SuppressWarnings("unused")
+        public static boolean isInherits(RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, byte inherits) {
+            return inherits == RRuntime.LOGICAL_TRUE;
+        }
+
+        private static class State {
+            final int svLength;
+            final int modeLength;
+            final int ifNotFoundLength;
+            final RFunction ifnFunc;
+            final Object[] data;
+            final String[] names;
+            boolean complete = RDataFactory.COMPLETE_VECTOR;
+
+            State(RStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
+                this.svLength = xv.getLength();
+                this.modeLength = mode.getLength();
+                this.ifNotFoundLength = ifNotFound.getLength();
+                if (ifNotFoundLength == 1 && ifNotFound.getDataAt(0) instanceof RFunction) {
+                    ifnFunc = (RFunction) ifNotFound.getDataAt(0);
+                } else {
+                    ifnFunc = null;
+                }
+                data = new Object[svLength];
+                names = new String[svLength];
+            }
+
+            String checkNA(String x) {
+                if (x == RRuntime.STRING_NA) {
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                }
+                return x;
+            }
+
+            RList getResult() {
+                return RDataFactory.createList(data, RDataFactory.createStringVector(names, complete));
+            }
+        }
+
+        private State checkArgs(RStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
+            State state = new State(xv, mode, ifNotFound);
+            if (!(state.modeLength == 1 || state.modeLength == state.svLength)) {
+                wrongLengthErrorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_LENGTH_ARG, "mode");
+            }
+            if (!(state.ifNotFoundLength == 1 || state.ifNotFoundLength == state.svLength)) {
+                wrongLengthErrorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_LENGTH_ARG, "ifnotfound");
+            }
+            return state;
+
+        }
+
+        @Specialization(guards = "!isInherits")
+        protected RList mgetNonInherit(VirtualFrame frame, RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
+            controlVisibility();
+            State state = checkArgs(xv, mode, ifNotFound);
+            for (int i = 0; i < state.svLength; i++) {
+                String x = state.checkNA(xv.getDataAt(i));
+                state.names[i] = x;
+                RType modeType = RType.fromString(mode.getDataAt(state.modeLength == 1 ? 0 : i));
+                Object r = envir.get(x);
+                if (r != null && RRuntime.checkType(r, modeType)) {
+                    state.data[i] = r;
+                } else {
+                    doIfNotFound(frame, state, i, x, ifNotFound);
+                }
+            }
+            return state.getResult();
+        }
+
+        @Specialization(guards = "isInherits")
+        protected RList mgetInherit(VirtualFrame frame, RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
+            controlVisibility();
+            State state = checkArgs(xv, mode, ifNotFound);
+            for (int i = 0; i < state.svLength; i++) {
+                String x = state.checkNA(xv.getDataAt(i));
+                state.names[i] = x;
+                RType modeType = RType.fromString(mode.getDataAt(state.modeLength == 1 ? 0 : i));
+                Object r = envir.get(x);
+                if (r == null || !RRuntime.checkType(r, modeType)) {
+                    inheritsProfile.enter();
+                    REnvironment env = envir;
+                    while (env != null) {
+                        env = env.getParent();
+                        if (env != null) {
+                            r = env.get(x);
+                            if (r != null && RRuntime.checkType(r, modeType)) {
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (r == null) {
+                    doIfNotFound(frame, state, i, x, ifNotFound);
+                } else {
+                    state.data[i] = r;
+                }
+            }
+            return state.getResult();
+        }
+
+        private void doIfNotFound(VirtualFrame frame, State state, int i, String x, RList ifNotFound) {
+            if (state.ifnFunc != null) {
+                state.data[i] = call(frame, state.ifnFunc, x);
+            } else {
+                state.data[i] = ifNotFound.getDataAt(state.ifNotFoundLength == 1 ? 0 : i);
+            }
+        }
+
+        private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
+            Object[] callArgs = RArguments.create(ifnFunc, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, new Object[]{x}, new String[0]);
+            return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
+        }
+
+    }
+
+}
