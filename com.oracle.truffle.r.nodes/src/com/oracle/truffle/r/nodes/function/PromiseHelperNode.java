@@ -79,8 +79,7 @@ public class PromiseHelperNode extends Node {
          * @param frame The frame to check for {@link RPromise}s to deoptimize
          * @return Whether there was at least on {@link RPromise} which needed to be deoptimized.
          */
-        @TruffleBoundary
-        // Deoptimize because of frame slot access
+        // @TruffleBoundary TODO Needed?
         public boolean deoptimizeFrame(MaterializedFrame frame) {
             boolean deoptOne = false;
             for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
@@ -140,6 +139,16 @@ public class PromiseHelperNode extends Node {
         return doEvaluate(frame, promise, callSrc);
     }
 
+    /**
+     * Main entry point for proper evaluation of the given Promise; including
+     * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles. Actual
+     * evaluation is delegated to {@link #generateValue(VirtualFrame, RPromise, SourceSection)}.
+     *
+     * @param frame
+     * @param promise
+     * @param callSrc
+     * @return The value the given Promise evaluates to
+     */
     private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
         if (isEvaluated(promise)) {
             return promise.getValue();
@@ -231,23 +240,24 @@ public class PromiseHelperNode extends Node {
     @TruffleBoundary
     private Object generateValueVararg(VarargPromise promise, SourceSection callSrc) {
         RPromise nextPromise = promise.getVararg();
-        // TODO Insert nextNode!
+        // TODO TruffleBoundary really needed? Null frame ok?
         return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
     }
 
     private Object getEagerValue(EagerPromise promise, SourceSection callSrc) {
-        OptType profieldOptType = optTypeProfile.profile(promise.getOptType());
-        if (profieldOptType == OptType.EAGER) {
-            return promise.getEagerValue();
-        } else if (profieldOptType == OptType.PROMISED) {
+        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
+        if (profiledOptType == OptType.EAGER) {
+            return getEagerValue(promise);
+        } else if (profiledOptType == OptType.PROMISED) {
             return getPromisedEagerValue(promise, callSrc);
         }
         throw RInternalError.shouldNotReachHere();
     }
 
+    @TruffleBoundary
     private Object getPromisedEagerValue(EagerPromise promise, SourceSection callSrc) {
         RPromise nextPromise = (RPromise) promise.getEagerValue();
-        // TODO frame == null ok here?
+        // TODO TruffleBoundary really needed? Null frame ok?
         return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
     }
 
@@ -338,6 +348,7 @@ public class PromiseHelperNode extends Node {
     private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile fallbackProfile = BranchProfile.create();
+    private final ValueProfile eagerValueProfile = ValueProfile.createPrimitiveProfile();
 
     public boolean isInlined(RPromise promise) {
         return isInlinedProfile.profile(promise.isInlined());
@@ -357,6 +368,13 @@ public class PromiseHelperNode extends Node {
      */
     public void setValue(Object newValue, RPromise promise) {
         promise.setValue(valueProfile.profile(newValue));
+    }
+
+    /**
+     * Returns {@link EagerPromise#getEagerValue()} profiled.
+     */
+    public Object getEagerValue(EagerPromise promise) {
+        return eagerValueProfile.profile(promise.getEagerValue());
     }
 
     /**
