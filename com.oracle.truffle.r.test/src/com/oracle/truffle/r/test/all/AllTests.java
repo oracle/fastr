@@ -10329,6 +10329,41 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMGet_047f5d5f86d293c4633a1d1066be1389() {
+        assertEval("{ a<- 1; b <- 2; mget(c(\"a\", \"b\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMGet_bcdb86b020d3b1e7e0ebac5b2f5dfb1a() {
+        assertEval("{ a<- 1; b <- 2; f <- function() { mget(c(\"a\", \"b\"), inherits=TRUE)}; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMGet_de1e2a4964bedbbb1814ec8471b27a0a() {
+        assertEval("{ a<- 1; mget(c(\"a\", \"b\"), ifnotfound=list(100)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMGet_4dbe3b9536c7d676d806e65cb763a9f6() {
+        assertEval("{ b <- 2; f <- function() { mget(c(\"a\", \"b\"), ifnotfound=list(100), inherits=TRUE)}; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMGet_d36a9c0eb6e23682c42047e6f9bd96e4() {
+        assertEval("{ mget(c(\"a\", \"b\"), ifnotfound=list(100, 200)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMGet_9680eb75dc23fcf5940df3082a80c48d() {
+        assertEval("{ a<- 1; b <- 2; mget(c(\"a\", \"b\"), mode=\"numeric\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMGet_0a7ec86b13299e2a36613eaaa051747e() {
+        assertEval("{ a<- 1; b <- \"2\"; mget(c(\"a\", \"b\"), mode=c(\"numeric\", \"character\")) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMakeNames_991d7bbd65a2bc1ac3888d143e33b98c() {
         assertEval("{ make.names(7) }");
     }

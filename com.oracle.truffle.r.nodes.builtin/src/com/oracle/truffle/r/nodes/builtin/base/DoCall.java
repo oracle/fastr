@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetFactory;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class DoCall extends RBuiltinNode {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
-    @Child private Get getNode;
+    @Child private GetFunctions.Get getNode;
 
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
