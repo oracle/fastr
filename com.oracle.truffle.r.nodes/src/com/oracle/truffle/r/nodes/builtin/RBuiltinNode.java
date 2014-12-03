@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedArgsNames", type = String[].class)})
@@ -184,6 +185,28 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         String name = getBuiltin().getRBuiltin().name();
         RInternalError.shouldNotReachHere("Builtin '" + name + "': Length of 'parameterNames' (" + argsLength + ") and specialization signature (" + specializationExpectesArgs +
                         ") must be consistent!");
+    }
+
+    /*
+     * The following two overrides are only needed when a {@code .Internal} call has been rewritten
+     * to replace itself with the {@link RBuiltinNode}. It may be better to create an AST structure
+     * that is more similar to the normal case.
+     */
+
+    @Override
+    public RNode getFunctionNode() {
+        return this;
+    }
+
+    @Override
+    public void deparse(State state) {
+        RBuiltin rb = getBuiltin().getRBuiltin();
+        assert rb.kind() == RBuiltinKind.INTERNAL;
+        state.append(".Internal(");
+        state.append(rb.name());
+        // arguments; there is no CallArgumentsNode, so we create one to reuse the deparse code
+        CallArgumentsNode.createUnnamed(false, false, getArguments()).deparse(state);
+        state.append(')');
     }
 
     /**
