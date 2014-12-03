@@ -72,6 +72,10 @@ public class RSerialize {
 
     }
 
+    public interface CallHook {
+        Object eval(Object arg);
+    }
+
     @SuppressWarnings("unused") private static final int MAX_PACKED_INDEX = Integer.MAX_VALUE >> 8;
 
     @SuppressWarnings("unused")
@@ -86,7 +90,7 @@ public class RSerialize {
     protected PStream stream;
     private Object[] refTable = new Object[128];
     private int refTableIndex;
-    @SuppressWarnings("unused") private final RFunction hook;
+    private final CallHook hook;
     private static boolean trace;
     private final int depth;
 
@@ -94,7 +98,7 @@ public class RSerialize {
         this(conn.getInputStream(), null, depth);
     }
 
-    private RSerialize(InputStream is, RFunction hook, int depth) throws IOException {
+    private RSerialize(InputStream is, CallHook hook, int depth) throws IOException {
         this.hook = hook;
         this.depth = depth;
         byte[] buf = new byte[2];
@@ -144,13 +148,18 @@ public class RSerialize {
         return instance.unserialize();
     }
 
-    public static Object unserialize(byte[] data, RFunction hook, int depth) throws IOException {
+    /**
+     * This variant exists for the {@code laxyLoadDBFetch} function. In certain cases, when
+     * {@link #persistentRestore} is called, an R function needs to be evaluated with an argument
+     * read from the serialized stream. This is handled with a callback object.
+     */
+    public static Object unserialize(byte[] data, CallHook hook, int depth) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
         RSerialize instance = trace ? new TracingRSerialize(is, hook, depth) : new RSerialize(is, hook, depth);
         return instance.unserialize();
     }
 
-    private Object unserialize() {
+    private Object unserialize() throws IOException {
         int version = stream.readInt();
         @SuppressWarnings("unused")
         int writerVersion = stream.readInt();
@@ -161,12 +170,12 @@ public class RSerialize {
         return result;
     }
 
-    protected Object readItem() {
+    protected Object readItem() throws IOException {
         Flags flags = Flags.decodeFlags(stream.readInt());
         return readItem(flags);
     }
 
-    protected Object readItem(Flags flags) {
+    protected Object readItem(Flags flags) throws IOException {
         Object result = null;
 
         SEXPTYPE type = SEXPTYPE.mapInt(flags.ptype);
@@ -193,6 +202,12 @@ public class RSerialize {
             case NAMESPACESXP: {
                 RStringVector s = inStringVec(false);
                 return addReadRef(RContext.getRASTHelper().findNamespace(s, depth));
+            }
+
+            case PERSISTSXP: {
+                RStringVector sv = inStringVec(false);
+                result = persistentRestore(sv);
+                return addReadRef(result);
             }
 
             case VECSXP: {
@@ -331,11 +346,6 @@ public class RSerialize {
                 break;
             }
 
-            case PERSISTSXP: {
-                RStringVector sv = inStringVec(false);
-                result = persistentRestore(sv);
-            }
-
             default:
                 assert false;
         }
@@ -389,7 +399,7 @@ public class RSerialize {
         return result;
     }
 
-    private RStringVector inStringVec(boolean strsxp) {
+    private RStringVector inStringVec(boolean strsxp) throws IOException {
         if (!strsxp) {
             if (stream.readInt() != 0) {
                 throw RError.nyi(null, "names in persistent strings are not supported yet");
@@ -408,28 +418,32 @@ public class RSerialize {
         return RDataFactory.createStringVector(data, complete);
     }
 
-    private Object persistentRestore(RStringVector sv) {
-        assert false;
-        return null;
+    private Object persistentRestore(RStringVector sv) throws IOException {
+        if (hook == null) {
+            throw new IOException("no restore method available");
+        }
+        // have to evaluate the hook function with sv as argument.
+        Object result = hook.eval(sv);
+        return result;
     }
 
     /**
      * Read GnuR bytecode. Not because we care, but it may be in there.
      */
-    private Object readBC() {
+    private Object readBC() throws IOException {
         int repsLength = stream.readInt();
         Object[] reps = new Object[repsLength];
         return readBC1(reps);
     }
 
-    private Object readBC1(Object[] reps) {
+    private Object readBC1(Object[] reps) throws IOException {
         Object car = readItem();
         // TODO R_bcEncode(car) (if we care)
         Object cdr = readBCConsts(reps);
         return new RPairList(car, cdr, null, SEXPTYPE.BCODESXP);
     }
 
-    private Object readBCConsts(Object[] reps) {
+    private Object readBCConsts(Object[] reps) throws IOException {
         int n = stream.readInt();
         Object[] ans = new Object[n];
         for (int i = 0; i < n; i++) {
@@ -459,7 +473,7 @@ public class RSerialize {
         return RDataFactory.createList(ans);
     }
 
-    private Object readBCLang(final SEXPTYPE typeArg, Object[] reps) {
+    private Object readBCLang(final SEXPTYPE typeArg, Object[] reps) throws IOException {
         SEXPTYPE type = typeArg;
         switch (type) {
             case BCREPREF:
@@ -772,12 +786,12 @@ public class RSerialize {
             this(conn.getInputStream(), null, depth);
         }
 
-        private TracingRSerialize(InputStream is, RFunction hook, int depth) throws IOException {
+        private TracingRSerialize(InputStream is, CallHook hook, int depth) throws IOException {
             super(is, hook, depth);
         }
 
         @Override
-        protected Object readItem() {
+        protected Object readItem() throws IOException {
             // CheckStyle: stop system..print check
             Flags flags = Flags.decodeFlags(stream.readInt());
             SEXPTYPE type = SEXPTYPE.mapInt(flags.ptype);
