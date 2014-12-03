@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
 
-@NodeChild(value = "vector", type = RNode.class)
+@NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "exact", type = RNode.class)})
 public class PositionsArrayNode extends PositionsArrayNodeAdapter {
     @Children protected final MultiDimPosConverterNode[] multiDimOperatorConverters;
 
@@ -39,12 +39,12 @@ public class PositionsArrayNode extends PositionsArrayNodeAdapter {
     }
 
     @ExplodeLoop
-    public Object executeEval(VirtualFrame frame, Object vector) {
+    public Object executeEval(VirtualFrame frame, Object vector, Object exact) {
         Object[] evaluatedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             Object p = positions[i].execute(frame);
-            Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p);
-            evaluatedElements[i] = elements[i].executeArg(frame, p, vector, convertedOperator);
+            Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p, exact);
+            evaluatedElements[i] = elements[i].executeArg(frame, vector, convertedOperator);
             if (multiDimOperatorConverters != null && multiDimOperatorConverters.length > 1) {
                 evaluatedElements[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, evaluatedElements[i]);
             }

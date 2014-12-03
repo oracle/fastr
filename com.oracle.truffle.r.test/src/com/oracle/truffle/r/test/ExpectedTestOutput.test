@@ -55735,6 +55735,26 @@ NULL
 [1] 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(aa=1, ba=2); x[["a", exact=FALSE]] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(aa=1, ba=2); x[["a", exact=TRUE]] }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(aa=1, ba=2); x[[exact=FALSE, "a"]] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(aa=1, ba=2); x[[exact=TRUE], "a"] }
+Error: unexpected ',' in "{ x<-list(aa=1, ba=2); x[[exact=TRUE],"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(ab=1, ac=2); x[["a", exact=FALSE]] }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(list(1,42)); x[[c(1, 2)]] }
 [1] 42
 

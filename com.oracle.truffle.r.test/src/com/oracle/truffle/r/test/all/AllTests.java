@@ -22734,6 +22734,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_04e77e72617fcffdfc37b9909771e493() {
+        assertEval("{ x<-list(aa=1, ba=2); x[[\"a\", exact=FALSE]] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_e494235ec5bee84f129f3b544c05707f() {
+        assertEval("{ x<-list(aa=1, ba=2); x[[exact=FALSE, \"a\"]] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_7709f0ad154670071994e29b9794780a() {
+        assertEval("{ x<-list(aa=1, ba=2); x[[\"a\", exact=TRUE]] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_627cf17e14d8efee3ae551c47282964e() {
+        assertEval("{ x<-list(aa=1, ba=2); x[[exact=TRUE], \"a\"] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_404fef2d5480c37a047eaa9c73620f30() {
+        assertEval("{ x<-list(ab=1, ac=2); x[[\"a\", exact=FALSE]] }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_23e220f9c43711417c97b6024e96b424() {
         assertEvalError("{ x<-c(1,2); x[[c(\"a\")]] }");
     }

@@ -159,26 +159,26 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castPosition = insert(ArrayPositionCastFactory.create(0, 1, true, false, null, null, null));
+            castPosition = insert(ArrayPositionCastFactory.create(0, 1, true, false, null, null));
         }
-        return castPosition.executeArg(frame, operand, vector, operand);
+        return castPosition.executeArg(frame, vector, operand);
     }
 
     private void initOperatorConvert() {
         if (operatorConverter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            operatorConverter = insert(OperatorConverterNodeFactory.create(0, 1, true, false, null, null));
+            operatorConverter = insert(OperatorConverterNodeFactory.create(0, 1, true, false, null, null, null));
         }
     }
 
     private Object convertOperand(VirtualFrame frame, Object vector, int operand) {
         initOperatorConvert();
-        return operatorConverter.executeConvert(frame, vector, operand);
+        return operatorConverter.executeConvert(frame, vector, operand, RRuntime.LOGICAL_TRUE);
     }
 
     private Object convertOperand(VirtualFrame frame, Object vector, String operand) {
         initOperatorConvert();
-        return operatorConverter.executeConvert(frame, vector, operand);
+        return operatorConverter.executeConvert(frame, vector, operand, RRuntime.LOGICAL_TRUE);
     }
 
     private Object setMultiDimData(VirtualFrame frame, RAbstractContainer value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,

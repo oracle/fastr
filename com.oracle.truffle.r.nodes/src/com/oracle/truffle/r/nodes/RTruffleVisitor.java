@@ -246,41 +246,68 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         return n.getValue().accept(this);
     }
 
-    private RNode createPositions(List<ArgNode> argList, int argLength, boolean isSubset, boolean isAssignment) {
+    private RNode createPositions(List<ArgNode> argList, int argLength, boolean isSubset, RNode castContainer, RNode dropDim, RNode tmpVarAccess, RNode rhsAccess, CoerceVector coerceVector,
+                    boolean isAssignment) {
         RNode[] positions;
         OperatorConverterNode[] operatorConverters;
         MultiDimPosConverterNode[] multiDimConverters = null;
         MultiDimPosConverterValueNode[] multiDimConvertersValue = null;
         ArrayPositionCast[] castPositions;
+        RNode exact = ConstantNode.create(RRuntime.LOGICAL_TRUE);
         if (argLength == 0) {
             positions = new RNode[]{ConstantNode.create(RMissing.instance)};
-            operatorConverters = new OperatorConverterNode[]{OperatorConverterNodeFactory.create(0, 1, isAssignment, isSubset, null, null)};
-            castPositions = new ArrayPositionCast[]{ArrayPositionCastFactory.create(0, 1, isAssignment, isSubset, null, null, null)};
+            operatorConverters = new OperatorConverterNode[]{OperatorConverterNodeFactory.create(0, 1, isAssignment, isSubset, null, null, null)};
+            castPositions = new ArrayPositionCast[]{ArrayPositionCastFactory.create(0, 1, isAssignment, isSubset, null, null)};
         } else {
-            positions = new RNode[argLength];
-            operatorConverters = new OperatorConverterNode[argLength];
-            if (isAssignment) {
-                multiDimConvertersValue = new MultiDimPosConverterValueNode[argLength];
-            } else {
-                multiDimConverters = new MultiDimPosConverterNode[argLength];
-            }
-            castPositions = new ArrayPositionCast[argLength];
+            int newArgLength = argLength;
             for (int i = 0; i < argLength; i++) {
-                ASTNode node = argList.get(i).getValue();
-                positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
-                if (isAssignment) {
-                    multiDimConvertersValue[i] = MultiDimPosConverterValueNodeFactory.create(isSubset, null, null, null);
-                } else {
-                    multiDimConverters[i] = MultiDimPosConverterNodeFactory.create(isSubset, null, null);
+                ArgNode argNode = argList.get(i);
+                ASTNode node = argNode.getValue();
+                Symbol name = argNode.getName();
+                if (name != null && name.toString() != null && name.toString().equals("exact")) {
+                    exact = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
+                    newArgLength--;
+                    break;
                 }
-                operatorConverters[i] = OperatorConverterNodeFactory.create(i, positions.length, isAssignment, isSubset, null, null);
-                castPositions[i] = ArrayPositionCastFactory.create(i, positions.length, isAssignment, isSubset, null, null, null);
+            }
+            positions = new RNode[newArgLength];
+            operatorConverters = new OperatorConverterNode[newArgLength];
+            if (isAssignment) {
+                multiDimConvertersValue = new MultiDimPosConverterValueNode[newArgLength];
+            } else {
+                multiDimConverters = new MultiDimPosConverterNode[newArgLength];
+            }
+            castPositions = new ArrayPositionCast[newArgLength];
+            int ind = 0;
+            for (int i = 0; i < argLength; i++) {
+                ArgNode argNode = argList.get(i);
+                Symbol name = argNode.getName();
+                ASTNode node = argNode.getValue();
+                if (name != null && name.toString() != null && name.toString().equals("exact")) {
+                    continue;
+                }
+                positions[ind] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
+                if (isAssignment) {
+                    multiDimConvertersValue[ind] = MultiDimPosConverterValueNodeFactory.create(isSubset, null, null, null);
+                } else {
+                    multiDimConverters[ind] = MultiDimPosConverterNodeFactory.create(isSubset, null, null);
+                }
+                operatorConverters[ind] = OperatorConverterNodeFactory.create(ind, positions.length, isAssignment, isSubset, null, null, null);
+                castPositions[ind] = ArrayPositionCastFactory.create(ind, positions.length, isAssignment, isSubset, null, null);
+                ind++;
             }
         }
         if (!isAssignment) {
-            return new PositionsArrayNode(castPositions, positions, operatorConverters, multiDimConverters);
+            assert castContainer != null;
+            assert dropDim != null;
+            PositionsArrayNode posArrayNode = new PositionsArrayNode(castPositions, positions, operatorConverters, multiDimConverters);
+            return AccessArrayNode.create(isSubset, castContainer, exact, posArrayNode, dropDim);
         } else {
-            return new PositionsArrayNodeValue(castPositions, positions, operatorConverters, multiDimConvertersValue);
+            PositionsArrayNodeValue posArrayNodeValue = new PositionsArrayNodeValue(castPositions, positions, operatorConverters, multiDimConvertersValue);
+            assert tmpVarAccess != null;
+            assert rhsAccess != null;
+            assert coerceVector != null;
+            return UpdateArrayHelperNodeFactory.create(isSubset, tmpVarAccess, rhsAccess, ConstantNode.create(0), posArrayNodeValue, coerceVector);
         }
     }
 
@@ -313,8 +340,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
         }
         RNode castContainer = CastToContainerNodeFactory.create(vector, false, false, false);
-        RNode positions = createPositions(args, argLength, a.isSubset(), false);
-        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castContainer, (PositionsArrayNode) positions, dropDim);
+        RNode access = createPositions(args, argLength, a.isSubset(), castContainer, dropDim, null, null, null, false);
         access.assignSourceSection(a.getSource());
         return access;
     }
@@ -421,9 +447,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             RNode rhsAccess = ReadVariableNode.create(null, rhsSymbolString, RType.Any, false);
             RNode tmpVarAccess = ReadVariableNode.create(null, varSymbol, RType.Any, false);
 
-            RNode positions = createPositions(a.getArguments(), argLength, a.isSubset(), true);
             CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
-            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), tmpVarAccess, rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions, coerceVector);
+            RNode updateOp = createPositions(a.getArguments(), argLength, a.isSubset(), null, null, tmpVarAccess, rhsAccess, coerceVector, true);
             RNode assignFromTemp = WriteVariableNode.create(vSymbol, updateOp, false, isSuper, WriteVariableNode.Mode.TEMP);
             return constructReplacementSuffix(seq, assignFromTemp, rhsSymbol, source);
         } else if (a.getVector() instanceof AccessVector) {
@@ -442,10 +467,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
 
-            RNode positions = createPositions(a.getArguments(), argLength, a.isSubset(), true);
             CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
-            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), vecAST.accept(this), rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions,
-                            coerceVector);
+            RNode updateOp = createPositions(a.getArguments(), argLength, a.isSubset(), null, null, vecAST.accept(this), rhsAccess, coerceVector, true);
             return constructRecursiveVectorUpdateSuffix(seq, updateOp, vecAST, source, isSuper);
         } else if (a.getVector() instanceof FieldAccess) {
             FieldAccess accessAST = (FieldAccess) a.getVector();
@@ -458,16 +481,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
 
-            RNode positions = createPositions(a.getArguments(), argLength, a.isSubset(), true);
             CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
-            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), accessAST.accept(this), rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions,
-                            coerceVector);
+            RNode updateOp = createPositions(a.getArguments(), argLength, a.isSubset(), null, null, accessAST.accept(this), rhsAccess, coerceVector, true);
             return constructRecursiveFieldUpdateSuffix(seq, updateOp, accessAST, source, isSuper);
         } else if (a.getVector() instanceof FunctionCall) {
             FunctionCall callAST = (FunctionCall) a.getVector();
-            RNode positions = createPositions(a.getArguments(), argLength, a.isSubset(), true);
             CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
-            return UpdateArrayHelperNodeFactory.create(a.isSubset(), callAST.accept(this), rhs, ConstantNode.create(0), (PositionsArrayNodeValue) positions, coerceVector);
+            return createPositions(a.getArguments(), argLength, a.isSubset(), null, null, callAST.accept(this), rhs, coerceVector, true);
         } else {
             Utils.nyi();
             return null;
@@ -665,9 +685,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
             List<ArgNode> arguments = new ArrayList<>(2);
             arguments.add(ArgNode.create(null, (String) null, Constant.createStringConstant(null, new String[]{a.getFieldName().toString()})));
-            RNode positions = createPositions(arguments, arguments.size(), false, true);
             CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
-            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(false, vecAST.accept(this), rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions, coerceVector);
+            RNode updateOp = createPositions(arguments, arguments.size(), false, null, null, vecAST.accept(this), rhsAccess, coerceVector, true);
             return constructRecursiveVectorUpdateSuffix(seq, updateOp, vecAST, source, isSuper);
         } else if (a.getLhs() instanceof FieldAccess) {
             FieldAccess accessAST = (FieldAccess) a.getLhs();

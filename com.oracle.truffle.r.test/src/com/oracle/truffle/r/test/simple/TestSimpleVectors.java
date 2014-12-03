@@ -496,6 +496,11 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ v <- c(1,2,3,4,5,6,7,8,9); f <- function(k) v[k]; f(2:5); f(-1:-2) }");
 
         assertEval("{ x <- NULL;  x[[\"names\", exact=TRUE]] }");
+        assertEval("{ x<-list(aa=1, ba=2); x[[\"a\", exact=FALSE]] }");
+        assertEval("{ x<-list(aa=1, ba=2); x[[exact=FALSE, \"a\"]] }");
+        assertEval("{ x<-list(aa=1, ba=2); x[[\"a\", exact=TRUE]] }");
+        assertEval("{ x<-list(aa=1, ba=2); x[[exact=TRUE], \"a\"] }");
+        assertEval("{ x<-list(ab=1, ac=2); x[[\"a\", exact=FALSE]] }");
     }
 
     @Test
