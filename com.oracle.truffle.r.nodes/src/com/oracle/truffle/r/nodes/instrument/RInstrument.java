@@ -28,7 +28,9 @@ import com.oracle.truffle.api.instrument.StandardSyntaxTag;
 import com.oracle.truffle.api.instrument.SyntaxTag;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.function.FunctionUID;
+import com.oracle.truffle.r.nodes.instrument.trace.*;
 import com.oracle.truffle.r.options.FastROptions;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +46,7 @@ public class RInstrument {
 
         @Override
         public void startASTProbing(Source source) {
+            System.console();
         }
 
         @Override
@@ -57,9 +60,11 @@ public class RInstrument {
                 if (FastROptions.AddFunctionCounters.getValue()) {
                     probe.attach(new REntryCounters.Function((FunctionUID) tagValue).instrument);
                 }
-
             } else if (tag == StandardSyntaxTag.START_METHOD) {
                 putProbe((FunctionUID) tagValue, probe);
+                if (FastROptions.TraceCalls.getValue()) {
+                    TraceHandling.attachTraceHandler((FunctionUID) tagValue);
+                }
             }
         }
 
