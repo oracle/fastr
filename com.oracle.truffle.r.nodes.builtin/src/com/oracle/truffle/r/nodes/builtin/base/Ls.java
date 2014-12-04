@@ -24,84 +24,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.regex.*;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@RBuiltin(name = "ls", aliases = {"objects"}, kind = SUBSTITUTE, parameterNames = {"name", "pos", "envir", "all.names", "pattern"})
-// TODO INTERNAL, which would sanitize the way the environment is passed to a single REnvironment
-// argument
+@RBuiltin(name = "ls", aliases = {"objects"}, kind = INTERNAL, parameterNames = {"envir", "all.names"})
 public abstract class Ls extends RBuiltinNode {
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                        ConstantNode.create(RMissing.instance)};
-    }
-
     @Specialization
-    @SuppressWarnings("unused")
-    protected RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
-        controlVisibility();
-        return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), null);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, RMissing pattern) {
-        controlVisibility();
-        return name.ls(RRuntime.fromLogical(allNames), null);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RStringVector ls(VirtualFrame frame, RMissing name, int pos, REnvironment envir, byte allNames, RMissing pattern) {
+    @TruffleBoundary
+    protected RStringVector ls(REnvironment envir, byte allNames) {
         controlVisibility();
         return envir.ls(RRuntime.fromLogical(allNames), null);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, String pattern) {
-        controlVisibility();
-        return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), compile(pattern));
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, String pattern) {
-        controlVisibility();
-        return name.ls(RRuntime.fromLogical(allNames), compile(pattern));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RStringVector ls(VirtualFrame frame, RMissing name, int pos, REnvironment envir, byte allNames, String pattern) {
-        controlVisibility();
-        return envir.ls(RRuntime.fromLogical(allNames), compile(pattern));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RStringVector ls(VirtualFrame frame, RAbstractIntVector name, int pos, RMissing envir, byte allNames, RMissing pattern) {
-        controlVisibility();
-        String[] searchPath = REnvironment.searchPath();
-        REnvironment env = REnvironment.lookupOnSearchPath(searchPath[name.getDataAt(0) - 1]);
-        return env.ls(RRuntime.fromLogical(allNames), null);
-    }
-
-    @TruffleBoundary
-    private static Pattern compile(String pattern) {
-        return Pattern.compile(RegExp.checkPreDefinedClasses(pattern));
     }
 
 }
