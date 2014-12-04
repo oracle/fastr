@@ -10,57 +10,54 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
-
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
 
     private String targetFunctionNameR;
-    private RFunction targetFunctionR;
+    protected RFunction targetFunctionR;
     private RStringVector klassR;
     private RStringVector typeL;
     private RStringVector typeR;
     private boolean writeGroupR;
+    protected boolean isBuiltinCalled;
 
-    public BinarysOpsGroupDispatchNode(String genericName, CallArgumentsNode callArgNode) {
-        super(genericName, RGroupGenerics.GROUP_OPS, callArgNode);
+    public BinarysOpsGroupDispatchNode(final String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
+        super(aGenericName, RGroupGenerics.GROUP_OPS, hasVararg, callSrc, argSrc);
     }
 
-    private void initDispatchTypes(VirtualFrame frame) {
+    private void initDispatchTypes(final Object[] evaluatedArgs) {
         // This is kind of tricky. We want to evaluate args before we know the function for which
         // arguments should be matched. But as OpsGroupDispatchNode is for BinaryOperators, we can
         // assume that arguments are in correct order!
-        evalArgs(frame);
-        if (evaluatedArgs.length > 0) {
-            this.typeL = getArgClass(evaluatedArgs[0]);
-        }
-        if (evaluatedArgs.length > 1) {
-            this.typeR = getArgClass(evaluatedArgs[1]);
-        }
+        this.typeL = getArgClass(evaluatedArgs[0]);
+        this.typeR = getArgClass(evaluatedArgs[1]);
     }
 
-// @Override
-// protected Object callBuiltin(VirtualFrame frame) {
-// initBuiltin(frame);
-// System.out.println(Arrays.toString(evaluatedArgs));
-// Object[] argObject = RArguments.create(builtinFunc, funCallNode.getSourceSection(),
-// evaluatedArgs, argNames);
-// return funCallNode.call(frame, builtinFunc.getTarget(), argObject);
-// }
+    @Override
+    public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
+        Object[] evaluatedArgs = argAndNames.getValues();
+        String[] argNames = argAndNames.getNames();
+        if (!isExecuted) {
+            isExecuted = true;
+            executeNoCache(frame, evaluatedArgs);
+        }
+        if (isBuiltinCalled || (targetFunctionR == null && targetFunction == null)) {
+            return callBuiltin(frame, evaluatedArgs, argNames);
+        }
+        return executeHelper(frame, evaluatedArgs, argNames);
+    }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        initDispatchTypes(frame);
-        if (this.typeL == null && this.typeR == null) {
-            return callBuiltin(frame);
-        }
+    public boolean isSameType(Object[] args) {
+        return !isExecuted || S3DispatchNode.isEqualType(getArgClass(args[0]), this.typeL) && S3DispatchNode.isEqualType(getArgClass(args[1]), this.typeR);
+    }
+
+    protected void executeNoCache(VirtualFrame frame, Object[] evaluatedArgs) {
+        initDispatchTypes(evaluatedArgs);
         if (this.typeR != null) {
             this.type = this.typeR;
             findTargetFunction(frame);
@@ -77,8 +74,10 @@ public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
         } else {
             targetFunction = null;
         }
+
         if (targetFunctionR == null && targetFunction == null) {
-            return callBuiltin(frame);
+            isBuiltinCalled = true;
+            return;
         }
         if (targetFunctionR != targetFunction) {
             if (targetFunctionR != null && targetFunction != null) {
@@ -89,7 +88,8 @@ public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
                      * TODO: throw warning
                      * "Incompatible methods (\"%s\", \"%s\") for \"%s\""),lname,rname, generic
                      */
-                    return callBuiltin(frame);
+                    isBuiltinCalled = true;
+                    return;
                 }
             }
             if (targetFunction == null) {
@@ -100,9 +100,9 @@ public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
                 this.type = this.typeR;
             }
         }
-        String[] methods = new String[this.evaluatedArgs.length];
+        String[] methods = new String[evaluatedArgs.length];
         for (int i = 0; i < methods.length; ++i) {
-            RStringVector classHr = getArgClass(this.evaluatedArgs[i]);
+            RStringVector classHr = getArgClass(evaluatedArgs[i]);
             if (classHr == null) {
                 continue;
             }
@@ -114,6 +114,24 @@ public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
             }
         }
         dotMethod = RDataFactory.createStringVector(methods, true);
-        return executeHelper(frame);
     }
+}
+
+class GenericBinarysOpsGroupDispatchNode extends BinarysOpsGroupDispatchNode {
+
+    public GenericBinarysOpsGroupDispatchNode(String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
+        super(aGenericName, hasVararg, callSrc, argSrc);
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
+        Object[] evaluatedArgs = argAndNames.getValues();
+        String[] argNames = argAndNames.getNames();
+        executeNoCache(frame, evaluatedArgs);
+        if (isBuiltinCalled || (targetFunctionR == null && targetFunction == null)) {
+            return callBuiltin(frame, evaluatedArgs, argNames);
+        }
+        return executeHelper(frame, evaluatedArgs, argNames);
+    }
+
 }

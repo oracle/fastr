@@ -24,13 +24,6 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"...", "na.rm"})
 public abstract class Prod extends RBuiltinNode {
 
-    private static final String[] PARAMETER_NAMES = new String[]{"..."};
-
-    @Override
-    public String[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};

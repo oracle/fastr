@@ -605,7 +605,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected RLogicalVector doFactorOp(RFactor left, RAbstractContainer right) {
         if (left.isOrdered()) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
-
         } else {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
         }
@@ -616,7 +615,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected RLogicalVector doFactorOp(RAbstractContainer left, RFactor right) {
         if (right.isOrdered()) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
-
         } else {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
         }

@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -29,7 +30,8 @@ public abstract class S3DispatchNode extends DispatchNode {
     @Child private WriteVariableNode wvnClass;
     @Child protected WriteVariableNode wvnMethod;
     @Child private WriteVariableNode wvnDefEnv;
-    @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
+    @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
+    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;
     protected RStringVector klass;
@@ -37,6 +39,79 @@ public abstract class S3DispatchNode extends DispatchNode {
     protected Frame genCallEnv;
     protected Frame genDefEnv;
     protected boolean isFirst;
+
+    // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
+    // having one method with a rather convoluted control flow structure?
+
+    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, final String[] argNames, final boolean hasVarArgs, final SourceSection callSrc) {
+        String[] evaluatedArgNames = null;
+        Object[] evaluatedArgsValues = evaluatedArgs;
+        int argCount = evaluatedArgs.length;
+        if (hasVarArgs) {
+            evaluatedArgNames = argNames;
+        } else {
+            boolean hasNames = argNames != null;
+            evaluatedArgNames = hasNames ? new String[argNames.length] : null;
+            int fi = 0;
+            int index = 0;
+            int argListSize = evaluatedArgsValues.length;
+            for (; fi < argCount; ++fi) {
+                Object arg = evaluatedArgs[fi];
+                if (arg instanceof RArgsValuesAndNames) {
+                    RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) arg;
+                    argListSize += varArgsContainer.length() - 1;
+                    evaluatedArgsValues = Utils.resizeArray(evaluatedArgsValues, argListSize);
+                    // argNames can be null if no names for arguments have been specified
+                    evaluatedArgNames = evaluatedArgNames == null ? new String[argListSize] : Utils.resizeArray(evaluatedArgNames, argListSize);
+                    Object[] varArgsValues = varArgsContainer.getValues();
+                    String[] varArgsNames = varArgsContainer.getNames();
+                    for (int i = 0; i < varArgsContainer.length(); i++) {
+                        addArg(evaluatedArgsValues, varArgsValues[i], index);
+                        String name = varArgsNames == null ? null : varArgsNames[i];
+                        evaluatedArgNames[index] = name;
+                        index++;
+                    }
+                } else {
+                    addArg(evaluatedArgsValues, arg, index);
+                    if (hasNames) {
+                        evaluatedArgNames[index] = argNames[fi];
+                    }
+                    index++;
+                }
+            }
+        }
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(evaluatedArgsValues, evaluatedArgNames);
+        // ...to match them against the chosen function's formal arguments
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, callSrc, promiseHelper);
+        return reorderedArgs;
+    }
+
+    private static void addArg(Object[] values, Object value, int index) {
+        if (RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value))) {
+            values[index] = null;
+        } else {
+            values[index] = value;
+        }
+    }
+
+    public static boolean isEqualType(final RStringVector one, final RStringVector two) {
+        if (one == null && two == null) {
+            return true;
+        }
+        if (one == null || two == null) {
+            return false;
+        }
+
+        if (one.getLength() != two.getLength()) {
+            return false;
+        }
+        for (int i = 0; i < one.getLength(); ++i) {
+            if (!one.getDataAt(i).equals(two.getDataAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     protected void findFunction(final String functionName, Frame frame) {
         if (lookup == null || !functionName.equals(lastFun)) {

@@ -1173,25 +1173,17 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     // non-convertible raw - other cases are guarded with convertRawToNumeric and
     // convertRawToNumericVector
 
-    @Specialization(guards = "rightNotAVector")
+    @Specialization
     protected byte doRaw(RRaw left, Object right) {
         return logic.op(left, right);
     }
 
-    @Specialization(guards = "leftNotAVector")
+    @Specialization
     protected byte doRaw(Object left, RRaw right) {
         return logic.op(left, right);
     }
 
-    protected static boolean rightNotAVector(RRawVector left, Object right) {
-        return !(right instanceof RRawVector);
-    }
-
-    protected static boolean leftNotAVector(Object left, RRawVector right) {
-        return !(left instanceof RRawVector);
-    }
-
-    @Specialization
+    @Specialization(guards = "rightNotAVector")
     protected byte doRaw(RAbstractRawVector left, Object right) {
         // perhaps not the cleanest solution but others would be (unnecessarily) more verbose (e.g.
         // introduce another abstract method to BooleanOperation just to signal an error in one
@@ -1200,7 +1192,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return logic.op(left.getDataAt(0), right);
     }
 
-    @Specialization
+    @Specialization(guards = "leftNotAVector")
     protected byte doRaw(Object left, RAbstractRawVector right) {
         // perhaps not the cleanest solution but others would be (unnecessarily) more verbose (e.g.
         // introduce another abstract method to BooleanOperation just to signal an error in one
@@ -1210,6 +1202,14 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     // guards
+
+    protected static boolean rightNotAVector(RAbstractRawVector left, Object right) {
+        return !(right instanceof RRawVector);
+    }
+
+    protected static boolean leftNotAVector(Object left, RAbstractRawVector right) {
+        return !(left instanceof RRawVector);
+    }
 
     public boolean isFactor(RAbstractContainer left, RNull right) {
         return left.getElementClass() == RFactor.class;
@@ -1872,5 +1872,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
         ret.copyNamesFrom(leftLength == resultLength ? left : right);
         return ret;
+    }
+
+    protected static boolean notEmpty(RAbstractVector left, RAbstractVector right) {
+        return left.getLength() != 0 && right.getLength() != 0;
     }
 }

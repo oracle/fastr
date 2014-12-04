@@ -3235,16 +3235,20 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testVapply() {
         assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }");
         assertEval("{ vapply(c(10, 20, 30, 40), function(x) x/2, c(1)) }");
         assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = FALSE) }");
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
         assertEval("{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }");
         assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) x, c(TRUE)) }");
         assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) FALSE, c(TRUE)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testVapplyIgnore() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
     }
 
     @Test
@@ -4024,20 +4028,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(+7+7i, +42+42i); x == 7+7i }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); x == as.raw(7) }");
 
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
-
         assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
+
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x > \"a\" }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
 
         assertEval("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
-        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
-        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
-        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
 
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
@@ -4063,7 +4059,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-structure(c(2.2,3.2,2.1), .Label=c(\"a\", \"b\"), class = c('factor')); as.integer(x) }");
 
         assertEval("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x==y }");
-        assertEvalWarning("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
 
         assertEval("{ x<-structure(factor(c(\"a\",\"b\",\"c\")), class=NULL); x }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); levels(x)<-c(7,42); x }");
@@ -4075,6 +4070,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); levels(x)<-c(7, 42); is.character(levels(x)) }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7+7i, 42+42i); is.complex(levels(x)) }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); is.raw(levels(x)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testFactorIgnore() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEvalWarning("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
     }
 
     @Test

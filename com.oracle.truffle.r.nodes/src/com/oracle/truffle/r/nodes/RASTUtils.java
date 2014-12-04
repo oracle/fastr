@@ -144,9 +144,9 @@ public class RASTUtils {
             return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
         } else if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
-        } else if (fn instanceof GroupDispatchNode) {
-            GroupDispatchNode gdn = (GroupDispatchNode) fn;
-            return DispatchedCallNode.create(gdn.getGenericName(), RGroupGenerics.RDotGroup, null, callArgsNode);
+        } else if (fn instanceof GroupDispatchCallNode) {
+            GroupDispatchCallNode gdcn = (GroupDispatchCallNode) fn;
+            return GroupDispatchCallNode.create(gdcn.getGenericName(), gdcn.getGroupName(), callArgsNode, gdcn.getCallSrc());
         } else {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createStaticCall(null, rfn, callArgsNode);
@@ -200,8 +200,8 @@ public class RASTUtils {
             } else {
                 return createRSymbol(child);
             }
-        } else if (child instanceof GroupDispatchNode) {
-            GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
+        } else if (child instanceof GroupDispatchCallNode) {
+            GroupDispatchCallNode groupDispatchNode = (GroupDispatchCallNode) child;
             String gname = groupDispatchNode.getGenericName();
             if (quote) {
                 gname = "`" + gname + "`";
@@ -219,19 +219,13 @@ public class RASTUtils {
 
     /**
      * Returns the {@link ReadVariableNode} associated with a {@link RCallNode} or the
-     * {@link GroupDispatchNode} associated with a {@link DispatchedCallNode}.
+     * {@link GroupDispatchCallNode} .
      */
     public static RNode findFunctionNode(Node node) {
         if (node instanceof RCallNode) {
             return ((RCallNode) node).getFunctionNode();
-        } else if (node instanceof DispatchedCallNode) {
-            for (Node child : node.getChildren()) {
-                if (child != null) {
-                    if (child instanceof GroupDispatchNode) {
-                        return (RNode) child;
-                    }
-                }
-            }
+        } else if (node instanceof GroupDispatchCallNode) {
+            return (RNode) node;
         }
         assert false;
         return null;

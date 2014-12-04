@@ -67,7 +67,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         RArguments.copyArgumentsInto(frame, mergedArgs);
         System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
         // TODO: implement names passing
-        Object[] argObject = RArguments.createS3Args(targetFunction, funCallNode.getSourceSection(), RArguments.getDepth(frame) + 1, mergedArgs, RArguments.EMPTY_STRING_ARRAY);
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(frame) + 1, mergedArgs, RArguments.EMPTY_STRING_ARRAY);
         final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         defineVarsNew(newFrame);
         if (storedFunctionName != null) {
@@ -78,7 +78,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (hasGroup) {
             RArguments.setS3Group(newFrame, this.group);
         }
-        return funCallNode.call(frame, targetFunction.getTarget(), argObject);
+        return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
     private boolean isSame() {
