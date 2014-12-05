@@ -495,7 +495,10 @@ public class ArgumentMatcher {
         // Error!
         String debugSrc = suppliedName;
         if (debugArgNode instanceof RNode) {
-            debugSrc = ((RNode) debugArgNode).getSourceSection().getCode();
+            SourceSection ss = ((RNode) debugArgNode).getSourceSection();
+            if (ss != null && ss.getCode() != null) {
+                debugSrc = ((RNode) debugArgNode).getSourceSection().getCode();
+            }
         }
         throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, debugSrc);
     }

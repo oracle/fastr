@@ -176,6 +176,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
     }
 
+    public static WriteVariableNode create(Object object, RNode rhs, boolean isArgWrite, boolean isSuper) {
+        return create(object.toString(), rhs, isArgWrite, isSuper, Mode.REGULAR);
+    }
+
     public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
         return create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
     }

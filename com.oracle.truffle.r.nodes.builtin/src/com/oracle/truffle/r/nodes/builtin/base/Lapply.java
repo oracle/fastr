@@ -21,16 +21,16 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN", "..."})
 public abstract class Lapply extends RBuiltinNode {
-
-    public static final String LAPPLY_VEC_ELEM_ID = new String("LAPPLY_VEC_ELEM_ID");
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
@@ -63,14 +63,12 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     public static final class DoApplyNode extends RNode {
+        private static final AnonymousFrameVariable LAPPLY_VEC_ELEM = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");
+
+        @Child protected WriteVariableNode writeVectorElement = null;
+        @CompilationFinal private ReadVariableNode readVectorElement = null;
 
         protected LapplyIteratorNode iterator = null;
-        @Child protected WriteVariableNode writeVectorElement = null;
-        private final SourceSection writeSrc = new NullSourceSection("Lapply builtin", "write vector element");
-        @CompilationFinal private ReadVariableNode readVectorElement = null;
-        private final SourceSection readSrc = new NullSourceSection("Lapply builtin", "read vector element");
-
-        private final SourceSection funSrc = new NullSourceSection("Lapply builtin", "call node");
         private LapplyFunctionNode functionNode = null;
         @Child protected RCallNode callNode = null;
 
@@ -78,11 +76,11 @@ public abstract class Lapply extends RBuiltinNode {
         @CompilationFinal private VarArgsSignature oldSignature = null;
 
         public Object[] execute(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
-            checkFunction(vecMat, fun, varArgs);
+            checkFunction(frame, vecMat, fun, varArgs);
 
             Object[] result = new Object[vecMat.getLength()];
             for (int i = 0; i < result.length; ++i) {
-                // Write new vector element to LAPPLY_VEC_ELEME_ID frame slot
+                // Write new vector element to LAPPLY_VEC_ELEM frame slot
                 writeVectorElement.execute(frame);
 
                 result[i] = callNode.execute(frame);
@@ -100,7 +98,7 @@ public abstract class Lapply extends RBuiltinNode {
          * @param fun
          * @param varArgs May be {@link RMissing#instance} to indicate empty "..."!
          */
-        private void checkFunction(RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
+        private void checkFunction(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
             /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
             FormalArguments formalArgs = ((RRootNode) fun.getTarget().getRootNode()).getFormalArguments();
 
@@ -112,11 +110,10 @@ public abstract class Lapply extends RBuiltinNode {
                 // To extract the elements from the vector in the loop, we use a dedicated node that
                 // maintains an internal counter.
                 // TODO Revise copy semantics here!
-                readVectorElement = replace(readVectorElement, ReadVariableNode.create(LAPPLY_VEC_ELEM_ID, true));
-                readVectorElement.assignSourceSection(readSrc);
+                readVectorElement = replace(readVectorElement, ReadVariableNode.create(LAPPLY_VEC_ELEM, true));
 
                 iterator = new LapplyIteratorNode();
-                writeVectorElement = replace(writeVectorElement, WriteVariableNode.create(writeSrc, LAPPLY_VEC_ELEM_ID, iterator, false, false));
+                writeVectorElement = replace(writeVectorElement, WriteVariableNode.create(LAPPLY_VEC_ELEM, iterator, false, false));
 
                 // The first parameter to the function call is named as defined by the function.
                 String readVectorElementName = formalArgs.getNames()[0];
@@ -147,16 +144,15 @@ public abstract class Lapply extends RBuiltinNode {
                     names[0] = readVectorElementName;
                     System.arraycopy(varArgs.getNames(), 0, names, 1, varArgs.length());
                 }
-                functionNode = new LapplyFunctionNode(fun);
+                functionNode = new LapplyFunctionNode();
                 CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, names);
-                callNode = replace(callNode, RCallNode.createCall(funSrc, functionNode, argsNode));
+                callNode = replace(callNode, RCallNode.createCall(null, functionNode, argsNode));
                 callTarget = fun.getTarget();
                 oldSignature = signature;
             }
 
-            // Update
-            iterator.reset(vecMat);
-            functionNode.reset(fun);
+            // zero the iteratoe value in the current frame
+            iterator.initialize(frame);
         }
 
         private <O extends Node, T extends Node> T replace(O oldNode, T newNode) {
@@ -168,36 +164,55 @@ public abstract class Lapply extends RBuiltinNode {
         }
 
         protected static class LapplyIteratorNode extends RNode {
+            private static final String LAPPLY_VEC = new String("X");
+            private static final String LAPPLY_ITER_INDEX = new String("LAPPLY_ITER_INDEX");
 
-            private RVector vector;
-            private int index;
+            @Child ReadVariableNode readVector;
+            @Child ReadVariableNode readIndex;
+            @Child WriteVariableNode writeIndex;
+            @Child WriteVariableNode zeroIndex;
 
-            public void reset(RVector newVector) {
-                this.vector = newVector;
-                this.index = 0;
+            LapplyIteratorNode() {
+                readVector = insert(ReadVariableNode.create(LAPPLY_VEC, false));
+                readIndex = insert(ReadVariableNode.create(LAPPLY_ITER_INDEX, false));
+                RNode[] incArgs = new RNode[]{ReadVariableNode.create(LAPPLY_ITER_INDEX, false), ConstantNode.create(1)};
+                BinaryArithmeticNode incIndex = BinaryArithmeticNodeFactory.create(BinaryArithmetic.ADD, null, incArgs, null, null);
+                writeIndex = insert(WriteVariableNode.create(null, LAPPLY_ITER_INDEX, incIndex, false, false));
+                zeroIndex = insert(WriteVariableNode.create(null, LAPPLY_ITER_INDEX, ConstantNode.create(0), false, false));
+            }
+
+            LapplyIteratorNode initialize(VirtualFrame frame) {
+                zeroIndex.execute(frame);
+                return this;
             }
 
             @Override
             public Object execute(VirtualFrame frame) {
-                return vector.getDataAtAsObject(index++);
+                Object result = readVector.execute(frame);
+                if (result instanceof RAbstractVector) {
+                    RAbstractVector vector = (RAbstractVector) result;
+                    int index = (int) readIndex.execute(frame);
+                    result = vector.getDataAtAsObject(index);
+                } else {
+                    // single element vector as scalar, e.g. Double
+                }
+                writeIndex.execute(frame);
+                return result;
             }
         }
 
         protected static class LapplyFunctionNode extends RNode {
+            private static final String LAPPLY_FUN = new String("FUN");
 
-            private RFunction function = null;
+            @Child ReadVariableNode readFun;
 
-            public LapplyFunctionNode(RFunction function) {
-                this.function = function;
-            }
-
-            public void reset(RFunction newFunction) {
-                this.function = newFunction;
+            public LapplyFunctionNode() {
+                readFun = insert(ReadVariableNode.create(LAPPLY_FUN, false));
             }
 
             @Override
             public Object execute(VirtualFrame frame) {
-                return function;
+                return readFun.execute(frame);
             }
 
         }
