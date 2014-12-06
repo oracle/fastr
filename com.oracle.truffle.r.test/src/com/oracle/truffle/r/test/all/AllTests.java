@@ -5919,28 +5919,118 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_c292a9a2047519d8fd24923adebb0ad2() {
+    public void TestSimpleBuiltins_testCbind_12ef49db6d93af61d6bc6793fd746df6() {
+        assertEval("{ cbind(c(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_427105c9ed38deeb2fed308b529efe4f() {
+        assertEval("{ cbind(a=c(b=1,c=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_5c5106de5752258a62b68563a3eed14d() {
+        assertEval("{ cbind(c(b=1,c=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_9f11c5e8444ef034be3d2ec4c3c0f0f0() {
+        assertEval("{ cbind(c(1,c=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_e2d3127ed6c78e5b22a76d30a0ff82a9() {
+        assertEval("{ v<-c(b=1, c=2); cbind(v) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_ef91bd5c35bb13b8c59f26e2ef47904f() {
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_cbbec7f43cda93024a3e24d7d697f987() {
+        assertEval("{ cbind(a=c(1,2), b=c(3,4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_33c6d516c9bd5842585f48bfc0a94f33() {
+        assertEval("{ cbind(a=c(x=1,y=2), b=c(3,4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_678a5966bb85d644e1b341e4f70a23e1() {
+        assertEval("{ cbind(a=c(1,2), b=c(x=3,y=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_7110543d7624fe6e75dc83a8e78bbb8e() {
+        assertEval("{ cbind(a=c(x=1,2), b=c(3,y=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_4fdce2d4ae3dad0b2d79d037769e55f9() {
+        assertEval("{ cbind(a=c(1,2), b=c(3,y=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_9aa3645c15c18248b938ff50ea256381() {
+        assertEval("{ cbind(a=c(1,x=2), b=c(y=3,4,5,6)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_2d440ef8b9444b1656b0fb09125ef20f() {
+        assertEval("{ cbind(a=c(1,x=2), b=c(3,4,5,6)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_29eee85a7f7a7e0f13bcf559b6e9ae3a() {
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_a5f8a13927ad3cdd7fa9d1dd9eb718ec() {
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_e9dfe3f92e78ef76244bcef169c951ca() {
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_6c2dd27e6678bd8591b594530c8c3ab6() {
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_88044b711f1de7a61a95002997846c82() {
+        assertEval("{ cbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_c292a9a2047519d8fd24923adebb0ad2() {
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_849d2f7200b6d113f749abbc67d41a7d() {
-        assertEval("{ cbind(1:3,1:2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCbindIgnore_24a51282927ba915c3ebc8717b71c58a() {
+    public void TestSimpleBuiltins_testCbind_24a51282927ba915c3ebc8717b71c58a() {
         assertEval("{ cbind(2,3, complex(3,3,2));}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_f5b3db04fe961d7c6d80476d53ae45be() {
+    public void TestSimpleBuiltins_testCbind_f5b3db04fe961d7c6d80476d53ae45be() {
         assertEval("{ cbind(2,3, c(1,1,1)) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_e8d1f5dd1ffd1a1a5ccb947fcc02b43f() {
+    public void TestSimpleBuiltins_testCbind_e8d1f5dd1ffd1a1a5ccb947fcc02b43f() {
         assertEval("{ cbind(2.1:10,32.2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbind_849d2f7200b6d113f749abbc67d41a7d() {
+        assertEvalWarning("{ cbind(1:3,1:2) }");
     }
 
     @Test
@@ -12784,13 +12874,103 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testRbind_be158803468f8099cec173e61a9c21e2() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+    public void TestSimpleBuiltins_testRbind_5d203578f2e233123c26f24e7b0b0787() {
+        assertEval("{ rbind(c(1,2)) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRbindIgnore_53509c8f581c1a9947804e87f0a3580f() {
+    public void TestSimpleBuiltins_testRbind_ee1d9bdf229922fdfa258a2c9576f9b8() {
+        assertEval("{ rbind(a=c(b=1,c=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_4c6ce2c0ebd928c0976d6a44c1e2501d() {
+        assertEval("{ rbind(c(b=1,c=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_d434d8e51cddddb05406517350688232() {
+        assertEval("{ rbind(c(1,c=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_a852baff2d2a41aaf2992bfc8222a137() {
+        assertEval("{ v<-c(b=1, c=2); rbind(v) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_9f455382f9dd83694bd9e0352ded495e() {
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_0c178462beb865f73d0d009c4b4d887c() {
+        assertEval("{ rbind(a=c(1,2), b=c(3,4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_083a0e17ae1ce9e7a2d60e747d11c2b5() {
+        assertEval("{ rbind(a=c(x=1,y=2), b=c(3,4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_661433f1bba4b3486352fd72ed03f599() {
+        assertEval("{ rbind(a=c(1,2), b=c(x=3,y=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_9e4c19c1d7f618901466ffc5b216f8b5() {
+        assertEval("{ rbind(a=c(x=1,2), b=c(3,y=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_f30dc032bb7d821845f0600d0c90ba98() {
+        assertEval("{ rbind(a=c(1,2), b=c(3,y=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_88251dd7d56a149a8e8c4a56c30fb2b7() {
+        assertEval("{ rbind(a=c(1,x=2), b=c(y=3,4,5,6)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_165db2c86214610c54bc545ab67c9b75() {
+        assertEval("{ rbind(a=c(1,x=2), b=c(3,4,5,6)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_12b3fe625aee28a0de84286d67b410d5() {
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_d2597184949f2d05ee3fdb45aa677a4c() {
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_06429be60879fd7ee97090e3011f76cd() {
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_c6f877af99031ecdcc832763d58295c7() {
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_bdb73465c93f23098898857e0f20b211() {
+        assertEval("{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_53509c8f581c1a9947804e87f0a3580f() {
         assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbind_be158803468f8099cec173e61a9c21e2() {
+        assertEvalWarning("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
     }
 
     @Test

@@ -33,14 +33,10 @@ import com.oracle.truffle.r.runtime.*;
 public class RBuiltinCustomConstructors {
     public static RBuiltinNode createNode(String nodeClassName, RBuiltinNode node) {
         switch (nodeClassName) {
-            case "com.oracle.truffle.r.nodes.builtin.base.Rbind":
-                return new com.oracle.truffle.r.nodes.builtin.base.Rbind(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Floor":
                 return new com.oracle.truffle.r.nodes.builtin.base.Floor(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Max":
                 return new com.oracle.truffle.r.nodes.builtin.base.Max(node);
-            case "com.oracle.truffle.r.nodes.builtin.base.Cbind":
-                return new com.oracle.truffle.r.nodes.builtin.base.Cbind(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Min":
                 return new com.oracle.truffle.r.nodes.builtin.base.Min(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Ceiling":

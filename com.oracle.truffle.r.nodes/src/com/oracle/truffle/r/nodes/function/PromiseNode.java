@@ -304,6 +304,10 @@ public class PromiseNode extends RNode {
             this.names = names;
         }
 
+        public RNode[] getVarArgs() {
+            return varargs;
+        }
+
         @Override
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {

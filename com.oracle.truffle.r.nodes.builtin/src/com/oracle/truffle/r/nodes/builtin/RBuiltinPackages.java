@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
-    private static final HashMap<String, RBuiltinPackage> packages = new HashMap<>(6);
+    private static final LinkedHashMap<String, RBuiltinPackage> packages = new LinkedHashMap<>(6);
 
     private static final RBuiltinPackages instance = new RBuiltinPackages();
 
@@ -127,7 +127,13 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     public static RBuiltinFactory lookupBuiltin(String name) {
-        return RBuiltinPackage.lookupByName(name);
+        for (RBuiltinPackage pkg : packages.values()) {
+            RBuiltinFactory factory = pkg.lookupByName(name);
+            if (factory != null) {
+                return factory;
+            }
+        }
+        return null;
     }
 
 }
