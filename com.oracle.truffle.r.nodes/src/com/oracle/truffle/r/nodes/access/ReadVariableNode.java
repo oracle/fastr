@@ -71,15 +71,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     /**
      * Convenience method.
      *
-     * @return {@link #create(String, boolean)}
-     */
-    public static ReadVariableNode create(Object symbol, boolean shouldCopyValue) {
-        return create(symbol.toString(), shouldCopyValue);
-    }
-
-    /**
-     * Convenience method.
-     *
      * @return {@link #create(String, RType, boolean, boolean)}
      */
     public static ReadVariableNode create(SourceSection src, String symbol, RType mode, boolean shouldCopyValue) {

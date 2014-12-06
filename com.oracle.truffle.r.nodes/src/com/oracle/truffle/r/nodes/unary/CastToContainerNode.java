@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 
@@ -72,5 +74,10 @@ public abstract class CastToContainerNode extends CastNode {
     @Specialization
     protected RPairList cast(RPairList pairlist) {
         return pairlist;
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        return CastToContainerNodeFactory.create(getOperand(), false, false, false);
     }
 }

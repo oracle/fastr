@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class PositionsArrayNodeAdapter extends RNode {
 
@@ -42,6 +43,28 @@ public abstract class PositionsArrayNodeAdapter extends RNode {
                 state.append(", ");
             }
         }
+    }
+
+    protected static class SubstitutedNodes {
+        public final ArrayPositionCast[] elements;
+        public final RNode[] positions;
+        public final OperatorConverterNode[] operatorConverters;
+
+        SubstitutedNodes(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
+            this.elements = elements;
+            this.positions = positions;
+            this.operatorConverters = operatorConverters;
+        }
+    }
+
+    protected SubstitutedNodes substituteComponents(REnvironment env) {
+        RNode[] subPositions = new RNode[positions.length];
+        for (int i = 0; i < positions.length; i++) {
+            subPositions[i] = positions[i].substitute(env);
+        }
+        // TODO elements and operatorConverters may require change based on what happened to
+        // positions
+        return new SubstitutedNodes(elements, subPositions, operatorConverters);
     }
 
     @Override

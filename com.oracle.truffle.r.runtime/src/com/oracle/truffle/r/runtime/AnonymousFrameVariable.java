@@ -25,19 +25,15 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.frame.*;
 
 /**
- * Creates a unique object for situations when an anonymous variable needs to be stored in a
- * {@link Frame}. Conceptually just an {@link Object} but wrapped so that the name can be seen when
- * debugging.
+ * Creates a unique name for situations when an anonymous variable needs to be stored in a
+ * {@link Frame}.
  */
 public final class AnonymousFrameVariable {
-    @SuppressWarnings("unused") private final String name;
+    private static final String BASE_NAME = "*anonymous-";
+    private static int id;
 
-    private AnonymousFrameVariable(String name) {
-        this.name = name;
-    }
-
-    public static AnonymousFrameVariable create(String name) {
-        return new AnonymousFrameVariable(name);
+    public static String create(String name) {
+        return BASE_NAME + name + "-" + id++;
     }
 
 }

@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "exact", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
@@ -84,6 +85,8 @@ public abstract class AccessArrayNode extends RNode {
 
     protected abstract RNode getDropDim();
 
+    protected abstract RNode getRecursionLevel();
+
     public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, RAbstractLogicalVector dropDim);
 
     public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, int operand, RAbstractLogicalVector dropDim);
@@ -107,6 +110,15 @@ public abstract class AccessArrayNode extends RNode {
             getDropDim().deparse(state);
         }
         state.append(isSubset ? "]" : "]]");
+    }
+
+    @Override
+    public RNode substitute(REnvironment env) {
+        RNode vector = getVector().substitute(env);
+        PositionsArrayNode positions = (PositionsArrayNode) getPositions().substitute(env);
+        RNode exact = getExact().substitute(env);
+        RNode dropDim = getDropDim().substitute(env);
+        return AccessArrayNodeFactory.create(isSubset, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
     }
 
     public AccessArrayNode(boolean isSubset, boolean exactInSource, boolean dropInSource) {

@@ -203,6 +203,16 @@ public final class REngine implements RContext.Engine {
         }
     }
 
+    public Node parseSingle(String singleExpression) {
+        try {
+            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(singleExpression), Source.asPseudoFile(singleExpression, "<parse_input>"));
+            return transform(seq.getExpressions()[0], REnvironment.emptyEnv());
+        } catch (RecognitionException ex) {
+            Utils.fatalError("parseSingle failed");
+            return null;
+        }
+    }
+
     public RExpression parse(String rscript) throws RContext.Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));

@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.*;
 import com.oracle.truffle.r.runtime.*;
@@ -38,10 +37,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "...", "USE.NAMES"})
 public abstract class VApply extends RBuiltinNode {
 
-    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
 
-    @Child private DoApplyNode doApply = new DoApplyNode();
+    @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
     // TODO complete implementation: useNames
     @Specialization
