@@ -242,7 +242,7 @@ public abstract class Scan extends RBuiltinNode {
         LinkedList<String> items = new LinkedList<>();
 
         String str = s;
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = null;
 
         while (true) {
             int sepInd;
@@ -270,6 +270,16 @@ public abstract class Scan extends RBuiltinNode {
                     // another separator) was not found
                     quoteInd = ind;
                     quoteChar = data.quoteset.charAt(i);
+                }
+            }
+
+            if (sb == null) {
+                // first iteration
+                if (quoteInd == -1) {
+                    // no quotes at all
+                    return data.sepchar == null ? s.split("\\s+") : s.split(data.sepchar);
+                } else {
+                    sb = new StringBuilder();
                 }
             }
 

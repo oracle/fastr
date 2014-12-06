@@ -41,20 +41,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
 @SuppressWarnings("unused")
-public abstract class Combine extends RBuiltinNode {
+public abstract class Combine extends RPrecedenceBuiltinNode {
 
-    @Child private CastComplexNode castComplex;
-    @Child private CastDoubleNode castDouble;
-    @Child private CastIntegerNode castInteger;
-    @Child private CastLogicalNode castLogical;
-    @Child private CastStringNode castString;
-    @Child private CastRawNode castRaw;
-    @Child private CastListNode castList;
     @Child private CastToVectorNode castVector;
 
     @Child private FoldOperationNode foldOperation;
-
-    @Child private PrecedenceNode precedenceNode;
 
     @Child private Combine combineRecursive;
 
@@ -80,12 +71,10 @@ public abstract class Combine extends RBuiltinNode {
 
     protected Combine() {
         this.foldOperation = new CombineFoldOperationNode();
-        this.precedenceNode = PrecedenceNodeFactory.create(null, null);
     }
 
     protected Combine(Combine previousNode) {
         this.foldOperation = previousNode.foldOperation;
-        this.precedenceNode = previousNode.precedenceNode;
     }
 
     public void setFoldOperation(FoldOperationNode foldOperation) {
@@ -246,107 +235,6 @@ public abstract class Combine extends RBuiltinNode {
         return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
-    protected boolean isIntegerPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.INT_PRECEDENCE;
-    }
-
-    protected boolean isLogicalPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.LOGICAL_PRECEDENCE;
-    }
-
-    protected boolean isDoublePrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.DOUBLE_PRECEDENCE;
-    }
-
-    protected boolean isComplexPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.COMPLEX_PRECEDENCE;
-    }
-
-    protected boolean isStringPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.STRING_PRECEDENCE;
-    }
-
-    protected boolean isRawPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.RAW_PRECEDENCE;
-    }
-
-    protected boolean isNullPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.NO_PRECEDENCE;
-    }
-
-    protected boolean isListPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.LIST_PRECEDENCE;
-    }
-
-    protected boolean isExprPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.EXPRESSION_PRECEDENCE;
-    }
-
-    private int precedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        int precedence = -1;
-        Object[] array = args.getValues();
-        for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, array[i], RRuntime.LOGICAL_FALSE));
-        }
-        return precedence;
-    }
-
-    private Object castComplex(VirtualFrame frame, Object operand) {
-        if (castComplex == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeFactory.create(null, true, false, false));
-        }
-        return castComplex.executeCast(frame, operand);
-    }
-
-    private Object castDouble(VirtualFrame frame, Object operand) {
-        if (castDouble == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, true, false, false));
-        }
-        return castDouble.executeCast(frame, operand);
-    }
-
-    private Object castInteger(VirtualFrame frame, Object operand) {
-        if (castInteger == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
-        }
-        return castInteger.executeCast(frame, operand);
-    }
-
-    private Object castLogical(VirtualFrame frame, Object operand) {
-        if (castLogical == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeFactory.create(null, true, false, false));
-        }
-        return castLogical.executeCast(frame, operand);
-    }
-
-    private Object castString(VirtualFrame frame, Object operand) {
-        if (castString == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
-        }
-        return castString.executeCast(frame, operand);
-    }
-
-    private Object castRaw(VirtualFrame frame, Object operand) {
-        if (castRaw == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeFactory.create(null, true, false, false));
-        }
-        return castRaw.executeCast(frame, operand);
-    }
-
-    private Object castList(VirtualFrame frame, Object operand) {
-        if (castList == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeFactory.create(null, true, false, false));
-        }
-        return castList.executeCast(frame, operand);
-    }
-
     public static RAbstractVector namesMerge(RAbstractVector vector, String name) {
         Object orgNamesObject = vector.getNames();
         if (((orgNamesObject == null || orgNamesObject == RNull.instance) && name == null) || vector.getLength() == 0) {
@@ -424,9 +312,9 @@ public abstract class Combine extends RBuiltinNode {
     protected Object allLogical(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
-        Object current = castLogical(frame, array[0]);
+        Object current = castLogical(frame, array[0], false);
         for (int i = 1; i < array.length; i++) {
-            Object other = castLogical(frame, array[i]);
+            Object other = castLogical(frame, array[i], false);
             current = foldOperation.executeLogical(frame, current, other);
         }
         return current;
@@ -438,10 +326,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castLogical(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castLogical(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castLogical(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castLogical(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeLogical(frame, current, other);
         }
         return current;
@@ -452,9 +340,9 @@ public abstract class Combine extends RBuiltinNode {
     protected Object allInt(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
-        Object current = castInteger(frame, array[0]);
+        Object current = castInteger(frame, array[0], false);
         for (int i = 1; i < array.length; i++) {
-            Object other = castInteger(frame, array[i]);
+            Object other = castInteger(frame, array[i], false);
             current = foldOperation.executeInteger(frame, current, other);
         }
         return current;
@@ -466,10 +354,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castInteger(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castInteger(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castInteger(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castInteger(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeInteger(frame, current, other);
         }
         return current;
@@ -480,9 +368,9 @@ public abstract class Combine extends RBuiltinNode {
     protected Object allDouble(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
-        Object current = castDouble(frame, array[0]);
+        Object current = castDouble(frame, array[0], false);
         for (int i = 1; i < array.length; i++) {
-            Object other = castDouble(frame, array[i]);
+            Object other = castDouble(frame, array[i], false);
             current = foldOperation.executeDouble(frame, current, other);
         }
         return current;
@@ -494,10 +382,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castDouble(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castDouble(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castDouble(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castDouble(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeDouble(frame, current, other);
         }
         return current;
@@ -508,9 +396,9 @@ public abstract class Combine extends RBuiltinNode {
     protected Object allComplex(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
-        Object current = castComplex(frame, array[0]);
+        Object current = castComplex(frame, array[0], false);
         for (int i = 1; i < array.length; i++) {
-            Object other = castComplex(frame, array[i]);
+            Object other = castComplex(frame, array[i], false);
             current = foldOperation.executeComplex(frame, current, other);
         }
         return current;
@@ -522,10 +410,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castComplex(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castComplex(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castComplex(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castComplex(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeComplex(frame, current, other);
         }
         return current;
@@ -536,9 +424,9 @@ public abstract class Combine extends RBuiltinNode {
     protected Object allString(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
-        Object current = castString(frame, array[0]);
+        Object current = castString(frame, array[0], false);
         for (int i = 1; i < array.length; i++) {
-            Object other = castString(frame, array[i]);
+            Object other = castString(frame, array[i], false);
             current = foldOperation.executeString(frame, current, other);
         }
         return current;
@@ -550,10 +438,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castString(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castString(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castString(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castString(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeString(frame, current, other);
         }
         return current;
@@ -564,9 +452,9 @@ public abstract class Combine extends RBuiltinNode {
     protected Object allRaw(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
-        Object current = castRaw(frame, array[0]);
+        Object current = castRaw(frame, array[0], false);
         for (int i = 1; i < array.length; i++) {
-            Object other = castRaw(frame, array[i]);
+            Object other = castRaw(frame, array[i], false);
             current = foldOperation.executeRaw(frame, current, other);
         }
         return current;
@@ -578,10 +466,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castRaw(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castRaw(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castRaw(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castRaw(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeRaw(frame, current, other);
         }
         return current;
@@ -594,7 +482,7 @@ public abstract class Combine extends RBuiltinNode {
         Object[] array = args.getValues();
         RList current = RDataFactory.createList();
         for (int i = 0; i < array.length; ++i) {
-            Object other = castList(frame, array[i]);
+            Object other = castList(frame, array[i], false);
             current = (RList) foldOperation.executeList(frame, current, other);
         }
         return current;
@@ -605,10 +493,10 @@ public abstract class Combine extends RBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeList(frame, current, other);
         }
         return current;
@@ -630,7 +518,7 @@ public abstract class Combine extends RBuiltinNode {
         RList current = RDataFactory.createList();
         for (int i = 0; i < array.length; ++i) {
             Object op = unwrapExpression(frame, array[i]);
-            Object other = castList(frame, op);
+            Object other = castList(frame, op, false);
             current = (RList) foldOperation.executeList(frame, current, other);
         }
         return RDataFactory.createExpression(current);
@@ -642,11 +530,11 @@ public abstract class Combine extends RBuiltinNode {
         Object[] array = args.getValues();
         Object op = unwrapExpression(frame, array[0]);
         RAbstractVector currentVector = castVector(frame, op);
-        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
+        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
         for (int i = 1; i < array.length; i++) {
             op = unwrapExpression(frame, array[i]);
             RAbstractVector otherVector = castVector(frame, op);
-            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
+            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
             current = foldOperation.executeList(frame, current, other);
         }
         return RDataFactory.createExpression((RList) current);

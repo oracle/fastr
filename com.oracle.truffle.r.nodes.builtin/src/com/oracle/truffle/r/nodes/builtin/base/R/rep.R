@@ -21,8 +21,8 @@ rep.int <- function(x, times) .Internal(rep.int(x, times))
 rep_len <- function(x, length.out) .Internal(rep_len(x, length.out))
 
 
-#rep.factor <- function(x, ...)
-#{
-#    y <- NextMethod()
-#    structure(y, class=class(x), levels=levels(x))
-#}
+rep.factor <- function(x, ...)
+{
+    y <- NextMethod()
+    structure(y, class=class(x), levels=levels(x))
+}

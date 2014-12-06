@@ -2357,13 +2357,29 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ cbind(1:3,2) }");
         assertEval("{ cbind(1:3,1:3) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; cbind(11:12, m) }");
-    }
 
-    @Test
-    @Ignore
-    public void testCbindIgnore() {
+        assertEval("{ cbind(c(1,2)) }");
+        assertEval("{ cbind(a=c(b=1,c=2)) }");
+        assertEval("{ cbind(c(b=1,c=2)) }");
+        assertEval("{ cbind(c(1,c=2)) }");
+        assertEval("{ v<-c(b=1, c=2); cbind(v) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+
+        assertEval("{ cbind(a=c(1,2), b=c(3,4)) }");
+        assertEval("{ cbind(a=c(x=1,y=2), b=c(3,4)) }");
+        assertEval("{ cbind(a=c(1,2), b=c(x=3,y=4)) }");
+        assertEval("{ cbind(a=c(x=1,2), b=c(3,y=4)) }");
+        assertEval("{ cbind(a=c(1,2), b=c(3,y=4)) }");
+        assertEval("{ cbind(a=c(1,x=2), b=c(y=3,4,5,6)) }");
+        assertEval("{ cbind(a=c(1,x=2), b=c(3,4,5,6)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
-        assertEval("{ cbind(1:3,1:2) }");
+        assertEvalWarning("{ cbind(1:3,1:2) }");
         assertEval("{ cbind(2,3, complex(3,3,2));}");
         assertEval("{ cbind(2,3, c(1,1,1)) }");
         assertEval("{ cbind(2.1:10,32.2) }");
@@ -2377,12 +2393,28 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rbind(1:3,1:3) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
-        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
-    }
+        assertEvalWarning("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
 
-    @Test
-    @Ignore
-    public void testRbindIgnore() {
+        assertEval("{ rbind(c(1,2)) }");
+        assertEval("{ rbind(a=c(b=1,c=2)) }");
+        assertEval("{ rbind(c(b=1,c=2)) }");
+        assertEval("{ rbind(c(1,c=2)) }");
+        assertEval("{ v<-c(b=1, c=2); rbind(v) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+
+        assertEval("{ rbind(a=c(1,2), b=c(3,4)) }");
+        assertEval("{ rbind(a=c(x=1,y=2), b=c(3,4)) }");
+        assertEval("{ rbind(a=c(1,2), b=c(x=3,y=4)) }");
+        assertEval("{ rbind(a=c(x=1,2), b=c(3,y=4)) }");
+        assertEval("{ rbind(a=c(1,2), b=c(3,y=4)) }");
+        assertEval("{ rbind(a=c(1,x=2), b=c(y=3,4,5,6)) }");
+        assertEval("{ rbind(a=c(1,x=2), b=c(3,4,5,6)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+
         assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
     }
 

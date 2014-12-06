@@ -6239,6 +6239,16 @@ b
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(1:3,1:2) }
+     [,1] [,2]
+[1,]    1    1
+[2,]    2    2
+[3,]    3    1
+Warning message:
+In cbind(1:3, 1:2) :
+  number of rows of result is not a multiple of vector length (arg 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
 #{ cbind(1:3,1:3) }
      [,1] [,2]
 [1,]    1    1
@@ -6253,10 +6263,154 @@ NULL
 [3,]    3    2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(2,3, c(1,1,1)) }
+     [,1] [,2] [,3]
+[1,]    2    3    1
+[2,]    2    3    1
+[3,]    2    3    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(2,3, complex(3,3,2));}
+     [,1] [,2] [,3]
+[1,] 2+0i 3+0i 3+2i
+[2,] 2+0i 3+0i 3+2i
+[3,] 2+0i 3+0i 3+2i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(2.1:10,32.2) }
+     [,1] [,2]
+[1,]  2.1 32.2
+[2,]  3.1 32.2
+[3,]  4.1 32.2
+[4,]  5.1 32.2
+[5,]  6.1 32.2
+[6,]  7.1 32.2
+[7,]  8.1 32.2
+[8,]  9.1 32.2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(1,2), b=c(3,4)) }
+     a b
+[1,] 1 3
+[2,] 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(1,2), b=c(3,y=4)) }
+  a b
+  1 3
+y 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(1,2), b=c(x=3,y=4)) }
+  a b
+x 1 3
+y 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(1,x=2), b=c(3,4,5,6)) }
+     a b
+[1,] 1 3
+[2,] 2 4
+[3,] 1 5
+[4,] 2 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(1,x=2), b=c(y=3,4,5,6)) }
+  a b
+y 1 3
+  2 4
+  1 5
+  2 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(b=1,c=2)) }
+  a
+b 1
+c 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(x=1,2), b=c(3,y=4)) }
+  a b
+x 1 3
+  2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(a=c(x=1,y=2), b=c(3,4)) }
+  a b
+x 1 3
+y 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(c(1,2)) }
+     [,1]
+[1,]    1
+[2,]    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(c(1,c=2)) }
+  [,1]
+     1
+c    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(c(b=1,c=2)) }
+  [,1]
+b    1
+c    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(list(1,2), TRUE, "a") }
+     [,1] [,2] [,3]
+[1,] 1    TRUE "a"
+[2,] 2    TRUE "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }
+      z
+m 1 3 8
+n 2 4 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }
+  x y
+m 1 3 8
+n 2 4 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }
+      z
+a 1 3 8
+b 2 4 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }
+  x y
+a 1 3
+b 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }
+  x y
+a 1 3 8
+b 2 4 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }
+  x y z
+a 1 3 8
+b 2 4 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
 #{ m <- matrix(1:6, nrow=2) ; cbind(11:12, m) }
      [,1] [,2] [,3] [,4]
 [1,]   11    1    3    5
 [2,]   12    2    4    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ v<-c(b=1, c=2); cbind(v) }
+  v
+b 1
+c 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCeiling
 #{ ceiling(c(0.2,-3.4,NA,0/0,1/0)) }
@@ -12674,6 +12828,11 @@ x <- x + 1
 [1] 52.92218
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ info <- c("print", "AES", "print.AES") ; ns <- integer(0) ; rbind(info, ns) }
+     [,1]    [,2]  [,3]
+info "print" "AES" "print.AES"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
 #{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }
      [,1] [,2]
 [1,]   11   12
@@ -12720,6 +12879,114 @@ NULL
      [,1] [,2] [,3]
 [1,]    1    2    3
 [2,]    2    2    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(1,2), b=c(3,4)) }
+  [,1] [,2]
+a    1    2
+b    3    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(1,2), b=c(3,y=4)) }
+    y
+a 1 2
+b 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(1,2), b=c(x=3,y=4)) }
+  x y
+a 1 2
+b 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(1,x=2), b=c(3,4,5,6)) }
+  [,1] [,2] [,3] [,4]
+a    1    2    1    2
+b    3    4    5    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(1,x=2), b=c(y=3,4,5,6)) }
+  y
+a 1 2 1 2
+b 3 4 5 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(b=1,c=2)) }
+  b c
+a 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(x=1,2), b=c(3,y=4)) }
+  x
+a 1 2
+b 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(a=c(x=1,y=2), b=c(3,4)) }
+  x y
+a 1 2
+b 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(c(1,2)) }
+     [,1] [,2]
+[1,]    1    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(c(1,c=2)) }
+       c
+[1,] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(c(b=1,c=2)) }
+     b c
+[1,] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }
+  m n
+  1 3
+  2 4
+z 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }
+     x y
+[1,] 1 3
+[2,] 2 4
+[3,] 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }
+  [,1] [,2]
+a    1    3
+b    2    4
+z    8    9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }
+  x y
+a 1 3
+b 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }
+  x y
+a 1 3
+b 2 4
+  8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }
+  x y
+a 1 3
+b 2 4
+z 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ v<-c(b=1, c=2); rbind(v) }
+  b c
+v 1 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
 #{ Im(1) }

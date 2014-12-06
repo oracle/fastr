@@ -289,31 +289,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCbindIgnore_c292a9a2047519d8fd24923adebb0ad2() {
-        assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCbindIgnore_849d2f7200b6d113f749abbc67d41a7d() {
-        assertEval("{ cbind(1:3,1:2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCbindIgnore_24a51282927ba915c3ebc8717b71c58a() {
-        assertEval("{ cbind(2,3, complex(3,3,2));}");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCbindIgnore_f5b3db04fe961d7c6d80476d53ae45be() {
-        assertEval("{ cbind(2,3, c(1,1,1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCbindIgnore_e8d1f5dd1ffd1a1a5ccb947fcc02b43f() {
-        assertEval("{ cbind(2.1:10,32.2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCharUtilsIgnore_864e89c688384c8cc67d1b4676ff314d() {
         assertEval("{ tolower(1E100) }");
     }
@@ -1406,11 +1381,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testRank_4b9cea01de60a8694a6b5606f91cf6e5() {
         assertEval("{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRbindIgnore_53509c8f581c1a9947804e87f0a3580f() {
-        assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
     }
 
     @Ignore
