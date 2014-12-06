@@ -98,7 +98,8 @@ public abstract class Get extends RBuiltinNode {
         }
     }
 
-    public static boolean isInherits(@SuppressWarnings("unused") RAbstractStringVector x, @SuppressWarnings("unused") REnvironment envir, String mode, byte inherits) {
+    @SuppressWarnings("unused")
+    public static boolean isInherits(RAbstractStringVector x, REnvironment envir, String mode, byte inherits) {
         return inherits == RRuntime.LOGICAL_TRUE;
     }
 

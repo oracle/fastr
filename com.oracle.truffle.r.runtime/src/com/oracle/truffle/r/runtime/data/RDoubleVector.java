@@ -221,8 +221,8 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RDoubleVector other = (RDoubleVector) fromVector;
-        data[toIndex] = other.data[fromIndex];
+        RAbstractDoubleVector other = (RAbstractDoubleVector) fromVector;
+        data[toIndex] = other.getDataAt(fromIndex);
     }
 
     public Class<?> getElementClass() {

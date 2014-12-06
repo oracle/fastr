@@ -511,7 +511,7 @@ public final class RError extends RuntimeException {
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
         CANNOT_MAKE_VECTOR_OF_MODE("vector: cannot make a vector of mode '%s'"),
         SET_ROWNAMES_NO_DIMS("attempt to set 'rownames' on an object with no dimensions"),
-        RBIND_COLUMNS_NOT_MULTIPLE("number of columns of result is not a multiple of vector length (arg 1)"),
+        COLUMNS_NOT_MULTIPLE("number of columns of result is not a multiple of vector length (arg %d)"),
         DATA_FRAMES_SUBSET_ACCESS("data frames subset access not supported"),
         CANNOT_ASSIGN_IN_EMPTY_ENV("cannot assign values in the empty environment"),
         CANNOT_OPEN_CONNECTION("cannot open the connection"),

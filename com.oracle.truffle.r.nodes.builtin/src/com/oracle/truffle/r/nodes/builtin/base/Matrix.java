@@ -63,6 +63,16 @@ public abstract class Matrix extends RBuiltinNode {
         return data.copyResizedWithDimensions(dim);
     }
 
+    @Specialization(guards = "!byRow")
+    @SuppressWarnings("unused")
+    protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
+        controlVisibility();
+        int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
+        RVector res = data.copyResizedWithDimensions(dim);
+        res.setDimNames(dimnames);
+        return res;
+    }
+
     @Specialization(guards = "byRow")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
@@ -73,6 +83,20 @@ public abstract class Matrix extends RBuiltinNode {
             transpose = insert(TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return (RAbstractVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
+    }
+
+    @Specialization(guards = "byRow")
+    @SuppressWarnings("unused")
+    protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
+        controlVisibility();
+        int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
+        if (transpose == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            transpose = insert(TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+        }
+        RVector res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
+        res.setDimNames(dimnames);
+        return res;
     }
 
     //
@@ -126,7 +150,7 @@ public abstract class Matrix extends RBuiltinNode {
     //
 
     @SuppressWarnings("unused")
-    protected static boolean byRow(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected static boolean byRow(RAbstractVector data, int nrow, int ncol, byte byrow) {
         return byrow == RRuntime.LOGICAL_TRUE;
     }
 
