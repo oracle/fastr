@@ -71,10 +71,10 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    private static final HashMap<String, ArrayList<Component>> rSources = new HashMap<>();
-    private static final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
+    private final HashMap<String, ArrayList<Component>> rSources = new HashMap<>();
+    private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
-    private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
+    private synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
     }
 
@@ -118,7 +118,7 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    public static RBuiltinFactory lookupByName(String methodName) {
+    public RBuiltinFactory lookupByName(String methodName) {
         return builtins.get(methodName);
     }
 
