@@ -65,7 +65,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         Object[] array = args.getValues();
         RAbstractVector[] vectors = new RAbstractVector[args.length()];
         boolean complete = true;
-        for (int i = 0, ind = 0; i < array.length; i++) {
+        int ind = 0;
+        for (int i = 0; i < array.length; i++) {
             vectors[ind] = castVector(frame, castInteger(frame, array[i], true));
             if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
                 vectors = Utils.resizeArray(vectors, vectors.length - 1);
@@ -85,7 +86,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         Object[] array = args.getValues();
         RAbstractVector[] vectors = new RAbstractVector[args.length()];
         boolean complete = true;
-        for (int i = 0, ind = 0; i < array.length; i++) {
+        int ind = 0;
+        for (int i = 0; i < array.length; i++) {
             vectors[ind] = castVector(frame, castDouble(frame, array[i], true));
             if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
                 vectors = Utils.resizeArray(vectors, vectors.length - 1);
@@ -105,7 +107,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         Object[] array = args.getValues();
         RAbstractVector[] vectors = new RAbstractVector[args.length()];
         boolean complete = true;
-        for (int i = 0, ind = 0; i < array.length; i++) {
+        int ind = 0;
+        for (int i = 0; i < array.length; i++) {
             vectors[ind] = castVector(frame, castString(frame, array[i], true));
             if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
                 vectors = Utils.resizeArray(vectors, vectors.length - 1);
@@ -125,7 +128,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         Object[] array = args.getValues();
         RAbstractVector[] vectors = new RAbstractVector[args.length()];
         boolean complete = true;
-        for (int i = 0, ind = 0; i < array.length; i++) {
+        int ind = 0;
+        for (int i = 0; i < array.length; i++) {
             vectors[ind] = castVector(frame, castComplex(frame, array[i], true));
             if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
                 vectors = Utils.resizeArray(vectors, vectors.length - 1);
@@ -145,9 +149,15 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         Object[] array = args.getValues();
         RAbstractVector[] vectors = new RAbstractVector[args.length()];
         boolean complete = true;
+        int ind = 0;
         for (int i = 0; i < array.length; i++) {
-            vectors[i] = castList(frame, array[i], true);
-            complete &= vectors[i].isComplete();
+            vectors[ind] = castList(frame, array[i], true);
+            if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
+                vectors = Utils.resizeArray(vectors, vectors.length - 1);
+            } else {
+                complete &= vectors[ind].isComplete();
+                ind++;
+            }
         }
 
         return genericBind(frame, vectors, complete, args, deparseLevel);
@@ -186,7 +196,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     /**
      * Compute dimnames for rows (cbind) or columns (rbind) from names of elements of combined
-     * vectors
+     * vectors.
      *
      * @param vec
      * @param dimLength
@@ -216,7 +226,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     /**
      * Compute dimnames for columns (cbind) or rows (rbind) from names of vectors being combined or
-     * by deparsing
+     * by deparsing.
      *
      * @param frame
      * @param vec
