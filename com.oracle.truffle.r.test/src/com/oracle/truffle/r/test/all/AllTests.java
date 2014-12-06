@@ -9439,6 +9439,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testLapply_0fe4f367fcb2a1c1b62d9c38a4b0fe8f() {
+        assertEval("{ l <- list(list(1),list(2),list(3)); f <- function(a) { lapply(a, function(x) lapply(x, function(y) print(y))) }; f(l)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testLength_31389093e21d303bed26828ab536576b() {
         assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
     }
