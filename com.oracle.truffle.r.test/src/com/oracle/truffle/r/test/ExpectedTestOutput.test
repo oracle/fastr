@@ -4,22 +4,6 @@
  [1] 0.45336386 0.38848030 0.94576608 0.11726267 0.21542351 0.08672997
  [7] 0.35201276 0.16919220 0.93579263 0.26084486
 
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); add_double(2, 3) }
-[1] 5
-
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); add_int(2L, 3L) }
-[1] 5
-
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }
-[1] 1 2
-
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadVanilla
-#{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }
-[1] "A vanilla R package"
-
 ##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
 #{ print(.Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/list2.rds"), NULL))) }
 $one

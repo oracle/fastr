@@ -138,11 +138,13 @@ public class TestRPackages extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testLoadVanilla() {
         assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
     @Test
+    @Ignore
     public void testLoadTestRFFI() {
         // tmp disable until OS name is fixed
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
