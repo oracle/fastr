@@ -45,7 +45,10 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     protected Object returnFunction(Object value) {
-        controlVisibility();
+        /*
+         * Do not call controlVisibility, otherwise return(invisible(e)) will not work. Whatever the
+         * visibility state at this point is preserved.
+         */
         throw new ReturnException(value);
     }
 }
