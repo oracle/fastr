@@ -208,4 +208,21 @@ public class HiddenInternalFunctions {
         }
     }
 
+    @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info")
+    public abstract static class GetRegisteredRoutines extends RBuiltinNode {
+        private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{".C", ".Call", ".Fortran", ".External"}, RDataFactory.COMPLETE_VECTOR);
+        private static final RList EMPTY = RDataFactory.createList();
+
+        @Specialization
+        protected RList getRegisteredRoutines(Object info) {
+            Object[] data;
+            if (info == RNull.instance) {
+                data = new Object[]{EMPTY, EMPTY, EMPTY, EMPTY};
+                return RDataFactory.createList(data, NAMES);
+            } else {
+                throw RError.nyi(getEncapsulatingSourceSection(), " getRegisteredRoutines with non-null info");
+            }
+        }
+    }
+
 }
