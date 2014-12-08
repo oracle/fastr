@@ -16,6 +16,7 @@ com.oracle.truffle.r.native/include/jni/R.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rconfig.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rdefines.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rinternals.h,gnu_r.copyright
+com.oracle.truffle.r.native/library/tools/src/tools.c,no.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchedCallNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchNode.java,purdue.copyright
