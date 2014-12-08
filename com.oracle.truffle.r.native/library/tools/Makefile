@@ -21,17 +21,44 @@
 # questions.
 #
 
-.PHONY: all clean
+include ../../platform.mk
 
-export TOPDIR = $(CURDIR)
+.PHONY: all clean cleanlib cleanobj force libr
 
-all:
-	$(MAKE) -C builtinlibs
-	$(MAKE) -C fficall
-	$(MAKE) -C library
+PKG = tools
 
-clean:
-	$(MAKE) -C builtinlibs clean
-	$(MAKE) -C fficall clean
-	$(MAKE) -C library clean
+SRC = src
+OBJ = lib/$(OS_DIR)
+
+C_SOURCES := $(wildcard $(SRC)/*.c)
+
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+
+LIBDIR := $(OBJ)
+
+LIB_PKG := $(OBJ)/lib$(PKG).$(SHARED_EXT)
+
+
+all: $(LIB_PKG)
+
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(LIB_PKG): $(OBJ) $(OBJ)/tools.o
+	mkdir -p $(LIBDIR)
+	$(CC) $(LDFLAGS) -o $(LIB_PKG) -current_version 3.1.1 -compatibility_version 3.1.1 $(OBJ)/tools.o
+
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ)/%.o: $(SRC)/%.f
+	$(FC) $(CFLAGS) -c $< -o $@
+
+clean: cleanobj cleanlib
+
+cleanlib:
+	rm -f $(LIB_PKG)
+
+cleanobj:
+	rm -f $(LIBDIR)/*.o
 	
