@@ -123,7 +123,7 @@ public class GrepFunctions {
 
         @Specialization(guards = "!isValue")
         @TruffleBoundary
-        protected RIntVector grepValueFalse(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected RIntVector grepValueFalse(String patternArg, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
             String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
@@ -160,7 +160,8 @@ public class GrepFunctions {
 
         @Specialization(guards = "isValue")
         @TruffleBoundary
-        protected RStringVector grepValueTrue(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected RStringVector grepValueTrue(String patternArg, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed, byte useBytes,
+                        byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
             String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
