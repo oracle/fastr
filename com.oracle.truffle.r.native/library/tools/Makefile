@@ -36,7 +36,8 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 
 LIBDIR := $(OBJ)
 
-LIB_PKG := $(OBJ)/lib$(PKG).$(SHARED_EXT)
+# packages seem to use .so even on Mac OS X and no "lib"
+LIB_PKG := $(OBJ)/$(PKG).so
 
 
 all: $(LIB_PKG)
@@ -46,7 +47,7 @@ $(OBJ):
 
 $(LIB_PKG): $(OBJ) $(OBJ)/tools.o
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_PKG) -current_version 3.1.1 -compatibility_version 3.1.1 $(OBJ)/tools.o
+	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(OBJ)/tools.o
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
