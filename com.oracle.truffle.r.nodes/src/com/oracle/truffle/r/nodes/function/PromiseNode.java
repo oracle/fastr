@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -164,6 +165,11 @@ public class PromiseNode extends RNode {
                 return promiseCheckHelper.checkEvaluate(frame, obj);
             }
         }
+
+        @Override
+        public void deparse(State state) {
+            expr.deparse(state);
+        }
     }
 
     /**
@@ -186,6 +192,11 @@ public class PromiseNode extends RNode {
             // builtin.inline: We do re-evaluation every execute inside the caller frame, based on
             // the assumption that the evaluation of default values should have no side effects
             return defaultExpr.execute(frame);
+        }
+
+        @Override
+        public void deparse(State state) {
+            defaultExpr.deparse(state);
         }
     }
 

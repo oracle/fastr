@@ -382,18 +382,16 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Detach the environment at search position {@code pos}. TODO handle packages
+     * Detach the environment at search position {@code pos}.
      *
-     * @param unload if {@code true} and env is a package, unload associated namespace
-     * @param force the detach even if there are dependent packages
      * @return the {@link REnvironment} that was detached.
      */
-    public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
+    public static REnvironment detach(int pos) throws DetachException {
         if (pos == searchPath.size()) {
             detachException(RError.Message.ENV_DETACH_BASE);
         }
         if (pos <= 0 || pos >= searchPath.size()) {
-            detachException(RError.Message.ENV_SUBSCRIPT);
+            detachException(RError.Message.INVALID_POS_ARGUMENT);
         }
         assert pos != 1; // explicitly checked in caller
         // N.B. pos is 1-based

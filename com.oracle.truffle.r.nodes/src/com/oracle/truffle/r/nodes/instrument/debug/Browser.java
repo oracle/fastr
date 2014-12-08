@@ -82,12 +82,12 @@ public class Browser {
                     case "Q":
                         throw new BrowserQuitException();
                     case "where": {
-                        int ix = 0;
+                        int ix = RArguments.getDepth(frame);
                         Frame stackFrame = frame;
                         do {
                             ch.println(RArguments.safeGetCallSourceString(stackFrame));
-                            ix++;
-                        } while ((stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);
+                            ix--;
+                        } while (ix > 0 && (stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);
                         ch.println("");
                         break;
                     }

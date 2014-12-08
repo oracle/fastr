@@ -826,10 +826,11 @@
 #    }
 #}
 #
-#cacheMetaData <-
-#        function(where, attach = TRUE, searchWhere = as.environment(where),
-#                doCheck = TRUE)
-#{
+cacheMetaData <-
+        function(where, attach = TRUE, searchWhere = as.environment(where),
+                doCheck = TRUE)
+{
+}
 #    ## a collection of actions performed on attach or detach
 #    ## to update class and method information.
 #    pkg <- getPackageName(where)

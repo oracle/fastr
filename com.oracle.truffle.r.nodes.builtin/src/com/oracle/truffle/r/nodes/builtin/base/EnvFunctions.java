@@ -58,12 +58,15 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected REnvironment asEnvironment(VirtualFrame frame, double dpos) {
-            controlVisibility();
-            return asEnvironmentInt(frame, (int) dpos);
+        protected REnvironment asEnvironment(VirtualFrame frame, RAbstractDoubleVector posVec) {
+            return asEnvironmentInt(frame, (int) posVec.getDataAt(0));
         }
 
         @Specialization
+        protected REnvironment asEnvironmentInt(VirtualFrame frame, RAbstractIntVector posVec) {
+            return asEnvironmentInt(frame, posVec.getDataAt(0));
+        }
+
         protected REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
             controlVisibility();
             if (pos == -1) {

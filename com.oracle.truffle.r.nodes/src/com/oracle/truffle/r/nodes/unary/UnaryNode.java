@@ -67,6 +67,10 @@ public abstract class UnaryNode extends RNode {
 
     @Override
     public RNode substitute(REnvironment env) {
+        /*
+         * TODO this works for simple cases but is inadequate in general; need to create an instance
+         * of "this" with substituted operand.
+         */
         return getOperand().substitute(env);
     }
 }

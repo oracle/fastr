@@ -3249,12 +3249,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
-    }
-
-    @Test
-    @Ignore
-    public void testInvisibleIgnore() {
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(FALSE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(TRUE, 1) }");
     }
 
     @Test
@@ -3603,6 +3600,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ lapply(1:3, sum) }");
         assertEval("{ lapply(1:3, sum, 2) }");
         assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
+        assertEval("{ l <- list(list(1),list(2),list(3)); f <- function(a) { lapply(a, function(x) lapply(x, function(y) print(y))) }; f(l)}");
     }
 
     @Test

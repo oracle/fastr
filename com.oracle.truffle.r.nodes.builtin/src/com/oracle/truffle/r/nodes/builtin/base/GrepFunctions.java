@@ -30,22 +30,25 @@ import java.util.regex.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+/**
+ * {@code grep} in all its variants. Nothing in here merits being Truffle optimized.
+ */
 public class GrepFunctions {
-    /**
-     * Temporary adapter class that handles the check for all the arguments that we don't yet
-     * implement.
-     */
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
+        /**
+         * Temporary method that handles the check for the arguments that are common to the majority
+         * of the functions, that we don't yet implement. If any of the arguments are {@code true},
+         * then an NYI error will be thrown (in the first one). If any of the arguments do not
+         * apply, pass {@link RRuntime#LOGICAL_FALSE}.
+         */
         protected void checkExtraArgs(byte ignoreCase, byte perl, byte fixed, byte useBytes, byte invert) {
             checkNotImplemented(RRuntime.fromLogical(ignoreCase), "ignoreCase", true);
             checkNotImplemented(RRuntime.fromLogical(perl), "perl", true);
@@ -54,6 +57,12 @@ public class GrepFunctions {
             checkNotImplemented(RRuntime.fromLogical(invert), "invert", true);
         }
 
+        /**
+         * Temporary check for the {@code value} argument, which is only applicable to {@code grep}
+         * and {@code agrep} (so not included in {@code checkExtraArgs}.
+         *
+         * @param value
+         */
         protected void valueCheck(byte value) {
             if (RRuntime.fromLogical(value)) {
                 errorProfile.enter();
@@ -61,7 +70,6 @@ public class GrepFunctions {
             }
         }
 
-        @TruffleBoundary
         protected void checkNotImplemented(boolean condition, String arg, boolean b) {
             if (condition) {
                 errorProfile.enter();
@@ -69,7 +77,7 @@ public class GrepFunctions {
             }
         }
 
-        protected int[] trimResult(int[] tmp, int numMatches, int vecLength) {
+        protected int[] trimIntResult(int[] tmp, int numMatches, int vecLength) {
             if (numMatches == 0) {
                 return null;
             } else if (numMatches == vecLength) {
@@ -83,25 +91,43 @@ public class GrepFunctions {
                 return result;
             }
         }
+
+        protected String[] trimStringResult(String[] tmp, int numMatches, int vecLength) {
+            if (numMatches == 0) {
+                return null;
+            } else if (numMatches == vecLength) {
+                return tmp;
+            } else {
+                // trim array to the appropriate size
+                String[] result = new String[numMatches];
+                for (int i = 0; i < result.length; i++) {
+                    result[i] = tmp[i];
+                }
+                return result;
+            }
+        }
+
+        @SuppressWarnings("unused")
+        protected boolean isFixed(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+            return RRuntime.fromLogical(fixed);
+        }
+
+        @SuppressWarnings("unused")
+        protected boolean isValue(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+            return RRuntime.fromLogical(value);
+        }
     }
 
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
     public abstract static class Grep extends CommonCodeAdapter {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
-        @Specialization
-        protected RIntVector grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        @Specialization(guards = "!isValue")
+        @TruffleBoundary
+        protected RIntVector grepValueFalse(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, invert);
-            valueCheck(value);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
-            int[] result = findAllIndexes(pattern, vector);
+            checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
+            String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
+            int[] result = findAllIndexes(pattern, vector, fixed);
             if (result == null) {
                 return RDataFactory.createEmptyIntVector();
             } else {
@@ -109,20 +135,20 @@ public class GrepFunctions {
             }
         }
 
-        protected int[] findAllIndexes(String pattern, RAbstractStringVector vector) {
+        protected int[] findAllIndexes(String pattern, RAbstractStringVector vector, byte fixed) {
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
             int ind = 0;
             for (int i = 0; i < vector.getLength(); i++) {
-                if (findIndex(pattern, vector.getDataAt(i))) {
+                String text = vector.getDataAt(i);
+                if (fixed == RRuntime.LOGICAL_TRUE ? text.contains(pattern) : findIndex(pattern, text)) {
                     numMatches++;
                     tmp[ind++] = i + 1;
                 }
             }
-            return trimResult(tmp, numMatches, vector.getLength());
+            return trimIntResult(tmp, numMatches, vector.getLength());
         }
 
-        @TruffleBoundary
         protected static boolean findIndex(String pattern, String text) {
             Matcher m = Regexp.getPatternMatcher(pattern, text);
             if (m.find()) {
@@ -131,23 +157,62 @@ public class GrepFunctions {
                 return false;
             }
         }
+
+        @Specialization(guards = "isValue")
+        @TruffleBoundary
+        protected RStringVector grepValueTrue(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+            controlVisibility();
+            checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
+            String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
+            String[] result = findAllMatches(pattern, vector, fixed);
+            if (result == null) {
+                return RDataFactory.createEmptyStringVector();
+            } else {
+                return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+            }
+        }
+
+        protected String[] findAllMatches(String pattern, RAbstractStringVector vector, byte fixed) {
+            String[] tmp = new String[vector.getLength()];
+            int numMatches = 0;
+            int ind = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                String text = vector.getDataAt(i);
+                String match;
+                if (fixed == RRuntime.LOGICAL_TRUE) {
+                    match = text.contains(pattern) ? text : null;
+                } else {
+                    match = findMatch(pattern, text);
+                }
+                if (match != null) {
+                    numMatches++;
+                    tmp[ind++] = match;
+                }
+            }
+            return trimStringResult(tmp, numMatches, vector.getLength());
+        }
+
+        protected static String findMatch(String pattern, String text) {
+            Matcher m = Regexp.getPatternMatcher(pattern, text);
+            if (m.find()) {
+                return m.group();
+            } else {
+                return null;
+            }
+        }
+
     }
 
     @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"})
+    // invert is passed but is always FALSE
     public abstract static class GrepL extends CommonCodeAdapter {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @Specialization(guards = "!isFixed")
+        @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object grepl(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);
             byte[] data = new byte[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
@@ -157,6 +222,7 @@ public class GrepFunctions {
         }
 
         @Specialization(guards = "isFixed")
+        @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object greplFixed(String pattern, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
@@ -168,22 +234,13 @@ public class GrepFunctions {
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @SuppressWarnings("unused")
-        protected boolean isFixed(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
-            return RRuntime.fromLogical(fixed);
-        }
     }
 
     @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class Sub extends CommonCodeAdapter {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @Specialization
+        @TruffleBoundary
         protected String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -192,6 +249,7 @@ public class GrepFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -200,6 +258,7 @@ public class GrepFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RStringVector sub(RStringVector patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -209,6 +268,7 @@ public class GrepFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RStringVector sub(String patternArg, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -235,13 +295,8 @@ public class GrepFunctions {
     @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class GSub extends Sub {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @Specialization
+        @TruffleBoundary
         @Override
         protected String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
@@ -251,6 +306,7 @@ public class GrepFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -269,13 +325,8 @@ public class GrepFunctions {
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class Regexp extends CommonCodeAdapter {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @Specialization
+        @TruffleBoundary
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -287,7 +338,6 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @TruffleBoundary
         protected static List<Integer> findIndex(String pattern, String text) {
             Matcher m = getPatternMatcher(pattern, text);
             List<Integer> list = new ArrayList<>();
@@ -311,13 +361,8 @@ public class GrepFunctions {
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class Gregexpr extends Regexp {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @Specialization
+        @TruffleBoundary
         @Override
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
@@ -343,15 +388,9 @@ public class GrepFunctions {
     @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "value", "fixed", "useBytes"})
     public abstract static class AGrep extends CommonCodeAdapter {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(0.1d), ConstantNode.create(RNull.instance),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
             controlVisibility();
@@ -367,7 +406,7 @@ public class GrepFunctions {
                     numMatches++;
                 }
             }
-            tmp = trimResult(tmp, numMatches, tmp.length);
+            tmp = trimIntResult(tmp, numMatches, tmp.length);
             if (tmp == null) {
                 return RDataFactory.createEmptyIntVector();
             } else {
@@ -379,14 +418,9 @@ public class GrepFunctions {
     @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "fixed", "useBytes"})
     public abstract static class AGrepL extends CommonCodeAdapter {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(0.1d), ConstantNode.create(RNull.instance),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
             controlVisibility();

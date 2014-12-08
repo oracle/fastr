@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.frame.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
+/**
+ * Creates a unique name for situations when an anonymous variable needs to be stored in a
+ * {@link Frame}.
+ */
+public final class AnonymousFrameVariable {
+    private static final String BASE_NAME = "*anonymous-";
+    private static int id;
 
-@RBuiltin(name = "ls", aliases = {"objects"}, kind = INTERNAL, parameterNames = {"envir", "all.names"})
-public abstract class Ls extends RBuiltinNode {
-
-    @Specialization
-    @TruffleBoundary
-    protected RStringVector ls(REnvironment envir, byte allNames) {
-        controlVisibility();
-        return envir.ls(RRuntime.fromLogical(allNames), null);
+    public static String create(String name) {
+        return BASE_NAME + name + "-" + id++;
     }
 
 }

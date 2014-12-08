@@ -28,6 +28,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
@@ -207,6 +208,9 @@ public class RASTUtils {
                 gname = "`" + gname + "`";
             }
             return RDataFactory.createSymbol(gname);
+        } else if (child instanceof RBuiltinNode) {
+            RBuiltinNode builtinNode = (RBuiltinNode) child;
+            return RDataFactory.createSymbol((builtinNode.getBuiltin().getRBuiltin().name()));
         } else if (child instanceof RCallNode) {
             return findFunctionName(child, quote);
         } else {

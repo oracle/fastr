@@ -283,7 +283,7 @@ public abstract class RCallNode extends RNode {
 
     @TruffleBoundary
     protected RCallNode getParentCallNode() {
-        RNode parent = (RNode) getParent();
+        RNode parent = (RNode) unwrapParent();
         if (!(parent instanceof RCallNode)) {
             throw RInternalError.shouldNotReachHere();
         }

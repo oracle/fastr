@@ -9231,6 +9231,16 @@ Levels: 1.ctrl 2.ctrl 1.treat 2.treat
 #{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
+#{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
+#{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(FALSE, 1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
+#{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(TRUE, 1) }
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvocation
 #{ f <- function(a, ...) { list(...) } ; f(1) }
 list()
@@ -9587,6 +9597,27 @@ $Y
 
 [[3]]
 [1] 6
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ l <- list(list(1),list(2),list(3)); f <- function(a) { lapply(a, function(x) lapply(x, function(y) print(y))) }; f(l)}
+[1] 1
+[1] 2
+[1] 3
+[[1]]
+[[1]][[1]]
+[1] 1
+
+
+[[2]]
+[[2]][[1]]
+[1] 2
+
+
+[[3]]
+[[3]][[1]]
+[1] 3
+
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply

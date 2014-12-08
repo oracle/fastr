@@ -52,7 +52,7 @@ public class TraceHandling {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         TraceFunctionEventReceiver fbr = receiverMap.get(fdn.getUID());
         if (fbr == null) {
-            Probe probe = attachTraceHandler(fdn);
+            Probe probe = attachTraceHandler(fdn.getUID());
             return probe != null;
         } else {
             fbr.enable();
@@ -61,29 +61,22 @@ public class TraceHandling {
 
     }
 
-    private static Probe attachTraceHandler(FunctionDefinitionNode fdn) {
-        Probe probe = RInstrument.findSingleProbe(fdn.getUID(), StandardSyntaxTag.START_METHOD);
+    public static Probe attachTraceHandler(FunctionUID uid) {
+        Probe probe = RInstrument.findSingleProbe(uid, StandardSyntaxTag.START_METHOD);
         if (probe == null) {
             return null;
         }
-        TraceFunctionEventReceiver fser = new TraceFunctionEventReceiver(fdn);
+        TraceFunctionEventReceiver fser = new TraceFunctionEventReceiver();
         probe.attach(fser.getInstrument());
         return probe;
     }
 
     private abstract static class TraceEventReceiver implements TruffleEventReceiver {
 
-        protected final FunctionDefinitionNode functionDefinitionNode;
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
 
-        protected TraceEventReceiver(FunctionDefinitionNode functionDefinitionNode) {
-            this.functionDefinitionNode = functionDefinitionNode;
-        }
-
-        @SuppressWarnings("unused")
-        FunctionDefinitionNode getFunctionDefinitionNode() {
-            return functionDefinitionNode;
+        protected TraceEventReceiver() {
         }
 
         @Override
@@ -91,14 +84,6 @@ public class TraceHandling {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
-        }
-
-        @Override
-        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
-        }
-
-        @Override
-        public void returnValue(Node node, VirtualFrame frame, Object result) {
         }
 
         boolean disabled() {
@@ -124,12 +109,12 @@ public class TraceHandling {
     }
 
     private static class TraceFunctionEventReceiver extends TraceEventReceiver {
+        private static final int INDENT = 2;
+        private static int indent;
 
-        @SuppressWarnings("unused") FunctionDefinitionNode fdn;
         Instrument instrument;
 
-        TraceFunctionEventReceiver(FunctionDefinitionNode fdn) {
-            super(fdn);
+        TraceFunctionEventReceiver() {
             instrument = Instrument.create(this);
         }
 
@@ -142,9 +127,28 @@ public class TraceHandling {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
+                for (int i = 0; i < indent; i++) {
+                    RContext.getInstance().getConsoleHandler().print(" ");
+                }
                 RContext.getInstance().getConsoleHandler().printf("trace: %s%n", RArguments.safeGetCallSourceString(frame));
+                indent += INDENT;
             }
         }
+
+        @Override
+        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+            if (!disabled()) {
+                indent -= INDENT;
+            }
+        }
+
+        @Override
+        public void returnValue(Node node, VirtualFrame frame, Object result) {
+            if (!disabled()) {
+                indent -= INDENT;
+            }
+        }
+
     }
 
 }
