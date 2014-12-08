@@ -52,11 +52,6 @@ public abstract class Lapply extends RBuiltinNode {
      */
     @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-    }
-
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RArgsValuesAndNames varArgs) {
 
