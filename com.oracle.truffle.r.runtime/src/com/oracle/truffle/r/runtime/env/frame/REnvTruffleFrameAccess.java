@@ -71,27 +71,18 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = fd.findFrameSlot(key);
 
-        // Handle RPromise: It cannot be cast to a int/double/byte!
-        if (value instanceof RPromise) {
-            if (slot == null) {
-                slot = fd.addFrameSlot(key, FrameSlotKind.Object);
-            }
-            // Overwrites former FrameSlotKind
-            frame.setObject(slot, value);
-            return;
-        }
-
-        // Handle all other values
-        FrameSlotKind slotKind = null;
+        // TODO what should really happen if valueSlotKind == FrameSlotKind.Illegal?
+        FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
         if (slot == null) {
-            slotKind = RRuntime.getSlotKind(value);
-            if (slotKind != FrameSlotKind.Illegal) {
-                slot = fd.addFrameSlot(key, slotKind);
+            if (valueSlotKind != FrameSlotKind.Illegal) {
+                slot = fd.addFrameSlot(key, valueSlotKind);
             }
         } else {
-            slotKind = slot.getKind();
+            if (valueSlotKind != FrameSlotKind.Illegal && valueSlotKind != slot.getKind()) {
+                slot.setKind(valueSlotKind);
+            }
         }
-        switch (slotKind) {
+        switch (valueSlotKind) {
             case Byte:
                 frame.setByte(slot, (byte) value);
                 break;
