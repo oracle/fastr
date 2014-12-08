@@ -9064,13 +9064,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testInvisible_45ebb4beda7d951423729ceea489852e() {
-        assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
+    public void TestSimpleBuiltins_testInvisible_d73dc3df8036b77c171c3b1e3e6abe2b() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testInvisibleIgnore_d73dc3df8036b77c171c3b1e3e6abe2b() {
-        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
+    public void TestSimpleBuiltins_testInvisible_3a995c24d265a83b890873282c4afc1a() {
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(FALSE, 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInvisible_3ae8cab1c90cde308137c39d8377a6b1() {
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(TRUE, 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInvisible_45ebb4beda7d951423729ceea489852e() {
+        assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
     }
 
     @Test

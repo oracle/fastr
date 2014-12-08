@@ -402,6 +402,7 @@ public final class RError extends RuntimeException {
         UNKNOWN_FUNCTION_USE_METHOD("no applicable method for '%s' applied to an object of class '%s'"),
         UNKNOWN_OBJECT("object '%s' not found"),
         INVALID_ARGUMENT("invalid '%s' argument"),
+        INVALID_POS_ARGUMENT("invalid 'pos' argument"),
         INVALID_VALUE("invalid '%s' value"),
         INVALID_ARGUMENTS_NO_QUOTE("invalid %s arguments"),
         INVALID_SUBSCRIPT_TYPE("invalid subscript type '%s'"),
@@ -581,7 +582,8 @@ public final class RError extends RuntimeException {
         NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),
         UNSUPPORTED_URL_SCHEME("unsupported URL scheme"),
         CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections"),
-        FULL_PRECISION("full precision may not have been achieved in '%s'");
+        FULL_PRECISION("full precision may not have been achieved in '%s'"),
+        ATTACH_BAD_TYPE("'attach' only works for lists, data frames and environments");
 
         public final String message;
         private final boolean hasArgs;

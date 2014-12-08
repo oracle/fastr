@@ -774,11 +774,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInvisibleIgnore_d73dc3df8036b77c171c3b1e3e6abe2b() {
-        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_6024770f1412c264dd004f2fa8bc6fbf() {
         assertEval("{ round( rnorm(1,), digits = 5 ) }");
     }
