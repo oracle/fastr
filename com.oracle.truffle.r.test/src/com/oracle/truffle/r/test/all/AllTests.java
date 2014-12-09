@@ -3089,6 +3089,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testMatrixBuiltin_b860c3745baba8c8b23ebc60e4e51491() {
+        assertEval("{ matrix(1:4, dimnames=list(c(\"b\", \"c\", \"d\", \"e\"), \"a\")) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testMatrixBuiltin_45da5dfb29ded0c72b401b745a231645() {
+        assertEval("{ matrix(1:4, dimnames=list(101:104, 42)) }");
+    }
+
+    @Test
     public void TestSimpleArrays_testMatrixSimpleRead_eb16fa2e75406d7cb53d9577dd513282() {
         assertEval("{ a = matrix(1,3,3); is.null(dim(a[1,])); }");
     }
