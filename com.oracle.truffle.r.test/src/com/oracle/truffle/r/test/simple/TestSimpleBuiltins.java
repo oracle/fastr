@@ -2608,6 +2608,9 @@ public class TestSimpleBuiltins extends TestBase {
     public void testQgamma() {
         assertEval("{ qgamma(0.5, shape=1) }");
         assertEval("{ p <- (1:9)/10 ; qgamma(p, shape=1) }");
+
+        assertEval("{ qgamma(0.5, shape=double()) }");
+        assertEval("{ qgamma(0.5, shape=1, rate=double()) }");
     }
 
     @Test
