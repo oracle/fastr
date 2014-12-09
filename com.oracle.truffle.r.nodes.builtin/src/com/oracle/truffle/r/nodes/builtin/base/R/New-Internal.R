@@ -85,12 +85,10 @@ commandArgs <- function(trailingOnly = FALSE) {
 #args <- function(name) .Internal(args(name))
 
 cbind <- function(..., deparse.level = 1)
-	# TODO: if the name of the internal and of R function is the same then R function is not picked up
-  .Internal(cbind.internal(deparse.level, ...))
+  .Internal(cbind(deparse.level, ...))
 
 rbind <- function(..., deparse.level = 1)
-	# TODO: if the name of the internal and of R function is the same then R function is not picked up	
-  .Internal(rbind.internal(deparse.level, ...))
+  .Internal(rbind(deparse.level, ...))
 
 ### for methods:::bind_activation
 #.__H__.cbind <- cbind
