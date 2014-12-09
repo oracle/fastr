@@ -100,6 +100,9 @@ public class TestSimpleArrays extends TestBase {
     public void testMatrixBuiltin() {
         // empty matrix length is 1
         assertEval("{ length(matrix()) }");
+
+        assertEval("{ matrix(1:4, dimnames=list(c(\"b\", \"c\", \"d\", \"e\"), \"a\")) }");
+        assertEval("{ matrix(1:4, dimnames=list(101:104, 42)) }");
     }
 
     @Test
