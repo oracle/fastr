@@ -12403,6 +12403,14 @@ a b
 #{ qgamma(0.5, shape=1) }
 [1] 0.6931472
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQgamma
+#{ qgamma(0.5, shape=1, rate=double()) }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQgamma
+#{ qgamma(0.5, shape=double()) }
+numeric(0)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
 #{ class(quote(x + y)) }
 [1] "call"

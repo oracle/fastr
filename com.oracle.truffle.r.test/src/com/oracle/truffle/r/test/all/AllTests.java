@@ -12519,6 +12519,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testQgamma_73970cd9fe85574e61743558b339addf() {
+        assertEval("{ qgamma(0.5, shape=double()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testQgamma_b9ab11d5c858f90c9fed8abbd509e3b1() {
+        assertEval("{ qgamma(0.5, shape=1, rate=double()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testQr_4c61546a62c6441af95effa50e76e062() {
         assertEval(" { x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; round( qr.coef(x, 1:10), digits=5 ) }");
     }
