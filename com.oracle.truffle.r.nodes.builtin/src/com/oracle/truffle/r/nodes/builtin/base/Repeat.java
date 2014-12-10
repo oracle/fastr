@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -57,10 +59,22 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
 public abstract class Repeat extends RBuiltinNode {
 
+    protected abstract Object execute(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);
+
+    @Child private Repeat repeatRecursive;
+
     private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorBranch = BranchProfile.create();
     private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
     private final ConditionProfile replicateOnce = ConditionProfile.createBinaryProfile();
+
+    private Object repeatRecursive(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+        if (repeatRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            repeatRecursive = insert(RepeatFactory.create(new RNode[4], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return repeatRecursive.execute(frame, x, times, lengthOut, each);
+    }
 
     @Override
     public RNode[] getParameterValues() {
@@ -147,6 +161,13 @@ public abstract class Repeat extends RBuiltinNode {
             r.setNames(names);
             return r;
         }
+    }
+
+    @Specialization
+    public RAbstractContainer rep(VirtualFrame frame, RFactor x, RAbstractIntVector times, int lengthOut, int each) {
+        RVector vec = (RVector) repeatRecursive(frame, x.getVector(), times, lengthOut, each);
+        vec.setLevels(x.getLevels());
+        return RVector.setVectorClassAttr(vec, x.getClassAttr(), null, null);
     }
 
     /**

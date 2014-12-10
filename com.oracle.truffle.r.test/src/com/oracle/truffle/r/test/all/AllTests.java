@@ -3089,6 +3089,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testMatrixBuiltin_b860c3745baba8c8b23ebc60e4e51491() {
+        assertEval("{ matrix(1:4, dimnames=list(c(\"b\", \"c\", \"d\", \"e\"), \"a\")) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testMatrixBuiltin_45da5dfb29ded0c72b401b745a231645() {
+        assertEval("{ matrix(1:4, dimnames=list(101:104, 42)) }");
+    }
+
+    @Test
     public void TestSimpleArrays_testMatrixSimpleRead_eb16fa2e75406d7cb53d9577dd513282() {
         assertEval("{ a = matrix(1,3,3); is.null(dim(a[1,])); }");
     }
@@ -13289,6 +13299,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRep_b9ece16c94beebc355c1a042ed5c2997() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_29a9f0be7e4b85f34a27a7fd2c5c10c1() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRepInt_4ccfb2f0d566a28b506a769bb45eaa31() {
         assertEval("{ rep.int(1,3) }");
     }
@@ -14386,6 +14406,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSetAttr_d3a803a8bcf4ca34f3f28cc87c530aef() {
         assertEval("{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_b50b2a80032a7b75ca37f1668bd4989d() {
+        assertEval("{ signif(0.555, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_68cebcc3c937a86beeb31bd0fc433868() {
+        assertEval("{ signif(0.5549, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_58c1d8c4ad70261755c0f3622c92b3c9() {
+        assertEval("{ signif(0.5551, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_633cb49e0aabda52de0fd95cad2d74f5() {
+        assertEval("{ signif(0.555, 0) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_bac0f610eca88b7698e47935c5427406() {
+        assertEval("{ signif(0.555, -1) }");
     }
 
     @Test

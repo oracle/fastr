@@ -2668,6 +2668,22 @@ Error in array(1, c(3, 3, 3))[[c(1, 2), 1, 1]] :
 #{ length(matrix()) }
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testMatrixBuiltin
+#{ matrix(1:4, dimnames=list(101:104, 42)) }
+    42
+101  1
+102  2
+103  3
+104  4
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testMatrixBuiltin
+#{ matrix(1:4, dimnames=list(c("b", "c", "d", "e"), "a")) }
+  a
+b 1
+c 2
+d 3
+e 4
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testMatrixSimpleRead
 #{ a = matrix(1,3,3); is.null(dim(a[1,])); }
 [1] TRUE
@@ -13314,6 +13330,16 @@ TRUE   NA TRUE
 X X X Y Y
 1 1 1 2 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ x<-factor(c("a", "b", "a")); rep(x, length=5) }
+[1] a b a a b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ x<-factor(c("a", "b", "a")); rep(x, times=3) }
+[1] a b a a b a a b a
+Levels: a b
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepInt
 #{ rep.int("a",3) }
 [1] "a" "a" "a"
@@ -14291,6 +14317,26 @@ integer(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatementNamedParamsIgnore
 #{ seq(to=-1,from=-10) }
  [1] -10  -9  -8  -7  -6  -5  -4  -3  -2  -1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
+#{ signif(0.5549, 2) }
+[1] 0.55
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
+#{ signif(0.555, -1) }
+[1] 0.6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
+#{ signif(0.555, 0) }
+[1] 0.6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
+#{ signif(0.555, 2) }
+[1] 0.56
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
+#{ signif(0.5551, 2) }
+[1] 0.56
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
 #{ rm("ieps") }

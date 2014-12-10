@@ -408,6 +408,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
     }
 
     @Test
@@ -2561,6 +2564,15 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testRoundIgnore() {
         assertEval("{ round(1.123456,digit=2.8) }");
+    }
+
+    @Test
+    public void testSignif() {
+        assertEval("{ signif(0.555, 2) }");
+        assertEval("{ signif(0.5549, 2) }");
+        assertEval("{ signif(0.5551, 2) }");
+        assertEval("{ signif(0.555, 0) }");
+        assertEval("{ signif(0.555, -1) }");
     }
 
     @Test

@@ -174,7 +174,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public RStringVector getClassHierarchy() {
-        return null;
+        return RDataFactory.createStringVector(RType.List.getName());
     }
 
     public boolean isObject() {
