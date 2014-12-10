@@ -35,6 +35,8 @@ import com.oracle.truffle.r.runtime.RPackages.RPackage;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
+import edu.umd.cs.findbugs.ba.bcp.*;
+
 /**
  * Denotes an R {@code environment}.
  *
@@ -117,7 +119,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static Global globalEnv;
     private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
-    private static Autoload autoloadEnv;
+    private static REnvironment autoloadEnv;
     private static REnvironment namespaceRegistry;
 
     /**
@@ -202,7 +204,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * Value set in the {@code .AutoloadEnv} variable.
      */
-    public static Autoload autoloadEnv() {
+    public static REnvironment autoloadEnv() {
         assert autoloadEnv != null;
         return autoloadEnv;
     }
@@ -226,7 +228,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         baseEnv = new Base(baseFrame);
 
         // autoload always next, has no R state
-        autoloadEnv = new Autoload();
+        autoloadEnv = new NewEnv();
         globalEnv = new Global(autoloadEnv, globalFrame);
         initSearchList();
 
@@ -932,6 +934,14 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             setAttr(NAME_ATTR_KEY, name);
         }
 
+        /**
+         * For Autoload.
+         */
+        NewEnv() {
+            this(baseEnv, 0);
+            setAttr(NAME_ATTR_KEY, "Autoloads");
+        }
+
         public REnvMapFrameAccess getFrameAccess() {
             return (REnvMapFrameAccess) frameAccess;
         }
@@ -948,17 +958,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             return false;
         }
         return true;
-    }
-
-    /**
-     * A placeholder for the package autoload mechanism. N.B. Although "unnamed", it is given a name
-     * with {@code attr} in GnuR.
-     */
-    private static final class Autoload extends REnvironment {
-        Autoload() {
-            super(baseEnv(), UNNAMED, baseEnv().getFrame());
-            setAttr(NAME_ATTR_KEY, "Autoloads");
-        }
     }
 
     /**
