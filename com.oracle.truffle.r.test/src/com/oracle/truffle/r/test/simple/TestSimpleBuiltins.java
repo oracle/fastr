@@ -2564,6 +2564,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSignif() {
+        assertEval("{ signif(0.555, 2) }");
+        assertEval("{ signif(0.5549, 2) }");
+        assertEval("{ signif(0.5551, 2) }");
+        assertEval("{ signif(0.555, 0) }");
+        assertEval("{ signif(0.555, -1) }");
+    }
+
+    @Test
     public void testRandom() {
         assertEval("{ set.seed(4357, \"default\"); sum(runif(10)) }");
         assertEval("{ set.seed(4336, \"default\"); sum(runif(10000)) }");

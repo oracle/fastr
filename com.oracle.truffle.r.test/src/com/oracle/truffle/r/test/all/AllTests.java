@@ -14349,6 +14349,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSignif_b50b2a80032a7b75ca37f1668bd4989d() {
+        assertEval("{ signif(0.555, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_68cebcc3c937a86beeb31bd0fc433868() {
+        assertEval("{ signif(0.5549, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_58c1d8c4ad70261755c0f3622c92b3c9() {
+        assertEval("{ signif(0.5551, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_633cb49e0aabda52de0fd95cad2d74f5() {
+        assertEval("{ signif(0.555, 0) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSignif_bac0f610eca88b7698e47935c5427406() {
+        assertEval("{ signif(0.555, -1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSimpleRm_ca7a9f28edcdd3c7bf66a0b3735a11dc() {
         assertEval("{ x <- 200 ; rm(\"x\") }");
     }
