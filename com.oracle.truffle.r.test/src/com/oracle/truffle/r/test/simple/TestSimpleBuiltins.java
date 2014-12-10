@@ -3055,18 +3055,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
     @Ignore
     public void testSysCallIgnore() {
-        assertEval("{ (function() sys.call())() }");
+        // TODO these fail because the argument name "x" is wrongly always output
         assertEval("{ f <- function(x) sys.call() ; f(2) }");
         assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
-
-        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+        // fails because can't parse out the "name"
+        assertEval("{ (function() sys.call())() }");
     }
 
     @Test
@@ -3116,6 +3118,16 @@ public class TestSimpleBuiltins extends TestBase {
     public void testMatchCall() {
         assertEval("{ f <- function() match.call() ; f() }");
         assertEval("{ f <- function(x) match.call() ; f(2) }");
+        assertEval("{ f <- function(x) match.call() ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call() ; f(2) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2, y=3) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2, 3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2, 3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, y=3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, 3) }");
     }
 
     @Test

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
@@ -85,5 +86,36 @@ public abstract class CastListNode extends CastNode {
     @Specialization
     protected RList doDataFrame(VirtualFrame frame, RDataFrame operand) {
         return castList(frame, operand.getVector());
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected RList doPairList(RPairList pl) {
+        // One list type into another, not performance critical!
+        int length = pl.getLength();
+        if (length == 0) {
+            return RDataFactory.createList();
+        }
+        Object[] data = new Object[length];
+        String[] names = new String[length];
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        int i = 0;
+        RPairList tpl = pl;
+        while (tpl != null) {
+            String tag = (String) tpl.getTag();
+            names[i] = tag == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : tag;
+            if (tag == RRuntime.STRING_NA) {
+                complete = RDataFactory.INCOMPLETE_VECTOR;
+            }
+            data[i] = tpl.car();
+            Object cdr = tpl.cdr();
+            if (cdr == null || cdr == RNull.instance) {
+                break;
+            } else {
+                tpl = (RPairList) cdr;
+            }
+            i++;
+        }
+        return RDataFactory.createList(data, RDataFactory.createStringVector(names, complete));
     }
 }

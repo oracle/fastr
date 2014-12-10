@@ -29,7 +29,6 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -55,7 +54,7 @@ public abstract class Quote extends RBuiltinNode {
         controlVisibility();
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();
-        RNode unode = node instanceof WrapArgumentNode ? ((WrapArgumentNode) node).getOperand() : node;
+        RNode unode = (RNode) RASTUtils.unwrap(node);
         SourceSection ss = node.getSourceSection();
         if (rvn.profile(unode instanceof ReadVariableNode)) {
             return RDataFactory.createSymbol(ss.toString());

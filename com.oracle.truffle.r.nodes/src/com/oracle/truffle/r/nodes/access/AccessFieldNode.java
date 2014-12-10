@@ -87,6 +87,23 @@ public abstract class AccessFieldNode extends RNode {
         throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
+    @Specialization(guards = "hasNames")
+    protected Object accessFieldHasNames(RLanguage object) {
+        String field = getField();
+        RStringVector names = (RStringVector) object.getNames();
+        for (int i = 0; i < names.getLength(); i++) {
+            if (field.equals(names.getDataAt(i))) {
+                return RContext.getRASTHelper().getDataAtAsObject(object, i);
+            }
+        }
+        return RNull.instance;
+    }
+
+    @Specialization(guards = "!hasNames")
+    protected Object accessField(@SuppressWarnings("unused") RLanguage object) {
+        return RNull.instance;
+    }
+
     protected static boolean hasNames(RAbstractContainer object) {
         return object.getNames() != RNull.instance;
     }

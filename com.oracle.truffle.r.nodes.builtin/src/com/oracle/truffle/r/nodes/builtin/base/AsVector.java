@@ -27,8 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -111,11 +109,6 @@ public abstract class AsVector extends RBuiltinNode {
         return castList.executeList(frame, operand);
     }
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName())};
-    }
-
     @Specialization
     protected Object asVector(RNull x, @SuppressWarnings("unused") RMissing mode) {
         controlVisibility();
@@ -172,6 +165,12 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Specialization(guards = "castToList")
     protected RAbstractVector asVectorList(VirtualFrame frame, RExpression x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return castList(frame, x);
+    }
+
+    @Specialization(guards = "castToList")
+    protected RAbstractVector asVectorList(VirtualFrame frame, RPairList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castList(frame, x);
     }
@@ -262,6 +261,10 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean castToList(@SuppressWarnings("unused") RExpression x, String mode) {
+        return mode.equals("list");
+    }
+
+    protected boolean castToList(@SuppressWarnings("unused") RPairList x, String mode) {
         return mode.equals("list");
     }
 

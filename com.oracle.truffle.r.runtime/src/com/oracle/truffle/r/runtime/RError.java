@@ -548,6 +548,7 @@ public final class RError extends RuntimeException {
         ARGS_MUST_BE_NAMED("all arguments must be named"),
         INVALID_INTERNAL("invalid .Internal() argument"),
         NO_SUCH_INTERNAL("there is no .Internal function '%s'"),
+        NO_SUCH_PRIMITIVE("no such primitive function"),
         INVALID_ERROR("invalid value for 'error'"),
         IMP_EXP_NAMES_MATCH("length of import and export names must match"),
         ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),
@@ -583,7 +584,8 @@ public final class RError extends RuntimeException {
         UNSUPPORTED_URL_SCHEME("unsupported URL scheme"),
         CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections"),
         FULL_PRECISION("full precision may not have been achieved in '%s'"),
-        ATTACH_BAD_TYPE("'attach' only works for lists, data frames and environments");
+        ATTACH_BAD_TYPE("'attach' only works for lists, data frames and environments"),
+        STRING_ARGUMENT_REQUIRED("string argument required");
 
         public final String message;
         private final boolean hasArgs;

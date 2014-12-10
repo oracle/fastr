@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
 import com.oracle.truffle.r.runtime.*;
@@ -91,9 +92,26 @@ public class RASTUtils {
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
-        } else if (argNode instanceof VarArgPromiseNode) {
-            RPromise p = ((VarArgPromiseNode) argNode).getPromise();
-            return createLanguageElement(unwrap(p.getRep()));
+        } else if (argNode instanceof VarArgsPromiseNode) {
+            /*
+             * This is mighty tedious, but GnuR represents this as a pairlist and we do have to
+             * convert it into either an RPairList or an RList for compatibility.
+             */
+            VarArgsPromiseNode vapn = ((VarArgsPromiseNode) argNode);
+            RNode[] nodes = vapn.getNodes();
+            String[] names = vapn.getNames();
+            RPairList prev = null;
+            RPairList result = null;
+            for (int i = 0; i < nodes.length; i++) {
+                RPairList pl = new RPairList(createLanguageElement(nodes[i]), null, names[i]);
+                if (prev != null) {
+                    prev.setCdr(pl);
+                } else {
+                    result = pl;
+                }
+                prev = pl;
+            }
+            return result;
         } else {
             return RDataFactory.createLanguage(argNode);
         }
@@ -119,6 +137,27 @@ public class RASTUtils {
         } else {
             return expr;
         }
+    }
+
+    /**
+     * Create an {@link RNode} from a runtime value.
+     */
+    @TruffleBoundary
+    public static RNode createNodeForValue(Object value) {
+        if (value instanceof RNode) {
+            return (RNode) value;
+        } else if (value instanceof RSymbol) {
+            return RASTUtils.createReadVariableNode(((RSymbol) value).getName());
+        } else if (value instanceof RLanguage) {
+            RLanguage l = (RLanguage) value;
+            return (RNode) NodeUtil.cloneNode((Node) l.getRep());
+        } else if (value instanceof RPromise) {
+            // TODO: flatten nested promises?
+            return NodeUtil.cloneNode(((RNode) ((RPromise) value).getRep()).unwrap());
+        } else {
+            return ConstantNode.create(value);
+        }
+
     }
 
     public static boolean isLanguageOrExpression(Object expr) {

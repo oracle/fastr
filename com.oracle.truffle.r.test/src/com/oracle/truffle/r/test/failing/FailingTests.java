@@ -1629,11 +1629,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSysCallIgnore_f44ee9a6ea3efb3dd3af1c314ae8b266() {
-        assertEval("{ (function() sys.call())() }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSysCallIgnore_7cbf9b612d6ed31bbb101daf73e590f7() {
         assertEval("{ f <- function(x) sys.call() ; f(2) }");
     }
@@ -1644,18 +1639,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSysCallIgnore_27098193cb36cf8c763bc06a7cc91a50() {
-        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSysCallIgnore_8572e1ef4a32293f18c6393bf5fb9d3e() {
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSysCallIgnore_1ca2e752432d9ae3306babfa58185261() {
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+    public void TestSimpleBuiltins_testSysCallIgnore_f44ee9a6ea3efb3dd3af1c314ae8b266() {
+        assertEval("{ (function() sys.call())() }");
     }
 
     @Ignore
