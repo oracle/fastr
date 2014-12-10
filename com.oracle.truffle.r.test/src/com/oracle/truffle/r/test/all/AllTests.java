@@ -13249,6 +13249,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRep_b9ece16c94beebc355c1a042ed5c2997() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_29a9f0be7e4b85f34a27a7fd2c5c10c1() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRepInt_4ccfb2f0d566a28b506a769bb45eaa31() {
         assertEval("{ rep.int(1,3) }");
     }

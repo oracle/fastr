@@ -13290,6 +13290,16 @@ TRUE   NA TRUE
 X X X Y Y
 1 1 1 2 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ x<-factor(c("a", "b", "a")); rep(x, length=5) }
+[1] a b a a b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ x<-factor(c("a", "b", "a")); rep(x, times=3) }
+[1] a b a a b a a b a
+Levels: a b
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepInt
 #{ rep.int("a",3) }
 [1] "a" "a" "a"

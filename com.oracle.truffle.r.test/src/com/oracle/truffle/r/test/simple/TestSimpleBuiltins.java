@@ -409,8 +409,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
 
-// assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
-// assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
     }
 
     @Test
