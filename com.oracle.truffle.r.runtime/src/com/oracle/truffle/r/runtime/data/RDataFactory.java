@@ -200,12 +200,12 @@ public final class RDataFactory {
 
     public static RDoubleSequence createAscendingRange(double start, double end) {
         assert start <= end;
-        return traceDataCreated(new RDoubleSequence(start, 1, (int) end - (int) start + 1));
+        return traceDataCreated(new RDoubleSequence(start, 1, (int) ((end - start) + 1)));
     }
 
     public static RDoubleSequence createDescendingRange(double start, double end) {
         assert start > end;
-        return traceDataCreated(new RDoubleSequence(start, -1, ((int) (start - end) + 1)));
+        return traceDataCreated(new RDoubleSequence(start, -1, (int) ((start - end) + 1)));
     }
 
     public static RDoubleSequence createDoubleSequence(double start, double stride, int length) {

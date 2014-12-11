@@ -197,7 +197,7 @@ public abstract class Seq extends RBuiltinNode {
     @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     protected RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
     }
 
     @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
@@ -209,7 +209,7 @@ public abstract class Seq extends RBuiltinNode {
     @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     protected RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1));
     }
 
     @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})

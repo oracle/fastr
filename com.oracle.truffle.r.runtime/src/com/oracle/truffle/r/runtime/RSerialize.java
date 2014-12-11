@@ -500,7 +500,7 @@ public class RSerialize {
                         break;
                 }
                 if (hasattr) {
-                    Object attrItem = readItem();
+                    readItem();
                     assert false;
                 }
                 Object tag = readItem();
