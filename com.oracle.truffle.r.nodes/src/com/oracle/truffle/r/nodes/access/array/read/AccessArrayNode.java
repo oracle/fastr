@@ -194,9 +194,9 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null, null));
+            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null));
         }
-        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RRuntime.LOGICAL_TRUE, RNull.instance);
+        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
     }
 
     private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
