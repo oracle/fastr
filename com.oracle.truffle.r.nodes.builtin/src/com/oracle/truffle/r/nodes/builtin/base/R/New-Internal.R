@@ -89,7 +89,7 @@ cbind <- function(..., deparse.level = 1)
   .Internal(cbind.internal(deparse.level, ...))
 
 rbind <- function(..., deparse.level = 1)
-	# TODO: if the name of the internal and of R function is the same then R function is not picked up	
+	# TODO: if the name of the internal and of R function is the same then R function is not picked up
   .Internal(rbind.internal(deparse.level, ...))
 
 ### for methods:::bind_activation
@@ -240,15 +240,15 @@ encodeString <- function(x, width = 0L, quote = "", na.encode = TRUE,
 	.Internal(encodeString(x, width, quote, justify, na.encode))
 }
 
-#l10n_info <- function() .Internal(l10n_info())
-#
-#iconv <- function(x, from = "", to = "", sub = NA, mark = TRUE, toRaw = FALSE)
-#{
-#  if(! (is.character(x) || (is.list(x) && is.null(oldClass(x)))))
-#    x <- as.character(x)
-#  .Internal(iconv(x, from, to, as.character(sub), mark, toRaw))
-#}
-#
+l10n_info <- function() .Internal(l10n_info())
+
+iconv <- function(x, from = "", to = "", sub = NA, mark = TRUE, toRaw = FALSE)
+{
+  if(! (is.character(x) || (is.list(x) && is.null(oldClass(x)))))
+    x <- as.character(x)
+  .Internal(iconv(x, from, to, as.character(sub), mark, toRaw))
+}
+
 #iconvlist <- function()
 #{
 #  int <- .Internal(iconv(NULL, "", "", "", TRUE, FALSE))
