@@ -17202,6 +17202,15 @@ $class
 [1] 3 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(3,4)); x[NULL, "a"] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=factor(c("y", "z", "y")), b=c(3,4,5)); x[NULL, "a"] }
+factor(0)
+Levels: y z
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }
 [1] 2
 
