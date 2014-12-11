@@ -247,14 +247,12 @@ public abstract class GroupDispatchCallNode extends RNode {
 
         @Override
         public String getGroupName() {
-            // TODO Auto-generated method stub
-            return null;
+            return gdn.groupName;
         }
 
         @Override
         public SourceSection getCallSrc() {
-            // TODO Auto-generated method stub
-            return null;
+            return gdn.callSrc;
         }
     }
 }
