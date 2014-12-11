@@ -92,6 +92,9 @@ public class RASTUtils {
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
+        } else if (argNode instanceof VarArgPromiseNode) {
+            RPromise p = ((VarArgPromiseNode) argNode).getPromise();
+            return createLanguageElement(unwrap(p.getRep()));
         } else if (argNode instanceof VarArgsPromiseNode) {
             /*
              * This is mighty tedious, but GnuR represents this as a pairlist and we do have to
@@ -103,7 +106,7 @@ public class RASTUtils {
             RPairList prev = null;
             RPairList result = null;
             for (int i = 0; i < nodes.length; i++) {
-                RPairList pl = new RPairList(createLanguageElement(nodes[i]), null, names[i]);
+                RPairList pl = new RPairList(createLanguageElement(unwrap(nodes[i])), null, names[i]);
                 if (prev != null) {
                     prev.setCdr(pl);
                 } else {
