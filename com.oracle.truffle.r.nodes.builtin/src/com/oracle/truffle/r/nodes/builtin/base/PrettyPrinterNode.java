@@ -334,13 +334,18 @@ public abstract class PrettyPrinterNode extends RNode {
     @Specialization
     protected String prettyPrintPairList(RPairList pairList, Object listElementName, byte quote, byte right) {
         StringBuilder sb = new StringBuilder();
+        int i = 1;
         RPairList pl = pairList;
         while (pl != null) {
             if (pl.getTag() != null) {
                 sb.append('$');
                 sb.append(pl.getTag());
-                sb.append('\n');
+            } else {
+                sb.append("[[");
+                sb.append(Integer.toString(i));
+                sb.append("]]");
             }
+            sb.append('\n');
             if (pl.car() != null) {
                 sb.append(prettyPrintRecursive(pl.car(), listElementName, quote, right));
                 sb.append('\n');
@@ -349,6 +354,7 @@ public abstract class PrettyPrinterNode extends RNode {
             if (pl != null) {
                 sb.append('\n');
             }
+            i++;
         }
         return sb.toString();
     }

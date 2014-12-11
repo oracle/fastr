@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -106,6 +107,8 @@ public class RASTHelperImpl implements RASTHelper {
             return ((WhileNode) node).isRepeat() ? 2 : 3;
         } else if (node instanceof WriteVariableNode) {
             return 3;
+        } else if (node instanceof VarArgsPromiseNode) {
+            return ((VarArgsPromiseNode) node).getNodes().length;
         } else {
             // TODO fill out
             assert false;

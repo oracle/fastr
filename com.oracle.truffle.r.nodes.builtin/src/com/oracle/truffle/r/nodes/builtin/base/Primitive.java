@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -32,37 +32,29 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "quote", nonEvalArgs = {0}, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"expr"})
-public abstract class Quote extends RBuiltinNode {
+@RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name")
+public abstract class Primitive extends RBuiltinNode {
+    protected final BranchProfile errorProfile = BranchProfile.create();
+
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance)};
     }
 
-    public abstract Object execute(VirtualFrame frame, RPromise expr);
-
-    private final ConditionProfile rvn = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile cn = ConditionProfile.createBinaryProfile();
-
     @Specialization
-    protected RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    protected RFunction primitive(String name) {
+        RFunction function = RContext.getEngine().lookupBuiltin(name);
+        if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.PRIMITIVE) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_PRIMITIVE, name);
+        }
+
+        // .Primitive function is validated
+        return function;
     }
 
-    @Specialization
-    protected Object doQuote(RPromise expr) {
-        controlVisibility();
-        // GnuR creates symbols for simple variables and actual values for constants
-        RNode node = (RNode) expr.getRep();
-        RNode unode = (RNode) RASTUtils.unwrap(node);
-        SourceSection ss = node.getSourceSection();
-        if (rvn.profile(unode instanceof ReadVariableNode)) {
-            return RDataFactory.createSymbol(ss.toString());
-        } else if (cn.profile(unode instanceof ConstantNode)) {
-            ConstantNode cnode = (ConstantNode) unode;
-            return cnode.getValue();
-        } else {
-            return RDataFactory.createLanguage(expr.getRep());
-        }
+    @Fallback
+    protected RFunction primitive(@SuppressWarnings("unused") Object name) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.STRING_ARGUMENT_REQUIRED);
     }
 }

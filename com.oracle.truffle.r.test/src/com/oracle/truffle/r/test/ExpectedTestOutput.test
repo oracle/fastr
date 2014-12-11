@@ -10732,7 +10732,47 @@ character(0)
 f()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(2) }
+f(2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(x=2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(x=2, 3) }
+f(x = 2, 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(x=2, y=3) }
+f(x = 2, y = 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(2) }
+f(... = list(2))
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(2, 3) }
+f(... = list(2, 3))
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2) }
+f(... = list(x = 2))
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, 3) }
+f(... = list(x = 2, 3))
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, y=3) }
+f(... = list(x = 2, y = 3))
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
 #{ f <- function(x) match.call() ; f(2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
+#{ f <- function(x) match.call() ; f(x=2) }
 f(x = 2)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchFun
@@ -15130,6 +15170,10 @@ f()
 f()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; typeof(f()[[1]]) }
+[1] "symbol"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
 #{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }
 g()
 
@@ -15152,6 +15196,14 @@ g()
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
 #{ f <- function(x) sys.call() ; f(x = 2) }
 f(x = 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }
+[1] "symbol"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }
+[1] "double"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysNFrame
 #{ f <- function() sys.nframe() ; f() }

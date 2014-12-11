@@ -443,5 +443,29 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             controlVisibility();
             return value;
         }
+
+        @Override
+        public void deparse(State state) {
+            String[] names = value.getNames();
+            Object[] values = value.getValues();
+            for (int i = 0; i < values.length; i++) {
+                String name = names[i];
+                if (name != null) {
+                    state.append(name);
+                    state.append(" = ");
+                }
+                Object argValue = values[i];
+                if (argValue instanceof RNode) {
+                    ((RNode) argValue).deparse(state);
+                } else if (argValue instanceof RPromise) {
+                    ((RNode) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
+                } else {
+                    RInternalError.shouldNotReachHere();
+                }
+                if (i < values.length - 1) {
+                    state.append(", ");
+                }
+            }
+        }
     }
 }

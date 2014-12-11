@@ -84,19 +84,7 @@ public abstract class Call extends RBuiltinNode {
         String[] names = argsAndNames == null ? new String[0] : argsAndNames.getNames();
 
         for (int i = 0; i < argLength; i++) {
-            Object a = values[i];
-            if (a instanceof RSymbol) {
-                args[i] = RASTUtils.createReadVariableNode(((RSymbol) a).getName());
-            } else if (a instanceof RLanguage) {
-                RLanguage l = (RLanguage) a;
-                args[i] = (RNode) l.getRep();
-            } else if (a instanceof RPromise) {
-                // TODO: flatten nested promises?
-                Object rep = ((RPromise) a).getRep();
-                args[i] = rep instanceof WrapArgumentNode ? ((WrapArgumentNode) rep).getOperand() : (RNode) rep;
-            } else {
-                args[i] = ConstantNode.create(a);
-            }
+            args[i] = RASTUtils.createNodeForValue(values[i]);
         }
 
         // TODO: handle replacement calls

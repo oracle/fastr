@@ -24,15 +24,20 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -84,8 +89,101 @@ public class FrameFunctions {
         }
     }
 
+    private abstract static class CallHelper extends FrameHelper {
+        @TruffleBoundary
+        protected RLanguage createCall(Frame cframe, @SuppressWarnings("unused") boolean sysCall, boolean expandDots) {
+            SourceSection callSource = RArguments.getCallSourceSection(cframe);
+            String functionName = extractFunctionName(callSource.getCode());
+            RLanguage call = null;
+            RArgsValuesAndNames argsValuesAndNames = null;
+            int argsLength = RArguments.getArgumentsLength(cframe);
+
+            if (argsLength > 0) {
+                Object[] values;
+                String[] names;
+                Object arg1 = RArguments.getArgument(cframe, 0);
+                if (arg1 instanceof RArgsValuesAndNames) {
+                    // ...
+                    RArgsValuesAndNames temp = ((RArgsValuesAndNames) arg1);
+                    if (expandDots || temp.length() == 0) {
+                        values = temp.getValues();
+                        names = temp.getNames();
+                    } else {
+                        names = new String[]{"..."};
+                        RNode[] listArgs = new RNode[temp.getValues().length];
+                        String[] listNames = new String[listArgs.length];
+                        for (int i = 0; i < listArgs.length; i++) {
+                            listArgs[i] = RASTUtils.createNodeForValue(temp.getValues()[i]);
+                            String listName;
+                            if ((listName = temp.getNames()[i]) != null) {
+                                listNames[i] = listName;
+                            }
+                        }
+                        RNode varArgs = PromiseNode.createVarArgs(null, EvalPolicy.PROMISED, listArgs, listNames, null, null);
+                        CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, names);
+                        values = new Object[]{RASTUtils.createCall("list", callArgsNode)};
+                        call = RDataFactory.createLanguage(RASTUtils.createCall(functionName, callArgsNode));
+                    }
+                } else {
+                    values = new Object[argsLength];
+                    /*
+                     * There is a bug in that RArguments names are filled (from the formals)
+                     * regardless of whether they were used in the call. I.e. can't distinguish g(x)
+                     * and g(a=x)
+                     */
+                    names = new String[argsLength];
+                    int argc = 0;
+                    for (int i = 0; i < argsLength; i++) {
+                        Object arg = RArguments.getArgument(cframe, i);
+                        if (!(arg instanceof RMissing)) {
+                            values[argc] = arg;
+                            names[argc] = RArguments.getName(cframe, i);
+                            argc++;
+                        }
+                    }
+                    if (argc != argsLength) {
+                        if (argc == 0) {
+                            values = new Object[0];
+                            names = new String[0];
+                        } else {
+                            values = Arrays.copyOfRange(values, 0, argc);
+                            names = Arrays.copyOfRange(names, 0, argc);
+                        }
+                    }
+                }
+                argsValuesAndNames = new RArgsValuesAndNames(values, names);
+            } else {
+                // Call.makeCall treats argsValuesAndNames == null as zero
+            }
+
+            if (call == null) {
+                call = Call.makeCall(functionName, argsValuesAndNames);
+            }
+            /*
+             * the "names" are set as the "names" attribute, unless they were all unset. N.B. The
+             * names are attributing the AST (as a list) and the function name counts and has a null
+             * "name"!
+             */
+            if (argsValuesAndNames != null && !argsValuesAndNames.isAllNamesEmpty()) {
+                String[] argNames = argsValuesAndNames.getNames();
+                String[] attrNames = new String[1 + argNames.length];
+                attrNames[0] = "";
+                System.arraycopy(argNames, 0, attrNames, 1, argNames.length);
+                call.setAttr(RRuntime.NAMES_ATTR_KEY, RDataFactory.createStringVector(attrNames, RDataFactory.COMPLETE_VECTOR));
+            }
+            return call;
+        }
+
+        @TruffleBoundary
+        private static String extractFunctionName(String callSource) {
+            // TODO in the general case we need to parse this into an AST
+            int index = callSource.indexOf('(');
+            return callSource.substring(0, index);
+        }
+    }
+
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
-    public abstract static class SysCall extends FrameHelper {
+    public abstract static class SysCall extends CallHelper {
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -94,29 +192,19 @@ public class FrameFunctions {
 
         @Specialization
         protected RLanguage sysCall(VirtualFrame frame, int which) {
+            /*
+             * sys.call preserves provided names but does not create them, unlike match.call The
+             * generated call has the same number of arguments as provided, modulo ... processing.
+             * ... is always expanded.
+             */
             controlVisibility();
             Frame cframe = getFrame(frame, which);
-            Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
-            RArguments.copyArgumentsInto(cframe, values);
-            int namesLength = RArguments.getNamesLength(cframe);
-            String[] names = new String[namesLength];
-            for (int i = 0; i < namesLength; ++i) {
-                names[i] = RArguments.getName(cframe, i);
-            }
-            SourceSection callSource = RArguments.getCallSourceSection(cframe);
-            String functionName = extractFunctionName(callSource.getCode());
-            return Call.makeCall(functionName, new RArgsValuesAndNames(values, names));
+            return createCall(cframe, true, true);
         }
 
         @Specialization
         protected RLanguage sysCall(VirtualFrame frame, double which) {
             return sysCall(frame, (int) which);
-        }
-
-        @TruffleBoundary
-        private static String extractFunctionName(String callSource) {
-            // TODO remove the need for this by assembling a proper RLanguage object for the call
-            return callSource.substring(0, callSource.indexOf('('));
         }
 
     }
@@ -125,7 +213,7 @@ public class FrameFunctions {
      * Generate a call object in which all of the arguments are fully qualified.
      */
     @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots"})
-    public abstract static class MatchCall extends FrameHelper {
+    public abstract static class MatchCall extends CallHelper {
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -133,24 +221,17 @@ public class FrameFunctions {
         }
 
         @Specialization
-        // TODO support expand.dots argument
-        protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, @SuppressWarnings("unused") byte expandDots) {
+        protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, byte expandDots) {
+            // TODO handle an explicitly provided call (default from R closure is
+            // sys.call(sys.parent())
             controlVisibility();
-            Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-            Object[] values = new Object[RArguments.getArgumentsLength(cframe)];
-            RArguments.copyArgumentsInto(cframe, values);
-            int namesLength = RArguments.getNamesLength(cframe);
-            String[] names = new String[namesLength];
-            for (int i = 0; i < namesLength; ++i) {
-                names[i] = RArguments.getName(cframe, i);
+            RPromise callArg = (RPromise) RArguments.getArgument(frame, 1);
+            if (callArg.isDefault()) {
+                Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+                return createCall(cframe, false, RRuntime.fromLogical(expandDots));
+            } else {
+                throw RError.nyi(getEncapsulatingSourceSection(), " explicit call argument not implemented");
             }
-
-            // extract the name of the function that was called
-            // TODO find a better solution for this
-            String callSource = RArguments.getCallSourceSection(cframe).getCode();
-            String functionName = callSource.substring(0, callSource.indexOf('('));
-
-            return Call.makeCall(functionName, new RArgsValuesAndNames(values, names));
         }
 
         @Specialization
