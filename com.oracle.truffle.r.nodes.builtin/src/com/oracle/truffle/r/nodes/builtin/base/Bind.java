@@ -392,7 +392,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return isListPrecedence(frame, args);
     }
 
-    @RBuiltin(name = "cbind.internal", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
+    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
     public abstract static class CbindInternal extends Bind {
         private final BranchProfile everSeenNotEqualRows = BranchProfile.create();
 
@@ -460,7 +460,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     }
 
-    @RBuiltin(name = "rbind.internal", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
+    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
     public abstract static class RbindInternal extends Bind {
         private final BranchProfile everSeenNotEqualColumns = BranchProfile.create();
 

@@ -408,6 +408,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
     }
 
     @Test
@@ -1264,6 +1267,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ which(logical()) }");
         assertEval("{ which(TRUE) }");
         assertEval("{ which(NA) }");
+        assertEval("{ x<-c(1,2); names(x)<-c(11, 12); attributes(which (x > 1)) }");
     }
 
     @Test
@@ -2564,6 +2568,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSignif() {
+        assertEval("{ signif(0.555, 2) }");
+        assertEval("{ signif(0.5549, 2) }");
+        assertEval("{ signif(0.5551, 2) }");
+        assertEval("{ signif(0.555, 0) }");
+        assertEval("{ signif(0.555, -1) }");
+    }
+
+    @Test
     public void testRandom() {
         assertEval("{ set.seed(4357, \"default\"); sum(runif(10)) }");
         assertEval("{ set.seed(4336, \"default\"); sum(runif(10000)) }");
@@ -2608,6 +2621,9 @@ public class TestSimpleBuiltins extends TestBase {
     public void testQgamma() {
         assertEval("{ qgamma(0.5, shape=1) }");
         assertEval("{ p <- (1:9)/10 ; qgamma(p, shape=1) }");
+
+        assertEval("{ qgamma(0.5, shape=double()) }");
+        assertEval("{ qgamma(0.5, shape=1, rate=double()) }");
     }
 
     @Test
@@ -3052,18 +3068,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
     @Ignore
     public void testSysCallIgnore() {
-        assertEval("{ (function() sys.call())() }");
+        // TODO these fail because the argument name "x" is wrongly always output
         assertEval("{ f <- function(x) sys.call() ; f(2) }");
         assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
-
-        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+        // fails because can't parse out the "name"
+        assertEval("{ (function() sys.call())() }");
     }
 
     @Test
@@ -3113,6 +3131,16 @@ public class TestSimpleBuiltins extends TestBase {
     public void testMatchCall() {
         assertEval("{ f <- function() match.call() ; f() }");
         assertEval("{ f <- function(x) match.call() ; f(2) }");
+        assertEval("{ f <- function(x) match.call() ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call() ; f(2) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2, y=3) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2, 3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2, 3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, y=3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, 3) }");
     }
 
     @Test

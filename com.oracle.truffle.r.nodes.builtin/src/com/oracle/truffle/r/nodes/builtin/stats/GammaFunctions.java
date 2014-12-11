@@ -49,23 +49,33 @@ public abstract class GammaFunctions {
     @RBuiltin(name = "qgamma", kind = INTERNAL, parameterNames = {"p", "shape", "scale", "lower.tail", "log.p"})
     public abstract static class Qgamma extends RBuiltinNode {
 
-        @Specialization
-        protected double qgamma(double p, double shape, double scale, byte lowerTail, byte logP) {
+        @Specialization(guards = "!emptyShapeOrScale")
+        protected double qgamma(double p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
             controlVisibility();
-            return GammaFunctions.qgamma(p, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+            return GammaFunctions.qgamma(p, shape.getDataAt(0), scale.getDataAt(0), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
         }
 
-        @Specialization
-        protected RDoubleVector qgamma(RDoubleVector p, double shape, double scale, byte lowerTail, byte logP) {
+        @Specialization(guards = "!emptyShapeOrScale")
+        protected RDoubleVector qgamma(RDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
             controlVisibility();
             // TODO if need be, support iteration over multiple vectors (not just p)
             // TODO support NA
             double[] result = new double[p.getLength()];
             for (int i = 0; i < p.getLength(); ++i) {
                 double pv = p.getDataAt(i);
-                result[i] = GammaFunctions.qgamma(pv, shape, scale, lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+                result[i] = GammaFunctions.qgamma(pv, shape.getDataAt(0), scale.getDataAt(0), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
             }
             return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "emptyShapeOrScale")
+        protected RDoubleVector qgammaEmptyShapeOrScale(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
+            return RDataFactory.createEmptyDoubleVector();
+        }
+
+        protected boolean emptyShapeOrScale(@SuppressWarnings("unused") Object p, RAbstractDoubleVector shape, RAbstractDoubleVector scale) {
+            return shape.getLength() == 0 || scale.getLength() == 0;
         }
 
     }

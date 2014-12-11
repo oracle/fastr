@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  */
 public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
     private final Object car;
-    private final Object cdr;
+    private Object cdr;
     private Object tag;
 
     /**
@@ -70,6 +70,11 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
 
     public Object cdr() {
         return cdr;
+    }
+
+    public void setCdr(Object newCdr) {
+        assert cdr == null;
+        cdr = newCdr;
     }
 
     public Object cadr() {
@@ -169,7 +174,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public RStringVector getClassHierarchy() {
-        return null;
+        return RDataFactory.createStringVector(RType.List.getName());
     }
 
     public boolean isObject() {
