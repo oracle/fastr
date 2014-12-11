@@ -1267,6 +1267,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ which(logical()) }");
         assertEval("{ which(TRUE) }");
         assertEval("{ which(NA) }");
+        assertEval("{ x<-c(1,2); names(x)<-c(11, 12); attributes(which (x > 1)) }");
     }
 
     @Test
