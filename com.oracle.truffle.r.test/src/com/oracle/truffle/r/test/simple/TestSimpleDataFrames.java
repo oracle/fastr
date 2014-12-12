@@ -141,6 +141,14 @@ public class TestSimpleDataFrames extends TestBase {
     }
 
     @Test
+    public void testUpdate() {
+        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
+
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[c(1,2)]<-list(c(11,12), c(13,14)); x }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4), c(5,6)); x[c(1,2, 3)]<-list(c(11,12), c(13,14), c(15,16)); x }");
+    }
+
+    @Test
     public void testPrint() {
         assertEval("{x<-c(1,2); class(x)<-\"data.frame\"; x}");
         assertEval("{ x<-integer(); class(x)<-\"data.frame\"; x }");
@@ -166,8 +174,6 @@ public class TestSimpleDataFrames extends TestBase {
 
     @Test
     public void testMisc() {
-        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
-
         assertEval("{ y<-data.frame(7); as.logical(y) }");
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
         assertEvalError("{ y<-data.frame(c(1,2,3)); as.logical(y) }");

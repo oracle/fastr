@@ -372,7 +372,8 @@ public class EnvFunctions {
             Object[] data = new Object[keys.getLength()];
             for (int i = 0; i < data.length; i++) {
                 // TODO: not all types are handled (e.g. copying environments)
-                Object o = env.get(keys.getDataAt(i));
+                String key = keys.getDataAt(i);
+                Object o = env.get(key);
                 data[i] = copy(frame, o);
             }
             return RDataFactory.createList(data, keys.getLength() == 0 ? null : keys.copy());

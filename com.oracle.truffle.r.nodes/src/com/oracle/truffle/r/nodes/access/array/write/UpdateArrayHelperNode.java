@@ -99,15 +99,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel, boolean forDataFrame) {
-        // for data frames, recursive update is the same as for lists but as if the [[]] operator
-        // was used
-        if (updateRecursive == null || (forDataFrame && isSubset) || (!forDataFrame && isSubset != recursiveIsSubset)) {
+        if (updateRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            boolean newIsSubset = this.isSubset;
-            if (forDataFrame && isSubset) {
-                newIsSubset = false;
-            }
-            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(newIsSubset, null, null, null, null, null));
+            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(isSubset, null, null, null, null, null));
         }
         return updateRecursive.executeUpdate(frame, v, value, recLevel, operand, vector);
     }
@@ -198,7 +192,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization
     protected Object update(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RDataFrame vector) {
         RVector inner = vector.getVector();
-        RVector res = (RVector) updateRecursive(frame, v, value, inner, positions, recLevel, true);
+        RVector res = (RVector) updateRecursive(frame, v, value, inner, positions, recLevel, false);
         if (res != inner) {
             return RDataFactory.createDataFrame(res);
         } else {

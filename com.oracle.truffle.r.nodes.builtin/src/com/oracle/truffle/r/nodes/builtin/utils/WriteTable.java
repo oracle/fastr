@@ -28,8 +28,7 @@ public class WriteTable {
         OutputStream os = con.getOutputStream();
         String tmp = null;
         if (xx instanceof RDataFrame) { /* A data frame */
-            RVector xy = ((RDataFrame) xx).getVector();
-            RVector x = (RVector) xy.getDataAtAsObject(0);
+            RVector x = ((RDataFrame) xx).getVector();
 
             /* handle factors internally, check integrity */
             RStringVector[] levels = new RStringVector[nc];
