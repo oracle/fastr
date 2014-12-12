@@ -140,7 +140,7 @@ public final class Utils {
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
         URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
         try {
-            return Source.fromURL(url, resourceName);
+            return Source.fromFileName(url.getPath());
         } catch (IOException ex) {
             Utils.fail("resource " + resourceName + " not found");
             return null;
