@@ -133,6 +133,7 @@ public class RDeparse {
         new Func("{", new PPInfo(PP.CURLY, 0, false)),
         new Func("(", new PPInfo(PP.PAREN, 0, false)),
         new Func("<-", new PPInfo(PP.ASSIGN, 1, true)),
+        new Func("<<-", new PPInfo(PP.ASSIGN, 1, true)),
         new Func("[", new PPInfo(PP.SUBSET, 17, false)),
         new Func("[[", new PPInfo(PP.SUBSET, 17, false)),
         new Func("$", new PPInfo(PP.DOLLAR, 15, false)),
@@ -357,7 +358,7 @@ public class RDeparse {
                 RPairList f = (RPairList) obj;
                 state.append("function (");
                 if (f.car() instanceof RPairList) {
-                    args2buff(state, (RPairList) f.car(), false, true);
+                    args2buff(state, f.car(), false, true);
                 }
                 state.append(") ");
                 state.writeline();
@@ -429,196 +430,208 @@ public class RDeparse {
                 if (carType == SEXPTYPE.SYMSXP) {
                     RSymbol symbol = (RSymbol) car;
                     String op = symbol.getName();
-                    RPairList pl = (RPairList) cdr;
-                    // TODO BUILTINSXP, SPECIALSXP, userBinOp
-                    PPInfo fop = ppInfo(op);
-                    if (fop.kind == PP.BINARY) {
-                        switch (pl.getLength()) {
-                            case 1:
-                                fop = new PPInfo(PP.UNARY, fop.prec == PREC_SUM ? PREC_SIGN : fop.prec, fop.rightassoc);
+                    if (RContext.getEngine().isBuiltin(op)) {
+                        RPairList pl = (RPairList) cdr;
+                        // TODO BUILTINSXP, SPECIALSXP, userBinOp
+                        PPInfo fop = ppInfo(op);
+                        if (fop.kind == PP.BINARY) {
+                            switch (pl.getLength()) {
+                                case 1:
+                                    fop = new PPInfo(PP.UNARY, fop.prec == PREC_SUM ? PREC_SIGN : fop.prec, fop.rightassoc);
+                                    break;
+                                case 2:
+                                    break;
+                                default:
+                                    assert false;
+                            }
+                        } else if (fop.kind == PP.BINARY2) {
+                            if (pl.getLength() != 2) {
+                                fop = new PPInfo(PP.FUNCALL, 0, false);
+                            } else if (/* userbinop */false) {
+                                // TODO
+                                fop = new PPInfo(PP.BINARY, fop.prec, fop.rightassoc);
+                            }
+                        }
+                        switch (fop.kind) {
+                            case ASSIGN: {
+                                // TODO needsparens
+                                deparse2buff(state, pl.car());
+                                state.append(' ');
+                                state.append(op);
+                                state.append(' ');
+                                deparse2buff(state, ((RPairList) pl.cdr()).car());
                                 break;
-                            case 2:
+                            }
+
+                            case IF: {
+                                state.append("if (");
+                                deparse2buff(state, pl.car());
+                                state.append(')');
+                                boolean lookahead = false;
+                                if (state.incurly > 0 && state.inlist == 0) {
+                                    lookahead = curlyahead(pl.cadr());
+                                    if (!lookahead) {
+                                        state.writeline();
+                                        state.indent++;
+                                    }
+                                }
+                                int lenpl = pl.getLength();
+                                if (lenpl > 2) {
+                                    deparse2buff(state, pl.cadr());
+                                    if (state.incurly > 0 && state.inlist == 0) {
+                                        state.writeline();
+                                        if (!lookahead) {
+                                            state.indent--;
+                                        }
+                                    } else {
+                                        state.append(' ');
+                                    }
+                                    state.append("else ");
+                                    deparse2buff(state, pl.caddr());
+                                } else {
+                                    deparse2buff(state, pl.cadr());
+                                    if (state.incurly > 0 && !lookahead && state.inlist == 0) {
+                                        state.indent--;
+                                    }
+                                }
                                 break;
+                            }
+
+                            case WHILE: {
+                                state.append("while (");
+                                deparse2buff(state, pl.car());
+                                state.append(") ");
+                                deparse2buff(state, pl.cadr());
+                                break;
+                            }
+
+                            case FOR: {
+                                state.append("for (");
+                                deparse2buff(state, pl.car());
+                                state.append(" in ");
+                                deparse2buff(state, pl.cadr());
+                                state.append(") ");
+                                deparse2buff(state, ((RPairList) pl.cdr()).cadr());
+                                break;
+                            }
+
+                            case REPEAT:
+                                state.append("repeat ");
+                                deparse2buff(state, pl.car());
+                                break;
+
+                            case BINARY:
+                            case BINARY2: {
+                                // TODO parens
+                                deparse2buff(state, pl.car());
+                                state.append(' ');
+                                state.append(op);
+                                state.append(' ');
+                                if (fop.kind == PP.BINARY) {
+                                    lbreak = state.linebreak(lbreak);
+                                }
+                                deparse2buff(state, pl.cadr());
+                                if (fop.kind == PP.BINARY) {
+                                    if (lbreak) {
+                                        state.indent--;
+                                        lbreak = false;
+                                    }
+                                }
+                                break;
+                            }
+
+                            case UNARY: {
+                                state.append(op);
+                                deparse2buff(state, pl.car());
+                                break;
+                            }
+
+                            case CURLY: {
+                                state.append(op);
+                                state.incurly++;
+                                state.indent++;
+                                state.writeline();
+                                while (pl != null) {
+                                    deparse2buff(state, pl.car());
+                                    state.writeline();
+                                    pl = next(pl);
+                                }
+                                state.indent--;
+                                state.append('}');
+                                state.incurly--;
+                                break;
+                            }
+
+                            case PAREN:
+                                state.append('(');
+                                deparse2buff(state, pl.car());
+                                state.append(')');
+                                break;
+
+                            case SUBSET: {
+                                deparse2buff(state, pl.car());
+                                state.append(op);
+                                args2buff(state, pl.cdr(), false, false);
+                                if (op.equals("[")) {
+                                    state.append(']');
+                                } else {
+                                    state.append("]]");
+                                }
+                                break;
+                            }
+
+                            case FUNCTION:
+                                state.append(op);
+                                state.append('(');
+                                args2buff(state, pl.car(), false, true);
+                                state.append(')');
+                                deparse2buff(state, pl.cadr());
+                                break;
+
+                            case DOLLAR: {
+                                // TODO needparens, etc
+                                deparse2buff(state, pl.car());
+                                state.append(op);
+                                deparse2buff(state, pl.cadr());
+                                break;
+                            }
+
+                            case FUNCALL:
+                            case RETURN: {
+                                if (state.backtick) {
+                                    state.append('`');
+                                    state.append(op);
+                                    state.append('`');
+                                } else {
+                                    state.append(op);
+                                }
+                                state.append('(');
+                                state.inlist++;
+                                args2buff(state, cdr, false, false);
+                                state.inlist--;
+                                state.append(')');
+                                break;
+                            }
+
                             default:
                                 assert false;
                         }
-                    } else if (fop.kind == PP.BINARY2) {
-                        if (pl.getLength() != 2) {
-                            fop = new PPInfo(PP.FUNCALL, 0, false);
-                        } else if (/* userbinop */false) {
-                            // TODO
-                            fop = new PPInfo(PP.BINARY, fop.prec, fop.rightassoc);
-                        }
-                    }
-                    switch (fop.kind) {
-                        case ASSIGN: {
-                            // TODO needsparens
-                            deparse2buff(state, pl.car());
-                            state.append(' ');
-                            state.append(op);
-                            state.append(' ');
-                            deparse2buff(state, ((RPairList) pl.cdr()).car());
-                            break;
-                        }
-
-                        case IF: {
-                            state.append("if (");
-                            deparse2buff(state, pl.car());
-                            state.append(')');
-                            boolean lookahead = false;
-                            if (state.incurly > 0 && state.inlist == 0) {
-                                lookahead = curlyahead(pl.cadr());
-                                if (!lookahead) {
-                                    state.writeline();
-                                    state.indent++;
-                                }
-                            }
-                            int lenpl = pl.getLength();
-                            if (lenpl > 2) {
-                                deparse2buff(state, pl.cadr());
-                                if (state.incurly > 0 && state.inlist == 0) {
-                                    state.writeline();
-                                    if (!lookahead) {
-                                        state.indent--;
-                                    }
-                                } else {
-                                    state.append(' ');
-                                }
-                                state.append("else ");
-                                deparse2buff(state, pl.caddr());
-                            } else {
-                                deparse2buff(state, pl.cadr());
-                                if (state.incurly > 0 && !lookahead && state.inlist == 0) {
-                                    state.indent--;
-                                }
-                            }
-                            break;
-                        }
-
-                        case WHILE: {
-                            state.append("while (");
-                            deparse2buff(state, pl.car());
-                            state.append(") ");
-                            deparse2buff(state, pl.cadr());
-                            break;
-                        }
-
-                        case FOR: {
-                            state.append("for (");
-                            deparse2buff(state, pl.car());
-                            state.append(" in ");
-                            deparse2buff(state, pl.cadr());
-                            state.append(") ");
-                            deparse2buff(state, ((RPairList) pl.cdr()).cadr());
-                            break;
-                        }
-
-                        case REPEAT:
-                            state.append("repeat ");
-                            deparse2buff(state, pl.car());
-                            break;
-
-                        case BINARY:
-                        case BINARY2: {
-                            // TODO parens
-                            deparse2buff(state, pl.car());
-                            state.append(' ');
-                            state.append(op);
-                            state.append(' ');
-                            if (fop.kind == PP.BINARY) {
-                                lbreak = state.linebreak(lbreak);
-                            }
-                            deparse2buff(state, pl.cadr());
-                            if (fop.kind == PP.BINARY) {
-                                if (lbreak) {
-                                    state.indent--;
-                                    lbreak = false;
-                                }
-                            }
-                            break;
-                        }
-
-                        case UNARY: {
-                            state.append(op);
-                            deparse2buff(state, pl.car());
-                            break;
-                        }
-
-                        case CURLY: {
-                            state.append(op);
-                            state.incurly++;
-                            state.indent++;
-                            state.writeline();
-                            while (pl != null) {
-                                deparse2buff(state, pl.car());
-                                state.writeline();
-                                pl = next(pl);
-                            }
-                            state.indent--;
-                            state.append('}');
-                            state.incurly--;
-                            break;
-                        }
-
-                        case PAREN:
+                    } else {
+                        // TODO promise?
+                        if (op.equals("::") || op.equals(":::")) {
+                            // special case
+                        } else {
+                            state.append(quotify(op));
                             state.append('(');
-                            deparse2buff(state, pl.car());
+                            args2buff(state, cdr, false, false);
                             state.append(')');
-                            break;
-
-                        case SUBSET: {
-                            deparse2buff(state, pl.car());
-                            state.append(op);
-                            args2buff(state, (RPairList) pl.cdr(), false, false);
-                            if (op.equals("[")) {
-                                state.append(']');
-                            } else {
-                                state.append("]]");
-                            }
-                            break;
                         }
-
-                        case FUNCTION:
-                            state.append(op);
-                            state.append('(');
-                            args2buff(state, (RPairList) pl.car(), false, true);
-                            state.append(')');
-                            deparse2buff(state, pl.cadr());
-                            break;
-
-                        case DOLLAR: {
-                            // TODO needparens, etc
-                            deparse2buff(state, pl.car());
-                            state.append(op);
-                            deparse2buff(state, pl.cadr());
-                            break;
-                        }
-
-                        case FUNCALL:
-                        case RETURN: {
-                            if (state.backtick) {
-                                state.append('`');
-                                state.append(op);
-                                state.append('`');
-                            } else {
-                                state.append(op);
-                            }
-                            state.append('(');
-                            state.inlist++;
-                            args2buff(state, (RPairList) cdr, false, false);
-                            state.inlist--;
-                            state.append(')');
-                            break;
-                        }
-
-                        default:
-                            assert false;
                     }
                 } else if (carType == SEXPTYPE.CLOSXP || carType == SEXPTYPE.SPECIALSXP || carType == SEXPTYPE.BUILTINSXP) {
                     // TODO needparens, etc
                     deparse2buff(state, car);
                     state.append('(');
-                    args2buff(state, (RPairList) cdr, false, false);
+                    args2buff(state, cdr, false, false);
                     state.append(')');
                 } else {
                     // lambda
@@ -630,7 +643,7 @@ public class RDeparse {
                         deparse2buff(state, car);
                     }
                     state.append('(');
-                    args2buff(state, (RPairList) f.cdr(), false, false);
+                    args2buff(state, f.cdr(), false, false);
                     state.append(')');
                 }
                 break;
@@ -649,12 +662,12 @@ public class RDeparse {
                 /*
                  * This should only happen in a call from RSerialize when unserializing a CLOSXP.
                  * There is no value in following GnuR and appending <bytecode>, as we need the
-                 * source., which is (we expect) in the RPaieLits cdr
+                 * source., which is (we expect) in the RPairList cdr (which is an RList).
+                 * Experimentally, only the first element of the list should be deparsed.
                  */
                 // state.append("<bytecode>");
                 RPairList pl = (RPairList) obj;
                 RList plcdr = (RList) pl.cdr();
-                assert plcdr.getLength() == 1;
                 deparse2buff(state, plcdr.getDataAtAsObject(0));
                 break;
             }
@@ -734,9 +747,14 @@ public class RDeparse {
     }
 
     @TruffleBoundary
-    private static State args2buff(State state, RPairList args, @SuppressWarnings("unused") boolean lineb, boolean formals) {
+    private static State args2buff(State state, Object args, @SuppressWarnings("unused") boolean lineb, boolean formals) {
         boolean lbreak = false;
-        RPairList arglist = args;
+        RPairList arglist;
+        if (args instanceof RNull) {
+            arglist = null;
+        } else {
+            arglist = (RPairList) args;
+        }
         while (arglist != null) {
             Object argTag = arglist.getTag();
             if (argTag != null && argTag != RNull.instance) {
@@ -796,7 +814,26 @@ public class RDeparse {
                     assert false;
             }
         } else if (type == SEXPTYPE.INTSXP) {
-            // TODO
+            // TODO seq detection and COMPAT?
+            if (len > 1) {
+                state.append("c(");
+            }
+            RIntVector intVec = (RIntVector) vec;
+            for (int i = 0; i < len; i++) {
+                int val = intVec.getDataAt(i);
+                if (RRuntime.isNA(val)) {
+                    state.append("NA_integer_");
+                } else {
+                    state.append(Integer.toString(val));
+                    state.append('L');
+                }
+                if (i < len - 1) {
+                    state.append(", ");
+                }
+            }
+            if (len > 1) {
+                state.append(')');
+            }
         } else {
             // TODO NA checks
             if (len > 1) {
@@ -826,7 +863,40 @@ public class RDeparse {
             case STRSXP:
                 // TODO encoding
                 state.append('"');
-                state.append((String) element);
+                String s = (String) element;
+                for (int i = 0; i < s.length(); i++) {
+                    char ch = s.charAt(i);
+                    int charInt = ch;
+                    switch (ch) {
+                        case '\n':
+                            state.append("\\n");
+                            break;
+                        case '\r':
+                            state.append("\\r");
+                            break;
+                        case '\t':
+                            state.append("\\t");
+                            break;
+                        case '\f':
+                            state.append("\\f");
+                            break;
+                        case '\\':
+                            state.append("\\");
+                            break;
+                        case '"':
+                            state.append("\\\"");
+                            break;
+                        default:
+                            if (Character.isISOControl(ch)) {
+                                state.append("\\x" + Integer.toHexString(charInt));
+                            } else if (charInt > 0x7F) {
+                                state.append("\\u" + Integer.toHexString(charInt));
+                            } else {
+                                state.append(ch);
+                            }
+                            break;
+                    }
+                }
                 state.append('"');
                 break;
             case LGLSXP:
@@ -846,6 +916,11 @@ public class RDeparse {
                 assert false;
         }
         return state;
+    }
+
+    private static String quotify(String name) {
+        // TODO implement
+        return name;
     }
 
 }

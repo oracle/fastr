@@ -48,7 +48,7 @@ local <-
 		function (expr, envir = new.env())
 	eval.parent(substitute(eval(quote(expr), envir)))
 
-# Recall <- function(...) .Internal(Recall(...))
+Recall <- function(...) .Internal(Recall(...))
 
 with <- function(data, expr, ...) UseMethod("with")
 within <- function(data, expr, ...) UseMethod("within")

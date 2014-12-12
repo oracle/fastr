@@ -11640,6 +11640,10 @@ Error in k() : argument "y" is missing, with no default
 #{ round(Mod(1+1i)*10000) }
 [1] 14142
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testModeSet
+#{  x<-c(1,2); mode(x)<-"character"; x }
+[1] "1" "2"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNChar
 #{ nchar(c("hello", "hi")) }
 [1] 5 2
@@ -17222,6 +17226,14 @@ Error in x >= y : invalid comparison with complex values
 [1]  7 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=1, b=2); x[logical(), "b"] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=1L, b=2L); x[logical(), "b"] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=c(1,2), b=c(11,12)); x[1,2] }
 [1] 11
 
@@ -17262,6 +17274,14 @@ $class
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=c(1,2), b=c(3,4)); x[NULL, "a"] }
 numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1,2), b=c(3,4)); x[logical(), "b"] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=c(1L,2L), b=c(3L,4L)); x[logical(), "b"] }
+integer(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=factor(c("y", "z", "y")), b=c(3,4,5)); x[NULL, "a"] }

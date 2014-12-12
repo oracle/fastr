@@ -19,6 +19,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testModeSet() {
+        assertEval("{  x<-c(1,2); mode(x)<-\"character\"; x }");
+    }
+
+    @Test
     public void testTable() {
         assertEval("{ a<-c(\"a\", \"b\", \"c\");  t<-table(a, sample(a)); dimnames(t) }");
     }

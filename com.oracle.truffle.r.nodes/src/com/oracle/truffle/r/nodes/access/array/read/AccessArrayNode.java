@@ -74,7 +74,6 @@ public abstract class AccessArrayNode extends RNode {
     @Child private GetMultiDimDataNode getMultiDimData;
     @Child private GetNamesNode getNamesNode;
     @Child private GetDimNamesNode getDimNamesNode;
-    @Child ContainerDimGet dimGetter;
     @Child ContainerRowNamesGet rowNamesGetter;
 
     protected abstract RNode getVector();
@@ -194,9 +193,9 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null, null));
+            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null));
         }
-        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RRuntime.LOGICAL_TRUE, RNull.instance);
+        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
     }
 
     private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
@@ -205,14 +204,6 @@ public abstract class AccessArrayNode extends RNode {
             getDimNamesNode = insert(GetDimNamesNodeFactory.create(namesCheck, null, null, null, null, null));
         }
         return (RStringVector) getDimNamesNode.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
-    }
-
-    private Object getContainerDim(VirtualFrame frame, RAbstractContainer value) {
-        if (dimGetter == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            dimGetter = insert(ContainerDimGetFactory.create(null));
-        }
-        return dimGetter.execute(frame, value);
     }
 
     private Object getContainerRowNames(VirtualFrame frame, RAbstractContainer value) {
@@ -1631,13 +1622,7 @@ public abstract class AccessArrayNode extends RNode {
         RIntVector firstIndVec = (RIntVector) position[0];
         RIntVector secondIndVec = (RIntVector) position[1];
         assert firstIndVec.getLength() > 0;
-        int firstInd = firstIndVec.getDataAt(0);
-        int firstDim = ((int[]) getContainerDim(frame, dataFrame))[0];
-        if (firstDim == 1) {
-            // "flat" data frame
-            assert firstInd == 1;
-            return accessRecursive(frame, dataFrame.getVector(), exact, secondIndVec, recLevel, dropDim, true);
-        } else if (secondIndVec.getLength() == 1) {
+        if (secondIndVec.getLength() == 1) {
             RList l = (RList) dataFrame.getVector();
             int secondInd = secondIndVec.getDataAt(0);
             assert l.getLength() >= secondInd;

@@ -35,8 +35,6 @@ import com.oracle.truffle.r.runtime.RPackages.RPackage;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
-import edu.umd.cs.findbugs.ba.bcp.*;
-
 /**
  * Denotes an R {@code environment}.
  *

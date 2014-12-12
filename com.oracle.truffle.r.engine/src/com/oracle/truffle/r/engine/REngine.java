@@ -160,6 +160,10 @@ public final class REngine implements RContext.Engine {
         RBuiltinPackages.load(name, frame, envForFrame);
     }
 
+    public boolean isBuiltin(String name) {
+        return builtinLookup.isBuiltin(name);
+    }
+
     public RFunction lookupBuiltin(String name) {
         return builtinLookup.lookup(name);
     }

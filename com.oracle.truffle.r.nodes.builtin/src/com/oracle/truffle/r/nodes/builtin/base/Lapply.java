@@ -77,8 +77,8 @@ public abstract class Lapply extends RBuiltinNode {
         /**
          * These nodes are all independent of the details of a particular call.
          */
-        private final LapplyIteratorNode iterator = new LapplyIteratorNode();
-        private final LapplyFunctionNode functionNode = new LapplyFunctionNode();
+        @Child LapplyIteratorNode iterator = new LapplyIteratorNode();
+        @Child LapplyFunctionNode functionNode = new LapplyFunctionNode();
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(LAPPLY_VEC_ELEM, iterator, false, false);
         @Child private ReadVariableNode readVectorElement = ReadVariableNode.create(LAPPLY_VEC_ELEM, true);
 

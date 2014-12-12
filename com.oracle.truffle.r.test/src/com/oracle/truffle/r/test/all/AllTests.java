@@ -11644,6 +11644,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testModeSet_f583f81f83ed2def4179e6bb91ffac61() {
+        assertEval("{  x<-c(1,2); mode(x)<-\"character\"; x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testNArgsIgnore_ee082d552ee9efa22803929c01c73692() {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
@@ -17966,6 +17971,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleDataFrames_testAccess_9abe2b64af62c2ac2eff95788c4173e7() {
         assertEval("{ x<-data.frame(a=factor(c(\"y\", \"z\", \"y\")), b=c(3,4,5)); x[NULL, \"a\"] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_9bdb9127d2b2d8e18b46b0a84f3fabbc() {
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); x[logical(), \"b\"] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_94ae22bf02837264ba871b1fc8e0b496() {
+        assertEval("{ x<-data.frame(a=c(1L,2L), b=c(3L,4L)); x[logical(), \"b\"] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_9ec17b36a1b48e177b9f377fa5cc9dcd() {
+        assertEval("{ x<-data.frame(a=1, b=2); x[logical(), \"b\"] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_64ce122d8f773d7e6adfe618476eb080() {
+        assertEval("{ x<-data.frame(a=1L, b=2L); x[logical(), \"b\"] }");
     }
 
     @Test

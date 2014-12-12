@@ -27,27 +27,26 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class), @NodeChild(value = "currDimLevel", type = RNode.class),
-                @NodeChild(value = "allNull", type = RNode.class), @NodeChild(value = "names", type = RNode.class)})
+                @NodeChild(value = "names", type = RNode.class)})
 abstract class GetNamesNode extends RNode {
 
-    public abstract Object executeNamesGet(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, Object names);
+    public abstract Object executeNamesGet(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, Object names);
 
     private final NACheck namesNACheck;
 
     @Child private GetNamesNode getNamesNodeRecursive;
 
-    private RStringVector getNamesRecursive(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, Object names, NACheck namesCheck) {
+    private RStringVector getNamesRecursive(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, Object names, NACheck namesCheck) {
         if (getNamesNodeRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNodeRecursive = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null, null));
+            getNamesNodeRecursive = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null));
         }
-        return (RStringVector) getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel, allNull, names);
+        return (RStringVector) getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel, names);
     }
 
     protected GetNamesNode(NACheck namesNACheck) {
@@ -59,13 +58,13 @@ abstract class GetNamesNode extends RNode {
     }
 
     @Specialization
-    protected RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
-        return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, names);
+    protected RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, RStringVector names) {
+        return getNamesInternal(frame, vector, positions, currentDimLevel, names);
     }
 
     @Specialization
-    protected RStringVector getNamesNull(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, @SuppressWarnings("unused") RNull names) {
-        return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, null);
+    protected RStringVector getNamesNull(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, @SuppressWarnings("unused") RNull names) {
+        return getNamesInternal(frame, vector, positions, currentDimLevel, null);
     }
 
     private final ConditionProfile oneDimLevelProfile = ConditionProfile.createBinaryProfile();
@@ -74,7 +73,7 @@ abstract class GetNamesNode extends RNode {
     private final BranchProfile nonNullSrcNames = BranchProfile.create();
     private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
 
-    RStringVector getNamesInternal(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
+    RStringVector getNamesInternal(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, RStringVector names) {
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
         int numPositions = p.getLength();
         RList dimNames = vector.getDimNames();
@@ -93,22 +92,21 @@ abstract class GetNamesNode extends RNode {
         if (multiPosProfile.profile(numPositions > 1)) {
             return newNames;
         } else {
-            byte newAllNull = allNull;
             if (newNames != null) {
+                // the idea here is that you can get names from dimnames only if the name of of an
+                // item can be unambiguously identified (there can be only one matching name in all
+                // dimensions - if "name" has already been set, we might as well return null
+                // already)
                 if (names != null) {
-                    newAllNull = RRuntime.LOGICAL_FALSE;
+                    return null;
                 }
             } else {
                 newNames = names;
             }
             if (oneDimLevelProfile.profile(currentDimLevel == 1)) {
-                if (newAllNull == RRuntime.LOGICAL_TRUE) {
-                    return newNames != null ? newNames : names;
-                } else {
-                    return null;
-                }
+                return newNames != null ? newNames : names;
             } else {
-                return getNamesRecursive(frame, vector, positions, currentDimLevel - 1, newAllNull, newNames == null ? RNull.instance : newNames, namesNACheck);
+                return getNamesRecursive(frame, vector, positions, currentDimLevel - 1, newNames == null ? RNull.instance : newNames, namesNACheck);
             }
         }
     }
