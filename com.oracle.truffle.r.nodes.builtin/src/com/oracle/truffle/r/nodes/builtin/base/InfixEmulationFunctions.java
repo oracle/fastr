@@ -32,6 +32,9 @@ import com.oracle.truffle.r.runtime.*;
  * These definitions create the illusion that the definitions exist, even if they are not actually
  * bound to anything useful.
  *
+ * One important reason that these must exist as {@link RBuiltin}s is that they occur when deparsing
+ * packages and the deparse logic depends on them being found as builtins. See {@link RDeparse}.
+ *
  * N.B. These could be implemented by delegating to the equivalent nodes, e.g.
  * {@link AccessArrayNode}.
  */
@@ -44,7 +47,7 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AccessArrayNodeBuiltin extends ErrorAdapter {
+    public abstract static class AccessArrayBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
@@ -53,7 +56,7 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AccessArrayNodeSubsetBuiltin extends ErrorAdapter {
+    public abstract static class AccessArraySubsetBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
@@ -62,7 +65,7 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class UpdateArrayNodeBuiltin extends ErrorAdapter {
+    public abstract static class UpdateArrayBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
@@ -79,8 +82,26 @@ public class InfixEmulationFunctions {
         }
     }
 
+    @RBuiltin(name = "<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    public abstract static class AssignBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x, Object i) {
+            throw nyi();
+        }
+    }
+
+    @RBuiltin(name = "<<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    public abstract static class AssignOuterBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x, Object i) {
+            throw nyi();
+        }
+    }
+
     @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AccessFieldNodeBuiltin extends ErrorAdapter {
+    public abstract static class AccessFieldBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
@@ -89,7 +110,7 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class UpdateFieldNodeBuiltin extends ErrorAdapter {
+    public abstract static class UpdateFieldBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x, Object i) {
@@ -98,7 +119,7 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "{", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class BraceNodeBuiltin extends ErrorAdapter {
+    public abstract static class BraceBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {
@@ -107,7 +128,52 @@ public class InfixEmulationFunctions {
     }
 
     @RBuiltin(name = "(", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class ParenNodeBuiltin extends ErrorAdapter {
+    public abstract static class ParenBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
+    @RBuiltin(name = "if", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class IfBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
+    @RBuiltin(name = "while", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class WhileBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
+    @RBuiltin(name = "for", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class ForBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
+    @RBuiltin(name = "break", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class BreakBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
+    @RBuiltin(name = "next", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class NextBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
         @Specialization
         protected Object doIt(Object x) {

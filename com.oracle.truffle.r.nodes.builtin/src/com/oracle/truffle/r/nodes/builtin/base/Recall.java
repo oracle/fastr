@@ -25,9 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,11 +36,12 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "Recall", kind = SUBSTITUTE, parameterNames = {"..."})
-// TODO INTERNAL
+@RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."})
+/**
+ * The {@code Recall} {@code .Internal}.
+ */
 public class Recall extends RCustomBuiltinNode {
-    @Child private DirectCallNode callNode;
-    @CompilationFinal private RFunction function;
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
     private final ConditionProfile argsPromise = ConditionProfile.createBinaryProfile();
 
@@ -52,18 +52,16 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+        RFunction function = RArguments.getFunction(cframe);
         if (function == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            function = RArguments.getFunction(frame);
-            if (function == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
-            }
-            callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
 
         // Use arguments in "..." as arguments for RECALL call
-        Object[] argsObject = RArguments.create(function, callNode.getSourceSection(), RArguments.getDepth(frame) + 1, createArgs(frame, arguments[0]));
-        return callNode.call(frame, argsObject);
+        Object[] argsObject = RArguments.create(function, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, createArgs(frame, arguments[0]));
+        return callCache.execute(frame, function.getTarget(), argsObject);
     }
 
     private Object[] createArgs(VirtualFrame frame, RNode argNode) {
