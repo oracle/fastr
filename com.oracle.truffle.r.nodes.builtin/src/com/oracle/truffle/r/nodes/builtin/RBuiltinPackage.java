@@ -29,6 +29,7 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.options.*;
@@ -56,22 +57,7 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public abstract class RBuiltinPackage {
 
-    private static class Component {
-        public final String libContents;
-        public final String libName;
-
-        public Component(String libName, String libContents) {
-            this.libContents = libContents;
-            this.libName = libName;
-        }
-
-        @Override
-        public String toString() {
-            return libName;
-        }
-    }
-
-    private final HashMap<String, ArrayList<Component>> rSources = new HashMap<>();
+    private final HashMap<String, ArrayList<Source>> rSources = new HashMap<>();
     private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
     private synchronized void putBuiltin(String name, RBuiltinFactory factory) {
@@ -86,14 +72,14 @@ public abstract class RBuiltinPackage {
             if (is == null) {
                 return;
             }
-            ArrayList<Component> componentList = new ArrayList<>();
+            ArrayList<Source> componentList = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = r.readLine()) != null) {
                     if (line.endsWith(".r") || line.endsWith(".R")) {
                         final String rResource = "R/" + line.trim();
-                        String content = Utils.getResourceAsString(getClass(), rResource, true);
-                        componentList.add(new Component(getClass().getSimpleName() + "/" + rResource, content));
+                        Source content = Utils.getResourceAsSource(getClass(), rResource);
+                        componentList.add(content);
                     }
                 }
             }
@@ -141,10 +127,10 @@ public abstract class RBuiltinPackage {
                 }
             }
         }
-        ArrayList<Component> sources = rSources.get(getName());
+        ArrayList<Source> sources = rSources.get(getName());
         if (sources != null) {
-            for (Component src : sources) {
-                RContext.getEngine().parseAndEval(src.libName, src.libContents, frame, envForFrame, false, false);
+            for (Source source : sources) {
+                RContext.getEngine().parseAndEval(source, frame, envForFrame, false, false);
             }
         }
         envForFrame.export();
