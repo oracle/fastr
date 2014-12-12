@@ -11640,6 +11640,10 @@ Error in k() : argument "y" is missing, with no default
 #{ round(Mod(1+1i)*10000) }
 [1] 14142
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testModeSet
+#{  x<-c(1,2); mode(x)<-"character"; x }
+[1] "1" "2"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNChar
 #{ nchar(c("hello", "hi")) }
 [1] 5 2

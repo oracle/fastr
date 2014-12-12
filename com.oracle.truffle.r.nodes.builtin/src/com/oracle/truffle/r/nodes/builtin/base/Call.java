@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Construct a call object ({@link RLanguage}) from a name and optional arguments.
@@ -44,20 +45,24 @@ public abstract class Call extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
-    protected RLanguage call(String name, @SuppressWarnings("unused") RMissing args) {
-        return makeCall(name, null);
+    @Specialization(guards = "!isEmptyName")
+    protected RLanguage call(RAbstractStringVector name, @SuppressWarnings("unused") RMissing args) {
+        return makeCall(name.getDataAt(0), null);
     }
 
-    @Specialization
-    protected RLanguage call(String name, RArgsValuesAndNames args) {
-        return makeCall(name, args);
+    @Specialization(guards = "!isEmptyName")
+    protected RLanguage call(RAbstractStringVector name, RArgsValuesAndNames args) {
+        return makeCall(name.getDataAt(0), args);
     }
 
     @Fallback
     @SuppressWarnings("unused")
     protected RLanguage call(Object name, Object args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
+    }
+
+    protected boolean isEmptyName(RAbstractStringVector name) {
+        return name.getLength() == 0;
     }
 
     @TruffleBoundary

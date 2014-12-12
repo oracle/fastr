@@ -11644,6 +11644,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testModeSet_f583f81f83ed2def4179e6bb91ffac61() {
+        assertEval("{  x<-c(1,2); mode(x)<-\"character\"; x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testNArgsIgnore_ee082d552ee9efa22803929c01c73692() {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
