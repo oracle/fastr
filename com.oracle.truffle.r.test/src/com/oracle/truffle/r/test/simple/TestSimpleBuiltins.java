@@ -2392,6 +2392,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ cbind(2,3, complex(3,3,2));}");
         assertEval("{ cbind(2,3, c(1,1,1)) }");
         assertEval("{ cbind(2.1:10,32.2) }");
+
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }");
     }
 
     @Test
@@ -2425,6 +2427,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
 
         assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
+
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(rbind,x)); y }");
     }
 
     @Test
