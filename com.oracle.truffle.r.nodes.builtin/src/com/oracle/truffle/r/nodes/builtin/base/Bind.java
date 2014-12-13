@@ -32,6 +32,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,10 +42,17 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class Bind extends RPrecedenceBuiltinNode {
 
     @Child private CastToVectorNode castVector;
+    @Child private DispatchedCallNode dcn;
 
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullNames = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
+
+    protected String getBindType() {
+        // this method should be abstract but due to annotation processor problem it does not work
+        Utils.nyi("getBindType() method must be overridden in a subclass");
+        return null;
+    }
 
     protected RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
@@ -61,7 +69,18 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "!oneElement"})
+    @Specialization(guards = {"!oneElement", "isDataFrame"})
+    protected Object allDataFrame(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevel, RArgsValuesAndNames args) {
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(DispatchedCallNode.create(getBindType(), RRuntime.USE_METHOD, getSuppliedArgsNames()));
+        }
+        // we don't pass deparseLevel (if we do, this fails) but data frame versions of rbind/cbind
+        // do not use it anyway
+        return dcn.executeInternal(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), args.getValues());
+    }
+
+    @Specialization(guards = {"isIntegerPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allInt(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         controlVisibility();
@@ -93,7 +112,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "!oneElement"})
+    @Specialization(guards = {"isDoublePrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allDouble(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         controlVisibility();
@@ -126,7 +145,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
     }
 
-    @Specialization(guards = {"isStringPrecedence", "!oneElement"})
+    @Specialization(guards = {"isStringPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allString(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         controlVisibility();
@@ -159,7 +178,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
     }
 
-    @Specialization(guards = {"isComplexPrecedence", "!oneElement"})
+    @Specialization(guards = {"isComplexPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allComplex(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         controlVisibility();
@@ -192,7 +211,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
     }
 
-    @Specialization(guards = {"isListPrecedence", "!oneElement"})
+    @Specialization(guards = {"isListPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allList(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         controlVisibility();
@@ -452,9 +471,18 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return isListPrecedence(frame, args);
     }
 
+    protected boolean isDataFrame(@SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
+        return args.getValues()[0] instanceof RDataFrame;
+    }
+
     @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
     public abstract static class CbindInternal extends Bind {
         private final BranchProfile everSeenNotEqualRows = BranchProfile.create();
+
+        @Override
+        public String getBindType() {
+            return "cbind";
+        }
 
         @Specialization(guards = {"!isNullPrecedence", "oneElement"})
         protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {
@@ -523,6 +551,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})
     public abstract static class RbindInternal extends Bind {
         private final BranchProfile everSeenNotEqualColumns = BranchProfile.create();
+
+        @Override
+        public String getBindType() {
+            return "rbind";
+        }
 
         @Specialization(guards = {"!isNullPrecedence", "oneElement"})
         protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {

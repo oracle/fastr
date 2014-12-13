@@ -166,7 +166,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         Object varArgContent = varArgsSlotNode.execute(frame);
 
         int times = varArgsSymbolIndices.length;
-        return createSignature(varArgContent, times, false);
+        return createSignature(varArgContent, times, true);
     }
 
     public static VarArgsSignature createSignature(Object varArgContent, int times, boolean allowConstants) {

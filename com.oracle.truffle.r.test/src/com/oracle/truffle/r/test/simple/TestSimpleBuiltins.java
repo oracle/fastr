@@ -192,6 +192,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ seq(7, c(41,42)) }");
         assertEval("{ seq(integer()) }");
         assertEval("{ seq(double()) }");
+        assertEval("{ seq(from=3L, length.out=3L) }");
     }
 
     @Test

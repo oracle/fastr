@@ -6432,6 +6432,11 @@ b 2 4 9
 b 1
 c 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCbind
+#{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }
+  a  c
+1 7 42
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCeiling
 #{ ceiling(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   1  -3  NA NaN Inf
@@ -13145,6 +13150,12 @@ z 8 9
   b c
 v 1 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
+#{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(rbind,x)); y }
+  V1
+a  7
+c 42
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
 #{ Im(1) }
 [1] 0
@@ -14205,6 +14216,10 @@ Error in seq.default(c(1, 2), 7) : 'from' must be of length 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
 #{ seq(double()) }
 integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(from=3L, length.out=3L) }
+[1] 3 4 5
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
 #{ seq(integer()) }
@@ -17560,13 +17575,6 @@ $x
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
-#{ n = c(2, 3, 5); s = c("aa", "bb", "cc"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }
-   n  s
-1 22 aa
-2 33 bb
-3 55 cc
-
-##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testMisc
 #{ y<-data.frame(7); as.logical(y) }
 [1] TRUE
 
@@ -17792,6 +17800,25 @@ $class
 $row.names
 [1] 1 2 3
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testUpdate
+#{ n = c(2, 3, 5); s = c("aa", "bb", "cc"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }
+   n  s
+1 22 aa
+2 33 bb
+3 55 cc
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testUpdate
+#{ x<-data.frame(c(1,2), c(3,4)); x[c(1,2)]<-list(c(11,12), c(13,14)); x }
+  c.1..2. c.3..4.
+1      11      13
+2      12      14
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testUpdate
+#{ x<-data.frame(c(1,2), c(3,4), c(5,6)); x[c(1,2, 3)]<-list(c(11,12), c(13,14), c(15,16)); x }
+  c.1..2. c.3..4. c.5..6.
+1      11      13      15
+2      12      14      16
 
 ##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
 #{ nonExistentVariable }

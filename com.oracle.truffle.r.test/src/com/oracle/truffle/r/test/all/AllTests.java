@@ -6039,6 +6039,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCbind_f057343fd791cbd93cd19a7941b728fd() {
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCbind_849d2f7200b6d113f749abbc67d41a7d() {
         assertEvalWarning("{ cbind(1:3,1:2) }");
     }
@@ -13054,6 +13059,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRbind_b63a593be8dfcba2aa29ab61b32774af() {
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(rbind,x)); y }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRbind_be158803468f8099cec173e61a9c21e2() {
         assertEvalWarning("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
     }
@@ -14246,6 +14256,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSequenceStatement_dea4be53b087a0c12fb86db7de2333e8() {
         assertEval("{ seq(double()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_c48ad0a94bea13fed40bc48149d25824() {
+        assertEval("{ seq(from=3L, length.out=3L) }");
     }
 
     @Test
@@ -18194,11 +18209,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleDataFrames_testMisc_19e026dd42148710ae11cdde5dc3b73e() {
-        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
-    }
-
-    @Test
     public void TestSimpleDataFrames_testMisc_e52a62b09e6557563b89aed7622a090f() {
         assertEval("{ y<-data.frame(7); as.logical(y) }");
     }
@@ -18371,6 +18381,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleDataFrames_testRowNames_617a4bc79c4c6a2d2d1bfc03b84edde6() {
         assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testUpdate_19e026dd42148710ae11cdde5dc3b73e() {
+        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testUpdate_9aca194664ecddf11b6eab4c9a03c5f9() {
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[c(1,2)]<-list(c(11,12), c(13,14)); x }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testUpdate_9f9f9e05cb1bbf56d9b184fef6d3c937() {
+        assertEval("{ x<-data.frame(c(1,2), c(3,4), c(5,6)); x[c(1,2, 3)]<-list(c(11,12), c(13,14), c(15,16)); x }");
     }
 
     @Test
