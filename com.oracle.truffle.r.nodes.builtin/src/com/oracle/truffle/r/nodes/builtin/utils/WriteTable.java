@@ -150,6 +150,26 @@ public class WriteTable {
 
     @SuppressWarnings("unused")
     private static String encodeElement(Object x, int indx, char quote, char dec) {
+        if (x instanceof RAbstractDoubleVector) {
+            RAbstractDoubleVector v = (RAbstractDoubleVector) x;
+            return RRuntime.doubleToString(v.getDataAt(indx));
+        }
+        if (x instanceof RAbstractIntVector) {
+            RAbstractIntVector v = (RAbstractIntVector) x;
+            return RRuntime.intToString(v.getDataAt(indx), false);
+        }
+        if (x instanceof RAbstractLogicalVector) {
+            RAbstractLogicalVector v = (RAbstractLogicalVector) x;
+            return RRuntime.logicalToString(v.getDataAt(indx));
+        }
+        if (x instanceof RAbstractComplexVector) {
+            RAbstractComplexVector v = (RAbstractComplexVector) x;
+            return RRuntime.complexToString(v.getDataAt(indx));
+        }
+        if (x instanceof RAbstractRawVector) {
+            RAbstractRawVector v = (RAbstractRawVector) x;
+            return RRuntime.rawToString(v.getDataAt(indx));
+        }
         throw RInternalError.unimplemented();
     }
 
