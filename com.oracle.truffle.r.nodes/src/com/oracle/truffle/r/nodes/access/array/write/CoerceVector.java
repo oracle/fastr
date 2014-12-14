@@ -97,6 +97,11 @@ public abstract class CoerceVector extends RNode {
         return vector;
     }
 
+    @Specialization
+    protected RFactor coerce(VirtualFrame frame, Object value, RFactor vector, Object operand) {
+        return vector;
+    }
+
     // int vector value
 
     @Specialization

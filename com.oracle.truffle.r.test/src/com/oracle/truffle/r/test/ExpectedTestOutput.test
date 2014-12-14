@@ -8911,6 +8911,11 @@ attr(,"levels")
 [1] "a" "b" "c"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
+#{ z=factor(c("a", "b", "a")); z[1] = "b"; z }
+[1] b b a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);fdata}
  [1] 1 2 2 3 1 2 3 3 1 2 3 3 1
 Levels: 1 2 3

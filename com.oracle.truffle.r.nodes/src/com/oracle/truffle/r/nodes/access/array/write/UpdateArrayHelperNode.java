@@ -190,6 +190,31 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @Specialization
+    protected Object update(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, Object positions, RFactor factor) {
+        RVector levels = factor.getLevels();
+        int[] data = new int[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            Object val = value.getDataAtAsObject(i);
+            for (int j = 0; j < levels.getLength(); j++) {
+                // levels are strings in most cases so using equals should be OK performance-wise
+                if (val.equals(levels.getDataAtAsObject(j))) {
+                    data[i] = j + 1;
+                    break;
+                }
+            }
+        }
+        RIntVector newValue = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        RVector inner = factor.getVector();
+        RIntVector res = (RIntVector) updateRecursive(frame, v, newValue, inner, positions, recLevel, false);
+        if (res != inner) {
+            res.setLevels(factor.getLevels());
+            return RDataFactory.createFactor(res, false);
+        } else {
+            return factor;
+        }
+    }
+
+    @Specialization
     protected Object update(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RDataFrame vector) {
         RVector inner = vector.getVector();
         RVector res = (RVector) updateRecursive(frame, v, value, inner, positions, recLevel, false);

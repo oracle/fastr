@@ -8549,6 +8549,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFactor_d58ed8da228ab0296423308393286ef2() {
+        assertEval("{ z=factor(c(\"a\", \"b\", \"a\")); z[1] = \"b\"; z }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testFactor_2ef7de52def309425a9b70965111f004() {
         assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
     }
