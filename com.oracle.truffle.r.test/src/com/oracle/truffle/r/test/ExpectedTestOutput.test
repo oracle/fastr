@@ -4907,6 +4907,10 @@ $names
 [1] "a" "b"
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsVector
+#{ x<-factor(c("a", "b", "a")); as.vector(x) }
+[1] "a" "b" "a"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAtomicTypeCheck
 #is.atomic("1")
 [1] TRUE

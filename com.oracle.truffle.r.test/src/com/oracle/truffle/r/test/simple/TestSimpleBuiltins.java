@@ -776,6 +776,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ as.vector(NULL, \"list\") }");
         assertEval("{ as.vector(NULL) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
     }
 
     @Test

@@ -206,6 +206,17 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "modeIsAny")
+    protected RAbstractVector asVector(RFactor x, @SuppressWarnings("unused") String mode) {
+        RVector levels = x.getLevels();
+        RVector result = levels.createEmptySameType(x.getLength(), RDataFactory.COMPLETE_VECTOR);
+        RIntVector factorData = x.getVector();
+        for (int i = 0; i < result.getLength(); i++) {
+            result.transferElementSameType(i, levels, factorData.getDataAt(i) - 1);
+        }
+        return result;
+    }
+
+    @Specialization(guards = "modeIsAny")
     protected RNull asVector(RNull x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return x;
@@ -280,7 +291,7 @@ public abstract class AsVector extends RBuiltinNode {
         return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode);
     }
 
-    protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+    protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractContainer x, String mode) {
         return RType.Any.getName().equals(mode);
     }
 

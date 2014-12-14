@@ -5279,6 +5279,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsVector_2f31db2c02e87e0b7e0d33e75d78665d() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsVector_e20c6558cca6aea70251347229e52bf5() {
         assertEvalWarning("{ as.vector(\"foo\", \"integer\") }");
     }
