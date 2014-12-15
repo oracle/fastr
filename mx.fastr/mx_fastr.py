@@ -29,19 +29,12 @@ import os
 
 _fastr_suite = None
 
-def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
+def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     setREnvironment()
-    debugger, args = _check_debug(args)
-
-    if debugger:
-        if debugger != 'rrepl':
-            mx.abort("unknown debugger :" + debugger)
-        className = "com.oracle.truffle.r.repl.RREPLServer"
-        vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.repl")]
-    else:
-        vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    project = className.rpartition(".")[0]
+    vmArgs = ['-cp', mx.classpath(project)]
 
     if runBench == False:
         vmArgs = vmArgs + ['-ea', '-esa']
@@ -51,19 +44,11 @@ def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False
 
 def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
-    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
+    return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
 
 def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
-    return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
-
-def _check_debug(args):
-    if len(args) > 1 and (args[0] == '--debugger' or args[0] == '-d'):
-        debugger = args[1]
-        args = args[2:]
-        return debugger, args
-    else:
-        return None, args
+    return runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
 
 def setREnvironment():
     osname = platform.system()

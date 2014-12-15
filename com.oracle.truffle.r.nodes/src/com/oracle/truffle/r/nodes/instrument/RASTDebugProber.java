@@ -49,6 +49,9 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
 
     private static final RASTDebugProber singleton = new RASTDebugProber();
 
+    private RASTDebugProber() {
+    }
+
     public static RASTDebugProber getRASTProber() {
         return singleton;
     }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.net.*;
 import java.nio.charset.*;
 import java.util.*;
 
@@ -134,6 +135,16 @@ public final class Utils {
             graphPrinter.beginGraph(RRuntime.toString(function)).visit(callTarget.getRootNode());
         }
         graphPrinter.printToNetwork(true);
+    }
+
+    public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
+        URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
+        try {
+            return Source.fromFileName(url.getPath());
+        } catch (IOException ex) {
+            Utils.fail("resource " + resourceName + " not found");
+            return null;
+        }
     }
 
     public static String getResourceAsString(Class<?> clazz, String resourceName, boolean mustExist) {

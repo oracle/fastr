@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.io.*;
 import java.nio.file.*;
 
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -37,7 +38,7 @@ public class RProfile {
      * The system profile location is hard-wired relative to this class and loaded statically for
      * AOT VMs.
      */
-    private static String systemProfile = Utils.getResourceAsString(RProfile.class, "R/Rprofile.R", true);
+    private static Source systemProfile = Utils.getResourceAsSource(RProfile.class, "R/Rprofile.R");
 
     public static void initialize() {
         String rHome = REnvVars.rHome();
@@ -52,7 +53,7 @@ public class RProfile {
             }
             File siteProfileFile = new File(siteProfilePath);
             if (siteProfileFile.exists()) {
-                siteProfile = source(siteProfileFile);
+                siteProfile = getProfile(siteProfilePath);
             }
         }
 
@@ -70,37 +71,35 @@ public class RProfile {
             if (userProfilePath != null) {
                 File userProfileFile = new File(userProfilePath);
                 if (userProfileFile.exists()) {
-                    userProfile = source(userProfileFile);
+                    userProfile = getProfile(userProfilePath);
                 }
             }
 
         }
     }
 
-    private static String siteProfile;
-    private static String userProfile;
+    private static Source siteProfile;
+    private static Source userProfile;
 
-    public static String systemProfile() {
+    public static Source systemProfile() {
         return systemProfile;
     }
 
-    public static String siteProfile() {
+    public static Source siteProfile() {
         return siteProfile;
     }
 
-    public static String userProfile() {
+    public static Source userProfile() {
         return userProfile;
     }
 
-    private static String source(File file) {
-        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
-            byte[] bytes = new byte[(int) file.length()];
-            is.read(bytes);
-            return new String(bytes);
+    private static Source getProfile(String path) {
+        try {
+            return Source.fromFileName(path);
         } catch (IOException ex) {
-            Utils.fail("unexpected error reading profile file: " + file);
+            // GnuR does not report an error, just ignores
             return null;
         }
-
     }
+
 }

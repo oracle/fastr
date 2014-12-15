@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RContext;
@@ -46,6 +47,8 @@ public class Browser {
         CONTINUE,
         FINISH
     }
+
+    private static final String BROWSER_SOURCE = "<browser_input>";
 
     @CompilerDirectives.TruffleBoundary
     public static ExitMode interact(MaterializedFrame frame) {
@@ -93,7 +96,7 @@ public class Browser {
                     }
 
                     default:
-                        RContext.getEngine().parseAndEval("<browser_input>", input, frame, callerEnv, true, false);
+                        RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, callerEnv, true, false);
                         break;
                 }
             }

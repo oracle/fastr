@@ -93,7 +93,7 @@ public final class REngine implements RContext.Engine {
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
      * @return a {@link VirtualFrame} that can be passed to
-     *         {@link #parseAndEval(String, String, MaterializedFrame, REnvironment, boolean, boolean)}
+     *         {@link #parseAndEval(Source, MaterializedFrame, REnvironment, boolean, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         singleton.startTime = System.nanoTime();
@@ -122,18 +122,18 @@ public final class REngine implements RContext.Engine {
             ROptions.initialize();
             RProfile.initialize();
             // eval the system profile
-            singleton.parseAndEval("<system_profile>", RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+            singleton.parseAndEval(RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
             REnvironment.packagesInitialize(RPackages.initialize());
             RPackageVariables.initialize(); // TODO replace with R code
-            String siteProfile = RProfile.siteProfile();
+            Source siteProfile = RProfile.siteProfile();
             if (siteProfile != null) {
-                singleton.parseAndEval("<site_profile>", siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+                singleton.parseAndEval(siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
             }
             initialized = true;
         }
-        String userProfile = RProfile.userProfile();
+        Source userProfile = RProfile.userProfile();
         if (userProfile != null) {
-            singleton.parseAndEval("<user_profile>", userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
+            singleton.parseAndEval(userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
         }
         registerBaseGraphicsSystem();
         return globalFrame;
@@ -180,23 +180,14 @@ public final class REngine implements RContext.Engine {
         return instrumentingEnabled;
     }
 
-    public Object parseAndEval(File file, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult) {
-        try {
-            return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromFileName(file.getAbsolutePath()), frame, printResult, false);
-        } catch (IOException ex) {
-            // we have already read the file so this cannot happen (comes from Source.fromFileName).
-            throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    public Object parseAndEval(String sourceDesc, String rscript, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, sourceDesc), frame, printResult, allowIncompleteSource);
+    public Object parseAndEval(Source sourceDesc, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+        return parseAndEvalImpl(new ANTLRStringStream(sourceDesc.getCode()), sourceDesc, frame, printResult, allowIncompleteSource);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame.materialize(), printResult, false);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), frame.materialize(), printResult, false);
     }
 
     public class ParseException extends Exception {
