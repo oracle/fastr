@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.nio.charset.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,6 +35,8 @@ public class LocaleFunctions {
 
     @RBuiltin(name = "Sys.getlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category"})
     public abstract static class GetLocale extends RBuiltinNode {
+
+        @TruffleBoundary
         @Specialization
         protected Object getLocal(RAbstractStringVector categoryVec) {
             controlVisibility();
@@ -52,6 +55,8 @@ public class LocaleFunctions {
 
     @RBuiltin(name = "Sys.setlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category, locale"})
     public abstract static class SetLocale extends RBuiltinNode {
+
+        @TruffleBoundary
         @Specialization
         protected Object setLocal(@SuppressWarnings("unused") RAbstractStringVector category) {
             controlVisibility();
