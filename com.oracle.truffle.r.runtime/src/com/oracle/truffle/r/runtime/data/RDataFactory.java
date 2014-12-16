@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -36,6 +37,11 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class RDataFactory {
+
+    /**
+     * Profile for creation tracing; must precede following declarations.
+     */
+    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
     private static final RIntVector EMPTY_INT_VECTOR = createIntVector(0);
     private static final RDoubleVector EMPTY_DOUBLE_VECTOR = createDoubleVector(0);
@@ -390,20 +396,20 @@ public final class RDataFactory {
         return traceDataCreated(new REnvironment.NewEnv(name));
     }
 
+    @CompilationFinal private static PerfHandler stats;
+
     private static <T> T traceDataCreated(T data) {
-        if (stats != null) {
+        if (statsProfile.profile(stats != null)) {
             stats.record(data);
         }
         return data;
     }
 
-    @CompilationFinal private static Handler stats;
-
     static {
-        RPerfAnalysis.register(new Handler());
+        RPerfAnalysis.register(new PerfHandler());
     }
 
-    private static class Handler implements RPerfAnalysis.Handler {
+    private static class PerfHandler implements RPerfAnalysis.Handler {
         private static Map<Class<?>, RPerfAnalysis.Histogram> histMap;
 
         @TruffleBoundary

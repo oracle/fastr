@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -87,9 +88,10 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     public abstract Iterator<RAttribute> iterator();
 
+    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
+
     public static RAttributes create() {
-        RAttributes result = stats ? new RAttributesStatsImpl() : new RAttributesImpl();
-        return result;
+        return new RAttributesImpl();
     }
 
     /**
@@ -99,6 +101,9 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
     private static class RAttributesImpl extends RAttributes implements RAttribute {
 
         RAttributesImpl() {
+            if (statsProfile.profile(stats != null)) {
+                stats.init();
+            }
         }
 
         private RAttributesImpl(RAttributesImpl attrs) {
@@ -142,18 +147,24 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
                 AttrInstance attr = find(list, name);
                 if (attr != null) {
                     attr.value = value;
+                    // no stats update needed, same size
                     return;
                 }
                 list.add(new AttrInstance(name, value));
             } else {
                 if (name1.equals(name)) {
                     value1 = value;
+                    // no stats update needed, same size
+                    return;
                 } else {
                     ArrayList<AttrInstance> list = new ArrayList<>(2);
                     list.add(new AttrInstance(name1, value1));
                     list.add(new AttrInstance(name, value));
                     value1 = list;
                 }
+            }
+            if (statsProfile.profile(stats != null)) {
+                stats.update(this);
             }
         }
 
@@ -332,48 +343,36 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     // Performance analysis
 
-    /**
-     * Only used when gathering performance statistics. Assumes single threaded.
-     */
-    private static class RAttributesStatsImpl extends RAttributesImpl {
-        private static final RPerfAnalysis.Histogram hist = new RPerfAnalysis.Histogram(5);
-
-        private int maxSize;
-
-        RAttributesStatsImpl() {
-            // starts off at size zero
-            hist.inc(0);
-        }
-
-        @Override
-        public void put(String name, Object value) {
-            super.put(name, value);
-            int s = size();
-            if (s > maxSize) {
-                int effectivePrevSize = hist.effectiveBucket(maxSize);
-                int effectiveSizeNow = hist.effectiveBucket(s);
-                hist.dec(effectivePrevSize);
-                hist.inc(effectiveSizeNow);
-                maxSize = s;
-            }
-        }
-
-        static void report() {
-            System.out.printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
-            hist.report();
-        }
-    }
-
-    @CompilationFinal private static boolean stats;
+    @CompilationFinal private static PerfHandler stats;
 
     static {
         RPerfAnalysis.register(new PerfHandler());
     }
 
+    /**
+     * Collects data on the maximum size of the attribute set. So only interested in adding not
+     * removing attributes.
+     */
     public static class PerfHandler implements RPerfAnalysis.Handler {
+        private static final RPerfAnalysis.Histogram hist = new RPerfAnalysis.Histogram(5);
+
+        @TruffleBoundary
+        void init() {
+            hist.inc(0);
+        }
+
+        @TruffleBoundary
+        void update(RAttributesImpl attr) {
+            // incremented size by 1
+            int s = attr.size();
+            int effectivePrevSize = hist.effectiveBucket(s - 1);
+            int effectiveSizeNow = hist.effectiveBucket(s);
+            hist.dec(effectivePrevSize);
+            hist.inc(effectiveSizeNow);
+        }
 
         public void initialize() {
-            stats = true;
+            stats = this;
         }
 
         public String getName() {
@@ -382,7 +381,8 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
         public void report() {
-            RAttributesStatsImpl.report();
+            System.out.printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
+            hist.report();
         }
 
     }
