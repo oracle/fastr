@@ -56,7 +56,7 @@ public abstract class Formals extends RBuiltinNode {
         for (int i = names.length - 1; i >= 0; i--) {
             RNode def = defaults[i];
             Object defValue = def == null ? RMissing.instance : RDataFactory.createLanguage(def);
-            RPairList pl = new RPairList(defValue, succ, names[i]);
+            RPairList pl = RDataFactory.createPairList(defValue, succ, names[i]);
             succ = pl;
         }
         return succ;

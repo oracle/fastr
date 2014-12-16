@@ -24,12 +24,16 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class RDataFactory {
 
@@ -212,10 +216,6 @@ public final class RDataFactory {
         return traceDataCreated(new RDoubleSequence(start, stride, length));
     }
 
-    private static <T> T traceDataCreated(T data) {
-        return data;
-    }
-
     public static RIntVector createEmptyIntVector() {
         return EMPTY_INT_VECTOR;
     }
@@ -312,6 +312,10 @@ public final class RDataFactory {
         return traceDataCreated(new RExpression(list));
     }
 
+    public static RFormula createFormula(SourceSection source, Object response, Object model) {
+        return traceDataCreated(new RFormula(source, response, model));
+    }
+
     public static RFactor createFactor(RIntVector vector, boolean ordered) {
         return traceDataCreated(new RFactor(vector, ordered));
     }
@@ -345,11 +349,104 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
+    public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
+        assert closure != null;
+        assert closure.getExpr() != null;
+        return traceDataCreated(new RPromise(evalPolicy, type, execFrame, closure));
+    }
+
+    public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type) {
+        return traceDataCreated(new RPromise(evalPolicy, type, null, null));
+    }
+
     @TruffleBoundary
     public static RPromise createPromise(Object rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?
         Closure closure = Closure.create(rep);
-        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env.getFrame(), closure));
+        return traceDataCreated(new RPromise(EvalPolicy.PROMISED, PromiseType.NO_ARG, env.getFrame(), closure));
+    }
+
+    public static RPairList createPairList(Object car, Object cdr, Object tag) {
+        return traceDataCreated(new RPairList(car, cdr, tag, null));
+    }
+
+    public static RPairList createPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
+        return traceDataCreated(new RPairList(car, cdr, tag, type));
+    }
+
+    public static RFunction createFunction(String name, RootCallTarget target, MaterializedFrame enclosingFrame) {
+        return traceDataCreated(new RFunction(name, target, null, enclosingFrame));
+    }
+
+    public static RFunction createFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
+        return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame));
+    }
+
+    public static REnvironment createNewEnv(REnvironment parent, int size) {
+        return traceDataCreated(new REnvironment.NewEnv(parent, size));
+    }
+
+    public static REnvironment createNewEnv(String name) {
+        return traceDataCreated(new REnvironment.NewEnv(name));
+    }
+
+    private static <T> T traceDataCreated(T data) {
+        if (stats != null) {
+            stats.record(data);
+        }
+        return data;
+    }
+
+    @CompilationFinal private static Handler stats;
+
+    static {
+        RPerfAnalysis.register(new Handler());
+    }
+
+    private static class Handler implements RPerfAnalysis.Handler {
+        private static Map<Class<?>, RPerfAnalysis.Histogram> histMap;
+
+        @TruffleBoundary
+        void record(Object data) {
+            Class<?> klass = data.getClass();
+            boolean isBounded = data instanceof RBounded;
+            RPerfAnalysis.Histogram hist = histMap.get(klass);
+            if (hist == null) {
+                hist = new RPerfAnalysis.Histogram(isBounded ? 10 : 1);
+                histMap.put(klass, hist);
+            }
+            int length = isBounded ? ((RBounded) data).getLength() : 0;
+            hist.inc(length);
+        }
+
+        public void initialize() {
+            stats = this;
+            histMap = new HashMap<>();
+        }
+
+        public String getName() {
+            return "datafactory";
+        }
+
+        public void report() {
+            System.out.println("Scalar types");
+            for (Map.Entry<Class<?>, RPerfAnalysis.Histogram> entry : histMap.entrySet()) {
+                RPerfAnalysis.Histogram hist = entry.getValue();
+                if (hist.numBuckets() == 1) {
+                    System.out.printf("%s: %d%n", entry.getKey().getSimpleName(), hist.getTotalCount());
+                }
+            }
+            System.out.println();
+            System.out.println("Vector types");
+            for (Map.Entry<Class<?>, RPerfAnalysis.Histogram> entry : histMap.entrySet()) {
+                RPerfAnalysis.Histogram hist = entry.getValue();
+                if (hist.numBuckets() > 1) {
+                    System.out.printf("%s: %d, max size %d%n", entry.getKey().getSimpleName(), hist.getTotalCount(), hist.getMaxSize());
+                    entry.getValue().report();
+                }
+            }
+            System.out.println();
+        }
     }
 
 }

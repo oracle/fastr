@@ -94,7 +94,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(Formula formula) {
-        return ConstantNode.create(new RFormula(formula.getSource(), formula.getResponse().accept(this), formula.getModel().accept(this)));
+        return ConstantNode.create(RDataFactory.createFormula(formula.getSource(), formula.getResponse().accept(this), formula.getModel().accept(this)));
     }
 
     @Override

@@ -40,14 +40,10 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
      */
     private final SEXPTYPE type;
 
-    public RPairList(Object car, Object cdr, String tag) {
-        this(car, cdr, tag, null);
-    }
-
     /**
      * Variant used in unserialization to record the GnuR type the pairlist denotes.
      */
-    public RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
+    RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
         this.car = car;
         this.cdr = cdr;
         this.tag = tag;

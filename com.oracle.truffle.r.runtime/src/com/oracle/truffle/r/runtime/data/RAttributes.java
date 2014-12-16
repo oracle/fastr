@@ -24,8 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -337,14 +336,13 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
      * Only used when gathering performance statistics. Assumes single threaded.
      */
     private static class RAttributesStatsImpl extends RAttributesImpl {
-        private static final int OVERFLOW = 5;
-        private static final int[] hist = new int[OVERFLOW + 1];
-        private static int globalMaxSize;
+        private static final RPerfAnalysis.Histogram hist = new RPerfAnalysis.Histogram(5);
 
         private int maxSize;
 
         RAttributesStatsImpl() {
-            hist[0]++;
+            // starts off at size zero
+            hist.inc(0);
         }
 
         @Override
@@ -352,40 +350,31 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
             super.put(name, value);
             int s = size();
             if (s > maxSize) {
-                int eIndexPrev = eIndex(maxSize);
-                int eIndexNow = eIndex(s);
-                hist[eIndexPrev]--;
-                hist[eIndexNow]++;
+                int effectivePrevSize = hist.effectiveBucket(maxSize);
+                int effectiveSizeNow = hist.effectiveBucket(s);
+                hist.dec(effectivePrevSize);
+                hist.inc(effectiveSizeNow);
                 maxSize = s;
-                if (maxSize > globalMaxSize) {
-                    globalMaxSize = maxSize;
-                }
-            }
-        }
-
-        private static int eIndex(int index) {
-            if (index > OVERFLOW) {
-                return OVERFLOW;
-            } else {
-                return index;
             }
         }
 
         static void report() {
-            // Checkstyle: stop system print check
-            int sum = 0;
-            for (int i = 0; i < hist.length; i++) {
-                sum += hist[i];
-            }
-            System.out.printf("RAttributes statistics: %d instances, max size %d%n", sum, globalMaxSize);
-            System.out.printf("%-9s%9d%9d%9d%9d%9d%9s%n", "Size:", 0, 1, 2, 3, 4, "> 4");
-            System.out.printf("%-9s%9d%9d%9d%9d%9d%9d%n", "Count", hist[0], hist[1], hist[2], hist[3], hist[4], hist[5]);
+            System.out.printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
+            hist.report();
         }
     }
 
-    private static final boolean stats = RPerfAnalysis.register(new PerfHandler());
+    @CompilationFinal private static boolean stats;
+
+    static {
+        RPerfAnalysis.register(new PerfHandler());
+    }
 
     public static class PerfHandler implements RPerfAnalysis.Handler {
+
+        public void initialize() {
+            stats = true;
+        }
 
         public String getName() {
             return "attributes";
@@ -395,5 +384,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         public void report() {
             RAttributesStatsImpl.report();
         }
+
     }
 }

@@ -187,7 +187,7 @@ public class ArgumentMatcher {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
                     Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-                    evaledArgs[fi] = RPromise.create(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultClosure);
+                    evaledArgs[fi] = RDataFactory.createPromise(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultClosure);
                 }
             } else if (function.isBuiltin() && evaledArg instanceof RPromise) {
                 RPromise promise = (RPromise) evaledArg;

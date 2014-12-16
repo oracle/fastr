@@ -281,7 +281,7 @@ public class PromiseNode extends RNode {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
-                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
+                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
             }
             return new RArgsValuesAndNames(promises, names);
         }

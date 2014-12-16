@@ -140,7 +140,7 @@ public abstract class Lapply extends RBuiltinNode {
             RNode getIndexedLoad() {
                 if (indexedLoad == null) {
                     AccessArrayNode indexNode = (AccessArrayNode) RContext.getEngine().parseSingle("X[[i]]");
-                    REnvironment env = new REnvironment.NewEnv("dummy");
+                    REnvironment env = RDataFactory.createNewEnv("dummy");
                     env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(ITER_INDEX_NAME, false)));
                     indexedLoad = indexNode.substitute(env);
                 }

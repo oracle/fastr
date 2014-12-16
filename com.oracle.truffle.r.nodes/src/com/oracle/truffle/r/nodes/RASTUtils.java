@@ -106,7 +106,7 @@ public class RASTUtils {
             RPairList prev = null;
             RPairList result = null;
             for (int i = 0; i < nodes.length; i++) {
-                RPairList pl = new RPairList(createLanguageElement(unwrap(nodes[i])), null, names[i]);
+                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(nodes[i])), null, names[i]);
                 if (prev != null) {
                     prev.setCdr(pl);
                 } else {

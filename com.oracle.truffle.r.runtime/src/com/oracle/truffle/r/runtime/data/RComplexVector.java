@@ -83,7 +83,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     public RComplex getDataAt(int i) {
         int index = i << 1;
-        return new RComplex(data[index], data[index + 1]);
+        return RDataFactory.createComplex(data[index], data[index + 1]);
     }
 
     public double[] getDataCopy() {

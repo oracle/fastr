@@ -50,7 +50,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
      */
     private int length = -1;
 
-    public RLanguage(Object rep) {
+    RLanguage(Object rep) {
         super(rep);
     }
 

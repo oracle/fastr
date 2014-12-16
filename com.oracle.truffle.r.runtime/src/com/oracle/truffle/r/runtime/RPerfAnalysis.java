@@ -24,58 +24,117 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.r.options.*;
 
 /**
- * Manage the creation/activation of handlers or performance analysis.
+ * Manage the creation/activation of handlers or performance analysis. Enabled by the
+ * {@link FastROptions#PerfStats} option.
+ *
+ * The handlers are all registered statically from the class wanting to participate. The handles are
+ * enabled selectively at runtime based on the command line option. An enabled handler gets a call
+ * to its {@link Handler#initialize()} method so that it can enable its perf-mode behavior.
  */
 public class RPerfAnalysis {
 
     public interface Handler {
+        void initialize();
 
         String getName();
 
         void report();
     }
 
-    private static final ArrayList<Handler> handlers = new ArrayList<>();
+    public static class Histogram {
+        private final long[] hist;
+        private int maxSize = -1;
 
-    @CompilationFinal private static final String[] enabledNames; // null == all analyses enabled
-
-    static {
-        // Currently we use a system property to enable the perf analysis
-        String prop = System.getProperty("fastr.perf");
-        if (prop == null) {
-            enabledNames = new String[0];
-        } else {
-            boolean all = prop.length() == 0;
-            enabledNames = all ? null : prop.split(",");
+        public Histogram(int buckets) {
+            hist = new long[buckets + 1];
         }
+
+        public void inc(int size) {
+            if (size > maxSize) {
+                maxSize = size;
+            }
+            hist[effectiveBucket(size)]++;
+        }
+
+        public void dec(int size) {
+            hist[effectiveBucket(size)]--;
+        }
+
+        public int numBuckets() {
+            return hist.length - 1;
+        }
+
+        public long getMaxSize() {
+            return maxSize;
+        }
+
+        public int effectiveBucket(int size) {
+            if (size > hist.length - 1) {
+                return hist.length - 1;
+            } else {
+                return size;
+            }
+        }
+
+        public long getTotalCount() {
+            long totalCount = 0;
+            for (int i = 0; i < hist.length; i++) {
+                totalCount += hist[i];
+            }
+            return totalCount;
+        }
+
+        public void report() {
+            long maxCount = -1;
+            for (int i = 0; i < hist.length; i++) {
+                if (hist[i] > maxCount) {
+                    maxCount = hist[i];
+                }
+            }
+            int fieldWidth = Long.toString(maxCount).length() + 1;
+            if (fieldWidth < 10) {
+                fieldWidth = 10;
+            }
+            String fieldWidthString = Integer.toString(fieldWidth);
+            String sFormat = "%-" + fieldWidthString + "s";
+            String dFormat = "%-" + fieldWidthString + "d";
+            System.out.printf(sFormat, "Size");
+            for (int i = 0; i < hist.length - 1; i++) {
+                System.out.printf(dFormat, i);
+            }
+            System.out.printf(sFormat, "> " + (hist.length - 1));
+            System.out.println();
+            System.out.printf(sFormat, "Count");
+            for (int i = 0; i < hist.length - 1; i++) {
+                System.out.printf(dFormat, hist[i]);
+            }
+            System.out.printf(dFormat, hist[hist.length - 1]);
+            System.out.println();
+        }
+
     }
 
-    public static boolean register(Handler handler) {
+    private static final ArrayList<Handler> handlers = new ArrayList<>();
+
+    public static void register(Handler handler) {
+        handlers.add(handler);
         if (enabled(handler.getName())) {
-            handlers.add(handler);
-            return true;
-        } else {
-            return false;
+            handler.initialize();
         }
     }
 
     private static boolean enabled(String name) {
-        if (enabledNames == null) {
-            return true;
-        }
-        for (String hname : enabledNames) {
-            if (hname.equals(name)) {
-                return true;
-            }
-        }
-        return false;
+        return FastROptions.matchesElement(name, FastROptions.PerfStats);
     }
 
     private static boolean reporting;
 
+    /**
+     * Called just before FastR exits.
+     */
     public static void report() {
         if (reporting) {
             // some crash in a reporter caused a recursive entry
@@ -83,7 +142,9 @@ public class RPerfAnalysis {
         }
         reporting = true;
         for (Handler handler : handlers) {
-            handler.report();
+            if (enabled(handler.getName())) {
+                handler.report();
+            }
         }
     }
 }
