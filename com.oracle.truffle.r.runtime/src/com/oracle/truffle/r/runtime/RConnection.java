@@ -186,4 +186,25 @@ public abstract class RConnection implements RClassHierarchy {
 
     public abstract void flush() throws IOException;
 
+    @SuppressWarnings("unused")
+    public RStringVector readChar(RAbstractIntVector nchars, boolean useBytes) throws IOException {
+        InputStream inputStream = getInputStream();
+        String[] data = new String[nchars.getLength()];
+        for (int i = 0; i < data.length; i++) {
+            byte[] bytes = new byte[nchars.getDataAt(i)];
+            inputStream.read(bytes);
+            int j = 0;
+            for (; j < bytes.length; j++) {
+                // strings end at 0
+                if (bytes[j] == 0) {
+                    break;
+                }
+            }
+            data[i] = new String(bytes, 0, j, "US-ASCII");
+        }
+
+        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+
+    }
+
 }

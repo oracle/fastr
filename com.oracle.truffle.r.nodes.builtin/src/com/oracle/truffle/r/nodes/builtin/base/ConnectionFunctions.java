@@ -407,6 +407,9 @@ public abstract class ConnectionFunctions {
                 case Write:
                     delegate = new FileWriteTextRConnection(this);
                     break;
+                case ReadBinary:
+                    delegate = new FileReadBinaryRConnection(this);
+                    break;
                 default:
                     throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
             }
@@ -472,6 +475,34 @@ public abstract class ConnectionFunctions {
         @Override
         public void flush() throws IOException {
             bufferedWriter.flush();
+        }
+    }
+
+    private static class FileReadBinaryRConnection extends DelegateReadRConnection {
+        private BufferedInputStream inputStream;
+        private InputStreamReader inputReader;
+
+        FileReadBinaryRConnection(FileRConnection base) throws IOException {
+            super(base);
+            inputStream = new BufferedInputStream(new FileInputStream(base.path));
+            inputReader = new InputStreamReader(inputStream, "US-ASCII");
+        }
+
+        @TruffleBoundary
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            throw new IOException("TODO");
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return inputStream;
+        }
+
+        @Override
+        public void close() throws IOException {
+            inputReader.close();
+            base.closed = true;
         }
     }
 
@@ -1056,4 +1087,41 @@ public abstract class ConnectionFunctions {
 
     }
 
+    @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"})
+    public abstract static class ReadChar extends RBuiltinNode {
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "ncharsEmpty")
+        protected RStringVector readCharNcharsEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
+            controlVisibility();
+            return RDataFactory.createEmptyStringVector();
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "useBytesEmpty")
+        protected RStringVector readCharUseBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
+            controlVisibility();
+            return RDataFactory.createEmptyStringVector();
+        }
+
+        @Specialization(guards = {"!ncharsEmpty", "!useBytesEmpty"})
+        protected RStringVector readChar(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
+            controlVisibility();
+            try {
+                return con.readChar(nchars, useBytes.getDataAt(0) == RRuntime.LOGICAL_TRUE);
+            } catch (IOException x) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+            }
+        }
+
+        boolean ncharsEmpty(@SuppressWarnings("unused") RConnection con, RAbstractIntVector nchars) {
+            return nchars.getLength() == 0;
+        }
+
+        @SuppressWarnings("unused")
+        boolean useBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
+            return useBytes.getLength() == 0;
+        }
+
+    }
 }
