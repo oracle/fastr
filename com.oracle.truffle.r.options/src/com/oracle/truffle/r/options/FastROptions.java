@@ -85,7 +85,7 @@ public class FastROptions {
                         }
 
                         case "String": {
-                            String value = stringOptionValue(prop);
+                            String value = (String) entry.getValue();
                             desc.getOptionValue().setValue(value);
                             break;
                         }
@@ -161,12 +161,4 @@ public class FastROptions {
         return option.charAt(2) == '+';
     }
 
-    private static String stringOptionValue(String option) {
-        int ix = option.indexOf('=');
-        if (ix < 0) {
-            return "";
-        } else {
-            return option.substring(ix + 1);
-        }
-    }
 }
