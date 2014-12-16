@@ -15,7 +15,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
+public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
 
     private String targetFunctionNameR;
     protected RFunction targetFunctionR;
@@ -25,7 +25,7 @@ public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
     private boolean writeGroupR;
     protected boolean isBuiltinCalled;
 
-    public BinarysOpsGroupDispatchNode(final String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
+    public BinaryOpsGroupDispatchNode(final String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
         super(aGenericName, RGroupGenerics.GROUP_OPS, hasVararg, callSrc, argSrc);
     }
 
@@ -117,7 +117,7 @@ public class BinarysOpsGroupDispatchNode extends GroupDispatchNode {
     }
 }
 
-class GenericBinarysOpsGroupDispatchNode extends BinarysOpsGroupDispatchNode {
+class GenericBinarysOpsGroupDispatchNode extends BinaryOpsGroupDispatchNode {
 
     public GenericBinarysOpsGroupDispatchNode(String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
         super(aGenericName, hasVararg, callSrc, argSrc);

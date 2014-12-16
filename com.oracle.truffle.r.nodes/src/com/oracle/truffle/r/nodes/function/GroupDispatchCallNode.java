@@ -161,7 +161,7 @@ public abstract class GroupDispatchCallNode extends RNode {
                     return new UnaryOpsGroupDispatchNode(this.genericName, this.callArgsNode.containsVarArgsSymbol(), this.getSourceSection(), this.callArgsNode.getEncapsulatingSourceSection());
                 }
                 if (evaluatedArgs.length >= 2) {
-                    return new BinarysOpsGroupDispatchNode(this.genericName, this.callArgsNode.containsVarArgsSymbol(), this.getSourceSection(), this.callArgsNode.getEncapsulatingSourceSection());
+                    return new BinaryOpsGroupDispatchNode(this.genericName, this.callArgsNode.containsVarArgsSymbol(), this.getSourceSection(), this.callArgsNode.getEncapsulatingSourceSection());
                 }
             }
             return new GroupDispatchNode(this.genericName, this.groupName, this.callArgsNode.containsVarArgsSymbol(), this.getSourceSection(), this.callArgsNode.getEncapsulatingSourceSection());
