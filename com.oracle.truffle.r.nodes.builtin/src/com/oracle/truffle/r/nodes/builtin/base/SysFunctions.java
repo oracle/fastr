@@ -30,12 +30,10 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.SysFunctionsFactory.SysSetEnvFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -107,73 +105,20 @@ public class SysFunctions {
 
     }
 
-    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE, parameterNames = {"..."})
-    // TODO INTERNAL when argument names available in list(...)
+    @RBuiltin(name = "Sys.setenv", kind = INTERNAL, parameterNames = {"nm", "values"})
     public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
 
-        protected abstract Object executeObject(VirtualFrame frame, Object args);
-
-        @Child private SysSetEnv sysSetEnvRecursive;
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
-        }
-
-        @Specialization
+        @Specialization()
         @TruffleBoundary
-        protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
-            return doSysSetEnv(new Object[]{argVec.getDataAt(0)});
-        }
-
-        @Specialization(guards = "oneElement")
-        protected Object doSysSetEnvOneElement(VirtualFrame frame, RArgsValuesAndNames args) {
-            controlVisibility();
-            if (sysSetEnvRecursive == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                sysSetEnvRecursive = insert(SysSetEnvFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
-            }
-            return sysSetEnvRecursive.executeObject(frame, args.getValues()[0]);
-
-        }
-
-        @Specialization(guards = "!oneElement")
-        @TruffleBoundary
-        protected RLogicalVector doSysSetEnv(RArgsValuesAndNames args) {
-            Object[] argValues = args.getValues();
-            return doSysSetEnv(argValues);
-        }
-
-        private RLogicalVector doSysSetEnv(Object[] argValues) {
-            controlVisibility();
-            String[] argNames = getSuppliedArgsNames();
-            validateArgNames(argNames);
-            byte[] data = new byte[argValues.length];
-            for (int i = 0; i < argValues.length; i++) {
-                REnvVars.put(argNames[i], (String) argValues[i]);
+        protected RLogicalVector doSysSetEnv(RStringVector names, RStringVector values) {
+            byte[] data = new byte[names.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                REnvVars.put(names.getDataAt(i), values.getDataAt(i));
                 data[i] = RRuntime.LOGICAL_TRUE;
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private void validateArgNames(String[] argNames) {
-            if (argNames == null || checkIfContainsNull(argNames)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
-            }
-        }
-
-        private static boolean checkIfContainsNull(String[] strings) {
-            for (String string : strings) {
-                if (string == null) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        protected boolean oneElement(RArgsValuesAndNames args) {
-            return args.length() == 1;
-        }
     }
 
     @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL, parameterNames = {"x"})
@@ -304,6 +249,32 @@ public class SysFunctions {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
         }
+    }
+
+    // TODO implement
+    @RBuiltin(name = "Sys.chmod", kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
+    public abstract static class SysChmod extends RBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        @TruffleBoundary
+        protected Object sysChmod(RAbstractStringVector pathVec, Object octmode, byte useUmask) {
+            controlVisibility();
+            throw RError.nyi(getEncapsulatingSourceSection(), " Sys.chmod");
+        }
+
+    }
+
+    // TODO implement
+    @RBuiltin(name = "Sys.umask", kind = INTERNAL, parameterNames = {"octmode"})
+    public abstract static class SysUmask extends RBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        @TruffleBoundary
+        protected Object sysChmod(Object octmode) {
+            controlVisibility();
+            throw RError.nyi(getEncapsulatingSourceSection(), " Sys.umask");
+        }
+
     }
 
 }
