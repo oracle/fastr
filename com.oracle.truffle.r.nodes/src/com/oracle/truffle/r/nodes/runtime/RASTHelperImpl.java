@@ -27,6 +27,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
@@ -56,7 +57,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  *
  * This implementation necessarily has to use a lot of {@code instanceof} checks on the node class.
  * However, it is not important enough to warrant refactoring as an {@link RNode} method, (cf
- * deparse).
+ * deparse). TODO reconsider this.
  *
  * Some examples:
  *
@@ -107,6 +108,16 @@ public class RASTHelperImpl implements RASTHelper {
             return ((WhileNode) node).isRepeat() ? 2 : 3;
         } else if (node instanceof WriteVariableNode) {
             return 3;
+        } else if (node instanceof AccessArrayNode) {
+            AccessArrayNode accessArrayNode = (AccessArrayNode) node;
+            int baseResult = 3;
+            if (accessArrayNode.exactInSource) {
+                baseResult++;
+            }
+            if (accessArrayNode.dropInSource) {
+                baseResult++;
+            }
+            return baseResult;
         } else if (node instanceof VarArgsPromiseNode) {
             return ((VarArgsPromiseNode) node).getNodes().length;
         } else {
@@ -191,6 +202,16 @@ public class RASTHelperImpl implements RASTHelper {
                     return RDataFactory.createSymbol(wvn.getName());
                 case 2:
                     return RASTUtils.createLanguageElement(wvn.getRhs());
+                default:
+                    assert false;
+            }
+        } else if (node instanceof AccessArrayNode) {
+            AccessArrayNode accessArrayNode = (AccessArrayNode) node;
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol(accessArrayNode.isSubset ? "`[`" : "`[[`");
+                case 1:
+                    return RASTUtils.createLanguageElement(accessArrayNode.getVector());
                 default:
                     assert false;
             }
