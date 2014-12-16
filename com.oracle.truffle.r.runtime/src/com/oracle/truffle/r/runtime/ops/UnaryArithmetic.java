@@ -24,6 +24,7 @@ public abstract class UnaryArithmetic extends Operation {
     public static final UnaryArithmeticFactory ROUND = Round::new;
     public static final UnaryArithmeticFactory FLOOR = Floor::new;
     public static final UnaryArithmeticFactory CEILING = Ceiling::new;
+    public static final UnaryArithmeticFactory PLUS = Plus::new;
 
     public UnaryArithmetic() {
         super(false, false);
@@ -71,6 +72,42 @@ public abstract class UnaryArithmetic extends Operation {
 
         @Override
         @TruffleBoundary
+        public RComplex opd(double re, double im, int digits) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
+    public static class Plus extends UnaryArithmetic {
+
+        @Override
+        public int op(int op) {
+            return op;
+        }
+
+        @Override
+        public double op(double op) {
+            return op;
+        }
+
+        @Override
+        public int op(byte op) {
+            return op;
+        }
+
+        @Override
+        public RComplex op(double re, double im) {
+            return RDataFactory.createComplex(re, im);
+        }
+
+        @Override
+        @SlowPath
+        public double opd(double op, int digits) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        @SlowPath
         public RComplex opd(double re, double im, int digits) {
             throw new UnsupportedOperationException();
         }

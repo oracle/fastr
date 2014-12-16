@@ -21,7 +21,7 @@ public abstract class UnaryOperation extends Operation {
     public static ASTNode create(SourceSection source, UnaryOperator op, ASTNode operand) {
         switch (op) {
             case PLUS:
-                return new Not(source, operand);
+                return new UnaryPlus(source, operand);
             case MINUS:
                 return new UnaryMinus(source, operand);
             case NOT:

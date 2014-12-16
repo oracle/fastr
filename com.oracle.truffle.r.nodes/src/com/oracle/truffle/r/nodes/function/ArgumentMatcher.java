@@ -194,6 +194,11 @@ public class ArgumentMatcher {
                 evaledArgs[fi] = promiseHelper.evaluate(frame, promise);
             }
         }
+        for (int i = 0; i < evaledArgs.length; ++i) {
+            if (evaledArgs[i] == null) {
+                evaledArgs[i] = RMissing.instance;
+            }
+        }
         return new EvaluatedArguments(evaledArgs, formals.getNames());
     }
 

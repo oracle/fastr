@@ -22,8 +22,6 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
-
     UseMethodDispatchNode(final String generic, final RStringVector type) {
         this.genericName = generic;
         this.type = type;
@@ -69,48 +67,21 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return executeHelper(frame, args);
     }
 
-    // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
-    // having one method with a rather convoluted control flow structure?
-
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
         // Extract arguments from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
         assert RArguments.getNamesLength(frame) == 0 || RArguments.getNamesLength(frame) == argCount;
         boolean hasNames = RArguments.getNamesLength(frame) > 0;
-        int argListSize = argCount;
-        Object[] argValues = new Object[argListSize];
-        String[] argNames = hasNames ? new String[argListSize] : null;
+        Object[] argValues = new Object[argCount];
+        String[] argNames = hasNames ? new String[argCount] : null;
         int fi = 0;
-        int index = 0;
         for (; fi < argCount; ++fi) {
-            Object arg = RArguments.getArgument(frame, fi);
-            if (arg instanceof RArgsValuesAndNames) {
-                RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) arg;
-                argListSize += varArgsContainer.length() - 1;
-                argValues = Utils.resizeArray(argValues, argListSize);
-                // argNames can be null if no names for arguments have been specified
-                argNames = argNames == null ? new String[argListSize] : Utils.resizeArray(argNames, argListSize);
-                Object[] varArgsValues = varArgsContainer.getValues();
-                String[] varArgsNames = varArgsContainer.getNames();
-                for (int i = 0; i < varArgsContainer.length(); i++) {
-                    addArg(argValues, varArgsValues[i], index);
-                    String name = varArgsNames == null ? null : varArgsNames[i];
-                    argNames[index] = name;
-                    index++;
-                }
-            } else {
-                addArg(argValues, arg, index);
-                if (hasNames) {
-                    argNames[index] = RArguments.getName(frame, fi);
-                }
-                index++;
+            argValues[fi] = RArguments.getArgument(frame, fi);
+            if (hasNames) {
+                argNames[fi] = RArguments.getName(frame, fi);
             }
         }
-
-        // ...and use them as 'supplied' arguments...
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
-        // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
@@ -153,12 +124,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @TruffleBoundary
     private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, funCallNode.getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);
-        return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
+        return indirectCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 
     private void findTargetFunction(Frame callerFrame) {

@@ -67,6 +67,9 @@ public abstract class VApply extends RBuiltinNode {
         } else if (funValue instanceof String) {
             String[] data = applyResultZeroLength ? new String[0] : convertString(applyResult);
             result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        } else if (funValue instanceof RComplex) {
+            double[] data = applyResultZeroLength ? new double[0] : convertComplex(applyResult);
+            result = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             assert false;
         }
@@ -105,6 +108,17 @@ public abstract class VApply extends RBuiltinNode {
         String[] newArray = new String[values.length];
         for (int i = 0; i < values.length; i++) {
             newArray[i] = (String) values[i];
+        }
+        return newArray;
+    }
+
+    @TruffleBoundary
+    private static double[] convertComplex(Object[] values) {
+        double[] newArray = new double[values.length * 2];
+        for (int i = 0; i < values.length; i++) {
+            int index = i << 1;
+            newArray[index] = ((RComplex) values[i]).getRealPart();
+            newArray[index + 1] = ((RComplex) values[i]).getImaginaryPart();
         }
         return newArray;
     }

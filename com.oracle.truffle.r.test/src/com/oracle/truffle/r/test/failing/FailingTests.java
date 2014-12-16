@@ -104,6 +104,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleArithmetic_testVectorizedLogicalAttributesIgnore_6ca96306ddcf6d79c3645b1dcdb13321() {
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x | y }");
+    }
+
+    @Ignore
     public void TestSimpleAssignment_testAssign_283c9530c525c82a5e49b43433fdced9() {
         assertEvalNoOutput("{ a<-1 }");
     }
@@ -676,6 +681,51 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_8e866be378d6495f8d649996dcb5bb3c() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_cab09968ee0783bc157730e05358ed0c() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_7cd2b27121f6c77b417a436d60108819() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_a34678ac5082e00e15dd97ecd53f0e12() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_7b9d1da1c475fe180c3d19653a62003e() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_e1f4890b0e585468d589f92e64e8fe43() {
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_442949c79222d476ad19ed8d25f6d67b() {
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_b998c6b80f80df4ef39a60ff889bc0e4() {
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testFactorIgnore_79abe62e1800fec0bdfb1ee89b43889b() {
+        assertEvalWarning("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
     }
 
     @Ignore
@@ -1706,6 +1756,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testUseMethodSimple_24e4b6579385856080f94ac48ee5406f() {
         assertEval("{f<-function(x){UseMethod(\"f\")};f.logical<-function(x){print(\"logical\")};f(TRUE)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapplyIgnore_a2e4a980be9ca6c3aa6f1be2cf568841() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testVapplyIgnore_3a016d2d2634bb34067c42ecf7f16d67() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
     }
 
     @Ignore
