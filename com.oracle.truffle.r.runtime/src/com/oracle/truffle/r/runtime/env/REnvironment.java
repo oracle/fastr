@@ -109,7 +109,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
     private static final REnvFrameAccess noFrameAccess = new REnvFrameAccess();
 
-    public static final String UNNAMED = "";
+    public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
     private static final String PATH_ATTR_KEY = "path";
 
@@ -222,7 +222,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
-        namespaceRegistry = RDataFactory.createNewEnv(null);
+        namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
         baseEnv = new Base(baseFrame);
 
         // autoload always next
@@ -931,7 +931,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
          */
         public NewEnv(String name) {
             this(null, 0);
-            setAttr(NAME_ATTR_KEY, name);
+            if (name != UNNAMED) {
+                setAttr(NAME_ATTR_KEY, name);
+            }
         }
 
         private static REnvironment createAutoload() {
