@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.junit.*;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.*;
 
 public class TestSimpleBuiltins extends TestBase {
@@ -4249,6 +4250,18 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testNArgsIgnore() {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+    }
+
+    @Test
+    public void testEnvVars() {
+        assertEvalError("{ Sys.setenv(\"a\") } ");
+        assertEval("{ Sys.setenv(FASTR_A=\"a\"); Sys.getenv(\"FASTR_A\"); } ");
+        REnvVars.unset("FASTR_A");
+        assertEval("{ Sys.setenv(FASTR_A=\"a\", FASTR_B=\"b\"); Sys.getenv(c(\"FASTR_A\", \"FASTR_B\"));  } ");
+        REnvVars.unset("FASTR_A");
+        REnvVars.unset("FASTR_B");
+        assertEval("{ Sys.getenv(\"FASTR_A\") } ");
+        assertEval("{ Sys.getenv(\"FASTR_A\", unset=\"UNSET\") } ");
     }
 
 }

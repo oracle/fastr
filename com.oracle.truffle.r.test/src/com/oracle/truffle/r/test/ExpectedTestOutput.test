@@ -8226,6 +8226,27 @@ attr(,"foo")
 #{x <- c("a", "ab", "abcde", NA); encodeString(x, width = NA, quote = "'", na.encode=FALSE, justify = "right");}
 [1] "    'a'" "   'ab'" "'abcde'" NA
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.getenv("FASTR_A") } 
+[1] ""
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.getenv("FASTR_A", unset="UNSET") } 
+[1] "UNSET"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.setenv("a") } 
+Error in Sys.setenv("a") : all arguments must be named
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.setenv(FASTR_A="a"); Sys.getenv("FASTR_A"); } 
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.setenv(FASTR_A="a", FASTR_B="b"); Sys.getenv(c("FASTR_A", "FASTR_B"));  } 
+FASTR_A FASTR_B
+    "a"     "b"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ as.environment(".GlobalEnv") }
 <environment: R_GlobalEnv>

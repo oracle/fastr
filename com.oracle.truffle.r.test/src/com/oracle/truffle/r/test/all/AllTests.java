@@ -7824,6 +7824,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvVars_98e4322c18798d7bc3afca7f666e129c() {
+        assertEval("{ Sys.setenv(FASTR_A=\"a\"); Sys.getenv(\"FASTR_A\"); } ");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvVars_42eda7e9f9fec9b98b2d8ac186ef9012() {
+        assertEval("{ Sys.setenv(FASTR_A=\"a\", FASTR_B=\"b\"); Sys.getenv(c(\"FASTR_A\", \"FASTR_B\"));  } ");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvVars_8c32df8a162aee9d09ae458e3afe9a52() {
+        assertEval("{ Sys.getenv(\"FASTR_A\") } ");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvVars_5b1c3f16772d928f73bdae0737552a97() {
+        assertEval("{ Sys.getenv(\"FASTR_A\", unset=\"UNSET\") } ");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvVars_14d6cf1c0627bb48c21282626cd2bada() {
+        assertEvalError("{ Sys.setenv(\"a\") } ");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_1b8319a6952fc86b59ba9a33e6463213() {
         assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"abc\", \"def\"), h) }");
     }
