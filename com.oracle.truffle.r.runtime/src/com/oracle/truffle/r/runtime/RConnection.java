@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public abstract class RConnection implements RClassHierarchy {
 
+    public static final int GZIP_BUFFER_SIZE = (2 << 20);
+
     private LinkedList<String> pushBack;
 
     public abstract String[] readLinesInternal(int n) throws IOException;

@@ -148,16 +148,19 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return pl.car;
     }
 
-    public Object getNames() {
+    public RStringVector getNames() {
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         int i = 0;
-        while (pl != null) {
-            data[i] = (String) pl.tag;
+        while (true) {
+            data[i] = pl.tag.toString();
             if (pl.tag == RRuntime.STRING_NA) {
                 complete = false;
+            }
+            if (pl.cdr == null || pl.cdr == RNull.instance) {
+                break;
             }
             pl = (RPairList) pl.cdr;
             i++;

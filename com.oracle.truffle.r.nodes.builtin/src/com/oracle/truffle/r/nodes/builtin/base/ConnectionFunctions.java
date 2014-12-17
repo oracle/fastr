@@ -563,7 +563,7 @@ public abstract class ConnectionFunctions {
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
             super(base);
-            stream = new GZIPInputStream(new FileInputStream(base.path));
+            stream = new GZIPInputStream(new FileInputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
         }
 
         @Override

@@ -741,7 +741,7 @@ public class RSerialize {
                 PByteArrayInputStream pbis = (PByteArrayInputStream) is;
                 xdr = new Xdr(pbis.getData(), pbis.pos());
             } else {
-                byte[] isbuf = new byte[16384];
+                byte[] isbuf = new byte[RConnection.GZIP_BUFFER_SIZE];
                 xdr = new Xdr(0);
                 int count = 0;
                 // read entire stream
