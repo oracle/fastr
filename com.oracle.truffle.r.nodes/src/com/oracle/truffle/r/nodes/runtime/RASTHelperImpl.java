@@ -118,6 +118,8 @@ public class RASTHelperImpl implements RASTHelper {
                 baseResult++;
             }
             return baseResult;
+        } else if (node instanceof AccessFieldNode) {
+            return 3;
         } else if (node instanceof VarArgsPromiseNode) {
             return ((VarArgsPromiseNode) node).getNodes().length;
         } else {
@@ -215,6 +217,19 @@ public class RASTHelperImpl implements RASTHelper {
                 default:
                     assert false;
             }
+        } else if (node instanceof AccessFieldNode) {
+            AccessFieldNode accessFieldNode = (AccessFieldNode) node;
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("`$`");
+                case 1:
+                    return RASTUtils.createLanguageElement(accessFieldNode.getObject());
+                case 2:
+                    return RDataFactory.createSymbol(accessFieldNode.getField());
+                default:
+                    assert false;
+            }
+
         } else {
             // TODO fill out
             assert false;
