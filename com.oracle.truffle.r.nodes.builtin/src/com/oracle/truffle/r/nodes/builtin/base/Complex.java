@@ -44,22 +44,22 @@ public abstract class Complex extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "lengthOutZero")
     @SuppressWarnings("unused")
-    protected RComplexVector complexZeroLength(int lengthOut, RAbstractDoubleVector real, RAbstractDoubleVector imaginary) {
-        controlVisibility();
-        return RDataFactory.createComplexVector(0);
+    @Specialization(guards = "resultEmpty")
+    protected RComplexVector complexEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
+        return RDataFactory.createEmptyComplexVector();
     }
 
-    @Specialization(guards = "!lengthOutZero")
+    @Specialization(guards = "!resultEmpty")
     protected RComplexVector complex(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
         controlVisibility();
         RDoubleVector real = checkLength(realAbsVec);
         RDoubleVector imaginary = checkLength(imaginaryAbsVec);
         int realLength = real.getLength();
         int imaginaryLength = imaginary.getLength();
+        int length = Math.max(Math.max(realLength, imaginaryLength), lengthOut);
         boolean complete = RDataFactory.COMPLETE_VECTOR;
-        double[] data = new double[lengthOut << 1];
+        double[] data = new double[length << 1];
         for (int i = 0; i < data.length; i += 2) {
             data[i] = real.getDataAt((i >> 1) % realLength);
             data[i + 1] = imaginary.getDataAt((i >> 1) % imaginaryLength);
@@ -78,8 +78,8 @@ public abstract class Complex extends RBuiltinNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean lengthOutZero(int lengthOut, RAbstractDoubleVector real, RAbstractDoubleVector imaginary) {
-        return lengthOut == 0;
+    public static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
+        return lengthOut == 0 && realAbsVec.getLength() == 0 && imaginaryAbsVec.getLength() == 0;
     }
+
 }
