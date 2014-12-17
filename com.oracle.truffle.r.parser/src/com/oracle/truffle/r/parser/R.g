@@ -580,8 +580,8 @@ arg_expr [List<ArgNode> l]
     : e=expr                                   { $l.add(ArgNode.create(sourceSection("arg_expr/expr", e, e), (Symbol) null, e)); }
     | name=(id | STRING) n_ ASSIGN n_ val=expr { $l.add(ArgNode.create(sourceSection("arg_expr/name=expr", name, val), name.getText(), val)); }
     | name=(id | STRING) n_ a=ASSIGN           { $l.add(ArgNode.create(sourceSection("arg_expr/name=", name, a), name.getText(), null)); }
-    | NULL n_ ASSIGN n_ val=expr               { Utils.nyi(); }
-    | NULL n_ ASSIGN                           { Utils.nyi(); }
+    | name=NULL n_ ASSIGN n_ val=expr          { $l.add(ArgNode.create(sourceSection("arg_expr/NULL=expr", name, val), name.getText(), val)); }
+    | name=NULL n_ a=ASSIGN                    { $l.add(ArgNode.create(sourceSection("arg_expr/NULL=", name, a), name.getText(), null)); }
     ;
 
 ///
