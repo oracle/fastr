@@ -125,6 +125,46 @@ $two
 #{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }
 character(0)
 
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { assign('e', function() {x}, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { assign('e', sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { b <<- function() {x} } ; a <- 1 ; f( a ) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { delayedAssign('b', function() {x}, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; f( a ) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { e <<- sys.frame(sys.nframe()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f( a ) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { le <- sys.frame(sys.nframe()); delayedAssign('e', le, le, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { sys.frame(sys.nframe()) } ; a <- 1 ; e <- f( a ) ; a <- 10 ; e$x }
+[1] 10
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testArithmeticUpdate
 #{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- 1L + x ; x } ; f(FALSE) }
 [1] 4

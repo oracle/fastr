@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 @RBuiltin(name = "assign", kind = SUBSTITUTE, parameterNames = {"x", "value", "pos", "envir", "inherits", "immediate"})
 // TODO INTERNAL
@@ -51,6 +52,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     // FIXME deal with omitted parameters: pos, imemdiate
 
     @CompilationFinal private final BranchProfile[] slotFoundOnIteration = {BranchProfile.create(), BranchProfile.create(), BranchProfile.create()};
+    private final BranchProfile invalidateProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {
@@ -98,7 +100,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return variableValue;
     }
 
-    private static Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
+    private Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
         MaterializedFrame materializedFrame = startFrame;
         FrameSlot frameSlot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         while (!isAppropriateFrameSlot(frameSlot, materializedFrame)) {
@@ -109,12 +111,13 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return variableValue;
     }
 
-    private static void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
+    private void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
         FrameSlot fs = frameSlot;
         if (fs == null) {
-            fs = frame.getFrameDescriptor().addFrameSlot(variableName);
+            fs = frame.getFrameDescriptor().addFrameSlot(variableName, FrameSlotChangeMonitor.createMonitor(), FrameSlotKind.Illegal);
         }
         frame.setObject(fs, variableValue);
+        FrameSlotChangeMonitor.checkAndInvalidate(frame, fs, invalidateProfile);
     }
 
     private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {

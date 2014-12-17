@@ -51,6 +51,8 @@ import com.oracle.truffle.r.runtime.env.*;
  *                            +-------------------+
  * INDEX_DEPTH             -> | depth             |
  *                            +-------------------+
+ * INDEX_IS_IRREGULAR      -> | isIrregular       |
+ *                            +-------------------+
  * INDEX_N_NAMES           -> | nNames            |
  *                            +-------------------+
  * INDEX_ARGUMENTS         -> | arg_0             |
@@ -85,10 +87,11 @@ public final class RArguments {
     private static final int INDEX_ENCLOSING_FRAME = 3;
     private static final int INDEX_N_ARGS = 4;
     private static final int INDEX_DEPTH = 5;
-    private static final int INDEX_N_NAMES = 6;
-    private static final int INDEX_ARGUMENTS = 7;
+    private static final int INDEX_IS_IRREGULAR = 6;
+    private static final int INDEX_N_NAMES = 7;
+    private static final int INDEX_ARGUMENTS = 8;
 
-    private static final int S3_VAR_COUNT = 8;
+    private static final int S3_VAR_COUNT = 9;
     /*
      * These indices are relative to INDEX_ARGUMENTS + nArgs+ nNames
      */
@@ -143,6 +146,7 @@ public final class RArguments {
         a[INDEX_CALL_SRC] = callSrc;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_DEPTH] = depth;
+        a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_N_ARGS] = evaluatedArgs.length;
         a[INDEX_N_NAMES] = names.length;
         copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
@@ -175,6 +179,7 @@ public final class RArguments {
     public static Object[] createUnitialized() {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
         a[INDEX_DEPTH] = 0;
+        a[INDEX_IS_IRREGULAR] = false;
         return a;
     }
 
@@ -324,6 +329,10 @@ public final class RArguments {
         return (Integer) getArgumentsWithEvalCheck(frame)[INDEX_DEPTH];
     }
 
+    public static boolean getIsIrregular(Frame frame) {
+        return (boolean) getArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR];
+    }
+
     public static void copyArgumentsInto(Frame frame, Object[] target) {
         System.arraycopy(getArgumentsWithEvalCheck(frame), INDEX_ARGUMENTS, target, 0, getNArgs(frame));
     }
@@ -331,6 +340,18 @@ public final class RArguments {
     public static Object getArgument(Frame frame, int argIndex) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
         return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
+    }
+
+    /**
+     * <b>Only to be called from AccessArgumentNode!</b>
+     *
+     * @param frame
+     * @param argIndex
+     * @param newValue
+     */
+    public static void setArgument(Frame frame, int argIndex, Object newValue) {
+        assert (argIndex >= 0 && argIndex < getNArgs(frame));
+        getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex] = newValue;
     }
 
     public static int getArgumentsLength(Frame frame) {
@@ -369,6 +390,15 @@ public final class RArguments {
 
     public static void setDepth(Frame frame, int depth) {
         getArgumentsWithEvalCheck(frame)[INDEX_DEPTH] = depth;
+    }
+
+    public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {
+        getArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR] = isIrregularFrame;
+    }
+
+    public static void setIsIrregular(Object[] arguments, boolean isIrregularFrame) {
+        assert arguments.length > INDEX_ARGUMENTS;
+        arguments[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {

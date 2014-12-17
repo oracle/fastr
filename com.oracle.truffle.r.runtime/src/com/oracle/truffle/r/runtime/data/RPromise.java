@@ -22,19 +22,23 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * Denotes an R {@code promise}.
+ * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise} and
+ * {@link VarargPromise} - are only present for documentation reasons: Because Truffle cannot do
+ * proper function dispatch based on inheritance, an additional {@link #optType} is introduced,
+ * which is used for manual method dispatch.
  */
 @ValueType
-public final class RPromise extends RLanguageRep {
+public class RPromise extends RLanguageRep {
 
     /**
      * The policy used to evaluate a promise.
@@ -82,6 +86,19 @@ public final class RPromise extends RLanguageRep {
         NO_ARG;
     }
 
+    /**
+     * As Truffle cannot inline virtual methods properly, this type was introduced to tell all
+     * {@link RPromise} classes apart and to implement "virtual" method dispatch.
+     *
+     * @see RPromise
+     */
+    public enum OptType {
+        DEFAULT,
+        EAGER,
+        VARARG,
+        PROMISED
+    }
+
     public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
     /**
@@ -94,6 +111,12 @@ public final class RPromise extends RLanguageRep {
      */
     protected final PromiseType type;
 
+    protected final OptType optType;
+
+    /**
+     * @see #getFrame()
+     * @see EagerPromise#materialize()
+     */
     protected MaterializedFrame execFrame;
 
     /**
@@ -118,104 +141,126 @@ public final class RPromise extends RLanguageRep {
     private boolean underEvaluation = false;
 
     /**
-     * This creates a new tuple (env, expr), which may later be evaluated. Must only be called from
-     * {@link RDataFactory}.
+     * This creates a new tuple (isEvaluated=false, expr, env, closure, value=null), which may later
+     * be evaluated.
      *
      * @param evalPolicy {@link EvalPolicy}
+     * @param type {@link #type}
+     * @param optType {@link #optType}
+     * @param execFrame {@link #execFrame}
      * @param closure {@link #getClosure()}
      */
-    RPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
         this.evalPolicy = evalPolicy;
         this.type = type;
+        this.optType = optType;
         this.execFrame = execFrame;
         this.closure = closure;
     }
 
-    @TruffleBoundary
-    protected Object doEvalArgument(SourceSection callSrc) {
-        assert execFrame != null;
-        return RContext.getEngine().evalPromise(this, callSrc);
-    }
-
-    protected Object doEvalArgument(MaterializedFrame frame) {
-        return RContext.getEngine().evalPromise(this, frame);
-    }
-
-    public boolean isNonArgument() {
-        return type == PromiseType.NO_ARG;
-    }
-
-    public boolean isInlined() {
-        return evalPolicy == EvalPolicy.INLINED;
+    /**
+     * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
+     * evaluated. Meant to be called via {@link RPromiseFactory#createArgEvaluated(Object)} only!
+     *
+     *
+     * @param evalPolicy {@link EvalPolicy}
+     * @param type {@link #type}
+     * @param optType {@link #optType}
+     * @param expr {@link #getRep()}
+     * @param value {@link #value}
+     */
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, Object expr, Object value) {
+        super(expr);
+        this.evalPolicy = evalPolicy;
+        this.type = type;
+        this.optType = optType;
+        this.value = value;
+        this.isEvaluated = true;
+        // Not needed as already evaluated:
+        this.execFrame = null;
+        this.closure = null;
     }
 
     /**
-     * @return The state of the {@link #underEvaluation} flag.
+     * This creates a new tuple (isEvaluated=false, expr, null, null, value=null). Meant to be
+     * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
+     *
+     * @param evalPolicy {@link EvalPolicy}
+     * @param type {@link #type}
+     * @param expr {@link #getRep()}
      */
-    public boolean isUnderEvaluation() {
-        return underEvaluation;
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, Object expr) {
+        super(expr);
+        this.evalPolicy = evalPolicy;
+        this.type = type;
+        this.optType = optType;
+        // Not needed as already evaluated:
+        this.execFrame = null;
+        this.closure = null;
+    }
+
+    /**
+     * @param evalPolicy {@link EvalPolicy}
+     * @param closure {@link #getClosure()}
+     * @return see {@link #RPromise(EvalPolicy, PromiseType, OptType, MaterializedFrame, Closure)}
+     */
+    public static RPromise create(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
+        assert closure != null;
+        assert closure.getExpr() != null;
+        return new RPromise(evalPolicy, type, OptType.DEFAULT, execFrame, closure);
+    }
+
+    public final boolean isInlined() {
+        return evalPolicy == EvalPolicy.INLINED;
     }
 
     /**
      * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
      */
-    public boolean isDefault() {
+    public final boolean isDefault() {
         return type == PromiseType.ARG_DEFAULT;
     }
+
+    public final boolean isNonArgument() {
+        return type == PromiseType.NO_ARG;
+    }
+
+    public final boolean isNullFrame() {
+        return execFrame == null;
+    }
+
+// /**
+// * @return Whether this is a eagerly evaluated Promise
+// */
+// public boolean isEagerPromise() {
+// return optType == OptType.EAGER || optType == OptType.PROMISED || optType == OptType.VARARG;
+// }
 
     /**
      * Used in case the {@link RPromise} is evaluated outside.
      *
      * @param newValue
      */
-    public void setValue(Object newValue) {
+    public final void setValue(Object newValue) {
         this.value = newValue;
         this.isEvaluated = true;
 
-        // TODO Does this apply to other values, too?
+        // set NAMED = 2
         if (newValue instanceof RShareable) {
-            // set NAMED = 2
             ((RShareable) newValue).makeShared();
         }
     }
 
-    /**
-     * @return The representation of expression (a RNode). May contain <code>null</code> if no expr
-     *         is provided!
-     */
-    @Override
-    public Object getRep() {
-        return super.getRep();
+    @TruffleBoundary
+    protected final Object doEvalArgument(SourceSection callSrc) {
+        assert execFrame != null;
+        return RContext.getEngine().evalPromise(this, callSrc);
     }
 
-    /**
-     * @return {@link #closure}
-     */
-    public Closure getClosure() {
-        return closure;
-    }
-
-    /**
-     * @return {@link #execFrame}
-     */
-    public MaterializedFrame getFrame() {
-        return execFrame;
-    }
-
-    /**
-     * @return The raw {@link #value}.
-     */
-    public Object getValue() {
-        assert isEvaluated;
-        return value;
-    }
-
-    /**
-     * Returns {@code true} if this promise has been evaluated?
-     */
-    public boolean isEvaluated() {
-        return isEvaluated;
+    @TruffleBoundary
+    protected final Object doEvalArgument(MaterializedFrame frame) {
+        return RContext.getEngine().evalPromise(this, frame);
     }
 
     /**
@@ -223,19 +268,66 @@ public final class RPromise extends RLanguageRep {
      * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
      *         directly inside the AST.
      */
-    public boolean isInOriginFrame(VirtualFrame frame) {
+    public final boolean isInOriginFrame(VirtualFrame frame) {
         if (isInlined()) {
             return true;
         }
 
-        if (isDefault() && getFrame() == null) {
+        if (isDefault() && isNullFrame()) {
             return true;
         }
 
         if (frame == null) {
             return false;
         }
-        return frame == getFrame();
+        return frame == execFrame;
+    }
+
+    /**
+     * @return The representation of expression (a RNode). May contain <code>null</code> if no expr
+     *         is provided!
+     */
+    @Override
+    public final Object getRep() {
+        return super.getRep();
+    }
+
+    /**
+     * @return {@link #closure}
+     */
+    public final Closure getClosure() {
+        return closure;
+    }
+
+    /**
+     * @return {@link #execFrame}. This might be <code>null</code>! Materialize before.
+     *
+     * @see #execFrame
+     */
+    public final MaterializedFrame getFrame() {
+        return execFrame;
+    }
+
+    /**
+     * @return The raw {@link #value}.
+     */
+    public final Object getValue() {
+        assert isEvaluated;
+        return value;
+    }
+
+    /**
+     * Returns {@code true} if this promise has been evaluated?
+     */
+    public final boolean isEvaluated() {
+        return isEvaluated;
+    }
+
+    /**
+     * @return This instance's {@link OptType}
+     */
+    public final OptType getOptType() {
+        return optType;
     }
 
     /**
@@ -247,10 +339,136 @@ public final class RPromise extends RLanguageRep {
         this.underEvaluation = underEvaluation;
     }
 
+    /**
+     * @return The state of the {@link #underEvaluation} flag.
+     */
+    public boolean isUnderEvaluation() {
+        return underEvaluation;
+    }
+
     @Override
     @TruffleBoundary
     public String toString() {
-        return "[" + evalPolicy + ", " + type + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + evalPolicy + ", " + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
+    }
+
+    /**
+     * This is a {@link RPromise} implementation that performs two optimizations:
+     * <ul>
+     * <li>1. It does not carry a {@link MaterializedFrame} ({@link RPromise#execFrame}) but knows
+     * how to retrieve the correct one if needed</li>
+     * <li>2. It carries a pre-evaluated value of the symbol-expression it is supposed to evaluate
+     * on first read</li>
+     * </ul>
+     * The 1. optimization is only possible if the {@link EagerPromise} does not leave the stack it
+     * was created in, e.g. by the means of "sys.frame", "function" or similar. If it needs to be
+     * present for any reason, {@link #materialize()} is called.<br/>
+     * The 2. optimization is only possible as long it can be guaranteed that the symbol it was
+     * originally read from has not been altered in the mean time. If this cannot be guaranteed for
+     * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
+     */
+    public static class EagerPromise extends RPromise {
+        protected final Object eagerValue;
+
+        private final Assumption assumption;
+        private final int frameId;
+        private final EagerFeedback feedback;
+
+        /**
+         * Set to <code>true</code> by {@link #deoptimize()}. If this is true, the
+         * {@link RPromise#execFrame} is guaranteed to be set.
+         */
+        private boolean deoptimized = false;
+
+        private EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            super(EvalPolicy.PROMISED, type, optType, (MaterializedFrame) null, closure);
+            assert type != PromiseType.NO_ARG;
+            this.eagerValue = eagerValue;
+            this.assumption = assumption;
+            this.frameId = nFrameId;
+            this.feedback = feedback;
+        }
+
+        /**
+         * @return Whether the promise has been deoptimized before
+         */
+        public boolean deoptimize() {
+            if (!deoptimized) {
+                deoptimized = true;
+                feedback.onFailure(this);
+                materialize();
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @return Whether the promise has been materialized before
+         */
+        public boolean materialize() {
+            if (execFrame == null) {
+                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
+                return false;
+            }
+            return true;
+        }
+
+        public Object getEagerValue() {
+            return eagerValue;
+        }
+
+        public boolean isDeoptimized() {
+            return deoptimized;
+        }
+
+        public boolean isValid() {
+            return assumption.isValid();
+        }
+
+        public void notifySuccess() {
+            feedback.onSuccess(this);
+        }
+
+        public void notifyFailure() {
+            feedback.onFailure(this);
+        }
+    }
+
+    /**
+     * A {@link RPromise} implementation that knows that it holds a Promise itself (that it has to
+     * respect by evaluating it on it's evaluation).
+     */
+    public static final class VarargPromise extends RPromise {
+        private final RPromise vararg;
+
+        private VarargPromise(PromiseType type, RPromise vararg, Closure exprClosure) {
+            super(EvalPolicy.PROMISED, type, OptType.VARARG, exprClosure.getExpr());
+            this.vararg = vararg;
+        }
+
+        public RPromise getVararg() {
+            return vararg;
+        }
+    }
+
+    /**
+     * Used to allow feedback on {@link EagerPromise} evaluation.
+     */
+    public interface EagerFeedback {
+        /**
+         * Called whenever an optimized {@link EagerPromise} has been evaluated successfully.
+         *
+         * @param promise
+         */
+        void onSuccess(RPromise promise);
+
+        /**
+         * Whenever an optimized {@link EagerPromise} has been deoptimized, or it's assumption did
+         * not hold until evaluation.
+         *
+         * @param promise
+         */
+        void onFailure(RPromise promise);
     }
 
     /**
@@ -258,7 +476,7 @@ public final class RPromise extends RLanguageRep {
      *
      * @see RPromiseFactory#createPromise(MaterializedFrame)
      * @see RPromiseFactory#createPromiseDefault()
-     * @see RPromiseFactory#createPromiseArgEvaluated(Object)
+     * @see RPromiseFactory#createArgEvaluated(Object)
      */
     public static final class RPromiseFactory {
         private final Closure exprClosure;
@@ -302,21 +520,47 @@ public final class RPromise extends RLanguageRep {
          *         {@link REnvironment} set!
          */
         public RPromise createPromiseDefault() {
-            assert type == PromiseType.ARG_SUPPLIED;
             return RDataFactory.createPromise(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultClosure);
         }
 
         /**
-         * @param argumentValue The already evaluated value of the supplied argument.
+         * @param argumentValue The already evaluated value of the argument.
          *            <code>RMissing.instance</code> denotes 'argument not supplied', aka.
          *            'missing'.
-         * @return A {@link RPromise} whose supplied argument has already been evaluated
+         * @return A {@link RPromise} whose argument has already been evaluated
          */
-        public RPromise createPromiseArgEvaluated(Object argumentValue) {
-            RPromise result = RDataFactory.createPromise(evalPolicy, type);
-            result.value = argumentValue;
-            result.isEvaluated = true;
-            return result;
+        public RPromise createArgEvaluated(Object argumentValue) {
+            return new RPromise(evalPolicy, type, OptType.DEFAULT, exprClosure.getExpr(), argumentValue);
+        }
+
+        /**
+         * @param eagerValue The eagerly evaluated value
+         * @param assumption The {@link Assumption} that eagerValue is still valid
+         * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
+         *            until evaluation
+         * @return An {@link EagerPromise}
+         */
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            return new EagerPromise(type, OptType.EAGER, exprClosure, eagerValue, assumption, nFrameId, feedback);
+        }
+
+        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            return new EagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, assumption, nFrameId, feedback);
+        }
+
+        /**
+         * @param eagerValue The eagerly evaluated value
+         * @param assumption The {@link Assumption} that eagerValue is still valid
+         * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
+         *            until evaluation
+         * @return An {@link EagerPromise}
+         */
+        public RPromise createEagerDefaultPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+            return new EagerPromise(type, OptType.EAGER, defaultClosure, eagerValue, assumption, nFrameId, feedback);
+        }
+
+        public RPromise createVarargPromise(RPromise promisedVararg) {
+            return new VarargPromise(type, promisedVararg, exprClosure);
         }
 
         public Object getExpr() {
@@ -370,9 +614,5 @@ public final class RPromise extends RLanguageRep {
         public Object getExpr() {
             return expr;
         }
-    }
-
-    public void setFrame(MaterializedFrame newFrame) {
-        execFrame = newFrame;
     }
 }

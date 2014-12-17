@@ -69,8 +69,58 @@ public class PromiseHelperNode extends Node {
         }
     }
 
+    public static class PromiseDeoptimizeFrameNode extends Node {
+        private final BranchProfile deoptimizeProfile = BranchProfile.create();
+
+        /**
+         * Guarantees, that all {@link RPromise}s in frame are deoptimized and thus are safe to
+         * leave it's stack-branch.
+         *
+         * @param frame The frame to check for {@link RPromise}s to deoptimize
+         * @return Whether there was at least on {@link RPromise} which needed to be deoptimized.
+         */
+        // @TruffleBoundary TODO Needed?
+        public boolean deoptimizeFrame(MaterializedFrame frame) {
+            boolean deoptOne = false;
+            for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+                // We're only interested in RPromises
+                if (slot.getKind() != FrameSlotKind.Object) {
+                    continue;
+                }
+
+                // Try to read it...
+                try {
+                    Object value = frame.getObject(slot);
+
+                    // If it's a promise, deoptimize it!
+                    if (value instanceof RPromise) {
+                        deoptOne |= deoptimize((RPromise) value);
+                    }
+                } catch (FrameSlotTypeException err) {
+                    // Should not happen after former check on FrameSlotKind!
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+            return deoptOne;
+        }
+
+        private boolean deoptimize(RPromise promise) {
+            OptType optType = promise.getOptType();
+            if (optType == OptType.EAGER || optType == OptType.PROMISED) {
+                deoptimizeProfile.enter();
+                EagerPromise eager = (EagerPromise) promise;
+                return eager.deoptimize();
+            }
+
+            // Nothing to do here; already the generic and slow RPromise
+            return true;
+        }
+    }
+
     @Child private InlineCacheNode<VirtualFrame, RNode> expressionInlineCache;
     @Child private InlineCacheNode<Frame, Closure> promiseClosureCache;
+
+    @Child private PromiseHelperNode nextNode = null;
 
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
@@ -82,6 +132,24 @@ public class PromiseHelperNode extends Node {
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
+        SourceSection callSrc = null;
+        if (frame != null) {
+            callSrc = RArguments.getCallSourceSection(frame);
+        }
+        return doEvaluate(frame, promise, callSrc);
+    }
+
+    /**
+     * Main entry point for proper evaluation of the given Promise; including
+     * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles. Actual
+     * evaluation is delegated to {@link #generateValue(VirtualFrame, RPromise, SourceSection)}.
+     *
+     * @param frame
+     * @param promise
+     * @param callSrc
+     * @return The value the given Promise evaluates to
+     */
+    private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
         if (isEvaluated(promise)) {
             return promise.getValue();
         }
@@ -95,35 +163,102 @@ public class PromiseHelperNode extends Node {
         try {
             promise.setUnderEvaluation(true);
 
-            Object obj;
-            if (isInOriginFrame(frame, promise)) {
-                if (expressionInlineCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    expressionInlineCache = insert(InlineCacheNode.createExpression(3));
-                }
-                obj = expressionInlineCache.execute(frame, (RNode) promise.getRep());
-            } else {
-                Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
-                assert promiseFrame != null;
-                SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
-                try {
-                    RArguments.setCallSourceSection(promiseFrame, RArguments.getCallSourceSection(frame));
-
-                    if (promiseClosureCache == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        promiseClosureCache = insert(InlineCacheNode.createPromise(3));
-                    }
-
-                    obj = promiseClosureCache.execute(promiseFrame, promise.getClosure());
-                } finally {
-                    RArguments.setCallSourceSection(promiseFrame, oldCallSource);
-                }
-            }
+            Object obj = generateValue(frame, promise, callSrc);
             setValue(obj, promise);
             return obj;
         } finally {
             promise.setUnderEvaluation(false);
         }
+    }
+
+    /**
+     * This method allows subclasses to override the evaluation method easily while maintaining
+     * {@link #isEvaluated(RPromise)} and {@link #isUnderEvaluation(RPromise)} semantics.
+     *
+     * @param frame The {@link VirtualFrame} of the environment the Promise is forced in
+     * @return The value this Promise represents
+     */
+    private Object generateValue(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
+        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
+        if (profiledOptType == OptType.DEFAULT) {
+            return generateValueDefault(frame, promise, callSrc);
+        } else if (profiledOptType == OptType.PROMISED || profiledOptType == OptType.EAGER) {
+            return generateValueEager(frame, (EagerPromise) promise, callSrc);
+        } else if (profiledOptType == OptType.VARARG) {
+            return generateValueVararg((VarargPromise) promise, callSrc);
+        }
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    private Object generateValueDefault(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
+        if (isInOriginFrame(frame, promise)) {
+            if (expressionInlineCache == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                expressionInlineCache = insert(InlineCacheNode.createExpression(3));
+            }
+            return expressionInlineCache.execute(frame, (RNode) promise.getRep());
+        } else {
+            Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
+            assert promiseFrame != null;
+            SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
+            try {
+                RArguments.setCallSourceSection(promiseFrame, callSrc);
+
+                if (promiseClosureCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                }
+
+                return promiseClosureCache.execute(promiseFrame, promise.getClosure());
+            } finally {
+                RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+            }
+        }
+    }
+
+    private Object generateValueEager(VirtualFrame frame, EagerPromise promise, SourceSection callSrc) {
+        if (isDeoptimized(promise)) {
+            // execFrame already materialized, feedback already given. Now we're a
+            // plain'n'simple RPromise
+            return generateValueDefault(frame, promise, callSrc);
+        } else if (promise.isValid()) {
+            promise.notifySuccess();
+
+            return getEagerValue(promise, callSrc);
+        } else {
+            fallbackProfile.enter();
+            promise.notifyFailure();
+
+            // Fallback: eager evaluation failed, now take the slow path
+            promise.materialize();
+
+            // Call
+            return generateValueDefault(frame, promise, callSrc);
+        }
+    }
+
+    @TruffleBoundary
+    private Object generateValueVararg(VarargPromise promise, SourceSection callSrc) {
+        RPromise nextPromise = promise.getVararg();
+        // TODO TruffleBoundary really needed? Null frame ok?
+        return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
+    }
+
+    private Object getEagerValue(EagerPromise promise, SourceSection callSrc) {
+        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
+        if (profiledOptType == OptType.EAGER) {
+            return getEagerValue(promise);
+        } else if (profiledOptType == OptType.PROMISED) {
+            return getPromisedEagerValue(promise, callSrc);
+        }
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @TruffleBoundary
+    private Object getPromisedEagerValue(EagerPromise promise, SourceSection callSrc) {
+        RPromise nextPromise = (RPromise) promise.getEagerValue();
+        // TODO TruffleBoundary really needed? Null frame ok?
+        return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
@@ -154,9 +289,30 @@ public class PromiseHelperNode extends Node {
         }
     }
 
-    @TruffleBoundary
-    private static Object doEvalArgument(RPromise promise, SourceSection callSrc) {
-        return RContext.getEngine().evalPromise(promise, callSrc);
+    /**
+     * Materializes the promises' frame. After execution, it is guaranteed to be !=
+     * <code>null</code>
+     *
+     * @return Whether it was materialized before
+     * @see RPromise#getFrame()
+     */
+    public boolean materialize(RPromise promise) {
+        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
+        if (profiledOptType == OptType.EAGER || profiledOptType == OptType.PROMISED) {
+            EagerPromise eager = (EagerPromise) promise;
+            return eager.materialize();
+        } else {
+            // Nothing to do here; already the generic and slow RPromise
+            return true;
+        }
+    }
+
+    private PromiseHelperNode checkNextNode() {
+        if (nextNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            nextNode = insert(new PromiseHelperNode());
+        }
+        return nextNode;
     }
 
     /**
@@ -167,11 +323,15 @@ public class PromiseHelperNode extends Node {
     }
 
     public boolean isNullFrame(RPromise promise) {
-        return isNullFrameProfile.profile(promise.getFrame() == null);
+        return isNullFrameProfile.profile(promise.isNullFrame());
     }
 
     public boolean isEvaluated(RPromise promise) {
         return isEvaluatedProfile.profile(promise.isEvaluated());
+    }
+
+    public boolean isDeoptimized(EagerPromise promise) {
+        return isDeoptimizedProfile.profile(promise.isDeoptimized());
     }
 
     private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();
@@ -183,6 +343,12 @@ public class PromiseHelperNode extends Node {
     private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
 
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
+
+    // Eager
+    private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
+    private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile fallbackProfile = BranchProfile.create();
+    private final ValueProfile eagerValueProfile = ValueProfile.createPrimitiveProfile();
 
     public boolean isInlined(RPromise promise) {
         return isInlinedProfile.profile(promise.isInlined());
@@ -205,14 +371,10 @@ public class PromiseHelperNode extends Node {
     }
 
     /**
-     * Only to be called from AccessArgumentNode, and in combination with
-     * {@link #updateFrame(MaterializedFrame, RPromise)}!
-     *
-     * @return Whether this promise needs a callee environment set (see
-     *         {@link #updateFrame(MaterializedFrame, RPromise)})
+     * Returns {@link EagerPromise#getEagerValue()} profiled.
      */
-    public boolean needsCalleeFrame(RPromise promise) {
-        return !isInlined(promise) && isDefault(promise) && isNullFrame(promise) && !isEvaluated(promise);
+    public Object getEagerValue(EagerPromise promise) {
+        return eagerValueProfile.profile(promise.getEagerValue());
     }
 
     /**
@@ -233,21 +395,5 @@ public class PromiseHelperNode extends Node {
             return false;
         }
         return isFrameForEnvProfile.profile(frame == promise.getFrame());
-    }
-
-    /**
-     * This method is necessary, as we have to create {@link RPromise}s before the actual function
-     * call, but the callee frame and environment get created _after_ the call happened. This update
-     * has to take place in AccessArgumentNode, just before arguments get stuffed into the fresh
-     * environment for the function. Whether a {@link RPromise} needs one is determined by
-     * {@link #needsCalleeFrame(RPromise)}!
-     *
-     * @param newFrame The REnvironment this promise is to be evaluated in
-     */
-    public void updateFrame(MaterializedFrame newFrame, RPromise promise) {
-        assert promise.isDefault();
-        if (isNullFrame(promise) && !isEvaluated(promise)) {
-            promise.setFrame(newFrame);
-        }
     }
 }

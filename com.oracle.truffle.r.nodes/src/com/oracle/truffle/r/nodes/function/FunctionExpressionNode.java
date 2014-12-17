@@ -25,9 +25,10 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class FunctionExpressionNode extends RNode {
 
@@ -52,6 +53,7 @@ public abstract class FunctionExpressionNode extends RNode {
         private final RFunction function;
 
         public StaticFunctionExpressionNode(RFunction function) {
+            // TODO DEOPT needed here?
             this.function = function;
         }
 
@@ -68,6 +70,7 @@ public abstract class FunctionExpressionNode extends RNode {
     public static final class DynamicFunctionExpressionNode extends FunctionExpressionNode {
 
         private final RootCallTarget callTarget;
+        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         public DynamicFunctionExpressionNode(RootCallTarget callTarget) {
             this.callTarget = callTarget;
@@ -75,7 +78,10 @@ public abstract class FunctionExpressionNode extends RNode {
 
         @Override
         public RFunction executeFunction(VirtualFrame frame) {
-            return RDataFactory.createFunction("", callTarget, frame.materialize());
+            // Deoptimize every promise which is now in this frame, as it might leave it's stack
+            MaterializedFrame matFrame = frame.materialize();
+            deoptFrameNode.deoptimizeFrame(matFrame);
+            return RDataFactory.createFunction("", callTarget, matFrame);
         }
 
         public RootCallTarget getCallTarget() {

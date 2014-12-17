@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
-import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -92,8 +92,8 @@ public class RASTUtils {
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
-        } else if (argNode instanceof VarArgPromiseNode) {
-            RPromise p = ((VarArgPromiseNode) argNode).getPromise();
+        } else if (argNode instanceof VarArgNode) {
+            RPromise p = ((VarArgNode) argNode).getPromise();
             return createLanguageElement(unwrap(p.getRep()));
         } else if (argNode instanceof VarArgsPromiseNode) {
             /*

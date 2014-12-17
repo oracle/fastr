@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeFactory;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -187,6 +188,7 @@ public class EnvFunctions {
 
         private final ConditionProfile isFunctionProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
+        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Override
         public RNode[] getParameterValues() {
@@ -197,7 +199,9 @@ public class EnvFunctions {
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-            return REnvironment.frameToEnvironment(callerFrame.materialize());
+            MaterializedFrame matFrame = callerFrame.materialize();
+            deoptFrameNode.deoptimizeFrame(matFrame);
+            return REnvironment.frameToEnvironment(matFrame);
         }
 
         /**

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -56,7 +58,11 @@ public abstract class FrameSlotNode extends Node {
     }
 
     public static FrameSlotNode create(String name) {
-        return new UnresolvedFrameSlotNode(name, false);
+        return create(name, false);
+    }
+
+    public static FrameSlotNode create(String name, boolean createIfAbsent) {
+        return new UnresolvedFrameSlotNode(name, createIfAbsent);
     }
 
     public static FrameSlotNode create(InternalFrameSlot slot, boolean createIfAbsent) {
@@ -92,12 +98,13 @@ public abstract class FrameSlotNode extends Node {
 
         private FrameSlotNode resolveFrameSlot(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             FrameSlotNode newNode;
             FrameSlot frameSlot;
             if (createIfAbsent) {
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(identifier);
+                frameSlot = findOrAddFrameSlot(frameDescriptor, identifier);
             } else {
-                frameSlot = frame.getFrameDescriptor().findFrameSlot(identifier);
+                frameSlot = frameDescriptor.findFrameSlot(identifier);
             }
             if (frameSlot != null) {
                 newNode = new PresentFrameSlotNode(frameSlot);

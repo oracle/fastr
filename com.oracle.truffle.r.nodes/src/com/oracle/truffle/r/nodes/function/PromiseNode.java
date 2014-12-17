@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -32,6 +34,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,14 +49,12 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * All these classes are created during/after argument matching and get cached afterwards, so they
  * get (and need to get) called every repeated call to a function with the same arguments.
  */
-public class PromiseNode extends RNode {
+public abstract class PromiseNode extends RNode {
     /**
      * The {@link RPromiseFactory} which holds all information necessary to construct a proper
      * {@link RPromise} for every case that might occur.
      */
     protected final RPromiseFactory factory;
-
-    protected final ConditionProfile isDefaultArgProfile = ConditionProfile.createBinaryProfile();
 
     /**
      * @param factory {@link #factory}
@@ -70,19 +71,47 @@ public class PromiseNode extends RNode {
      */
     @TruffleBoundary
     public static RNode create(SourceSection src, RPromiseFactory factory) {
-        RNode pn = null;
         assert factory.getType() != PromiseType.NO_ARG;
+
+        RNode pn = null;
         switch (factory.getEvalPolicy()) {
             case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
+                    // TODO Correct??
                     pn = factory.getExpr() instanceof ConstantNode ? (RNode) factory.getExpr() : new InlinedSuppliedPromiseNode(factory);
                 } else {
+                    // TODO Correct??
                     pn = factory.getDefaultExpr() instanceof ConstantNode ? (RNode) factory.getDefaultExpr() : new InlinedPromiseNode(factory);
                 }
                 break;
 
             case PROMISED:
-                pn = new PromiseNode(factory);
+                // For ARG_DEFAULT, expr == defaultExpr!
+                RNode expr = unfold(factory.getExpr());
+                if (isOptimizableConstant(expr)) {
+                    // As Constants don't care where they are evaluated, we don't need to
+                    // distinguish between ARG_DEFAULT and ARG_SUPPLIED
+                    pn = new OptConstantPromiseNode(factory);
+                    break;
+                }
+
+                if (factory.getType() == PromiseType.ARG_SUPPLIED) {
+                    if (isOptimizableVariable(expr)) {
+                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
+                        break;
+                    }
+
+                    if (isVararg(expr)) {
+                        pn = new VarargPromiseNode(factory, (VarArgNode) expr);
+                        break;
+                    }
+
+// if (isOptimizableExpression(expr)) {
+// System.err.println(" >>> SUP " + src.getCode());
+// }
+                }
+
+                pn = new PromisedNode(factory);
                 break;
 
             default:
@@ -94,22 +123,88 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * @param promise
-     * @return Creates a {@link VarArgPromiseNode} for the given {@link RPromise}
+     * This method checks whether to apply optimizations to RNodes created for single "..."
+     * elements.
+     *
+     * @param expr
+     * @return Whether the given {@link RNode} is a {@link VarArgNode}
      */
-    public static VarArgPromiseNode createVarArg(RPromise promise) {
-        VarArgPromiseNode result = new VarArgPromiseNode(promise);
+    private static boolean isVararg(RNode expr) {
+        return expr instanceof VarArgNode;
+    }
+
+    /**
+     * @param promise
+     * @return Creates a {@link VarArgNode} for the given {@link RPromise}
+     */
+    public static VarArgNode createVarArg(RPromise promise) {
+        VarArgNode result = new VarArgNode(promise);
         result.assignSourceSection(((RNode) promise.getRep()).getSourceSection());
         return result;
     }
 
     /**
-     * Creates a new {@link RPromise} every time.
+     * A {@link PromiseNode} for supplied arguments.
      */
-    @Override
-    public Object execute(VirtualFrame frame) {
-        MaterializedFrame matFrame = isDefaultArgProfile.profile(factory.getType() == PromiseType.ARG_DEFAULT) ? null : frame.materialize();
-        return factory.createPromise(matFrame);
+    private static final class PromisedNode extends PromiseNode {
+
+        private final ConditionProfile isSuppliedArgProfile = ConditionProfile.createBinaryProfile();
+
+        private PromisedNode(RPromiseFactory factory) {
+            super(factory);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            MaterializedFrame execFrame = isSuppliedArgProfile.profile(factory.getType() == PromiseType.ARG_SUPPLIED) ? frame.materialize() : null;
+            return factory.createPromise(execFrame);
+        }
+    }
+
+    /**
+     * TODO Expand!
+     */
+    private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
+
+        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn) {
+            super(factory, rvn);
+        }
+
+        @Override
+        protected RNode createFallback() {
+            return new PromisedNode(factory);
+        }
+
+// @TruffleBoundary
+        public void onSuccess(RPromise promise) {
+// System.err.println("Opt SUCCESS: " + promise.getOptType());
+        }
+
+// @TruffleBoundary
+        public void onFailure(RPromise promise) {
+// System.err.println("Opt FAILURE: " + promise.getOptType());
+            rewriteToFallback();
+        }
+    }
+
+    /**
+     * TODO Expand!
+     */
+    public static final class VarargPromiseNode extends PromiseNode {
+        @Child private VarArgNode varargNode;
+
+        public VarargPromiseNode(RPromiseFactory factory, VarArgNode varargNode) {
+            super(factory);
+            this.varargNode = varargNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            // At this point we simply circumvent VarArgNode (by directly passing the contained
+            // Promise); BUT we have to respect the RPromise! Thus we use a RPromise class which
+            // knows that it contains a RPromise..
+            return factory.createVarargPromise(varargNode.getPromise());
+        }
     }
 
     /**
@@ -202,13 +297,16 @@ public class PromiseNode extends RNode {
 
     /**
      * This {@link RNode} is used to evaluate the expression given in a {@link RPromise} formerly
-     * wrapped into a "..." after unrolling.
+     * wrapped into a "..." after unrolling.<br/>
+     * In a certain sense this is the class corresponding class for GNU R's PROMSXP (AST equivalent
+     * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
+     * other varargs classes)
      */
-    public static final class VarArgPromiseNode extends RNode {
+    public static final class VarArgNode extends RNode {
         private final RPromise promise;
         @CompilationFinal private boolean isEvaluated = false;
 
-        private VarArgPromiseNode(RPromise promise) {
+        private VarArgNode(RPromise promise) {
             this.promise = promise;
         }
 
@@ -223,7 +321,7 @@ public class PromiseNode extends RNode {
                 return result;
             }
 
-            // Should be easily compile to constant
+            // Should easily compile to constant
             return promise.getValue();
         }
 

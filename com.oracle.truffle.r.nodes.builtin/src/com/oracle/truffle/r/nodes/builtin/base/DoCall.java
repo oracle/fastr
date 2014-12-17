@@ -71,6 +71,7 @@ public abstract class DoCall extends RBuiltinNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
         Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }
 

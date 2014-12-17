@@ -292,6 +292,8 @@ public final class Utils {
     public static VirtualFrame getActualCurrentFrame() {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         if (frameInstance == null) {
+            // Might be the case during initialization, when envs are prepared before the actual
+            // Truffle/R system has started
             return null;
         }
         VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
