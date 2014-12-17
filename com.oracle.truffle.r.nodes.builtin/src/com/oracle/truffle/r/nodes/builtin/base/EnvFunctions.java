@@ -28,9 +28,9 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeFactory;
 import com.oracle.truffle.r.nodes.function.*;
@@ -190,11 +190,6 @@ public class EnvFunctions {
         private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
         private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RNull.instance)};
-        }
-
         @Specialization
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
             controlVisibility();
@@ -232,12 +227,6 @@ public class EnvFunctions {
     @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"})
     public abstract static class EnvironmentName extends RBuiltinNode {
 
-        @Override
-        public RNode[] getParameterValues() {
-            // fun = NULL
-            return new RNode[]{ConstantNode.create(RNull.instance)};
-        }
-
         @Specialization
         protected String environmentName(REnvironment env) {
             controlVisibility();
@@ -262,8 +251,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "search", kind = SUBSTITUTE, parameterNames = {})
-    // TODO INTERNAL
+    @RBuiltin(name = "search", kind = INTERNAL, parameterNames = {})
     public abstract static class Search extends RBuiltinNode {
         @Specialization
         protected RStringVector search() {
@@ -273,12 +261,6 @@ public class EnvFunctions {
 
     @RBuiltin(name = "lockEnvironment", kind = INTERNAL, parameterNames = {"env", "bindings"})
     public abstract static class LockEnvironment extends RInvisibleBuiltinNode {
-
-        @Override
-        public RNode[] getParameterValues() {
-            // env, bindings = FALSE
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
 
         @Specialization
         protected Object lockEnvironment(REnvironment env, byte bindings) {
@@ -299,36 +281,62 @@ public class EnvFunctions {
 
     }
 
+    private interface BindingErrorMixin {
+        default void check(SourceSection source, Object sym, Object env) throws RError {
+            if (!(sym instanceof RSymbol)) {
+                throw RError.error(source, RError.Message.NOT_A_SYMBOL);
+            }
+            if (!(env instanceof REnvironment)) {
+                throw RError.error(source, RError.Message.NOT_AN_ENVIRONMENT);
+            }
+        }
+    }
+
     @RBuiltin(name = "lockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class LockBinding extends RInvisibleBuiltinNode {
+    public abstract static class LockBinding extends RInvisibleBuiltinNode implements BindingErrorMixin {
         @Specialization
-        protected Object lockBinding(String sym, REnvironment env) {
+        protected Object lockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
-            env.lockBinding(sym);
+            env.lockBinding(sym.getName());
             return RNull.instance;
         }
 
+        @Fallback
+        protected Object lockBinding(Object sym, Object env) {
+            check(getEncapsulatingSourceSection(), sym, env);
+            return RNull.instance;
+        }
     }
 
     @RBuiltin(name = "unlockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
+    public abstract static class UnlockBinding extends RInvisibleBuiltinNode implements BindingErrorMixin {
         @Specialization
-        protected Object unlockBinding(String sym, REnvironment env) {
+        protected Object unlockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
-            env.unlockBinding(sym);
+            env.unlockBinding(sym.getName());
             return RNull.instance;
         }
 
+        @Fallback
+        protected Object unlockBinding(Object sym, Object env) {
+            check(getEncapsulatingSourceSection(), sym, env);
+            return RNull.instance;
+        }
     }
 
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class BindingIsLocked extends RBuiltinNode {
+    public abstract static class BindingIsLocked extends RBuiltinNode implements BindingErrorMixin {
         @Specialization
-        protected Object bindingIsLocked(String sym, REnvironment env) {
+        protected Object bindingIsLocked(RSymbol sym, REnvironment env) {
             controlVisibility();
-            return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym));
+            return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym.getName()));
         }
 
+        @Fallback
+        protected Object bindingIsLocked(Object sym, Object env) {
+            check(getEncapsulatingSourceSection(), sym, env);
+            return RNull.instance;
+        }
     }
 
     @RBuiltin(name = "makeActiveBinding", kind = INTERNAL, parameterNames = {"sym", "fun", "env"})

@@ -23,31 +23,26 @@ environmentIsLocked <- function(env)
     .Internal(environmentIsLocked(env))
 
 lockBinding <- function(sym, env) {
-    # TODO enable as.name
-    # if (is.character(sym)) sym <- as.name(sym)
+    if (is.character(sym)) sym <- as.name(sym)
     .Internal(lockBinding(sym, env))
 }
 
 bindingIsLocked <- function(sym, env) {
-    # TODO enable as.name
-    # if (is.character(sym)) sym <- as.name(sym)
+    if (is.character(sym)) sym <- as.name(sym)
     .Internal(bindingIsLocked(sym, env))
 }
 
 makeActiveBinding <- function(sym, fun, env) {
-    # TODO enable as.name
-    # if (is.character(sym)) sym <- as.name(sym)
+    if (is.character(sym)) sym <- as.name(sym)
     .Internal(makeActiveBinding(sym, fun, env))
 }
 
 bindingIsActive <- function(sym, env) {
-    # TODO enable as.name
-    # if (is.character(sym)) sym <- as.name(sym)
+    if (is.character(sym)) sym <- as.name(sym)
     .Internal(bindingIsActive(sym, env))
 }
 
 unlockBinding <- function(sym, env) {
-    # TODO enable as.name
-    # if (is.character(sym)) sym <- as.name(sym)
+    if (is.character(sym)) sym <- as.name(sym)
     .Internal(unlockBinding(sym, env))
 }
