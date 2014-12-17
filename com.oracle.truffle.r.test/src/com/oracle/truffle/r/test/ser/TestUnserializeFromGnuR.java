@@ -47,7 +47,7 @@ public class TestUnserializeFromGnuR extends TestBase {
             try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = r.readLine()) != null) {
-                    if (line.endsWith(".rds")) {
+                    if (line.endsWith(".rds") || line.endsWith(".bin")) {
                         String key = line.trim();
                         final String rResource = "data/" + key;
                         URL url = ResourceHandlerFactory.getHandler().getResource(getClass(), rResource);
@@ -67,7 +67,17 @@ public class TestUnserializeFromGnuR extends TestBase {
         runUnserializeFromConn("list2.rds");
     }
 
+    @Test
+    public void readChar() {
+        readCharTests("testchar.bin", new String[]{"c(3, 10, 3)", "c(1, 8, 3)", "c(4, 9, 3)"});
+    }
+
     private static void runUnserializeFromConn(String fileName) {
         assertTemplateEval(TestBase.template("{ print(.Internal(unserializeFromConn(gzfile(\"%0\"), NULL))) }", new String[]{paths.get(fileName).toString()}));
     }
+
+    private static void readCharTests(String fileName, String[] nchars) {
+        assertTemplateEval(TestBase.template("{ zz <- file(\"%0\", \"rb\"); nc<-%1; readChar(zz, nc) }", new String[]{paths.get(fileName).toString()}, nchars));
+    }
+
 }
