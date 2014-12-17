@@ -36,13 +36,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * The {@code vapply} builtin. The closure definition for {@code vapply} is
- * {@code unction(X, FUN, FUN.VALUE, ...,  USE.NAMES = TRUE)}. The {@code .Internal} call in
+ * {@code function(X, FUN, FUN.VALUE, ...,  USE.NAMES = TRUE)}. The {@code .Internal} call in
  * {@code sapply.R} is {@code .Internal(vapply(X, FUN, FUN.VALUE, USE.NAMES))}. I.e., the "..." is
  * not passed even though, for correct operation, any extra arguments must be passed to {@code FUN}.
- * Compare with similar code for {@code lapply} which does pass the "...". In order for FastR to use
- * the same version of {@code sapply.R} as GnuR, we have to define the specialization signature
- * without the "...", which means we have to fish the optional arguments out of the frame for the
- * closure.
+ * In order for FastR to use the same version of {@code sapply.R} as GnuR, we have to define the
+ * specialization signature without the "...", which means we have to fish the optional arguments
+ * out of the frame for the closure.
  *
  * TODO Set dimnames on result if necessary.
  */
