@@ -43,8 +43,10 @@ import com.oracle.truffle.r.runtime.ops.*;
  * generated. In order to pass the result of the indexing operation, this is also stored in a unique
  * variable in the frame. This is a slight inefficiency that could be handled more directly in
  * simple cases by having the indexing operation itself be an argument to the function.
+ *
+ * See the comment in {@link VApply} regarding "...".
  */
-@RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN", "..."})
+@RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"})
 public abstract class Lapply extends RBuiltinNode {
 
     /**
@@ -53,10 +55,11 @@ public abstract class Lapply extends RBuiltinNode {
     @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
     @Specialization
-    protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RArgsValuesAndNames varArgs) {
+    protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun) {
 
         RVector vecMat = vec.materialize();
-        Object[] result = doApply.execute(frame, vecMat, fun, varArgs);
+        RArgsValuesAndNames optionalArgs = (RArgsValuesAndNames) RArguments.getArgument(frame, 2);
+        Object[] result = doApply.execute(frame, vecMat, fun, optionalArgs);
         // set here else it gets overridden by the iterator evaluation
         controlVisibility();
         return RDataFactory.createList(result, vecMat.getNames());
@@ -82,7 +85,7 @@ public abstract class Lapply extends RBuiltinNode {
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(LAPPLY_VEC_ELEM, iterator, false, false);
         @Child private ReadVariableNode readVectorElement = ReadVariableNode.create(LAPPLY_VEC_ELEM, true);
 
-        public Object[] execute(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames varArgs) {
+        public Object[] execute(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames optionalArgs) {
             // zero the iterator value in the current frame
             iterator.initialize(frame);
 
@@ -91,7 +94,7 @@ public abstract class Lapply extends RBuiltinNode {
                 // Write new vector element to LAPPLY_VEC_ELEM frame slot
                 writeVectorElement.execute(frame);
 
-                result[i] = callCache.execute(frame, fun.getTarget(), varArgs);
+                result[i] = callCache.execute(frame, fun.getTarget(), optionalArgs);
             }
             return result;
         }
@@ -120,7 +123,7 @@ public abstract class Lapply extends RBuiltinNode {
             @Child WriteVariableNode zeroIndex;
             /**
              * Loads the element of the vector based on the {@code X} variable and the current
-             * {@link #ITER_INDEX_NAME} variable. Specialized based on the tytpe of {@code X}.
+             * {@link #ITER_INDEX_NAME} variable. Specialized based on the type of {@code X}.
              */
             @Child RNode indexedLoad;
 
