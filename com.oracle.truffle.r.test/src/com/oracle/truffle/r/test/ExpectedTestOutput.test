@@ -15158,6 +15158,13 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ a <- NULL ; switch(mode(a), NULL="naught") }
+[1] "naught"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ a <- NULL ; switch(mode(a), NULL=) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ answer<-"no";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }
 [1] 2
 

@@ -15654,6 +15654,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSwitch_8a40de0f07b7e08f957c62d689644e1f() {
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=\"naught\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_d3315e3da842ce13b6ce1e77fba726e4() {
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSysCall_ffdd075dd1a47fd18359279945ca339a() {
         assertEval("{ f <- function() sys.call() ; f() }");
     }

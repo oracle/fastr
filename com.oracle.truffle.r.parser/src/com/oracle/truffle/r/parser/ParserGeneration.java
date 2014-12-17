@@ -59,7 +59,8 @@ public class ParserGeneration {
         "improved error handling in parser",
         "clean up ... handling in parser",
         "dedicated AST nodes for ..N",
-        "support strings in field accesses"
+        "support strings in field accesses",
+        "allow NULL= in switch"
     };
 
 }

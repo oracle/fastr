@@ -3576,6 +3576,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- \"<\"; v <- switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE); v }");
         assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE) }");
         assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=\"naught\") }");
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
     }
 
     @Test
