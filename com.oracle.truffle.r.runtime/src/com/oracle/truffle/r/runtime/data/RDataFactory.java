@@ -25,13 +25,16 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
@@ -358,18 +361,26 @@ public final class RDataFactory {
     public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
         assert closure != null;
         assert closure.getExpr() != null;
-        return traceDataCreated(new RPromise(evalPolicy, type, execFrame, closure));
-    }
-
-    public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type) {
-        return traceDataCreated(new RPromise(evalPolicy, type, null, null));
+        return traceDataCreated(new RPromise(evalPolicy, type, OptType.DEFAULT, execFrame, closure));
     }
 
     @TruffleBoundary
     public static RPromise createPromise(Object rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?
         Closure closure = Closure.create(rep);
-        return traceDataCreated(new RPromise(EvalPolicy.PROMISED, PromiseType.NO_ARG, env.getFrame(), closure));
+        return traceDataCreated(new RPromise(EvalPolicy.PROMISED, PromiseType.NO_ARG, OptType.DEFAULT, env.getFrame(), closure));
+    }
+
+    public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type, OptType opt, Object expr, Object argumentValue) {
+        return traceDataCreated(new RPromise(evalPolicy, type, opt, expr, argumentValue));
+    }
+
+    public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+        return traceDataCreated(new RPromise.EagerPromise(type, eager, exprClosure, eagerValue, assumption, nFrameId, feedback));
+    }
+
+    public static RPromise createVarargPromise(PromiseType type, RPromise promisedVararg, Closure exprClosure) {
+        return traceDataCreated(new RPromise.VarargPromise(type, promisedVararg, exprClosure));
     }
 
     public static RPairList createPairList(Object car, Object cdr, Object tag) {

@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 

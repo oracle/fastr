@@ -71,9 +71,6 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = fd.findFrameSlot(key);
 
-        // TODO what should really happen if valueSlotKind == FrameSlotKind.Illegal?
-        FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
-
         // Handle RPromise: It cannot be cast to a int/double/byte!
         if (value instanceof RPromise) {
             if (slot == null) {
@@ -85,10 +82,11 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
             return;
         }
 
+        // TODO what should really happen if valueSlotKind == FrameSlotKind.Illegal?
+        FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
+
         // Handle all other values
-        FrameSlotKind slotKind = null;
         if (slot == null) {
-            slotKind = RRuntime.getSlotKind(value);
             if (valueSlotKind != FrameSlotKind.Illegal) {
                 slot = addFrameSlot(fd, key, valueSlotKind);
             }
