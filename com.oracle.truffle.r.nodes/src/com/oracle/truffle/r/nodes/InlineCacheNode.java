@@ -61,7 +61,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
     public static <F extends Frame> InlineCacheNode<F, RNode> createExpression(int maxPicDepth) {
-        return create(maxPicDepth, value -> value, (frame, value) -> RContext.getEngine().eval(new RLanguage(value), frame.materialize()));
+        return create(maxPicDepth, value -> value, (frame, value) -> RContext.getEngine().eval(RDataFactory.createLanguage(value), frame.materialize()));
     }
 
     /**

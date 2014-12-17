@@ -72,6 +72,8 @@ public interface Visitor<R> {
 
     R visit(UnaryMinus m);
 
+    R visit(UnaryPlus m);
+
     R visit(Constant constant);
 
     R visit(SimpleAccessVariable readVariable);

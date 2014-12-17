@@ -47,15 +47,11 @@ public final class RFunction extends RScalar implements RAttributable {
     private MaterializedFrame enclosingFrame;
     protected RAttributes attributes;
 
-    public RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
+    RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
         this.enclosingFrame = enclosingFrame;
-    }
-
-    public RFunction(String name, RootCallTarget target, MaterializedFrame enclosingFrame) {
-        this(name, target, null, enclosingFrame);
     }
 
     public boolean isBuiltin() {

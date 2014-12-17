@@ -109,7 +109,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
     private static final REnvFrameAccess noFrameAccess = new REnvFrameAccess();
 
-    public static final String UNNAMED = "";
+    public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
     private static final String PATH_ATTR_KEY = "path";
 
@@ -222,11 +222,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
-        namespaceRegistry = new NewEnv(null);
+        namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
         baseEnv = new Base(baseFrame);
 
-        // autoload always next, has no R state
-        autoloadEnv = new NewEnv();
+        // autoload always next
+        autoloadEnv = NewEnv.createAutoload();
         globalEnv = new Global(autoloadEnv, globalFrame);
         initSearchList();
 
@@ -457,7 +457,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * e.g. {@code substitute}.
      */
     public static REnvironment createFromList(RList list, REnvironment parent) {
-        REnvironment result = new NewEnv(parent, 0);
+        REnvironment result = RDataFactory.createNewEnv(parent, 0);
         RStringVector names = (RStringVector) list.getNames();
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -918,26 +918,28 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     public static final class NewEnv extends REnvironment implements UsesREnvMap {
 
         /**
-         * Constructor for the {@code new.env} function.
+         * Constructor for the {@code new.env} function. Should only be called from
+         * {@link RDataFactory}.
          */
         public NewEnv(REnvironment parent, int size) {
             super(parent, UNNAMED, new REnvMapFrameAccess(size));
         }
 
         /**
-         * Constructor for environment without a parent, e.g., for use by {@link #attach}.
+         * Constructor for environment without a parent, e.g., for use by {@link #attach}. Should
+         * only be called from {@link RDataFactory}.
          */
         public NewEnv(String name) {
             this(null, 0);
-            setAttr(NAME_ATTR_KEY, name);
+            if (name != UNNAMED) {
+                setAttr(NAME_ATTR_KEY, name);
+            }
         }
 
-        /**
-         * For Autoload.
-         */
-        NewEnv() {
-            this(baseEnv, 0);
-            setAttr(NAME_ATTR_KEY, "Autoloads");
+        private static REnvironment createAutoload() {
+            REnvironment autoload = RDataFactory.createNewEnv(baseEnv, 0);
+            autoload.setAttr(NAME_ATTR_KEY, "Autoloads");
+            return autoload;
         }
 
         public REnvMapFrameAccess getFrameAccess() {

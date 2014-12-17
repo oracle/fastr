@@ -254,7 +254,7 @@ public class EnvFunctions {
         protected REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
             // Ignore hash == FALSE
-            return new REnvironment.NewEnv(parent, size);
+            return RDataFactory.createNewEnv(parent, size);
         }
     }
 

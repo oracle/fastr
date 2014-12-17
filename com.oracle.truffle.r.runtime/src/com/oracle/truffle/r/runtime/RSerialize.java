@@ -303,7 +303,7 @@ public class RSerialize {
                 }
                 Object carItem = readItem();
                 Object cdrItem = readItem();
-                RPairList pairList = new RPairList(carItem, cdrItem, tagItem, type);
+                RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
                 result = pairList;
                 if (attrItem != null) {
                     assert false;
@@ -323,7 +323,7 @@ public class RSerialize {
                          * (and overwrite the promise), so we fix the enclosing frame up on return.
                          */
                         RExpression expr = RContext.getEngine().parse(deparse);
-                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.emptyEnv(), 0), depth + 1);
+                        RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
                         func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                         result = func;
                     } catch (RContext.Engine.ParseException | PutException ex) {
@@ -440,7 +440,7 @@ public class RSerialize {
         Object car = readItem();
         // TODO R_bcEncode(car) (if we care)
         Object cdr = readBCConsts(reps);
-        return new RPairList(car, cdr, null, SEXPTYPE.BCODESXP);
+        return RDataFactory.createPairList(car, cdr, null, SEXPTYPE.BCODESXP);
     }
 
     private Object readBCConsts(Object[] reps) throws IOException {
@@ -506,7 +506,7 @@ public class RSerialize {
                 Object tag = readItem();
                 Object car = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
                 Object cdr = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
-                Object ans = new RPairList(car, cdr, tag, type);
+                Object ans = RDataFactory.createPairList(car, cdr, tag, type);
                 if (pos >= 0)
                     reps[pos] = ans;
                 return ans;

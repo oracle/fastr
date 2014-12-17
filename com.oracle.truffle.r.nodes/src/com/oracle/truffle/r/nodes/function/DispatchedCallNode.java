@@ -15,15 +15,9 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class DispatchedCallNode extends RNode {
 
@@ -35,14 +29,6 @@ public abstract class DispatchedCallNode extends RNode {
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
-    }
-
-    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "RDotGroup is intended to be used as an identity")
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, SourceSection callSrc, final CallArgumentsNode callArgsNode) {
-        if (dispatchType == RGroupGenerics.RDotGroup) {
-            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callSrc, callArgsNode));
-        }
-        throw new AssertionError();
     }
 
     @Override
@@ -151,105 +137,18 @@ public abstract class DispatchedCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, final RStringVector aType) {
-            if (isEqualType(this.type, aType)) {
+            if (S3DispatchNode.isEqualType(this.type, aType)) {
                 return currentNode.execute(frame);
             }
             return nextNode.execute(frame, aType);
         }
 
-        private static boolean isEqualType(final RStringVector one, final RStringVector two) {
-            if (one == null && two == null) {
-                return true;
-            }
-            if (one == null || two == null) {
-                return false;
-            }
-
-            if (one.getLength() != two.getLength()) {
-                return false;
-            }
-            for (int i = 0; i < one.getLength(); ++i) {
-                if (!one.getDataAt(i).equals(two.getDataAt(i))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
         @Override
         public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
-            if (isEqualType(this.type, aType)) {
+            if (S3DispatchNode.isEqualType(this.type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }
             return nextNode.executeInternal(frame, aType, args);
-        }
-    }
-
-    private static final class ResolvedDispatchedCallNode extends DispatchedCallNode {
-        @Child private RCallNode aCallNode;
-        @Child private GroupDispatchNode aDispatchNode;
-
-        public ResolvedDispatchedCallNode(GroupDispatchNode dNode) {
-            this.aDispatchNode = dNode;
-            this.assignSourceSection(dNode.getSourceSection());
-        }
-
-        @Override
-        public boolean isSyntax() {
-            return true;
-        }
-
-        @Override
-        public void deparse(State state) {
-            String name = aDispatchNode.getGenericName();
-            RDeparse.Func func = RDeparse.getFunc(name);
-            if (func != null) {
-                // infix operator
-                RASTDeparse.deparseInfixOperator(state, this, func);
-            } else {
-                state.append(name);
-                aDispatchNode.callArgsNode.deparse(state);
-            }
-        }
-
-        @Override
-        public RNode substitute(REnvironment env) {
-            // TODO substitute aDispatchNode
-            return RASTUtils.createCall(aDispatchNode, (CallArgumentsNode) aDispatchNode.callArgsNode.substitute(env));
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame);
-            return executeHelper(frame, aFuncCall);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RStringVector type) {
-            DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame, type);
-            return executeHelper(frame, aFuncCall);
-        }
-
-        @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
-            return Utils.nyi();
-        }
-
-        // TODO Insert PIC!
-        private Object executeHelper(VirtualFrame frame, DispatchNode.FunctionCall aFuncCall) {
-            if (aCallNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                aCallNode = insert(RCallNode.createCall(getSourceSection(), null, aFuncCall.args));
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                aCallNode.replace(RCallNode.createCall(getSourceSection(), null, aFuncCall.args));
-            }
-            try {
-                Object result = aCallNode.execute(frame, aFuncCall.function);
-                return result;
-            } finally {
-                aDispatchNode.unsetEnvironment();
-            }
         }
     }
 }

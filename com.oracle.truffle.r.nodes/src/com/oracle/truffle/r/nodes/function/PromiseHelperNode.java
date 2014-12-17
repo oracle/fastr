@@ -142,7 +142,7 @@ public class PromiseHelperNode extends Node {
 
             Object obj;
             if (promise.isInOriginFrame(frame)) {
-                obj = RContext.getEngine().eval(new RLanguage(promise.getRep()), frame.materialize());
+                obj = RContext.getEngine().eval(RDataFactory.createLanguage(promise.getRep()), frame.materialize());
             } else {
                 SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
                 obj = RContext.getEngine().evalPromise(promise, callSrc);

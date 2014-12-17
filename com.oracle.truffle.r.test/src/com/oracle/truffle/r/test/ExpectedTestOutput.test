@@ -1626,10 +1626,6 @@ logical(0)
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorizedLogicalAttributes
-#{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x | y }
-Error: dims [product 4] do not match the length of object [8]
-
-##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorizedLogicalAttributes
 #{ x<-1:4; names(x)<-101:104; attr(x, "foo")<-"foo"; attributes(x | TRUE) }
 $names
 [1] "101" "102" "103" "104"
@@ -8226,6 +8222,27 @@ attr(,"foo")
 #{x <- c("a", "ab", "abcde", NA); encodeString(x, width = NA, quote = "'", na.encode=FALSE, justify = "right");}
 [1] "    'a'" "   'ab'" "'abcde'" NA
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.getenv("FASTR_A") } 
+[1] ""
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.getenv("FASTR_A", unset="UNSET") } 
+[1] "UNSET"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.setenv("a") } 
+Error in Sys.setenv("a") : all arguments must be named
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.setenv(FASTR_A="a"); Sys.getenv("FASTR_A"); } 
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvVars
+#{ Sys.setenv(FASTR_A="a", FASTR_B="b"); Sys.getenv(c("FASTR_A", "FASTR_B"));  } 
+FASTR_A FASTR_B
+    "a"     "b"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ as.environment(".GlobalEnv") }
 <environment: R_GlobalEnv>
@@ -8672,24 +8689,6 @@ Error in class(x) <- "factor" :
   adding class "factor" to an invalid object
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-c(1L, 2L, 1L); class(x)<-c("factor", "ordered"); levels(x)<-c("a", "b"); x + "a" }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, "a") : + not meaningful for factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-c(1L, 2L, 1L); class(x)<-c("factor", "ordered"); levels(x)<-c("a", "b"); x > "a" }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, "a") : > not meaningful for factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-c(1L, 2L, 1L); class(x)<-c("ordered", "factor"); levels(x)<-c("a", "b"); x + "a" }
-[1] NA NA NA
-Warning message:
-In Ops.ordered(x, "a") : '+' is not meaningful for ordered factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-c(1L, 2L, 1L); class(x)<-c("ordered", "factor"); levels(x)<-c("a", "b"); x > "a" }
 [1] FALSE  TRUE FALSE
 
@@ -8760,18 +8759,6 @@ Error in print.factor(c(1L, 2L, 1L)) :
 Levels: 7 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-factor(c("a", "b", "a")); x + "a" }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, "a") : + not meaningful for factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-factor(c("a", "b", "a")); x + c("a", "b") }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, c("a", "b")) : + not meaningful for factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a")); x == "a" }
 [1]  TRUE FALSE  TRUE
 
@@ -8783,18 +8770,6 @@ Warning messages:
   longer object length is not a multiple of shorter object length
 2: In `==.default`(x, c("a", "b")) :
   longer object length is not a multiple of shorter object length
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-factor(c("a", "b", "a")); x > "a" }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, "a") : > not meaningful for factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-factor(c("a", "b", "a")); x > c("a", "b") }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, c("a", "b")) : > not meaningful for factors
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a")); x[1] }
@@ -8831,12 +8806,6 @@ Levels: a b
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-factor(c("a", "b", "a"), ordered=TRUE); x + "a" }
-[1] NA NA NA
-Warning message:
-In Ops.ordered(x, "a") : '+' is not meaningful for ordered factors
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-factor(c("a", "b", "a"), ordered=TRUE); x > "a" }
 [1] FALSE  TRUE FALSE
 
@@ -8870,12 +8839,6 @@ In y[1] <- x :
 [1] c b a c
 Levels: a b c
 
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
-#{ x<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); y<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); x+y }
-[1] NA NA NA
-Warning message:
-In Ops.factor(x, y) : + not meaningful for factors
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFactor
 #{ x<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); y<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); x==y }
@@ -16340,6 +16303,30 @@ f first 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodReturn
 #{f <- function(x){ UseMethod("f");cat("This should not be executed"); }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
 f second 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c("hello", "goodbye", "up", "down"), function(x) x, c("a"), USE.NAMES = FALSE) }
+[1] "hello"   "goodbye" "up"      "down"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(10, 20, 30, 40), function(x) x/2, c(1)) }
+[1]  5 10 15 20
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }
+[1] 6 7 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }
+[1]  6+4i 10-2i 11+8i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(TRUE, FALSE, TRUE), function(x) FALSE, c(TRUE)) }
+[1] FALSE FALSE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(TRUE, FALSE, TRUE), function(x) x, c(TRUE)) }
+[1]  TRUE FALSE  TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVectorConstructor
 #{ vector("integer") }
 integer(0)

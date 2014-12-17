@@ -413,7 +413,7 @@ public final class REngine implements RContext.Engine {
             } catch (ControlFlowException cfe) {
                 throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
-            assert !FastROptions.CheckResultCompleteness.getValue() || checkResult(result);
+            assert checkResult(result);
             if (printResult) {
                 printResult(result);
             }
@@ -434,8 +434,9 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    @TruffleBoundary
     private static boolean checkResult(Object result) {
-        if (result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+        if (FastROptions.CheckResultCompleteness.getValue() && result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
             assert ((RAbstractVector) result).checkCompleteness() : "vector: " + result + " is not complete, but isComplete flag is true";
         }
         return true;

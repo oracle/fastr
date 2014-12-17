@@ -46,9 +46,9 @@ import com.oracle.truffle.r.runtime.ops.na.*;
                 @NodeChild(value = "positions", type = PositionsArrayNode.class, executeWith = {"vector", "exact"}), @NodeChild(value = "dropDim", type = RNode.class)})
 public abstract class AccessArrayNode extends RNode {
 
-    private final boolean isSubset;
-    private final boolean exactInSource;
-    private final boolean dropInSource;
+    public final boolean isSubset;
+    public final boolean exactInSource;
+    public final boolean dropInSource;
 
     private final NACheck elementNACheck = NACheck.create();
     private final NACheck posNACheck = NACheck.create();
@@ -76,7 +76,7 @@ public abstract class AccessArrayNode extends RNode {
     @Child private GetDimNamesNode getDimNamesNode;
     @Child ContainerRowNamesGet rowNamesGetter;
 
-    protected abstract RNode getVector();
+    public abstract RNode getVector();
 
     protected abstract RNode getPositions();
 

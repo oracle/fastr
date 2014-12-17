@@ -123,7 +123,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
         RBuiltin builtin = builtinFactory.getRBuiltin();
         assert builtin != null;
-        return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtinFactory.getBuiltinNames()[0], callTarget, builtin, builtinFactory.getEnv().getFrame()));
+        return RContext.getInstance().putCachedFunction(methodName, RDataFactory.createFunction(builtinFactory.getBuiltinNames()[0], callTarget, builtin, builtinFactory.getEnv().getFrame()));
     }
 
     public static RBuiltinFactory lookupBuiltin(String name) {

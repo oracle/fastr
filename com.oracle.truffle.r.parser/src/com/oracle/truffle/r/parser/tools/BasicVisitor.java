@@ -190,6 +190,11 @@ public class BasicVisitor<R> implements Visitor<R> {
     }
 
     @Override
+    public R visit(UnaryPlus op) {
+        return visit((UnaryOperation) op);
+    }
+
+    @Override
     public R visit(Constant c) {
         return visit((ASTNode) c);
     }

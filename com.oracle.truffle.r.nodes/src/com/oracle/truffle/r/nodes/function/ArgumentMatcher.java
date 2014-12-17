@@ -187,11 +187,16 @@ public class ArgumentMatcher {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
                     Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-                    evaledArgs[fi] = RPromise.create(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultClosure);
+                    evaledArgs[fi] = RDataFactory.createPromise(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultClosure);
                 }
             } else if (function.isBuiltin() && evaledArg instanceof RPromise) {
                 RPromise promise = (RPromise) evaledArg;
                 evaledArgs[fi] = promiseHelper.evaluate(frame, promise);
+            }
+        }
+        for (int i = 0; i < evaledArgs.length; ++i) {
+            if (evaledArgs[i] == null) {
+                evaledArgs[i] = RMissing.instance;
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getNames());
