@@ -6829,6 +6829,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testComplex_4a70d4fc75fde6304e4894f7fb2494b5() {
+        assertEval("{ complex(3, c(1,2,3), c(4,5,6)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testComplex_e8b5743ec2e88605af84173f9ff4f7b7() {
+        assertEval("{ complex(3, c(1,2,3), c(4,5)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testComplex_bc5e71067c8fc7c5a59af218e962ff09() {
+        assertEval("{ complex(3, c(1,2), c(4,5,6)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testComplexGroupDispatch_5ead400d0cd56aa4d43d6828a1d318e7() {
         assertEval("{x<--7+2i;class(x)<-\"foo\";Complex.foo<-function(z){1;};Im(x);}");
     }

@@ -7341,6 +7341,18 @@ expression(1, 2)
 [1] 0+0i 0+0i 0+0i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3, c(1,2), c(4,5,6)) }
+[1] 1+4i 2+5i 1+6i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3, c(1,2,3), c(4,5)) }
+[1] 1+4i 2+5i 3+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3, c(1,2,3), c(4,5,6)) }
+[1] 1+4i 2+5i 3+6i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
 #{ complex(real=1,imag=2) }
 [1] 1+2i
 

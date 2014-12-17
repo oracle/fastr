@@ -2528,6 +2528,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ complex(real=1,imaginary=2) }");
         assertEval("{ complex(real=1,imag=2) }");
         assertEval("{ complex(3) }");
+        assertEval("{ complex(3, c(1,2,3), c(4,5,6)) }");
+        assertEval("{ complex(3, c(1,2,3), c(4,5)) }");
+        assertEval("{ complex(3, c(1,2), c(4,5,6)) }");
     }
 
     @Test
