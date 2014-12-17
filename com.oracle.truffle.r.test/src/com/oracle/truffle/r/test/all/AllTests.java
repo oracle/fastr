@@ -16849,6 +16849,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testVapply_3a016d2d2634bb34067c42ecf7f16d67() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testVapply_3ab8fddc638c3b0d5c9699be66448791() {
         assertEval("{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }");
     }
@@ -16864,13 +16869,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testVapplyIgnore_a2e4a980be9ca6c3aa6f1be2cf568841() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testVapplyIgnore_3a016d2d2634bb34067c42ecf7f16d67() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+    public void TestSimpleBuiltins_testVapply_a87f525c4999c40a50a96fb045f4e3fb() {
+        assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }");
     }
 
     @Test

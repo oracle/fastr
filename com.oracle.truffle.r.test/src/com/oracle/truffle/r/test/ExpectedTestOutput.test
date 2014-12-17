@@ -16304,6 +16304,11 @@ f first 1
 #{f <- function(x){ UseMethod("f");cat("This should not be executed"); }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
 f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c("hello", "goodbye", "up", "down"), function(x) x, c("a")) }
+    hello   goodbye        up      down
+  "hello" "goodbye"      "up"    "down"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
 #{ vapply(c("hello", "goodbye", "up", "down"), function(x) x, c("a"), USE.NAMES = FALSE) }
 [1] "hello"   "goodbye" "up"      "down"
 
@@ -16313,6 +16318,10 @@ f second 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
 #{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }
+[1] 6 7 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }
 [1] 6 7 8 9
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply

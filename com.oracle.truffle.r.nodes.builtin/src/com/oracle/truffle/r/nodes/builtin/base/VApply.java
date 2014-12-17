@@ -34,25 +34,38 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "...", "USE.NAMES"})
+/**
+ * The {@code vapply} builtin. The closure definition for {@code vapply} is
+ * {@code unction(X, FUN, FUN.VALUE, ...,  USE.NAMES = TRUE)}. The {@code .Internal} call in
+ * {@code sapply.R} is {@code .Internal(vapply(X, FUN, FUN.VALUE, USE.NAMES))}. I.e., the "..." is
+ * not passed even though, for correct operation, any extra arguments must be passed to {@code FUN}.
+ * Compare with similar code for {@code lapply} which does pass the "...". In order for FastR to use
+ * the same version of {@code sapply.R} as GnuR, we have to define the specialization signature
+ * without the "...", which means we have to fish the optional arguments out of the frame for the
+ * closure.
+ *
+ * TODO Set dimnames on result if necessary.
+ */
+@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"})
 public abstract class VApply extends RBuiltinNode {
 
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
+    private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
 
     @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
-    // TODO complete implementation: useNames
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, RArgsValuesAndNames optionalArgs, @SuppressWarnings("unused") Object useNames) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {
         controlVisibility();
-        return delegateToLapply(frame, vec, fun, funValue, optionalArgs);
+        RArgsValuesAndNames optionalArgs = (RArgsValuesAndNames) RArguments.getArgument(frame, 3);
+        return delegateToLapply(frame, vec, fun, funValue, useNames, optionalArgs);
     }
 
-    private Object delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, RArgsValuesAndNames optionalArgs) {
+    private RVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, byte useNames, RArgsValuesAndNames optionalArgs) {
         RVector vecMat = vec.materialize();
         Object[] applyResult = doApply.execute(frame, vecMat, fun, optionalArgs);
 
-        Object result = null;
+        RVector result = null;
         boolean applyResultZeroLength = applyResult.length == 0;
         Object funValue = funValueProfile.profile(funValueArg);
         if (funValue instanceof Integer) {
@@ -72,6 +85,19 @@ public abstract class VApply extends RBuiltinNode {
             result = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             assert false;
+        }
+
+        if (useNamesProfile.profile(RRuntime.fromLogical(useNames))) {
+            Object names = vecMat.getNames();
+            Object newNames = null;
+            if (names != RNull.instance) {
+                newNames = names;
+            } else if (vecMat instanceof RStringVector) {
+                newNames = ((RStringVector) vecMat).copy();
+            }
+            if (newNames != null) {
+                result.setNames(newNames);
+            }
         }
         return result;
     }
