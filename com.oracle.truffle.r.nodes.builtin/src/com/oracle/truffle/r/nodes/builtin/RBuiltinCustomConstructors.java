@@ -41,8 +41,6 @@ public class RBuiltinCustomConstructors {
                 return new com.oracle.truffle.r.nodes.builtin.base.Min(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Ceiling":
                 return new com.oracle.truffle.r.nodes.builtin.base.Ceiling(node);
-            case "com.oracle.truffle.r.nodes.builtin.base.Recall":
-                return new com.oracle.truffle.r.nodes.builtin.base.Recall(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Sum":
                 return new com.oracle.truffle.r.nodes.builtin.base.Sum(node);
             default:

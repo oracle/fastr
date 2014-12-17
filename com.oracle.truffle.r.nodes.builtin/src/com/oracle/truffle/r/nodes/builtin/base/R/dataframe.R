@@ -476,6 +476,204 @@ data.frame <-
 	value
 }
 
+### Here are the methods for rbind and cbind.
+
+cbind.data.frame <- function(..., deparse.level = 1)
+	data.frame(..., check.names = FALSE)
+
+rbind.data.frame <- function(..., deparse.level = 1)
+{
+	match.names <- function(clabs, nmi)
+	{
+		if(identical(clabs, nmi)) NULL
+		else if(length(nmi) == length(clabs) && all(nmi %in% clabs)) {
+			## we need 1-1 matches here
+			m <- pmatch(nmi, clabs, 0L)
+			if(any(m == 0L))
+				stop("names do not match previous names")
+			m
+		} else stop("names do not match previous names")
+	}
+	Make.row.names <- function(nmi, ri, ni, nrow)
+	{
+		if(nzchar(nmi)) {
+			if(ni == 0L) character()  # PR8506
+			else if(ni > 1L) paste(nmi, ri, sep = ".")
+			else nmi
+		}
+		else if(nrow > 0L && identical(ri, seq_len(ni)))
+			as.integer(seq.int(from = nrow + 1L, length.out = ni))
+		else ri
+	}
+	allargs <- list(...)
+	allargs <- allargs[vapply(allargs, length, 1L) > 0L]
+	if(length(allargs)) {
+		## drop any zero-row data frames, as they may not have proper column
+		## types (e.g. NULL).
+		nr <- vapply(allargs, function(x)
+					if(is.data.frame(x)) .row_names_info(x, 2L)
+					else if(is.list(x)) length(x[[1L]]) # mismatched lists are checked later
+					else length(x), 1L)
+		if(any(nr > 0L)) allargs <- allargs[nr > 0L]
+		else return(allargs[[1L]]) # pretty arbitrary
+	}
+	n <- length(allargs)
+	if(n == 0L)
+		return(structure(list(),
+						class = "data.frame",
+						row.names = integer()))
+	nms <- names(allargs)
+	if(is.null(nms))
+		nms <- character(n)
+	cl <- NULL
+	perm <- rows <- rlabs <- vector("list", n)
+	nrow <- 0L
+	value <- clabs <- NULL
+	all.levs <- list()
+	for(i in seq_len(n)) {
+		## check the arguments, develop row and column labels
+		xi <- allargs[[i]]
+		nmi <- nms[i]
+		## coerce matrix to data frame
+		if(is.matrix(xi)) allargs[[i]] <- xi <- as.data.frame(xi)
+		if(inherits(xi, "data.frame")) {
+			if(is.null(cl))
+				cl <- oldClass(xi)
+			ri <- attr(xi, "row.names")
+			ni <- length(ri)
+			if(is.null(clabs))
+				clabs <- names(xi)
+			else {
+				if(length(xi) != length(clabs))
+					stop("numbers of columns of arguments do not match")
+				pi <- match.names(clabs, names(xi))
+				if( !is.null(pi) ) perm[[i]] <- pi
+			}
+			rows[[i]] <- seq.int(from = nrow + 1L, length.out = ni)
+			rlabs[[i]] <- Make.row.names(nmi, ri, ni, nrow)
+			nrow <- nrow + ni
+			if(is.null(value)) {
+				value <- unclass(xi)
+				nvar <- length(value)
+				all.levs <- vector("list", nvar)
+				has.dim <- logical(nvar)
+				facCol <- logical(nvar)
+				ordCol <- logical(nvar)
+				for(j in seq_len(nvar)) {
+					xj <- value[[j]]
+					if( !is.null(levels(xj)) ) {
+						all.levs[[j]] <- levels(xj)
+						facCol[j] <- TRUE # turn categories into factors
+					} else facCol[j] <- is.factor(xj)
+					ordCol[j] <- is.ordered(xj)
+					has.dim[j] <- length(dim(xj)) == 2L
+				}
+			}
+			else for(j in seq_len(nvar)) {
+					xij <- xi[[j]]
+					if(is.null(pi) || is.na(jj <- pi[[j]])) jj <- j
+					if(facCol[jj]) {
+						if(length(lij <- levels(xij))) {
+							all.levs[[jj]] <- unique(c(all.levs[[jj]], lij))
+							ordCol[jj] <- ordCol[jj] & is.ordered(xij)
+						} else if(is.character(xij))
+							all.levs[[jj]] <- unique(c(all.levs[[jj]], xij))
+					}
+				}
+		}
+		else if(is.list(xi)) {
+			ni <- range(vapply(xi, length, 1L))
+			if(ni[1L] == ni[2L])
+				ni <- ni[1L]
+			else stop("invalid list argument: all variables should have the same length")
+			rows[[i]] <- ri <-
+					as.integer(seq.int(from = nrow + 1L, length.out = ni))
+			nrow <- nrow + ni
+			rlabs[[i]] <- Make.row.names(nmi, ri, ni, nrow)
+			if(length(nmi <- names(xi)) > 0L) {
+				if(is.null(clabs))
+					clabs <- nmi
+				else {
+					if(length(xi) != length(clabs))
+						stop("numbers of columns of arguments do not match")
+					pi <- match.names(clabs, nmi)
+					if( !is.null(pi) ) perm[[i]] <- pi
+				}
+			}
+		}
+		else if(length(xi)) {
+			rows[[i]] <- nrow <- nrow + 1L
+			rlabs[[i]] <- if(nzchar(nmi)) nmi else as.integer(nrow)
+		}
+	}
+	nvar <- length(clabs)
+	if(nvar == 0L)
+		nvar <- max(vapply(allargs, length, 1L)) # only vector args
+	if(nvar == 0L)
+		return(structure(list(), class = "data.frame",
+						row.names = integer()))
+	pseq <- seq_len(nvar)
+	if(is.null(value)) { # this happens if there has been no data frame
+		value <- list()
+		value[pseq] <- list(logical(nrow)) # OK for coercion except to raw.
+		all.levs <- vector("list", nvar)
+		has.dim <- logical(nvar)
+		facCol <- logical(nvar)
+		ordCol <- logical(nvar)
+	}
+	names(value) <- clabs
+	for(j in pseq)
+		if(length(lij <- all.levs[[j]]))
+			value[[j]] <-
+					factor(as.vector(value[[j]]), lij, ordered = ordCol[j])
+	if(any(has.dim)) {
+		rmax <- max(unlist(rows))
+		for(i in pseq[has.dim])
+			if(!inherits(xi <- value[[i]], "data.frame")) {
+				dn <- dimnames(xi)
+				rn <- dn[[1L]]
+				if(length(rn) > 0L) length(rn) <- rmax
+				pi <- dim(xi)[2L]
+				length(xi) <- rmax * pi
+				value[[i]] <- array(xi, c(rmax, pi), list(rn, dn[[2L]]))
+			}
+	}
+	for(i in seq_len(n)) {
+		xi <- unclass(allargs[[i]])
+		if(!is.list(xi))
+			if(length(xi) != nvar)
+				xi <- rep(xi, length.out = nvar)
+		ri <- rows[[i]]
+		pi <- perm[[i]]
+		if(is.null(pi)) pi <- pseq
+		for(j in pseq) {
+			jj <- pi[j]
+			xij <- xi[[j]]
+			if(has.dim[jj]) {
+				value[[jj]][ri,	 ] <- xij
+				## copy rownames
+				rownames(value[[jj]])[ri] <- rownames(xij)
+			} else {
+				## coerce factors to vectors, in case lhs is character or
+				## level set has changed
+				value[[jj]][ri] <- if(is.factor(xij)) as.vector(xij) else xij
+				## copy names if any
+				if(!is.null(nm <- names(xij))) names(value[[jj]])[ri] <- nm
+			}
+		}
+	}
+	rlabs <- unlist(rlabs)
+	if(anyDuplicated(rlabs))
+		rlabs <- make.unique(as.character(unlist(rlabs)), sep = "")
+	if(is.null(cl)) {
+		as.data.frame(value, row.names = rlabs)
+	} else {
+		class(value) <- cl
+		attr(value, "row.names") <- rlabs
+		value
+	}
+}
+
 ### coercion and print methods
 
 print.data.frame <-

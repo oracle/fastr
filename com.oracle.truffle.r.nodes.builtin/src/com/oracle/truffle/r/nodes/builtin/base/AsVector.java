@@ -27,8 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -111,11 +109,6 @@ public abstract class AsVector extends RBuiltinNode {
         return castList.executeList(frame, operand);
     }
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName())};
-    }
-
     @Specialization
     protected Object asVector(RNull x, @SuppressWarnings("unused") RMissing mode) {
         controlVisibility();
@@ -177,6 +170,12 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "castToList")
+    protected RAbstractVector asVectorList(VirtualFrame frame, RPairList x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return castList(frame, x);
+    }
+
+    @Specialization(guards = "castToList")
     protected RAbstractVector asVectorList(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return RDataFactory.createList();
@@ -203,6 +202,17 @@ public abstract class AsVector extends RBuiltinNode {
         controlVisibility();
         RList result = x.copyWithNewDimensions(null);
         result.copyNamesFrom(x);
+        return result;
+    }
+
+    @Specialization(guards = "modeIsAny")
+    protected RAbstractVector asVector(RFactor x, @SuppressWarnings("unused") String mode) {
+        RVector levels = x.getLevels();
+        RVector result = levels.createEmptySameType(x.getLength(), RDataFactory.COMPLETE_VECTOR);
+        RIntVector factorData = x.getVector();
+        for (int i = 0; i < result.getLength(); i++) {
+            result.transferElementSameType(i, levels, factorData.getDataAt(i) - 1);
+        }
         return result;
     }
 
@@ -265,6 +275,10 @@ public abstract class AsVector extends RBuiltinNode {
         return mode.equals("list");
     }
 
+    protected boolean castToList(@SuppressWarnings("unused") RPairList x, String mode) {
+        return mode.equals("list");
+    }
+
     protected boolean castToList(@SuppressWarnings("unused") RNull x, String mode) {
         return mode.equals("list");
     }
@@ -277,7 +291,7 @@ public abstract class AsVector extends RBuiltinNode {
         return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode);
     }
 
-    protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+    protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractContainer x, String mode) {
         return RType.Any.getName().equals(mode);
     }
 

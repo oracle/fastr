@@ -130,6 +130,22 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; attributes(x[1, c(1,2)]) }");
 
         assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); x[,\"b\"] }");
+
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); x[NULL, \"a\"] }");
+        assertEval("{ x<-data.frame(a=factor(c(\"y\", \"z\", \"y\")), b=c(3,4,5)); x[NULL, \"a\"] }");
+
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); x[logical(), \"b\"] }");
+        assertEval("{ x<-data.frame(a=c(1L,2L), b=c(3L,4L)); x[logical(), \"b\"] }");
+        assertEval("{ x<-data.frame(a=1, b=2); x[logical(), \"b\"] }");
+        assertEval("{ x<-data.frame(a=1L, b=2L); x[logical(), \"b\"] }");
+    }
+
+    @Test
+    public void testUpdate() {
+        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
+
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[c(1,2)]<-list(c(11,12), c(13,14)); x }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4), c(5,6)); x[c(1,2, 3)]<-list(c(11,12), c(13,14), c(15,16)); x }");
     }
 
     @Test
@@ -158,8 +174,6 @@ public class TestSimpleDataFrames extends TestBase {
 
     @Test
     public void testMisc() {
-        assertEval("{ n = c(2, 3, 5); s = c(\"aa\", \"bb\", \"cc\"); df = data.frame(n, s); df[[1]] <- c(22,33,55); df }");
-
         assertEval("{ y<-data.frame(7); as.logical(y) }");
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
         assertEvalError("{ y<-data.frame(c(1,2,3)); as.logical(y) }");

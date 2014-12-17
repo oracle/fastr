@@ -55,13 +55,19 @@ public class FastROptions {
     public static final OptionValue<Boolean> AddFunctionCounters = new OptionValue<>(false);
     @Option(help = "Enable binding of builtins into package environment")
     public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(false);
-    @Option(help = "Trace all function calls")
+    @Option(help = "Trace all R function calls (requires +Instrumentation)")
     public static final OptionValue<Boolean> TraceCalls = new OptionValue<>(false);
+    @Option(help = "Collect Performance Data")
+    public static final OptionValue<String> PerfStats = new OptionValue<>(null);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();
+    private static boolean initialized;
 
     public static void initialize() {
+        if (initialized) {
+            return;
+        }
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String prop = (String) entry.getKey();
             if (prop.startsWith("R:")) {
@@ -79,7 +85,7 @@ public class FastROptions {
                         }
 
                         case "String": {
-                            String value = stringOptionValue(prop);
+                            String value = (String) entry.getValue();
                             desc.getOptionValue().setValue(value);
                             break;
                         }
@@ -89,17 +95,29 @@ public class FastROptions {
                 }
             }
         }
+        initialized = true;
     }
 
     /**
      * Convenience function for matching against the Debug option.
      *
-     * @param string string to match against {@link #Debug} value.
-     * @return {@code true} if {@link #Debug} is set with no {@code =value} component, or of
-     *         {@code string} matches an element, {@code false} otherwise.
      */
-    public static boolean debugMatches(String string) {
-        String s = Debug.getValue();
+    public static boolean debugMatches(String element) {
+        return matchesElement(element, Debug);
+    }
+
+    /**
+     * Convenience function for matching against an option whose value is expected to be a comma
+     * separated list. If the option is set without a value, i.e. just plain {@code -R:Option}, all
+     * elements are deemed to match.
+     *
+     * @param element string to match against the option value list.
+     * @return {@code true} if the option is set with no {@code =value} component, or if
+     *         {@code element} matches an element, {@code false} otherwise.
+     */
+    public static boolean matchesElement(String element, OptionValue<String> stringOption) {
+        initialize();
+        String s = stringOption.getValue();
         if (s == null) {
             return false;
         } else if (s.length() == 0) {
@@ -107,12 +125,13 @@ public class FastROptions {
         } else {
             String[] parts = s.split(",");
             for (String part : parts) {
-                if (part.equals(string)) {
+                if (part.equals(element)) {
                     return true;
                 }
             }
         }
         return false;
+
     }
 
     private static OptionDescriptor findOption(String key) {
@@ -142,12 +161,4 @@ public class FastROptions {
         return option.charAt(2) == '+';
     }
 
-    private static String stringOptionValue(String option) {
-        int ix = option.indexOf('=');
-        if (ix < 0) {
-            return "";
-        } else {
-            return option.substring(ix + 1);
-        }
-    }
 }

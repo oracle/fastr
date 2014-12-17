@@ -75,24 +75,24 @@ public abstract class Scan extends RBuiltinNode {
     @CreateCast({"arguments"})
     public RNode[] createCastValue(RNode[] children) {
         RNode file = children[0];
-        RNode what = CastToVectorNodeFactory.create(children[1], false, false, false, false);
-        RNode nmax = CastToVectorNodeFactory.create(CastIntegerNodeFactory.create(children[2], false, false, false), false, false, false, false);
-        RNode sep = CastToVectorNodeFactory.create(children[3], false, false, false, false);
-        RNode dec = CastToVectorNodeFactory.create(children[4], false, false, false, false);
-        RNode quotes = CastToVectorNodeFactory.create(children[5], false, false, false, false);
-        RNode nskip = CastToVectorNodeFactory.create(CastIntegerNodeFactory.create(children[6], false, false, false), false, false, false, false);
-        RNode nlines = CastToVectorNodeFactory.create(CastIntegerNodeFactory.create(children[7], false, false, false), false, false, false, false);
-        RNode naStrings = CastToVectorNodeFactory.create(children[8], false, false, false, false);
-        RNode flush = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[9], false, false, false), false, false, false, false);
-        RNode fill = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[10], false, false, false), false, false, false, false);
-        RNode stripWhite = CastToVectorNodeFactory.create(children[11], false, false, false, false);
-        RNode quiet = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[12], false, false, false), false, false, false, false);
-        RNode blSkip = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[13], false, false, false), false, false, false, false);
-        RNode multiLine = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[14], false, false, false), false, false, false, false);
-        RNode commentChar = CastToVectorNodeFactory.create(children[15], false, false, false, false);
-        RNode allowEscapes = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[16], false, false, false), false, false, false, false);
-        RNode encoding = CastToVectorNodeFactory.create(children[17], false, false, false, false);
-        RNode skipNull = CastToVectorNodeFactory.create(CastLogicalNodeFactory.create(children[18], false, false, false), false, false, false, false);
+        RNode what = children[1];
+        RNode nmax = CastIntegerNodeFactory.create(children[2], false, false, false);
+        RNode sep = children[3];
+        RNode dec = children[4];
+        RNode quotes = children[5];
+        RNode nskip = CastIntegerNodeFactory.create(children[6], false, false, false);
+        RNode nlines = CastIntegerNodeFactory.create(children[7], false, false, false);
+        RNode naStrings = children[8];
+        RNode flush = CastLogicalNodeFactory.create(children[9], false, false, false);
+        RNode fill = CastLogicalNodeFactory.create(children[10], false, false, false);
+        RNode stripWhite = children[11];
+        RNode quiet = CastLogicalNodeFactory.create(children[12], false, false, false);
+        RNode blSkip = CastLogicalNodeFactory.create(children[13], false, false, false);
+        RNode multiLine = CastLogicalNodeFactory.create(children[14], false, false, false);
+        RNode commentChar = children[15];
+        RNode allowEscapes = CastLogicalNodeFactory.create(children[16], false, false, false);
+        RNode encoding = children[17];
+        RNode skipNull = CastLogicalNodeFactory.create(children[18], false, false, false);
 
         return new RNode[]{file, what, nmax, sep, dec, quotes, nskip, nlines, naStrings, flush, fill, stripWhite, quiet, blSkip, multiLine, commentChar, allowEscapes, encoding, skipNull};
     }

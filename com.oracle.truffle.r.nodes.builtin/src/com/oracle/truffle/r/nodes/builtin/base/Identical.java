@@ -142,6 +142,26 @@ public abstract class Identical extends RBuiltinNode {
         throw RError.nyi(getEncapsulatingSourceSection(), "data frames not supported in 'identical'");
     }
 
+    @Specialization
+    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RFunction x, @SuppressWarnings("unused") RAbstractContainer y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
+                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RAbstractContainer x, @SuppressWarnings("unused") RFunction y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
+                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
         return x.getElementClass() == Object.class && y.getElementClass() == Object.class;
     }

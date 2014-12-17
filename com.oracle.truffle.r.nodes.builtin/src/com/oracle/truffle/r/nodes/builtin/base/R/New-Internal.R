@@ -85,12 +85,10 @@ commandArgs <- function(trailingOnly = FALSE) {
 #args <- function(name) .Internal(args(name))
 
 cbind <- function(..., deparse.level = 1)
-	# TODO: if the name of the internal and of R function is the same then R function is not picked up
-  .Internal(cbind.internal(deparse.level, ...))
+  .Internal(cbind(deparse.level, ...))
 
 rbind <- function(..., deparse.level = 1)
-	# TODO: if the name of the internal and of R function is the same then R function is not picked up	
-  .Internal(rbind.internal(deparse.level, ...))
+  .Internal(rbind(deparse.level, ...))
 
 ### for methods:::bind_activation
 #.__H__.cbind <- cbind
@@ -140,15 +138,15 @@ drop <- function(x) .Internal(drop(x))
 #format.info <- function(x, digits = NULL, nsmall = 0L)
 #  .Internal(format.info(x, digits, nsmall))
 #
-#gc <- function(verbose = getOption("verbose"),  reset=FALSE)
-#{
-#  res <- .Internal(gc(verbose, reset))
-#  res <- matrix(res, 2L, 7L,
-#      dimnames = list(c("Ncells","Vcells"),
-#          c("used", "(Mb)", "gc trigger", "(Mb)",
-#              "limit (Mb)", "max used", "(Mb)")))
-#  if(all(is.na(res[, 5L]))) res[, -5L] else res
-#}
+gc <- function(verbose = getOption("verbose"),  reset=FALSE)
+{
+  res <- .Internal(gc(verbose, reset))
+  res <- matrix(res, 2L, 7L,
+      dimnames = list(c("Ncells","Vcells"),
+          c("used", "(Mb)", "gc trigger", "(Mb)",
+              "limit (Mb)", "max used", "(Mb)")))
+  if(all(is.na(res[, 5L]))) res[, -5L] else res
+}
 #gcinfo <- function(verbose) .Internal(gcinfo(verbose))
 #gctorture <- function(on = TRUE) .Internal(gctorture(on))
 #gctorture2 <- function(step, wait = step, inhibit_release = FALSE)
@@ -240,15 +238,15 @@ encodeString <- function(x, width = 0L, quote = "", na.encode = TRUE,
 	.Internal(encodeString(x, width, quote, justify, na.encode))
 }
 
-#l10n_info <- function() .Internal(l10n_info())
-#
-#iconv <- function(x, from = "", to = "", sub = NA, mark = TRUE, toRaw = FALSE)
-#{
-#  if(! (is.character(x) || (is.list(x) && is.null(oldClass(x)))))
-#    x <- as.character(x)
-#  .Internal(iconv(x, from, to, as.character(sub), mark, toRaw))
-#}
-#
+l10n_info <- function() .Internal(l10n_info())
+
+iconv <- function(x, from = "", to = "", sub = NA, mark = TRUE, toRaw = FALSE)
+{
+  if(! (is.character(x) || (is.list(x) && is.null(oldClass(x)))))
+    x <- as.character(x)
+  .Internal(iconv(x, from, to, as.character(sub), mark, toRaw))
+}
+
 #iconvlist <- function()
 #{
 #  int <- .Internal(iconv(NULL, "", "", "", TRUE, FALSE))

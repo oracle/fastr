@@ -24,55 +24,33 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
-import com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsPromiseNode;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "Recall", kind = SUBSTITUTE, parameterNames = {"..."})
-// TODO INTERNAL
-public class Recall extends RCustomBuiltinNode {
-    @Child private DirectCallNode callNode;
-    @CompilationFinal private RFunction function;
+/**
+ * The {@code Recall} {@code .Internal}.
+ */
+@RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."})
+public abstract class Recall extends RBuiltinNode {
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
 
-    private final ConditionProfile argsPromise = ConditionProfile.createBinaryProfile();
-
-    public Recall(RBuiltinNode prev) {
-        super(prev);
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
+    @Specialization
+    public Object execute(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+        RFunction function = RArguments.getFunction(cframe);
         if (function == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            function = RArguments.getFunction(frame);
-            if (function == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
-            }
-            callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
 
         // Use arguments in "..." as arguments for RECALL call
-        Object[] argsObject = RArguments.create(function, callNode.getSourceSection(), RArguments.getDepth(frame) + 1, createArgs(frame, arguments[0]));
-        return callNode.call(frame, argsObject);
+        Object[] argsObject = RArguments.create(function, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, args.getValues());
+        return callCache.execute(frame, function.getTarget(), argsObject);
     }
 
-    private Object[] createArgs(VirtualFrame frame, RNode argNode) {
-        RNode actualArgNode = argNode instanceof WrapArgumentNode ? ((WrapArgumentNode) argNode).getOperand() : argNode;
-        if (argsPromise.profile(actualArgNode instanceof InlineVarArgsPromiseNode)) {
-            RArgsValuesAndNames varArgs = (RArgsValuesAndNames) actualArgNode.execute(frame);
-            return varArgs.getValues();
-        } else {
-            return new Object[]{argNode.execute(frame)};
-        }
-    }
 }

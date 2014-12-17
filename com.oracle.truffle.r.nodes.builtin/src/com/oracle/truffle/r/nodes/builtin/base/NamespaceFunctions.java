@@ -65,7 +65,7 @@ public class NamespaceFunctions {
     @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL, parameterNames = {})
     public abstract static class GetNamespaceRegistry extends RBuiltinNode {
         @Specialization
-        protected REnvironment doGetNamespaceRegistry(@SuppressWarnings("unused") RMissing missing) {
+        protected REnvironment doGetNamespaceRegistry() {
             controlVisibility();
             return REnvironment.getNamespaceRegistry();
         }

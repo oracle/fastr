@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgPromiseNode;
 import com.oracle.truffle.r.runtime.*;
@@ -94,6 +95,26 @@ public class RASTUtils {
         } else if (argNode instanceof VarArgPromiseNode) {
             RPromise p = ((VarArgPromiseNode) argNode).getPromise();
             return createLanguageElement(unwrap(p.getRep()));
+        } else if (argNode instanceof VarArgsPromiseNode) {
+            /*
+             * This is mighty tedious, but GnuR represents this as a pairlist and we do have to
+             * convert it into either an RPairList or an RList for compatibility.
+             */
+            VarArgsPromiseNode vapn = ((VarArgsPromiseNode) argNode);
+            RNode[] nodes = vapn.getNodes();
+            String[] names = vapn.getNames();
+            RPairList prev = null;
+            RPairList result = null;
+            for (int i = 0; i < nodes.length; i++) {
+                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(nodes[i])), null, names[i]);
+                if (prev != null) {
+                    prev.setCdr(pl);
+                } else {
+                    result = pl;
+                }
+                prev = pl;
+            }
+            return result;
         } else {
             return RDataFactory.createLanguage(argNode);
         }
@@ -121,6 +142,27 @@ public class RASTUtils {
         }
     }
 
+    /**
+     * Create an {@link RNode} from a runtime value.
+     */
+    @TruffleBoundary
+    public static RNode createNodeForValue(Object value) {
+        if (value instanceof RNode) {
+            return (RNode) value;
+        } else if (value instanceof RSymbol) {
+            return RASTUtils.createReadVariableNode(((RSymbol) value).getName());
+        } else if (value instanceof RLanguage) {
+            RLanguage l = (RLanguage) value;
+            return (RNode) NodeUtil.cloneNode((Node) l.getRep());
+        } else if (value instanceof RPromise) {
+            // TODO: flatten nested promises?
+            return NodeUtil.cloneNode(((RNode) ((RPromise) value).getRep()).unwrap());
+        } else {
+            return ConstantNode.create(value);
+        }
+
+    }
+
     public static boolean isLanguageOrExpression(Object expr) {
         return expr instanceof RExpression || expr instanceof RLanguage;
     }
@@ -145,9 +187,9 @@ public class RASTUtils {
             return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
         } else if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
-        } else if (fn instanceof GroupDispatchNode) {
-            GroupDispatchNode gdn = (GroupDispatchNode) fn;
-            return DispatchedCallNode.create(gdn.getGenericName(), RGroupGenerics.RDotGroup, null, callArgsNode);
+        } else if (fn instanceof GroupDispatchCallNode) {
+            GroupDispatchCallNode gdcn = (GroupDispatchCallNode) fn;
+            return GroupDispatchCallNode.create(gdcn.getGenericName(), gdcn.getGroupName(), callArgsNode, gdcn.getCallSrc());
         } else {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createStaticCall(null, rfn, callArgsNode);
@@ -201,8 +243,8 @@ public class RASTUtils {
             } else {
                 return createRSymbol(child);
             }
-        } else if (child instanceof GroupDispatchNode) {
-            GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
+        } else if (child instanceof GroupDispatchCallNode) {
+            GroupDispatchCallNode groupDispatchNode = (GroupDispatchCallNode) child;
             String gname = groupDispatchNode.getGenericName();
             if (quote) {
                 gname = "`" + gname + "`";
@@ -223,19 +265,13 @@ public class RASTUtils {
 
     /**
      * Returns the {@link ReadVariableNode} associated with a {@link RCallNode} or the
-     * {@link GroupDispatchNode} associated with a {@link DispatchedCallNode}.
+     * {@link GroupDispatchCallNode} .
      */
     public static RNode findFunctionNode(Node node) {
         if (node instanceof RCallNode) {
             return ((RCallNode) node).getFunctionNode();
-        } else if (node instanceof DispatchedCallNode) {
-            for (Node child : node.getChildren()) {
-                if (child != null) {
-                    if (child instanceof GroupDispatchNode) {
-                        return (RNode) child;
-                    }
-                }
-            }
+        } else if (node instanceof GroupDispatchCallNode) {
+            return (RNode) node;
         }
         assert false;
         return null;

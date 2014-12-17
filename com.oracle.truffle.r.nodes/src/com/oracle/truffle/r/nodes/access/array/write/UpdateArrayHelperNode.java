@@ -99,15 +99,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel, boolean forDataFrame) {
-        // for data frames, recursive update is the same as for lists but as if the [[]] operator
-        // was used
-        if (updateRecursive == null || (forDataFrame && isSubset) || (!forDataFrame && isSubset != recursiveIsSubset)) {
+        if (updateRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            boolean newIsSubset = this.isSubset;
-            if (forDataFrame && isSubset) {
-                newIsSubset = false;
-            }
-            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(newIsSubset, null, null, null, null, null));
+            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(isSubset, null, null, null, null, null));
         }
         return updateRecursive.executeUpdate(frame, v, value, recLevel, operand, vector);
     }
@@ -196,9 +190,34 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @Specialization
+    protected Object update(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, Object positions, RFactor factor) {
+        RVector levels = factor.getLevels();
+        int[] data = new int[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            Object val = value.getDataAtAsObject(i);
+            for (int j = 0; j < levels.getLength(); j++) {
+                // levels are strings in most cases so using equals should be OK performance-wise
+                if (val.equals(levels.getDataAtAsObject(j))) {
+                    data[i] = j + 1;
+                    break;
+                }
+            }
+        }
+        RIntVector newValue = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        RVector inner = factor.getVector();
+        RIntVector res = (RIntVector) updateRecursive(frame, v, newValue, inner, positions, recLevel, false);
+        if (res != inner) {
+            res.setLevels(factor.getLevels());
+            return RDataFactory.createFactor(res, false);
+        } else {
+            return factor;
+        }
+    }
+
+    @Specialization
     protected Object update(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RDataFrame vector) {
         RVector inner = vector.getVector();
-        RVector res = (RVector) updateRecursive(frame, v, value, inner, positions, recLevel, true);
+        RVector res = (RVector) updateRecursive(frame, v, value, inner, positions, recLevel, false);
         if (res != inner) {
             return RDataFactory.createDataFrame(res);
         } else {

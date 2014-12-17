@@ -29,6 +29,8 @@ import com.oracle.truffle.api.source.*;
  *
  * Currently, only very simple formulae of the form {@code y ~ x} are supported. Both response and
  * model are represented internally as {@link Object} members.
+ *
+ * TODO The {@link SourceSection} attribute is suspicious for a runtime value.
  */
 public class RFormula extends RScalar {
 
@@ -36,7 +38,7 @@ public class RFormula extends RScalar {
     private final Object response;
     private final Object model;
 
-    public RFormula(SourceSection source, Object response, Object model) {
+    RFormula(SourceSection source, Object response, Object model) {
         this.source = source;
         this.response = response;
         this.model = model;

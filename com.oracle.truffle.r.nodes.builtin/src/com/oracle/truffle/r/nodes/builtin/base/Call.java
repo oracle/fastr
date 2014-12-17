@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Construct a call object ({@link RLanguage}) from a name and optional arguments.
@@ -44,20 +45,24 @@ public abstract class Call extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
-    protected RLanguage call(String name, @SuppressWarnings("unused") RMissing args) {
-        return makeCall(name, null);
+    @Specialization(guards = "!isEmptyName")
+    protected RLanguage call(RAbstractStringVector name, @SuppressWarnings("unused") RMissing args) {
+        return makeCall(name.getDataAt(0), null);
     }
 
-    @Specialization
-    protected RLanguage call(String name, RArgsValuesAndNames args) {
-        return makeCall(name, args);
+    @Specialization(guards = "!isEmptyName")
+    protected RLanguage call(RAbstractStringVector name, RArgsValuesAndNames args) {
+        return makeCall(name.getDataAt(0), args);
     }
 
     @Fallback
     @SuppressWarnings("unused")
     protected RLanguage call(Object name, Object args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
+    }
+
+    protected boolean isEmptyName(RAbstractStringVector name) {
+        return name.getLength() == 0;
     }
 
     @TruffleBoundary
@@ -84,19 +89,7 @@ public abstract class Call extends RBuiltinNode {
         String[] names = argsAndNames == null ? new String[0] : argsAndNames.getNames();
 
         for (int i = 0; i < argLength; i++) {
-            Object a = values[i];
-            if (a instanceof RSymbol) {
-                args[i] = RASTUtils.createReadVariableNode(((RSymbol) a).getName());
-            } else if (a instanceof RLanguage) {
-                RLanguage l = (RLanguage) a;
-                args[i] = (RNode) l.getRep();
-            } else if (a instanceof RPromise) {
-                // TODO: flatten nested promises?
-                Object rep = ((RPromise) a).getRep();
-                args[i] = rep instanceof WrapArgumentNode ? ((WrapArgumentNode) rep).getOperand() : (RNode) rep;
-            } else {
-                args[i] = ConstantNode.create(a);
-            }
+            args[i] = RASTUtils.createNodeForValue(values[i]);
         }
 
         // TODO: handle replacement calls

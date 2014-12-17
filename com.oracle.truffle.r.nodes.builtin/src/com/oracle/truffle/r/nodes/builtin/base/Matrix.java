@@ -39,10 +39,19 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Matrix extends RBuiltinNode {
 
     @Child private Transpose transpose;
+    @Child private UpdateDimNames updateDimNames;
 
     private final BinaryConditionProfile nrowMissingNcolGiven = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile nrowGivenNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+
+    private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
+        if (updateDimNames == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return updateDimNames.executeList(frame, vector, o);
+    }
 
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] args) {
@@ -65,11 +74,11 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "!byRow")
     @SuppressWarnings("unused")
-    protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
+    protected RAbstractVector matrixbc(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
-        RVector res = data.copyResizedWithDimensions(dim);
-        res.setDimNames(dimnames);
+        RAbstractVector res = data.copyResizedWithDimensions(dim);
+        res = updateDimNames(frame, res, dimnames);
+        controlVisibility();
         return res;
     }
 
@@ -88,14 +97,14 @@ public abstract class Matrix extends RBuiltinNode {
     @Specialization(guards = "byRow")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
-        controlVisibility();
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             transpose = insert(TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
-        RVector res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
-        res.setDimNames(dimnames);
+        RAbstractVector res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
+        res = updateDimNames(frame, res, dimnames);
+        controlVisibility();
         return res;
     }
 

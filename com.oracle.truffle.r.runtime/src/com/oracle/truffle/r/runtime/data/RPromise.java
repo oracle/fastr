@@ -118,28 +118,18 @@ public final class RPromise extends RLanguageRep {
     private boolean underEvaluation = false;
 
     /**
-     * This creates a new tuple (env, expr), which may later be evaluated.
+     * This creates a new tuple (env, expr), which may later be evaluated. Must only be called from
+     * {@link RDataFactory}.
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param closure {@link #getClosure()}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
+    RPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
         this.evalPolicy = evalPolicy;
         this.type = type;
         this.execFrame = execFrame;
         this.closure = closure;
-    }
-
-    /**
-     * @param evalPolicy {@link EvalPolicy}
-     * @param closure {@link #getClosure()}
-     * @return see {@link #RPromise(EvalPolicy, PromiseType, MaterializedFrame, Closure)}
-     */
-    public static RPromise create(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
-        assert closure != null;
-        assert closure.getExpr() != null;
-        return new RPromise(evalPolicy, type, execFrame, closure);
     }
 
     @TruffleBoundary
@@ -300,7 +290,7 @@ public final class RPromise extends RLanguageRep {
          * @return A {@link RPromise} from the given parameters
          */
         public RPromise createPromise(MaterializedFrame frame) {
-            return RPromise.create(evalPolicy, type, frame, exprClosure);
+            return RDataFactory.createPromise(evalPolicy, type, frame, exprClosure);
         }
 
         /**
@@ -313,7 +303,7 @@ public final class RPromise extends RLanguageRep {
          */
         public RPromise createPromiseDefault() {
             assert type == PromiseType.ARG_SUPPLIED;
-            return RPromise.create(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultClosure);
+            return RDataFactory.createPromise(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultClosure);
         }
 
         /**
@@ -323,7 +313,7 @@ public final class RPromise extends RLanguageRep {
          * @return A {@link RPromise} whose supplied argument has already been evaluated
          */
         public RPromise createPromiseArgEvaluated(Object argumentValue) {
-            RPromise result = new RPromise(evalPolicy, type, null, null);
+            RPromise result = RDataFactory.createPromise(evalPolicy, type);
             result.value = argumentValue;
             result.isEvaluated = true;
             return result;

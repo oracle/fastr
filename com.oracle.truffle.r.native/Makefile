@@ -28,7 +28,9 @@ export TOPDIR = $(CURDIR)
 all:
 	$(MAKE) -C builtinlibs
 	$(MAKE) -C fficall
+	$(MAKE) -C library
 
 clean:
 	$(MAKE) -C builtinlibs clean
 	$(MAKE) -C fficall clean
+	$(MAKE) -C library clean

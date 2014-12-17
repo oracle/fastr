@@ -264,7 +264,7 @@ public class PromiseNode extends RNode {
     /**
      * This class is used for wrapping arguments into "..." ({@link RArgsValuesAndNames}).
      */
-    private static final class VarArgsPromiseNode extends RNode {
+    public static final class VarArgsPromiseNode extends RNode {
         @Children protected final RNode[] nodes;
         @CompilationFinal protected final String[] names;
         protected final ClosureCache closureCache;
@@ -281,9 +281,36 @@ public class PromiseNode extends RNode {
             Object[] promises = new Object[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
-                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
+                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
             }
             return new RArgsValuesAndNames(promises, names);
+        }
+
+        @Override
+        public void deparse(State state) {
+            // In support of match.call(expand.dots=FALSE)
+            // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
+            state.append("list(");
+            for (int i = 0; i < nodes.length; i++) {
+                String name = names[i];
+                if (name != null) {
+                    state.append(name);
+                    state.append(" = ");
+                }
+                nodes[i].deparse(state);
+                if (i < nodes.length - 1) {
+                    state.append(", ");
+                }
+            }
+            state.append(')');
+        }
+
+        public RNode[] getNodes() {
+            return nodes;
+        }
+
+        public String[] getNames() {
+            return names;
         }
     }
 

@@ -47,6 +47,10 @@ public abstract class BinaryNode extends RNode {
         return left.getLength() == 0 || right.getLength() == 0;
     }
 
+    public static boolean notEmpty(RAbstractVector left, RAbstractVector right) {
+        return left.getLength() != 0 && right.getLength() != 0;
+    }
+
     // int
 
     public static boolean isNA(int left) {

@@ -46,9 +46,9 @@ import com.oracle.truffle.r.runtime.ops.na.*;
                 @NodeChild(value = "positions", type = PositionsArrayNode.class, executeWith = {"vector", "exact"}), @NodeChild(value = "dropDim", type = RNode.class)})
 public abstract class AccessArrayNode extends RNode {
 
-    private final boolean isSubset;
-    private final boolean exactInSource;
-    private final boolean dropInSource;
+    public final boolean isSubset;
+    public final boolean exactInSource;
+    public final boolean dropInSource;
 
     private final NACheck elementNACheck = NACheck.create();
     private final NACheck posNACheck = NACheck.create();
@@ -74,10 +74,9 @@ public abstract class AccessArrayNode extends RNode {
     @Child private GetMultiDimDataNode getMultiDimData;
     @Child private GetNamesNode getNamesNode;
     @Child private GetDimNamesNode getDimNamesNode;
-    @Child ContainerDimGet dimGetter;
     @Child ContainerRowNamesGet rowNamesGetter;
 
-    protected abstract RNode getVector();
+    public abstract RNode getVector();
 
     protected abstract RNode getPositions();
 
@@ -194,9 +193,9 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null, null));
+            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null));
         }
-        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RRuntime.LOGICAL_TRUE, RNull.instance);
+        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
     }
 
     private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
@@ -205,14 +204,6 @@ public abstract class AccessArrayNode extends RNode {
             getDimNamesNode = insert(GetDimNamesNodeFactory.create(namesCheck, null, null, null, null, null));
         }
         return (RStringVector) getDimNamesNode.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
-    }
-
-    private Object getContainerDim(VirtualFrame frame, RAbstractContainer value) {
-        if (dimGetter == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            dimGetter = insert(ContainerDimGetFactory.create(null));
-        }
-        return dimGetter.execute(frame, value);
     }
 
     private Object getContainerRowNames(VirtualFrame frame, RAbstractContainer value) {
@@ -263,6 +254,9 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     protected Object accessFactor(VirtualFrame frame, RFactor factor, Object exact, int recLevel, Object position, RAbstractLogicalVector dropDim) {
         RIntVector res = (RIntVector) castVector(frame, accessRecursive(frame, factor.getVector(), exact, position, recLevel, dropDim, false));
+        if (res == RDataFactory.createEmptyIntVector()) {
+            res = RDataFactory.createIntVector(0);
+        }
         res.setLevels(factor.getLevels());
         return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
     }
@@ -794,7 +788,12 @@ public abstract class AccessArrayNode extends RNode {
             if (elementNACheck.check(position)) {
                 data[i] = RRuntime.INT_NA;
             } else {
-                data[i] = vector.getDataAt(position - 1);
+                try {
+                    data[i] = vector.getDataAt(position - 1);
+                } catch (ArrayIndexOutOfBoundsException x) {
+                    x.printStackTrace();
+
+                }
                 elementNACheck.check(data[i]);
             }
         }
@@ -1623,29 +1622,23 @@ public abstract class AccessArrayNode extends RNode {
         RIntVector firstIndVec = (RIntVector) position[0];
         RIntVector secondIndVec = (RIntVector) position[1];
         assert firstIndVec.getLength() > 0;
-        int firstInd = firstIndVec.getDataAt(0);
-        int firstDim = ((int[]) getContainerDim(frame, dataFrame))[0];
-        if (firstDim == 1) {
-            // "flat" data frame
-            assert firstInd == 1;
-            return accessRecursive(frame, dataFrame.getVector(), exact, secondIndVec, recLevel, dropDim, true);
-        } else if (secondIndVec.getLength() == 1) {
+        if (secondIndVec.getLength() == 1) {
             RList l = (RList) dataFrame.getVector();
             int secondInd = secondIndVec.getDataAt(0);
             assert l.getLength() >= secondInd;
-            return accessRecursive(frame, l.getDataAt(secondInd - 1), exact, firstIndVec, recLevel, dropDim, false);
+            return accessRecursive(frame, l.getDataAt(secondInd - 1), exact, firstIndVec.getLength() == 1 ? firstIndVec.getDataAt(0) : firstIndVec, recLevel, dropDim, false);
         } else {
             RList l = (RList) dataFrame.getVector();
             Object[] data = new Object[secondIndVec.getLength()];
             for (int i = 0; i < secondIndVec.getLength(); i++) {
                 int secondInd = secondIndVec.getDataAt(i);
                 assert l.getLength() >= secondInd;
-                data[i] = accessRecursive(frame, l.getDataAt(secondInd - 1), exact, firstIndVec, recLevel, dropDim, false);
+                data[i] = accessRecursive(frame, l.getDataAt(secondInd - 1), exact, firstIndVec.getLength() == 1 ? firstIndVec.getDataAt(0) : firstIndVec, recLevel, dropDim, false);
             }
             RList resList = RDataFactory.createList(data, dataFrame.getNames());
-            Object newRowNames = accessRecursive(frame, getContainerRowNames(frame, dataFrame), exact, firstIndVec, 0,
+            Object newRowNames = accessRecursive(frame, getContainerRowNames(frame, dataFrame), exact, firstIndVec.getLength() == 1 ? firstIndVec.getDataAt(0) : firstIndVec, 0,
                             RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE}, RDataFactory.COMPLETE_VECTOR), false);
-            resList.setRowNames(newRowNames);
+            resList.setRowNames(castVector(frame, newRowNames));
             return resList.setClassAttr(RDataFactory.createStringVector("data.frame"));
         }
 

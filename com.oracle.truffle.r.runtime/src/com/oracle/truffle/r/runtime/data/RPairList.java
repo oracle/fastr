@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  */
 public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
     private final Object car;
-    private final Object cdr;
+    private Object cdr;
     private Object tag;
 
     /**
@@ -40,14 +40,10 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
      */
     private final SEXPTYPE type;
 
-    public RPairList(Object car, Object cdr, String tag) {
-        this(car, cdr, tag, null);
-    }
-
     /**
      * Variant used in unserialization to record the GnuR type the pairlist denotes.
      */
-    public RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
+    RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
         this.car = car;
         this.cdr = cdr;
         this.tag = tag;
@@ -70,6 +66,11 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
 
     public Object cdr() {
         return cdr;
+    }
+
+    public void setCdr(Object newCdr) {
+        assert cdr == null;
+        cdr = newCdr;
     }
 
     public Object cadr() {
@@ -143,16 +144,19 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return pl.car;
     }
 
-    public Object getNames() {
+    public RStringVector getNames() {
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         int i = 0;
-        while (pl != null) {
-            data[i] = (String) pl.tag;
+        while (true) {
+            data[i] = pl.tag.toString();
             if (pl.tag == RRuntime.STRING_NA) {
                 complete = false;
+            }
+            if (pl.cdr == null || pl.cdr == RNull.instance) {
+                break;
             }
             pl = (RPairList) pl.cdr;
             i++;
@@ -169,7 +173,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public RStringVector getClassHierarchy() {
-        return null;
+        return RDataFactory.createStringVector(RType.List.getName());
     }
 
     public boolean isObject() {

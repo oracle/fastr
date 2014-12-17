@@ -109,7 +109,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
     private static final REnvFrameAccess noFrameAccess = new REnvFrameAccess();
 
-    public static final String UNNAMED = "";
+    public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
     private static final String PATH_ATTR_KEY = "path";
 
@@ -117,7 +117,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static Global globalEnv;
     private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
-    private static Autoload autoloadEnv;
+    private static REnvironment autoloadEnv;
     private static REnvironment namespaceRegistry;
 
     /**
@@ -202,7 +202,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * Value set in the {@code .AutoloadEnv} variable.
      */
-    public static Autoload autoloadEnv() {
+    public static REnvironment autoloadEnv() {
         assert autoloadEnv != null;
         return autoloadEnv;
     }
@@ -222,11 +222,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
-        namespaceRegistry = new NewEnv(null);
+        namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
         baseEnv = new Base(baseFrame);
 
-        // autoload always next, has no R state
-        autoloadEnv = new Autoload();
+        // autoload always next
+        autoloadEnv = NewEnv.createAutoload();
         globalEnv = new Global(autoloadEnv, globalFrame);
         initSearchList();
 
@@ -382,18 +382,16 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Detach the environment at search position {@code pos}. TODO handle packages
+     * Detach the environment at search position {@code pos}.
      *
-     * @param unload if {@code true} and env is a package, unload associated namespace
-     * @param force the detach even if there are dependent packages
      * @return the {@link REnvironment} that was detached.
      */
-    public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
+    public static REnvironment detach(int pos) throws DetachException {
         if (pos == searchPath.size()) {
             detachException(RError.Message.ENV_DETACH_BASE);
         }
         if (pos <= 0 || pos >= searchPath.size()) {
-            detachException(RError.Message.ENV_SUBSCRIPT);
+            detachException(RError.Message.INVALID_POS_ARGUMENT);
         }
         assert pos != 1; // explicitly checked in caller
         // N.B. pos is 1-based
@@ -459,7 +457,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * e.g. {@code substitute}.
      */
     public static REnvironment createFromList(RList list, REnvironment parent) {
-        REnvironment result = new NewEnv(parent, 0);
+        REnvironment result = RDataFactory.createNewEnv(parent, 0);
         RStringVector names = (RStringVector) list.getNames();
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -920,18 +918,28 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     public static final class NewEnv extends REnvironment implements UsesREnvMap {
 
         /**
-         * Constructor for the {@code new.env} function.
+         * Constructor for the {@code new.env} function. Should only be called from
+         * {@link RDataFactory}.
          */
         public NewEnv(REnvironment parent, int size) {
             super(parent, UNNAMED, new REnvMapFrameAccess(size));
         }
 
         /**
-         * Constructor for environment without a parent, e.g., for use by {@link #attach}.
+         * Constructor for environment without a parent, e.g., for use by {@link #attach}. Should
+         * only be called from {@link RDataFactory}.
          */
         public NewEnv(String name) {
             this(null, 0);
-            setAttr(NAME_ATTR_KEY, name);
+            if (name != UNNAMED) {
+                setAttr(NAME_ATTR_KEY, name);
+            }
+        }
+
+        private static REnvironment createAutoload() {
+            REnvironment autoload = RDataFactory.createNewEnv(baseEnv, 0);
+            autoload.setAttr(NAME_ATTR_KEY, "Autoloads");
+            return autoload;
         }
 
         public REnvMapFrameAccess getFrameAccess() {
@@ -950,17 +958,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             return false;
         }
         return true;
-    }
-
-    /**
-     * A placeholder for the package autoload mechanism. N.B. Although "unnamed", it is given a name
-     * with {@code attr} in GnuR.
-     */
-    private static final class Autoload extends REnvironment {
-        Autoload() {
-            super(baseEnv(), UNNAMED, baseEnv().getFrame());
-            setAttr(NAME_ATTR_KEY, "Autoloads");
-        }
     }
 
     /**

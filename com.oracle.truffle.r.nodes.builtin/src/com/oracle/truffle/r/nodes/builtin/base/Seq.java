@@ -112,6 +112,12 @@ public abstract class Seq extends RBuiltinNode {
         return RDataFactory.createIntSequence(start.getDataAt(0), stride, Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
     }
 
+    @Specialization(guards = {"startLengthOne", "!lengthZero"})
+    protected RDoubleSequence seq(RAbstractIntVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), 1, lengthOut);
+    }
+
     @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     protected RDoubleVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();

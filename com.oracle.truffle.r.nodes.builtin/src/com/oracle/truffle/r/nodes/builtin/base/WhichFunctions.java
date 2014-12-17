@@ -31,11 +31,10 @@ import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 import java.util.ArrayList;
 
@@ -50,12 +49,14 @@ public class WhichFunctions {
     @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x"})
     public abstract static class Which extends RBuiltinNode {
 
+        private final NACheck naCheck = NACheck.create();
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
 
-        @Specialization
+        @Specialization(guards = "!hasNames")
         @TruffleBoundary
         protected RIntVector which(RAbstractLogicalVector x) {
             controlVisibility();
@@ -69,7 +70,35 @@ public class WhichFunctions {
             for (int i = 0; i < result.length; ++i) {
                 result[i] = w.get(i) + 1;
             }
-            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, x.getNames());
+            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @Specialization(guards = "hasNames")
+        @TruffleBoundary
+        protected RIntVector whichNames(RAbstractLogicalVector x) {
+            controlVisibility();
+            ArrayList<Integer> w = new ArrayList<>();
+            ArrayList<String> n = new ArrayList<>();
+            RStringVector oldNames = (RStringVector) x.getNames();
+            naCheck.enable(oldNames);
+            for (int i = 0; i < x.getLength(); ++i) {
+                if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
+                    w.add(i);
+                    String s = oldNames.getDataAt(i);
+                    naCheck.check(s);
+                    n.add(s);
+                }
+            }
+            int[] result = new int[w.size()];
+            for (int i = 0; i < result.length; ++i) {
+                result[i] = w.get(i) + 1;
+            }
+            String[] names = new String[n.size()];
+            return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, RDataFactory.createStringVector(n.toArray(names), naCheck.neverSeenNA()));
+        }
+
+        protected boolean hasNames(RAbstractLogicalVector x) {
+            return x.getNames() != RNull.instance;
         }
     }
 

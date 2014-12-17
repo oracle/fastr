@@ -21,30 +21,30 @@ Sys.getenv <- function(x = NULL, unset = "", names = NA)
     if (is.null(x)) {
         ## This presumes that '=' does not appear as part of the name
         ## of an environment variable.  That used to happen on Windows.
-        x <- strsplit(.Internal(Sys.getenv(character(), "")), "=", fixed=TRUE)
-        v <- n <- character(LEN <- length(x))
-        for (i in 1L:LEN) {
-            n[i] <- x[[i]][1L]
-            v[i] <- paste(x[[i]][-1L], collapse = "=")
-        }
+	x <- strsplit(.Internal(Sys.getenv(character(), "")), "=", fixed=TRUE)
+	v <- n <- character(LEN <- length(x))
+	for (i in 1L:LEN) {
+	    n[i] <- x[[i]][1L]
+	    v[i] <- paste(x[[i]][-1L], collapse = "=")
+	}
         if (!identical(names, FALSE)) v <- structure(v, names = n)
-        v[sort.list(n)]
+	v[sort.list(n)]
     } else {
         v <- .Internal(Sys.getenv(as.character(x), as.character(unset)))
-        if (isTRUE(names) || (length(x) > 1L && !identical(names, FALSE)))
+	if (isTRUE(names) || (length(x) > 1L && !identical(names, FALSE)))
             structure(v, names = x)
         else v
     }
 }
-# substituted due to lack of names in list(...)
-#Sys.setenv <- function(...)
-#{
-#    x <- list(...)
-#    nm <- names(x)
-#    if(is.null(nm) || "" %in% nm)
-#        stop("all arguments must be named")
-#    .Internal(Sys.setenv(nm, as.character(unlist(x))))
-#}
+
+Sys.setenv <- function(...)
+{
+    x <- list(...)
+    nm <- names(x)
+    if(is.null(nm) || "" %in% nm)
+        stop("all arguments must be named")
+    .Internal(Sys.setenv(nm, as.character(unlist(x))))
+}
 
 Sys.unsetenv <- function(x) .Internal(Sys.unsetenv(as.character(x)))
 

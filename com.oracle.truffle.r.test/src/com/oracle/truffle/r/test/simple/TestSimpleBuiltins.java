@@ -14,9 +14,15 @@ import java.util.*;
 
 import org.junit.*;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.*;
 
 public class TestSimpleBuiltins extends TestBase {
+
+    @Test
+    public void testModeSet() {
+        assertEval("{  x<-c(1,2); mode(x)<-\"character\"; x }");
+    }
 
     @Test
     public void testTable() {
@@ -187,6 +193,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ seq(7, c(41,42)) }");
         assertEval("{ seq(integer()) }");
         assertEval("{ seq(double()) }");
+        assertEval("{ seq(from=3L, length.out=3L) }");
     }
 
     @Test
@@ -408,6 +415,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
         assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
     }
 
     @Test
@@ -767,6 +777,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ as.vector(NULL, \"list\") }");
         assertEval("{ as.vector(NULL) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
     }
 
     @Test
@@ -1264,6 +1276,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ which(logical()) }");
         assertEval("{ which(TRUE) }");
         assertEval("{ which(NA) }");
+        assertEval("{ x<-c(1,2); names(x)<-c(11, 12); attributes(which (x > 1)) }");
     }
 
     @Test
@@ -2383,6 +2396,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ cbind(2,3, complex(3,3,2));}");
         assertEval("{ cbind(2,3, c(1,1,1)) }");
         assertEval("{ cbind(2.1:10,32.2) }");
+
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }");
     }
 
     @Test
@@ -2416,6 +2431,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
 
         assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
+
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(rbind,x)); y }");
     }
 
     @Test
@@ -2564,6 +2581,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSignif() {
+        assertEval("{ signif(0.555, 2) }");
+        assertEval("{ signif(0.5549, 2) }");
+        assertEval("{ signif(0.5551, 2) }");
+        assertEval("{ signif(0.555, 0) }");
+        assertEval("{ signif(0.555, -1) }");
+    }
+
+    @Test
     public void testRandom() {
         assertEval("{ set.seed(4357, \"default\"); sum(runif(10)) }");
         assertEval("{ set.seed(4336, \"default\"); sum(runif(10000)) }");
@@ -2608,6 +2634,9 @@ public class TestSimpleBuiltins extends TestBase {
     public void testQgamma() {
         assertEval("{ qgamma(0.5, shape=1) }");
         assertEval("{ p <- (1:9)/10 ; qgamma(p, shape=1) }");
+
+        assertEval("{ qgamma(0.5, shape=double()) }");
+        assertEval("{ qgamma(0.5, shape=1, rate=double()) }");
     }
 
     @Test
@@ -3052,18 +3081,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }");
         assertEval("{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }");
+
+        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
+        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
     }
 
     @Test
     @Ignore
     public void testSysCallIgnore() {
-        assertEval("{ (function() sys.call())() }");
+        // TODO these fail because the argument name "x" is wrongly always output
         assertEval("{ f <- function(x) sys.call() ; f(2) }");
         assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
-
-        assertEval("{ f <- function() sys.call() ; typeof(f()[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
-        assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
+        // fails because can't parse out the "name"
+        assertEval("{ (function() sys.call())() }");
     }
 
     @Test
@@ -3113,6 +3144,16 @@ public class TestSimpleBuiltins extends TestBase {
     public void testMatchCall() {
         assertEval("{ f <- function() match.call() ; f() }");
         assertEval("{ f <- function(x) match.call() ; f(2) }");
+        assertEval("{ f <- function(x) match.call() ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call() ; f(2) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2, y=3) }");
+        assertEval("{ f <- function(...) match.call() ; f(x=2, 3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2, 3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, y=3) }");
+        assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, 3) }");
     }
 
     @Test
@@ -3249,12 +3290,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
-    }
-
-    @Test
-    @Ignore
-    public void testInvisibleIgnore() {
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(FALSE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(TRUE, 1) }");
     }
 
     @Test
@@ -3264,6 +3302,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 200 ; rm(\"x\") }");
         assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
         assertEvalError("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
+    }
+
+    @Test
+    public void testVapply() {
+        assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }");
+        assertEval("{ vapply(c(10, 20, 30, 40), function(x) x/2, c(1)) }");
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = FALSE) }");
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+        assertEval("{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }");
+        assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) x, c(TRUE)) }");
+        assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) FALSE, c(TRUE)) }");
+        assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }");
     }
 
     @Test
@@ -4044,20 +4094,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(+7+7i, +42+42i); x == 7+7i }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); x == as.raw(7) }");
 
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
-
         assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x == c(\"a\", \"b\") }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
+
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\", \"c\")); x == c(\"a\", \"b\") }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x > \"a\" }");
-        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
 
         assertEval("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
-        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
-        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
-        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
 
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
         assertEvalWarning("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
@@ -4083,7 +4125,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-structure(c(2.2,3.2,2.1), .Label=c(\"a\", \"b\"), class = c('factor')); as.integer(x) }");
 
         assertEval("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x==y }");
-        assertEvalWarning("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
 
         assertEval("{ x<-structure(factor(c(\"a\",\"b\",\"c\")), class=NULL); x }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); levels(x)<-c(7,42); x }");
@@ -4095,6 +4136,22 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); levels(x)<-c(7, 42); is.character(levels(x)) }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7+7i, 42+42i); is.complex(levels(x)) }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); is.raw(levels(x)) }");
+
+        assertEval("{ z=factor(c(\"a\", \"b\", \"a\")); z[1] = \"b\"; z }");
+    }
+
+    @Test
+    @Ignore
+    public void testFactorIgnore() {
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
+        assertEvalWarning("{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEvalWarning("{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEvalWarning("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
     }
 
     @Test
@@ -4210,6 +4267,18 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testNArgsIgnore() {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+    }
+
+    @Test
+    public void testEnvVars() {
+        assertEvalError("{ Sys.setenv(\"a\") } ");
+        assertEval("{ Sys.setenv(FASTR_A=\"a\"); Sys.getenv(\"FASTR_A\"); } ");
+        REnvVars.unset("FASTR_A");
+        assertEval("{ Sys.setenv(FASTR_A=\"a\", FASTR_B=\"b\"); Sys.getenv(c(\"FASTR_A\", \"FASTR_B\"));  } ");
+        REnvVars.unset("FASTR_A");
+        REnvVars.unset("FASTR_B");
+        assertEval("{ Sys.getenv(\"FASTR_A\") } ");
+        assertEval("{ Sys.getenv(\"FASTR_A\", unset=\"UNSET\") } ");
     }
 
 }

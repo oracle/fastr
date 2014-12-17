@@ -123,7 +123,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
         RBuiltin builtin = builtinFactory.getRBuiltin();
         assert builtin != null;
-        return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtinFactory.getBuiltinNames()[0], callTarget, builtin, builtinFactory.getEnv().getFrame()));
+        return RContext.getInstance().putCachedFunction(methodName, RDataFactory.createFunction(builtinFactory.getBuiltinNames()[0], callTarget, builtin, builtinFactory.getEnv().getFrame()));
     }
 
     public static RBuiltinFactory lookupBuiltin(String name) {
@@ -134,6 +134,20 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             }
         }
         return null;
+    }
+
+    /**
+     * Used by {@link RDeparse} to detect whether a symbol is a builtin (or special). N.B. special
+     * functions are not explicitly denoted currently, only by virtue of the
+     * {@link RBuiltin#nonEvalArgs} attribute.
+     */
+    public boolean isBuiltin(String name) {
+        for (RBuiltinPackage pkg : packages.values()) {
+            if (pkg.lookupByName(name) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

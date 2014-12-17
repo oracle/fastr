@@ -363,8 +363,8 @@ public class SplineFunctions {
 
         @CreateCast("arguments")
         protected RNode[] castVectorArguments(RNode[] arguments) {
-            // xout argument is at index 1
-            arguments[1] = CastDoubleNodeFactory.create(arguments[1], true, true, true);
+            // xout argument is at index 0
+            arguments[0] = CastDoubleNodeFactory.create(arguments[0], true, true, true);
             return arguments;
         }
 

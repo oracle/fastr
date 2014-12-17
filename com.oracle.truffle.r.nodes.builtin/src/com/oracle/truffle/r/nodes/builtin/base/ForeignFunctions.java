@@ -657,6 +657,17 @@ public class ForeignFunctions {
 
     @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
     public abstract static class DotExternal2 extends CastAdapter {
+
+        @Child private CastToVectorNode castVector;
+
+        private RAbstractVector castVector(VirtualFrame frame, Object value) {
+            if (castVector == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            }
+            return (RAbstractVector) castVector.executeObject(frame, value);
+        }
+
         // Transcribed from GnuR, library/utils/src/io.c
         @TruffleBoundary
         @Specialization(guards = "isWriteTable")
@@ -716,7 +727,7 @@ public class ForeignFunctions {
             }
             boolean[] quoteCol = new boolean[nc];
             boolean quoteRn = false;
-            RIntVector quote = (RIntVector) quoteArg;
+            RIntVector quote = (RIntVector) castVector(frame, quoteArg);
             for (int i = 0; i < quote.getLength(); i++) {
                 int qi = quote.getDataAt(i);
                 if (qi == 0) {

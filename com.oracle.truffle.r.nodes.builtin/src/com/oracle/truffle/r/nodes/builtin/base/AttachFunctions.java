@@ -26,62 +26,36 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
-/**
- * TODO The specialization signatures are weird owing to issues with named parameter handling.
- */
 public class AttachFunctions {
-    @RBuiltin(name = "attach", kind = INTERNAL, parameterNames = {"what", "pos", "name", "warn.conflicts"})
+    @RBuiltin(name = "attach", kind = INTERNAL, parameterNames = {"what", "pos", "name"})
     public abstract static class Attach extends RInvisibleBuiltinNode {
 
-        private static final String POS_WARNING = "*** 'pos=1' is not possible; setting 'pos=2' for now.\n" + "*** Note that 'pos=1' will give an error in the future";
-
-        // TODO 3rd parameter "name" has default "deparse(substitute(what)"
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(2), null, ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[1] = CastIntegerNodeFactory.create(arguments[1], false, false, false);
+            return arguments;
         }
 
         @Specialization
-        protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, int pos, String name) {
+        protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
-            REnvironment env = new REnvironment.NewEnv(name);
-            doAttachEnv(pos, env);
+            REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
+            doAttachEnv(pos.getDataAt(0), env);
             return env;
         }
 
         @Specialization
-        protected REnvironment doAttach(RNull what, double pos, RAbstractStringVector name) {
-            return doAttach(what, (int) pos, name.getDataAt(0));
-        }
-
-        @Specialization
-        protected REnvironment doAttach(REnvironment what, String name, @SuppressWarnings("unused") String unused) {
+        protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
-            return doAttachEnv(what, 2, name);
-        }
-
-        @Specialization
-        protected REnvironment doAttach(REnvironment what, int pos, String name) {
-            controlVisibility();
-            return doAttachEnv(what, pos, name);
-        }
-
-        @Specialization
-        protected REnvironment doAttach(REnvironment what, double pos, String name) {
-            controlVisibility();
-            return doAttachEnv(what, (int) pos, name);
-        }
-
-        REnvironment doAttachEnv(REnvironment what, int pos, String name) {
-            REnvironment env = new REnvironment.NewEnv(name);
+            REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.ls(true, null);
             for (int i = 0; i < names.getLength(); i++) {
                 String key = names.getDataAt(i);
@@ -89,47 +63,32 @@ public class AttachFunctions {
                 // TODO copy?
                 env.safePut(key, value);
             }
-            doAttachEnv(pos, env);
+            doAttachEnv(pos.getDataAt(0), env);
             return env;
-
         }
 
         @Specialization
-        protected REnvironment doAttach(RList what, String name, @SuppressWarnings("unused") String unused) {
+        protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
-            return doAttachList(what, 2, name);
-        }
-
-        @Specialization
-        protected REnvironment doAttach(RList what, int pos, String name) {
-            controlVisibility();
-            return doAttachList(what, pos, name);
-        }
-
-        @Specialization
-        protected REnvironment doAttach(RList what, double pos, String name) {
-            controlVisibility();
-            return doAttachList(what, (int) pos, name);
-        }
-
-        REnvironment doAttachList(RList what, int pos, String name) {
-            REnvironment env = new REnvironment.NewEnv(name);
+            REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = (RStringVector) what.getNames();
             for (int i = 0; i < names.getLength(); i++) {
                 env.safePut(names.getDataAt(i), what.getDataAt(i));
             }
-            doAttachEnv(pos, env);
+            doAttachEnv(pos.getDataAt(0), env);
             return env;
         }
 
-        void doAttachEnv(int pos, REnvironment env) {
+        @SuppressWarnings("unused")
+        @Fallback
+        protected REnvironment doAttach(Object what, Object pos, Object name) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTACH_BAD_TYPE);
+        }
+
+        protected void doAttachEnv(int pos, REnvironment env) {
             // GnuR appears to allow any value of pos except 1.
-            // Values < 1 are intepreted as 2
+            // Values < 1 are interpreted as 2
             int ipos = pos;
-            if (ipos == 1) {
-                RContext.getInstance().setEvalWarning(POS_WARNING);
-                ipos = 2;
-            }
             if (ipos < 1) {
                 ipos = 2;
             }
@@ -137,44 +96,20 @@ public class AttachFunctions {
         }
     }
 
-    @RBuiltin(name = "detach", kind = INTERNAL, parameterNames = {"name", "pos", "unload", "character.only", "force"})
+    @RBuiltin(name = "detach", kind = INTERNAL, parameterNames = {"pos"})
     public abstract static class Detach extends RInvisibleBuiltinNode {
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(2), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[0] = CastIntegerNodeFactory.create(arguments[0], false, false, false);
+            return arguments;
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object doDetach1(int name, int pos, byte unload, byte characterOnly, byte force) {
+        protected Object doDetach(RAbstractIntVector pos) {
             controlVisibility();
-            return doDetach3(name, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
-        }
-
-        @Specialization
-        protected Object doDetach(double name, int pos, byte unload, byte characterOnly, byte force) {
-            return doDetach1((int) name, pos, unload, characterOnly, force);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doDetach2(String name, int pos, byte unload, byte characterOnly, byte force) {
-            controlVisibility();
-            int ix = REnvironment.lookupIndexOnSearchPath(name);
-            if (ix <= 0) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "name");
-            }
-            return doDetach3(ix, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
-        }
-
-        REnvironment doDetach3(int pos, boolean unload, boolean force) {
-            if (pos == 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
-            }
             try {
-                return REnvironment.detach(pos, unload, force);
+                return REnvironment.detach(pos.getDataAt(0));
             } catch (DetachException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), ex);
             }

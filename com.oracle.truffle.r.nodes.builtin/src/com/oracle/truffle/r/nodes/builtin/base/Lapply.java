@@ -52,11 +52,6 @@ public abstract class Lapply extends RBuiltinNode {
      */
     @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-    }
-
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RArgsValuesAndNames varArgs) {
 
@@ -82,8 +77,8 @@ public abstract class Lapply extends RBuiltinNode {
         /**
          * These nodes are all independent of the details of a particular call.
          */
-        private final LapplyIteratorNode iterator = new LapplyIteratorNode();
-        private final LapplyFunctionNode functionNode = new LapplyFunctionNode();
+        @Child LapplyIteratorNode iterator = new LapplyIteratorNode();
+        @Child LapplyFunctionNode functionNode = new LapplyFunctionNode();
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(LAPPLY_VEC_ELEM, iterator, false, false);
         @Child private ReadVariableNode readVectorElement = ReadVariableNode.create(LAPPLY_VEC_ELEM, true);
 
@@ -145,7 +140,7 @@ public abstract class Lapply extends RBuiltinNode {
             RNode getIndexedLoad() {
                 if (indexedLoad == null) {
                     AccessArrayNode indexNode = (AccessArrayNode) RContext.getEngine().parseSingle("X[[i]]");
-                    REnvironment env = new REnvironment.NewEnv("dummy");
+                    REnvironment env = RDataFactory.createNewEnv("dummy");
                     env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(ITER_INDEX_NAME, false)));
                     indexedLoad = indexNode.substitute(env);
                 }

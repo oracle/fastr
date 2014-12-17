@@ -26,6 +26,8 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RBuiltinLookup {
 
+    boolean isBuiltin(String name);
+
     RFunction lookup(String methodName);
 
 }

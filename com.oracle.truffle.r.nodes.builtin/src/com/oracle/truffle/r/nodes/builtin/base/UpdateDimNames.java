@@ -68,8 +68,11 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     public abstract RAbstractVector executeList(VirtualFrame frame, RAbstractVector vector, Object o);
 
-    public RList convertToListOfStrings(VirtualFrame frame, RList list) {
-        assert (!list.isShared());
+    public RList convertToListOfStrings(VirtualFrame frame, RList oldList) {
+        RList list = oldList;
+        if (list.isShared()) {
+            list = (RList) list.copy();
+        }
         for (int i = 0; i < list.getLength(); i++) {
             Object element = list.getDataAt(i);
             if (element != RNull.instance) {

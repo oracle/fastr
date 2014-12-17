@@ -113,14 +113,17 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
     }
 
     @Specialization
-    protected RIntVector doMissingVector(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
+    protected Object doMissingVector(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
         verifyDimensions(frame, container);
         int[] data = new int[numDimensions == 1 ? container.getLength() : ((int[]) dimGetter.execute(frame, container))[dimension]];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = i + 1;
+        if (data.length > 0) {
+            for (int i = 0; i < data.length; i++) {
+                data[i] = i + 1;
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        } else {
+            return 0;
         }
-
-        return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization

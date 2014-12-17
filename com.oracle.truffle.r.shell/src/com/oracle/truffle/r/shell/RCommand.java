@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
@@ -157,18 +158,16 @@ public class RCommand {
         if (!file.exists()) {
             Utils.fatalError("cannot open file '" + filePath + "': No such file or directory");
         }
-        String content = null;
-        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
-            byte[] bytes = new byte[(int) file.length()];
-            is.read(bytes);
-            content = new String(bytes);
+        Source fileSource = null;
+        try {
+            fileSource = Source.fromFileName(filePath);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
         }
         try {
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(file, content, frame.materialize(), REnvironment.globalEnv(), false);
+            REngine.getInstance().parseAndEval(fileSource, frame.materialize(), REnvironment.globalEnv(), false, false);
         } catch (IOException ex) {
             Utils.fail("unexpected error creating console");
         }
@@ -194,7 +193,7 @@ public class RCommand {
                 }
 
                 try {
-                    while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
                         console.setPrompt(SLAVE.getValue() ? "" : "+ ");
                         String additionalInput = console.readLine();
                         if (additionalInput == null) {
