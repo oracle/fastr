@@ -585,7 +585,8 @@ public final class RError extends RuntimeException {
         CANNOT_CLOSE_STANDARD_CONNECTIONS("cannot close standard connections"),
         FULL_PRECISION("full precision may not have been achieved in '%s'"),
         ATTACH_BAD_TYPE("'attach' only works for lists, data frames and environments"),
-        STRING_ARGUMENT_REQUIRED("string argument required");
+        STRING_ARGUMENT_REQUIRED("string argument required"),
+        NOT_VALID_NAMES("not a valid named list");
 
         public final String message;
         private final boolean hasArgs;
