@@ -112,7 +112,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
-            RArguments.setEnclosingFrame(vf, enclosingFrameProfile.profile(RArguments.getEnclosingFrame(vf)));
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
