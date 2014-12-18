@@ -79,7 +79,7 @@ public class PromiseHelperNode extends Node {
          * @param frame The frame to check for {@link RPromise}s to deoptimize
          * @return Whether there was at least on {@link RPromise} which needed to be deoptimized.
          */
-        // @TruffleBoundary TODO Needed?
+        @TruffleBoundary
         public boolean deoptimizeFrame(MaterializedFrame frame) {
             boolean deoptOne = false;
             for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
