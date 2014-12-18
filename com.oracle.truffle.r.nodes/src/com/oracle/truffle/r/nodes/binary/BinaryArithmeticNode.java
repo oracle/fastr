@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import java.util.function.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -51,6 +53,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     private final ConditionProfile emptyVector = ConditionProfile.createBinaryProfile();
     private final BranchProfile hasAttributesProfile = BranchProfile.create();
+    private final BranchProfile warningProfile = BranchProfile.create();
 
     public BinaryArithmeticNode(BinaryArithmeticFactory factory, UnaryArithmeticFactory unaryFactory) {
         this.arithmetic = factory.create();
@@ -148,7 +151,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected RLogicalVector doFactorOp(RFactor left, @SuppressWarnings("unused") RNull right) {
         if (left.isOrdered()) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
-
         } else {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
         }
@@ -159,7 +161,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected RLogicalVector doFactorOp(@SuppressWarnings("unused") RNull left, RFactor right) {
         if (right.isOrdered()) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS, arithmetic.opName());
-
         } else {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, arithmetic.opName());
         }
@@ -184,7 +185,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "nonNumeric")
     protected RComplexVector doLeftNull(RNull left, RAbstractVector right) {
-        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+        throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     @Specialization
@@ -219,7 +220,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "nonNumeric")
     protected RComplexVector doRightNull(RAbstractVector left, RNull right) {
-        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+        throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     @SuppressWarnings("unused")
@@ -236,7 +237,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!isFactorLeft")
     protected Object doRightString(RAbstractContainer left, RAbstractStringVector right) {
-        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+        throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     @Specialization(guards = "!isFactorRight")
@@ -247,7 +248,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!isFactorLeft")
     protected Object doRightRaw(RAbstractContainer left, RAbstractRawVector right) {
-        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+        throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     protected boolean supportsIntResult() {
@@ -495,6 +496,22 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     // double vector and vectors
 
+    @Specialization
+    protected RDoubleVector doDoubleVector(RAbstractDoubleVector left, double right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performOpDifferentLength(left, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
+                        (array, i) -> array[i] = performArithmeticDouble(left.getDataAt(i), right));
+    }
+
+    @Specialization
+    protected RDoubleVector doDoubleVector(double left, RAbstractDoubleVector right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performOpDifferentLength(right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
+                        (array, i) -> array[i] = performArithmeticDouble(left, right.getDataAt(i)));
+    }
+
     @Specialization(guards = "!areSameLength")
     protected RDoubleVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(left, right);
@@ -655,11 +672,25 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
+    private void copyAttributes(RVector ret, RAbstractVector source) {
+        if (source.getAttributes() != null || source.hasDimensions() || source.getNames() != RNull.instance || source.getDimNames() != null) {
+            hasAttributesProfile.enter();
+            copyAttributesInternal(ret, source);
+        }
+    }
+
     @TruffleBoundary
     private void copyAttributesInternal(RVector ret, RAbstractVector attributeSource, RAbstractVector left, RAbstractVector right) {
         ret.copyRegAttributesFrom(attributeSource);
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getSourceSection());
         ret.copyNamesFrom(attributeSource);
+    }
+
+    @TruffleBoundary
+    private void copyAttributesInternal(RVector ret, RAbstractVector source) {
+        ret.copyRegAttributesFrom(source);
+        ret.setDimensions(source.getDimensions(), getSourceSection());
+        ret.copyNamesFrom(source);
     }
 
     private void copyAttributesSameLength(RVector ret, RAbstractVector left, RAbstractVector right) {
@@ -680,206 +711,122 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    private RComplexVector performComplexVectorOpDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+    interface SameOpFunction<ArrayT> {
+        void apply(ArrayT array, int i);
+    }
+
+    interface DifferentOpFunction<ArrayT> {
+        void apply(ArrayT array, int i, int k, int j);
+    }
+
+    private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT> ResultT performOpDifferentLength(ParamT left, ParamT right, IntFunction<ArrayT> arrayConstructor,
+                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, DifferentOpFunction<ArrayT> op) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
+        int length = Math.max(leftLength, rightLength);
         if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
-            return RDataFactory.createEmptyComplexVector();
+            return emptyConstructor.get();
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
-        int length = Math.max(leftLength, rightLength);
-        double[] result = new double[length << 1];
+        ArrayT result = arrayConstructor.apply(length);
         int j = 0;
         int k = 0;
         for (int i = 0; i < length; ++i) {
-            RComplex leftValue = left.getDataAt(k);
-            RComplex rightValue = right.getDataAt(j);
-            RComplex resultValue = performArithmeticComplex(leftValue, rightValue);
-            int index = i << 1;
-            result[index] = resultValue.getRealPart();
-            result[index + 1] = resultValue.getImaginaryPart();
-            j = Utils.incMod(j, rightLength);
-            k = Utils.incMod(k, leftLength);
+            op.apply(result, i, j, k);
+            j = Utils.incMod(j, leftLength);
+            k = Utils.incMod(k, rightLength);
         }
         boolean notMultiple = j != 0 || k != 0;
         if (notMultiple) {
+            warningProfile.enter();
             RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
-        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
+        ResultT ret = resultFunction.apply(result, isComplete());
         copyAttributes(ret, left, right);
         return ret;
+    }
+
+    private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT> ResultT performOpDifferentLength(ParamT source, IntFunction<ArrayT> arrayConstructor, Supplier<ResultT> emptyConstructor,
+                    BiFunction<ArrayT, Boolean, ResultT> resultFunction, SameOpFunction<ArrayT> op) {
+        int length = source.getLength();
+        if (emptyVector.profile(length == 0)) {
+            return emptyConstructor.get();
+        }
+        resultNACheck.enable(arithmetic.introducesNA());
+        ArrayT result = arrayConstructor.apply(length);
+        for (int i = 0; i < length; ++i) {
+            op.apply(result, i);
+        }
+        ResultT ret = resultFunction.apply(result, isComplete());
+        copyAttributes(ret, source);
+        return ret;
+    }
+
+    private RComplexVector performComplexVectorOpDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+        return performOpDifferentLength(left, right, len -> new double[len << 1], RDataFactory::createEmptyComplexVector, RDataFactory::createComplexVector, (array, i, j, k) -> {
+            RComplex result = performArithmeticComplex(left.getDataAt(j), right.getDataAt(k));
+            array[i << 1] = result.getRealPart();
+            array[(i << 1) + 1] = result.getImaginaryPart();
+        });
     }
 
     private RDoubleVector performDoubleVectorOpDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
-        int leftLength = left.getLength();
-        int rightLength = right.getLength();
-        int length = Math.max(leftLength, rightLength);
-        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
-            return RDataFactory.createEmptyDoubleVector();
-        }
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
-        resultNACheck.enable(arithmetic.introducesNA());
-        double[] result = new double[length];
-        int j = 0;
-        int k = 0;
-        for (int i = 0; i < length; ++i) {
-            double leftValue = left.getDataAt(k);
-            double rightValue = right.getDataAt(j);
-            result[i] = performArithmeticDouble(leftValue, rightValue);
-            j = Utils.incMod(j, rightLength);
-            k = Utils.incMod(k, leftLength);
-        }
-        boolean notMultiple = j != 0 || k != 0;
-        if (notMultiple) {
-            RError.warning(RError.Message.LENGTH_NOT_MULTI);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        copyAttributes(ret, left, right);
-        return ret;
+        return performOpDifferentLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
+                        (array, i, j, k) -> array[i] = performArithmeticDouble(left.getDataAt(j), right.getDataAt(k)));
     }
 
     private RIntVector performIntVectorOpDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
-        int leftLength = left.getLength();
-        int rightLength = right.getLength();
-        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
-            return RDataFactory.createEmptyIntVector();
-        }
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
-        resultNACheck.enable(arithmetic.introducesNA());
-        int length = Math.max(leftLength, rightLength);
-        int[] result = new int[length];
-        int j = 0;
-        int k = 0;
-        for (int i = 0; i < length; ++i) {
-            int leftValue = left.getDataAt(k);
-            int rightValue = right.getDataAt(j);
-            result[i] = performArithmetic(leftValue, rightValue);
-            j = Utils.incMod(j, rightLength);
-            k = Utils.incMod(k, leftLength);
-        }
-        boolean notMultiple = j != 0 || k != 0;
-        if (notMultiple) {
-            RError.warning(RError.Message.LENGTH_NOT_MULTI);
-        }
-        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
-        copyAttributes(ret, left, right);
-        return ret;
+        return performOpDifferentLength(left, right, int[]::new, RDataFactory::createEmptyIntVector, RDataFactory::createIntVector,
+                        (array, i, j, k) -> array[i] = performArithmetic(left.getDataAt(j), right.getDataAt(k)));
     }
 
     private RDoubleVector performIntVectorOpDoubleDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
-        int leftLength = left.getLength();
-        int rightLength = right.getLength();
-        if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
-            return RDataFactory.createEmptyDoubleVector();
+        return performOpDifferentLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
+                        (array, i, j, k) -> array[i] = performArithmeticIntIntDouble(left.getDataAt(j), right.getDataAt(k)));
+    }
+
+    private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT> ResultT performOpSameLength(ParamT left, ParamT right, IntFunction<ArrayT> arrayConstructor,
+                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, SameOpFunction<ArrayT> op) {
+        assert areSameLength(left, right);
+        int length = left.getLength();
+        if (emptyVector.profile(length == 0)) {
+            return emptyConstructor.get();
         }
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
-        int length = Math.max(leftLength, rightLength);
-        double[] result = new double[length];
-        int j = 0;
-        int k = 0;
+        ArrayT result = arrayConstructor.apply(length);
         for (int i = 0; i < length; ++i) {
-            int leftValue = left.getDataAt(k);
-            int rightValue = right.getDataAt(j);
-            result[i] = performArithmeticIntIntDouble(leftValue, rightValue);
-            j = Utils.incMod(j, rightLength);
-            k = Utils.incMod(k, leftLength);
+            op.apply(result, i);
         }
-        boolean notMultiple = j != 0 || k != 0;
-        if (notMultiple) {
-            RError.warning(RError.Message.LENGTH_NOT_MULTI);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        copyAttributes(ret, left, right);
+        ResultT ret = resultFunction.apply(result, isComplete());
+        copyAttributesSameLength(ret, left, right);
         return ret;
     }
 
     private RComplexVector performComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
-        assert areSameLength(left, right);
-        int length = left.getLength();
-        if (emptyVector.profile(length == 0)) {
-            return RDataFactory.createEmptyComplexVector();
-        }
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
-        resultNACheck.enable(arithmetic.introducesNA());
-        double[] result = new double[length << 1];
-        for (int i = 0; i < length; ++i) {
-            RComplex leftValue = left.getDataAt(i);
-            RComplex rightValue = right.getDataAt(i);
-            RComplex resultValue = performArithmeticComplex(leftValue, rightValue);
-            int index = i << 1;
-            result[index] = resultValue.getRealPart();
-            result[index + 1] = resultValue.getImaginaryPart();
-        }
-        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
-        copyAttributesSameLength(ret, left, right);
-        return ret;
+        return performOpSameLength(left, right, len -> new double[len << 1], RDataFactory::createEmptyComplexVector, RDataFactory::createComplexVector, (array, i) -> {
+            RComplex result = performArithmeticComplex(left.getDataAt(i), right.getDataAt(i));
+            array[i << 1] = result.getRealPart();
+            array[(i << 1) + 1] = result.getImaginaryPart();
+        });
     }
 
     private RDoubleVector performDoubleVectorOpSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
-        assert areSameLength(left, right);
-        int length = left.getLength();
-        if (emptyVector.profile(length == 0)) {
-            return RDataFactory.createEmptyDoubleVector();
-        }
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
-        resultNACheck.enable(arithmetic.introducesNA());
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            double leftValue = left.getDataAt(i);
-            double rightValue = right.getDataAt(i);
-            result[i] = performArithmeticDouble(leftValue, rightValue);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        copyAttributesSameLength(ret, left, right);
-        return ret;
+        return performOpSameLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
+                        (array, i) -> array[i] = performArithmeticDouble(left.getDataAt(i), right.getDataAt(i)));
     }
 
     private RIntVector performIntVectorOpSameLength(RAbstractIntVector left, RAbstractIntVector right) {
-        assert areSameLength(left, right);
-        int length = left.getLength();
-        if (emptyVector.profile(length == 0)) {
-            return RDataFactory.createEmptyIntVector();
-        }
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
-        resultNACheck.enable(arithmetic.introducesNA());
-        int[] result = new int[length];
-        for (int i = 0; i < length; ++i) {
-            int leftValue = left.getDataAt(i);
-            int rightValue = right.getDataAt(i);
-            result[i] = performArithmetic(leftValue, rightValue);
-        }
-        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
-        copyAttributesSameLength(ret, left, right);
-        return ret;
+        return performOpSameLength(left, right, int[]::new, RDataFactory::createEmptyIntVector, RDataFactory::createIntVector,
+                        (array, i) -> array[i] = performArithmetic(left.getDataAt(i), right.getDataAt(i)));
     }
 
     private RDoubleVector performIntVectorOpDoubleSameLength(RAbstractIntVector left, RAbstractIntVector right) {
-        assert areSameLength(left, right);
-        int length = left.getLength();
-        if (emptyVector.profile(length == 0)) {
-            return RDataFactory.createEmptyDoubleVector();
-        }
-        leftNACheck.enable(left);
-        rightNACheck.enable(right);
-        resultNACheck.enable(arithmetic.introducesNA());
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            int leftValue = left.getDataAt(i);
-            int rightValue = right.getDataAt(i);
-            result[i] = performArithmeticIntIntDouble(leftValue, rightValue);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        copyAttributesSameLength(ret, left, right);
-        return ret;
+        return performOpSameLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
+                        (array, i) -> array[i] = performArithmeticIntIntDouble(left.getDataAt(i), right.getDataAt(i)));
     }
 
     private double performArithmeticDoubleEnableNACheck(double left, double right) {
@@ -928,7 +875,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
                 return RDataFactory.createComplexRealOne();
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
@@ -938,7 +885,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
