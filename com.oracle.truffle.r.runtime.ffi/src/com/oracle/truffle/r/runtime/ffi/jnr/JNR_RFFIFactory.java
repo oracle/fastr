@@ -109,6 +109,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         return posix().chdir(dir);
     }
 
+    @TruffleBoundary
     public String getwd() {
         byte[] buf = new byte[4096];
         int rc = libcx().getcwd(buf);
