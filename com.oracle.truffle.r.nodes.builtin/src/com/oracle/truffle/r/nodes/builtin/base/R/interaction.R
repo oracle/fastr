@@ -1,7 +1,7 @@
 #  File src/library/base/R/interaction.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -22,9 +22,11 @@ interaction <- function(..., drop = FALSE, sep = ".", lex.order = FALSE)
 {
     args <- list(...)
     narg <- length(args)
+    if (narg < 1L)
+	stop("No factors specified")
     if (narg == 1L && is.list(args[[1L]])) {
-        args <- args[[1L]]
-        narg <- length(args)
+	args <- args[[1L]]
+	narg <- length(args)
     }
     for(i in narg:1L) {
         f <- as.factor(args[[i]])[, drop = drop]
@@ -41,7 +43,7 @@ interaction <- function(..., drop = FALSE, sep = ".", lex.order = FALSE)
             } else {
                 ans <- ans * length(l) + if1
                 lvs <- paste(rep(l, length(lvs)),
-                        rep(lvs, each = length(l)), sep=sep)
+                             rep(lvs, each = length(l)), sep=sep)
             }
             if(anyDuplicated(lvs)) { ## fix them up
                 ulvs <- unique(lvs)

@@ -26,52 +26,51 @@
 ##' @return x itself, or an array if the simplification "is sensible"
 simplify2array <- function(x, higher = TRUE)
 {
-  if(length(common.len <- unique(unlist(lapply(x, length)))) > 1L)
-    return(x)
-  if(common.len == 1L)
-    unlist(x, recursive = FALSE)
-  else if(common.len > 1L) {
-    n <- length(x)
-    ## make sure that array(*) will not call rep() {e.g. for 'call's}:
-    r <- as.vector(unlist(x, recursive = FALSE))
-    if(higher && length(c.dim <- unique(lapply(x, dim))) == 1 &&
-        is.numeric(c.dim <- c.dim[[1L]]) &&
-        prod(d <- c(c.dim, n)) == length(r)) {
+    if(length(common.len <- unique(unlist(lapply(x, length)))) > 1L)
+        return(x)
+    if(common.len == 1L)
+        unlist(x, recursive = FALSE)
+    else if(common.len > 1L) {
+        n <- length(x)
+        ## make sure that array(*) will not call rep() {e.g. for 'call's}:
+        r <- as.vector(unlist(x, recursive = FALSE))
+        if(higher && length(c.dim <- unique(lapply(x, dim))) == 1 &&
+           is.numeric(c.dim <- c.dim[[1L]]) &&
+           prod(d <- c(c.dim, n)) == length(r)) {
 
-      iN1 <- is.null(n1 <- dimnames(x[[1L]]))
-      n2 <- names(x)
-      dnam <-
-          if(!(iN1 && is.null(n2)))
-            c(if(iN1) rep.int(list(n1), length(c.dim)) else n1,
-                list(n2)) ## else NULL
-      array(r, dim = d, dimnames = dnam)
+            iN1 <- is.null(n1 <- dimnames(x[[1L]]))
+            n2 <- names(x)
+            dnam <-
+                if(!(iN1 && is.null(n2)))
+                    c(if(iN1) rep.int(list(n1), length(c.dim)) else n1,
+                      list(n2)) ## else NULL
+            array(r, dim = d, dimnames = dnam)
 
-    } else if(prod(d <- c(common.len, n)) == length(r))
-      array(r, dim = d,
-          dimnames = if(!(is.null(n1 <- names(x[[1L]])) &
-                is.null(n2 <- names(x)))) list(n1,n2))
+        } else if(prod(d <- c(common.len, n)) == length(r))
+            array(r, dim = d,
+                  dimnames = if(!(is.null(n1 <- names(x[[1L]])) &
+                  is.null(n2 <- names(x)))) list(n1,n2))
+        else x
+    }
     else x
-  }
-  else x
 }
 
 sapply <- function(X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
-#sapply <- function(X, FUN, USE.NAMES = TRUE, simplify = TRUE, ...)
 {
-  FUN <- match.fun(FUN)
-  answer <- lapply(X = X, FUN = FUN, ...)
-  if(USE.NAMES && is.character(X) && is.null(names(answer)))
-    names(answer) <- X
-  if(!identical(simplify, FALSE) && length(answer))
-    simplify2array(answer, higher = (simplify == "array"))
-  else answer
+    FUN <- match.fun(FUN)
+    answer <- lapply(X = X, FUN = FUN, ...)
+    if(USE.NAMES && is.character(X) && is.null(names(answer)))
+	names(answer) <- X
+    if(!identical(simplify, FALSE) && length(answer))
+	simplify2array(answer, higher = (simplify == "array"))
+    else answer
 }
 
 vapply <- function(X, FUN, FUN.VALUE, ...,  USE.NAMES = TRUE)
 {
-  FUN <- match.fun(FUN)
-  if(!is.vector(X) || is.object(X)) X <- as.list(X)
-  .Internal(vapply(X, FUN, FUN.VALUE, USE.NAMES))
+    FUN <- match.fun(FUN)
+    if(!is.vector(X) || is.object(X)) X <- as.list(X)
+    .Internal(vapply(X, FUN, FUN.VALUE, USE.NAMES))
 }
 
 

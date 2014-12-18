@@ -1,24 +1,13 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
@@ -33,12 +22,14 @@ import java.util.regex.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
+
+// Much of this code was influences/transcribed from GnuR src/main/platform.c
 
 public class FileFunctions {
 
@@ -76,13 +67,68 @@ public class FileFunctions {
         }
     }
 
+    @RBuiltin(name = "file.append", kind = INTERNAL, parameterNames = {"file1", "file2"})
+    public abstract static class FileAppend extends RBuiltinNode {
+
+        @Specialization
+        @TruffleBoundary
+        protected RLogicalVector doFileAppend(RAbstractStringVector file1Vec, RAbstractStringVector file2Vec) {
+            int len1 = file1Vec.getLength();
+            int len2 = file2Vec.getLength();
+            if (len1 < 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FILE_APPEND_TO);
+            }
+            if (len2 < 1) {
+                return RDataFactory.createEmptyLogicalVector();
+            }
+            int len = len1 > len2 ? len1 : len2;
+            byte[] status = new byte[len];
+            if (len1 == 1) {
+                String file1 = file1Vec.getDataAt(0);
+                if (file1 == RRuntime.STRING_NA) {
+                    return RDataFactory.createEmptyLogicalVector();
+                }
+                file1 = Utils.tildeExpand(file1);
+                try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
+                    status[0] = RRuntime.LOGICAL_TRUE;
+                    for (int i = 0; i < len; i++) {
+                        String file2 = file2Vec.getDataAt(i % len2);
+                        if (file2 == RRuntime.STRING_NA) {
+                            continue;
+                        }
+                        file2 = Utils.tildeExpand(file2);
+                        File file2File = new File(file2);
+                        if (!file2File.exists()) {
+                            // not an error (cf GnuR)
+                            continue;
+                        } else {
+                            byte[] buf = new byte[(int) file2File.length()];
+                            try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file2))) {
+                                in.read();
+                            } catch (IOException ex) {
+                                // not an error (cf GnuR)
+                                continue;
+                            }
+                            try {
+                                out.write(buf);
+                            } catch (IOException ex) {
+                                RContext.getInstance().setEvalWarning(RError.Message.FILE_APPEND_WRITE.message);
+                                status[0] = RRuntime.LOGICAL_FALSE;
+                            }
+                        }
+                    }
+                } catch (IOException ex) {
+                    // failure to open output file not reported as error by GnuR
+                }
+            } else {
+                throw RError.nyi(getEncapsulatingSourceSection(), " appending multiple files not implemented");
+            }
+            return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
     @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"})
     public abstract static class FileCreate extends RBuiltinNode {
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-        }
 
         @Specialization
         @TruffleBoundary
@@ -326,31 +372,37 @@ public class FileFunctions {
 
     }
 
+    // TODO Implement all the options
     @RBuiltin(name = "list.files", kind = INTERNAL, parameterNames = {"path", "pattern", "all.files", "full.names", "recursive", "ignore.case", "include.dirs", "no.."})
     public abstract static class ListFiles extends RBuiltinNode {
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create("."), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-        }
-
-        // @formatter:off
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive,
-                        byte ignoreCase, byte includeDirs, byte noDotDot) {
-            // pattern in first element of vector, remaining elements are ignored (as per GnuR).
-            String patternString = patternVec.getLength() == 0 ? "" : patternVec.getDataAt(0);
-            final Pattern pattern = Pattern.compile(patternString);
-            DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
-                public boolean accept(Path file) throws IOException {
-                    return pattern.matcher(file.getFileName().toString()).matches();
-                }
-            };
+        protected RStringVector doListFiles(RAbstractStringVector vec, RNull patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs, byte noDotDot) {
+            return doListFilesBody(vec, null, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
+        }
 
-            // @formatter:on
+        @Specialization
+        @TruffleBoundary
+        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs, byte noDotDot) {
+            // pattern in first element of vector, remaining elements are ignored (as per GnuR).
+
+            DirectoryStream.Filter<Path> filter = null;
+            if (!(patternVec.getLength() == 0 || patternVec.getDataAt(0).length() == 0)) {
+                String patternString = patternVec.getLength() == 0 ? "" : patternVec.getDataAt(0);
+                final Pattern pattern = Pattern.compile(patternString);
+                filter = new DirectoryStream.Filter<Path>() {
+                    public boolean accept(Path file) throws IOException {
+                        return pattern.matcher(file.getFileName().toString()).matches();
+                    }
+                };
+            }
+            return doListFilesBody(vec, filter, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
+        }
+
+        @SuppressWarnings("unused")
+        protected RStringVector doListFilesBody(RAbstractStringVector vec, DirectoryStream.Filter<Path> filter, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs,
+                        byte noDotDot) {
             controlVisibility();
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
@@ -361,7 +413,7 @@ public class FileFunctions {
                 if (!dir.exists()) {
                     continue;
                 }
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath(), filter)) {
+                try (DirectoryStream<Path> stream = getDirectoryStream(dir.toPath(), filter)) {
                     for (Path entry : stream) {
                         files.add(fullNames == RRuntime.LOGICAL_TRUE ? entry.toString() : entry.getFileName().toString());
                     }
@@ -377,35 +429,27 @@ public class FileFunctions {
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
         }
+
+        protected DirectoryStream<Path> getDirectoryStream(Path path, DirectoryStream.Filter<Path> filter) throws IOException {
+            return filter == null ? Files.newDirectoryStream(path) : Files.newDirectoryStream(path, filter);
+        }
     }
 
-    // TODO make .Internal, when resolving .Platform in files.R is fixed
     // TODO handle the general case, which is similar to paste
-    @RBuiltin(name = "file.path", kind = SUBSTITUTE, parameterNames = {"...", "fsep"})
+    @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"})
     public abstract static class FilePath extends RBuiltinNode {
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{null, ConstantNode.create(File.separator)};
-        }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "lengthZero")
         @TruffleBoundary
-        protected RStringVector doFilePathZero(RAbstractStringVector vec, String fsep) {
+        protected RStringVector doFilePathZero(RList vec, String fsep) {
             return RDataFactory.createEmptyStringVector();
-        }
-
-        @Specialization(guards = "!lengthZero")
-        @TruffleBoundary
-        protected RStringVector doFilePath(RAbstractStringVector vec, String fsep) {
-            return doFilePath(new RArgsValuesAndNames(new Object[]{vec}, null), fsep);
         }
 
         @Specialization(guards = "simpleArgs")
         @TruffleBoundary
-        protected RStringVector doFilePath(RArgsValuesAndNames args, String fsep) {
-            Object[] argValues = args.getValues();
+        protected RStringVector doFilePath(RList args, String fsep) {
+            Object[] argValues = args.getDataWithoutCopying();
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < argValues.length; i++) {
                 Object elem = argValues[i];
@@ -433,12 +477,12 @@ public class FileFunctions {
             return RDataFactory.createStringVectorFromScalar(sb.toString());
         }
 
-        public static boolean lengthZero(RAbstractStringVector vec, @SuppressWarnings("unused") String fsep) {
-            return vec.getLength() == 0;
+        public static boolean lengthZero(RList list, @SuppressWarnings("unused") String fsep) {
+            return list.getLength() == 0;
         }
 
-        public static boolean simpleArgs(RArgsValuesAndNames args) {
-            for (Object arg : args.getValues()) {
+        public static boolean simpleArgs(RList args) {
+            for (Object arg : args.getDataWithoutCopying()) {
                 if (arg instanceof RStringVector) {
                     if (((RStringVector) arg).getLength() > 1) {
                         return false;
@@ -452,6 +496,71 @@ public class FileFunctions {
                 }
             }
             return true;
+        }
+    }
+
+    /**
+     * {@code file.copy} builtin. This is only called when the target is a directory.
+     */
+    @RBuiltin(name = "file.copy", kind = INTERNAL, parameterNames = {"from", "to", "overwrite", "recursive", "copy.mode", "copy.date"})
+    public abstract static class FileCopy extends RBuiltinNode {
+
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            for (int i = 2; i < 5; i++) {
+                arguments[i] = CastLogicalNodeFactory.create(arguments[0], true, false, false);
+            }
+            return arguments;
+        }
+
+        protected boolean checkLogical(byte value, String name) throws RError {
+            if (RRuntime.isNA(value)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+            } else {
+                return RRuntime.fromLogical(value);
+            }
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RLogicalVector fileCopy(RAbstractStringVector vecFrom, RAbstractStringVector vecTo, byte overwriteArg, byte recursiveArg, byte copyModeArg, byte copyDateArg) {
+            int lenFrom = vecFrom.getLength();
+            byte[] status = new byte[lenFrom];
+            if (lenFrom > 0) {
+                int lenTo = vecTo.getLength();
+                if (lenTo != 1) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "to");
+                }
+                boolean overWrite = checkLogical(overwriteArg, "overwrite");
+                boolean recursive = checkLogical(recursiveArg, "recursive");
+                boolean copyMode = checkLogical(copyModeArg, "copy.mode");
+                boolean copyDate = checkLogical(copyDateArg, "copy.dates");
+
+                if (recursive) {
+                    throw RError.nyi(getEncapsulatingSourceSection(), " 'recursive' option not implemented");
+                }
+                CopyOption[] copyOption = copyMode || copyDate ? new CopyOption[]{StandardCopyOption.COPY_ATTRIBUTES} : new CopyOption[0];
+                FileSystem fileSystem = FileSystems.getDefault();
+                Path toDir = fileSystem.getPath(Utils.tildeExpand(vecTo.getDataAt(0)));
+
+                for (int i = 0; i < lenFrom; i++) {
+                    String from = vecFrom.getDataAt(i % lenFrom);
+                    String to = vecTo.getDataAt(i % lenTo);
+                    to = fileSystem.getPath(toDir.toString(), from).toString();
+                    Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
+                    Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
+                    status[i] = RRuntime.LOGICAL_TRUE;
+                    try {
+                        if (!Files.exists(toPath) || overWrite) {
+                            Files.copy(fromPath, toPath, copyOption);
+                        }
+                    } catch (UnsupportedOperationException | IOException ex) {
+                        status[i] = RRuntime.LOGICAL_FALSE;
+                        RContext.getInstance().setEvalWarning("  cannot link '" + from + "' to '" + to + "', reason " + ex.getMessage());
+                    }
+                }
+            }
+            return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
     }
 

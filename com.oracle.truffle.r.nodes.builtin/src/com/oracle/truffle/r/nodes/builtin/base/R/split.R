@@ -21,13 +21,13 @@ split <- function(x, f, drop = FALSE, ...) UseMethod("split")
 split.default <- function(x, f, drop = FALSE, sep = ".", ...)
 {
     if(!missing(...)) .NotYetUsed(deparse(...), error = FALSE)
-    
+
     if (is.list(f)) f <- interaction(f, drop = drop, sep = sep)
     else if (!is.factor(f)) f <- as.factor(f) # docs say as.factor
     else if (drop) f <- factor(f) # drop extraneous levels
     storage.mode(f) <- "integer"  # some factors have had double in the past
     if (is.null(attr(x, "class")))
-        return(.Internal(split(x, f)))
+	return(.Internal(split(x, f)))
     ## else
     lf <- levels(f)
     y <- vector("list", length(lf))
@@ -40,43 +40,43 @@ split.default <- function(x, f, drop = FALSE, sep = ".", ...)
 ## This is documented to work for matrices too
 split.data.frame <- function(x, f, drop = FALSE, ...)
     lapply(split(x = seq_len(nrow(x)), f = f, drop = drop, ...),
-            function(ind) x[ind, , drop = FALSE])
+           function(ind) x[ind, , drop = FALSE])
 
-#`split<-` <- function(x, f, drop = FALSE, ..., value) UseMethod("split<-")
+`split<-` <- function(x, f, drop = FALSE, ..., value) UseMethod("split<-")
 
-#`split<-.default` <- function(x, f, drop = FALSE, ..., value)
-#{
-#    ix <- split(seq_along(x), f, drop = drop, ...)
-#    n <- length(value)
-#    j <- 0
-#    for (i in ix) {
-#        j <- j %% n + 1
-#        x[i] <- value[[j]]
-#    }
-#    x
-#}
+`split<-.default` <- function(x, f, drop = FALSE, ..., value)
+{
+    ix <- split(seq_along(x), f, drop = drop, ...)
+    n <- length(value)
+    j <- 0
+    for (i in ix) {
+        j <- j %% n + 1
+        x[i] <- value[[j]]
+    }
+    x
+}
 
 ## This is documented to work for matrices too
-#`split<-.data.frame` <- function(x, f, drop = FALSE, ..., value)
-#{
-#    ix <- split(seq_len(nrow(x)), f, drop = drop, ...)
-#    n <- length(value)
-#    j <- 0
-#    for (i in ix) {
-#        j <- j %% n + 1
-#        x[i,] <- value[[j]]
-#    }
-#    x
-#}
+`split<-.data.frame` <- function(x, f, drop = FALSE, ..., value)
+{
+    ix <- split(seq_len(nrow(x)), f, drop = drop, ...)
+    n <- length(value)
+    j <- 0
+    for (i in ix) {
+        j <- j %% n + 1
+        x[i,] <- value[[j]]
+    }
+    x
+}
 
-#unsplit <- function (value, f, drop = FALSE)
-#{
-#    len <- length(if (is.list(f)) f[[1L]] else f)
-#    if (is.data.frame(value[[1L]])) {
-#        x <- value[[1L]][rep(NA, len),, drop = FALSE]
-#        rownames(x) <- unsplit(lapply(value, rownames), f, drop = drop)
-#    } else
-#        x <- value[[1L]][rep(NA, len)]
-#    split(x, f, drop = drop) <- value
-#    x
-#}
+unsplit <- function (value, f, drop = FALSE)
+{
+    len <- length(if (is.list(f)) f[[1L]] else f)
+    if (is.data.frame(value[[1L]])) {
+        x <- value[[1L]][rep(NA, len),, drop = FALSE]
+        rownames(x) <- unsplit(lapply(value, rownames), f, drop = drop)
+    } else
+        x <- value[[1L]][rep(NA, len)]
+    split(x, f, drop = drop) <- value
+    x
+}
