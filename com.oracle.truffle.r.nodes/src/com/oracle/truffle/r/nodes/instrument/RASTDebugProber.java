@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.FastROptions;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * A visitor which traverses a completely parsed R AST (presumed not yet executed) and attaches

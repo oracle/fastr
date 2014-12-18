@@ -1759,16 +1759,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testVapplyIgnore_a2e4a980be9ca6c3aa6f1be2cf568841() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testVapplyIgnore_3a016d2d2634bb34067c42ecf7f16d67() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testWhichIgnore_6d01b8ef11e5cdf979ca7122cd3de717() {
         assertEval("{ which(c(a=TRUE,b=FALSE,c=TRUE)) }");
     }

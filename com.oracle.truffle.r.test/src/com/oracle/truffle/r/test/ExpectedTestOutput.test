@@ -137,6 +137,46 @@ $two
 #{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }
 character(0)
 
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { assign('e', function() {x}, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { assign('e', sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { b <<- function() {x} } ; a <- 1 ; f( a ) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { delayedAssign('b', function() {x}, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; f( a ) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { e <<- sys.frame(sys.nframe()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f( a ) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { le <- sys.frame(sys.nframe()); delayedAssign('e', le, le, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestPromiseOptimizations.testDeoptimization
+#{ f <- function(x) { sys.frame(sys.nframe()) } ; a <- 1 ; e <- f( a ) ; a <- 10 ; e$x }
+[1] 10
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testArithmeticUpdate
 #{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- 1L + x ; x } ; f(FALSE) }
 [1] 4
@@ -7311,6 +7351,18 @@ expression(1, 2)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
 #{ complex(3) }
 [1] 0+0i 0+0i 0+0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3, c(1,2), c(4,5,6)) }
+[1] 1+4i 2+5i 1+6i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3, c(1,2,3), c(4,5)) }
+[1] 1+4i 2+5i 3+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3, c(1,2,3), c(4,5,6)) }
+[1] 1+4i 2+5i 3+6i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
 #{ complex(real=1,imag=2) }
@@ -15130,6 +15182,13 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ a <- NULL ; switch(mode(a), NULL="naught") }
+[1] "naught"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ a <- NULL ; switch(mode(a), NULL=) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ answer<-"no";switch(as.character(answer), yes=, YES=1, no=, NO=2,3) }
 [1] 2
 
@@ -16316,6 +16375,11 @@ f first 1
 #{f <- function(x){ UseMethod("f");cat("This should not be executed"); }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
 f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c("hello", "goodbye", "up", "down"), function(x) x, c("a")) }
+    hello   goodbye        up      down
+  "hello" "goodbye"      "up"    "down"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
 #{ vapply(c("hello", "goodbye", "up", "down"), function(x) x, c("a"), USE.NAMES = FALSE) }
 [1] "hello"   "goodbye" "up"      "down"
 
@@ -16325,6 +16389,10 @@ f second 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
 #{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }
+[1] 6 7 8 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply
+#{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }
 [1] 6 7 8 9
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVapply

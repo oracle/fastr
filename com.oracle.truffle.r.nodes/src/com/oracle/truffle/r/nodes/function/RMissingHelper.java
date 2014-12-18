@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -56,8 +57,6 @@ public class RMissingHelper {
      */
     @TruffleBoundary
     public static boolean isMissingArgument(Frame frame, String name) {
-        // TODO IsDotDotSymbol: Anything special to do here?
-
         // Check symbols value
         Object value = getMissingValue(frame, name);
         if (isMissing(value)) {
@@ -121,7 +120,7 @@ public class RMissingHelper {
     public static boolean isMissingName(RPromise promise) {
         boolean result = false;
         // Missing RPromises throw an error on evaluation, so this might only be checked if it has
-        // not been evaluated yet. (My guess, true?)
+        // not been evaluated yet.
         if (!promise.isEvaluated()) {
             Object exprObj = promise.getRep();
 
@@ -138,7 +137,13 @@ public class RMissingHelper {
                 if (promise.isUnderEvaluation()) {
                     return true;
                 }
+
                 try {
+                    // TODO Profile necessary here???
+                    if (promise instanceof EagerPromise) {
+                        ((EagerPromise) promise).materialize();
+                    }
+                    // promise.materialize(globalMissingPromiseProfile);
                     promise.setUnderEvaluation(true);
                     result = isMissingArgument(promise.getFrame(), rvn.getName());
                 } finally {

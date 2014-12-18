@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * This node removes a slot from the current frame (i.e., sets it to {@code null} to allow fast-path
@@ -82,6 +84,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
          * returned.
          */
         private final FrameSlot slot;
+        private final BranchProfile invalidateProfile = BranchProfile.create();
 
         protected RemoveAndAnswerResolvedNode(FrameSlot slot) {
             this.slot = slot;
@@ -92,6 +95,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             controlVisibility();
             Object result = frame.getValue(slot);
             frame.setObject(slot, null); // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot, invalidateProfile);
             return result;
         }
 

@@ -16,8 +16,6 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# Commented out functions currently implemented directly.
-
 vector <- function(mode = "logical", length = 0L) .Internal(vector(mode, length))
 logical <- function(length = 0L) .Internal(vector("logical", length))
 character <- function(length = 0L) .Internal(vector("character", length))
@@ -25,17 +23,17 @@ integer <- function(length = 0L) .Internal(vector("integer", length))
 numeric <- double <-
     function(length = 0L) .Internal(vector("double", length))
 
-#complex <- function(length.out = 0L,
-#        real = numeric(), imaginary = numeric(),
-#        modulus = 1, argument = 0) {
-#            if(missing(modulus) && missing(argument)) {
-#                ## assume 'real' and 'imaginary'
-#                .Internal(complex(length.out, real, imaginary))
-#            } else {
-#                n <- max(length.out, length(argument), length(modulus))
-#                rep_len(modulus, n) * exp(1i * rep_len(argument, n))
-#            }
-#}
+complex <- function(length.out = 0L,
+		    real = numeric(), imaginary = numeric(),
+		    modulus = 1, argument = 0) {
+    if(missing(modulus) && missing(argument)) {
+	## assume 'real' and 'imaginary'
+	.Internal(complex(length.out, real, imaginary))
+    } else {
+	n <- max(length.out, length(argument), length(modulus))
+	rep_len(modulus, n) * exp(1i * rep_len(argument, n))
+    }
+}
 
-#single <- function(length = 0L)
-#    structure(vector("double", length), Csingle=TRUE)
+single <- function(length = 0L)
+    structure(vector("double", length), Csingle=TRUE)

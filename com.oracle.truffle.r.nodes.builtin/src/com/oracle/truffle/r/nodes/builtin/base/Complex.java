@@ -26,21 +26,16 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "complex", kind = SUBSTITUTE, parameterNames = {"length.out", "real", "imaginary", "modulus", "argument"})
-// TODO INTERNAL
+@RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"})
 public abstract class Complex extends RBuiltinNode {
 
-    @Override
-    public RNode[] getParameterValues() {
-        // FIXME have numeric vectors for real and imaginary
-        return new RNode[]{ConstantNode.create(0), ConstantNode.create(0.0), ConstantNode.create(0.0), ConstantNode.create(1), ConstantNode.create(0)};
-    }
+    private static final RDoubleVector ZERO = RDataFactory.createDoubleVectorFromScalar(0.0);
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -49,27 +44,42 @@ public abstract class Complex extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "zeroLength")
     @SuppressWarnings("unused")
-    protected RComplex complexZeroLength(int lengthOut, double real, double imaginary, int modulus, int argument) {
-        controlVisibility();
-        return RDataFactory.createComplex(real, imaginary);
+    @Specialization(guards = "resultEmpty")
+    protected RComplexVector complexEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
+        return RDataFactory.createEmptyComplexVector();
     }
 
-    @Specialization(guards = "!zeroLength")
-    @SuppressWarnings("unused")
-    protected RComplexVector complex(int lengthOut, double real, double imaginary, int modulus, int argument) {
+    @Specialization(guards = "!resultEmpty")
+    protected RComplexVector complex(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
         controlVisibility();
-        double[] data = new double[lengthOut << 1];
+        RDoubleVector real = checkLength(realAbsVec);
+        RDoubleVector imaginary = checkLength(imaginaryAbsVec);
+        int realLength = real.getLength();
+        int imaginaryLength = imaginary.getLength();
+        int length = Math.max(Math.max(realLength, imaginaryLength), lengthOut);
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        double[] data = new double[length << 1];
         for (int i = 0; i < data.length; i += 2) {
-            data[i] = real;
-            data[i + 1] = imaginary;
+            data[i] = real.getDataAt((i >> 1) % realLength);
+            data[i + 1] = imaginary.getDataAt((i >> 1) % imaginaryLength);
+            if (RRuntime.isNA(data[i]) || RRuntime.isNA(data[i + 1])) {
+                complete = RDataFactory.INCOMPLETE_VECTOR;
+            }
         }
-        return RDataFactory.createComplexVector(data, !RRuntime.isNA(real) && !RRuntime.isNA(imaginary));
+        return RDataFactory.createComplexVector(data, complete);
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean zeroLength(int lengthOut, double real, double imaginary, int modulus, int argument) {
-        return lengthOut == 0;
+    private static RDoubleVector checkLength(RAbstractDoubleVector v) {
+        if (v.getLength() == 0) {
+            return ZERO;
+        } else {
+            return v.materialize();
+        }
     }
+
+    public static boolean resultEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
+        return lengthOut == 0 && realAbsVec.getLength() == 0 && imaginaryAbsVec.getLength() == 0;
+    }
+
 }

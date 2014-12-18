@@ -71,7 +71,7 @@ vapply <- function(X, FUN, FUN.VALUE, ...,  USE.NAMES = TRUE)
 {
   FUN <- match.fun(FUN)
   if(!is.vector(X) || is.object(X)) X <- as.list(X)
-  .Internal(vapply(X=X, FUN=FUN, FUN.VALUE=FUN.VALUE, USE.NAMES=USE.NAMES))
+  .Internal(vapply(X, FUN, FUN.VALUE, USE.NAMES))
 }
 
 

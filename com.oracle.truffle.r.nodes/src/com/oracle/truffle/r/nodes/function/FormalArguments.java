@@ -108,8 +108,8 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
      * @return The default argument for the given index.
      */
     public RNode getDefaultArg(int index) {
-        assert index >= 0 && index < arguments.length;
-        return arguments[index];
+        assert index >= 0;
+        return index < arguments.length ? arguments[index] : null;
     }
 
     /**

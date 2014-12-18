@@ -11,7 +11,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -524,7 +525,8 @@ public final class RError extends RuntimeException {
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
-        NOT_AN_ENVIRONMENT("argument is not an environment"),
+        NOT_AN_ENVIRONMENT("not an environment"),
+        NOT_A_SYMBOL("not a symbol"),
         CANNOT_SET_PARENT("cannot set the parent of the empty environment"),
         INVALID_OR_UNIMPLEMENTED_ARGUMENTS("invalid or unimplemented arguments"),
         NOTHING_TO_LINK("nothing to link"),
@@ -586,6 +588,8 @@ public final class RError extends RuntimeException {
         FULL_PRECISION("full precision may not have been achieved in '%s'"),
         ATTACH_BAD_TYPE("'attach' only works for lists, data frames and environments"),
         STRING_ARGUMENT_REQUIRED("string argument required"),
+        FILE_APPEND_TO("nothing to append to"),
+        FILE_APPEND_WRITE("write error during file append"),
         NOT_VALID_NAMES("not a valid named list");
 
         public final String message;

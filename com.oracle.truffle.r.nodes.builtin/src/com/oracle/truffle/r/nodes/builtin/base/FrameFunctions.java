@@ -35,6 +35,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -256,6 +257,7 @@ public class FrameFunctions {
     public abstract static class SysFrame extends FrameHelper {
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
+        private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -265,14 +267,19 @@ public class FrameFunctions {
         @Specialization
         protected REnvironment sysFrame(VirtualFrame frame, int which) {
             controlVisibility();
+            REnvironment result;
             if (zeroProfile.profile(which == 0)) {
                 // TODO Strictly this should be the value of .GlobalEnv
                 // (which may differ from globalenv() during startup)
-                return REnvironment.globalEnv();
+                result = REnvironment.globalEnv();
             } else {
                 Frame callerFrame = getFrame(frame, which);
-                return REnvironment.frameToEnvironment(callerFrame.materialize());
+                result = REnvironment.frameToEnvironment(callerFrame.materialize());
             }
+
+            // Deoptimize every promise which is now in this frame, as it might leave it's stack
+            deoptFrameNode.deoptimizeFrame(result.getFrame());
+            return result;
         }
 
         @Specialization
@@ -357,6 +364,7 @@ public class FrameFunctions {
         @Specialization
         protected Object sysFrames() {
             errorProfile.enter();
+            // TODO DEOPT RPromise.deoptimizeFrame every frame that escapes it's stack here
             throw RError.nyi(null, "sys.frames is not implemented");
         }
     }

@@ -169,7 +169,7 @@ nchar <- function(x, type = "chars", allowNA = FALSE)
 #polyroot <- function(z) .Internal(polyroot(z))
 #
 #readline <- function(prompt = "") .Internal(readline(prompt))
-#search <- function() .Internal(search())
+search <- function() .Internal(search())
 #searchpaths <- function()
 #{
 #  s <- search()

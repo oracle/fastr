@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 

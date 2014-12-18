@@ -34,23 +34,21 @@ import com.oracle.truffle.api.instrument.StandardSyntaxTag;
 import com.oracle.truffle.api.instrument.SyntaxTag;
 import com.oracle.truffle.api.instrument.SyntaxTagTrap;
 import com.oracle.truffle.api.instrument.TruffleEventReceiver;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.nodes.RNode;
 import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.FunctionUID;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RContext;
-import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RFunction;
+
 import java.util.*;
 
 /**

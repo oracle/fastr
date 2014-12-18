@@ -31,7 +31,6 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.*;
@@ -230,7 +229,7 @@ public abstract class RCallNode extends RNode {
     }
 
     public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(src, BuiltinFunctionVariableNodeFactory.create(function, function.getName()), arguments);
+        return RCallNode.createCall(src, BuiltinFunctionVariableNode.create(function, function.getName()), arguments);
     }
 
     /**
@@ -246,7 +245,7 @@ public abstract class RCallNode extends RNode {
      */
     public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerDirectives.transferToInterpreter();
-        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, name);
+        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNode.create(function, name);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
         current.assignSourceSection(src);

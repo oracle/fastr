@@ -23,8 +23,18 @@ lapply <- function (X, FUN, ...)
     ## However, it would be OK to have attributes which is.vector
     ## disallows.
     if(!is.vector(X) || is.object(X)) X <- as.list(X)
-    ##TODO
     ## Note ... is not passed down.  Rather the internal code
     ## evaluates FUN(X[i], ...) in the frame of this function
-    .Internal(lapply(X, FUN, ...))
+    .Internal(lapply(X, FUN))
+}
+
+rapply <-
+    function(object, f, classes = "ANY", deflt = NULL,
+             how = c("unlist", "replace", "list"), ...)
+{
+    if(typeof(object) != "list")
+        stop("'object' must be a list")
+    how <- match.arg(how)
+    res <- .Internal(rapply(object, f, classes, deflt, how))
+    if(how == "unlist") unlist(res, recursive = TRUE) else res
 }

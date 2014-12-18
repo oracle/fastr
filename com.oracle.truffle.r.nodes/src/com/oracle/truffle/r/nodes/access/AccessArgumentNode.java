@@ -22,15 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
+
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.*;
-//import com.oracle.truffle.r.nodes.ReadArgumentsNodeWrapper;
+import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -38,23 +44,34 @@ import com.oracle.truffle.r.runtime.env.*;
  * {@link #getIndex()}). It is used to populate a function's new frame right after the actual
  * function call and before the function's actual body is executed.
  */
-// Fully qualified type name to circumvent compiler bug..
-@NodeChild(value = "readArgNode", type = com.oracle.truffle.r.nodes.access.AccessArgumentNode.ReadArgumentNode.class)
+@NodeChild(value = "readArgNode", type = ReadArgumentNode.class)
 public abstract class AccessArgumentNode extends RNode {
 
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     /**
-     * @return The {@link ReadArgumentNode} that does the actual extraction from
-     *         {@link RArguments#getArgument(Frame, int)}
+     * The formal index of this argument.
      */
+    private final int index;
+
     public abstract ReadArgumentNode getReadArgNode();
 
     /**
-     * @return Formal, 0-based index of the argument to read
+     * Used to cache {@link RPromise} evaluations.
      */
-    public Integer getIndex() {
-        return getReadArgNode().getIndex();
+    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
+    @Child private RNode optDefaultArgNode = null;
+    @CompilationFinal private FormalArguments formals = null;
+    @CompilationFinal private RPromiseFactory factory = null;
+    @CompilationFinal private boolean deoptimized = false;
+    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();  // true;
+
+    public AccessArgumentNode(int index) {
+        this.index = index;
+    }
+
+    public AccessArgumentNode(AccessArgumentNode prev) {
+        this.index = prev.index;
     }
 
     /**
@@ -62,7 +79,7 @@ public abstract class AccessArgumentNode extends RNode {
      * @return A fresh {@link AccessArgumentNode} for the given index
      */
     public static AccessArgumentNode create(Integer index) {
-        return AccessArgumentNodeFactory.create(new ReadArgumentNode(index));
+        return AccessArgumentNodeFactory.create(index, new ReadArgumentNode(index));
     }
 
     @Override
@@ -86,28 +103,8 @@ public abstract class AccessArgumentNode extends RNode {
         return varArgsContainer;
     }
 
-    @Specialization(guards = {"!isPromise", "!isRArgsValuesAndNames"})
-    public Object doArgument(Object obj) {
-        return obj;
-    }
-
-    public static boolean isPromise(Object obj) {
-        return obj instanceof RPromise;
-    }
-
-    public static boolean isRArgsValuesAndNames(Object obj) {
-        return obj instanceof RArgsValuesAndNames;
-    }
-
     private Object handlePromise(VirtualFrame frame, RPromise promise) {
         assert !promise.isNonArgument();
-
-        // Check whether it is necessary to create a callee REnvironment for the promise
-        if (promiseHelper.needsCalleeFrame(promise)) {
-            // In this case the promise might lack the proper REnvironment, as it was created before
-            // the environment was
-            promiseHelper.updateFrame(frame.materialize(), promise);
-        }
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promiseHelper.isInlined(promise)) {
@@ -116,33 +113,137 @@ public abstract class AccessArgumentNode extends RNode {
         return promise;
     }
 
-    @CreateWrapper
-    public static class ReadArgumentNode extends RNode {
-        private final int index;
+    @Specialization(guards = {"!hasDefaultArg", "!isVarArgIndex"})
+    public Object doArgumentNoDefaultArg(RMissing argMissing) {
+        // Simply return missing if there's no default arg OR it represents an empty "..."
+        // (Empty "..." defaults to missing anyway, this way we don't have to rely on )
+        return argMissing;
+    }
 
-        private ReadArgumentNode(int index) {
-            this.index = index;
+    @Specialization(guards = {"hasDefaultArg", "canBeOptimized"})
+    public Object doArgumentEagerDefaultArg(VirtualFrame frame, RMissing argMissing) {
+        // Insert default value
+        checkFormals();
+        checkPromiseFactory();
+        if (!checkInsertOptDefaultArg()) {
+            // Default arg cannot be optimized: Rewrite to default and assure that we don't take
+            // this path again
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            defaultArgCanBeOptimized = false;
+            return doArgumentDefaultArg(frame, argMissing);
+        }
+        Object result = optDefaultArgNode.execute(frame);
+        RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
+        return result;
+    }
+
+    @Specialization(guards = {"hasDefaultArg", "!canBeOptimized"})
+    public Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
+        // Insert default value
+        checkFormals();
+        checkPromiseFactory();
+        RPromise result = factory.createPromise(frame.materialize());
+        RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
+        return result;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean hasDefaultArg(RMissing argMissing) {
+        checkFormals();
+        return formals.getDefaultArg(getIndex()) != null;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean isVarArgIndex(RMissing argMissing) {
+        checkFormals();
+        return formals.getVarArgIndex() == getIndex();
+    }
+
+    protected boolean canBeOptimized() {
+        return !deoptimized && defaultArgCanBeOptimized;
+    }
+
+    private void checkFormals() {
+        if (formals == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            formals = ((RRootNode) getRootNode()).getFormalArguments();
+        }
+    }
+
+    private void checkPromiseFactory() {
+        if (factory == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArg(getIndex()));
+
+            factory = RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure, defaultClosure);
+        }
+    }
+
+    private boolean checkInsertOptDefaultArg() {
+        if (optDefaultArgNode == null) {
+            checkFormals();
+            RNode defaultArg = formals.getDefaultArg(getIndex());
+            RNode arg = EagerEvalHelper.unfold(defaultArg);
+
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (isOptimizableVariable(arg) && isVariableArgument(arg)) {
+                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg));
+            } else if (isOptimizableConstant(arg) && isConstantArgument(arg)) {
+                optDefaultArgNode = new OptConstantPromiseNode(factory);
+            }
+// else if (isOptimizableExpression(arg)) {
+// System.err.println(" >>> DEF " + arg.getSourceSection().getCode());
+// }
+            if (optDefaultArgNode == null) {
+                // No success: Rewrite to default
+                return false;
+            }
+            insert(optDefaultArgNode);
+        }
+        return true;
+    }
+
+    @Fallback
+    public Object doArgument(Object obj) {
+        return obj;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    protected final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
+
+        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn) {
+            super(factory, rvn);
         }
 
-        /**
-         * for WrapperNode subclass.
-         */
-        protected ReadArgumentNode() {
-            index = 0;
+        public void onSuccess(RPromise promise) {
+        }
+
+        public void onFailure(RPromise promise) {
+            // Assure that no further eager promises are created
+            if (!deoptimized) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                deoptimized = true;
+            }
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            return RArguments.getArgument(frame, index);
-        }
-
-        public int getIndex() {
-            return index;
+        protected Object rewriteToAndExecuteFallback(VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            deoptimized = true;
+            return doArgumentDefaultArg(frame, RMissing.instance);
         }
 
         @Override
-        public ProbeNode.WrapperNode createWrapperNode(RNode node) {
-            return new ReadArgumentNodeWrapper((ReadArgumentNode) node);
+        protected Object executeFallback(VirtualFrame frame) {
+            return doArgumentDefaultArg(frame, RMissing.instance);
+        }
+
+        @Override
+        protected RNode createFallback() {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 }

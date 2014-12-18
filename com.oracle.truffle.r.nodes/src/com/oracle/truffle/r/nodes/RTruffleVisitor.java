@@ -650,7 +650,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         WriteVariableNode cvar = WriteVariableNode.create(RRuntime.toString(loop.getVariable()), null, false, false);
         RNode range = loop.getRange().accept(this);
         RNode body = loop.getBody().accept(this);
-        return ForNode.create(cvar, range, SequenceNode.ensureSequence(body));
+        return ForNode.create(loop.getSource(), cvar, range, SequenceNode.ensureSequence(body));
     }
 
     @Override

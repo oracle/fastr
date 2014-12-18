@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
@@ -33,8 +33,10 @@ import com.oracle.truffle.r.nodes.function.FunctionUID;
 import com.oracle.truffle.r.nodes.instrument.REntryCounters;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.*;
+
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;

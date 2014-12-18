@@ -124,6 +124,56 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestPromiseOptimizations_testDeoptimization_78a373f06df48fb5d5c96a3d4827ae94() {
+        assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f( a ) ; a <- 10 ; b() }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_408f8c53258b625ff792f6b700ec8ea1() {
+        assertEval("{ f <- function(x) { sys.frame(sys.nframe()) } ; a <- 1 ; e <- f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_53aabac8c266fb89b248ef98598fff26() {
+        assertEval("{ f <- function(x) { b <<- function() {x} } ; a <- 1 ; f( a ) ; a <- 10 ; b() }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_e479123f7bce7f09761f299b67ddc3cd() {
+        assertEval("{ f <- function(x) { e <<- sys.frame(sys.nframe()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_c88ab79e9badae2bc6aad0584ab063fa() {
+        assertEval("{ f <- function(x) { assign('e', sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_abbad1226b2a5a2f8f6f2f272c640d8e() {
+        assertEval("{ f <- function(x) { assign('e', function() {x}, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e() }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_d08a8714d10a0c1729ad451682f8ecf3() {
+        assertEval("{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()) } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_7b22a501f5c6c40061a45835dcf1bc5f() {
+        assertEval("{ f <- function(x) { le <- sys.frame(sys.nframe()); delayedAssign('e', le, le, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e$x }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_7545bd99d4d31c925654f905bc267cf7() {
+        assertEval("{ f <- function(x) { delayedAssign('v', x, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; v <- 0; f( a ) ; a <- 10 ; v }");
+    }
+
+    @Test
+    public void TestPromiseOptimizations_testDeoptimization_6e7e192f8d14c229a95c7105fb8f3f37() {
+        assertEval("{ f <- function(x) { delayedAssign('b', function() {x}, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; f( a ) ; a <- 10 ; b() }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testArithmeticUpdate_53dd62f0f4ee11cdf35cbec8ec41f7c8() {
         assertEval("{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- x + 1L ; x } ; f(FALSE) }");
     }
@@ -6776,6 +6826,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testComplex_08afe9365f9ccc2563e2efdda7b69a89() {
         assertEval("{ complex(3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testComplex_4a70d4fc75fde6304e4894f7fb2494b5() {
+        assertEval("{ complex(3, c(1,2,3), c(4,5,6)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testComplex_e8b5743ec2e88605af84173f9ff4f7b7() {
+        assertEval("{ complex(3, c(1,2,3), c(4,5)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testComplex_bc5e71067c8fc7c5a59af218e962ff09() {
+        assertEval("{ complex(3, c(1,2), c(4,5,6)) }");
     }
 
     @Test
@@ -15604,6 +15669,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSwitch_8a40de0f07b7e08f957c62d689644e1f() {
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=\"naught\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_d3315e3da842ce13b6ce1e77fba726e4() {
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSysCall_ffdd075dd1a47fd18359279945ca339a() {
         assertEval("{ f <- function() sys.call() ; f() }");
     }
@@ -16849,6 +16924,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testVapply_3a016d2d2634bb34067c42ecf7f16d67() {
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testVapply_3ab8fddc638c3b0d5c9699be66448791() {
         assertEval("{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }");
     }
@@ -16864,13 +16944,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testVapplyIgnore_a2e4a980be9ca6c3aa6f1be2cf568841() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testVapplyIgnore_3a016d2d2634bb34067c42ecf7f16d67() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+    public void TestSimpleBuiltins_testVapply_a87f525c4999c40a50a96fb045f4e3fb() {
+        assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }");
     }
 
     @Test

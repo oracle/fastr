@@ -283,7 +283,7 @@ public final class REngine implements RContext.Engine {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, callSrc, depth);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, (RFunction) null, callSrc, depth);
         return runCall(callTarget, vFrame, false, false);
     }
 

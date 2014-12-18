@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
@@ -51,6 +52,8 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
     private final ConditionProfile existingProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyPromiseProfile = ConditionProfile.createBinaryProfile();
     private final NAProfile na = NAProfile.create();
+
+    private final BranchProfile invalidateProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {
@@ -82,6 +85,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
         } else {
             // initialize the list of exit handlers
             frame.setObject(slot, current = new ArrayList<>());
+            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot, invalidateProfile);
         }
         if (!empty) {
             current.add(expr.getRep());

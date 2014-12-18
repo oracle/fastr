@@ -18,16 +18,13 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeFactory;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 

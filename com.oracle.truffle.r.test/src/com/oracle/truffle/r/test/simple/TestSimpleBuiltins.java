@@ -2528,6 +2528,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ complex(real=1,imaginary=2) }");
         assertEval("{ complex(real=1,imag=2) }");
         assertEval("{ complex(3) }");
+        assertEval("{ complex(3, c(1,2,3), c(4,5,6)) }");
+        assertEval("{ complex(3, c(1,2,3), c(4,5)) }");
+        assertEval("{ complex(3, c(1,2), c(4,5,6)) }");
     }
 
     @Test
@@ -3309,16 +3312,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, c(1L)) }");
         assertEval("{ vapply(c(10, 20, 30, 40), function(x) x/2, c(1)) }");
         assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = FALSE) }");
+        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
         assertEval("{ vapply(c(3+2i, 7-4i, 8+6i), function(x) x+(3+2i), c(1+1i)) }");
         assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) x, c(TRUE)) }");
         assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) FALSE, c(TRUE)) }");
-    }
-
-    @Test
-    @Ignore
-    public void testVapplyIgnore() {
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\"), USE.NAMES = TRUE) }");
-        assertEval("{ vapply(c(\"hello\", \"goodbye\", \"up\", \"down\"), function(x) x, c(\"a\")) }");
+        assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }");
     }
 
     @Test
@@ -3581,6 +3579,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- \"<\"; v <- switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE); v }");
         assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" = TRUE, FALSE) }");
         assertEval("{ x <- \"<\"; switch(x, \"<=\" =, \"<\" =, \">\" =, FALSE) }");
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=\"naught\") }");
+        assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
     }
 
     @Test

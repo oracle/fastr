@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.*;
 
-/**
- * Encapsulates the nodes that save the incoming function arguments into the frame. Functionally a
- * pass-through, but provides structure that assists instrumentation. This <b>always</b> exists even
- * if the function has no formal arguments.
- */
-public class SaveArgumentsNode extends SequenceNode {
+@CreateWrapper
+public class ReadArgumentNode extends RNode {
 
-    public static final SaveArgumentsNode NO_ARGS = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
+    private final int index;
 
-    public SaveArgumentsNode(RNode[] sequence) {
-        super(sequence);
+    protected ReadArgumentNode(int index) {
+        this.index = index;
+    }
+
+    /**
+     * for WrapperNode subclass.
+     */
+    protected ReadArgumentNode() {
+        index = 0;
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        SequenceNode seqSub = (SequenceNode) super.substitute(env);
-        return new SaveArgumentsNode(seqSub.getSequence());
+    public Object execute(VirtualFrame frame) {
+        return RArguments.getArgument(frame, index);
     }
 
+    public int getIndex() {
+        return index;
+    }
+
+    @Override
+    public ProbeNode.WrapperNode createWrapperNode(RNode node) {
+        return new ReadArgumentNodeWrapper((ReadArgumentNode) node);
+    }
 }
