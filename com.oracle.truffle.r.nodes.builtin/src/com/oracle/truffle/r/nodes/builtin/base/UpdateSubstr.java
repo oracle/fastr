@@ -82,6 +82,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     @Specialization(guards = "emptyArg")
     @TruffleBoundary
     protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
+        controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -89,7 +90,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     @Specialization(guards = {"!emptyArg", "wrongParams"})
     @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
-        assert false; // should never happen
+        RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
@@ -110,6 +111,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     @Specialization(guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
     @TruffleBoundary
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
+        controlVisibility();
         int argLength = arg.getLength();
         String[] res = new String[argLength];
         na.enable(arg);
