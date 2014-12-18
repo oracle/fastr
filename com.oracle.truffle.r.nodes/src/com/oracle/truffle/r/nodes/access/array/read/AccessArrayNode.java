@@ -1615,6 +1615,8 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DATA_FRAMES_SUBSET_ACCESS);
     }
 
+    private final BranchProfile withNames = BranchProfile.create();
+
     @Specialization
     protected Object access(VirtualFrame frame, RDataFrame dataFrame, Object exact, int recLevel, Object[] position, RAbstractLogicalVector dropDim) {
         // there should be error checks here, but since it will ultimately be implemented in R...
@@ -1630,12 +1632,29 @@ public abstract class AccessArrayNode extends RNode {
         } else {
             RList l = (RList) dataFrame.getVector();
             Object[] data = new Object[secondIndVec.getLength()];
+            RStringVector names = null;
+            String[] namesData = null;
+            if (dataFrame.getNames() != RNull.instance) {
+                withNames.enter();
+                names = (RStringVector) dataFrame.getNames();
+                namesData = new String[secondIndVec.getLength()];
+            }
             for (int i = 0; i < secondIndVec.getLength(); i++) {
                 int secondInd = secondIndVec.getDataAt(i);
                 assert l.getLength() >= secondInd;
-                data[i] = accessRecursive(frame, l.getDataAt(secondInd - 1), exact, firstIndVec.getLength() == 1 ? firstIndVec.getDataAt(0) : firstIndVec, recLevel, dropDim, false);
+                int ind = secondInd - 1;
+                data[i] = accessRecursive(frame, l.getDataAt(ind), exact, firstIndVec.getLength() == 1 ? firstIndVec.getDataAt(0) : firstIndVec, recLevel, dropDim, false);
+                if (namesData != null) {
+                    withNames.enter();
+                    namesData[i] = names.getDataAt(ind);
+                }
             }
-            RList resList = RDataFactory.createList(data, dataFrame.getNames());
+            if (namesData != null) {
+                withNames.enter();
+                names = RDataFactory.createStringVector(namesData, names.isComplete());
+            }
+
+            RList resList = RDataFactory.createList(data, names);
             Object newRowNames = accessRecursive(frame, getContainerRowNames(frame, dataFrame), exact, firstIndVec.getLength() == 1 ? firstIndVec.getDataAt(0) : firstIndVec, 0,
                             RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE}, RDataFactory.COMPLETE_VECTOR), false);
             resList.setRowNames(castVector(frame, newRowNames));

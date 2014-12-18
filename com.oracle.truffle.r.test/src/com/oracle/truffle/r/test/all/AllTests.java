@@ -18159,6 +18159,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testAccess_e8480bbea775f451f83be45e3946f282() {
+        assertEval("{ x<-data.frame(a=1:2, b=3:4, c=5:6); x[1, c(1,3)] }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testAccess_3c751253c42329c6652cb02b6c064aa2() {
         assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
     }

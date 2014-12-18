@@ -17321,6 +17321,11 @@ Error in x >= y : invalid comparison with complex values
 numeric(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-data.frame(a=1:2, b=3:4, c=5:6); x[1, c(1,3)] }
+  a c
+1 1 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
 #{ x<-data.frame(a=1L, b=2L); x[logical(), "b"] }
 integer(0)
 
