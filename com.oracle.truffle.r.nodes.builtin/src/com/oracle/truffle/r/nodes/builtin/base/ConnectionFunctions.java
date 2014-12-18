@@ -315,7 +315,7 @@ public abstract class ConnectionFunctions {
     /**
      * Subclasses are special in that they do not use delegation as the connection is always open.
      */
-    protected static abstract class StdConnection extends BaseRConnection {
+    private abstract static class StdConnection extends BaseRConnection {
         StdConnection(OpenMode openMode) {
             super(openMode, null);
             this.opened = true;
@@ -388,23 +388,29 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    /**
-     * A special case that does not use delegation as the connection is always open.
-     */
     private static class StdoutConnection extends StdConnection {
 
-        StdoutConnection() {
+        private final boolean isErr;
+
+        StdoutConnection(boolean isErr) {
             super(OpenMode.Write);
             this.opened = true;
             setClass("terminal");
+            this.isErr = isErr;
         }
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             for (int i = 0; i < lines.getLength(); i++) {
-                ch.print(lines.getDataAt(i));
-                ch.print(sep);
+                String line = lines.getDataAt(i);
+                if (isErr) {
+                    ch.printError(line);
+                    ch.printError(sep);
+                } else {
+                    ch.print(line);
+                    ch.print(sep);
+                }
             }
         }
     }
@@ -418,9 +424,24 @@ public abstract class ConnectionFunctions {
         protected RConnection stdout() {
             controlVisibility();
             if (stdout == null) {
-                stdout = new StdoutConnection();
+                stdout = new StdoutConnection(false);
             }
             return stdout;
+        }
+    }
+
+    private static StdoutConnection stderr;
+
+    @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {})
+    public abstract static class Stderr extends RInvisibleBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RConnection stderr() {
+            controlVisibility();
+            if (stderr == null) {
+                stderr = new StdoutConnection(true);
+            }
+            return stderr;
         }
     }
 
