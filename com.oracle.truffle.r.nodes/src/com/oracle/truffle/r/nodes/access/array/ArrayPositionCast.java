@@ -889,11 +889,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                             return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
                         }
                     } else {
-                        if (namesProfile.profile(container.getDimNames() != null)) {
+                        if (namesProfile.profile(getContainerDimNames(frame, container) != null)) {
                             if (assignment) {
-                                return findPositionsWithNames(frame, container, container.getDimNames().getDataAt(dimension), operand, assignment);
+                                return findPositionsWithNames(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             } else {
-                                return findPositions(frame, container, container.getDimNames().getDataAt(dimension), operand, assignment);
+                                return findPositions(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             }
                         } else {
                             throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
