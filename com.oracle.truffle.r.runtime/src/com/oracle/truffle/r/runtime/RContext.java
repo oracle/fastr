@@ -343,7 +343,7 @@ public final class RContext extends ExecutionContext {
 
     public ConsoleHandler getConsoleHandler() {
         if (consoleHandler == null) {
-            Utils.fail("no console handler set");
+            throw Utils.fail("no console handler set");
         }
         return consoleHandler;
     }
@@ -363,7 +363,7 @@ public final class RContext extends ExecutionContext {
 
     public String[] getCommandArgs() {
         if (commandArgs == null) {
-            Utils.fail("no command args set");
+            throw Utils.fail("no command args set");
         }
         return commandArgs;
     }

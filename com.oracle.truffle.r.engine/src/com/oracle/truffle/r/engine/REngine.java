@@ -203,8 +203,7 @@ public final class REngine implements RContext.Engine {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(singleExpression), Source.asPseudoFile(singleExpression, "<parse_input>"));
             return transform(seq.getExpressions()[0], REnvironment.emptyEnv());
         } catch (RecognitionException ex) {
-            Utils.fatalError("parseSingle failed");
-            return null;
+            throw Utils.fatalError("parseSingle failed");
         }
     }
 

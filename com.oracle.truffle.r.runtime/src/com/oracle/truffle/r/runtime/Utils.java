@@ -142,8 +142,7 @@ public final class Utils {
         try {
             return Source.fromFileName(url.getPath());
         } catch (IOException ex) {
-            Utils.fail("resource " + resourceName + " not found");
-            return null;
+            throw Utils.fail("resource " + resourceName + " not found");
         }
     }
 
@@ -159,8 +158,7 @@ public final class Utils {
             } catch (IOException ex) {
             }
         }
-        Utils.fail("resource " + resourceName + " not found");
-        return null;
+        throw Utils.fail("resource " + resourceName + " not found");
     }
 
     private static String getResourceAsString(InputStream is) throws IOException {
@@ -194,25 +192,26 @@ public final class Utils {
     /**
      * All terminations should go through this method.
      */
-    public static void exit(int status) {
+    public static RuntimeException exit(int status) {
         RPerfAnalysis.report();
         if (RCmdOptions.DEBUGGER.getValue() != null) {
             throw new DebugExitException();
         } else {
             System.exit(status);
+            return null;
         }
     }
 
-    public static void fail(String msg) {
+    public static RuntimeException fail(String msg) {
         // CheckStyle: stop system..print check
         System.err.println("FastR internal error: " + msg);
         // CheckStyle: resume system..print check
-        Utils.exit(2);
+        throw Utils.exit(2);
     }
 
-    public static void fatalError(String msg) {
+    public static RuntimeException fatalError(String msg) {
         System.err.println("Fatal error: " + msg);
-        Utils.exit(2);
+        throw Utils.exit(2);
     }
 
     private static String userHome;

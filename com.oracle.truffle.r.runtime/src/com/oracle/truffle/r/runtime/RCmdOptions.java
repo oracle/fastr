@@ -49,8 +49,7 @@ public class RCmdOptions {
         EITHER {
             @Override
             public String usage() {
-                Utils.fail("can't call usage() on Client.EITHER");
-                return null;
+                throw Utils.fail("can't call usage() on Client.EITHER");
             }
         };
 

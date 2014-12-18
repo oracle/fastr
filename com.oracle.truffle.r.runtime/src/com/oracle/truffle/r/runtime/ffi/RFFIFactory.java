@@ -57,28 +57,23 @@ public abstract class RFFIFactory {
     protected abstract RFFI createRFFI();
 
     public LapackRFFI getLapackRFFI() {
-        Utils.fail("getLapackRFFI not implemented");
-        return null;
+        throw Utils.fail("getLapackRFFI not implemented");
     }
 
     public RDerivedRFFI getRDerivedRFFI() {
-        Utils.fail("getRDerivedRFFI not implemented");
-        return null;
+        throw Utils.fail("getRDerivedRFFI not implemented");
     }
 
     public CRFFI getCRFFI() {
-        Utils.fail("getCRFFI not implemented");
-        return null;
+        throw Utils.fail("getCRFFI not implemented");
     }
 
     public CallRFFI getCallRFFI() {
-        Utils.fail("getCallRFFI not implemented");
-        return null;
+        throw Utils.fail("getCallRFFI not implemented");
     }
 
     public UserRngRFFI getUserRngRFFI() {
-        Utils.fail("getUserRngRFFI not implemented");
-        return null;
+        throw Utils.fail("getUserRngRFFI not implemented");
     }
 
     @TruffleBoundary

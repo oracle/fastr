@@ -129,11 +129,11 @@ public class RCommand {
                 }
                 consoleInput = new StringBufferInputStream(sb.toString());
             }
-            ConsoleReader console = null;
+            ConsoleReader console;
             try {
                 console = new RJLineConsoleReader(consoleInput, consoleOutput);
             } catch (IOException ex) {
-                Utils.fail("unexpected error opening console reader");
+                throw Utils.fail("unexpected error opening console reader");
             }
             readEvalPrint(consoleInput == System.in, console, args);
         }
@@ -150,7 +150,7 @@ public class RCommand {
 
     private static void printRHomeAndExit() {
         System.out.println(REnvVars.rHome());
-        Utils.exit(0);
+        throw Utils.exit(0);
     }
 
     private static void evalFileInput(String filePath, String[] commandArgs) {

@@ -346,8 +346,7 @@ public final class RDataFactory {
             }
             return RDataFactory.createLogicalVector(result, completeVector);
         }
-        Utils.fail("unimplemented object vector type: " + data[0].getClass().getSimpleName());
-        return null;
+        throw Utils.fail("unimplemented object vector type: " + data[0].getClass().getSimpleName());
     }
 
     public static RSymbol createSymbol(String name) {

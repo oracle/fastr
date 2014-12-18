@@ -542,7 +542,6 @@ public class RSerialize {
 
         private static void notImpl() {
             Utils.fail("not implemented");
-
         }
 
     }

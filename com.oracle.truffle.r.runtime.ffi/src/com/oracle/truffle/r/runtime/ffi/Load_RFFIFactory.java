@@ -55,9 +55,7 @@ public class Load_RFFIFactory {
             instance.initialize();
             return instance;
         } catch (Exception ex) {
-            Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
-            return null;
+            throw Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
         }
-
     }
 }

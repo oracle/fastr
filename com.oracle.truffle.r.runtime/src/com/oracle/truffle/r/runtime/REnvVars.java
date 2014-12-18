@@ -47,7 +47,7 @@ public class REnvVars {
 
     private static Map<String, String> checkEnvVars() {
         if (envVars == null) {
-            Utils.fail("envVars not initialized");
+            throw Utils.fail("envVars not initialized");
         }
         return envVars;
     }

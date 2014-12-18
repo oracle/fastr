@@ -64,7 +64,7 @@ public abstract class Quit extends RInvisibleBuiltinNode {
                 consoleHandler.print("Save workspace image? [y/n/c]: ");
                 String response = consoleHandler.readLine();
                 if (response == null) {
-                    Utils.exit(status);
+                    throw Utils.exit(status);
                 }
                 if (response.length() == 0) {
                     continue;

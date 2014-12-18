@@ -102,8 +102,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
             mkdtemp = nfi.getFunctionHandle("mkdtemp", long.class, long.class);
             return this;
         } catch (UnsupportedOperationException ex) {
-            Utils.fail(ex.getMessage());
-            return null;
+            throw Utils.fail(ex.getMessage());
         }
     }
 
@@ -163,28 +162,23 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     }
 
     public Object dlopen(String path, boolean local, boolean now) {
-        Utils.fail("dlopen not implemented");
-        return 0;
+        throw Utils.fail("dlopen not implemented");
     }
 
     public long dlsym(Object handle, String symbol) {
-        Utils.fail("dlsym not implemented");
-        return 0;
+        throw Utils.fail("dlsym not implemented");
     }
 
     public int dlclose(Object handle) {
-        Utils.fail("dlclose not implemented");
-        return 0;
+        throw Utils.fail("dlclose not implemented");
     }
 
     public String dlerror() {
-        Utils.fail("dlerror not implemented");
-        return null;
+        throw Utils.fail("dlerror not implemented");
     }
 
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
-        Utils.fail("uncompress not implemented");
-        return 0;
+        throw Utils.fail("uncompress not implemented");
     }
 
     public void mkdir(String dir, int mode) throws IOException {
@@ -192,8 +186,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     }
 
     public long strtol(String s, int base) throws IllegalArgumentException {
-        Utils.fail("strtol not implemented");
-        return 0;
+        throw Utils.fail("strtol not implemented");
     }
 
     public UtsName uname() {
