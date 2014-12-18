@@ -22,35 +22,40 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.lang.reflect.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "fastr.compile", kind = PRIMITIVE, parameterNames = {"func"})
+@RBuiltin(name = "fastr.compile", kind = PRIMITIVE, parameterNames = {"func", "background"})
 public abstract class FastRCompileBuiltin extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{null, ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+    }
 
     private static final class Compiler {
         private final Class<?> optimizedCallTarget;
+        private final Class<?> graalTruffleRuntime;
         private final Method compileMethod;
 
         private Compiler() {
-            Class<?> clazz = null;
-            Method method = null;
             try {
-                clazz = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
-                method = clazz.getDeclaredMethod("compile");
+                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
+                graalTruffleRuntime = Class.forName("com.oracle.graal.truffle.GraalTruffleRuntime", false, Truffle.getRuntime().getClass().getClassLoader());
+                compileMethod = graalTruffleRuntime.getDeclaredMethod("compile", optimizedCallTarget, boolean.class);
             } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
-                Utils.fail("fastr.compile: failed to find 'compile' method");
+                throw Utils.fail("fastr.compile: failed to find 'compile' method");
             }
-            optimizedCallTarget = clazz;
-            compileMethod = method;
         }
 
         static Compiler getCompiler() {
@@ -62,9 +67,9 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
             }
         }
 
-        boolean compile(CallTarget callTarget) throws InvocationTargetException, IllegalAccessException {
+        boolean compile(CallTarget callTarget, boolean background) throws InvocationTargetException, IllegalAccessException {
             if (optimizedCallTarget.isInstance(callTarget)) {
-                compileMethod.invoke(callTarget);
+                compileMethod.invoke(Truffle.getRuntime(), callTarget, background);
                 return true;
             } else {
                 return false;
@@ -76,11 +81,11 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected byte compileFunction(RFunction function) {
+    protected byte compileFunction(RFunction function, byte background) {
         controlVisibility();
         if (compiler != null) {
             try {
-                if (compiler.compile(function.getTarget())) {
+                if (compiler.compile(function.getTarget(), background == RRuntime.LOGICAL_TRUE)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -90,10 +95,11 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Fallback
-    protected byte compileFunction(@SuppressWarnings("unused") Object arg) {
+    protected byte compileFunction(Object function, Object background) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
     }
 }
