@@ -736,11 +736,9 @@ find.package <-
                 }
           })
       db <- do.call("rbind", db)
-# problem with named array access
-#      ok <- (apply(!is.na(db), 1L, all)
-#            & (db[, "Package"] == pkg)
-#            & (grepl(valid_package_version_regexp, db[, "Version"])))
-          ok <- TRUE
+      ok <- (apply(!is.na(db), 1L, all)
+            & (db[, "Package"] == pkg)
+            & (grepl(valid_package_version_regexp, db[, "Version"])))
       paths <- paths[ok]
     }
 

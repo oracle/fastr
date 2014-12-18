@@ -28,9 +28,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -50,6 +48,7 @@ public abstract class Substr extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg")
     protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+        controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -57,7 +56,7 @@ public abstract class Substr extends RBuiltinNode {
     @Specialization(guards = {"!emptyArg", "wrongParams"})
     @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
-        assert false; // should never happen
+        RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
@@ -65,6 +64,7 @@ public abstract class Substr extends RBuiltinNode {
     @TruffleBoundary
     @ExplodeLoop
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+        controlVisibility();
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);

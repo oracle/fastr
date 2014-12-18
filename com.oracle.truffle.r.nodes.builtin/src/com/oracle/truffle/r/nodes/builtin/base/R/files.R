@@ -90,10 +90,9 @@ list.dirs <- function(path = ".", full.names = TRUE, recursive = TRUE)
     .Internal(list.dirs(path, full.names, recursive))
 
 
-# .Platform not found?
-#file.path <-
-#function(..., fsep=.Platform$file.sep)
-#    .Internal(file.path(list(...), fsep))
+file.path <-
+function(..., fsep=.Platform$file.sep)
+    .Internal(file.path(list(...), fsep))
 
 file.exists <- function(...) .Internal(file.exists(c(...)))
 
@@ -102,51 +101,53 @@ file.create <- function(..., showWarnings =  TRUE)
 
 file.choose <- function(new=FALSE) .Internal(file.choose(new))
 
-# No $ support
-#file.copy <- function(from, to,
-#                      overwrite = recursive, recursive = FALSE,
-#                      copy.mode = TRUE)
-#{
-#    if (!(nf <- length(from))) return(logical())
-#    if (!(nt <- length(to)))   stop("no files to copy to")
-#    ## we don't use file_test as that is in utils.
-#    if (nt == 1 && isTRUE(file.info(to)$isdir)) {
-#        if (recursive && to %in% from)
-#            stop("attempt to copy a directory to itself")
-#        ## on Windows we need \ for the compiled code (e.g. mkdir).
-#        # No $ support (nor Windows)
-#        #if(.Platform$OS.type == "windows") {
-#        #    from <- gsub("/", "\\", from, fixed = TRUE)
-#        #    to <- gsub("/", "\\", to, fixed = TRUE)
-#        #}
-#        return(.Internal(file.copy(from, to, overwrite, recursive, copy.mode)))
-#    } else if (nf > nt) stop("more 'from' files than 'to' files")
-#    else if (recursive)
-#        warning("'recursive' will be ignored as 'to' is not a single existing directory")
-#    if(nt > nf) from <- rep_len(from, length.out = nt)
-#    okay <- file.exists(from)
-#    if (!overwrite) okay[file.exists(to)] <- FALSE
-#    if (any(from[okay] %in% to[okay]))
-#        stop("file can not be copied both 'from' and 'to'")
-#    if (any(okay)) { # care: file.create could fail but file.append work.
-#      okay[okay] <- file.create(to[okay])
-#      if(any(okay)) {
-#            okay[okay] <- file.append(to[okay], from[okay])
-#            if(copy.mode)
-#                Sys.chmod(to[okay], file.info(from[okay])$mode, TRUE)
-#        }
-#    }
-#    okay
-#}
-#
-#file.symlink <- function(from, to) {
-#    if (!(length(from))) stop("no files to link from")
-#    if (!(nt <- length(to)))   stop("no files/directory to link to")
-#    if (nt == 1 && file.exists(to) && file.info(to)$isdir)
-#        to <- file.path(to, basename(from))
-#    .Internal(file.symlink(from, to))
-#}
-#
+file.copy <- function(from, to,
+		overwrite = recursive, recursive = FALSE,
+		copy.mode = TRUE, copy.date = FALSE)
+{
+	if (!(nf <- length(from))) return(logical())
+	if (!(nt <- length(to)))   stop("no files to copy to")
+	## we don't use file_test as that is in utils.
+	if (nt == 1 && isTRUE(file.info(to)$isdir)) {
+		if (recursive && to %in% from)
+			stop("attempt to copy a directory to itself")
+		## on Windows we need \ for the compiled code (e.g. mkdir).
+		if(.Platform$OS.type == "windows") {
+			from <- gsub("/", "\\", from, fixed = TRUE)
+			to <- gsub("/", "\\", to, fixed = TRUE)
+		}
+		return(.Internal(file.copy(from, to, overwrite, recursive,
+								copy.mode, copy.date)))
+	} else if (nf > nt) stop("more 'from' files than 'to' files")
+	else if (recursive)
+		warning("'recursive' will be ignored as 'to' is not a single existing directory")
+	if(nt > nf) from <- rep_len(from, length.out = nt)
+	okay <- file.exists(from)
+	if (!overwrite) okay[file.exists(to)] <- FALSE
+	if (any(from[okay] %in% to[okay]))
+		stop("file can not be copied both 'from' and 'to'")
+	if (any(okay)) { # care: file.create could fail but file.append work.
+		okay[okay] <- file.create(to[okay])
+		if(any(okay)) {
+			okay[okay] <- file.append(to[okay], from[okay])
+			if(copy.mode || copy.date) { # file.info call can be slow
+				fi <- file.info(from[okay])
+				if(copy.mode) Sys.chmod(to[okay], fi$mode, TRUE)
+				if(copy.date) Sys.setFileTime(to[okay], fi$mtime)
+			}
+		}
+	}
+	okay
+}
+
+file.symlink <- function(from, to) {
+    if (!(length(from))) stop("no files to link from")
+    if (!(nt <- length(to)))   stop("no files/directory to link to")
+    if (nt == 1 && file.exists(to) && file.info(to)$isdir)
+        to <- file.path(to, basename(from))
+    .Internal(file.symlink(from, to))
+}
+
 file.link <- function(from, to) {
     if (!(length(from))) stop("no files to link from")
     if (!(nt <- length(to)))   stop("no files to link to")

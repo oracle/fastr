@@ -24,32 +24,26 @@
 
 det <- function(x, ...)
 {
-# TODO proper argument handling
-#  z <- determinant(x, logarithm = TRUE, ...)
-  z <- determinant(x, logarithm = TRUE)
-  c(z$sign * exp(z$modulus))
+    z <- determinant(x, logarithm = TRUE, ...)
+    c(z$sign * exp(z$modulus))
 }
 
-# TODO proper argument handling
-#determinant <- function(x, logarithm = TRUE, ...) UseMethod("determinant")
-determinant <- function(x, logarithm = TRUE) UseMethod("determinant")
+determinant <- function(x, logarithm = TRUE, ...) UseMethod("determinant")
 
-# TODO proper argument handling
-#determinant.matrix <- function(x, logarithm = TRUE, ...)
-determinant.matrix <- function(x, logarithm = TRUE)
+determinant.matrix <- function(x, logarithm = TRUE, ...)
 {
-  if ((n <- ncol(x)) != nrow(x))
-    stop("'x' must be a square matrix")
-  if (n < 1L)
-    return(structure(list(modulus =
-                    structure(if(logarithm) 0 else 1,
-                        logarithm = logarithm),
-                sign = 1L),
-            class = "det"))
-  if (is.complex(x))
-    stop("'determinant' not currently defined for complex matrices")
-  ## FIXME: should not be so hard to implement; see
-  ##      moddet_ge_real() in ../../../modules/lapack/Lapack.c
-  ## the 'sign' would have to be complex z, with |z|=1
-  .Internal(det_ge_real(x, logarithm))
+    if ((n <- ncol(x)) != nrow(x))
+        stop("'x' must be a square matrix")
+    if (n < 1L)
+	return(structure(list(modulus =
+			      structure(if(logarithm) 0 else 1,
+					logarithm = logarithm),
+			      sign = 1L),
+			 class = "det"))
+    if (is.complex(x))
+        stop("'determinant' not currently defined for complex matrices")
+    ## FIXME: should not be so hard to implement; see
+    ##      moddet_ge_real() in ../../../modules/lapack/Lapack.c
+    ## the 'sign' would have to be complex z, with |z|=1
+    .Internal(det_ge_real(x, logarithm))
 }
