@@ -6209,6 +6209,9 @@ a
 #{ cat("a", "b") }
 a b
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat("a", "b", "c", sep=c("-", "+")) }
+a-b+c
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat("hi",1:3,"hello") }
 hi 1 2 3 hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
@@ -6220,6 +6223,12 @@ hi-
 NA-
 hello
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat("hi",NULL,"hello",sep="-") }
+hi-hello
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat("hi",integer(0),"hello",sep="-") }
+hi--hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat() }
 

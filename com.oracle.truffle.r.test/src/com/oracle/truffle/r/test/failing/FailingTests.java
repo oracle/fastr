@@ -279,13 +279,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCatIgnore_01ac467ff40598b5a055378fc7882537() {
-        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCatIgnore_4949a7df83738286ea025e86159c9cdc() {
-        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+    public void TestSimpleBuiltins_testCatIgnore_f979ff1eaf80c178d2d1b3159eb94792() {
+        assertEvalNoNL("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
     }
 
     @Ignore
