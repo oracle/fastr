@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -292,9 +291,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     @NodeChild(value = "readNode", type = ReadVariableNode.class)
     @NodeField(name = "props", type = ReadProperties.class)
     public abstract static class ResolvePromiseNode extends ReadVariableNode {
-
-        @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
-        @Child private InlineCacheNode<Frame, Closure> promiseClosureCache = InlineCacheNode.createPromise(3);
 
         public abstract ReadVariableNode getReadNode();
 
