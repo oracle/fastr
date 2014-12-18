@@ -52362,6 +52362,10 @@ Error in x$b : $ operator is invalid for atomic vectors
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
+#{ x<-NULL; x$a }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFieldAccess
 #{ x<-data.frame(a=list(1,2)); y<-list(bb=x, c=NULL); y$b$a.1 }
 [1] 1
 

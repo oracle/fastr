@@ -20959,6 +20959,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testFieldAccess_c74b20e7f7a76a0a6c0a2d9b8d9a80e6() {
+        assertEval("{ x<-NULL; x$a }");
+    }
+
+    @Test
     public void TestSimpleVectors_testFieldAccess_5323930bd315d7a9d640f80f09658876() {
         assertEvalError("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(1:3) }");
     }

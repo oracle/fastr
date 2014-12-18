@@ -44,6 +44,11 @@ public abstract class AccessFieldNode extends RNode {
 
     private final BranchProfile inexactMatch = BranchProfile.create();
 
+    @Specialization
+    protected RNull access(@SuppressWarnings("unused") RNull object) {
+        return RNull.instance;
+    }
+
     @Specialization(guards = "hasNames")
     protected Object accessField(RList object) {
         int index = object.getElementIndexByName(getField());
