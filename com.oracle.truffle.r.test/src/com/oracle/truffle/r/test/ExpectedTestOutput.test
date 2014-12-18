@@ -10768,6 +10768,10 @@ character(0)
 #{ match(c(1,2,3,4,5),c(1,2,1,2)) }
 [1]  1  2 NA NA NA
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match(factor(c("a", "b")), factor(c("c", "b", "a", "b", "c", "a"))) }
+[1] 3 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchCall
 #{ f <- function() match.call() ; f() }
 f()

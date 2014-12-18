@@ -10869,6 +10869,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatch_e88919f986241bc776830b31c651476c() {
+        assertEval("{ match(factor(c(\"a\", \"b\")), factor(c(\"c\", \"b\", \"a\", \"b\", \"c\", \"a\"))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatchCall_a0448ccc47d09e1ad95ea97342b088e9() {
         assertEval("{ f <- function() match.call() ; f() }");
     }

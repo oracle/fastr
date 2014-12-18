@@ -3236,6 +3236,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
         assertEval("{ match(\"abc\", c(\"xyz\")) }");
         assertEval("{ match(\"abc\", c(\"xyz\"), nomatch=-1) }");
+
+        assertEval("{ match(factor(c(\"a\", \"b\")), factor(c(\"c\", \"b\", \"a\", \"b\", \"c\", \"a\"))) }");
     }
 
     @Test

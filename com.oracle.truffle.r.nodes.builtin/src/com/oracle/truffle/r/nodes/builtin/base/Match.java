@@ -43,8 +43,12 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
 public abstract class Match extends RBuiltinNode {
 
+    protected abstract RIntVector executeRIntVector(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables);
+
     @Child private CastStringNode castString;
     @Child private CastIntegerNode castInt;
+
+    @Child private Match matchRecursive;
 
     private final NACheck naCheck = new NACheck();
 
@@ -70,6 +74,14 @@ public abstract class Match extends RBuiltinNode {
         return (int) castInt.executeCast(frame, operand);
     }
 
+    private RIntVector matchRecursive(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables) {
+        if (matchRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            matchRecursive = insert(MatchFactory.create(new RNode[4], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return matchRecursive.executeRIntVector(frame, x, table, noMatch, incomparables);
+    }
+
     @Child private BooleanOperation eq = BinaryCompare.EQUAL.create();
 
     // FIXME deal incomparables parameter
@@ -84,6 +96,12 @@ public abstract class Match extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected RIntVector match(VirtualFrame frame, RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(x.getLength());
+    }
+
+    @Specialization
+    protected RIntVector match(VirtualFrame frame, RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
+        naCheck.enable(!x.getVector().isComplete() || table.getVector().isComplete());
+        return matchRecursive(frame, RClosures.createFactorToVector(x, naCheck), RClosures.createFactorToVector(table, naCheck), nomatchObj, incomparables);
     }
 
     @Specialization
@@ -245,7 +263,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(guards = "!isStringVectorX")
+    @Specialization(guards = "!isStringVectorTable")
     @SuppressWarnings("unused")
     protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -301,8 +319,8 @@ public abstract class Match extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
-    protected boolean isStringVectorX(RAbstractVector x) {
-        return x.getElementClass() == String.class;
+    protected boolean isStringVectorTable(@SuppressWarnings("unused") RAbstractStringVector x, RAbstractVector table) {
+        return table.getElementClass() == String.class;
     }
 
     private static int[] initResult(int length, int nomatch) {
