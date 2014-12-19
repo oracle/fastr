@@ -17,6 +17,7 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
@@ -172,7 +173,7 @@ public class RDeparse {
         private int indent;
         private final int cutoff;
         private final boolean backtick;
-        @SuppressWarnings("unused") private int opts;
+        private int opts;
         @SuppressWarnings("unused") private int sourceable;
         @SuppressWarnings("unused") private int longstring;
         private final int maxlines;
@@ -180,15 +181,16 @@ public class RDeparse {
         @SuppressWarnings("unused") private int isS4;
         private boolean changed;
 
-        private State(int widthCutOff, boolean backtick, int maxlines, boolean needVector) {
+        private State(int widthCutOff, boolean backtick, int maxlines, int opts, boolean needVector) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
             this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
+            this.opts = opts;
             lines = needVector ? new ArrayList<>() : null;
         }
 
         public static State createPrintableState() {
-            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, false);
+            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false);
         }
 
         private void preAppend() {
@@ -297,6 +299,10 @@ public class RDeparse {
             // assumes needVector == false
             return sb.toString();
         }
+
+        boolean showAttributes() {
+            return (opts & SHOWATTRIBUTES) != 0;
+        }
     }
 
     /**
@@ -304,16 +310,18 @@ public class RDeparse {
      */
     @TruffleBoundary
     public static String deparse(RPairList pl) {
-        State state = new State(80, false, -1, false);
+        State state = new State(80, false, -1, 0, false);
         return deparse2buff(state, pl).sb.toString();
     }
 
     /**
      * Version for {@code deparse}.
+     *
+     * @param opts TODO
      */
     @TruffleBoundary
-    public static String[] deparse(Object expr, int widthCutoff, boolean backtick, int nlines) {
-        State state = new State(widthCutoff, backtick, nlines, true);
+    public static String[] deparse(Object expr, int widthCutoff, boolean backtick, int opts, int nlines) {
+        State state = new State(widthCutoff, backtick, nlines, opts, true);
         deparse2buff(state, expr);
         state.writeline();
         String[] data = new String[state.lines.size()];
@@ -323,7 +331,8 @@ public class RDeparse {
 
     @SuppressWarnings("unused")
     @TruffleBoundary
-    public static State deparse2buff(State state, Object obj) {
+    public static State deparse2buff(State state, final Object objArg) {
+        Object obj = objArg;
         boolean lbreak = false;
         if (!state.active) {
             return state;
@@ -382,11 +391,16 @@ public class RDeparse {
                 state.append("<environment>");
                 break;
 
+            case FASTR_FACTOR:
+                deparseList(state, ((RFactor) obj).getVector());
+                break;
+
+            case FASTR_DATAFRAME:
+                deparseList(state, ((RDataFrame) obj).getVector());
+                break;
+
             case VECSXP:
-                RList list = (RList) obj;
-                state.append("list(");
-                vec2buff(state, list);
-                state.append(')');
+                deparseList(state, obj);
                 break;
 
             case EXPRSXP:
@@ -713,6 +727,23 @@ public class RDeparse {
         }
     }
 
+    /**
+     * Deparse list, dataframe, factor (different representation types in FastR).
+     */
+    private static void deparseList(State state, Object obj) {
+        RList list = (RList) obj;
+        if (state.showAttributes()) {
+            attr1(state, obj);
+        }
+        state.append("list(");
+        vec2buff(state, list);
+        state.append(')');
+        if (state.showAttributes()) {
+            attr2(state, obj);
+        }
+
+    }
+
     @SuppressWarnings("unused")
     private static boolean needsParens(PPInfo mainop, Object arg, boolean isLeft) {
         // TODO
@@ -921,6 +952,73 @@ public class RDeparse {
     private static String quotify(String name) {
         // TODO implement
         return name;
+    }
+
+    private static boolean hasAttributes(Object obj) {
+        // TODO check (and ignore) function source attribute
+        if (obj instanceof RAttributable) {
+            RAttributes attrs = ((RAttributable) obj).getAttributes();
+            return attrs != null && !attrs.isEmpty();
+        } else {
+            return false;
+        }
+    }
+
+    private static void attr1(State state, Object obj) {
+        if (hasAttributes(obj)) {
+            state.append("structure(");
+        }
+    }
+
+    private static void attr2(State state, Object obj) {
+        if (obj instanceof RAttributable) {
+            RAttributes attrs = ((RAttributable) obj).getAttributes();
+            if (attrs != null) {
+                Iterator<RAttribute> iter = attrs.iterator();
+                while (iter.hasNext()) {
+                    RAttribute attr = iter.next();
+                    // TODO ignore function source attribute
+                    String attrName = attr.getName();
+                    state.append(", ");
+                    String dotName = null;
+                    switch (attrName) {
+                        case "dimnames":
+                            dotName = ".Dimnames";
+                            break;
+                        case "dim":
+                            dotName = ".Dim";
+                            break;
+                        case "names":
+                            dotName = ".Names";
+                            break;
+                        case "tsp":
+                            dotName = ".Tsp";
+                            break;
+                        case "levels":
+                            dotName = ".Label";
+                            break;
+
+                        default: {
+                            state.opts = SIMPLEDEPARSE;
+                            if (attrName.contains(" ")) {
+                                state.append('"');
+                                state.append(attrName);
+                                state.append('"');
+                            } else {
+                                state.append(attrName);
+                            }
+                        }
+
+                    }
+                    if (dotName != null) {
+                        state.append(dotName);
+                    }
+                    state.append(" = ");
+                    deparse2buff(state, attr.getValue());
+                    state.append(')');
+                }
+            }
+        }
     }
 
 }
