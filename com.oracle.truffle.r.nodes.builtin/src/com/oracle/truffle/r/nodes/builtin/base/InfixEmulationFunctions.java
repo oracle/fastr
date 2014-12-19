@@ -181,4 +181,13 @@ public class InfixEmulationFunctions {
         }
     }
 
+    @RBuiltin(name = "function", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class FunctionBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
 }

@@ -7643,6 +7643,10 @@ Error in print(x, y) :
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { x <- 4 ; delayedAssign("x", y); y <- 10; x  } ; f() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
 #{ f <- function(...) { delayedAssign("x", ..1) ; y <<- x } ; f(10) ; y }
 [1] 10
 
