@@ -400,7 +400,7 @@ public class RDeparse {
                 break;
 
             case VECSXP:
-                deparseList(state, obj);
+                deparseList(state, (RList) obj);
                 break;
 
             case EXPRSXP:
@@ -598,7 +598,7 @@ public class RDeparse {
                                 state.append(op);
                                 state.append('(');
                                 args2buff(state, pl.car(), false, true);
-                                state.append(')');
+                                state.append(") ");
                                 deparse2buff(state, pl.cadr());
                                 break;
 
@@ -730,13 +730,12 @@ public class RDeparse {
     /**
      * Deparse list, dataframe, factor (different representation types in FastR).
      */
-    private static void deparseList(State state, Object obj) {
-        RList list = (RList) obj;
+    private static void deparseList(State state, RVector obj) {
         if (state.showAttributes()) {
             attr1(state, obj);
         }
         state.append("list(");
-        vec2buff(state, list);
+        vec2buff(state, obj);
         state.append(')');
         if (state.showAttributes()) {
             attr2(state, obj);
@@ -752,9 +751,9 @@ public class RDeparse {
     }
 
     @TruffleBoundary
-    /** Handles {@link RList} and (@link RExpression}. Method name same as GnuR.
+    /** Handles {@link RList}, (@link RExpression}, {@link RDataFrame} and {@link RFactor}. Method name same as GnuR.
      */
-    private static State vec2buff(State state, RList v) {
+    private static State vec2buff(State state, RVector v) {
         int n = v.getLength();
         boolean lbreak = false;
         Object names = v.getNames();
@@ -764,12 +763,12 @@ public class RDeparse {
                 state.append(", ");
             }
             lbreak = state.linebreak(lbreak);
-            String sname = (String) v.getNameAt(i);
+            String sname = snames == null ? null : snames.getDataAt(i);
             if (snames != null && ((sname = snames.getDataAt(i)) != null)) {
                 state.append(sname);
                 state.append(" = ");
             }
-            deparse2buff(state, v.getDataAt(i));
+            deparse2buff(state, v.getDataAtAsObject(i));
         }
         if (lbreak) {
             state.decIndent();
