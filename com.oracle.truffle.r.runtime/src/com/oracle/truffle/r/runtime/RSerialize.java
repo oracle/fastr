@@ -366,13 +366,19 @@ public class RSerialize {
                 RAttributable rAttributable = (RAttributable) result;
                 /*
                  * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract
-                 * RAttributes class.
+                 * RAttributes class. FastR also uses different types to represent data/frame and
+                 * factor which is handled in the setClassAttr
                  */
                 RPairList pl = (RPairList) attr;
                 while (true) {
                     RSymbol tagSym = (RSymbol) pl.getTag();
                     String tag = tagSym.getName();
-                    rAttributable.setAttr(tag, pl.car());
+                    // this may convert a plain vector to a data.frame or factor
+                    if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                        result = ((RVector) result).setClassAttr((RStringVector) pl.car());
+                    } else {
+                        rAttributable.setAttr(tag, pl.car());
+                    }
                     Object cdr = pl.cdr();
                     if (cdr instanceof RNull) {
                         break;
@@ -383,35 +389,7 @@ public class RSerialize {
             }
         }
 
-        return checkType(result);
-    }
-
-    private static Object checkType(Object obj) {
-        if (obj instanceof RAttributable) {
-            RAttributable rAttributable = (RAttributable) obj;
-            RAttributes attrs = rAttributable.getAttributes();
-            if (attrs != null) {
-                Object klassAttr = attrs.get(RRuntime.CLASS_ATTR_KEY);
-                if (klassAttr != null) {
-                    RStringVector klasses = (RStringVector) klassAttr;
-                    if (matchAttrValue(klasses, "factor")) {
-                        return RDataFactory.createFactor((RIntVector) obj, matchAttrValue(klasses, "ordered"));
-                    } else if (matchAttrValue(klasses, "data.frame")) {
-                        return RDataFactory.createDataFrame((RVector) obj);
-                    }
-                }
-            }
-        }
-        return obj;
-    }
-
-    private static boolean matchAttrValue(RStringVector svec, String name) {
-        for (int i = 0; i < svec.getLength(); i++) {
-            if (svec.getDataAt(i).equals(name)) {
-                return true;
-            }
-        }
-        return false;
+        return result;
     }
 
     private RStringVector inStringVec(boolean strsxp) throws IOException {

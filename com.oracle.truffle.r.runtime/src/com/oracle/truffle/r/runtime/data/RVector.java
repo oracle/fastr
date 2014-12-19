@@ -201,7 +201,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             setRowNames(value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            setClassAttr((RStringVector) value);
+            throw Utils.nyi("The \"class\" attribute should be set using a separate method");
         } else {
             attributes.put(name, value);
         }

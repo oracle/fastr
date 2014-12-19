@@ -45,6 +45,14 @@ $two
 #{ print(.Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/vector1.rds"), NULL))) }
 [1] "1" "2" "3"
 
+##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
+#{ x <- .Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/dataframe1.rds"), NULL)); is.data.frame(x) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.testVectors
+#{ x <- .Internal(unserializeFromConn(gzfile("com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test/ser/data/factor1.rds"), NULL)); is.factor(x) }
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestConnections.testPushBack
 #{ con<-textConnection(c("a","b","c","d")); pushBack("G", con); clearPushBack(con); pushBackLength(con) }
 [1] 0

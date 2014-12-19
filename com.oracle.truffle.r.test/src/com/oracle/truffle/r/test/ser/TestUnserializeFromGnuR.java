@@ -65,6 +65,8 @@ public class TestUnserializeFromGnuR extends TestBase {
     public void testVectors() {
         runUnserializeFromConn("vector1.rds");
         runUnserializeFromConn("list2.rds");
+        checkDataFrame("dataframe1.rds");
+        checkFactor("factor1.rds");
     }
 
     @Test
@@ -74,6 +76,14 @@ public class TestUnserializeFromGnuR extends TestBase {
 
     private static void runUnserializeFromConn(String fileName) {
         assertTemplateEval(TestBase.template("{ print(.Internal(unserializeFromConn(gzfile(\"%0\"), NULL))) }", new String[]{paths.get(fileName).toString()}));
+    }
+
+    private static void checkDataFrame(String fileName) {
+        assertTemplateEval(TestBase.template("{ x <- .Internal(unserializeFromConn(gzfile(\"%0\"), NULL)); is.data.frame(x) }", new String[]{paths.get(fileName).toString()}));
+    }
+
+    private static void checkFactor(String fileName) {
+        assertTemplateEval(TestBase.template("{ x <- .Internal(unserializeFromConn(gzfile(\"%0\"), NULL)); is.factor(x) }", new String[]{paths.get(fileName).toString()}));
     }
 
     private static void readCharTests(String fileName, String[] nchars) {
