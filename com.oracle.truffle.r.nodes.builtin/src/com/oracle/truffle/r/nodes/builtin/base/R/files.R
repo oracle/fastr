@@ -16,28 +16,25 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# Implemented entirely as a builtin owing to switch not working
-R.home <- function(component) .Internal(R.home(component))
+R.home <- function(component="home")
+{
+    rh <- .Internal(R.home())
+    switch(component,
+           "home" = rh,
+           "bin" = if(.Platform$OS.type == "windows" &&
+                      nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
+           else file.path(rh, component),
+           "share" = if(nzchar(p <- Sys.getenv("R_SHARE_DIR"))) p
+           else file.path(rh, component),
+           "doc" = if(nzchar(p <- Sys.getenv("R_DOC_DIR"))) p
+           else file.path(rh, component),
+           "include" = if(nzchar(p <- Sys.getenv("R_INCLUDE_DIR"))) p
+           else file.path(rh, component),
+           "modules" = if(nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
+           else file.path(rh, component),
+           file.path(rh, component))
+}
 
-#R.home <- function(component="home")
-#{
-#    rh <- .Internal(R.home())
-#    switch(component,
-#           "home" = rh,
-#           "bin" = if(.Platform$OS.type == "windows" &&
-#                      nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
-#           else file.path(rh, component),
-#           "share" = if(nzchar(p <- Sys.getenv("R_SHARE_DIR"))) p
-#           else file.path(rh, component),
-#           "doc" = if(nzchar(p <- Sys.getenv("R_DOC_DIR"))) p
-#           else file.path(rh, component),
-#           "include" = if(nzchar(p <- Sys.getenv("R_INCLUDE_DIR"))) p
-#           else file.path(rh, component),
-#           "modules" = if(nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
-#           else file.path(rh, component),
-#           file.path(rh, component))
-#}
-#
 file.show <-
     function (..., header = rep("", nfiles), title = "R Information",
               delete.file = FALSE, pager = getOption("pager"), encoding = "")

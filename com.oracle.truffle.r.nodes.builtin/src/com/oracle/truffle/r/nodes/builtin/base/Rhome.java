@@ -26,43 +26,20 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RMissing;
-
-import java.nio.file.FileSystems;
-
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 /**
  * R.home builtin.
- *
- * TODO This is currently a complete implementation of the {@code R.home} functionality, as
- * {@code switch} is not implemented, which is used by the R code for {@code R.home} in
- * {@code files.R}.
- *
- * N.B. GnuR seems to allow other types as the component, e.g. integer, although the spec does not
- * mention coercions.
  */
-@RBuiltin(name = "R.home", kind = INTERNAL, parameterNames = "component")
-// TODO revert to R implementation
+@RBuiltin(name = "R.home", kind = INTERNAL, parameterNames = {})
 public abstract class Rhome extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object doRhome(@SuppressWarnings("unused") RMissing component) {
+    protected String doRhome() {
         controlVisibility();
-        return RDataFactory.createStringVector(REnvVars.rHome());
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected Object doRhome(String component) {
-        controlVisibility();
-        String rHome = REnvVars.rHome();
-        String result = component.equals("home") ? rHome : RRuntime.toString(FileSystems.getDefault().getPath(rHome, component).toAbsolutePath());
-        return RDataFactory.createStringVector(result);
+        return REnvVars.rHome();
     }
 
 }

@@ -313,14 +313,40 @@ public abstract class ConnectionFunctions {
     }
 
     /**
-     * A special case that does not use delegation as the connection is always open.
+     * Subclasses are special in that they do not use delegation as the connection is always open.
      */
-    private static class StdinConnection extends BaseRConnection {
-
-        StdinConnection() {
-            super(OpenMode.Read, null);
+    private abstract static class StdConnection extends BaseRConnection {
+        StdConnection(OpenMode openMode) {
+            super(openMode, null);
             this.opened = true;
             setClass("terminal");
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public OutputStream getOutputStream() {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void close() throws IOException {
+            throw new IOException(RError.Message.CANNOT_CLOSE_STANDARD_CONNECTIONS.message);
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            // nothing to do, as we override the RConnection methods directly.
+        }
+    }
+
+    private static class StdinConnection extends StdConnection {
+
+        StdinConnection() {
+            super(OpenMode.Read);
         }
 
         @Override
@@ -345,26 +371,6 @@ public abstract class ConnectionFunctions {
             return result;
         }
 
-        @Override
-        public InputStream getInputStream() throws IOException {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public void close() throws IOException {
-            throw new IOException(RError.Message.CANNOT_CLOSE_STANDARD_CONNECTIONS.message);
-        }
-
-        @Override
-        protected void createDelegateConnection() throws IOException {
-            // nothing to do, as we override the RConnection methods directly.
-        }
-
     }
 
     private static StdinConnection stdin;
@@ -379,6 +385,63 @@ public abstract class ConnectionFunctions {
                 stdin = new StdinConnection();
             }
             return stdin;
+        }
+    }
+
+    private static class StdoutConnection extends StdConnection {
+
+        private final boolean isErr;
+
+        StdoutConnection(boolean isErr) {
+            super(OpenMode.Write);
+            this.opened = true;
+            setClass("terminal");
+            this.isErr = isErr;
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+            for (int i = 0; i < lines.getLength(); i++) {
+                String line = lines.getDataAt(i);
+                if (isErr) {
+                    ch.printError(line);
+                    ch.printError(sep);
+                } else {
+                    ch.print(line);
+                    ch.print(sep);
+                }
+            }
+        }
+    }
+
+    private static StdoutConnection stdout;
+
+    @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {})
+    public abstract static class Stdout extends RInvisibleBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RConnection stdout() {
+            controlVisibility();
+            if (stdout == null) {
+                stdout = new StdoutConnection(false);
+            }
+            return stdout;
+        }
+    }
+
+    private static StdoutConnection stderr;
+
+    @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {})
+    public abstract static class Stderr extends RInvisibleBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RConnection stderr() {
+            controlVisibility();
+            if (stderr == null) {
+                stderr = new StdoutConnection(true);
+            }
+            return stderr;
         }
     }
 

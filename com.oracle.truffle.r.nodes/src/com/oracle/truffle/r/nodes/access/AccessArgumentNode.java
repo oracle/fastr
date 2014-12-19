@@ -72,6 +72,10 @@ public abstract class AccessArgumentNode extends RNode {
 
     public AccessArgumentNode(AccessArgumentNode prev) {
         this.index = prev.index;
+        formals = prev.formals;
+        factory = prev.factory;
+        deoptimized = prev.deoptimized;
+        defaultArgCanBeOptimized = prev.defaultArgCanBeOptimized;
     }
 
     /**

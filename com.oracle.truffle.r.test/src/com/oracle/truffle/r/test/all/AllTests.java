@@ -5929,18 +5929,28 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_01ac467ff40598b5a055378fc7882537() {
+        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_4949a7df83738286ea025e86159c9cdc() {
+        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_90d0eb7682820f8871a877503c191775() {
+        assertEvalNoNL("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_c991c3c93c858a033c1e8f63f4994441() {
         assertEvalNoOutput("{ cat() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCatIgnore_01ac467ff40598b5a055378fc7882537() {
-        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCatIgnore_4949a7df83738286ea025e86159c9cdc() {
-        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+    public void TestSimpleBuiltins_testCatIgnore_f979ff1eaf80c178d2d1b3159eb94792() {
+        assertEvalNoNL("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test

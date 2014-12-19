@@ -24,79 +24,89 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.io.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "cat", kind = SUBSTITUTE, parameterNames = {"...", "file", "sep", "fill", "labels", "append"})
-// TODO Should be INTERNAL
-@SuppressWarnings("unused")
+/**
+ * The {@code cat .Internal}. TODO Implement the "fill", "lables" and "append" arguments. Open/close
+ * unopen connections for the duration. Fix {@link ToStringNode} to take a vector of separators and
+ * rework to not store state in {@link #currentSep} as this will break in a nested call (unlikely
+ * scenario).
+ */
+@RBuiltin(name = "cat", kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
 public abstract class Cat extends RInvisibleBuiltinNode {
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(""), ConstantNode.create(" "), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RNull.instance),
-                        ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-    }
-
     @Child private ToStringNode toString;
 
     @CompilationFinal private String currentSep;
-    @CompilationFinal private boolean sepContainsNewline;
 
     private void ensureToString(String sep) {
         if (toString == null || !sep.equals(currentSep)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             toString = insert(ToStringNodeFactory.create(null, false, sep, false));
-            sepContainsNewline = sep.contains("\n");
             currentSep = sep;
         }
     }
 
-    @Specialization
-    protected RNull cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization(guards = "!isNull")
-    protected RNull cat(VirtualFrame frame, RArgsValuesAndNames args, String file, String sep, byte fill, Object labels, byte append) {
-        ensureToString(sep);
-        Object[] argValues = args.getValues();
-        for (int i = 0; i < argValues.length; ++i) {
-            if (i > 0) {
-                catIntl(sep);
-            }
-            catIntl(toString.executeString(frame, argValues[i]));
-        }
-        if (sepContainsNewline && argValues.length > 0) {
-            catIntl("\n");
-        }
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization(guards = "isNull")
-    protected RNull catNull(RArgsValuesAndNames args, String file, String sep, byte fill, Object labels, byte append) {
-        controlVisibility();
-        return RNull.instance;
-    }
-
-    protected boolean isNull(RArgsValuesAndNames args) {
-        return args.length() == 1 && args.getValues()[0] == RNull.instance;
-    }
-
     @TruffleBoundary
-    private static void catIntl(String s) {
-        RContext.getInstance().getConsoleHandler().print(s);
+    @Specialization
+    protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, byte fill, @SuppressWarnings("unused") RNull labels, byte append) {
+        if (RRuntime.fromLogical(fill) || RRuntime.fromLogical(append)) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " fill/append = TRUE");
+        }
+        ensureToString(sepVec.getDataAt(0));
+        int length = args.getLength();
+        int sepLength = sepVec.getLength();
+        boolean sepContainsNewline = sepContainsNewline(sepVec);
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < length; ++i) {
+            Object obj = args.getDataAt(i);
+            if (obj instanceof RNull) {
+                continue;
+            }
+            if (!zeroLength(obj)) {
+                sb.append(toString.executeString(frame, obj));
+            }
+            if (i != length - 1) {
+                sb.append(sepVec.getDataAt(i % sepLength));
+            }
+        }
+        if (sepContainsNewline && length > 0) {
+            sb.append('\n');
+        }
+        try {
+            conn.writeLines(RDataFactory.createStringVectorFromScalar(sb.toString()), "");
+        } catch (IOException ex) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+        }
+        controlVisibility();
+        return RNull.instance;
     }
+
+    private static boolean zeroLength(Object obj) {
+        if (obj instanceof RAbstractContainer) {
+            return ((RAbstractContainer) obj).getLength() == 0;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean sepContainsNewline(RAbstractStringVector sepVec) {
+        for (int i = 0; i < sepVec.getLength(); i++) {
+            if (sepVec.getDataAt(i).contains("\n")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

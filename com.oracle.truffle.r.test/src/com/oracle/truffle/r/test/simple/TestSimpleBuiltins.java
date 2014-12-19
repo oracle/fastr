@@ -1032,6 +1032,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
         assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
         assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
+        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
@@ -1045,8 +1048,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testCatIgnore() {
-        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
-        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
