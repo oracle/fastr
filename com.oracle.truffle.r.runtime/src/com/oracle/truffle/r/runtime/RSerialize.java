@@ -219,7 +219,7 @@ public class RSerialize {
                     Object elem = readItem();
                     data[i] = elem;
                 }
-                // this is a list
+                // this could (ultimately) be a list,factor or dataframe
                 result = RDataFactory.createList(data);
                 break;
             }
@@ -363,8 +363,7 @@ public class RSerialize {
         } else {
             if (flags.hasAttr) {
                 Object attr = readItem();
-                // Eventually we can use RAttributable
-                RVector vec = (RVector) result;
+                RAttributable rAttributable = (RAttributable) result;
                 /*
                  * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract
                  * RAttributes class.
@@ -373,19 +372,7 @@ public class RSerialize {
                 while (true) {
                     RSymbol tagSym = (RSymbol) pl.getTag();
                     String tag = tagSym.getName();
-                    Object car = pl.car();
-                    // TODO just use the generic setAttr
-                    if (tag.equals(RRuntime.NAMES_ATTR_KEY)) {
-                        vec.setNames(car);
-                    } else if (tag.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                        vec.setDimNames((RList) car);
-                    } else if (tag.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                        vec.setRowNames(car);
-                    } else if (tag.equals(RRuntime.CLASS_ATTR_KEY)) {
-                        result = RVector.setVectorClassAttr(vec, (RStringVector) car, null, null);
-                    } else {
-                        vec.setAttr(tag, car);
-                    }
+                    rAttributable.setAttr(tag, pl.car());
                     Object cdr = pl.cdr();
                     if (cdr instanceof RNull) {
                         break;
@@ -396,7 +383,35 @@ public class RSerialize {
             }
         }
 
-        return result;
+        return checkType(result);
+    }
+
+    private static Object checkType(Object obj) {
+        if (obj instanceof RAttributable) {
+            RAttributable rAttributable = (RAttributable) obj;
+            RAttributes attrs = rAttributable.getAttributes();
+            if (attrs != null) {
+                Object klassAttr = attrs.get(RRuntime.CLASS_ATTR_KEY);
+                if (klassAttr != null) {
+                    RStringVector klasses = (RStringVector) klassAttr;
+                    if (matchAttrValue(klasses, "factor")) {
+                        return RDataFactory.createFactor((RIntVector) obj, matchAttrValue(klasses, "ordered"));
+                    } else if (matchAttrValue(klasses, "data.frame")) {
+                        return RDataFactory.createDataFrame((RVector) obj);
+                    }
+                }
+            }
+        }
+        return obj;
+    }
+
+    private static boolean matchAttrValue(RStringVector svec, String name) {
+        for (int i = 0; i < svec.getLength(); i++) {
+            if (svec.getDataAt(i).equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private RStringVector inStringVec(boolean strsxp) throws IOException {
