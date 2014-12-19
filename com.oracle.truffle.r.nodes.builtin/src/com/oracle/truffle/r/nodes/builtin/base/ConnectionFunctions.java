@@ -522,6 +522,7 @@ public abstract class ConnectionFunctions {
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             writeLinesHelper(bufferedWriter, lines, sep);
+            flush();
         }
 
         @Override

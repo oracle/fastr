@@ -33,12 +33,19 @@ public class WriteTable {
             /* handle factors internally, check integrity */
             RStringVector[] levels = new RStringVector[nc];
             for (int j = 0; j < nc; j++) {
-                RAbstractContainer xj = (RAbstractContainer) x.getDataAtAsObject(j);
-                if (xj.getLength() != nr) {
-                    throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
-                }
-                if (isFactor(xj)) {
-                    levels[j] = (RStringVector) xj.getAttributes().get("levels");
+                Object xjObj = x.getDataAtAsObject(j);
+                if (xjObj instanceof RAbstractContainer) {
+                    RAbstractContainer xj = (RAbstractContainer) xjObj;
+                    if (xj.getLength() != nr) {
+                        throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
+                    }
+                    if (isFactor(xj)) {
+                        levels[j] = (RStringVector) xj.getAttributes().get("levels");
+                    }
+                } else {
+                    if (nr != 1) {
+                        throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
+                    }
                 }
             }
 
@@ -50,17 +57,24 @@ public class WriteTable {
                     os.write(csep.getBytes());
                 }
                 for (int j = 0; j < nc; j++) {
-                    RAbstractContainer xj = (RAbstractContainer) x.getDataAtAsObject(j);
-                    if (j > 0)
+                    Object xjObj = x.getDataAtAsObject(j);
+                    if (j > 0) {
                         os.write(csep.getBytes());
-                    if (isna(xj, i)) {
-                        tmp = cna;
-                    } else {
-                        if (levels[j] != null) {
-                            tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
+                    }
+                    if (xjObj instanceof RAbstractContainer) {
+                        RAbstractContainer xj = (RAbstractContainer) xjObj;
+                        if (isna(xj, i)) {
+                            tmp = cna;
                         } else {
-                            tmp = encodeElement2((RAbstractVector) xj, i, quoteCol[j], qmethod, cdec);
+                            if (levels[j] != null) {
+                                tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
+                            } else {
+                                tmp = encodeElement2((RAbstractVector) xj, i, quoteCol[j], qmethod, cdec);
+                            }
+                            /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
                         }
+                    } else {
+                        tmp = encodePrimitiveElement(xjObj, cna, quoteRn, qmethod);
                         /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
                     }
                     os.write(tmp.getBytes());
@@ -105,6 +119,23 @@ public class WriteTable {
         return RNull.instance;
     }
 
+    private static String encodeStringElement(String p0, boolean quote, boolean qmethod) {
+        if (!quote) {
+            return p0;
+        }
+        StringBuffer sb = new StringBuffer();
+        sb.append('"');
+        for (int i = 0; i < p0.length(); i++) {
+            char p = p0.charAt(i);
+            if (p == '"') {
+                sb.append(qmethod ? '\\' : '"');
+            }
+            sb.append(p);
+        }
+        sb.append('"');
+        return sb.toString();
+    }
+
     /* a version of EncodeElement with different escaping of char strings */
     private static String encodeElement2(RAbstractVector x, int indx, boolean quote, boolean qmethod, char cdec) {
         if (indx < 0 || indx >= x.getLength()) {
@@ -112,22 +143,33 @@ public class WriteTable {
         }
         if (x instanceof RStringVector) {
             RStringVector sx = (RStringVector) x;
-            StringBuffer sb = new StringBuffer();
             String p0 = /* translateChar */sx.getDataAt(indx);
-            if (!quote)
-                return p0;
-            sb.append('"');
-            for (int i = 0; i < p0.length(); i++) {
-                char p = p0.charAt(i);
-                if (p == '"') {
-                    sb.append(qmethod ? '\\' : '"');
-                }
-                sb.append(p);
-            }
-            sb.append('"');
-            return sb.toString();
+            return encodeStringElement(p0, quote, qmethod);
         }
         return encodeElement(x, indx, quote ? '"' : 0, cdec);
+    }
+
+    private static String encodePrimitiveElement(Object o, String cna, boolean quote, boolean qmethod) {
+        if (o instanceof Integer) {
+            int v = (int) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.intToStringNoCheck(v, false);
+        } else if (o instanceof Double) {
+            double v = (double) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.doubleToStringNoCheck(v);
+        } else if (o instanceof Byte) {
+            byte v = (byte) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.logicalToStringNoCheck(v);
+        } else if (o instanceof String) {
+            String v = (String) o;
+            return RRuntime.isNA(v) ? cna : encodeStringElement(v, quote, qmethod);
+        } else if (o instanceof Double) {
+            RComplex v = (RComplex) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.complexToStringNoCheck(v);
+        } else if (o instanceof RRaw) {
+            RRaw v = (RRaw) o;
+            return RRuntime.rawToString(v);
+        }
+        throw RInternalError.unimplemented();
     }
 
     private static boolean isna(RAbstractContainer x, int indx) {
