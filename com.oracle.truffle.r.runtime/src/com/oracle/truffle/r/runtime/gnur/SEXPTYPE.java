@@ -72,7 +72,9 @@ public enum SEXPTYPE {
     FASTR_DOUBLE(300, Double.class),
     FASTR_INT(301, Integer.class),
     FASTR_BYTE(302, Byte.class),
-    FASTR_STRING(303, String.class);
+    FASTR_STRING(303, String.class),
+    FASTR_DATAFRAME(304, RDataFrame.class),
+    FASTR_FACTOR(305, RFactor.class);
 
     public final int code;
     public final Class<?> fastRClass;

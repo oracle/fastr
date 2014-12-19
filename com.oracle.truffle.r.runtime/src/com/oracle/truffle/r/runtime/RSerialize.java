@@ -219,7 +219,7 @@ public class RSerialize {
                     Object elem = readItem();
                     data[i] = elem;
                 }
-                // this is a list
+                // this could (ultimately) be a list,factor or dataframe
                 result = RDataFactory.createList(data);
                 break;
             }
@@ -363,28 +363,21 @@ public class RSerialize {
         } else {
             if (flags.hasAttr) {
                 Object attr = readItem();
-                // Eventually we can use RAttributable
-                RVector vec = (RVector) result;
+                RAttributable rAttributable = (RAttributable) result;
                 /*
                  * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract
-                 * RAttributes class.
+                 * RAttributes class. FastR also uses different types to represent data/frame and
+                 * factor which is handled in the setClassAttr
                  */
                 RPairList pl = (RPairList) attr;
                 while (true) {
                     RSymbol tagSym = (RSymbol) pl.getTag();
                     String tag = tagSym.getName();
-                    Object car = pl.car();
-                    // TODO just use the generic setAttr
-                    if (tag.equals(RRuntime.NAMES_ATTR_KEY)) {
-                        vec.setNames(car);
-                    } else if (tag.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                        vec.setDimNames((RList) car);
-                    } else if (tag.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                        vec.setRowNames(car);
-                    } else if (tag.equals(RRuntime.CLASS_ATTR_KEY)) {
-                        result = RVector.setVectorClassAttr(vec, (RStringVector) car, null, null);
+                    // this may convert a plain vector to a data.frame or factor
+                    if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                        result = ((RVector) result).setClassAttr((RStringVector) pl.car());
                     } else {
-                        vec.setAttr(tag, car);
+                        rAttributable.setAttr(tag, pl.car());
                     }
                     Object cdr = pl.cdr();
                     if (cdr instanceof RNull) {

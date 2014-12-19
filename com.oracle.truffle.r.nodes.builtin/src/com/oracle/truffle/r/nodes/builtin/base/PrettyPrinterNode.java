@@ -303,7 +303,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     private static String prettyPrintLanguageInternal(RLanguage language) {
-        String[] lines = RDeparse.deparse(language, 60, false, -1);
+        String[] lines = RDeparse.deparse(language, 60, false, 0, -1);
         if (lines.length == 1) {
             return lines[0];
         } else {
