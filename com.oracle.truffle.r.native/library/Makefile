@@ -21,13 +21,10 @@
 # questions.
 #
 
-.PHONY: all clean libdir
+.PHONY: all clean
 
-all: libdir
+all:
 	$(MAKE) -C tools
 
 clean:
 	$(MAKE) -C tools clean
-	
-libdir:
-	mkdir -p $(TOPDIR)/../library
