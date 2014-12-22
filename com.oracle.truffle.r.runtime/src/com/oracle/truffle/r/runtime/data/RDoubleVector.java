@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -74,8 +75,8 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     @Override
-    @TruffleBoundary
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.doubleToString(v)).toArray(String[]::new));
     }
 

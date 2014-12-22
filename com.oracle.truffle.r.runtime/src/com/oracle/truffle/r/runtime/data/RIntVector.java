@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -78,8 +79,8 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     }
 
     @Override
-    @TruffleBoundary
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.intToString(v, false)).toArray(String[]::new));
     }
 
