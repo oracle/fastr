@@ -37,7 +37,7 @@ public class FunctionStatementsNode extends SequenceNode {
         super(sequence);
     }
 
-    public FunctionStatementsNode(SourceSection src, RNode[] sequence) {
+    public FunctionStatementsNode(SourceSection src, RNode sequence) {
         super(src, sequence);
     }
 

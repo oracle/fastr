@@ -22,25 +22,43 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import java.util.concurrent.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public class SequenceNode extends RNode {
 
     @Children protected final RNode[] sequence;
 
+    private final long[] timing;
+
     public SequenceNode(RNode[] sequence) {
         this.sequence = sequence;
+        this.timing = null;
+    }
+
+    public SequenceNode(RNode[] sequence, SourceSection src) {
+        this.sequence = sequence;
+        this.timing = PerfHandler.initTiming(src, this);
+        if (src != null) {
+            assignSourceSection(src);
+        }
+    }
+
+    public SequenceNode(SourceSection src, RNode node) {
+        this(node, src);
     }
 
     public SequenceNode(SourceSection src, RNode[] sequence) {
-        this(sequence);
-        assignSourceSection(src);
+        this(sequence, src);
     }
 
     /**
@@ -51,6 +69,10 @@ public class SequenceNode extends RNode {
      */
     protected SequenceNode(RNode node) {
         this(convert(node));
+    }
+
+    protected SequenceNode(RNode node, SourceSection src) {
+        this(convert(node), src);
     }
 
     public RNode[] getSequence() {
@@ -81,8 +103,14 @@ public class SequenceNode extends RNode {
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
         Object lastResult = null;
+        long t1 = timing == null ? 0 : System.nanoTime();
         for (int i = 0; i < sequence.length; i++) {
             lastResult = sequence[i].execute(frame);
+            if (timing != null) {
+                long t2 = System.nanoTime();
+                timing[i] += t2 - t1;
+                t1 = t2;
+            }
         }
         return lastResult;
     }
@@ -111,4 +139,56 @@ public class SequenceNode extends RNode {
         return new SequenceNode(sequenceSubs);
     }
 
+    // Performance analysis
+
+    static {
+        RPerfAnalysis.register(new PerfHandler());
+    }
+
+    public static class PerfHandler implements RPerfAnalysis.Handler {
+
+        private static ConcurrentLinkedDeque<SequenceNode> timedSequences;
+
+        private static long[] initTiming(SourceSection src, SequenceNode sequence) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (timedSequences != null && src != null) {
+                timedSequences.add(sequence);
+                return new long[sequence.sequence.length];
+            }
+            return null;
+        }
+
+        public void initialize() {
+            timedSequences = new ConcurrentLinkedDeque<>();
+        }
+
+        public String getName() {
+            return "sequences";
+        }
+
+        public void report() {
+            if (timedSequences != null) {
+                for (SequenceNode sequence : timedSequences) {
+                    Source source = sequence.getSourceSection().getSource();
+                    long[] time = new long[source.getLineCount() + 1];
+                    long total = 0;
+                    for (int i = 0; i < sequence.timing.length; i++) {
+                        SourceSection src = sequence.sequence[i].getSourceSection();
+                        if (src != null) {
+                            time[src.getLineLocation().getLineNumber()] += sequence.timing[i];
+                            total += sequence.timing[i];
+                        }
+                    }
+                    if (total > 1000000000L) {
+                        int startLine = sequence.getSourceSection().getStartLine();
+                        int endLine = startLine + sequence.getSourceSection().getCode().split("\n").length - 1;
+                        System.out.println("File " + source.getName() + " lines " + startLine + "-" + endLine + ", total: " + (total / 1000000) + "ms");
+                        for (int i = startLine; i <= endLine; i++) {
+                            System.out.printf("%2d%%: %s%n", (time[i] + (total / 200)) * 100 / total, source.getCode(i));
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
