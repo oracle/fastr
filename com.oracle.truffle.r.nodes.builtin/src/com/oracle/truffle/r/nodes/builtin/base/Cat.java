@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
- * The {@code cat .Internal}. TODO Implement the "fill", "lables" and "append" arguments. Open/close
+ * The {@code cat .Internal}. TODO Implement the "fill", "labels" and "append" arguments. Open/close
  * unopen connections for the duration. Fix {@link ToStringNode} to take a vector of separators and
  * rework to not store state in {@link #currentSep} as this will break in a nested call (unlikely
  * scenario).
@@ -57,7 +57,6 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     @Specialization
     protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, byte fill, @SuppressWarnings("unused") RNull labels, byte append) {
         if (RRuntime.fromLogical(fill) || RRuntime.fromLogical(append)) {
@@ -65,22 +64,40 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         }
         ensureToString(sepVec.getDataAt(0));
         int length = args.getLength();
-        int sepLength = sepVec.getLength();
-        boolean sepContainsNewline = sepContainsNewline(sepVec);
-        StringBuffer sb = new StringBuffer();
+
+        String[] values = new String[length];
         for (int i = 0; i < length; ++i) {
             Object obj = args.getDataAt(i);
-            if (obj instanceof RNull) {
-                continue;
-            }
-            if (!zeroLength(obj)) {
-                sb.append(toString.executeString(frame, obj));
-            }
-            if (i != length - 1) {
-                sb.append(sepVec.getDataAt(i % sepLength));
+            if (!(obj instanceof RNull)) {
+                if (zeroLength(obj)) {
+                    values[i] = "";
+                } else {
+                    values[i] = toString.executeString(frame, obj);
+                }
             }
         }
-        if (sepContainsNewline && length > 0) {
+
+        output(conn, sepVec, values);
+        controlVisibility();
+        return RNull.instance;
+    }
+
+    @TruffleBoundary
+    private void output(RConnection conn, RAbstractStringVector sepVec, String[] values) {
+        int sepLength = sepVec.getLength();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < values.length; ++i) {
+            String str = values[i];
+            if (str != null) {
+                sb.append(str);
+                if (i != values.length - 1) {
+                    sb.append(sepVec.getDataAt(i % sepLength));
+                }
+            }
+        }
+
+        boolean sepContainsNewline = sepContainsNewline(sepVec);
+        if (sepContainsNewline && values.length > 0) {
             sb.append('\n');
         }
         try {
@@ -88,10 +105,9 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }
-        controlVisibility();
-        return RNull.instance;
     }
 
+    @TruffleBoundary
     private static boolean zeroLength(Object obj) {
         if (obj instanceof RAbstractContainer) {
             return ((RAbstractContainer) obj).getLength() == 0;
