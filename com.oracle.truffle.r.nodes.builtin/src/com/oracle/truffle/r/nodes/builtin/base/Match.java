@@ -237,19 +237,22 @@ public abstract class Match extends RBuiltinNode {
                 Integer index = hashTable.get(xx);
                 if (index != null) {
                     result[i] = index + 1;
+                } else {
                     matchAll = false;
                 }
             }
         } else {
             for (int i = 0; i < result.length; ++i) {
                 String xx = x.getDataAt(i);
+                boolean match = false;
                 for (int k = 0; k < table.getLength(); ++k) {
                     if (eq.op(xx, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
                         result[i] = k + 1;
-                        matchAll = false;
+                        match = true;
                         break;
                     }
                 }
+                matchAll &= match;
             }
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
