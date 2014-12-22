@@ -26,7 +26,11 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -275,6 +279,86 @@ public class SysFunctions {
             throw RError.nyi(getEncapsulatingSourceSection(), " Sys.umask");
         }
 
+    }
+
+    @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"})
+    public abstract static class SysGlob extends RBuiltinNode {
+        private static final char[] GLOBCHARS = new char[]{'*', '?', '['};
+
+        @Specialization
+        @TruffleBoundary
+        protected Object sysGlob(RAbstractStringVector pathVec, byte dirMask) {
+            controlVisibility();
+            ArrayList<String> matches = new ArrayList<>();
+            FileSystem fileSystem = FileSystems.getDefault();
+            for (int i = 0; i < pathVec.getLength(); i++) {
+                String pathPattern = pathVec.getDataAt(i);
+                if (pathPattern.length() == 0) {
+                    continue;
+                }
+                @SuppressWarnings("unused")
+                int firstGlobChar;
+                if ((firstGlobChar = containsGlobChar(pathPattern)) >= 0) {
+                    Path path = fileSystem.getPath(pathPattern);
+                    ArrayList<Path> components = components(path);
+                    if (components.size() > 1) {
+                        // No easy way to do this in a single shot
+                        throw RError.nyi(getEncapsulatingSourceSection(), " glob on dir");
+                    } else {
+                        try (Stream<Path> stream = Files.find(fileSystem.getPath(""), 1, new FileMatcher(pathPattern))) {
+                            Iterator<Path> iter = stream.iterator();
+                            while (iter.hasNext()) {
+                                String s = iter.next().getFileName().toString();
+                                if (s.length() > 0) {
+                                    matches.add(s);
+                                }
+                            }
+                        } catch (IOException ex) {
+                            // ignored
+                        }
+                    }
+                } else {
+                    matches.add(pathPattern);
+                }
+            }
+            String[] data = new String[matches.size()];
+            matches.toArray(data);
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static int containsGlobChar(String pathPattern) {
+            for (int i = 0; i < pathPattern.length(); i++) {
+                char ch = pathPattern.charAt(i);
+                for (int j = 0; j < GLOBCHARS.length; j++) {
+                    if (ch == GLOBCHARS[j]) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        private static ArrayList<Path> components(Path path) {
+            ArrayList<Path> list = new ArrayList<>();
+            Iterator<Path> iter = path.iterator();
+            while (iter.hasNext()) {
+                list.add(iter.next());
+            }
+            return list;
+        }
+
+        private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+            PathMatcher pathMatcher;
+
+            FileMatcher(String pathPattern) {
+                pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + pathPattern);
+            }
+
+            public boolean test(Path path, BasicFileAttributes u) {
+                boolean result = pathMatcher.matches(path);
+                return result;
+            }
+        }
     }
 
 }

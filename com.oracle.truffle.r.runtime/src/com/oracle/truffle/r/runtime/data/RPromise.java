@@ -329,8 +329,8 @@ public class RPromise extends RLanguageRep {
     }
 
     @Override
-    @TruffleBoundary
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "[" + evalPolicy + ", " + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 

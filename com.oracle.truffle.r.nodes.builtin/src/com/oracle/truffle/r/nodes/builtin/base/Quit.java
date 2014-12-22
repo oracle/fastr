@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -42,6 +43,7 @@ public abstract class Quit extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object doQuit(final String saveArg, int status, byte runLast) {
         controlVisibility();
         String save = saveArg;

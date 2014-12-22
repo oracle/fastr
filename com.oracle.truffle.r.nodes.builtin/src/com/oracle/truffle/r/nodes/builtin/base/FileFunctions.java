@@ -19,8 +19,10 @@ import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -439,64 +441,88 @@ public class FileFunctions {
     @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"})
     public abstract static class FilePath extends RBuiltinNode {
 
+        @Child private CastStringNode castStringNode;
+
+        private CastStringNode initCastStringNode() {
+            if (castStringNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+            }
+            return castStringNode;
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = "lengthZero")
         @TruffleBoundary
-        protected RStringVector doFilePathZero(RList vec, String fsep) {
+        protected RStringVector doFilePathZero(RList vec, RAbstractStringVector fsep) {
             return RDataFactory.createEmptyStringVector();
         }
 
-        @Specialization(guards = "simpleArgs")
+        @Specialization(guards = "!lengthZero")
         @TruffleBoundary
-        protected RStringVector doFilePath(RList args, String fsep) {
+        protected RStringVector doFilePath(VirtualFrame frame, RList args, RAbstractStringVector fsepVec) {
             Object[] argValues = args.getDataWithoutCopying();
-            StringBuffer sb = new StringBuffer();
+            int resultLength = 0;
             for (int i = 0; i < argValues.length; i++) {
                 Object elem = argValues[i];
-                String elemAsString;
-                if (elem instanceof RStringVector) {
-                    RStringVector svec = (RStringVector) elem;
-                    elemAsString = svec.getLength() == 0 ? "" : svec.getDataAt(0);
-                } else if (elem instanceof Object[]) {
-                    Object[] elemArray = (Object[]) elem;
-                    for (int j = 0; j < elemArray.length - 1; j++) {
-                        if (i != 0) {
-                            sb.append(fsep);
-                        }
-                        sb.append(elemArray[j]);
-                    }
-                    elemAsString = (String) elemArray[elemArray.length - 1];
+                int argLength;
+                if (elem instanceof RAbstractContainer) {
+                    argLength = ((RAbstractContainer) elem).getLength();
                 } else {
-                    elemAsString = (String) elem;
+                    argLength = 1;
                 }
-                if (i != 0) {
-                    sb.append(fsep);
-                }
-                sb.append(elemAsString);
-            }
-            return RDataFactory.createStringVectorFromScalar(sb.toString());
-        }
-
-        public static boolean lengthZero(RList list, @SuppressWarnings("unused") String fsep) {
-            return list.getLength() == 0;
-        }
-
-        public static boolean simpleArgs(RList args) {
-            for (Object arg : args.getDataWithoutCopying()) {
-                if (arg instanceof RStringVector) {
-                    if (((RStringVector) arg).getLength() > 1) {
-                        return false;
-                    }
-                } else {
-                    if (arg instanceof String) {
-                        continue;
-                    } else {
-                        return false;
-                    }
+                if (argLength > resultLength) {
+                    resultLength = argLength;
                 }
             }
-            return true;
+            if (resultLength == 0) {
+                return RDataFactory.createEmptyStringVector();
+            }
+            String[] result = new String[resultLength];
+            String[][] inputs = new String[argValues.length][];
+            for (int i = 0; i < argValues.length; i++) {
+                Object elem = argValues[i];
+                if (!(elem instanceof String || elem instanceof RStringVector)) {
+                    elem = initCastStringNode().executeString(frame, elem);
+                }
+                if (elem instanceof String) {
+                    inputs[i] = new String[]{(String) elem};
+                } else if (elem instanceof RStringVector) {
+                    inputs[i] = ((RStringVector) elem).getDataWithoutCopying();
+                } else {
+                    RInternalError.shouldNotReachHere();
+                }
+            }
+            String fsep = fsepVec.getDataAt(0);
+            for (int i = 0; i < resultLength; i++) {
+                String path = "";
+                for (int j = 0; j < inputs.length; j++) {
+                    path += inputs[j][i % inputs[j].length];
+                    if (j != inputs.length - 1) {
+                        path += fsep;
+                    }
+
+                }
+                result[i] = path;
+            }
+            return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
+
+        public static boolean lengthZero(RList list, @SuppressWarnings("unused") RAbstractStringVector fsep) {
+            if (list.getLength() == 0) {
+                return true;
+            }
+            for (int i = 0; i < list.getLength(); i++) {
+                Object elem = list.getDataAt(i);
+                if (elem instanceof RAbstractContainer) {
+                    if (((RAbstractContainer) elem).getLength() == 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
     }
 
     /**

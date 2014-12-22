@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -68,8 +69,8 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     }
 
     @Override
-    @TruffleBoundary
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         StringBuilder str = new StringBuilder();
         str.append('[');
         for (int i = 0; i < getLength(); i++) {

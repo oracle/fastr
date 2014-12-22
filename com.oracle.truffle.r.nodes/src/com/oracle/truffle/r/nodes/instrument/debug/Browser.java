@@ -22,19 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.instrument.debug;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RContext;
-import com.oracle.truffle.r.runtime.ROptions;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * The interactive component of the {@code browser} function.
@@ -50,7 +43,7 @@ public class Browser {
 
     private static final String BROWSER_SOURCE = "<browser_input>";
 
-    @CompilerDirectives.TruffleBoundary
+    @TruffleBoundary
     public static ExitMode interact(MaterializedFrame frame) {
         RContext.ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
         REnvironment callerEnv = REnvironment.frameToEnvironment(frame);
@@ -109,5 +102,4 @@ public class Browser {
     private static String browserPrompt(int depth) {
         return "Browse[" + depth + "]> ";
     }
-
 }

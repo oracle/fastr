@@ -494,7 +494,7 @@ public class ForeignFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "isMenu")
         @TruffleBoundary
-        protected int menu(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+        protected int menu(RList f, RArgsValuesAndNames args, RMissing packageName) {
             Object[] values = args.getValues();
             String[] choices;
             if (values[0] instanceof String) {
