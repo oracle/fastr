@@ -29,6 +29,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -43,6 +44,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
 public abstract class Match extends RBuiltinNode {
 
+    private static final long BIG_THRESHOLD = 1000;
+
     protected abstract RIntVector executeRIntVector(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables);
 
     @Child private CastStringNode castString;
@@ -51,6 +54,7 @@ public abstract class Match extends RBuiltinNode {
     @Child private Match matchRecursive;
 
     private final NACheck naCheck = new NACheck();
+    private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -215,23 +219,38 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        for (int i = 0; i < result.length; ++i) {
-            String xx = x.getDataAt(i);
-            boolean match = false;
-            for (int k = 0; k < table.getLength(); ++k) {
-                if (eq.op(xx, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
-                    result[i] = k + 1;
-                    match = true;
-                    break;
+        if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
+            HashMap<String, Integer> hashTable = new HashMap<>(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                String entry = table.getDataAt(i);
+                if (!RRuntime.isNA(entry)) {
+                    hashTable.put(entry, i);
                 }
             }
-            matchAll &= match;
+            for (int i = 0; i < result.length; ++i) {
+                String xx = x.getDataAt(i);
+                Integer index = hashTable.get(xx);
+                if (index != null) {
+                    result[i] = index + 1;
+                    matchAll = false;
+                }
+            }
+        } else {
+            for (int i = 0; i < result.length; ++i) {
+                String xx = x.getDataAt(i);
+                for (int k = 0; k < table.getLength(); ++k) {
+                    if (eq.op(xx, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
+                        result[i] = k + 1;
+                        matchAll = false;
+                        break;
+                    }
+                }
+            }
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }

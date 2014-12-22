@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -30,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
@@ -41,6 +42,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 // consider using one of the existing libraries that offer hash table implementations for primitive
 // types
 public abstract class Unique extends RBuiltinNode {
+
+    private static final long BIG_THRESHOLD = 100;
+
+    private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -60,16 +65,24 @@ public abstract class Unique extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        ArrayList<String> dataList = new ArrayList<>(vec.getLength());
-        for (int i = 0; i < vec.getLength(); i++) {
-            String s = vec.getDataAt(i);
-            if (!dataList.contains(s)) {
-                dataList.add(s);
+        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+            LinkedHashSet<String> set = new LinkedHashSet<>();
+            for (int i = 0; i < vec.getLength(); i++) {
+                set.add(vec.getDataAt(i));
             }
+            return RDataFactory.createStringVector(set.toArray(new String[set.size()]), vec.isComplete());
+        } else {
+            ArrayList<String> dataList = new ArrayList<>(vec.getLength());
+            for (int i = 0; i < vec.getLength(); i++) {
+                String s = vec.getDataAt(i);
+                if (!dataList.contains(s)) {
+                    dataList.add(s);
+                }
+            }
+            String[] data = new String[dataList.size()];
+            dataList.toArray(data);
+            return RDataFactory.createStringVector(data, vec.isComplete());
         }
-        String[] data = new String[dataList.size()];
-        dataList.toArray(data);
-        return RDataFactory.createStringVector(data, vec.isComplete());
     }
 
     // these are intended to stay private as they will go away once we figure out which external
