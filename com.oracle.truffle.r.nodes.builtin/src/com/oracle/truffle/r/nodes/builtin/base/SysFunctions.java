@@ -287,7 +287,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGlob(RAbstractStringVector pathVec, byte dirMask) {
+        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") byte dirMask) {
             controlVisibility();
             ArrayList<String> matches = new ArrayList<>();
             FileSystem fileSystem = FileSystems.getDefault();
