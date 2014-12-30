@@ -76,8 +76,8 @@ public abstract class Signif extends RBuiltinNode {
                 if (infProfile.profile(Double.isInfinite(val))) {
                     data[i] = Double.POSITIVE_INFINITY;
                 } else {
-                    BigDecimal bigDecimalVal = new BigDecimal(val);
-                    data[i] = bigDecimalVal.setScale(digits, RoundingMode.HALF_UP).doubleValue();
+                    BigDecimal bigDecimalVal = new BigDecimal(val, new MathContext(digits, RoundingMode.HALF_UP));
+                    data[i] = bigDecimalVal.doubleValue();
                 }
             }
         }

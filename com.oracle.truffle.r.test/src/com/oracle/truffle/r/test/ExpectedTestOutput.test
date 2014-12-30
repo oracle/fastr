@@ -14514,6 +14514,10 @@ integer(0)
  [1] -10  -9  -8  -7  -6  -5  -4  -3  -2  -1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
+#{ signif(0.0005551, 2) }
+[1] 0.00056
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSignif
 #{ signif(0.5549, 2) }
 [1] 0.55
 
