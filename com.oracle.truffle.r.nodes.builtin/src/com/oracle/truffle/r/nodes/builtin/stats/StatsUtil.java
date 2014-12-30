@@ -20,7 +20,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
  */
 public class StatsUtil {
 
-    public static final double DBLEPSILON = 1E-9;
+    public static final double DBLEPSILON = 2.2204460492503131e-16;
 
     @TruffleBoundary
     private static void fail(String message) {
@@ -31,6 +31,8 @@ public class StatsUtil {
 
     public static final double M_LN2 = 0.693147180559945309417232121458;
 
+    public static final double M_PI = 3.141592653589793238462643383280;
+
     public static final double M_2PI = 6.283185307179586476925286766559;
 
     public static final double M_1_SQRT_2PI = 0.398942280401432677939946059934;
@@ -40,6 +42,10 @@ public class StatsUtil {
     public static final double M_LOG10_2 = 0.301029995663981195213738894724;
 
     public static final double DBL_MANT_DIG = 53;
+
+    public static final int DBL_MAX_EXP = 1024;
+
+    public static final int DBL_MIN_EXP = -1021;
 
     public static double rdtlog(double p, boolean lowerTail, boolean logp) {
         return lowerTail ? rdlog(p, logp) : rdlexp(p, logp);
