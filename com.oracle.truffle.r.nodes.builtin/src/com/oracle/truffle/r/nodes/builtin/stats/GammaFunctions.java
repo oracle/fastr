@@ -49,23 +49,52 @@ public abstract class GammaFunctions {
     @RBuiltin(name = "qgamma", kind = INTERNAL, parameterNames = {"p", "shape", "scale", "lower.tail", "log.p"})
     public abstract static class Qgamma extends RBuiltinNode {
 
+        private final NACheck naCheck = NACheck.create();
+
         @Specialization(guards = "!emptyShapeOrScale")
-        protected double qgamma(double p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
+        protected RDoubleVector qgamma(double p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
             controlVisibility();
-            return GammaFunctions.qgamma(p, shape.getDataAt(0), scale.getDataAt(0), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+            int shapeLen = shape.getLength();
+            int scaleLen = scale.getLength();
+            double[] result = new double[Math.max(shapeLen, scaleLen)];
+            RAbstractDoubleVector attrSource = null;
+            if (result.length > 1) {
+                attrSource = shapeLen == result.length ? shape : scale;
+            }
+            naCheck.enable(true);
+            for (int i = 0, j = 0, k = 0; i < result.length; i++, j = Utils.incMod(j, shapeLen), k = Utils.incMod(k, scaleLen)) {
+                result[i] = GammaFunctions.qgamma(p, shape.getDataAt(j), scale.getDataAt(k), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+                naCheck.check(result[i]);
+            }
+            RDoubleVector res = RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
+            if (attrSource != null) {
+                res.copyAttributesFrom(attrSource);
+            }
+            return res;
         }
 
         @Specialization(guards = "!emptyShapeOrScale")
-        protected RDoubleVector qgamma(RDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
+        protected RDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
             controlVisibility();
-            // TODO if need be, support iteration over multiple vectors (not just p)
-            // TODO support NA
-            double[] result = new double[p.getLength()];
-            for (int i = 0; i < p.getLength(); ++i) {
-                double pv = p.getDataAt(i);
-                result[i] = GammaFunctions.qgamma(pv, shape.getDataAt(0), scale.getDataAt(0), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+            int pLen = p.getLength();
+            int shapeLen = shape.getLength();
+            int scaleLen = scale.getLength();
+            double[] result = new double[Math.max(pLen, Math.max(shapeLen, scaleLen))];
+            RAbstractDoubleVector attrSource = null;
+            if (result.length > 1) {
+                attrSource = pLen == result.length ? p : (shapeLen == result.length ? shape : scale);
             }
-            return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+            naCheck.enable(true);
+            for (int i = 0, l = 0, j = 0, k = 0; i < result.length; ++i, l = Utils.incMod(l, pLen), j = Utils.incMod(j, shapeLen), k = Utils.incMod(k, scaleLen)) {
+                double pv = p.getDataAt(l);
+                result[i] = GammaFunctions.qgamma(pv, shape.getDataAt(j), scale.getDataAt(k), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
+                naCheck.check(result[i]);
+            }
+            RDoubleVector res = RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
+            if (attrSource != null) {
+                res.copyAttributesFrom(attrSource);
+            }
+            return res;
         }
 
         @SuppressWarnings("unused")
@@ -624,9 +653,9 @@ public abstract class GammaFunctions {
     private static final double pMIN = 1e-100; /* was 0.000002 = 2e-6 */
     private static final double pMAX = (1 - 1e-14); /* was (1-1e-12) and 0.999998 = 1 - 2e-6 */
 
-    private static final double i420 = 1 / 420;
-    private static final double i2520 = 1 / 2520;
-    private static final double i5040 = 1 / 5040;
+    private static final double i420 = 1.0 / 420;
+    private static final double i2520 = 1.0 / 2520;
+    private static final double i5040 = 1.0 / 5040;
 
     public static double qgamma(double p, double alpha, double scale, boolean lowerTail, boolean logp) {
         double pu;
@@ -752,7 +781,6 @@ public abstract class GammaFunctions {
                 s3 = (210 + a * (462 + a * (707 + 932 * a))) * i2520;
                 s4 = (252 + a * (672 + 1182 * a) + c * (294 + a * (889 + 1740 * a))) * i5040;
                 s5 = (84 + 2264 * a + c * (1175 + 606 * a)) * i2520;
-
                 ch += t * (1 + 0.5 * t * s1 - b * c * (s1 - b * (s2 - b * (s3 - b * (s4 - b * (s5 - b * s6))))));
                 if (Math.abs(q - ch) < EPS2 * ch) {
                     break PHASE1;
@@ -775,9 +803,9 @@ public abstract class GammaFunctions {
         /*
          * PR# 2214 : From: Morten Welinder <terra@diku.dk>, Fri, 25 Oct 2002 16:50 -------- To:
          * R-bugs@biostat.ku.dk Subject: qgamma precision
-         * 
+         *
          * With a final Newton step, double accuracy, e.g. for (p= 7e-4; nu= 0.9)
-         * 
+         *
          * Improved (MM): - only if rel.Err > EPS_N (= 1e-15); - also for lower_tail = FALSE or
          * log_p = TRUE - optionally *iterate* Newton
          */
@@ -800,6 +828,7 @@ public abstract class GammaFunctions {
             } else {
                 pu = pgamma(x, alpha, scale, lowerTail, localLogp);
             }
+
             if (pu == Double.NEGATIVE_INFINITY) {
                 return 0; /* PR#14710 */
             }
@@ -1784,7 +1813,7 @@ public abstract class GammaFunctions {
 // mVal.ierr = 4;
                     return Double.NaN;
                 }
-                x *= Math.PI; /* pi * x */
+                x *= M_PI; /* pi * x */
                 if (n == 0) {
                     tt = Math.cos(x) / Math.sin(x);
                 } else if (n == 1) {
@@ -1805,7 +1834,7 @@ public abstract class GammaFunctions {
                 t1 = t2 = s = 1.;
                 for (int k = 0, j = k - n; j < m; k++, j++, s = -s) {
                     /* k == n+j , s = (-1)^k */
-                    t1 *= Math.PI; /* t1 == pi^(k+1) */
+                    t1 *= M_PI; /* t1 == pi^(k+1) */
                     if (k >= 2) {
                         t2 *= k; /* t2 == k! == gamma(k+1) */
                     }
@@ -1841,8 +1870,8 @@ public abstract class GammaFunctions {
             }
             mm = m;
             // nx = imin2(-Rf_i1mach(15), Rf_i1mach(16));/* = 1021 */
-            nx = Math.min(-Double.MIN_EXPONENT, Double.MAX_EXPONENT);
-// assert (nx == 1021); - it's actually 1022 but it does not seem to matter
+            nx = Math.min(-DBL_MIN_EXP, DBL_MAX_EXP);
+            assert (nx == 1021);
             r1m5 = M_LOG10_2; // Rf_d1mach(5);
             r1m4 = DBLEPSILON * 0.5; // Rf_d1mach(4) * 0.5;
             wdtol = fmax2(r1m4, 0.5e-18); /* 1.11e-16 */
