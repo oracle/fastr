@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -218,10 +219,8 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization
-    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
-        controlVisibility();
-        int nomatch = castInt(frame, nomatchObj);
+    @TruffleBoundary
+    protected RIntVector matchInternal(int nomatch, RAbstractStringVector x, RAbstractStringVector table) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
@@ -256,6 +255,13 @@ public abstract class Match extends RBuiltinNode {
             }
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+    }
+
+    @Specialization
+    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+        controlVisibility();
+        int nomatch = castInt(frame, nomatchObj);
+        return matchInternal(nomatch, x, table);
     }
 
     @Specialization
