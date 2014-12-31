@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "order", kind = SUBSTITUTE, parameterNames = {"x", "tie"})
+@GenerateNodeFactory
 // TODO INTERNAL
 public abstract class Order extends RBuiltinNode {
 

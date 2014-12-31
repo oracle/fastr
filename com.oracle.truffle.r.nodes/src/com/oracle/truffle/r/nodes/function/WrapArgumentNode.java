@@ -85,7 +85,7 @@ public abstract class WrapArgumentNode extends RProxyNode {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
             return operand;
         } else {
-            WrapArgumentNode wan = WrapArgumentNodeFactory.create(modeChange, operand);
+            WrapArgumentNode wan = WrapArgumentNodeGen.create(modeChange, operand);
             wan.assignSourceSection(operand.getSourceSection());
             return wan;
         }

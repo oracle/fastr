@@ -51,7 +51,7 @@ public abstract class CastIntegerNode extends CastNode {
     private Object castIntegerRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastInteger = insert(CastIntegerNodeFactory.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastInteger = insert(CastIntegerNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastInteger.executeInt(frame, o);
     }

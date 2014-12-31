@@ -31,7 +31,7 @@ public abstract class CharMatch extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
+        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;
     }
 

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
+@GenerateNodeFactory
 public abstract class UpdateNames extends RInvisibleBuiltinNode {
 
     @Child private CastStringNode castStringNode;
@@ -45,7 +46,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, false, true, false, false));
+            castStringNode = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
         return castStringNode.executeString(frame, o);
     }

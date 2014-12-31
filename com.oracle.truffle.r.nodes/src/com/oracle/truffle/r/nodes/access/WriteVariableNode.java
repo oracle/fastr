@@ -25,15 +25,15 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeGen;
 import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -172,7 +172,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(name), mode);
+            return UnresolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, RRuntime.toString(name), mode);
         } else {
             assert !isArgWrite;
             return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(name), mode);
@@ -242,7 +242,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public abstract Mode getMode();
 
         public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, String name, FrameSlot frameSlot, Mode mode) {
-            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, name, frameSlot, mode);
+            return ResolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, name, frameSlot, mode);
         }
 
         @Specialization(guards = "isFrameBooleanKind")
@@ -392,11 +392,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
                 // we've reached the global scope, do unconditional write
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
-                AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
-                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), symbol)),
-                                this.isArgWrite(), getName(), mode);
+                AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeGen.create(1) : null;
+                writeNode = WriteSuperVariableNodeGen.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), symbol)), this.isArgWrite(),
+                                getName(), mode);
             } else {
-                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), this.getName(), mode);
+                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeGen.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), this.getName(), mode);
                 writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
@@ -410,7 +410,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 execute(frame, value, enclosingFrame);
             } else {
                 // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), RRuntime.toString(symbol), mode)).execute(frame, value);
+                replace(UnresolvedWriteLocalVariableNodeGen.create(getRhs(), this.isArgWrite(), RRuntime.toString(symbol), mode)).execute(frame, value);
             }
         }
 

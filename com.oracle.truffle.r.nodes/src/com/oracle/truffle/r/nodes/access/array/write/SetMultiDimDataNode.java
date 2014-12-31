@@ -49,7 +49,7 @@ abstract class SetMultiDimDataNode extends RNode {
                     int accSrcDimensions, int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (setMultiDimDataRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setMultiDimDataRecursive = insert(SetMultiDimDataNodeFactory.create(posCheck, elementCheck, this.isSubset, null, null, null, null, null, null, null, null));
+            setMultiDimDataRecursive = insert(SetMultiDimDataNodeGen.create(posCheck, elementCheck, this.isSubset, null, null, null, null, null, null, null, null));
         }
         return setMultiDimDataRecursive.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }

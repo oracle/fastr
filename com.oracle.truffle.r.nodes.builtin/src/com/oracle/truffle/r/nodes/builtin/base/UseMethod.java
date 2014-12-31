@@ -54,7 +54,7 @@ public abstract class UseMethod extends RBuiltinNode {
 
     private abstract static class UseMethodNode extends RNode {
 
-        @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
+        @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(null);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
         @CompilationFinal protected final String[] suppliedArgsNames;
 

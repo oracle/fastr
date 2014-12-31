@@ -52,7 +52,7 @@ public abstract class Signif extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // digits argument is at index 1
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], false, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
         return arguments;
     }
 

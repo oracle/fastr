@@ -37,6 +37,12 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedArgsNames", type = String[].class)})
 @NodeChild(value = "arguments", type = RNode[].class)
+@GenerateNodeFactory
+/*
+ * TODO Remove this as only about 20 builtins actually need a Factory. However doing so greatly
+ * complicates the builtin loading/initialization/creation process, as the class naming changes
+ * considerably,
+ */
 public abstract class RBuiltinNode extends LeafCallNode implements VisibilityController {
 
     public String getSourceCode() {

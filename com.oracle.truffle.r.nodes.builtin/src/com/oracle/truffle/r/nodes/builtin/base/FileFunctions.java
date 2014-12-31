@@ -446,7 +446,7 @@ public class FileFunctions {
         private CastStringNode initCastStringNode() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
             }
             return castStringNode;
         }
@@ -534,7 +534,7 @@ public class FileFunctions {
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
             for (int i = 2; i < 5; i++) {
-                arguments[i] = CastLogicalNodeFactory.create(arguments[0], true, false, false);
+                arguments[i] = CastLogicalNodeGen.create(arguments[0], true, false, false);
             }
             return arguments;
         }

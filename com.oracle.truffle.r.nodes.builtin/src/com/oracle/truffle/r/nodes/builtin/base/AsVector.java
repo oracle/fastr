@@ -48,7 +48,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
         return (RIntVector) castInteger.executeInt(frame, operand);
     }
@@ -56,7 +56,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RDoubleVector castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, false, false, false));
+            castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
         }
         return (RDoubleVector) castDouble.executeDouble(frame, operand);
     }
@@ -64,7 +64,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RComplexVector castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeFactory.create(null, false, false, false));
+            castComplex = insert(CastComplexNodeGen.create(null, false, false, false));
         }
         return (RComplexVector) castComplex.executeComplex(frame, operand);
     }
@@ -72,7 +72,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RLogicalVector castLogical(VirtualFrame frame, Object operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
+            castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
         }
         return (RLogicalVector) castLogical.executeLogical(frame, operand);
     }
@@ -80,7 +80,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RStringVector castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, false, false, false));
+            castString = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
         return (RStringVector) castString.executeString(frame, operand);
     }
@@ -88,7 +88,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RSymbol castSymbol(VirtualFrame frame, Object operand) {
         if (castSymbol == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castSymbol = insert(CastSymbolNodeFactory.create(null, false, false, false));
+            castSymbol = insert(CastSymbolNodeGen.create(null, false, false, false));
         }
         return (RSymbol) castSymbol.executeSymbol(frame, operand);
     }
@@ -96,7 +96,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RRawVector castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeFactory.create(null, false, false, false));
+            castRaw = insert(CastRawNodeGen.create(null, false, false, false));
         }
         return (RRawVector) castRaw.executeRaw(frame, operand);
     }
@@ -104,7 +104,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RList castList(VirtualFrame frame, Object operand) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeFactory.create(null, true, false, false));
+            castList = insert(CastListNodeGen.create(null, true, false, false));
         }
         return castList.executeList(frame, operand);
     }

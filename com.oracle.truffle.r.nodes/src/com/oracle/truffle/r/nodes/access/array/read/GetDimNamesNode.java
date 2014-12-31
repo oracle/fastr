@@ -45,7 +45,7 @@ abstract class GetDimNamesNode extends RNode {
     private RStringVector getDimNamesRecursive(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
         if (getDimNamesNodeRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getDimNamesNodeRecursive = insert(GetDimNamesNodeFactory.create(namesCheck, null, null, null, null, null));
+            getDimNamesNodeRecursive = insert(GetDimNamesNodeGen.create(namesCheck, null, null, null, null, null));
         }
         return (RStringVector) getDimNamesNodeRecursive.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
     }

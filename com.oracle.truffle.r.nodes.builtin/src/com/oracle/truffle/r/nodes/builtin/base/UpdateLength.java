@@ -28,7 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -45,7 +45,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // length argument is at index 1, and cast to int
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
         return arguments;
     }
 

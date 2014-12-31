@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.OperatorConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -117,7 +117,7 @@ public abstract class AccessArrayNode extends RNode {
         PositionsArrayNode positions = (PositionsArrayNode) getPositions().substitute(env);
         RNode exact = getExact().substitute(env);
         RNode dropDim = getDropDim().substitute(env);
-        return AccessArrayNodeFactory.create(isSubset, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
+        return AccessArrayNodeGen.create(isSubset, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
     }
 
     public AccessArrayNode(boolean isSubset, boolean exactInSource, boolean dropInSource) {
@@ -143,7 +143,7 @@ public abstract class AccessArrayNode extends RNode {
             if (forDataFrame && isSubset) {
                 newIsSubset = false;
             }
-            accessRecursive = insert(AccessArrayNodeFactory.create(newIsSubset, false, false, null, null, null, null, null));
+            accessRecursive = insert(AccessArrayNodeGen.create(newIsSubset, false, false, null, null, null, null, null));
         }
         return accessRecursive.executeAccess(frame, vector, exact, recLevel, operand, dropDim);
     }
@@ -151,7 +151,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, true));
+            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, true));
         }
         return castVector.executeObject(frame, value);
     }
@@ -159,7 +159,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castPosition = insert(ArrayPositionCastFactory.create(0, 1, false, false, null, null));
+            castPosition = insert(ArrayPositionCastNodeGen.create(0, 1, false, false, null, null));
         }
         return castPosition.executeArg(frame, vector, operand);
     }
@@ -167,7 +167,7 @@ public abstract class AccessArrayNode extends RNode {
     private void initOperatorConvert() {
         if (operatorConverter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            operatorConverter = insert(OperatorConverterNodeFactory.create(0, 1, false, false, null, null, null));
+            operatorConverter = insert(OperatorConverterNodeGen.create(0, 1, false, false, null, null, null));
         }
     }
 
@@ -185,7 +185,7 @@ public abstract class AccessArrayNode extends RNode {
                     int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (getMultiDimData == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getMultiDimData = insert(GetMultiDimDataNodeFactory.create(posCheck, elementCheck, null, null, null, null, null, null, null, null));
+            getMultiDimData = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck, null, null, null, null, null, null, null, null));
         }
         return getMultiDimData.executeMultiDimDataGet(frame, data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
@@ -193,7 +193,7 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null));
+            getNamesNode = insert(GetNamesNodeGen.create(namesCheck, null, null, null, null));
         }
         return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
     }
@@ -201,7 +201,7 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
         if (getDimNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getDimNamesNode = insert(GetDimNamesNodeFactory.create(namesCheck, null, null, null, null, null));
+            getDimNamesNode = insert(GetDimNamesNodeGen.create(namesCheck, null, null, null, null, null));
         }
         return (RStringVector) getDimNamesNode.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
     }
@@ -209,7 +209,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object getContainerRowNames(VirtualFrame frame, RAbstractContainer value) {
         if (rowNamesGetter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            rowNamesGetter = insert(ContainerRowNamesGetFactory.create(null));
+            rowNamesGetter = insert(ContainerRowNamesGetNodeGen.create(null));
         }
         return rowNamesGetter.execute(frame, value);
     }
@@ -1802,7 +1802,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     public static AccessArrayNode create(boolean isSubset, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
-        return AccessArrayNodeFactory.create(isSubset, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
+        return AccessArrayNodeGen.create(isSubset, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
     }
 
 }

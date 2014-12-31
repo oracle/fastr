@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
@@ -43,7 +43,7 @@ public abstract class SeqLen extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{CastIntegerNodeFactory.create(children[0], false, false, false)};
+        return new RNode[]{CastIntegerNodeGen.create(children[0], false, false, false)};
     }
 
     @Specialization

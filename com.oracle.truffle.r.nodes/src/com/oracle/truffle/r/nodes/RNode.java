@@ -43,159 +43,159 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
     public abstract Object execute(VirtualFrame frame);
 
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectInteger(execute(frame));
+        return RTypesGen.expectInteger(execute(frame));
     }
 
     public RRaw executeRRaw(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRRaw(execute(frame));
+        return RTypesGen.expectRRaw(execute(frame));
     }
 
     public RAbstractVector executeRAbstractVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractVector(execute(frame));
+        return RTypesGen.expectRAbstractVector(execute(frame));
     }
 
     public RComplex executeRComplex(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRComplex(execute(frame));
+        return RTypesGen.expectRComplex(execute(frame));
     }
 
     public RIntSequence executeRIntSequence(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRIntSequence(execute(frame));
+        return RTypesGen.expectRIntSequence(execute(frame));
     }
 
     public RDoubleSequence executeRDoubleSequence(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRDoubleSequence(execute(frame));
+        return RTypesGen.expectRDoubleSequence(execute(frame));
     }
 
     public RIntVector executeRIntVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRIntVector(execute(frame));
+        return RTypesGen.expectRIntVector(execute(frame));
     }
 
     public RDoubleVector executeRDoubleVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRDoubleVector(execute(frame));
+        return RTypesGen.expectRDoubleVector(execute(frame));
     }
 
     public RRawVector executeRRawVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRRawVector(execute(frame));
+        return RTypesGen.expectRRawVector(execute(frame));
     }
 
     public RComplexVector executeRComplexVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRComplexVector(execute(frame));
+        return RTypesGen.expectRComplexVector(execute(frame));
     }
 
     public RStringVector executeRStringVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRStringVector(execute(frame));
+        return RTypesGen.expectRStringVector(execute(frame));
     }
 
     public RList executeRList(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRList(execute(frame));
+        return RTypesGen.expectRList(execute(frame));
     }
 
     public RLogicalVector executeRLogicalVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRLogicalVector(execute(frame));
+        return RTypesGen.expectRLogicalVector(execute(frame));
     }
 
     public RAbstractDoubleVector executeRAbstractDoubleVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractDoubleVector(executeRAbstractVector(frame));
+        return RTypesGen.expectRAbstractDoubleVector(executeRAbstractVector(frame));
     }
 
     public RAbstractIntVector executeRAbstractIntVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractIntVector(executeRAbstractVector(frame));
+        return RTypesGen.expectRAbstractIntVector(executeRAbstractVector(frame));
     }
 
     public RAbstractComplexVector executeRAbstractComplexVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractComplexVector(executeRAbstractVector(frame));
+        return RTypesGen.expectRAbstractComplexVector(executeRAbstractVector(frame));
     }
 
     public RAbstractLogicalVector executeRAbstractLogicalVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractLogicalVector(executeRAbstractVector(frame));
+        return RTypesGen.expectRAbstractLogicalVector(executeRAbstractVector(frame));
     }
 
     public RAbstractRawVector executeRAbstractRawVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractRawVector(executeRAbstractVector(frame));
+        return RTypesGen.expectRAbstractRawVector(executeRAbstractVector(frame));
     }
 
     public RAbstractStringVector executeRAbstractStringVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractStringVector(executeRAbstractVector(frame));
+        return RTypesGen.expectRAbstractStringVector(executeRAbstractVector(frame));
     }
 
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectDouble(execute(frame));
+        return RTypesGen.expectDouble(execute(frame));
     }
 
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectByte(execute(frame));
+        return RTypesGen.expectByte(execute(frame));
     }
 
     public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectObjectArray(execute(frame));
+        return RTypesGen.expectObjectArray(execute(frame));
     }
 
     public RFunction executeFunction(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRFunction(execute(frame));
+        return RTypesGen.expectRFunction(execute(frame));
     }
 
     public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRNull(execute(frame));
+        return RTypesGen.expectRNull(execute(frame));
     }
 
     public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRMissing(execute(frame));
+        return RTypesGen.expectRMissing(execute(frame));
     }
 
     public String executeString(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectString(execute(frame));
+        return RTypesGen.expectString(execute(frame));
     }
 
     public REnvironment executeREnvironment(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectREnvironment(execute(frame));
+        return RTypesGen.expectREnvironment(execute(frame));
     }
 
     public RConnection executeRConnection(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRConnection(execute(frame));
+        return RTypesGen.expectRConnection(execute(frame));
     }
 
     public RExpression executeRExpression(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRExpression(execute(frame));
+        return RTypesGen.expectRExpression(execute(frame));
     }
 
     public RDataFrame executeRDataFrame(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRDataFrame(execute(frame));
+        return RTypesGen.expectRDataFrame(execute(frame));
     }
 
     public RFactor executeRFactor(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRFactor(execute(frame));
+        return RTypesGen.expectRFactor(execute(frame));
     }
 
     public RSymbol executeRSymbol(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRSymbol(execute(frame));
+        return RTypesGen.expectRSymbol(execute(frame));
     }
 
     public RLanguage executeRLanguage(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRLanguage(execute(frame));
+        return RTypesGen.expectRLanguage(execute(frame));
     }
 
     public RPromise executeRPromise(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRPromise(execute(frame));
+        return RTypesGen.expectRPromise(execute(frame));
     }
 
     public RAbstractContainer executeRAbstractContainer(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRAbstractContainer(execute(frame));
+        return RTypesGen.expectRAbstractContainer(execute(frame));
     }
 
     public RPairList executeRPairList(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRPairList(execute(frame));
+        return RTypesGen.expectRPairList(execute(frame));
     }
 
     public RFormula executeFormula(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRFormula(execute(frame));
+        return RTypesGen.expectRFormula(execute(frame));
     }
 
     public RArgsValuesAndNames executeRArgsValuesAndNames(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRArgsValuesAndNames(execute(frame));
+        return RTypesGen.expectRArgsValuesAndNames(execute(frame));
     }
 
     public RType executeType(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRType(execute(frame));
+        return RTypesGen.expectRType(execute(frame));
     }
 
     public static boolean areSameLength(RAbstractContainer a, RAbstractContainer b) {

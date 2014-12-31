@@ -32,7 +32,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeFactory;
+import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
@@ -369,7 +369,7 @@ public class EnvFunctions {
         private Object copy(VirtualFrame frame, Object operand) {
             if (copy == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                copy = insert(CopyNodeFactory.create(null));
+                copy = insert(CopyNodeGen.create(null));
             }
             return copy.execute(frame, operand);
         }
@@ -404,7 +404,7 @@ public class EnvFunctions {
         private Object recursiveCopy(VirtualFrame frame, Object operand) {
             if (recursiveCopy == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveCopy = insert(CopyNodeFactory.create(null));
+                recursiveCopy = insert(CopyNodeGen.create(null));
             }
             return recursiveCopy.execute(frame, operand);
         }

@@ -45,7 +45,7 @@ public abstract class Any extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[0] = CastLogicalNodeFactory.create(arguments[0], true, false, false);
+        arguments[0] = CastLogicalNodeGen.create(arguments[0], true, false, false);
         return arguments;
     }
 
@@ -77,7 +77,7 @@ public abstract class Any extends RBuiltinNode {
     protected byte any(VirtualFrame frame, RArgsValuesAndNames args) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
+            castLogicalNode = insert(CastLogicalNodeGen.create(null, true, false, false));
         }
         controlVisibility();
         boolean seenNA = false;

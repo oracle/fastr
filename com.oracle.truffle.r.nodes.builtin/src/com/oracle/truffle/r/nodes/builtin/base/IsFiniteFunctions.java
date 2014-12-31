@@ -83,7 +83,7 @@ public class IsFiniteFunctions {
         protected Object doIsFiniteOther(VirtualFrame frame, Object x) {
             controlVisibility();
             if (typeofNode == null) {
-                typeofNode = insert(TypeofNodeFactory.create(null));
+                typeofNode = insert(TypeofNodeGen.create(null));
             }
             String type = typeofNode.execute(frame, x).getName();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);

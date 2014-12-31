@@ -64,7 +64,7 @@ public abstract class Format extends RBuiltinNode {
     private RAbstractIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, operand);
     }
@@ -78,13 +78,13 @@ public abstract class Format extends RBuiltinNode {
         RNode[] newChildren = new RNode[children.length];
         // cast to vector as appropriate to eliminate NULL values
         newChildren[0] = children[0];
-        newChildren[1] = CastLogicalNodeFactory.create(CastToVectorNodeFactory.create(children[1], false, false, false, false), false, false, false);
-        newChildren[2] = CastIntegerNodeFactory.create(CastToVectorNodeFactory.create(children[2], false, false, false, false), false, false, false);
-        newChildren[3] = CastIntegerNodeFactory.create(CastToVectorNodeFactory.create(children[3], false, false, false, false), false, false, false);
-        newChildren[4] = CastIntegerNodeFactory.create(CastToVectorNodeFactory.create(children[4], false, false, false, false), false, false, false);
-        newChildren[5] = CastIntegerNodeFactory.create(CastToVectorNodeFactory.create(children[5], false, false, false, false), false, false, false);
-        newChildren[6] = CastLogicalNodeFactory.create(CastToVectorNodeFactory.create(children[6], false, false, false, false), false, false, false);
-        newChildren[7] = CastToVectorNodeFactory.create(children[7], false, false, false, false);
+        newChildren[1] = CastLogicalNodeGen.create(CastToVectorNodeGen.create(children[1], false, false, false, false), false, false, false);
+        newChildren[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false, false, false, false), false, false, false);
+        newChildren[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false, false, false, false), false, false, false);
+        newChildren[4] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[4], false, false, false, false), false, false, false);
+        newChildren[5] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[5], false, false, false, false), false, false, false);
+        newChildren[6] = CastLogicalNodeGen.create(CastToVectorNodeGen.create(children[6], false, false, false, false), false, false, false);
+        newChildren[7] = CastToVectorNodeGen.create(children[7], false, false, false, false);
         return newChildren;
     }
 

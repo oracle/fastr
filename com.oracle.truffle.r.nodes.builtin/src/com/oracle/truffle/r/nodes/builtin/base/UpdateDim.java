@@ -50,7 +50,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     private void updateCastInteger() {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
         }
     }
 

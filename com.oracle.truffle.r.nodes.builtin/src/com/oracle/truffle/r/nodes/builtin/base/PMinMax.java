@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
-import com.oracle.truffle.r.nodes.builtin.base.PMinMaxFactory.MultiElemStringHandlerFactory;
+import com.oracle.truffle.r.nodes.builtin.base.PMinMaxFactory.MultiElemStringHandlerNodeGen;
 
 public abstract class PMinMax extends RBuiltinNode {
 
@@ -47,7 +47,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastDoubleNode castDouble;
     @Child private CastStringNode castString;
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeFactory.create(null, null);
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);
     private final ReduceSemantics semantics;
     private final BinaryArithmeticFactory factory;
     @Child private BinaryArithmetic op;
@@ -73,7 +73,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private byte handleString(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stringHandler = insert(MultiElemStringHandlerFactory.create(semantics, factory, na, null, null, null, null, null, null, null));
+            stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null, null, null, null, null));
         }
         return stringHandler.executeByte(frame, argValues, naRm, offset, ind, maxLength, warning, data);
     }
@@ -81,7 +81,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, true, true, true, false));
+            castVector = insert(CastToVectorNodeGen.create(null, true, true, true, false));
         }
         return ((RAbstractVector) castVector.executeObject(frame, value)).materialize();
     }
@@ -89,7 +89,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getIntegerCastNode() {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, true, true));
+            castInteger = insert(CastIntegerNodeGen.create(null, true, true, true));
         }
         return castInteger;
     }
@@ -97,7 +97,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getDoubleCastNode() {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, true, true, true));
+            castDouble = insert(CastDoubleNodeGen.create(null, true, true, true));
         }
         return castDouble;
     }
@@ -105,7 +105,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getStringCastNode() {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, true, true, true, false));
+            castString = insert(CastStringNodeGen.create(null, true, true, true, false));
         }
         return castString;
     }
@@ -336,7 +336,7 @@ public abstract class PMinMax extends RBuiltinNode {
         private byte handleString(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
             if (recursiveStringHandler == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveStringHandler = insert(MultiElemStringHandlerFactory.create(semantics, factory, na, null, null, null, null, null, null, null));
+                recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null, null, null, null, null));
             }
             return recursiveStringHandler.executeByte(frame, argValues, naRm, offset, ind, maxLength, warning, data);
         }

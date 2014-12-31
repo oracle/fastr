@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class CastSymbolNode extends CastNode {
 
-    @Child private ToStringNode toString = ToStringNodeFactory.create(null, true, ToStringNode.DEFAULT_SEPARATOR, false);
+    @Child private ToStringNode toString = ToStringNodeGen.create(null, true, ToStringNode.DEFAULT_SEPARATOR, false);
 
     public abstract Object executeSymbol(VirtualFrame frame, Object o);
 

@@ -33,7 +33,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.OperatorConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -101,7 +101,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel, boolean forDataFrame) {
         if (updateRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateRecursive = insert(UpdateArrayHelperNodeFactory.create(isSubset, null, null, null, null, null));
+            updateRecursive = insert(UpdateArrayHelperNodeGen.create(isSubset, null, null, null, null, null));
         }
         return updateRecursive.executeUpdate(frame, v, value, recLevel, operand, vector);
     }
@@ -113,7 +113,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeFactory.create(null, true, true, false));
+            castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
         }
         return castComplex.executeCast(frame, operand);
     }
@@ -121,7 +121,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, true, true, false));
+            castDouble = insert(CastDoubleNodeGen.create(null, true, true, false));
         }
         return castDouble.executeCast(frame, operand);
     }
@@ -129,7 +129,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, true, false));
+            castInteger = insert(CastIntegerNodeGen.create(null, true, true, false));
         }
         return castInteger.executeCast(frame, operand);
     }
@@ -137,7 +137,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, true, true, false, true));
+            castString = insert(CastStringNodeGen.create(null, true, true, false, true));
         }
         return castString.executeCast(frame, operand);
     }
@@ -145,7 +145,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object coerceVector(VirtualFrame frame, Object vector, Object value, Object operand) {
         if (coerceVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            coerceVector = insert(CoerceVectorFactory.create(null, null, null));
+            coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
         }
         return coerceVector.executeEvaluated(frame, value, vector, operand);
     }
@@ -153,7 +153,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castPosition = insert(ArrayPositionCastFactory.create(0, 1, true, false, null, null));
+            castPosition = insert(ArrayPositionCastNodeGen.create(0, 1, true, false, null, null));
         }
         return castPosition.executeArg(frame, vector, operand);
     }
@@ -161,7 +161,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private void initOperatorConvert() {
         if (operatorConverter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            operatorConverter = insert(OperatorConverterNodeFactory.create(0, 1, true, false, null, null, null));
+            operatorConverter = insert(OperatorConverterNodeGen.create(0, 1, true, false, null, null, null));
         }
     }
 
@@ -179,14 +179,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     int accSrcDimensions, int accDstDimensions, NACheck posNACheck, NACheck elementNACheck) {
         if (setMultiDimData == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setMultiDimData = insert(SetMultiDimDataNodeFactory.create(posNACheck, elementNACheck, this.isSubset, null, null, null, null, null, null, null, null));
+            setMultiDimData = insert(SetMultiDimDataNodeGen.create(posNACheck, elementNACheck, this.isSubset, null, null, null, null, null, null, null, null));
         }
         return setMultiDimData.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
 
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
-        return CastToContainerNodeFactory.create(child, false, false, false);
+        return CastToContainerNodeGen.create(child, false, false, false);
     }
 
     @Specialization

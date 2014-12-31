@@ -28,7 +28,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeFactory.MultiElemStringHandlerFactory;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen.MultiElemStringHandlerNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
@@ -64,7 +64,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     private String handleString(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stringHandler = insert(MultiElemStringHandlerFactory.create(semantics, factory, na, null, null, null));
+            stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null));
         }
         return stringHandler.executeString(frame, operand, naRm, offset);
     }
@@ -458,7 +458,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         private String handleString(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
             if (recursiveStringHandler == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveStringHandler = insert(MultiElemStringHandlerFactory.create(semantics, factory, na, null, null, null));
+                recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null));
             }
             return recursiveStringHandler.executeString(frame, operand, naRm, offset);
         }

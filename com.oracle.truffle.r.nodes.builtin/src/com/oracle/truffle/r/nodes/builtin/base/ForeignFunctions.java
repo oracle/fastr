@@ -320,7 +320,7 @@ public class ForeignFunctions {
         private Object castComplex(VirtualFrame frame, Object operand) {
             if (castComplex == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castComplex = insert(CastComplexNodeFactory.create(null, true, true, false));
+                castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
             }
             return castComplex.executeCast(frame, operand);
         }
@@ -328,7 +328,7 @@ public class ForeignFunctions {
         private Object castLogical(VirtualFrame frame, Object operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castLogical = insert(CastLogicalNodeFactory.create(null, true, false, false));
+                castLogical = insert(CastLogicalNodeGen.create(null, true, false, false));
             }
             return castLogical.executeCast(frame, operand);
         }
@@ -336,7 +336,7 @@ public class ForeignFunctions {
         private RAbstractVector castVector(VirtualFrame frame, Object value) {
             if (castVector == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
             }
             return (RAbstractVector) castVector.executeObject(frame, value);
         }
@@ -573,7 +573,7 @@ public class ForeignFunctions {
         protected byte castLogical(VirtualFrame frame, Object operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
+                castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
             }
             return (byte) castLogical.executeCast(frame, operand);
         }
@@ -581,7 +581,7 @@ public class ForeignFunctions {
         protected int castInt(VirtualFrame frame, Object operand) {
             if (castInt == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInt = insert(CastIntegerNodeFactory.create(null, false, false, false));
+                castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
             }
             return (int) castInt.executeCast(frame, operand);
         }
@@ -663,7 +663,7 @@ public class ForeignFunctions {
         private RAbstractVector castVector(VirtualFrame frame, Object value) {
             if (castVector == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
             }
             return (RAbstractVector) castVector.executeObject(frame, value);
         }

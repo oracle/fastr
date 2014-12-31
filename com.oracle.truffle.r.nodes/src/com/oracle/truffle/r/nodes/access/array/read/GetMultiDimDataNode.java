@@ -53,7 +53,7 @@ abstract class GetMultiDimDataNode extends RNode {
                     int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (getMultiDimDataRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getMultiDimDataRecursive = insert(GetMultiDimDataNodeFactory.create(posCheck, elementCheck, null, null, null, null, null, null, null, null));
+            getMultiDimDataRecursive = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck, null, null, null, null, null, null, null, null));
         }
         return getMultiDimDataRecursive.executeMultiDimDataGet(frame, data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }

@@ -57,7 +57,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     protected RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
         return (RAbstractVector) castVector.executeObject(frame, value);
     }

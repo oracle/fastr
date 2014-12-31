@@ -28,7 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -60,7 +60,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
     }
 

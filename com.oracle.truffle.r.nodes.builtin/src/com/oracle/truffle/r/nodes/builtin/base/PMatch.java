@@ -46,8 +46,8 @@ public abstract class PMatch extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], false, false, false);
-        arguments[3] = CastLogicalNodeFactory.create(arguments[3], false, false, false);
+        arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);
+        arguments[3] = CastLogicalNodeGen.create(arguments[3], false, false, false);
         return arguments;
     }
 
