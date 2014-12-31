@@ -42,9 +42,9 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
-        arguments[3] = CastIntegerNodeFactory.create(arguments[3], true, false, false);
-        arguments[4] = CastLogicalNodeFactory.create(arguments[4], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
+        arguments[3] = CastIntegerNodeGen.create(arguments[3], true, false, false);
+        arguments[4] = CastLogicalNodeGen.create(arguments[4], true, false, false);
         return arguments;
     }
 

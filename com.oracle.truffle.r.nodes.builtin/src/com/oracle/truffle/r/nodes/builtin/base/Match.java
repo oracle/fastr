@@ -27,8 +27,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -41,7 +43,10 @@ import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
+@GenerateNodeFactory
 public abstract class Match extends RBuiltinNode {
+
+    private static final long BIG_THRESHOLD = 1000;
 
     protected abstract RIntVector executeRIntVector(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables);
 
@@ -51,6 +56,7 @@ public abstract class Match extends RBuiltinNode {
     @Child private Match matchRecursive;
 
     private final NACheck naCheck = new NACheck();
+    private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -61,7 +67,7 @@ public abstract class Match extends RBuiltinNode {
     private String castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, false, false, false));
+            castString = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
         return (String) castString.executeCast(frame, operand);
     }
@@ -69,7 +75,7 @@ public abstract class Match extends RBuiltinNode {
     private int castInt(VirtualFrame frame, Object operand) {
         if (castInt == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInt = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
         return (int) castInt.executeCast(frame, operand);
     }
@@ -214,26 +220,49 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
-        controlVisibility();
-        int nomatch = castInt(frame, nomatchObj);
+    @TruffleBoundary
+    protected RIntVector matchInternal(int nomatch, RAbstractStringVector x, RAbstractStringVector table) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        for (int i = 0; i < result.length; ++i) {
-            String xx = x.getDataAt(i);
-            boolean match = false;
-            for (int k = 0; k < table.getLength(); ++k) {
-                if (eq.op(xx, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
-                    result[i] = k + 1;
-                    match = true;
-                    break;
+        if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
+            HashMap<String, Integer> hashTable = new HashMap<>(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                String entry = table.getDataAt(i);
+                if (!RRuntime.isNA(entry)) {
+                    hashTable.put(entry, i);
                 }
             }
-            matchAll &= match;
+            for (int i = 0; i < result.length; ++i) {
+                String xx = x.getDataAt(i);
+                Integer index = hashTable.get(xx);
+                if (index != null) {
+                    result[i] = index + 1;
+                } else {
+                    matchAll = false;
+                }
+            }
+        } else {
+            for (int i = 0; i < result.length; ++i) {
+                String xx = x.getDataAt(i);
+                boolean match = false;
+                for (int k = 0; k < table.getLength(); ++k) {
+                    if (eq.op(xx, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
+                        result[i] = k + 1;
+                        match = true;
+                        break;
+                    }
+                }
+                matchAll &= match;
+            }
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+    }
+
+    @Specialization
+    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+        controlVisibility();
+        int nomatch = castInt(frame, nomatchObj);
+        return matchInternal(nomatch, x, table);
     }
 
     @Specialization

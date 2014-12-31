@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -435,7 +435,7 @@ public class TrigExpFunctions {
 
         private static RNode castArgument(RNode node) {
             if (!(node instanceof ConstantMissingNode)) {
-                return CastDoubleNodeFactory.create(node, false, false, false);
+                return CastDoubleNodeGen.create(node, false, false, false);
             }
             return node;
         }

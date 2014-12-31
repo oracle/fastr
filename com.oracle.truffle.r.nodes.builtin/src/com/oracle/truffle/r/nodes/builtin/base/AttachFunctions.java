@@ -40,7 +40,7 @@ public class AttachFunctions {
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
-            arguments[1] = CastIntegerNodeFactory.create(arguments[1], false, false, false);
+            arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
             return arguments;
         }
 
@@ -101,7 +101,7 @@ public class AttachFunctions {
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastIntegerNodeFactory.create(arguments[0], false, false, false);
+            arguments[0] = CastIntegerNodeGen.create(arguments[0], false, false, false);
             return arguments;
         }
 

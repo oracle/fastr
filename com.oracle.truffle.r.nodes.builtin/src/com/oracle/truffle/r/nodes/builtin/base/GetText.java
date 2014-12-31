@@ -48,7 +48,7 @@ public abstract class GetText extends RBuiltinNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
+            castString = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
         return castString.executeCast(frame, operand);
     }
@@ -56,7 +56,7 @@ public abstract class GetText extends RBuiltinNode {
     private Object castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
         return castVector.executeObject(frame, value);
     }

@@ -44,6 +44,11 @@ public abstract class AccessFieldNode extends RNode {
 
     private final BranchProfile inexactMatch = BranchProfile.create();
 
+    @Specialization
+    protected RNull access(@SuppressWarnings("unused") RNull object) {
+        return RNull.instance;
+    }
+
     @Specialization(guards = "hasNames")
     protected Object accessField(RList object) {
         int index = object.getElementIndexByName(getField());
@@ -128,7 +133,7 @@ public abstract class AccessFieldNode extends RNode {
         if (fieldSub != null) {
             field = RASTUtils.expectName(fieldSub);
         }
-        return AccessFieldNodeFactory.create(object, field);
+        return AccessFieldNodeGen.create(object, field);
     }
 
 }

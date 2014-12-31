@@ -314,7 +314,7 @@ public final class REngine implements RContext.Engine {
                 return INCOMPLETE_SOURCE;
             }
             String line = source.getCode(e.line);
-            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, e.charPositionInLine + 1) + "\"";
+            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, Math.min(line.length(), e.charPositionInLine + 1)) + "\"";
             singleton.context.getConsoleHandler().println(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"));
             return null;
         } catch (RError e) {

@@ -33,12 +33,12 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeGen;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
@@ -116,7 +116,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             rvn = new UnResolvedReadLocalVariableNode(props);
         }
 
-        return ResolvePromiseNodeFactory.create(rvn, props);
+        return ResolvePromiseNodeGen.create(rvn, props);
     }
 
     /**
@@ -375,8 +375,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (enclosingFrame != null) {
-                ReadSuperVariableNode readSuper = props.copyValue ? ReadAndCopySuperVariableNodeFactory.create((AccessEnclosingFrameNode) null, FrameSlotNode.create(getName()), props)
-                                : ReadSuperVariableNodeFactory.create((AccessEnclosingFrameNode) null, FrameSlotNode.create(getName()), props);
+                ReadSuperVariableNode readSuper = props.copyValue ? ReadAndCopySuperVariableNodeGen.create((AccessEnclosingFrameNode) null, FrameSlotNode.create(getName()), props)
+                                : ReadSuperVariableNodeGen.create((AccessEnclosingFrameNode) null, FrameSlotNode.create(getName()), props);
                 ReadVariableNode nextNode = new UnresolvedReadVariableNode(props);
                 ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, nextNode);
                 return replace(readNode).execute(frame, enclosingFrame);
@@ -388,9 +388,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private ReadVariableNode resolveNonFrame() {
             RFunction lookupResult = RContext.getEngine().lookupBuiltin(RRuntime.toString(getName()));
             if (lookupResult != null) {
-                return BuiltinFunctionVariableNodeFactory.create(lookupResult, props);
+                return BuiltinFunctionVariableNodeGen.create(lookupResult, props);
             } else {
-                return UnknownVariableNodeFactory.create(props);
+                return UnknownVariableNodeGen.create(props);
             }
         }
 
@@ -401,7 +401,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             ReadVariableNode readNode;
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
-                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(FrameSlotNode.create(getName()), props);
+                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeGen.create(FrameSlotNode.create(getName()), props);
                 ReadVariableNode nextNode = new UnresolvedReadVariableNode(props);
                 readNode = new ReadVariableVirtualNode(actualReadNode, nextNode);
             } else {
@@ -523,7 +523,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             controlVisibility();
-            node = insert(ReadLocalVariableNodeFactory.create(FrameSlotNode.create(getName()), getProps()));
+            node = insert(ReadLocalVariableNodeGen.create(FrameSlotNode.create(getName()), getProps()));
             if (node.getFrameSlotNode().hasValue(frame)) {
                 Object result = node.execute(frame);
                 if (checkType(frame, result)) {
@@ -531,7 +531,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     return result;
                 }
             }
-            return replace(UnknownVariableNodeFactory.create(getProps())).execute(frame);
+            return replace(UnknownVariableNodeGen.create(getProps())).execute(frame);
         }
 
         @Override
@@ -567,7 +567,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             ReadProperties props = new ReadProperties(name, mode, false, true, false, false);
             ReadVariableNode rvn = new UnresolvedReadVariableNode(props);
             rvn.assignSourceSection(src);
-            return ResolvePromiseNodeFactory.create(new ReadVariableSuperMaterializedNode(rvn), props);
+            return ResolvePromiseNodeGen.create(new ReadVariableSuperMaterializedNode(rvn), props);
         }
 
         @Override
@@ -760,7 +760,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         public static BuiltinFunctionVariableNode create(RFunction function, String name) {
             ReadProperties props = new ReadProperties(name, RType.Function, false, false, false, false);
-            return BuiltinFunctionVariableNodeFactory.create(function, props);
+            return BuiltinFunctionVariableNodeGen.create(function, props);
         }
 
         public abstract RFunction getFunction();

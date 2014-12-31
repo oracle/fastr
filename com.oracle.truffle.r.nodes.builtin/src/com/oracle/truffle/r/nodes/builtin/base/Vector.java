@@ -50,7 +50,7 @@ public abstract class Vector extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castLength(RNode[] arguments) {
         // length is at index 1
-        arguments[1] = ConvertIntFactory.create(arguments[1]);
+        arguments[1] = ConvertIntNodeGen.create(arguments[1]);
         return arguments;
     }
 

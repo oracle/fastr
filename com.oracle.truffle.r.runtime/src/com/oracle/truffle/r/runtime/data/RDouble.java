@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 
 @ValueType
@@ -39,8 +39,8 @@ public final class RDouble extends RScalar {
     }
 
     @Override
-    @TruffleBoundary
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return Double.toString(value);
     }
 }

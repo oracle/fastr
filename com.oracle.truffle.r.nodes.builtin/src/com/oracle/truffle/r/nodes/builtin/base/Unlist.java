@@ -24,7 +24,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.nodes.builtin.base.UnlistFactory.RecursiveLengthFactory;
+import com.oracle.truffle.r.nodes.builtin.base.UnlistFactory.RecursiveLengthNodeGen;
 
 @RBuiltin(name = "unlist", kind = SUBSTITUTE, parameterNames = {"x", "recursive", "use.names"})
 // TODO INTERNAL
@@ -37,7 +37,7 @@ public abstract class Unlist extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeFactory.create(null, null);
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);
     @Child private Length lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
 
@@ -59,7 +59,7 @@ public abstract class Unlist extends RBuiltinNode {
         private void initRecursiveLengthNode() {
             if (recursiveLengthNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveLengthNode = insert(RecursiveLengthFactory.create(null));
+                recursiveLengthNode = insert(RecursiveLengthNodeGen.create(null));
             }
         }
 
@@ -111,7 +111,7 @@ public abstract class Unlist extends RBuiltinNode {
     private void initRecursiveLengthNode() {
         if (recursiveLengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveLengthNode = insert(RecursiveLengthFactory.create(null));
+            recursiveLengthNode = insert(RecursiveLengthNodeGen.create(null));
         }
     }
 

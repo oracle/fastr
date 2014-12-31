@@ -55,8 +55,8 @@ public abstract class Array extends RBuiltinNode {
 
     @CreateCast({"arguments"})
     public RNode[] createCastDimensions(RNode[] children) {
-        RNode dimsVector = CastToVectorNodeFactory.create(children[1], false, false, false, false);
-        return new RNode[]{children[0], CastIntegerNodeFactory.create(dimsVector, false, false, false), children[2]};
+        RNode dimsVector = CastToVectorNodeGen.create(children[1], false, false, false, false);
+        return new RNode[]{children[0], CastIntegerNodeGen.create(dimsVector, false, false, false), children[2]};
     }
 
     private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {

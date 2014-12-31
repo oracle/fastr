@@ -32,7 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.CombineFactory.UnwrapExpressionFactory;
+import com.oracle.truffle.r.nodes.builtin.base.CombineFactory.UnwrapExpressionNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
+@GenerateNodeFactory
 @SuppressWarnings("unused")
 public abstract class Combine extends RPrecedenceBuiltinNode {
 
@@ -58,7 +59,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
         RVector resultVector = ((RAbstractVector) castVector.executeObject(frame, value)).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :
@@ -505,7 +506,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     private Object unwrapExpression(VirtualFrame frame, Object operand) {
         if (unwrapExpression == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            unwrapExpression = insert(UnwrapExpressionFactory.create(null));
+            unwrapExpression = insert(UnwrapExpressionNodeGen.create(null));
         }
         return unwrapExpression.executeObject(frame, operand);
     }

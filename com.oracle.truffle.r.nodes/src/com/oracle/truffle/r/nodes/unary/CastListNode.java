@@ -39,7 +39,7 @@ public abstract class CastListNode extends CastNode {
     private RList castList(VirtualFrame frame, Object operand) {
         if (castListRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castListRecursive = insert(CastListNodeFactory.create(null, false, false, false));
+            castListRecursive = insert(CastListNodeGen.create(null, false, false, false));
         }
         return castListRecursive.executeList(frame, operand);
     }

@@ -30,8 +30,8 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.ContainerDimNamesGetFactory;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastFactory.OperatorConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.ContainerDimNamesGetNodeGen;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,7 +46,7 @@ abstract class ArrayPositionsCastBase extends RNode {
     protected final boolean isSubset;
 
     private final BranchProfile errorProfile = BranchProfile.create();
-    @Child ContainerDimGet dimGetter = ContainerDimGetFactory.create(null);
+    @Child ContainerDimGet dimGetter = ContainerDimGetNodeGen.create(null);
 
     protected ArrayPositionsCastBase(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
         this.dimension = dimension;
@@ -230,14 +230,14 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private void initConvertCast() {
             if (operatorConvertRecursive == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                operatorConvertRecursive = insert(OperatorConverterNodeFactory.create(this.dimension, this.numDimensions, this.assignment, this.isSubset, null, null, null));
+                operatorConvertRecursive = insert(OperatorConverterNodeGen.create(this.dimension, this.numDimensions, this.assignment, this.isSubset, null, null, null));
             }
         }
 
         private RList getContainerDimNames(VirtualFrame frame, RAbstractContainer value) {
             if (dimNamesGetter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dimNamesGetter = insert(ContainerDimNamesGetFactory.create(null));
+                dimNamesGetter = insert(ContainerDimNamesGetNodeGen.create(null));
             }
             return dimNamesGetter.execute(frame, value);
         }
@@ -265,7 +265,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private void initIntCast() {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
+                castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
             }
         }
 
@@ -287,7 +287,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private Object castLogical(VirtualFrame frame, Object operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
+                castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
             }
             return castLogical.executeCast(frame, operand);
         }
@@ -295,7 +295,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private Object castVector(VirtualFrame frame, Object operand) {
             if (castVector == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
             }
             return castVector.executeCast(frame, operand);
         }
@@ -889,11 +889,11 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                             return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
                         }
                     } else {
-                        if (namesProfile.profile(container.getDimNames() != null)) {
+                        if (namesProfile.profile(getContainerDimNames(frame, container) != null)) {
                             if (assignment) {
-                                return findPositionsWithNames(frame, container, container.getDimNames().getDataAt(dimension), operand, assignment);
+                                return findPositionsWithNames(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             } else {
-                                return findPositions(frame, container, container.getDimNames().getDataAt(dimension), operand, assignment);
+                                return findPositions(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             }
                         } else {
                             throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
@@ -1097,7 +1097,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private Object getContainerRowNames(VirtualFrame frame, RAbstractContainer value) {
             if (rowNamesGetter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                rowNamesGetter = insert(ContainerRowNamesGetFactory.create(null));
+                rowNamesGetter = insert(ContainerRowNamesGetNodeGen.create(null));
             }
             return rowNamesGetter.execute(frame, value);
         }
@@ -1105,7 +1105,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private Object castString(VirtualFrame frame, Object operand) {
             if (castString == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
+                castString = insert(CastStringNodeGen.create(null, false, true, false, false));
             }
             return castString.executeCast(frame, operand);
         }

@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.binary.ColonNodeFactory.ColonCastNodeFactory;
+import com.oracle.truffle.r.nodes.binary.ColonNodeGen.ColonCastNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -43,7 +43,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {
-        ColonCastNode ccn = ColonCastNodeFactory.create(child);
+        ColonCastNode ccn = ColonCastNodeGen.create(child);
         ccn.assignSourceSection(getSourceSection());
         return ccn;
     }
@@ -112,7 +112,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     }
 
     public static ColonNode create(SourceSection src, RNode left, RNode right) {
-        ColonNode cn = ColonNodeFactory.create(left, right);
+        ColonNode cn = ColonNodeGen.create(left, right);
         cn.assignSourceSection(src);
         return cn;
     }

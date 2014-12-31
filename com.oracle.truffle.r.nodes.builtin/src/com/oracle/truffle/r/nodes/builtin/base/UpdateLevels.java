@@ -33,7 +33,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
         return (RAbstractVector) castVector.executeObject(frame, value);
     }
@@ -41,7 +41,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
+            castString = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
         return castString.executeCast(frame, operand);
     }

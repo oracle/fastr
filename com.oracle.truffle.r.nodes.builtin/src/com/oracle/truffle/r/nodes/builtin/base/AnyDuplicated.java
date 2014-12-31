@@ -42,7 +42,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[2] = CastLogicalNodeFactory.create(arguments[2], true, false, false);
+        arguments[2] = CastLogicalNodeGen.create(arguments[2], true, false, false);
         return arguments;
     }
 
@@ -165,8 +165,8 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     private void initChildren() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
-            typeof = insert(TypeofNodeFactory.create(null));
+            castTypeNode = insert(CastTypeNodeGen.create(null, null));
+            typeof = insert(TypeofNodeGen.create(null));
         }
     }
 }

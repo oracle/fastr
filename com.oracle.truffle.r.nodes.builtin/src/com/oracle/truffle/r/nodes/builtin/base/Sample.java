@@ -21,9 +21,9 @@ import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -42,10 +42,10 @@ public abstract class Sample extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[0] = CastIntegerNodeFactory.create(arguments[0], true, false, false);
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
-        arguments[2] = CastLogicalNodeFactory.create(arguments[2], true, false, false);
-        arguments[3] = CastDoubleNodeFactory.create(arguments[3], true, false, false);
+        arguments[0] = CastIntegerNodeGen.create(arguments[0], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
+        arguments[2] = CastLogicalNodeGen.create(arguments[2], true, false, false);
+        arguments[3] = CastDoubleNodeGen.create(arguments[3], true, false, false);
         return arguments;
     }
 

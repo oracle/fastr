@@ -36,8 +36,8 @@ public abstract class ColMeans extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
+        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;
     }
 

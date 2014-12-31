@@ -18,7 +18,7 @@ import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -44,8 +44,8 @@ public abstract class RowSums extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
+        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;
     }
 

@@ -87,21 +87,21 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(null, null));
+            castTypeNode = insert(CastTypeNodeGen.create(null, null));
         }
     }
 
     private void initFactorNode() {
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorNodeFactory.create(null));
+            isFactor = insert(IsFactorNodeGen.create(null));
         }
     }
 
     private void initTypeOfNode() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofNodeFactory.create(null));
+            typeof = insert(TypeofNodeGen.create(null));
         }
     }
 

@@ -137,7 +137,7 @@ public class HiddenInternalFunctions {
         private void initCast() {
             if (castIntNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castIntNode = insert(CastIntegerNodeFactory.create(null, false, false, false));
+                castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
             }
         }
 

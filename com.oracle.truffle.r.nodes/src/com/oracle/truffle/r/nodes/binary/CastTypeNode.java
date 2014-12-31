@@ -146,63 +146,63 @@ public abstract class CastTypeNode extends BinaryNode {
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofNodeFactory.create(null));
+            typeof = insert(TypeofNodeGen.create(null));
         }
     }
 
     private void initCastString() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
     }
 
     private void initCastComplex() {
         if (castComplexNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplexNode = insert(CastComplexNodeFactory.create(null, false, false, false));
+            castComplexNode = insert(CastComplexNodeGen.create(null, false, false, false));
         }
     }
 
     private void initCastDouble() {
         if (castDoubleNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false, false));
+            castDoubleNode = insert(CastDoubleNodeGen.create(null, false, false, false));
         }
     }
 
     private void initCastInteger() {
         if (castIntegerNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntegerNode = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            castIntegerNode = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
     }
 
     private void initCastLogical() {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false, false));
+            castLogicalNode = insert(CastLogicalNodeGen.create(null, false, false, false));
         }
     }
 
     private void initCastRaw() {
         if (castRawNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRawNode = insert(CastRawNodeFactory.create(null, false, false, false));
+            castRawNode = insert(CastRawNodeGen.create(null, false, false, false));
         }
     }
 
     private void initCastList() {
         if (castListNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castListNode = insert(CastListNodeFactory.create(null, false, false, false));
+            castListNode = insert(CastListNodeGen.create(null, false, false, false));
         }
     }
 
     private void initCastRecursive() {
         if (castRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRecursive = insert(CastTypeNodeFactory.create(null, null));
+            castRecursive = insert(CastTypeNodeGen.create(null, null));
         }
     }
 

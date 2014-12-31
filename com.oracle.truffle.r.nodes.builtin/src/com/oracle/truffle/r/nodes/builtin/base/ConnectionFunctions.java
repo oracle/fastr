@@ -522,6 +522,7 @@ public abstract class ConnectionFunctions {
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             writeLinesHelper(bufferedWriter, lines, sep);
+            flush();
         }
 
         @Override
@@ -1072,7 +1073,7 @@ public abstract class ConnectionFunctions {
 
         @CreateCast("arguments")
         protected RNode[] castTimesLength(RNode[] arguments) {
-            arguments[0] = CastToVectorNodeFactory.create(CastStringNodeFactory.create(arguments[0], false, false, false, false), false, false, false, false);
+            arguments[0] = CastToVectorNodeGen.create(CastStringNodeGen.create(arguments[0], false, false, false, false), false, false, false, false);
             return arguments;
         }
 

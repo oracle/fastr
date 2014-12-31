@@ -34,17 +34,19 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"})
 public abstract class RepeatInternal extends RBuiltinNode {
 
     private final ConditionProfile timesOne = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final NACheck naCheck = NACheck.create();
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // times argument is at index 1
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
         return arguments;
     }
 
@@ -53,7 +55,8 @@ public abstract class RepeatInternal extends RBuiltinNode {
         controlVisibility();
         double[] array = new double[times];
         Arrays.fill(array, value);
-        return RDataFactory.createDoubleVector(array, RRuntime.isComplete(value));
+        naCheck.enable(value);
+        return RDataFactory.createDoubleVector(array, !naCheck.check(value));
     }
 
     @Specialization
@@ -129,7 +132,17 @@ public abstract class RepeatInternal extends RBuiltinNode {
         controlVisibility();
         int[] array = new int[times];
         Arrays.fill(array, value);
-        return RDataFactory.createIntVector(array, RDataFactory.COMPLETE_VECTOR);
+        naCheck.enable(value);
+        return RDataFactory.createIntVector(array, !naCheck.check(value));
+    }
+
+    @Specialization
+    protected RIntVector repInt(byte value, int times) {
+        controlVisibility();
+        int[] array = new int[times];
+        Arrays.fill(array, value);
+        naCheck.enable(value);
+        return RDataFactory.createIntVector(array, !naCheck.check(value));
     }
 
     @Specialization
@@ -137,7 +150,8 @@ public abstract class RepeatInternal extends RBuiltinNode {
         controlVisibility();
         String[] array = new String[times];
         Arrays.fill(array, value);
-        return RDataFactory.createStringVector(array, RDataFactory.COMPLETE_VECTOR);
+        naCheck.enable(value);
+        return RDataFactory.createStringVector(array, !naCheck.check(value));
     }
 
     @Specialization

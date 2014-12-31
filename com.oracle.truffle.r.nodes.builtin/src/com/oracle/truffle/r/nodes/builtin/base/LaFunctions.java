@@ -193,7 +193,7 @@ public class LaFunctions {
 
         @CreateCast("arguments")
         protected RNode[] castbInArgument(RNode[] arguments) {
-            arguments[1] = CastDoubleNodeFactory.create(arguments[1], false, true, false);
+            arguments[1] = CastDoubleNodeGen.create(arguments[1], false, true, false);
             return arguments;
         }
 

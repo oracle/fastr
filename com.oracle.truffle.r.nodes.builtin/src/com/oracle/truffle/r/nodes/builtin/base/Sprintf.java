@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "sprintf", kind = SUBSTITUTE, parameterNames = {"fmt", "..."})
+@GenerateNodeFactory
 // TODO INTERNAL
 public abstract class Sprintf extends RBuiltinNode {
 

@@ -55,6 +55,7 @@ public class GetFunctions {
     }
 
     @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
+    @GenerateNodeFactory
     public abstract static class Get extends Adapter {
 
         public abstract Object execute(VirtualFrame frame, RAbstractStringVector name, REnvironment envir, String mode, byte inherits);

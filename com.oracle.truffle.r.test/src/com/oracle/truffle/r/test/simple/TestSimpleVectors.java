@@ -2045,6 +2045,8 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ e <- list(a=2) ; e$a }");
         assertEval("{ e <- list(a=2) ; e$\"a\" }");
+
+        assertEval("{ x<-NULL; x$a }");
     }
 
     @Test

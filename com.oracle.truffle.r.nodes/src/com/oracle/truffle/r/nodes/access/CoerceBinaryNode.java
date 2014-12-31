@@ -28,8 +28,8 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.CoerceBinaryNodeFactory.VectorUpdateValueCastFactory;
-import com.oracle.truffle.r.nodes.access.CoerceBinaryNodeFactory.VectorUpdateVectorCastFactory;
+import com.oracle.truffle.r.nodes.access.CoerceBinaryNodeGen.VectorUpdateValueCastNodeGen;
+import com.oracle.truffle.r.nodes.access.CoerceBinaryNodeGen.VectorUpdateVectorCastNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -59,12 +59,12 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @CreateCast({"left"})
     public RNode createCastLeft(RNode child) {
-        return VectorUpdateVectorCastFactory.create(child, leftNACheck);
+        return VectorUpdateVectorCastNodeGen.create(child, leftNACheck);
     }
 
     @CreateCast({"right"})
     public RNode createCastRight(RNode child) {
-        return VectorUpdateValueCastFactory.create(child, leftNACheck);
+        return VectorUpdateValueCastNodeGen.create(child, leftNACheck);
     }
 
     public abstract RNode getLeft();

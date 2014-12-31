@@ -121,32 +121,32 @@ sort.int <-
     y
 }
 
-#order <- function(..., na.last = TRUE, decreasing = FALSE)
-#{
-#    z <- list(...)
-#    if(any(unlist(lapply(z, is.object)))) {
-#        z <- lapply(z, function(x) if(is.object(x)) xtfrm(x) else x)
-#        if(!is.na(na.last))
-#            return(do.call("order", c(z, na.last = na.last,
-#                                      decreasing = decreasing)))
-#    } else if(!is.na(na.last)) {
-#        if (length(z) == 1L && is.factor(zz <- z[[1L]]) && nlevels(zz) < 100000)
-#            return(.Internal(radixsort(zz, na.last, decreasing)))
-#        else return(.Internal(order(na.last, decreasing, ...)))
-#    }
-#
-#    ## na.last = NA case: remove nas
-#    if(any(diff(l.z <- vapply(z, length, 1L)) != 0L))
-#        stop("argument lengths differ")
-#    ans <- vapply(z, is.na, rep.int(NA, l.z[1L]))
-#    ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
-#    if(all(!ok)) return(integer())
-#    z[[1L]][!ok] <- NA
-#    ans <- do.call("order", c(z, decreasing = decreasing))
-#    keep <- seq_along(ok)[ok]
-#    ans[ans %in% keep]
-#}
-#
+order <- function(..., na.last = TRUE, decreasing = FALSE)
+{
+    z <- list(...)
+    if(any(unlist(lapply(z, is.object)))) {
+        z <- lapply(z, function(x) if(is.object(x)) xtfrm(x) else x)
+        if(!is.na(na.last))
+            return(do.call("order", c(z, na.last = na.last,
+                                      decreasing = decreasing)))
+    } else if(!is.na(na.last)) {
+        if (length(z) == 1L && is.factor(zz <- z[[1L]]) && nlevels(zz) < 100000)
+            return(.Internal(radixsort(zz, na.last, decreasing)))
+        else return(.Internal(order(na.last, decreasing, ...)))
+	}
+
+    ## na.last = NA case: remove nas
+    if(any(diff(l.z <- vapply(z, length, 1L)) != 0L))
+        stop("argument lengths differ")
+    ans <- vapply(z, is.na, rep.int(NA, l.z[1L]))
+    ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
+    if(all(!ok)) return(integer())
+    z[[1L]][!ok] <- NA
+    ans <- do.call("order", c(z, decreasing = decreasing))
+    keep <- seq_along(ok)[ok]
+    ans[ans %in% keep]
+}
+
 #sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
 #                      method = c("shell", "quick", "radix"))
 #{

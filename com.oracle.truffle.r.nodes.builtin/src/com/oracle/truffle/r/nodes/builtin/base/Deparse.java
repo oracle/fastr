@@ -26,10 +26,10 @@ public abstract class Deparse extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], false, false, false);
-        arguments[2] = CastLogicalNodeFactory.create(arguments[2], false, false, false);
-        arguments[3] = CastIntegerNodeFactory.create(arguments[3], false, false, false);
-        arguments[4] = CastIntegerNodeFactory.create(arguments[4], false, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
+        arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
+        arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
+        arguments[4] = CastIntegerNodeGen.create(arguments[4], false, false, false);
         return arguments;
     }
 

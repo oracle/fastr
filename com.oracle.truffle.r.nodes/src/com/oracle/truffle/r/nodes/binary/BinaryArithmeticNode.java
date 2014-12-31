@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Multiply;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
+@GenerateNodeFactory
 public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Child private BinaryArithmetic arithmetic;

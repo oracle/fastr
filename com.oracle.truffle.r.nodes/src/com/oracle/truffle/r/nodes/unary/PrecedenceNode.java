@@ -46,7 +46,7 @@ public abstract class PrecedenceNode extends UnaryNode {
 
     @Override
     public int executeInteger(VirtualFrame frame) {
-        return RTypesGen.RTYPES.asInteger(execute(frame));
+        return RTypesGen.asInteger(execute(frame));
     }
 
     public abstract int executeInteger(VirtualFrame frame, Object object, byte recursive);
@@ -56,7 +56,7 @@ public abstract class PrecedenceNode extends UnaryNode {
     private int precedenceRecursive(VirtualFrame frame, Object o, byte recursive) {
         if (precedenceNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            precedenceNode = insert(PrecedenceNodeFactory.create(null, null));
+            precedenceNode = insert(PrecedenceNodeGen.create(null, null));
         }
         return precedenceNode.executeInteger(frame, o, recursive);
     }

@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -105,7 +105,7 @@ public class WhichFunctions {
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastDoubleNodeFactory.create(arguments[0], true, false, false);
+            arguments[0] = CastDoubleNodeGen.create(arguments[0], true, false, false);
             return arguments;
         }
 
@@ -131,7 +131,7 @@ public class WhichFunctions {
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastDoubleNodeFactory.create(arguments[0], true, false, false);
+            arguments[0] = CastDoubleNodeGen.create(arguments[0], true, false, false);
             return arguments;
         }
 

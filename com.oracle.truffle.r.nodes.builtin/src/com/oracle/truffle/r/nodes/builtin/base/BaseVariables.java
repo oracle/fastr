@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
     @CompilationFinal private static final String[] VARS = new String[]{
-        ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform"
+        ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform", ".Library", ".LibrarySite"
     };
     // @formatter:on
 
@@ -99,7 +99,21 @@ private int initialized = -1;
                 env.safePut(var, value);
             }
         } else {
-            // nothing in this phase
+            for (String var : VARS) {
+                Object value = null;
+                switch (var) {
+                    case ".Library":
+                        value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrary());
+                        break;
+                    case ".LibrarySite":
+                        value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrarySite(), RDataFactory.COMPLETE_VECTOR);
+                        break;
+                    default:
+                        continue;
+                }
+                env.safePut(var, value);
+
+            }
         }
         initialized++;
     }

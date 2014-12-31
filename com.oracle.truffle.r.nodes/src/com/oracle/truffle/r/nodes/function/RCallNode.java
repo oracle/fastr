@@ -217,11 +217,11 @@ public abstract class RCallNode extends RNode {
     }
 
     public int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectInteger(execute(frame, function));
+        return RTypesGen.expectInteger(execute(frame, function));
     }
 
     public double executeDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectDouble(execute(frame, function));
+        return RTypesGen.expectDouble(execute(frame, function));
     }
 
     public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {

@@ -45,254 +45,254 @@ import com.oracle.truffle.r.runtime.env.*;
 public class RTypes {
 
     @TypeCheck
-    public boolean isRNull(Object value) {
+    public static boolean isRNull(Object value) {
         return value == RNull.instance;
     }
 
     @TypeCast
     @SuppressWarnings("unused")
-    public RNull asRNull(Object value) {
+    public static RNull asRNull(Object value) {
         return RNull.instance;
     }
 
     @TypeCheck
-    public boolean isRMissing(Object value) {
+    public static boolean isRMissing(Object value) {
         return value == RMissing.instance;
     }
 
     @TypeCast
     @SuppressWarnings("unused")
-    public RMissing asRMissing(Object value) {
+    public static RMissing asRMissing(Object value) {
         return RMissing.instance;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(int value) {
+    public static RAbstractContainer toAbstractContainer(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(double value) {
+    public static RAbstractContainer toAbstractContainer(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RRaw value) {
+    public static RAbstractContainer toAbstractContainer(RRaw value) {
         return RDataFactory.createRawVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(byte value) {
+    public static RAbstractContainer toAbstractContainer(byte value) {
         return RDataFactory.createLogicalVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RComplex value) {
+    public static RAbstractContainer toAbstractContainer(RComplex value) {
         return RDataFactory.createComplexVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(String value) {
+    public static RAbstractContainer toAbstractContainer(String value) {
         return RDataFactory.createStringVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RIntVector vector) {
+    public static RAbstractContainer toAbstractContainer(RIntVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RDoubleVector vector) {
+    public static RAbstractContainer toAbstractContainer(RDoubleVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RLogicalVector vector) {
+    public static RAbstractContainer toAbstractContainer(RLogicalVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RComplexVector vector) {
+    public static RAbstractContainer toAbstractContainer(RComplexVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RRawVector vector) {
+    public static RAbstractContainer toAbstractContainer(RRawVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RStringVector vector) {
+    public static RAbstractContainer toAbstractContainer(RStringVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RIntSequence vector) {
+    public static RAbstractContainer toAbstractContainer(RIntSequence vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RDoubleSequence vector) {
+    public static RAbstractContainer toAbstractContainer(RDoubleSequence vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RList vector) {
+    public static RAbstractContainer toAbstractContainer(RList vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RDataFrame vector) {
+    public static RAbstractContainer toAbstractContainer(RDataFrame vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractContainer toAbstractContainer(RAbstractVector vector) {
+    public static RAbstractContainer toAbstractContainer(RAbstractVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(int value) {
+    public static RAbstractVector toAbstractVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(double value) {
+    public static RAbstractVector toAbstractVector(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RRaw value) {
+    public static RAbstractVector toAbstractVector(RRaw value) {
         return RDataFactory.createRawVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(byte value) {
+    public static RAbstractVector toAbstractVector(byte value) {
         return RDataFactory.createLogicalVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RComplex value) {
+    public static RAbstractVector toAbstractVector(RComplex value) {
         return RDataFactory.createComplexVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(String value) {
+    public static RAbstractVector toAbstractVector(String value) {
         return RDataFactory.createStringVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RIntVector vector) {
+    public static RAbstractVector toAbstractVector(RIntVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RDoubleVector vector) {
+    public static RAbstractVector toAbstractVector(RDoubleVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RLogicalVector vector) {
+    public static RAbstractVector toAbstractVector(RLogicalVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RComplexVector vector) {
+    public static RAbstractVector toAbstractVector(RComplexVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RRawVector vector) {
+    public static RAbstractVector toAbstractVector(RRawVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RStringVector vector) {
+    public static RAbstractVector toAbstractVector(RStringVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RIntSequence vector) {
+    public static RAbstractVector toAbstractVector(RIntSequence vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RDoubleSequence vector) {
+    public static RAbstractVector toAbstractVector(RDoubleSequence vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractVector toAbstractVector(RList vector) {
+    public static RAbstractVector toAbstractVector(RList vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractIntVector toAbstractIntVector(int value) {
+    public static RAbstractIntVector toAbstractIntVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractIntVector toAbstractIntVector(RIntSequence vector) {
+    public static RAbstractIntVector toAbstractIntVector(RIntSequence vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractIntVector toAbstractIntVector(RIntVector vector) {
+    public static RAbstractIntVector toAbstractIntVector(RIntVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractDoubleVector toAbstractDoubleVector(double value) {
+    public static RAbstractDoubleVector toAbstractDoubleVector(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public RAbstractDoubleVector toAbstractDoubleVector(RDoubleSequence vector) {
+    public static RAbstractDoubleVector toAbstractDoubleVector(RDoubleSequence vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractDoubleVector toAbstractDoubleVector(RDoubleVector vector) {
+    public static RAbstractDoubleVector toAbstractDoubleVector(RDoubleVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractComplexVector toAbstractComplexVector(RComplexVector vector) {
+    public static RAbstractComplexVector toAbstractComplexVector(RComplexVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractComplexVector toAbstractComplexVector(RComplex vector) {
+    public static RAbstractComplexVector toAbstractComplexVector(RComplex vector) {
         return RDataFactory.createComplexVectorFromScalar(vector);
     }
 
     @ImplicitCast
-    public RAbstractLogicalVector toAbstractLogicalVector(byte vector) {
+    public static RAbstractLogicalVector toAbstractLogicalVector(byte vector) {
         return RDataFactory.createLogicalVectorFromScalar(vector);
     }
 
     @ImplicitCast
-    public RAbstractLogicalVector toAbstractLogicalVector(RLogicalVector vector) {
+    public static RAbstractLogicalVector toAbstractLogicalVector(RLogicalVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractRawVector toAbstractRawVector(RRaw vector) {
+    public static RAbstractRawVector toAbstractRawVector(RRaw vector) {
         return RDataFactory.createRawVectorFromScalar(vector);
     }
 
     @ImplicitCast
-    public RAbstractRawVector toAbstractRawVector(RRawVector vector) {
+    public static RAbstractRawVector toAbstractRawVector(RRawVector vector) {
         return vector;
     }
 
     @ImplicitCast
-    public RAbstractStringVector toAbstractStringVector(String vector) {
+    public static RAbstractStringVector toAbstractStringVector(String vector) {
         return RDataFactory.createStringVectorFromScalar(vector);
     }
 
     @ImplicitCast
-    public RAbstractStringVector toAbstractStringVector(RStringVector vector) {
+    public static RAbstractStringVector toAbstractStringVector(RStringVector vector) {
         return vector;
     }
 
