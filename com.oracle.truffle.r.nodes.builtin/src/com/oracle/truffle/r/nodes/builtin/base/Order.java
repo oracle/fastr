@@ -50,7 +50,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "noVec")
-    RNull orderEmpty(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderEmpty(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         return RNull.instance;
     }
 
