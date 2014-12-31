@@ -86,6 +86,8 @@ public abstract class Any extends RBuiltinNode {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {
                 result = accumulate((RLogicalVector) castLogicalNode.executeLogical(frame, argValue));
+            } else if (argValue == RNull.instance) {
+                result = RRuntime.LOGICAL_FALSE;
             } else {
                 result = (byte) castLogicalNode.executeByte(frame, argValue);
             }

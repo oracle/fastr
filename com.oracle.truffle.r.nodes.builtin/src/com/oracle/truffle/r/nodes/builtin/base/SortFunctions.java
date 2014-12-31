@@ -67,9 +67,9 @@ public class SortFunctions {
             controlVisibility();
             if (order == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                order = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+                order = insert(OrderFactory.create(new RNode[3], getBuiltin(), getSuppliedArgsNames()));
             }
-            RIntVector result = order.executeDoubleVector(frame, vec, RMissing.instance);
+            RIntVector result = order.executeRIntVector(frame, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, new RArgsValuesAndNames(new Object[]{vec}, null));
             if (orderProfile.profile(RRuntime.fromLogical(decreasing))) {
                 int[] data = result.getDataWithoutCopying();
                 int[] rdata = new int[data.length];

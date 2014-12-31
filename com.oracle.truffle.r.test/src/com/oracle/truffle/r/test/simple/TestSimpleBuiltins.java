@@ -1442,11 +1442,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ order(7) }");
         assertEval("{ order(FALSE) }");
         assertEval("{ order(character()) }");
-    }
 
-    @Test
-    @Ignore
-    public void testOrderIgnore() {
         assertEval("{ order(1:3) }");
         assertEval("{ order(3:1) }");
         assertEval("{ order(c(1,1,1), 3:1) }");
@@ -1461,6 +1457,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ order(c(1,2,3,NA), na.last=FALSE) }");
         assertEval("{ order(c(1,2,3,NA), na.last=FALSE, decreasing=TRUE) }");
         assertEval("{ order(c(0/0, -1/0, 2)) }");
+
+        assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=TRUE) }");
+        assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testOrderIgnore() {
         assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
     }
 
@@ -2642,6 +2646,18 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ qgamma(0.5, shape=double()) }");
         assertEval("{ qgamma(0.5, shape=1, rate=double()) }");
+
+        assertEval("{ qgamma(0.5, shape=c(2,1), scale=c(3,4)) }");
+        assertEval("{ qgamma(0.5, shape=c(2,1), scale=c(3,4,5)) }");
+        assertEval("{ qgamma(0.5, shape=c(2,1,2), scale=c(3,4,5)) }");
+        assertEval("{ qgamma(c(0.5, 0.7), shape=c(2,1,2), scale=c(3,4,5)) }");
+        assertEval("{ qgamma(c(0.5, 0.7, 0.5), shape=c(2,1,2), scale=c(3,4,5)) }");
+
+        assertEval("{ x<-c(a=0.5, b=0.7); attr(x, \"foo\")<-\"foo\"; qgamma(x, shape=1) }");
+        assertEval("{ x<-c(0.5); y<-c(s1=1); z<-c(s1=7); qgamma(x, shape=y, rate=z) }");
+        assertEval("{ x<-c(0.5); y<-c(s1=1); z<-c(s1=7); attr(z, \"foo\")<-\"foo\"; qgamma(x, shape=y, rate=z) }");
+        assertEval("{ x<-c(0.5); y<-c(s1=1, s2=2); z<-c(s1=7, s2=8); qgamma(0.5, shape=y, rate=z) }");
+        assertEval("{ x<-c(a=0.5); y<-c(s1=1); attr(y, \"bar\")<-\"bar\"; z<-c(7, s3=8); attr(z, \"foo\")<-\"foo\"; qgamma(x, shape=y, rate=z) }");
     }
 
     @Test
@@ -3014,6 +3030,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ any(TRUE, TRUE, NA,  na.rm=TRUE) }");
         assertEval("{ any(TRUE, FALSE, NA,  na.rm=TRUE) }");
         assertEval("{ any(FALSE, NA,  na.rm=FALSE) }");
+
+        assertEval("{ any(NULL); }");
     }
 
     @Test
@@ -3316,6 +3334,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) x, c(TRUE)) }");
         assertEval("{ vapply(c(TRUE, FALSE, TRUE), function(x) FALSE, c(TRUE)) }");
         assertEval("{ vapply(c(1L, 2L, 3L, 4L), function(x, y) x+5L, c(1L), 10) }");
+
+        assertEval("{ f<-function(x) as.integer(x + 1) ; y<-vapply(list(1:3, 6:8), f, rep(7, 3)); y }");
+        assertEval("{ f<-function(x) x + 1 ; y<-vapply(list(1:3, 6:8), f, rep(as.double(NA), 3)); y }");
+        assertEval("{ f<-function(x) x + 1 ; y<-vapply(list(1:3), f, rep(as.double(NA), 3)); y }");
     }
 
     @Test
