@@ -33,19 +33,16 @@ import javax.tools.*;
 /**
  * Analyzes classes annotated with {@code RBuiltin} and generates/updates a per-R-package class
  * {@code RBuiltinClasses} that is used to drive the loading process on FastR startup. When the
- * builtins are complete, this AP could be retired and the generated class migrated to the versioned
+ * builtins are complete, this AP can be retired and the generated class migrated to the versioned
  * source repository.
  *
  * The AP could also check builtins for invariants. None are currently defined.
  *
- * N.B. the AP may not handle deleted builtins gracefully in an IDE. Deleted builtins will manifest
- * as compilation errors in {@code RBuiltinClasses}.
+ * N.B. the AP cannot handle deleted builtins gracefully. Deleted builtins will manifest as
+ * compilation errors in {@code RBuiltinClasses}.
  *
  * N.B. We explicitly avoid depending statically on the {@code RBuiltin} class as that causes this
  * AP to reference projects in Graal, which has undesirable build consequences.
- *
- * Update 12/30/14. The Truffle DSL change to not create Factory classes by default required adding
- * a new feature to emulate the missing factory classes.
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.runtime.RBuiltin")
@@ -116,11 +113,12 @@ public class BuiltinProcessor extends AbstractProcessor {
         for (PackageBuiltins packageBuiltins : map.values()) {
             String packageName = packageBuiltins.packageElement.getQualifiedName().toString();
             // Read the previous file content if any
-            Set<TypeElement> classElements = readBuiltinsClass(packageName);
-            note("read " + classElements.size() + " from existing in " + packageName);
+            SortedSet<String> classNames = readBuiltinsClass(packageName);
+            note("read " + classNames.size() + " from existing in " + packageName);
             // add in the classes from this step
             for (TypeElement builtinClassElement : packageBuiltins.builtinClassElements) {
-                classElements.add(builtinClassElement);
+                String qualName = builtinClassElement.getQualifiedName().toString();
+                classNames.add(qualName);
             }
             // write out the class
             JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + ".RBuiltinClasses");
@@ -129,10 +127,6 @@ public class BuiltinProcessor extends AbstractProcessor {
                 wr.printf("package %s;%n", packageName);
                 wr.println("public final class RBuiltinClasses {");
                 wr.println("    public static final Class<?>[] RBUILTIN_CLASSES = {");
-                SortedSet<String> classNames = new TreeSet<>();
-                for (TypeElement classElement : classElements) {
-                    classNames.add(classElement.getQualifiedName().toString());
-                }
                 for (String className : classNames) {
                     wr.printf("        %s.class,%n", className);
                 }
@@ -143,10 +137,10 @@ public class BuiltinProcessor extends AbstractProcessor {
         }
     }
 
-    private Set<TypeElement> readBuiltinsClass(String packageName) throws IOException {
+    private SortedSet<String> readBuiltinsClass(String packageName) throws IOException {
         FileObject locator = processingEnv.getFiler().getResource(StandardLocation.SOURCE_OUTPUT, packageName, "RBuiltinClasses.java");
         File file = new File(locator.toUri().getPath());
-        Set<TypeElement> classElements = new HashSet<>();
+        SortedSet<String> classNames = new TreeSet<>();
         if (file.exists()) {
             try (BufferedReader rd = new BufferedReader(new FileReader(file))) {
                 String line = null;
@@ -160,14 +154,12 @@ public class BuiltinProcessor extends AbstractProcessor {
                         if (line.contains("}")) {
                             break;
                         }
-                        String className = line.replace(".class,", "").trim();
-                        TypeElement classElement = processingEnv.getElementUtils().getTypeElement(className);
-                        classElements.add(classElement);
+                        classNames.add(line.replace(".class,", "").trim());
                     }
                 }
             }
         }
-        return classElements;
+        return classNames;
     }
 
     private static boolean checkRBuiltin() {
