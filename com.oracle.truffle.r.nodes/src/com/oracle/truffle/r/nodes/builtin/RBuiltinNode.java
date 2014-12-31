@@ -39,9 +39,10 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeChild(value = "arguments", type = RNode[].class)
 @GenerateNodeFactory
 /*
- * TODO Remove this as only about 20 builtins actually need a Factory. However doing so greatly
- * complicates the builtin loading/initialization/creation process, as the class naming changes
- * considerably,
+ * TODO Remove this as only about 20 builtins truly need a Factory (because they are used/created by
+ * other builtins). However doing so greatly complicates the builtin loading/initialization/creation
+ * process, as the class naming changes considerably. N.B. Those subclasses that need a Factory are
+ * explicitly annotated with @GenerateNodeFactory.
  */
 public abstract class RBuiltinNode extends LeafCallNode implements VisibilityController {
 
