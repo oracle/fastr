@@ -154,6 +154,7 @@ public class RRuntime {
     }
 
     @TruffleBoundary
+    // TODO refactor this into RType so it is complete and more efficient
     public static String classToString(Class<?> c, boolean numeric) {
         if (c == RLogical.class) {
             return RType.Logical.getName();
@@ -167,6 +168,8 @@ public class RRuntime {
             return RType.Raw.getName();
         } else if (c == RString.class) {
             return RType.Character.getName();
+        } else if (c == RFunction.class) {
+            return RType.Function.getName();
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
@@ -178,6 +181,7 @@ public class RRuntime {
     }
 
     @TruffleBoundary
+    // TODO refactor this into RType so it is complete and more efficient
     public static String classToStringCap(Class<?> c) {
         if (c == RLogical.class) {
             return "Logical";
