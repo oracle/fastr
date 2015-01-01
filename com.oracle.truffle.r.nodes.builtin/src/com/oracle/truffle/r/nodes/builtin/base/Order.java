@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
+@GenerateNodeFactory
 @RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."})
 public abstract class Order extends RPrecedenceBuiltinNode {
 
@@ -42,14 +43,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
         return (RAbstractVector) castVector.executeObject(frame, value);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "noVec")
-    RNull orderEmpty(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderEmpty(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         return RNull.instance;
     }
 

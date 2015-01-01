@@ -30,7 +30,7 @@ import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeFactory.*;
-import com.oracle.truffle.r.nodes.binary.BinaryBooleanNonVectorizedNodeFactory.LeftOpToLogicalScalarCastFactory;
+import com.oracle.truffle.r.nodes.binary.BinaryBooleanNonVectorizedNodeFactory.LeftOpToLogicalScalarCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 @SuppressWarnings("unused")
+@GenerateNodeFactory
 public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
 
     private final BooleanOperationFactory factory;
@@ -64,12 +65,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
     }
 
     private LeftOpToLogicalScalarCast createCast(RNode child) {
-        return LeftOpToLogicalScalarCastFactory.create(child, logic.opName());
+        return LeftOpToLogicalScalarCastNodeGen.create(child, logic.opName());
     }
 
     @ShortCircuit("arguments[1]")
     protected boolean needsRightOperand(Object leftValue) {
-        return logic.requiresRightOperand(RTypesGen.RTYPES.asByte(leftValue));
+        return logic.requiresRightOperand(RTypesGen.asByte(leftValue));
     }
 
     @Specialization(guards = "needsRightOperand")

@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
+@GenerateNodeFactory
 public abstract class Match extends RBuiltinNode {
 
     private static final long BIG_THRESHOLD = 1000;
@@ -65,7 +66,7 @@ public abstract class Match extends RBuiltinNode {
     private String castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, false, false, false));
+            castString = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
         return (String) castString.executeCast(frame, operand);
     }
@@ -73,7 +74,7 @@ public abstract class Match extends RBuiltinNode {
     private int castInt(VirtualFrame frame, Object operand) {
         if (castInt == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInt = insert(CastIntegerNodeFactory.create(null, false, false, false));
+            castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
         return (int) castInt.executeCast(frame, operand);
     }

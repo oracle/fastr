@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "t.default", kind = SUBSTITUTE, parameterNames = {"x"})
+@GenerateNodeFactory
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Transpose extends RBuiltinNode {

@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 @SuppressWarnings("unused")
+@GenerateNodeFactory
 public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     protected abstract Object execute(VirtualFrame frame, Object left, Object right);

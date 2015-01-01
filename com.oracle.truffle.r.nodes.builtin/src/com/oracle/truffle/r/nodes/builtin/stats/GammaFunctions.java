@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.stats.GammaFunctionsFactory.DpsiFnCalcFactory;
+import com.oracle.truffle.r.nodes.builtin.stats.GammaFunctionsFactory.DpsiFnCalcNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -161,7 +161,7 @@ public abstract class GammaFunctions {
         private double dpsiFnCalc(VirtualFrame frame, double x, int n, int kode, double ans) {
             if (dpsiFnCalc == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dpsiFnCalc = insert(DpsiFnCalcFactory.create(null, null, null, null));
+                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
             }
             return dpsiFnCalc.executeDouble(frame, x, n, kode, ans);
         }
@@ -1738,7 +1738,7 @@ public abstract class GammaFunctions {
         private double dpsiFnCalc(VirtualFrame frame, double x, int n, int kode, double ans) {
             if (dpsiFnCalc == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dpsiFnCalc = insert(DpsiFnCalcFactory.create(null, null, null, null));
+                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
             }
             return dpsiFnCalc.executeDouble(frame, x, n, kode, ans);
         }

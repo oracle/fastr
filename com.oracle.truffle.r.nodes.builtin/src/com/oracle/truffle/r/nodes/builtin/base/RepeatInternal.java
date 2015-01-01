@@ -46,7 +46,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // times argument is at index 1
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
         return arguments;
     }
 

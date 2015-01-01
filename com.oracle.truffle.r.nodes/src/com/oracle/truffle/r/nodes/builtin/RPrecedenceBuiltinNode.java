@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class RPrecedenceBuiltinNode extends RCastingBuiltinNode {
 
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeFactory.create(null, null);
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);
 
     private int precedence(VirtualFrame frame, RArgsValuesAndNames args) {
         int precedence = -1;

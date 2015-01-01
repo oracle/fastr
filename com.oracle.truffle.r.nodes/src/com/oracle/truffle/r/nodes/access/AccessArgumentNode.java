@@ -83,7 +83,7 @@ public abstract class AccessArgumentNode extends RNode {
      * @return A fresh {@link AccessArgumentNode} for the given index
      */
     public static AccessArgumentNode create(Integer index) {
-        return AccessArgumentNodeFactory.create(index, new ReadArgumentNode(index));
+        return AccessArgumentNodeGen.create(index, new ReadArgumentNode(index));
     }
 
     @Override

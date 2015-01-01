@@ -31,7 +31,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.MakeNamesFactory.AllowUnderscoreConverterFactory;
+import com.oracle.truffle.r.nodes.builtin.base.MakeNamesFactory.AllowUnderscoreConverterNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,7 +46,7 @@ public abstract class MakeNames extends RBuiltinNode {
 
     @CreateCast({"arguments"})
     public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{children[0], AllowUnderscoreConverterFactory.create(children[1])};
+        return new RNode[]{children[0], AllowUnderscoreConverterNodeGen.create(children[1])};
     }
 
     @TruffleBoundary
@@ -187,8 +187,8 @@ public abstract class MakeNames extends RBuiltinNode {
     @NodeChild("allowUnderScoreArg")
     protected abstract static class AllowUnderscoreConverter extends RNode {
 
-        @Child private CastLogicalNode castLogical = CastLogicalNodeFactory.create(null, false, false, false);
-        @Child private CastToVectorNode castVector = CastToVectorNodeFactory.create(null, false, false, false, false);
+        @Child private CastLogicalNode castLogical = CastLogicalNodeGen.create(null, false, false, false);
+        @Child private CastToVectorNode castVector = CastToVectorNodeGen.create(null, false, false, false, false);
 
         @Specialization
         protected RAbstractLogicalVector convert(VirtualFrame frame, Object allowUnderScoreArg) {

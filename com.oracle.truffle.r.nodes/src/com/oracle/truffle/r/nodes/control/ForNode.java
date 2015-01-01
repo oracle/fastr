@@ -54,7 +54,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     public static ForNode create(WriteVariableNode cvar, RNode range, RNode body) {
-        return ForNodeFactory.create(cvar, body, range);
+        return ForNodeGen.create(cvar, body, range);
     }
 
     public static ForNode create(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {

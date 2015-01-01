@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * </ol>
  */
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
+@GenerateNodeFactory
 public abstract class Repeat extends RBuiltinNode {
 
     protected abstract Object execute(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);
@@ -84,9 +85,9 @@ public abstract class Repeat extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] arguments) {
         // times is at index 1; length.out, at 2; each, at 3
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
-        arguments[2] = FirstIntNodeFactory.create(CastIntegerNodeFactory.create(arguments[2], true, false, false));
-        arguments[3] = CastIntegerNodeFactory.create(arguments[3], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
+        arguments[2] = FirstIntNodeGen.create(CastIntegerNodeGen.create(arguments[2], true, false, false));
+        arguments[3] = CastIntegerNodeGen.create(arguments[3], true, false, false);
         return arguments;
     }
 

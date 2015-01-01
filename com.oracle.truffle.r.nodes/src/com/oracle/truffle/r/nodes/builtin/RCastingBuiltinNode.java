@@ -40,7 +40,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castComplex(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeFactory.create(null, true, preserveAllAttr, preserveAllAttr));
+            castComplex = insert(CastComplexNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
         return castComplex.executeCast(frame, operand);
     }
@@ -48,7 +48,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castDouble(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, true, preserveAllAttr, preserveAllAttr));
+            castDouble = insert(CastDoubleNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
         return castDouble.executeCast(frame, operand);
     }
@@ -56,7 +56,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castInteger(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, preserveAllAttr, preserveAllAttr));
+            castInteger = insert(CastIntegerNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
         return castInteger.executeCast(frame, operand);
     }
@@ -64,7 +64,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castLogical(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeFactory.create(null, true, preserveAllAttr, preserveAllAttr));
+            castLogical = insert(CastLogicalNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
         return castLogical.executeCast(frame, operand);
     }
@@ -72,7 +72,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castString(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, preserveAllAttr, preserveAllAttr));
+            castString = insert(CastStringNodeGen.create(null, false, true, preserveAllAttr, preserveAllAttr));
         }
         return castString.executeCast(frame, operand);
     }
@@ -80,7 +80,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castRaw(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeFactory.create(null, true, preserveAllAttr, preserveAllAttr));
+            castRaw = insert(CastRawNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
         return castRaw.executeCast(frame, operand);
     }
@@ -88,7 +88,7 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected RList castList(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeFactory.create(null, true, preserveAllAttr, preserveAllAttr));
+            castList = insert(CastListNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
         return castList.executeList(frame, operand);
     }

@@ -22,6 +22,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"...", "na.rm"})
+@GenerateNodeFactory
 public abstract class Prod extends RBuiltinNode {
 
     @Override

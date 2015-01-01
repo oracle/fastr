@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"})
+@GenerateNodeFactory
 public abstract class ShortRowNames extends RBuiltinNode {
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile typeConditionProfile = ConditionProfile.createBinaryProfile();
@@ -47,7 +48,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
 
     @CreateCast({"arguments"})
     public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{children[0], CastIntegerNodeFactory.create(children[1], false, false, false)};
+        return new RNode[]{children[0], CastIntegerNodeGen.create(children[1], false, false, false)};
     }
 
     @SuppressWarnings("unused")

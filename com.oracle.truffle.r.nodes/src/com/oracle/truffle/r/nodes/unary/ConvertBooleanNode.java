@@ -148,7 +148,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         if (node instanceof ConvertBooleanNode) {
             return (ConvertBooleanNode) node;
         }
-        return ConvertBooleanNodeFactory.create(node);
+        return ConvertBooleanNodeGen.create(node);
     }
 
     @Override

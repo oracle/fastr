@@ -27,14 +27,14 @@ public abstract class IsFactorNode extends UnaryNode {
     protected byte isFactor(VirtualFrame frame, Object x) {
         if (typeofNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeofNode = insert(TypeofNodeFactory.create(null));
+            typeofNode = insert(TypeofNodeGen.create(null));
         }
         if (typeofNode.execute(frame, x) != RType.Integer) {
             return RRuntime.LOGICAL_FALSE;
         }
         if (inheritsNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inheritsNode = insert(InheritsNodeFactory.create(null, null));
+            inheritsNode = insert(InheritsNodeGen.create(null, null));
         }
         return inheritsNode.execute(frame, x, RDataFactory.createStringVector(RType.Factor.getName()));
     }

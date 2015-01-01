@@ -32,7 +32,13 @@ public class BasePackage extends RBuiltinPackage {
     public BasePackage() {
         /*
          * Primitive operations (these are really builtins, but not currently defined that way, so
-         * we fake it). N.B. UnaryNotNode is annotated, but not loaded automatically.
+         * we fake it). N.B. UnaryNotNode is annotated, but not loaded automatically because it is
+         * not in the {nodes.builtin.base} package, (along with all the other nodes). A corollary of
+         * this is that all the node classes referenced here here must be annotated with
+         * @GenerateNodeFactory.
+         * 
+         * Arguably this is structurally incorrect and they should all be moved into
+         * {nodes.builtin.base}
          */
         load(UnaryNotNode.class).setRBuiltin(UnaryNotNode.class);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.AddBuiltin.class).arguments(BinaryArithmetic.ADD, UnaryArithmetic.PLUS);

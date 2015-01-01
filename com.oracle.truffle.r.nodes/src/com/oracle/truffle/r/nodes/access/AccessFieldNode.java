@@ -133,7 +133,7 @@ public abstract class AccessFieldNode extends RNode {
         if (fieldSub != null) {
             field = RASTUtils.expectName(fieldSub);
         }
-        return AccessFieldNodeFactory.create(object, field);
+        return AccessFieldNodeGen.create(object, field);
     }
 
 }

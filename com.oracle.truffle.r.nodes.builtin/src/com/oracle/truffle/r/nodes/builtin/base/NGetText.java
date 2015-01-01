@@ -46,7 +46,7 @@ public abstract class NGetText extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{CastIntegerNodeFactory.create(children[0], false, false, false), children[1], children[2], children[3]};
+        return new RNode[]{CastIntegerNodeGen.create(children[0], false, false, false), children[1], children[2], children[3]};
     }
 
     @Specialization(guards = "wrongNVector")

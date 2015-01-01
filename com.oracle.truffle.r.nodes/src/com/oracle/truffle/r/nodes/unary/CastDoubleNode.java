@@ -53,7 +53,7 @@ public abstract class CastDoubleNode extends CastNode {
     private Object castDoubleRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastDouble = insert(CastDoubleNodeFactory.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastDouble = insert(CastDoubleNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastDouble.executeDouble(frame, o);
     }

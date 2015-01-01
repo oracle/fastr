@@ -47,7 +47,7 @@ public abstract class CastLogicalNode extends CastNode {
     private Object castLogicalRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastLogical = insert(CastLogicalNodeFactory.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastLogical = insert(CastLogicalNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastLogical.executeLogical(frame, o);
     }

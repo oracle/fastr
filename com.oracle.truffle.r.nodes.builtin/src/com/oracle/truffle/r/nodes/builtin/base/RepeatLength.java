@@ -29,7 +29,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // length.out is at index 1 of arguments
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
+        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
         return arguments;
     }
 

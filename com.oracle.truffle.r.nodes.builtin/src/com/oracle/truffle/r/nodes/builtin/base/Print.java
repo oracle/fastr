@@ -41,7 +41,7 @@ public abstract class Print extends RInvisibleBuiltinNode {
                     ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance),
                     ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
 
-    @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, null, false);
+    @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeGen.create(null, null, null, null, false);
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);

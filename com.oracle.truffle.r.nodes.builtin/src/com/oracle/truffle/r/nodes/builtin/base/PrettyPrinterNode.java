@@ -33,11 +33,11 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleVectorElementNodeFactory;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintDimNodeFactory;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVector2DimNodeFactory;
-import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVectorMultiDimNodeFactory;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleListElementNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleVectorElementNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintDimNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVector2DimNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVectorMultiDimNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -87,7 +87,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private String prettyPrintAttributes(Object o) {
         if (attributePrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            attributePrettyPrinter = insert(PrettyPrinterNodeFactory.create(null, null, null, null, true));
+            attributePrettyPrinter = insert(PrettyPrinterNodeGen.create(null, null, null, null, true));
         }
         return (String) attributePrettyPrinter.executeString(currentFrame(), o, null, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE);
     }
@@ -95,7 +95,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private String prettyPrintRecursive(Object o, Object listElementName, byte quote, byte right) {
         if (recursivePrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursivePrettyPrinter = insert(PrettyPrinterNodeFactory.create(null, null, null, null, isPrintingAttributes()));
+            recursivePrettyPrinter = insert(PrettyPrinterNodeGen.create(null, null, null, null, isPrintingAttributes()));
         }
         return (String) recursivePrettyPrinter.executeString(currentFrame(), o, listElementName, quote, right);
     }
@@ -103,7 +103,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private String prettyPrintSingleListElement(Object o, Object listElementName, byte quote, byte right) {
         if (singleListElementPrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            singleListElementPrettyPrinter = insert(PrettyPrinterSingleListElementNodeFactory.create(null, null, null, null));
+            singleListElementPrettyPrinter = insert(PrettyPrinterSingleListElementNodeGen.create(null, null, null, null));
         }
         return (String) singleListElementPrettyPrinter.executeString(currentFrame(), o, listElementName, quote, right);
     }
@@ -111,7 +111,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private String prettyPrintSingleVectorElement(Object o, byte isQuoted) {
         if (singleVectorElementPrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null, null));
+            singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeGen.create(null, null));
         }
         return (String) singleVectorElementPrettyPrinter.executeString(null, o, isQuoted);
     }
@@ -119,7 +119,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private String printVectorMultiDim(RAbstractVector vector, boolean isListOrStringVector, boolean isComplexOrRawVector, byte quote) {
         if (multiDimPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            multiDimPrinter = insert(PrintVectorMultiDimNodeFactory.create(null, null, null, null));
+            multiDimPrinter = insert(PrintVectorMultiDimNodeGen.create(null, null, null, null));
         }
         StringBuilder sb = new StringBuilder();
         sb.append((String) multiDimPrinter.executeString(currentFrame(), vector, RRuntime.asLogical(isListOrStringVector), RRuntime.asLogical(isComplexOrRawVector), quote));
@@ -1037,14 +1037,14 @@ public abstract class PrettyPrinterNode extends RNode {
         private void initCast(Object listElementName) {
             if (prettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                prettyPrinter = insert(PrettyPrinterNodeFactory.create(null, null, null, null, false));
+                prettyPrinter = insert(PrettyPrinterNodeGen.create(null, null, null, null, false));
             }
         }
 
         private void initCast() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
             }
         }
 
@@ -1174,7 +1174,7 @@ public abstract class PrettyPrinterNode extends RNode {
         private String prettyPrintRecursive(Object o, byte isQuoted) {
             if (recursivePrettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursivePrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null, null));
+                recursivePrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeGen.create(null, null));
             }
             return (String) recursivePrettyPrinter.executeString(null, o, isQuoted);
         }
@@ -1274,7 +1274,7 @@ public abstract class PrettyPrinterNode extends RNode {
         private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                vector2DimPrinter = insert(PrintVector2DimNodeFactory.create(null, null, null, null, null, null));
+                vector2DimPrinter = insert(PrintVector2DimNodeGen.create(null, null, null, null, null, null));
             }
             return (String) vector2DimPrinter.executeString(currentFrame(), vector, dimensions, offset, isListOrStringVector, isComplexOrRawVector, isQuoted);
         }
@@ -1282,7 +1282,7 @@ public abstract class PrettyPrinterNode extends RNode {
         private String printDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header, byte isQuoted) {
             if (dimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dimPrinter = insert(PrintDimNodeFactory.create(null, null, null, null, null, null, null, null));
+                dimPrinter = insert(PrintDimNodeGen.create(null, null, null, null, null, null, null, null));
             }
             return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header, isQuoted);
         }
@@ -1351,7 +1351,7 @@ public abstract class PrettyPrinterNode extends RNode {
         private String prettyPrintSingleVectorElement(Object o, byte isQuoted) {
             if (singleVectorElementPrettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null, null));
+                singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeGen.create(null, null));
             }
             return (String) singleVectorElementPrettyPrinter.executeString(currentFrame(), o, isQuoted);
         }
@@ -1735,7 +1735,7 @@ public abstract class PrettyPrinterNode extends RNode {
         private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                vector2DimPrinter = insert(PrintVector2DimNodeFactory.create(null, null, null, null, null, null));
+                vector2DimPrinter = insert(PrintVector2DimNodeGen.create(null, null, null, null, null, null));
             }
             return (String) vector2DimPrinter.executeString(currentFrame(), vector, dimensions, offset, isListOrStringVector, isComplexOrRawVector, isQuoted);
         }
@@ -1744,7 +1744,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         byte isQuoted) {
             if (dimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dimPrinter = insert(PrintDimNodeFactory.create(null, null, null, null, null, null, null, null));
+                dimPrinter = insert(PrintDimNodeGen.create(null, null, null, null, null, null, null, null));
             }
             return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header, isQuoted);
         }

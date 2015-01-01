@@ -44,7 +44,7 @@ abstract class GetNamesNode extends RNode {
     private RStringVector getNamesRecursive(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, Object names, NACheck namesCheck) {
         if (getNamesNodeRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNodeRecursive = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null));
+            getNamesNodeRecursive = insert(GetNamesNodeGen.create(namesCheck, null, null, null, null));
         }
         return (RStringVector) getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel, names);
     }

@@ -51,7 +51,7 @@ public abstract class ToStringNode extends UnaryNode {
     private String toStringRecursive(VirtualFrame frame, Object o) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringNodeFactory.create(null, isQuotes(), getSeparator(), isAppendIntL()));
+            recursiveToString = insert(ToStringNodeGen.create(null, isQuotes(), getSeparator(), isAppendIntL()));
         }
         return recursiveToString.executeString(frame, o);
     }
