@@ -60,6 +60,17 @@ public class REnvVars {
         envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
         envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
+        String rLibsUserProperty = System.getenv("R_LIBS_USER");
+        if (rLibsUserProperty == null) {
+            String os = System.getProperty("os.name");
+            if (os.contains("Mac OS")) {
+                rLibsUserProperty = "~/Library/R/%v/library";
+            } else {
+                rLibsUserProperty = "~/R/%p-library/%v";
+            }
+            envVars.put("R_LIBS_USER", rLibsUserProperty);
+            // This gets expanded by R code in the system profile
+        }
 
         if (!RCmdOptions.NO_ENVIRON.getValue()) {
             String siteFile = envVars.get("R_ENVIRON");
