@@ -2596,6 +2596,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ signif(0.5551, 2) }");
         assertEval("{ signif(0.555, 0) }");
         assertEval("{ signif(0.555, -1) }");
+        assertEval("{ signif(0.0005551, 2) }");
     }
 
     @Test

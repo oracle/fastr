@@ -14634,6 +14634,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSignif_85c6345496eadc0704051bb403224287() {
+        assertEval("{ signif(0.0005551, 2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSimpleRm_ca7a9f28edcdd3c7bf66a0b3735a11dc() {
         assertEval("{ x <- 200 ; rm(\"x\") }");
     }
