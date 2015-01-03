@@ -82,6 +82,12 @@ public final class REngine implements RContext.Engine {
      */
     private static boolean initialized;
 
+    /**
+     * A temporary mechanism for suppressing warnings while evaluating the system profile, until the
+     * proper mechanism is understood.
+     */
+    private static boolean reportWarnings;
+
     private REngine() {
     }
 
@@ -118,11 +124,14 @@ public final class REngine implements RContext.Engine {
             RVersionInfo.initialize();
             RRNG.initialize();
             TempDirPath.initialize();
-            LibPaths.initialize();
             ROptions.initialize();
             RProfile.initialize();
-            // eval the system profile
+            /*
+             * eval the system profile. Experimentally GnuR does not report warnings during this
+             * evaluation, but does for the site/user profiles
+             */
             singleton.parseAndEval(RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+            reportWarnings = true;
             REnvironment.packagesInitialize(RPackages.initialize());
             RPackageVariables.initialize(); // TODO replace with R code
             Source siteProfile = RProfile.siteProfile();
@@ -475,6 +484,9 @@ public final class REngine implements RContext.Engine {
     @TruffleBoundary
     private static void reportWarnings(boolean inAddition) {
         List<String> evalWarnings = singleton.context.extractEvalWarnings();
+        if (!reportWarnings) {
+            return;
+        }
         ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
         // GnuR outputs warnings to the stderr, so we do too
         if (evalWarnings != null && evalWarnings.size() > 0) {

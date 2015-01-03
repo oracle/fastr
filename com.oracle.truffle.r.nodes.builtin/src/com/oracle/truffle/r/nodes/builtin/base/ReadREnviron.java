@@ -31,8 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "readRenviron", kind = SUBSTITUTE, parameterNames = "path")
-// TODO INTERNAL
+@RBuiltin(name = "readRenviron", kind = INTERNAL, parameterNames = "path")
 public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector")
@@ -49,6 +48,11 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }
         return result;
+    }
+
+    @Fallback
+    protected Object doReadEnviron(@SuppressWarnings("unused") Object vec) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MUST_BE_STRING, "x");
     }
 
     public static boolean lengthOneCVector(RAbstractStringVector vec) {

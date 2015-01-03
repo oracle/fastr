@@ -27,8 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,19 +39,13 @@ public abstract class NChar extends RBuiltinNode {
 
     @Child private CastStringNode convertString;
 
-    @Override
-    public RNode[] getParameterValues() {
-        // x, type = "chars", allowNA = FALSE
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create("chars"), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-    }
-
     private String coerceContent(VirtualFrame frame, Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeGen.create(null, false, true, false, false));
+            convertString = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
         try {
-            return (String) convertString.executeCast(frame, content);
+            return (String) convertString.executeString(frame, content);
         } catch (ConversionFailedException e) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
         }
@@ -61,35 +53,49 @@ public abstract class NChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector rev(VirtualFrame frame, RNull value, String type, byte allowNA) {
+    protected RIntVector nchar(VirtualFrame frame, RNull value, String type, byte allowNA) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected int rev(VirtualFrame frame, int value, String type, byte allowNA) {
+    protected int nchar(VirtualFrame frame, int value, String type, byte allowNA) {
         controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected int rev(VirtualFrame frame, double value, String type, byte allowNA) {
+    protected int nchar(VirtualFrame frame, double value, String type, byte allowNA) {
         controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected int rev(VirtualFrame frame, byte value, String type, byte allowNA) {
+    protected int nchar(VirtualFrame frame, byte value, String type, byte allowNA) {
         controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected RIntVector rev(RStringVector vector, String type, byte allowNA) {
+    @Specialization(guards = "lengthZero")
+    protected RIntVector ncharL0(RAbstractStringVector vector, String type, byte allowNA) {
+        controlVisibility();
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "lengthOne")
+    protected int ncharL1(RAbstractStringVector vector, String type, byte allowNA) {
+        controlVisibility();
+        return vector.getDataAt(0).length();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "lengthGT1")
+    protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA) {
         controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];
@@ -100,14 +106,38 @@ public abstract class NChar extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected RIntVector rev(VirtualFrame frame, RAbstractVector vector, String type, byte allowNA) {
+    @Fallback
+    protected RIntVector nchar(VirtualFrame frame, Object obj, Object type, Object allowNA) {
         controlVisibility();
-        int len = vector.getLength();
-        int[] result = new int[len];
-        for (int i = 0; i < len; i++) {
-            result[i] = coerceContent(frame, vector.getDataAtAsObject(i)).length();
+        if (obj instanceof RFactor) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_CHAR_VECTOR, "nchar");
         }
-        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
+        if (obj instanceof RAbstractVector) {
+            RAbstractVector vector = (RAbstractVector) obj;
+            int len = vector.getLength();
+            int[] result = new int[len];
+            for (int i = 0; i < len; i++) {
+                result[i] = coerceContent(frame, vector.getDataAtAsObject(i)).length();
+            }
+            return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
+        }
     }
+
+    @SuppressWarnings("unused")
+    public static boolean lengthGT1(RAbstractStringVector vector, String type, byte allowNA) {
+        return vector.getLength() > 1;
+    }
+
+    @SuppressWarnings("unused")
+    public static boolean lengthOne(RAbstractStringVector vector, String type, byte allowNA) {
+        return vector.getLength() == 1;
+    }
+
+    @SuppressWarnings("unused")
+    public static boolean lengthZero(RAbstractStringVector vector, String type, byte allowNA) {
+        return vector.getLength() == 0;
+    }
+
 }

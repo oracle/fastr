@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import java.lang.reflect.*;
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -106,6 +109,41 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     @Override
     public final double executeDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         return executeDouble(frame);
+    }
+
+    /**
+     * WORKAROUND for recursive sharing bug. A shallow copy is insufficient because is can cause
+     * shared state in the {@code arguments} field to be overwritten during a re-specialization.
+     * This is an ugly fix that uses reflection to update the hidden {@code arguments} field, and
+     * should go away with an upcoming Truffle fix.
+     */
+    @Override
+    public Node copy() {
+        RBuiltinNode copy = (RBuiltinNode) super.copy();
+        RNode[] args = getArguments();
+        RNode[] copyArgs = Arrays.copyOf(args, args.length);
+        try {
+            Field field = getArgumentsField(getClass());
+            field.setAccessible(true);
+            field.set(copy, copyArgs);
+        } catch (IllegalAccessException | NoSuchFieldException ex) {
+            Utils.fatalError("failed to update RBuiltinNode.arguments");
+        }
+        return copy;
+    }
+
+    /**
+     * WORKAROUND support method.
+     */
+    private Field getArgumentsField(Class<?> klass) throws NoSuchFieldException {
+        if (klass == RBuiltinNode.class) {
+            throw new NoSuchFieldException();
+        }
+        try {
+            return klass.getDeclaredField("arguments");
+        } catch (NoSuchFieldException ex) {
+            return getArgumentsField(klass.getSuperclass());
+        }
     }
 
     private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {

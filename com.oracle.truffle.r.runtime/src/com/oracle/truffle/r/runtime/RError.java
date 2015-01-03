@@ -590,6 +590,7 @@ public final class RError extends RuntimeException {
         STRING_ARGUMENT_REQUIRED("string argument required"),
         FILE_APPEND_TO("nothing to append to"),
         FILE_APPEND_WRITE("write error during file append"),
+        REQUIRES_CHAR_VECTOR("'%s' requires a character vector"),
         NOT_VALID_NAMES("not a valid named list");
 
         public final String message;
