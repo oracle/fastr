@@ -61,7 +61,6 @@ public abstract class Substr extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!emptyArg", "!wrongParams"})
-    @TruffleBoundary
     @ExplodeLoop
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         controlVisibility();
