@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 import java.util.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 // Implements default S3 method
@@ -56,7 +55,6 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         return vec;
     }
@@ -64,7 +62,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        if (true || bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             Utils.NonRecursiveHashSet<String> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
             String[] data = new String[vec.getLength()];
             int ind = 0;
@@ -219,35 +217,58 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        IntArray dataList = new IntArray(vec.getLength());
-        for (int i = 0; i < vec.getLength(); i++) {
-            int val = vec.getDataAt(i);
-            if (!dataList.contains(val)) {
-                dataList.add(val);
+        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+            Utils.NonRecursiveHashSetInt set = new Utils.NonRecursiveHashSetInt(vec.getLength());
+            int[] data = new int[vec.getLength()];
+            int ind = 0;
+            for (int i = 0; i < vec.getLength(); i++) {
+                int val = vec.getDataAt(i);
+                if (!set.add(val)) {
+                    data[ind++] = val;
+                }
             }
+            return RDataFactory.createIntVector(Arrays.copyOf(data, ind), vec.isComplete());
+        } else {
+            IntArray dataList = new IntArray(vec.getLength());
+            for (int i = 0; i < vec.getLength(); i++) {
+                int val = vec.getDataAt(i);
+                if (!dataList.contains(val)) {
+                    dataList.add(val);
+                }
+            }
+            return RDataFactory.createIntVector(dataList.toArray(), vec.isComplete());
         }
-        return RDataFactory.createIntVector(dataList.toArray(), vec.isComplete());
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        DoubleArray dataList = new DoubleArray(vec.getLength());
-        for (int i = 0; i < vec.getLength(); i++) {
-            double val = vec.getDataAt(i);
-            if (!dataList.contains(val)) {
-                dataList.add(val);
+        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+            Utils.NonRecursiveHashSetDouble set = new Utils.NonRecursiveHashSetDouble(vec.getLength());
+            double[] data = new double[vec.getLength()];
+            int ind = 0;
+            for (int i = 0; i < vec.getLength(); i++) {
+                double val = vec.getDataAt(i);
+                if (!set.add(val)) {
+                    data[ind++] = val;
+                }
             }
+            return RDataFactory.createDoubleVector(Arrays.copyOf(data, ind), vec.isComplete());
+        } else {
+            DoubleArray dataList = new DoubleArray(vec.getLength());
+            for (int i = 0; i < vec.getLength(); i++) {
+                double val = vec.getDataAt(i);
+                if (!dataList.contains(val)) {
+                    dataList.add(val);
+                }
+            }
+            return RDataFactory.createDoubleVector(dataList.toArray(), vec.isComplete());
         }
-        return RDataFactory.createDoubleVector(dataList.toArray(), vec.isComplete());
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
@@ -261,30 +282,55 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
-        for (int i = 0; i < vec.getLength(); i++) {
-            RComplex s = vec.getDataAt(i);
-            if (!dataList.contains(s)) {
-                dataList.add(s);
+        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+            Utils.NonRecursiveHashSet<RComplex> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
+            double[] data = new double[vec.getLength() * 2];
+            int ind = 0;
+            for (int i = 0; i < vec.getLength(); i++) {
+                RComplex val = vec.getDataAt(i);
+                if (!set.add(val)) {
+                    data[ind++] = val.getRealPart();
+                    data[ind++] = val.getImaginaryPart();
+                }
             }
+            return RDataFactory.createComplexVector(Arrays.copyOf(data, ind), vec.isComplete());
+        } else {
+            DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
+            for (int i = 0; i < vec.getLength(); i++) {
+                RComplex s = vec.getDataAt(i);
+                if (!dataList.contains(s)) {
+                    dataList.add(s);
+                }
+            }
+            return RDataFactory.createComplexVector(dataList.toArray(), vec.isComplete());
         }
-        return RDataFactory.createComplexVector(dataList.toArray(), vec.isComplete());
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        ByteArray dataList = new ByteArray(vec.getLength());
-        for (int i = 0; i < vec.getLength(); i++) {
-            byte val = vec.getDataAt(i).getValue();
-            if (!dataList.contains(val)) {
-                dataList.add(val);
+        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+            Utils.NonRecursiveHashSet<RRaw> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
+            byte[] data = new byte[vec.getLength()];
+            int ind = 0;
+            for (int i = 0; i < vec.getLength(); i++) {
+                RRaw val = vec.getDataAt(i);
+                if (!set.add(val)) {
+                    data[ind++] = val.getValue();
+                }
             }
+            return RDataFactory.createRawVector(Arrays.copyOf(data, ind));
+        } else {
+            ByteArray dataList = new ByteArray(vec.getLength());
+            for (int i = 0; i < vec.getLength(); i++) {
+                byte val = vec.getDataAt(i).getValue();
+                if (!dataList.contains(val)) {
+                    dataList.add(val);
+                }
+            }
+            return RDataFactory.createRawVector(dataList.toArray());
         }
-        return RDataFactory.createRawVector(dataList.toArray());
     }
 
 }
