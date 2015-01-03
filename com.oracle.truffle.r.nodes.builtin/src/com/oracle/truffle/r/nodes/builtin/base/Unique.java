@@ -63,14 +63,18 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            LinkedHashSet<String> set = new LinkedHashSet<>();
+        if (true || bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+            Utils.NonRecursiveHashSet<String> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
+            String[] data = new String[vec.getLength()];
+            int ind = 0;
             for (int i = 0; i < vec.getLength(); i++) {
-                set.add(vec.getDataAt(i));
+                String val = vec.getDataAt(i);
+                if (!set.add(val)) {
+                    data[ind++] = val;
+                }
             }
-            return RDataFactory.createStringVector(set.toArray(new String[set.size()]), vec.isComplete());
+            return RDataFactory.createStringVector(Arrays.copyOf(data, ind), vec.isComplete());
         } else {
             ArrayList<String> dataList = new ArrayList<>(vec.getLength());
             for (int i = 0; i < vec.getLength(); i++) {

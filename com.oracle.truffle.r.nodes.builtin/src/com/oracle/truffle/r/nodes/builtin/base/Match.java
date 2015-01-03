@@ -117,7 +117,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMapInt hashTable = new NonRecursiveHashMapInt(table.getLength());
+            Utils.NonRecursiveHashMapInt hashTable = new Utils.NonRecursiveHashMapInt(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 int entry = table.getDataAt(i);
                 if (!RRuntime.isNA(entry)) {
@@ -158,7 +158,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMapDouble hashTable = new NonRecursiveHashMapDouble(table.getLength());
+            Utils.NonRecursiveHashMapDouble hashTable = new Utils.NonRecursiveHashMapDouble(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 int entry = table.getDataAt(i);
                 if (!RRuntime.isNA(entry)) {
@@ -199,7 +199,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMapDouble hashTable = new NonRecursiveHashMapDouble(table.getLength());
+            Utils.NonRecursiveHashMapDouble hashTable = new Utils.NonRecursiveHashMapDouble(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 double entry = table.getDataAt(i);
                 if (!RRuntime.isNA(entry)) {
@@ -240,7 +240,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (true || bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMapDouble hashTable = new NonRecursiveHashMapDouble(table.getLength());
+            Utils.NonRecursiveHashMapDouble hashTable = new Utils.NonRecursiveHashMapDouble(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 double entry = table.getDataAt(i);
                 if (!RRuntime.isNAorNaN(entry)) {
@@ -303,7 +303,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMap<String> hashTable = new NonRecursiveHashMap<>(table.getLength());
+            Utils.NonRecursiveHashMap<String> hashTable = new Utils.NonRecursiveHashMap<>(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 String entry = table.getDataAt(i);
                 if (!RRuntime.isNA(entry)) {
@@ -372,7 +372,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMap<String> hashTable = new NonRecursiveHashMap<>(table.getLength());
+            Utils.NonRecursiveHashMap<String> hashTable = new Utils.NonRecursiveHashMap<>(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 String entry = castString(frame, table.getDataAtAsObject(i));
                 if (!RRuntime.isNA(entry)) {
@@ -413,7 +413,7 @@ public abstract class Match extends RBuiltinNode {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         if (bigProfile.profile(x.getLength() * (long) table.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashMap<RComplex> hashTable = new NonRecursiveHashMap<>(table.getLength());
+            Utils.NonRecursiveHashMap<RComplex> hashTable = new Utils.NonRecursiveHashMap<>(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 RComplex entry = table.getDataAt(i);
                 if (!RRuntime.isNA(entry)) {
@@ -474,217 +474,6 @@ public abstract class Match extends RBuiltinNode {
      */
     private static boolean setCompleteState(boolean matchAll, int nomatch) {
         return nomatch != RRuntime.INT_NA || matchAll ? RDataFactory.COMPLETE_VECTOR : RDataFactory.INCOMPLETE_VECTOR;
-    }
-
-    // simple implementations of non-recursive hash-maps to enable compilation
-    // TODO: consider replacing with a more efficient library implementation
-
-    private static class NonRecursiveHashMap<KEY> {
-
-        private Object[] keys;
-        private int[] values;
-
-        public NonRecursiveHashMap(int approxCapacity) {
-            keys = new Object[Math.max(approxCapacity, 1)];
-            values = new int[Math.max(approxCapacity, 1)];
-        }
-
-        public void put(KEY key, int value) {
-            int ind = Math.abs(key.hashCode()) % keys.length;
-            int firstInd = ind;
-            while (true) {
-                if (keys[ind] == null) {
-                    keys[ind] = key;
-                    values[ind] = value;
-                    break;
-                } else if (key.equals(keys[ind])) {
-                    values[ind] = value;
-                    break;
-                } else {
-                    ind = (ind + 1) % keys.length;
-                    if (ind == firstInd) {
-                        // resize
-                        Object[] newKeys = new Object[keys.length + keys.length / 2];
-                        int[] newValues = new int[values.length + values.length / 2];
-                        for (int i = 0; i < keys.length; i++) {
-                            if (keys[i] != null) {
-                                int tmpInd = Math.abs(keys[i].hashCode()) % newKeys.length;
-                                while (true) {
-                                    if (newKeys[tmpInd] == null) {
-                                        newKeys[tmpInd] = keys[i];
-                                        newValues[tmpInd] = values[i];
-                                    } else {
-                                        assert !keys[i].equals(newKeys[tmpInd]);
-                                        tmpInd = (tmpInd + 1) % newKeys.length;
-                                    }
-                                }
-                            }
-                        }
-
-                        keys = newKeys;
-                        values = newValues;
-
-                        // start hashing from the beginning
-                        ind = firstInd;
-                    }
-                }
-            }
-        }
-
-        public int get(KEY key) {
-            int ind = Math.abs(key.hashCode()) % keys.length;
-            int firstInd = ind;
-            while (true) {
-                if (key.equals(keys[ind])) {
-                    return values[ind];
-                } else {
-                    ind = (ind + 1) % keys.length;
-                    if (ind == firstInd || keys[ind] == null) {
-                        return -1;
-                    }
-                }
-            }
-        }
-    }
-
-    private static class NonRecursiveHashMapDouble {
-
-        private double[] keys;
-        private int[] values;
-
-        public NonRecursiveHashMapDouble(int approxCapacity) {
-            keys = new double[Math.max(approxCapacity, 1)];
-            Arrays.fill(keys, RRuntime.DOUBLE_NA);
-            values = new int[Math.max(approxCapacity, 1)];
-        }
-
-        public void put(double key, int value) {
-            int ind = Math.abs(Double.hashCode(key)) % keys.length;
-            int firstInd = ind;
-            while (true) {
-                if (RRuntime.isNAorNaN(keys[ind])) {
-                    keys[ind] = key;
-                    values[ind] = value;
-                    break;
-                } else if (key == keys[ind]) {
-                    values[ind] = value;
-                    break;
-                } else {
-                    ind = (ind + 1) % keys.length;
-                    if (ind == firstInd) {
-                        // resize
-                        double[] newKeys = new double[keys.length + keys.length / 2];
-                        Arrays.fill(newKeys, RRuntime.DOUBLE_NA);
-                        int[] newValues = new int[values.length + values.length / 2];
-                        for (int i = 0; i < keys.length; i++) {
-                            if (!RRuntime.isNAorNaN(keys[i])) {
-                                int tmpInd = Math.abs(Double.hashCode(keys[i])) % newKeys.length;
-                                while (true) {
-                                    if (RRuntime.isNAorNaN(newKeys[tmpInd])) {
-                                        newKeys[tmpInd] = keys[i];
-                                        newValues[tmpInd] = values[i];
-                                    } else {
-                                        assert keys[i] != newKeys[tmpInd];
-                                        tmpInd = (tmpInd + 1) % newKeys.length;
-                                    }
-                                }
-                            }
-                        }
-
-                        keys = newKeys;
-                        values = newValues;
-
-                        // start hashing from the beginning
-                        ind = firstInd;
-                    }
-                }
-            }
-        }
-
-        public int get(double key) {
-            int ind = Math.abs(Double.hashCode(key)) % keys.length;
-            int firstInd = ind;
-            while (true) {
-                if (key == keys[ind]) {
-                    return values[ind];
-                } else {
-                    ind = (ind + 1) % keys.length;
-                    if (ind == firstInd || RRuntime.isNAorNaN(keys[ind])) {
-                        return -1;
-                    }
-                }
-            }
-        }
-    }
-
-    private static class NonRecursiveHashMapInt {
-
-        private int[] keys;
-        private int[] values;
-
-        public NonRecursiveHashMapInt(int approxCapacity) {
-            keys = new int[Math.max(approxCapacity, 1)];
-            Arrays.fill(keys, RRuntime.INT_NA);
-            values = new int[Math.max(approxCapacity, 1)];
-        }
-
-        public void put(int key, int value) {
-            int ind = Math.abs(Integer.hashCode(key)) % keys.length;
-            int firstInd = ind;
-            while (true) {
-                if (RRuntime.isNA(keys[ind])) {
-                    keys[ind] = key;
-                    values[ind] = value;
-                    break;
-                } else if (key == keys[ind]) {
-                    values[ind] = value;
-                    break;
-                } else {
-                    ind = (ind + 1) % keys.length;
-                    if (ind == firstInd) {
-                        // resize
-                        int[] newKeys = new int[keys.length + keys.length / 2];
-                        Arrays.fill(newKeys, RRuntime.INT_NA);
-                        int[] newValues = new int[values.length + values.length / 2];
-                        for (int i = 0; i < keys.length; i++) {
-                            if (!RRuntime.isNA(keys[i])) {
-                                int tmpInd = Math.abs(Integer.hashCode(keys[i])) % newKeys.length;
-                                while (true) {
-                                    if (RRuntime.isNA(newKeys[tmpInd])) {
-                                        newKeys[tmpInd] = keys[i];
-                                        newValues[tmpInd] = values[i];
-                                    } else {
-                                        assert keys[i] != newKeys[tmpInd];
-                                        tmpInd = (tmpInd + 1) % newKeys.length;
-                                    }
-                                }
-                            }
-                        }
-
-                        keys = newKeys;
-                        values = newValues;
-
-                        // start hashing from the beginning
-                        ind = firstInd;
-                    }
-                }
-            }
-        }
-
-        public int get(int key) {
-            int ind = Math.abs(Integer.hashCode(key)) % keys.length;
-            int firstInd = ind;
-            while (true) {
-                if (key == keys[ind]) {
-                    return values[ind];
-                } else {
-                    ind = (ind + 1) % keys.length;
-                    if (ind == firstInd || RRuntime.isNA(keys[ind])) {
-                        return -1;
-                    }
-                }
-            }
-        }
     }
 
 }

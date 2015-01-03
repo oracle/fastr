@@ -399,7 +399,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (posNACheck.check(pos)) {
                 // ignore
                 numNAs++;
-                continue;
             } else if (pos < 0) {
                 if (-pos > highestPos) {
                     highestPos = -pos;
