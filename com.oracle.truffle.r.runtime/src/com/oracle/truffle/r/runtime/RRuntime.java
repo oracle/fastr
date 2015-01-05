@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -129,6 +129,16 @@ public class RRuntime {
     public static final String DROP_DIM_ARG_NAME = "drop";
 
     public static final String NULL = "NULL";
+
+    @CompilationFinal private static final String[] numberStringCache = new String[1024];
+    private static final int MIN_CACHED_NUMBER = -numberStringCache.length / 2;
+    private static final int MAX_CACHED_NUMBER = numberStringCache.length / 2 - 1;
+
+    static {
+        for (int i = 0; i < numberStringCache.length; i++) {
+            numberStringCache[i] = String.valueOf(i + MIN_CACHED_NUMBER);
+        }
+    }
 
     /**
      * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the
@@ -444,7 +454,13 @@ public class RRuntime {
 
     @TruffleBoundary
     public static String intToStringNoCheck(int operand, boolean appendL) {
-        return String.valueOf(operand) + (appendL ? "L" : "");
+        String result;
+        if (operand >= MIN_CACHED_NUMBER && operand <= MAX_CACHED_NUMBER) {
+            result = numberStringCache[operand - MIN_CACHED_NUMBER];
+        } else {
+            result = String.valueOf(operand);
+        }
+        return appendL ? result + "L" : result;
     }
 
     public static String intToString(int operand, boolean appendL) {
@@ -493,7 +509,7 @@ public class RRuntime {
     @TruffleBoundary
     public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
         if (doubleIsInt(operand)) {
-            return String.valueOf((int) operand);
+            return intToStringNoCheck((int) operand, false);
         }
         if (operand == Double.POSITIVE_INFINITY) {
             return "Inf";
@@ -609,23 +625,11 @@ public class RRuntime {
     @TruffleBoundary
     public static String toString(Object object) {
         if (object instanceof Integer) {
-            int intValue = (int) object;
-            if (isNA(intValue)) {
-                return STRING_NA;
-            }
-            return String.valueOf(intValue);
+            return intToString((int) object, false);
         } else if (object instanceof Double) {
-            double doubleValue = (double) object;
-            if (isNA(doubleValue)) {
-                return STRING_NA;
-            }
-            return String.valueOf(doubleValue);
+            return doubleToString((double) object);
         } else if (object instanceof Byte) {
-            byte logicalValue = (byte) object;
-            if (isNA(logicalValue)) {
-                return STRING_NA;
-            }
-            return logicalValue == LOGICAL_TRUE ? "TRUE" : "FALSE";
+            return logicalToString((byte) object);
         }
 
         return object.toString();
