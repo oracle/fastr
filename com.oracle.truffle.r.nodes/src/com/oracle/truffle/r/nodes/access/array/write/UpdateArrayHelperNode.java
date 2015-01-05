@@ -1127,7 +1127,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private ConditionProfile naOrNegativeProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile naOrNegativeProfile = ConditionProfile.createBinaryProfile();
 
     private boolean seenNaOrNegative(int p, RAbstractContainer value) {
         if (naOrNegativeProfile.profile(posNACheck.check(p) || p < 0)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     private final NACheck na = NACheck.create();
 
-    final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
     public UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
@@ -442,7 +442,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         private final BinaryArithmeticFactory factory;
         @Child private BinaryArithmetic arithmetic;
         private final NACheck na;
-        final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
         public MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;

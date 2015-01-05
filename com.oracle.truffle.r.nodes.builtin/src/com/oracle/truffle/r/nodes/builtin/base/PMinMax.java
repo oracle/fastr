@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,8 +52,8 @@ public abstract class PMinMax extends RBuiltinNode {
     private final BinaryArithmeticFactory factory;
     @Child private BinaryArithmetic op;
     private final NACheck na = NACheck.create();
-    final ConditionProfile lengthProfile = ConditionProfile.createBinaryProfile();
-    final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile lengthProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -320,7 +320,7 @@ public abstract class PMinMax extends RBuiltinNode {
         private final BinaryArithmeticFactory factory;
         @Child private BinaryArithmetic op;
         private final NACheck na;
-        final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
         public MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
