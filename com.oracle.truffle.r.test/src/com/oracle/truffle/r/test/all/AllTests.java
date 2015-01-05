@@ -10884,6 +10884,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatch_b50f1d33b29ff7afba636387c42ef616() {
+        assertEval("{ match(c(1,2,3,\"NA\",NA), c(NA,\"NA\",1,2,3,4,5,6,7,8,9,10)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_a132643426f74e629d86da25ecacc838() {
+        assertEval("{ match(c(1L,2L,3L,1L,NA), c(NA,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_33a18a5bdf27b3345cee51e929f5b4dc() {
+        assertEval("{ match(c(1,2,3,NaN,NA,1), c(1,NA,NaN,1,2,3,4,5,6,7,8,9,10)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_855a0f72221f46a72785f993c09e9fa4() {
+        assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,\"NA\",NA), c(NA,\"NA\",1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_5e8519b709b3603d9464fed5719d9761() {
+        assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,1L,NA), c(NA,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L,0L,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L,0L,1L,1L,2L,3L,4L,5L,6L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_76666ec99977740465000f7573ac75ea() {
+        assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,NaN,NA,1), c(1,NA,NaN,1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatch_e88919f986241bc776830b31c651476c() {
         assertEval("{ match(factor(c(\"a\", \"b\")), factor(c(\"c\", \"b\", \"a\", \"b\", \"c\", \"a\"))) }");
     }
