@@ -18,20 +18,15 @@
 
 load <- function (file, envir = parent.frame(), verbose = FALSE)
 {
-	# TODO: using "closeFile" necessary only as long as on.exit does not work properly	
-	closeFile = FALSE
-	if (is.character(file)) {
+    if (is.character(file)) {
         ## files are allowed to be of an earlier format
         ## gzfile can open gzip, bzip2, xz and uncompressed files.
         con <- gzfile(file)
-		# TODO: on.exit does not work properly	
-#        on.exit(close(con))
-		closeFile = TRUE
-		## Since the connection is not open this opens it in binary mode
+        on.exit(close(con))
+        ## Since the connection is not open this opens it in binary mode
         ## and closes it again.
         magic <- readChar(con, 5L, useBytes = TRUE)
-#    if (!length(magic)) stop("empty (zero-byte) input file")
-    if (!length(magic)) { if (closeFile == TRUE) close(con) ; stop("empty (zero-byte) input file") }
+	if (!length(magic)) stop("empty (zero-byte) input file")
 	if (!grepl("RD[AX]2\n", magic)) {
             ## a check while we still know the call to load()
             if(grepl("RD[ABX][12]\r", magic))
@@ -43,22 +38,17 @@ load <- function (file, envir = parent.frame(), verbose = FALSE)
                     "  ",
                     "Use of save versions prior to 2 is deprecated",
                     domain = NA, call. = FALSE)
-            res = (.Internal(load(file, envir)))
-			if (closeFile == TRUE) close(con)
-			return(res)
+            return(.Internal(load(file, envir)))
         }
     } else if (inherits(file, "connection")) {
         con <- if(inherits(file, "gzfile") || inherits(file, "gzcon")) file
                else gzcon(file)
-#    } else stop("bad 'file' argument")
-    } else { if (closeFile == TRUE) close(con) ; stop("bad 'file' argument") }
+    } else stop("bad 'file' argument")
 
     if (verbose)
     	cat("Loading objects:\n")
 
-    res = .Internal(loadFromConn2(con, envir, verbose))
-	if (closeFile == TRUE) close(con)
-	res
+    .Internal(loadFromConn2(con, envir, verbose))
 }
 
 save <- function(..., list = character(),

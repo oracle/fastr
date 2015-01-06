@@ -35,7 +35,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "proc.time", kind = PRIMITIVE, parameterNames = {})
 public abstract class ProcTime extends RBuiltinNode {
 
-    private static String[] NAMES = new String[]{"user.self", "sys.self", "elapsed", "user.child", "sys.child"};
+    private static final String[] NAMES = new String[]{"user.self", "sys.self", "elapsed", "user.child", "sys.child"};
+    private static final RStringVector PROC_TIME_CLASS = RDataFactory.createStringVectorFromScalar("proc_time");
 
     private static ThreadMXBean bean;
     private static RStringVector RNAMES;
@@ -62,7 +63,9 @@ public abstract class ProcTime extends RBuiltinNode {
         if (RNAMES == null) {
             RNAMES = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         }
-        return RDataFactory.createDoubleVector(data, complete, RNAMES);
+        RDoubleVector result = RDataFactory.createDoubleVector(data, complete, RNAMES);
+        result.setClassAttr(PROC_TIME_CLASS);
+        return result;
     }
 
     private static final long T = 1000;

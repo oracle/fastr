@@ -25,9 +25,6 @@ function(file = "", what = double(), nmax = -1L, n = -1L, sep = "",
          multi.line = TRUE, comment.char = "", allowEscapes = FALSE,
          fileEncoding = "", encoding = "unknown", text, skipNul = FALSE)
 {
-	# TODO: using "closeFile" necessary only as long as on.exit does not work properly	
-	closeFile = FALSE
-	
     na.strings <- as.character(na.strings)# allow it to be NULL
     if(!missing(n)) {
         if(missing(nmax))
@@ -38,9 +35,7 @@ function(file = "", what = double(), nmax = -1L, n = -1L, sep = "",
     if (missing(file) && !missing(text)) {
 	file <- textConnection(text, encoding = "UTF-8")
 	encoding <- "UTF-8"
-	# TODO: on.exit does not work properly	
-#	on.exit(close(file))
-    closeFile = TRUE
+	on.exit(close(file))
     }
 
     if(is.character(file))
@@ -48,20 +43,12 @@ function(file = "", what = double(), nmax = -1L, n = -1L, sep = "",
         else {
             file <- if(nzchar(fileEncoding))
                 file(file, "r", encoding = fileEncoding) else file(file, "r")
-	# TODO: on.exit does not work properly
-#            on.exit(close(file))
-			closeFile = TRUE
-		}
-	# TODO: uncomment once RConnection is more faithful to how connections are implemented in GNU R 
-#    if(!inherits(file, "connection"))
-#        stop("'file' must be a character string or connection")
-	# TODO: using "result" necessary only as long as on.exit does not work properly
-    result = .Internal(scan(file, what, nmax, sep, dec, quote, skip, nlines,
+            on.exit(close(file))
+        }
+    if(!inherits(file, "connection"))
+        stop("'file' must be a character string or connection")
+    .Internal(scan(file, what, nmax, sep, dec, quote, skip, nlines,
                    na.strings, flush, fill, strip.white, quiet,
                    blank.lines.skip, multi.line, comment.char,
                    allowEscapes, encoding, skipNul))
-   if (closeFile == TRUE) {
-	   close(file)
-   }
-   result
 }
