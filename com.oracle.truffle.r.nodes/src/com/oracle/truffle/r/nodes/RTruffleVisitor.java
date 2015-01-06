@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -418,6 +418,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             return (SimpleAccessVariable) v.getVector();
         } else if (v.getVector() instanceof AccessVector) {
             return getVectorVariable((AccessVector) v.getVector());
+        } else if (v.getVector() instanceof FunctionCall) {
+            return null;
         } else {
             Utils.nyi();
             return null;
@@ -427,6 +429,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     private static SimpleAccessVariable getFieldAccessVariable(FieldAccess a) {
         if (a.getLhs() instanceof SimpleAccessVariable) {
             return (SimpleAccessVariable) a.getLhs();
+        } else if (a.getLhs() instanceof FunctionCall) {
+            return null;
         } else {
             Utils.nyi();
             return null;
@@ -461,15 +465,19 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
             AccessVector vecAST = (AccessVector) a.getVector();
             SimpleAccessVariable varAST = getVectorVariable(vecAST);
-            String vSymbol = RRuntime.toString(varAST.getVariable());
             RNode[] seq = new RNode[3];
+            Object rhsSymbol;
+            if (varAST != null) {
+                String vSymbol = RRuntime.toString(varAST.getVariable());
 
-            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
-                            varAST.shouldCopyValue());
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
+                ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                                varAST.shouldCopyValue());
+                rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
 
+            } else {
+                rhsSymbol = constructReplacementPrefix(seq, rhs, vecAST.getVector().accept(this), WriteVariableNode.Mode.INVISIBLE);
+            }
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-
             CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
             RNode updateOp = createPositions(a.getArguments(), argLength, a.isSubset(), false, null, null, vecAST.accept(this), rhsAccess, coerceVector, true);
             return constructRecursiveVectorUpdateSuffix(seq, updateOp, vecAST, source, isSuper);
@@ -477,11 +485,16 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             FieldAccess accessAST = (FieldAccess) a.getVector();
             SimpleAccessVariable varAST = getFieldAccessVariable(accessAST);
 
-            String vSymbol = RRuntime.toString(varAST.getVariable());
             RNode[] seq = new RNode[3];
-            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
-                            varAST.shouldCopyValue());
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
+            Object rhsSymbol;
+            if (varAST != null) {
+                String vSymbol = RRuntime.toString(varAST.getVariable());
+                ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                                varAST.shouldCopyValue());
+                rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
+            } else {
+                rhsSymbol = constructReplacementPrefix(seq, rhs, accessAST.getLhs().accept(this), WriteVariableNode.Mode.INVISIBLE);
+            }
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
 
             CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
@@ -677,12 +690,17 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         } else if (a.getLhs() instanceof AccessVector) {
             AccessVector vecAST = (AccessVector) a.getLhs();
             SimpleAccessVariable varAST = getVectorVariable(vecAST);
-            String vSymbol = RRuntime.toString(varAST.getVariable());
             RNode[] seq = new RNode[3];
+            Object rhsSymbol;
+            if (varAST != null) {
+                String vSymbol = RRuntime.toString(varAST.getVariable());
 
-            ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
-                            varAST.shouldCopyValue());
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
+                ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(varAST.getSource(), vSymbol, RType.Any) : ReadVariableNode.create(varAST.getSource(), vSymbol, RType.Any,
+                                varAST.shouldCopyValue());
+                rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
+            } else {
+                rhsSymbol = constructReplacementPrefix(seq, rhs, vecAST.getVector().accept(this), WriteVariableNode.Mode.INVISIBLE);
+            }
 
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
 
@@ -703,6 +721,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
             UpdateFieldNode ufn = UpdateFieldNodeGen.create(accessAST.accept(this), rhsAccess, RRuntime.toString(a.getFieldName()));
             return constructRecursiveFieldUpdateSuffix(seq, ufn, accessAST, source, isSuper);
+        } else if (a.getLhs() instanceof FunctionCall) {
+            FunctionCall callAST = (FunctionCall) a.getLhs();
+            CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
+            List<ArgNode> arguments = new ArrayList<>(2);
+            arguments.add(ArgNode.create(null, (String) null, Constant.createStringConstant(null, new String[]{a.getFieldName().toString()})));
+            return createPositions(arguments, arguments.size(), false, false, null, null, callAST.accept(this), rhs, coerceVector, true);
         } else {
             Utils.nyi();
             return null;

@@ -3,7 +3,7 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2012-2015, Purdue University
  * Copyright (c) 2013, 2014, Oracle and/or its affiliates
  *
  * All rights reserved.
@@ -501,6 +501,12 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(aa=1, ba=2); x[[\"a\", exact=TRUE]] }");
         assertEval("{ x<-list(aa=1, ba=2); x[[exact=TRUE], \"a\"] }");
         assertEval("{ x<-list(ab=1, ac=2); x[[\"a\", exact=FALSE]] }");
+
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]][1]<-\"z\"; x }");
+        // this works but should generate a "coerce to list warning"
+// assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(m=\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]]$m<-\"z\"; x }");
+        // this works but matrix printing is off
+// assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
     }
 
     @Test

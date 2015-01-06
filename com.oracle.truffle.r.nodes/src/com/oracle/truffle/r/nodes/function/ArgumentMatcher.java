@@ -803,14 +803,33 @@ public class ArgumentMatcher {
 
     /**
      * {@link VarArgsFactory} implementation that returns varargs as <code>Object[]</code>.
+     *
      */
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
+        /**
+         * The call of {@link #nonNull} and the assertion in the "else" clause prevents the creation
+         * of an {@link RArgsValuesAndNames} containing any {@code null} values. Experimentally,
+         * only length 1 arrays ever contain {@code null} (from the conversion of {@link RMissing}
+         * into {@code null} in {@link S3DispatchNode#addArg}). Should this ever change perhaps
+         * these should be turned back into {@link RMissing}. Ideally, this invariant should be
+         * enforced by the caller(s).
+         */
         public Object makeList(Object[] elements, String[] names) {
-            if (elements.length > 0) {
+            if (elements.length > 0 && nonNull(elements)) {
                 return new RArgsValuesAndNames(elements, names);
             } else {
+                assert elements.length == 0 || elements.length == 1;
                 return RArgsValuesAndNames.EMPTY;   // RMissing.instance;
             }
+        }
+
+        private static boolean nonNull(Object[] elements) {
+            for (int i = 0; i < elements.length; i++) {
+                if (elements[i] == null) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
