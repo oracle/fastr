@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,6 @@ public class TestrGenBuiltinmatch extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatch4() {
         assertEval("argv <- list(c(\'1\', \'2\', NA), NA_real_, NA_integer_, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -128,6 +127,7 @@ public class TestrGenBuiltinmatch extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testmatch22() {
         assertEval("argv <- list(c(NA, NA, 3, 4, 5), c(NA, NA, 4, 5), 0L, NA); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -150,7 +150,6 @@ public class TestrGenBuiltinmatch extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatch26() {
         assertEval("argv <- list(c(NA, NA, NA, NA, NA, NA, NA, NA), c(\'real\', \'double\'), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -161,7 +160,6 @@ public class TestrGenBuiltinmatch extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatch28() {
         assertEval("argv <- list(c(NA, NA), c(\'real\', \'double\'), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -186,4 +184,3 @@ public class TestrGenBuiltinmatch extends TestBase {
         assertEval("argv <- list(c(\'.__C__classA\', \'.__T__$:base\', \'.__T__$<-:base\', \'.__T__[:base\', \'.__T__plot:graphics\', \'plot\'), c(\'.__NAMESPACE__.\', \'.__S3MethodsTable__.\', \'.packageName\', \'.First.lib\', \'.Last.lib\', \'.onLoad\', \'.onAttach\', \'.onDetach\', \'.conflicts.OK\', \'.noGenerics\'), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }
-
