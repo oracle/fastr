@@ -382,6 +382,7 @@ public final class Utils {
                                     if (newKeys[tmpInd] == null) {
                                         newKeys[tmpInd] = keys[i];
                                         newValues[tmpInd] = values[i];
+                                        break;
                                     } else {
                                         assert !keys[i].equals(newKeys[tmpInd]);
                                         tmpInd = (tmpInd + 1) % newKeys.length;
@@ -394,7 +395,7 @@ public final class Utils {
                         values = newValues;
 
                         // start hashing from the beginning
-                        ind = firstInd;
+                        ind = Math.abs(key.hashCode()) % keys.length;
                     }
                 }
             }
@@ -452,6 +453,7 @@ public final class Utils {
                                     if (RRuntime.isNAorNaN(newKeys[tmpInd])) {
                                         newKeys[tmpInd] = keys[i];
                                         newValues[tmpInd] = values[i];
+                                        break;
                                     } else {
                                         assert keys[i] != newKeys[tmpInd];
                                         tmpInd = (tmpInd + 1) % newKeys.length;
@@ -464,7 +466,7 @@ public final class Utils {
                         values = newValues;
 
                         // start hashing from the beginning
-                        ind = firstInd;
+                        ind = Math.abs(Double.hashCode(key)) % keys.length;
                     }
                 }
             }
@@ -522,6 +524,7 @@ public final class Utils {
                                     if (RRuntime.isNA(newKeys[tmpInd])) {
                                         newKeys[tmpInd] = keys[i];
                                         newValues[tmpInd] = values[i];
+                                        break;
                                     } else {
                                         assert keys[i] != newKeys[tmpInd];
                                         tmpInd = (tmpInd + 1) % newKeys.length;
@@ -534,7 +537,7 @@ public final class Utils {
                         values = newValues;
 
                         // start hashing from the beginning
-                        ind = firstInd;
+                        ind = Math.abs(Integer.hashCode(key)) % keys.length;
                     }
                 }
             }
