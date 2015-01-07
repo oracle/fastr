@@ -58,14 +58,6 @@ public final class Utils {
         throw new UnsupportedOperationException(reason);
     }
 
-    public static String getProperty(String key, String dfltValue) {
-        return System.getProperty(key, dfltValue);
-    }
-
-    public static boolean getProperty(String key, boolean dfltValue) {
-        return Boolean.parseBoolean(getProperty(key, dfltValue ? "true" : "false"));
-    }
-
     public static boolean isIsoLatinDigit(char c) {
         return c >= '\u0030' && c <= '\u0039';
     }
@@ -217,6 +209,7 @@ public final class Utils {
     private static String userHome;
 
     private static String userHome() {
+        CompilerAsserts.neverPartOfCompilation("property access cannot be expanded by PE");
         if (userHome == null) {
             userHome = System.getProperty("user.home");
         }

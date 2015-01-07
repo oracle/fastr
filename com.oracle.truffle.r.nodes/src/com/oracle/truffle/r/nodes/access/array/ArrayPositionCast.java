@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -363,7 +363,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @TruffleBoundary
         @Specialization
-        protected Object doStringVectorOneDimAssignment(VirtualFrame frame, RNull vector, RAbstractStringVector operand, Object exact) {
+        protected Object doStringVectorOneDimAssignment(RNull vector, RAbstractStringVector operand, Object exact) {
             if (assignment && numDimensions == 1 && isSubset && operand.getLength() > 1) {
                 // we need to get rid of duplicates but retain all NAs
                 int[] data = new int[operand.getLength()];
