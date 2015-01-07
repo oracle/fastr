@@ -219,12 +219,15 @@ public abstract class Unique extends RBuiltinNode {
     @Specialization
     protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            Utils.NonRecursiveHashSetInt set = new Utils.NonRecursiveHashSetInt(vec.getLength());
-            int[] data = new int[vec.getLength()];
+            NonRecursiveHashSetInt set = new NonRecursiveHashSetInt();
+            int[] data = new int[16];
             int ind = 0;
             for (int i = 0; i < vec.getLength(); i++) {
                 int val = vec.getDataAt(i);
                 if (!set.add(val)) {
+                    if (ind == data.length) {
+                        data = Arrays.copyOf(data, data.length << 1);
+                    }
                     data[ind++] = val;
                 }
             }
@@ -238,6 +241,55 @@ public abstract class Unique extends RBuiltinNode {
                 }
             }
             return RDataFactory.createIntVector(dataList.toArray(), vec.isComplete());
+        }
+    }
+
+    private static final class NonRecursiveHashSetInt {
+
+        private int[] keys;
+        private int size;
+        private boolean containsZero;
+
+        public NonRecursiveHashSetInt() {
+            keys = new int[64];
+        }
+
+        public boolean add(int key) {
+            if (key == 0) {
+                if (containsZero) {
+                    return true;
+                } else {
+                    containsZero = true;
+                    return false;
+                }
+            }
+            int ind = Math.abs(Integer.hashCode(key)) & (keys.length - 1);
+            while (true) {
+                if (keys[ind] == 0) {
+                    keys[ind] = key;
+                    size++;
+                    if (size << 1 == keys.length) {
+                        int[] newKeys = new int[keys.length << 1];
+                        for (int rehashKey : keys) {
+                            if (rehashKey != 0) {
+                                int tmpInd = Math.abs(Integer.hashCode(rehashKey)) & (newKeys.length - 1);
+                                while (newKeys[tmpInd] != 0) {
+                                    assert newKeys[tmpInd] != rehashKey;
+                                    tmpInd = (tmpInd + 1) & (newKeys.length - 1);
+                                }
+                                newKeys[tmpInd] = rehashKey;
+                            }
+                        }
+
+                        keys = newKeys;
+                    }
+                    return false;
+                } else if (key == keys[ind]) {
+                    return true;
+                } else {
+                    ind = (ind + 1) & (keys.length - 1);
+                }
+            }
         }
     }
 
