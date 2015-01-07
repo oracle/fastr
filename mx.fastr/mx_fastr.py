@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import mx_graal
 import os
 
 _fastr_suite = None
+_apptests_suite = None
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
@@ -274,8 +275,11 @@ def _rpackages_unit_tests():
 def _ser_unit_tests():
     return _test_subpackage('ser')
 
+def _app_unit_tests():
+    return _test_subpackage('apps')
+
 def _gate_unit_tests():
-    return ','.join((_simple_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests()))
+    return ','.join((_simple_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests(), _app_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()
@@ -372,17 +376,19 @@ def rcmplib(args):
 def bench(args):
     mx.abort("no benchmarks available")
 
-def mx_post_parse_cmd_line(opts):
-    # dynamically load the benchmarks suite
+def load_optional_suite(name):
     hg_base = mx.get_env('HG_BASE')
-    alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
-    bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
-    if bm_suite:
-        mx.build_suite(bm_suite)
-# disabled because causes endless rebuild on mx R
-#    debug_suite = _fastr_suite.import_suite('rdebug', version=None, alternate=alternate)
-#    if debug_suite:
-#        mx.build_suite(debug_suite)
+    alternate = None if hg_base is None else join(hg_base, name)
+    opt_suite = _fastr_suite.import_suite(name, version=None, alternate=alternate)
+    if opt_suite:
+        mx.build_suite(opt_suite)
+    return opt_suite
+
+def mx_post_parse_cmd_line(opts):
+    # load optional suites
+    load_optional_suite('r_benchmarks')
+    global _apptests_suite
+    _apptests_suite = load_optional_suite('r_apptests')
 
 def mx_init(suite):
     global _fastr_suite
