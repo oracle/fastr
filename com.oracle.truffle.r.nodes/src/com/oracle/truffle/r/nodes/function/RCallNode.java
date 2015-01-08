@@ -76,13 +76,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -95,11 +95,11 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -107,7 +107,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -119,7 +119,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -379,35 +379,35 @@ public abstract class RCallNode extends RNode {
 
         @Child private RootCallNode nextNode;
         @Child private RCallNode currentNode;
-        private final RFunction cachedFunction;
+        private final CallTarget cachedCallTarget;
 
         public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
             super(function, null);  // Relies on the getArguments redirect below
             this.currentNode = current;
             this.nextNode = next;
-            this.cachedFunction = cachedFunction;
+            this.cachedCallTarget = cachedFunction.getTarget();
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction f) {
-            if (cachedFunction == f) {
-                return currentNode.execute(frame, cachedFunction);
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.execute(frame, f);
             }
             return nextNode.execute(frame, f);
         }
 
         @Override
         public int executeInteger(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedFunction == f) {
-                return currentNode.executeInteger(frame, cachedFunction);
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.executeInteger(frame, f);
             }
             return nextNode.executeInteger(frame, f);
         }
 
         @Override
         public double executeDouble(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedFunction == f) {
-                return currentNode.executeDouble(frame, cachedFunction);
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.executeDouble(frame, f);
             }
             return nextNode.executeDouble(frame, f);
         }
