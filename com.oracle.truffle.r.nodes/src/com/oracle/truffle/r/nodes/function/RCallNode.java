@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -379,35 +379,35 @@ public abstract class RCallNode extends RNode {
 
         @Child private RootCallNode nextNode;
         @Child private RCallNode currentNode;
-        private final CallTarget cachedCallTarget;
+        private final RFunction cachedFunction;
 
         public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
             super(function, null);  // Relies on the getArguments redirect below
             this.currentNode = current;
             this.nextNode = next;
-            this.cachedCallTarget = cachedFunction.getTarget();
+            this.cachedFunction = cachedFunction;
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction f) {
-            if (cachedCallTarget == f.getTarget()) {
-                return currentNode.execute(frame, f);
+            if (cachedFunction == f) {
+                return currentNode.execute(frame, cachedFunction);
             }
             return nextNode.execute(frame, f);
         }
 
         @Override
         public int executeInteger(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedCallTarget == f.getTarget()) {
-                return currentNode.executeInteger(frame, f);
+            if (cachedFunction == f) {
+                return currentNode.executeInteger(frame, cachedFunction);
             }
             return nextNode.executeInteger(frame, f);
         }
 
         @Override
         public double executeDouble(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedCallTarget == f.getTarget()) {
-                return currentNode.executeDouble(frame, f);
+            if (cachedFunction == f) {
+                return currentNode.executeDouble(frame, cachedFunction);
             }
             return nextNode.executeDouble(frame, f);
         }
