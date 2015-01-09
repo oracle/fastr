@@ -21,7 +21,7 @@
 # questions.
 #
 import tempfile, shutil, filecmp, platform, zipfile, sys, subprocess
-from os.path import join, sep, exists
+from os.path import join, sep, exists, dirname
 from argparse import ArgumentParser
 import mx
 import mx_graal
@@ -389,6 +389,8 @@ def mx_post_parse_cmd_line(opts):
     load_optional_suite('r_benchmarks')
     global _apptests_suite
     _apptests_suite = load_optional_suite('r_apptests')
+    if _apptests_suite:
+        os.environ['MX_HOME'] = dirname(mx.__file__)
 
 def mx_init(suite):
     global _fastr_suite
