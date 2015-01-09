@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.function.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -63,6 +64,8 @@ public abstract class Missing extends RBuiltinNode {
         @Child private InlineCacheNode<Frame, String> recursive;
         @Child private PromiseHelperNode promiseHelper;
 
+        @CompilationFinal private FrameDescriptor recursiveDesc;
+
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
@@ -90,11 +93,12 @@ public abstract class Missing extends RBuiltinNode {
 
             // This might be a promise...
             if (isPromiseProfile.profile(value instanceof RPromise)) {
+                RPromise promise = (RPromise) value;
                 if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
+                    recursiveDesc = promise.getFrame() != null ? promise.getFrame().getFrameDescriptor() : null;
                 }
-                RPromise promise = (RPromise) value;
                 if (level == 0 && promiseHelper.isDefault(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
@@ -109,13 +113,21 @@ public abstract class Missing extends RBuiltinNode {
                 if (promiseHelper.isUnderEvaluation(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
-                try {
-                    promiseHelper.materialize(promise); // Ensure that promise holds a frame
-                    promise.setUnderEvaluation(true);
-                    String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
-                    return isSymbolNullProfile.profile(symbol == null) ? RRuntime.LOGICAL_FALSE : recursive.execute(promise.getFrame(), symbol);
-                } finally {
-                    promise.setUnderEvaluation(false);
+                promiseHelper.materialize(promise); // Ensure that promise holds a frame
+                String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
+                if (isSymbolNullProfile.profile(symbol == null)) {
+                    return RRuntime.LOGICAL_FALSE;
+                } else {
+                    if (recursiveDesc != promise.getFrame().getFrameDescriptor()) {
+                        return RRuntime.asLogical(RMissingHelper.isMissingName(promise));
+                    } else {
+                        try {
+                            promise.setUnderEvaluation(true);
+                            return recursive.execute(promise.getFrame(), symbol);
+                        } finally {
+                            promise.setUnderEvaluation(false);
+                        }
+                    }
                 }
             }
             return RRuntime.LOGICAL_FALSE;
