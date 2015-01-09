@@ -29,6 +29,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -43,6 +44,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @GenerateNodeFactory
 public abstract class Match extends RBuiltinNode {
 
+    private final static int TABLE_SIZE_FACTOR = 10;
+
     protected abstract RIntVector executeRIntVector(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables);
 
     @Child private CastStringNode castString;
@@ -51,6 +54,7 @@ public abstract class Match extends RBuiltinNode {
     @Child private Match matchRecursive;
 
     private final NACheck naCheck = new NACheck();
+    private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -109,9 +113,24 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        NonRecursiveHashMapInt hashTable = new NonRecursiveHashMapInt(table.getLength());
-        for (int i = table.getLength() - 1; i >= 0; i--) {
-            hashTable.put(table.getDataAt(i), i);
+        NonRecursiveHashMapInt hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapInt(x.getLength());
+            NonRecursiveHashSetInt hashSet = new NonRecursiveHashSetInt(x.getLength());
+            for (int i = 0; i < result.length; ++i) {
+                hashSet.add(x.getDataAt(i));
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                int val = table.getDataAt(i);
+                if (hashSet.contains(val)) {
+                    hashTable.put(val, i);
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapInt(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                hashTable.put(table.getDataAt(i), i);
+            }
         }
         for (int i = 0; i < result.length; ++i) {
             int xx = x.getDataAt(i);
@@ -132,9 +151,24 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        NonRecursiveHashMapDouble hashTable = new NonRecursiveHashMapDouble(table.getLength());
-        for (int i = table.getLength() - 1; i >= 0; i--) {
-            hashTable.put(RRuntime.int2double(table.getDataAt(i)), i);
+        NonRecursiveHashMapDouble hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapDouble(x.getLength());
+            NonRecursiveHashSetDouble hashSet = new NonRecursiveHashSetDouble(x.getLength());
+            for (int i = 0; i < result.length; ++i) {
+                hashSet.add(x.getDataAt(i));
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                int val = table.getDataAt(i);
+                if (hashSet.contains(RRuntime.int2double(val))) {
+                    hashTable.put(RRuntime.int2double(val), i);
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapDouble(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                hashTable.put(RRuntime.int2double(table.getDataAt(i)), i);
+            }
         }
         for (int i = 0; i < result.length; ++i) {
             double xx = x.getDataAt(i);
@@ -155,13 +189,30 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        NonRecursiveHashMapInt hashTable = new NonRecursiveHashMapInt(table.getLength());
-        for (int i = table.getLength() - 1; i >= 0; i--) {
-            double xx = table.getDataAt(i);
-            if (RRuntime.isNA(xx)) {
-                hashTable.put(RRuntime.INT_NA, i);
-            } else if (xx == (int) xx) {
-                hashTable.put((int) xx, i);
+        NonRecursiveHashMapInt hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapInt(x.getLength());
+            NonRecursiveHashSetInt hashSet = new NonRecursiveHashSetInt(x.getLength());
+            for (int i = 0; i < result.length; ++i) {
+                hashSet.add(x.getDataAt(i));
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                double val = table.getDataAt(i);
+                if (RRuntime.isNA(val) && hashSet.contains(RRuntime.INT_NA)) {
+                    hashTable.put(RRuntime.INT_NA, i);
+                } else if (val == (int) val && hashSet.contains((int) val)) {
+                    hashTable.put((int) val, i);
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapInt(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                double xx = table.getDataAt(i);
+                if (RRuntime.isNA(xx)) {
+                    hashTable.put(RRuntime.INT_NA, i);
+                } else if (xx == (int) xx) {
+                    hashTable.put((int) xx, i);
+                }
             }
         }
         for (int i = 0; i < result.length; ++i) {
@@ -183,9 +234,24 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        NonRecursiveHashMapDouble hashTable = new NonRecursiveHashMapDouble(table.getLength());
-        for (int i = table.getLength() - 1; i >= 0; i--) {
-            hashTable.put(table.getDataAt(i), i);
+        NonRecursiveHashMapDouble hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapDouble(x.getLength());
+            NonRecursiveHashSetDouble hashSet = new NonRecursiveHashSetDouble(x.getLength());
+            for (int i = 0; i < result.length; ++i) {
+                hashSet.add(x.getDataAt(i));
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                double val = table.getDataAt(i);
+                if (hashSet.contains(val)) {
+                    hashTable.put(val, i);
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapDouble(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                hashTable.put(table.getDataAt(i), i);
+            }
         }
         for (int i = 0; i < result.length; ++i) {
             double xx = x.getDataAt(i);
@@ -239,9 +305,24 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        NonRecursiveHashMapCharacter hashTable = new NonRecursiveHashMapCharacter(table.getLength());
-        for (int i = table.getLength() - 1; i >= 0; i--) {
-            hashTable.put(table.getDataAt(i), i);
+        NonRecursiveHashMapCharacter hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapCharacter(x.getLength());
+            NonRecursiveHashSetCharacter hashSet = new NonRecursiveHashSetCharacter(x.getLength());
+            for (int i = 0; i < result.length; ++i) {
+                hashSet.add(x.getDataAt(i));
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                String val = table.getDataAt(i);
+                if (hashSet.contains(val)) {
+                    hashTable.put(val, i);
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapCharacter(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                hashTable.put(table.getDataAt(i), i);
+            }
         }
         for (int i = 0; i < result.length; ++i) {
             String xx = x.getDataAt(i);
@@ -324,9 +405,24 @@ public abstract class Match extends RBuiltinNode {
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
-        NonRecursiveHashMapComplex hashTable = new NonRecursiveHashMapComplex(table.getLength());
-        for (int i = table.getLength() - 1; i >= 0; i--) {
-            hashTable.put(table.getDataAt(i), i);
+        NonRecursiveHashMapComplex hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapComplex(x.getLength());
+            NonRecursiveHashSetComplex hashSet = new NonRecursiveHashSetComplex(x.getLength());
+            for (int i = 0; i < result.length; ++i) {
+                hashSet.add(x.getDataAt(i));
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                RComplex val = table.getDataAt(i);
+                if (hashSet.contains(val)) {
+                    hashTable.put(val, i);
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapComplex(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                hashTable.put(table.getDataAt(i), i);
+            }
         }
         for (int i = 0; i < result.length; ++i) {
             RComplex xx = x.getDataAt(i);
@@ -398,20 +494,22 @@ public abstract class Match extends RBuiltinNode {
             keys = new String[values.length];
         }
 
-        public void put(String key, int value) {
+        public boolean put(String key, int value) {
             assert value >= 0;
             if (RRuntime.isNA(key)) {
+                boolean ret = naValue == 0;
                 naValue = value + 1;
+                return ret;
             } else {
                 int ind = index(key.hashCode());
                 while (true) {
                     if (values[ind] == 0) {
                         keys[ind] = key;
                         values[ind] = value + 1;
-                        break;
+                        return false;
                     } else if (key.equals(keys[ind])) {
                         values[ind] = value + 1;
-                        break;
+                        return true;
                     } else {
                         ind++;
                         if (ind == values.length) {
@@ -454,20 +552,22 @@ public abstract class Match extends RBuiltinNode {
             keys = new RComplex[values.length];
         }
 
-        public void put(RComplex key, int value) {
+        public boolean put(RComplex key, int value) {
             assert value >= 0;
             if (RRuntime.isNA(key)) {
+                boolean ret = naValue == 0;
                 naValue = value + 1;
+                return ret;
             } else {
                 int ind = index(key.hashCode());
                 while (true) {
                     if (values[ind] == 0) {
                         keys[ind] = key;
                         values[ind] = value + 1;
-                        break;
+                        return false;
                     } else if (key.equals(keys[ind])) {
                         values[ind] = value + 1;
-                        break;
+                        return true;
                     } else {
                         ind++;
                         if (ind == values.length) {
@@ -512,22 +612,26 @@ public abstract class Match extends RBuiltinNode {
             Arrays.fill(keys, RRuntime.DOUBLE_NA);
         }
 
-        public void put(double key, int value) {
+        public boolean put(double key, int value) {
             assert value >= 0;
             if (RRuntime.isNA(key)) {
+                boolean ret = naValue == 0;
                 naValue = value + 1;
+                return ret;
             } else if (Double.isNaN(key)) {
+                boolean ret = nanValue == 0;
                 nanValue = value + 1;
+                return ret;
             } else {
                 int ind = index(Double.hashCode(key));
                 while (true) {
                     if (values[ind] == 0) {
                         keys[ind] = key;
                         values[ind] = value + 1;
-                        break;
+                        return false;
                     } else if (key == keys[ind]) {
                         values[ind] = value + 1;
-                        break;
+                        return true;
                     } else {
                         ind++;
                         if (ind == values.length) {
@@ -573,20 +677,22 @@ public abstract class Match extends RBuiltinNode {
             Arrays.fill(keys, RRuntime.INT_NA);
         }
 
-        public void put(int key, int value) {
+        public boolean put(int key, int value) {
             assert value >= 0;
             if (RRuntime.isNA(key)) {
+                boolean ret = naValue == 0;
                 naValue = value + 1;
+                return ret;
             } else {
                 int ind = index(Integer.hashCode(key));
                 while (true) {
                     if (values[ind] == 0) {
                         keys[ind] = key;
                         values[ind] = value + 1;
-                        break;
+                        return false;
                     } else if (key == keys[ind]) {
                         values[ind] = value + 1;
-                        break;
+                        return true;
                     } else {
                         ind++;
                         if (ind == values.length) {
@@ -617,6 +723,70 @@ public abstract class Match extends RBuiltinNode {
                     }
                 }
             }
+        }
+    }
+
+    public static class NonRecursiveHashSetInt {
+        private NonRecursiveHashMapInt map;
+
+        public NonRecursiveHashSetInt(int approxCapacity) {
+            map = new NonRecursiveHashMapInt(approxCapacity);
+        }
+
+        public boolean add(int value) {
+            return map.put(value, 1);
+        }
+
+        public boolean contains(int value) {
+            return map.get(value) == 1 ? true : false;
+        }
+    }
+
+    public static class NonRecursiveHashSetDouble {
+        private NonRecursiveHashMapDouble map;
+
+        public NonRecursiveHashSetDouble(int approxCapacity) {
+            map = new NonRecursiveHashMapDouble(approxCapacity);
+        }
+
+        public boolean add(double value) {
+            return map.put(value, 1);
+        }
+
+        public boolean contains(double value) {
+            return map.get(value) == 1 ? true : false;
+        }
+    }
+
+    public static class NonRecursiveHashSetCharacter {
+        private NonRecursiveHashMapCharacter map;
+
+        public NonRecursiveHashSetCharacter(int approxCapacity) {
+            map = new NonRecursiveHashMapCharacter(approxCapacity);
+        }
+
+        public boolean add(String value) {
+            return map.put(value, 1);
+        }
+
+        public boolean contains(String value) {
+            return map.get(value) == 1 ? true : false;
+        }
+    }
+
+    public static class NonRecursiveHashSetComplex {
+        private NonRecursiveHashMapComplex map;
+
+        public NonRecursiveHashSetComplex(int approxCapacity) {
+            map = new NonRecursiveHashMapComplex(approxCapacity);
+        }
+
+        public boolean add(RComplex value) {
+            return map.put(value, 1);
+        }
+
+        public boolean contains(RComplex value) {
+            return map.get(value) == 1 ? true : false;
         }
     }
 }
