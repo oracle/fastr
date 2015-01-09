@@ -315,6 +315,15 @@ public class RDeparse {
     }
 
     /**
+     * Version to generate a printable string for e.g., error messages.
+     */
+    @TruffleBoundary
+    public static String deparseForPrint(Object expr) {
+        State state = State.createPrintableState();
+        return deparse2buff(state, expr).sb.toString();
+    }
+
+    /**
      * Version for {@code deparse}.
      *
      * @param opts TODO
