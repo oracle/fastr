@@ -18,7 +18,9 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.OrderFactory.CmpNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,6 +35,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     public abstract RIntVector executeRIntVector(VirtualFrame frame, byte naLast, byte dec, RArgsValuesAndNames args);
 
     @Child private CastToVectorNode castVector;
+    @Child private CmpNode cmpNode;
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile error = BranchProfile.create();
@@ -46,6 +49,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
         return (RAbstractVector) castVector.executeObject(frame, value);
+    }
+
+    private int cmp(VirtualFrame frame, Object v, int i, int j, byte naLast) {
+        if (cmpNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            cmpNode = insert(CmpNodeGen.create(null, null, null, null));
+        }
+        return cmpNode.executeInt(frame, v, i, j, naLast);
     }
 
     @SuppressWarnings("unused")
@@ -173,13 +184,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private int preprocessVectorsInt(VirtualFrame frame, RArgsValuesAndNames args) {
+    private int preprocessVectors(VirtualFrame frame, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
-        RAbstractVector v = castVector(frame, castInteger(frame, vectors[0], false));
+        RAbstractVector v = castVector(frame, vectors[0]);
         int n = v.getLength();
         vectors[0] = v;
         for (int i = 1; i < vectors.length; i++) {
-            v = castVector(frame, castInteger(frame, vectors[i], false));
+            v = castVector(frame, vectors[i]);
             if (n != v.getLength()) {
                 error.enter();
                 throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
@@ -189,79 +200,15 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return n;
     }
 
-    private int preprocessVectorsDouble(VirtualFrame frame, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
-        RAbstractVector v = castVector(frame, castDouble(frame, vectors[0], false));
-        int n = v.getLength();
-        vectors[0] = v;
-        for (int i = 1; i < vectors.length; i++) {
-            v = castVector(frame, castDouble(frame, vectors[i], false));
-            if (n != v.getLength()) {
-                error.enter();
-                throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
-            }
-            vectors[i] = v;
-        }
-        return n;
-    }
+    @Specialization(guards = {"!oneVec", "!noVec"})
+    Object orderMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+        int n = preprocessVectors(frame, args);
 
-    private int preprocessVectorsLogical(VirtualFrame frame, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
-        RAbstractVector v = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, castLogical(frame, vectors[0], false)), naCheck);
-        int n = v.getLength();
-        vectors[0] = v;
-        for (int i = 1; i < vectors.length; i++) {
-            v = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, castLogical(frame, vectors[i], false)), naCheck);
-            if (n != v.getLength()) {
-                error.enter();
-                throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
-            }
-            vectors[i] = v;
-        }
-        return n;
-    }
-
-    private int preprocessVectorsString(VirtualFrame frame, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
-        RAbstractVector v = castVector(frame, castString(frame, vectors[0], false));
-        int n = v.getLength();
-        vectors[0] = v;
-        for (int i = 1; i < vectors.length; i++) {
-            v = castVector(frame, castString(frame, vectors[i], false));
-            if (n != v.getLength()) {
-                error.enter();
-                throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
-            }
-            vectors[i] = v;
-        }
-        return n;
-    }
-
-    private int preprocessVectorsComplex(VirtualFrame frame, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
-        RAbstractVector v = castVector(frame, castComplex(frame, vectors[0], false));
-        int n = v.getLength();
-        vectors[0] = v;
-        for (int i = 1; i < vectors.length; i++) {
-            v = castVector(frame, castComplex(frame, vectors[i], false));
-            if (n != v.getLength()) {
-                error.enter();
-                throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
-            }
-            vectors[i] = v;
-        }
-        return n;
-    }
-
-    @Specialization(guards = {"!oneVec", "!noVec", "isIntegerPrecedence"})
-    Object orderIntMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        int n = preprocessVectorsInt(frame, args);
-
-        boolean naLast = true;
+        byte naLast = RRuntime.LOGICAL_TRUE;
         boolean dec = true;
 
         if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
+            naLast = RRuntime.LOGICAL_FALSE;
         }
         if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
             dec = false;
@@ -271,7 +218,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVectorInt(indx, args, naLast, dec);
+        orderVector(frame, indx, args, naLast, dec);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -279,200 +226,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = {"!oneVec", "!noVec", "isDoublePrecedence"})
-    Object orderDoubleMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        int n = preprocessVectorsDouble(frame, args);
-
-        boolean naLast = true;
-        boolean dec = true;
-
-        if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
-        }
-        if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
-        }
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
-        }
-        orderVectorDouble(indx, args, naLast, dec);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
-
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization(guards = {"!oneVec", "!noVec", "isLogicalPrecedence"})
-    Object orderLogicalMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        preprocessVectorsLogical(frame, args);
-        return orderIntMulti(frame, naLastVec, decVec, args);
-    }
-
-    @Specialization(guards = {"!oneVec", "!noVec", "isStringPrecedence"})
-    Object orderStringMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        int n = preprocessVectorsString(frame, args);
-
-        boolean naLast = true;
-        boolean dec = true;
-
-        if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
-        }
-        if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
-        }
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
-        }
-        orderVectorString(indx, args, naLast, dec);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
-
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization(guards = {"!oneVec", "!noVec", "isComplexPrecedence"})
-    Object orderComplexMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        int n = preprocessVectorsComplex(frame, args);
-
-        boolean naLast = true;
-        boolean dec = true;
-
-        if (naLastVec.getLength() == 0 || naLastVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            naLast = false;
-        }
-        if (decVec.getLength() == 0 || decVec.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-            dec = false;
-        }
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
-        }
-        orderVectorComplex(indx, args, naLast, dec);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
-
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    static int icmp(int x, int y, boolean naLast) {
-        boolean nax = RRuntime.isNA(x);
-        boolean nay = RRuntime.isNA(y);
-        if (nax && nay) {
-            return 0;
-        }
-        if (nax) {
-            return naLast ? 1 : -1;
-        }
-        if (nay) {
-            return naLast ? -1 : 1;
-        }
-        if (x < y) {
-            return -1;
-        }
-        if (x > y) {
-            return 1;
-        }
-        return 0;
-    }
-
-    static int rcmp(double x, double y, boolean naLast) {
-        boolean nax = RRuntime.isNAorNaN(x);
-        boolean nay = RRuntime.isNAorNaN(y);
-        if (nax && nay) {
-            return 0;
-        }
-        if (nax) {
-            return naLast ? 1 : -1;
-        }
-        if (nay) {
-            return naLast ? -1 : 1;
-        }
-        if (x < y) {
-            return -1;
-        }
-        if (x > y) {
-            return 1;
-        }
-        return 0;
-    }
-
-    static int scmp(String x, String y, boolean naLast) {
-        boolean nax = RRuntime.isNA(x);
-        boolean nay = RRuntime.isNA(y);
-        if (nax && nay) {
-            return 0;
-        }
-        if (nax) {
-            return naLast ? 1 : -1;
-        }
-        if (nay) {
-            return naLast ? -1 : 1;
-        }
-        if (x.compareTo(y) < 0) {
-            return -1;
-        }
-        if (x.compareTo(y) > 0) {
-            return 1;
-        }
-        return 0;
-    }
-
-    static int ccmp(RComplex x, RComplex y, boolean naLast) {
-        // compare real parts
-        boolean nax = RRuntime.isNA(x.getRealPart());
-        boolean nay = RRuntime.isNA(y.getRealPart());
-        if (nax && nay) {
-            return 0;
-        }
-        if (nax) {
-            return naLast ? 1 : -1;
-        }
-        if (nay) {
-            return naLast ? -1 : 1;
-        }
-        if (x.getRealPart() < y.getRealPart()) {
-            return -1;
-        }
-        if (x.getRealPart() > y.getRealPart()) {
-            return 1;
-        }
-
-        // compare real parts
-        nax = RRuntime.isNA(x.getImaginaryPart());
-        nay = RRuntime.isNA(y.getImaginaryPart());
-        if (nax && nay) {
-            return 0;
-        }
-        if (nax) {
-            return naLast ? 1 : -1;
-        }
-        if (nay) {
-            return naLast ? -1 : 1;
-        }
-        if (x.getImaginaryPart() < y.getImaginaryPart()) {
-            return -1;
-        }
-        if (x.getImaginaryPart() > y.getImaginaryPart()) {
-            return 1;
-        }
-        return 0; // equal
-    }
-
-    private static boolean greaterSubInt(int i, int j, RArgsValuesAndNames args, boolean naLast, boolean dec) {
+    private boolean greaterSub(VirtualFrame frame, int i, int j, RArgsValuesAndNames args, byte naLast, boolean dec) {
         Object[] vectors = args.getValues();
         int c = -1;
         for (int k = 0; k < args.length(); k++) {
-            RAbstractIntVector v = (RAbstractIntVector) vectors[k];
-            c = rcmp(v.getDataAt(i), v.getDataAt(j), naLast);
+            RAbstractVector v = (RAbstractVector) vectors[k];
+            c = cmp(frame, v, i, j, naLast);
             if (dec) {
                 c = -c;
             }
@@ -486,64 +245,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return (c == 0 && i < j) ? false : true;
     }
 
-    private static boolean greaterSubDouble(int i, int j, RArgsValuesAndNames args, boolean naLast, boolean dec) {
-        Object[] vectors = args.getValues();
-        int c = -1;
-        for (int k = 0; k < args.length(); k++) {
-            RAbstractDoubleVector v = (RAbstractDoubleVector) vectors[k];
-            c = rcmp(v.getDataAt(i), v.getDataAt(j), naLast);
-            if (dec) {
-                c = -c;
-            }
-            if (c > 0) {
-                return true;
-            }
-            if (c < 0) {
-                return false;
-            }
-        }
-        return (c == 0 && i < j) ? false : true;
-    }
-
-    private static boolean greaterSubString(int i, int j, RArgsValuesAndNames args, boolean naLast, boolean dec) {
-        Object[] vectors = args.getValues();
-        int c = -1;
-        for (int k = 0; k < args.length(); k++) {
-            RAbstractStringVector v = (RAbstractStringVector) vectors[k];
-            c = scmp(v.getDataAt(i), v.getDataAt(j), naLast);
-            if (dec) {
-                c = -c;
-            }
-            if (c > 0) {
-                return true;
-            }
-            if (c < 0) {
-                return false;
-            }
-        }
-        return (c == 0 && i < j) ? false : true;
-    }
-
-    private static boolean greaterSubComplex(int i, int j, RArgsValuesAndNames args, boolean naLast, boolean dec) {
-        Object[] vectors = args.getValues();
-        int c = -1;
-        for (int k = 0; k < args.length(); k++) {
-            RAbstractComplexVector v = (RAbstractComplexVector) vectors[k];
-            c = ccmp(v.getDataAt(i), v.getDataAt(j), naLast);
-            if (dec) {
-                c = -c;
-            }
-            if (c > 0) {
-                return true;
-            }
-            if (c < 0) {
-                return false;
-            }
-        }
-        return (c == 0 && i < j) ? false : true;
-    }
-
-    private static void orderVectorInt(int[] indx, RArgsValuesAndNames args, boolean naLast, boolean dec) {
+    private void orderVector(VirtualFrame frame, int[] indx, RArgsValuesAndNames args, byte naLast, boolean dec) {
         if (indx.length > 1) {
 
             int t = 0;
@@ -553,67 +255,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 for (int i = h; i < indx.length; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= h && greaterSubInt(indx[j - h], itmp, args, naLast, dec)) {
-                        indx[j] = indx[j - h];
-                        j -= h;
-                    }
-                    indx[j] = itmp;
-                }
-            }
-        }
-    }
-
-    private static void orderVectorDouble(int[] indx, RArgsValuesAndNames args, boolean naLast, boolean dec) {
-        if (indx.length > 1) {
-
-            int t = 0;
-            for (; SINCS[t] > indx.length; t++) {
-            }
-            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-                for (int i = h; i < indx.length; i++) {
-                    int itmp = indx[i];
-                    int j = i;
-                    while (j >= h && greaterSubDouble(indx[j - h], itmp, args, naLast, dec)) {
-                        indx[j] = indx[j - h];
-                        j -= h;
-                    }
-                    indx[j] = itmp;
-                }
-            }
-        }
-    }
-
-    private static void orderVectorString(int[] indx, RArgsValuesAndNames args, boolean naLast, boolean dec) {
-        if (indx.length > 1) {
-
-            int t = 0;
-            for (; SINCS[t] > indx.length; t++) {
-            }
-            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-                for (int i = h; i < indx.length; i++) {
-                    int itmp = indx[i];
-                    int j = i;
-                    while (j >= h && greaterSubString(indx[j - h], itmp, args, naLast, dec)) {
-                        indx[j] = indx[j - h];
-                        j -= h;
-                    }
-                    indx[j] = itmp;
-                }
-            }
-        }
-    }
-
-    private static void orderVectorComplex(int[] indx, RArgsValuesAndNames args, boolean naLast, boolean dec) {
-        if (indx.length > 1) {
-
-            int t = 0;
-            for (; SINCS[t] > indx.length; t++) {
-            }
-            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
-                for (int i = h; i < indx.length; i++) {
-                    int itmp = indx[i];
-                    int j = i;
-                    while (j >= h && greaterSubComplex(indx[j - h], itmp, args, naLast, dec)) {
+                    while (j >= h && greaterSub(frame, indx[j - h], itmp, args, naLast, dec)) {
                         indx[j] = indx[j - h];
                         j -= h;
                     }
@@ -905,27 +547,27 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @SuppressWarnings("unused")
     protected boolean isIntegerPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        return isIntegerPrecedence(frame, args);
+        return isIntegerPrecedence(frame, args.getValues()[0]);
     }
 
     @SuppressWarnings("unused")
     protected boolean isDoublePrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        return isDoublePrecedence(frame, args);
+        return isDoublePrecedence(frame, args.getValues()[0]);
     }
 
     @SuppressWarnings("unused")
     protected boolean isLogicalPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        return isLogicalPrecedence(frame, args);
+        return isLogicalPrecedence(frame, args.getValues()[0]);
     }
 
     @SuppressWarnings("unused")
     protected boolean isStringPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        return isStringPrecedence(frame, args);
+        return isStringPrecedence(frame, args.getValues()[0]);
     }
 
     @SuppressWarnings("unused")
     protected boolean isComplexPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        return isComplexPrecedence(frame, args);
+        return isComplexPrecedence(frame, args.getValues()[0]);
     }
 
     @SuppressWarnings("unused")
@@ -938,4 +580,126 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return args.length() == 1;
     }
 
+    @NodeChildren({@NodeChild("v"), @NodeChild("i"), @NodeChild("j"), @NodeChild("naLast")})
+    protected abstract static class CmpNode extends RNode {
+
+        public abstract int executeInt(VirtualFrame frame, Object v, int i, int j, byte naLast);
+
+        @Specialization
+        protected int icmp(RAbstractIntVector v, int i, int j, byte naLast) {
+            int x = v.getDataAt(i);
+            int y = v.getDataAt(j);
+            boolean nax = RRuntime.isNA(x);
+            boolean nay = RRuntime.isNA(y);
+            if (nax && nay) {
+                return 0;
+            }
+            if (nax) {
+                return naLast == RRuntime.LOGICAL_TRUE ? 1 : -1;
+            }
+            if (nay) {
+                return naLast == RRuntime.LOGICAL_TRUE ? -1 : 1;
+            }
+            if (x < y) {
+                return -1;
+            }
+            if (x > y) {
+                return 1;
+            }
+            return 0;
+        }
+
+        @Specialization
+        protected int rcmp(RAbstractDoubleVector v, int i, int j, byte naLast) {
+            double x = v.getDataAt(i);
+            double y = v.getDataAt(j);
+            boolean nax = RRuntime.isNAorNaN(x);
+            boolean nay = RRuntime.isNAorNaN(y);
+            if (nax && nay) {
+                return 0;
+            }
+            if (nax) {
+                return naLast == RRuntime.LOGICAL_TRUE ? 1 : -1;
+            }
+            if (nay) {
+                return naLast == RRuntime.LOGICAL_TRUE ? -1 : 1;
+            }
+            if (x < y) {
+                return -1;
+            }
+            if (x > y) {
+                return 1;
+            }
+            return 0;
+        }
+
+        @Specialization
+        protected int scmp(RAbstractStringVector v, int i, int j, byte naLast) {
+            String x = v.getDataAt(i);
+            String y = v.getDataAt(j);
+            boolean nax = RRuntime.isNA(x);
+            boolean nay = RRuntime.isNA(y);
+            if (nax && nay) {
+                return 0;
+            }
+            if (nax) {
+                return naLast == RRuntime.LOGICAL_TRUE ? 1 : -1;
+            }
+            if (nay) {
+                return naLast == RRuntime.LOGICAL_TRUE ? -1 : 1;
+            }
+            if (x.compareTo(y) < 0) {
+                return -1;
+            }
+            if (x.compareTo(y) > 0) {
+                return 1;
+            }
+            return 0;
+        }
+
+        @Specialization
+        protected int ccmp(RAbstractComplexVector v, int i, int j, byte naLast) {
+            RComplex x = v.getDataAt(i);
+            RComplex y = v.getDataAt(j);
+            // compare real parts
+            boolean nax = RRuntime.isNA(x.getRealPart());
+            boolean nay = RRuntime.isNA(y.getRealPart());
+            if (nax && nay) {
+                return 0;
+            }
+            if (nax) {
+                return naLast == RRuntime.LOGICAL_TRUE ? 1 : -1;
+            }
+            if (nay) {
+                return naLast == RRuntime.LOGICAL_TRUE ? -1 : 1;
+            }
+            if (x.getRealPart() < y.getRealPart()) {
+                return -1;
+            }
+            if (x.getRealPart() > y.getRealPart()) {
+                return 1;
+            }
+
+            // compare real parts
+            nax = RRuntime.isNA(x.getImaginaryPart());
+            nay = RRuntime.isNA(y.getImaginaryPart());
+            if (nax && nay) {
+                return 0;
+            }
+            if (nax) {
+                return naLast == RRuntime.LOGICAL_TRUE ? 1 : -1;
+            }
+            if (nay) {
+                return naLast == RRuntime.LOGICAL_TRUE ? -1 : 1;
+            }
+            if (x.getImaginaryPart() < y.getImaginaryPart()) {
+                return -1;
+            }
+            if (x.getImaginaryPart() > y.getImaginaryPart()) {
+                return 1;
+            }
+            return 0; // equal
+        }
+
+    }
 }
