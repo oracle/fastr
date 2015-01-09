@@ -15383,6 +15383,14 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 [1] "miep"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "!"; v <- switch(x, ""=v77, "<=" =, "<" =, ">" = 99, v55)}
+Error: attempt to use zero-length variable name
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ x <- "!"; v <- switch(x, v77, "<=" =, "<" =, ">" = 99, v55)}
+Error: duplicate 'switch' defaults: 'v77' and 'v55'
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ x <- "<"; switch(x, "<=" =, "<" =, ">" = TRUE, FALSE) }
 [1] TRUE
 
@@ -15400,6 +15408,9 @@ Error in sum(as.raw(42), as.raw(7)) : invalid 'type' (raw) of argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{switch(4,1,2,3)}
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{switch(4,1,2,z)}
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSysCall
 #{ f <- function() sys.call() ; f() }
