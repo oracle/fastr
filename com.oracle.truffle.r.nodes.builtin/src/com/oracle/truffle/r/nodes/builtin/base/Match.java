@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @GenerateNodeFactory
 public abstract class Match extends RBuiltinNode {
 
-    private final static int TABLE_SIZE_FACTOR = 10;
+    private static final int TABLE_SIZE_FACTOR = 10;
 
     protected abstract RIntVector executeRIntVector(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables);
 
