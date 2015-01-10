@@ -390,7 +390,12 @@ def mx_post_parse_cmd_line(opts):
     global _apptests_suite
     _apptests_suite = load_optional_suite('r_apptests')
     if _apptests_suite:
+        # app tests typically run mx recursively
+        # and they need both a way to locate mx and knowledge
+        # of the suite model in use
         os.environ['MX_HOME'] = dirname(mx.__file__)
+        suiteModel = "--src-suitemodel:" + ("sibling" if mx._src_suitemodel.nestedsuites_dirname() is None else "nested")
+        os.environ['MX_SUITEMODEL'] = suiteModel
 
 def mx_init(suite):
     global _fastr_suite
