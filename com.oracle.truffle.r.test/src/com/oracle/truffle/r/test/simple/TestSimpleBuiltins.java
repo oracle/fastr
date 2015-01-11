@@ -1460,6 +1460,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=TRUE) }");
         assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=FALSE) }");
+
+        assertEval("{ order(c(-1480,  -974, -1576,  -970), c(\"a\", \"b\", \"c\", \"d\")) }");
     }
 
     @Test

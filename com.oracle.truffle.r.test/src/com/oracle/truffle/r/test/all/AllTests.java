@@ -12239,6 +12239,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testOrder_7c483d960829d5c6f6f05632573e06de() {
+        assertEval("{ order(c(-1480,  -974, -1576,  -970), c(\"a\", \"b\", \"c\", \"d\")) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOrderIgnore_e63709ad10dd0c536abd53f59d2cfdf8() {
         assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
     }
