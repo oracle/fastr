@@ -569,6 +569,10 @@ public final class Utils {
         public boolean add(VAL value) {
             return map.put(value, 1);
         }
+
+        public boolean contains(VAL value) {
+            return map.get(value) == 1 ? true : false;
+        }
     }
 
     public static class NonRecursiveHashSetInt {
@@ -581,6 +585,10 @@ public final class Utils {
         public boolean add(int value) {
             return map.put(value, 1);
         }
+
+        public boolean contains(int value) {
+            return map.get(value) == 1 ? true : false;
+        }
     }
 
     public static class NonRecursiveHashSetDouble {
@@ -592,6 +600,10 @@ public final class Utils {
 
         public boolean add(double value) {
             return map.put(value, 1);
+        }
+
+        public boolean contains(double value) {
+            return map.get(value) == 1 ? true : false;
         }
     }
 

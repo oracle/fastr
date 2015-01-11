@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,12 +38,20 @@ public class LocaleFunctions {
 
         @TruffleBoundary
         @Specialization
-        protected Object getLocal(RAbstractStringVector categoryVec) {
+        protected Object getLocal(RAbstractIntVector categoryVec) {
             controlVisibility();
-            String category = categoryVec.getDataAt(0);
+            int category = categoryVec.getDataAt(0);
             switch (category) {
-                case "LC_CTYPE":
+                case 3: // "LC_CTYPE",
                     return RDataFactory.createStringVector(Charset.defaultCharset().name());
+                case 1: // "LC_ALL"
+                case 2: // "LC_COLLATE"
+                case 4: // "LC_MONETARY"
+                case 5: // "LC_NUMERIC"
+                case 6: // "LC_TIME"
+                case 7: // "LC_MESSAGES"
+                case 8: // "LC_PAPER"
+                case 9: // "LC_MEASUREMENT"
                 default:
                     RError.nyi(getEncapsulatingSourceSection(), "category not implemented: " + category);
 

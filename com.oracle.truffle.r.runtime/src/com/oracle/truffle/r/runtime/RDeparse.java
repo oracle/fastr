@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -312,6 +312,15 @@ public class RDeparse {
     public static String deparse(RPairList pl) {
         State state = new State(80, false, -1, 0, false);
         return deparse2buff(state, pl).sb.toString();
+    }
+
+    /**
+     * Version to generate a printable string for e.g., error messages.
+     */
+    @TruffleBoundary
+    public static String deparseForPrint(Object expr) {
+        State state = State.createPrintableState();
+        return deparse2buff(state, expr).sb.toString();
     }
 
     /**

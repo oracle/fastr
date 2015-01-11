@@ -12239,6 +12239,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testOrder_7c483d960829d5c6f6f05632573e06de() {
+        assertEval("{ order(c(-1480,  -974, -1576,  -970), c(\"a\", \"b\", \"c\", \"d\")) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOrderIgnore_e63709ad10dd0c536abd53f59d2cfdf8() {
         assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
     }
@@ -15754,6 +15759,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSwitch_7b95afa0be4476d260f13bf311b73c24() {
+        assertEval("{switch(4,1,2,z)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSwitch_1b7168f6bb9903b01c133144d277290a() {
         assertEval("{ test1 <- function(type) { switch(type, mean = mean(c(1,2,3,4)), median = 2, trimmed = 3) };test1(\"mean\")}");
     }
@@ -15791,6 +15801,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSwitch_d3315e3da842ce13b6ce1e77fba726e4() {
         assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_8d2fe2359dba7a41e829e2769dbe654f() {
+        assertEvalError("{ x <- \"!\"; v <- switch(x, v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSwitch_1c377fbe8b3224d67079503d732becd5() {
+        assertEvalError("{ x <- \"!\"; v <- switch(x, \"\"=v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
     }
 
     @Test

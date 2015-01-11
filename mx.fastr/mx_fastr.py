@@ -21,7 +21,7 @@
 # questions.
 #
 import tempfile, shutil, filecmp, platform, zipfile, sys, subprocess
-from os.path import join, sep, exists
+from os.path import join, sep, exists, dirname
 from argparse import ArgumentParser
 import mx
 import mx_graal
@@ -377,7 +377,7 @@ def bench(args):
     mx.abort("no benchmarks available")
 
 def load_optional_suite(name):
-    hg_base = mx.get_env('HG_BASE')
+    hg_base = mx.get_env('MX_HG_BASE')
     alternate = None if hg_base is None else join(hg_base, name)
     opt_suite = _fastr_suite.import_suite(name, version=None, alternate=alternate)
     if opt_suite:
@@ -389,6 +389,13 @@ def mx_post_parse_cmd_line(opts):
     load_optional_suite('r_benchmarks')
     global _apptests_suite
     _apptests_suite = load_optional_suite('r_apptests')
+    if _apptests_suite:
+        # app tests typically run mx recursively
+        # and they need both a way to locate mx and knowledge
+        # of the suite model in use
+        os.environ['MX_HOME'] = dirname(mx.__file__)
+        suiteModel = "--src-suitemodel:" + ("sibling" if mx._src_suitemodel.nestedsuites_dirname() is None else "nested")
+        os.environ['MX_SUITEMODEL'] = suiteModel
 
 def mx_init(suite):
     global _fastr_suite

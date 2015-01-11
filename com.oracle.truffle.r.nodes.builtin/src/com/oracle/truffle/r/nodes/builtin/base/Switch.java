@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,81 +23,117 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."})
+/**
+ * The {@code switch} builtin. When called directly, the "..." arguments are not evaluated before
+ * the call, as the semantics requires that only the matched case is evaluated. However, if called
+ * indirectly, e.g., by {@do.call}, the arguments will have been evaluated, regardless of the match,
+ * so we have to be prepared for both evaluated and unevaluated args, which is encapsulated in
+ * {@link PromiseCheckHelperNode}.
+ *
+ */
+@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = {1})
 public abstract class Switch extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
+    @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
 
+    private final BranchProfile suppliedArgNameIsEmpty = BranchProfile.create();
     private final BranchProfile suppliedArgNameIsNull = BranchProfile.create();
     private final BranchProfile matchedArgIsMissing = BranchProfile.create();
-    private final ConditionProfile currentDefaultValueProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile currentDefaultProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile returnValueProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile notIntType = BranchProfile.create();
-
-    private boolean isVisible = true;
 
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    public boolean getVisibility() {
-        return this.isVisible;
-    }
-
     @Specialization(guards = "isLengthOne")
     @TruffleBoundary
-    protected Object doSwitch(RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
+    protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
+        controlVisibility();
+        return prepareResult(doSwitchString(frame, x, optionalArgs));
+    }
+
+    @TruffleBoundary
+    protected Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         Object[] optionalArgValues = optionalArgs.getValues();
-        Object currentDefaultValue = null;
         final String xStr = x.getDataAt(0);
         final String[] names = optionalArgs.getNames();
         for (int i = 0; i < names.length; ++i) {
             final String suppliedArgName = names[i];
-            final Object optionalArgValue = optionalArgValues[i];
-            if (xStr.equals(suppliedArgName) && optionalArgValue != null) {
+            if (suppliedArgName == null) {
+                continue;
+            } else if (suppliedArgName.length() == 0) {
+                suppliedArgNameIsEmpty.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ZERO_LENGTH_VARIABLE);
+            } else if (xStr.equals(suppliedArgName)) {
+                // match, evaluate the associated arg
+                Object optionalArgValue = promiseHelper.checkEvaluate(frame, optionalArgValues[i]);
                 if (RMissingHelper.isMissing(optionalArgValue)) {
                     matchedArgIsMissing.enter();
 
                     // Fall-through: If the matched value is missing, take the next non-missing
                     for (int j = i + 1; j < optionalArgValues.length; j++) {
-                        Object val = optionalArgValues[j];
+                        Object val = promiseHelper.checkEvaluate(frame, optionalArgValues[j]);
                         if (!RMissingHelper.isMissing(val)) {
-                            return returnNonNull(val);
+                            return val;
                         }
                     }
 
                     // No non-missing value: invisible null
-                    return returnNull();
+                    return null;
                 } else {
                     // Default: Matched name has a value
-                    return returnNonNull(optionalArgValue);
-                }
-            }
-            if (suppliedArgName == null) {
-                suppliedArgNameIsNull.enter();
-                if (currentDefaultValueProfile.profile(currentDefaultValue != null)) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, currentDefaultValue.toString(), optionalArgValue.toString());
-                } else {
-                    currentDefaultValue = optionalArgValue;
+                    return optionalArgValue;
                 }
             }
         }
-        if (returnValueProfile.profile(currentDefaultValue != null)) {
-            return returnNonNull(currentDefaultValue);
+        // We didn't find a match, so check for default(s)
+        Object currentDefault = null;
+        for (int i = 0; i < names.length; ++i) {
+            final String suppliedArgName = names[i];
+            if (suppliedArgName == null) {
+                suppliedArgNameIsNull.enter();
+                Object optionalArg = optionalArgValues[i];
+                if (currentDefaultProfile.profile(currentDefault != null)) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, deparseDefault(currentDefault), deparseDefault(optionalArg));
+                } else {
+                    currentDefault = optionalArg;
+                }
+            }
+        }
+        if (returnValueProfile.profile(currentDefault != null)) {
+            return promiseHelper.checkEvaluate(frame, currentDefault);
         } else {
-            return returnNull();
+            return null;
+        }
+    }
+
+    private static String deparseDefault(Object arg) {
+        if (arg instanceof RPromise) {
+            // We do not want to evaluate the promise,just display the rep
+            RPromise p = (RPromise) arg;
+            RNode node = (RNode) p.getRep();
+            State state = State.createPrintableState();
+            node.deparse(state);
+            return state.toString();
+        } else {
+            return RDeparse.deparseForPrint(arg);
         }
     }
 
     @Specialization
-    protected Object doSwitch(int x, RArgsValuesAndNames optionalArgs) {
-        return doSwitchInt(x, optionalArgs);
+    protected Object doSwitch(VirtualFrame frame, int x, RArgsValuesAndNames optionalArgs) {
+        return prepareResult(doSwitchInt(frame, x, optionalArgs));
     }
 
     @Specialization
@@ -109,9 +145,9 @@ public abstract class Switch extends RBuiltinNode {
         Object objIndex = castIntNode.executeCast(frame, x);
         if (!(objIndex instanceof Integer)) {
             notIntType.enter();
-            return returnNull();
+            return null;
         }
-        return doSwitchInt((int) objIndex, optionalArgs);
+        return prepareResult(doSwitchInt(frame, (int) objIndex, optionalArgs));
     }
 
     @SuppressWarnings("unused")
@@ -122,34 +158,30 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private Object doSwitchInt(int index, RArgsValuesAndNames optionalArgs) {
+    private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
         Object[] optionalArgValues = optionalArgs.getValues();
         if (index >= 1 && index <= optionalArgValues.length) {
-            Object value = optionalArgValues[index - 1];
+            Object value = promiseHelper.checkEvaluate(frame, optionalArgValues[index - 1]);
             if (value != null) {
-                return returnNonNull(value);
+                return value;
             }
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ALTERNATIVE_IN_SWITCH);
         }
-        return returnNull();
+        return null;
     }
 
     protected boolean isLengthOne(RAbstractStringVector x) {
         return x.getLength() == 1;
     }
 
-    private Object returnNull() {
-        switchVisibilityTo(false);
-        return RNull.instance;
+    private Object prepareResult(Object value) {
+        if (returnValueProfile.profile(value != null)) {
+            forceVisibility(true);
+            return value;
+        } else {
+            forceVisibility(false);
+            return RNull.instance;
+        }
     }
 
-    private Object returnNonNull(Object value) {
-        switchVisibilityTo(true);
-        return value;
-    }
-
-    private void switchVisibilityTo(boolean isVisibleArg) {
-        this.isVisible = isVisibleArg;
-        controlVisibility();
-    }
 }

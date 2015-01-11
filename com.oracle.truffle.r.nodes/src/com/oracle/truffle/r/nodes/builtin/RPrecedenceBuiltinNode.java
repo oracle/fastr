@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,42 @@ public abstract class RPrecedenceBuiltinNode extends RCastingBuiltinNode {
 
     protected boolean isExprPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.EXPRESSION_PRECEDENCE;
+    }
+
+    protected boolean isIntegerPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.INT_PRECEDENCE;
+    }
+
+    protected boolean isLogicalPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LOGICAL_PRECEDENCE;
+    }
+
+    protected boolean isDoublePrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.DOUBLE_PRECEDENCE;
+    }
+
+    protected boolean isComplexPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.COMPLEX_PRECEDENCE;
+    }
+
+    protected boolean isStringPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.STRING_PRECEDENCE;
+    }
+
+    protected boolean isRawPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.RAW_PRECEDENCE;
+    }
+
+    protected boolean isNullPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.NO_PRECEDENCE;
+    }
+
+    protected boolean isListPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LIST_PRECEDENCE;
+    }
+
+    protected boolean isExprPrecedence(VirtualFrame frame, Object arg) {
+        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.EXPRESSION_PRECEDENCE;
     }
 
 }

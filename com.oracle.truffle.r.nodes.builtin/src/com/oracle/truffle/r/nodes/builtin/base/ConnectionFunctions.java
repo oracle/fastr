@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,12 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private enum OpenMode {
+    /**
+     * Abstracts from the fact that some modes can be specified with multiple text strings. N.B.
+     * includes the {@code Lazy} mode for laxy opening support, which is requested in R by "" as the
+     * open argument.
+     */
+    private enum AbstractOpenMode {
         Lazy(new String[]{""}),
         Read(new String[]{"r", "rt"}),
         Write(new String[]{"w", "wt"}),
@@ -68,13 +73,13 @@ public abstract class ConnectionFunctions {
 
         private String[] modeStrings;
 
-        OpenMode(String[] modeStrings) {
+        AbstractOpenMode(String[] modeStrings) {
             this.modeStrings = modeStrings;
         }
 
         @TruffleBoundary
-        static OpenMode getOpenMode(String modeString) throws IOException {
-            for (OpenMode openMode : values()) {
+        static AbstractOpenMode getOpenMode(String modeString) throws IOException {
+            for (AbstractOpenMode openMode : values()) {
                 for (String ms : openMode.modeStrings) {
                     if (ms.equals(modeString)) {
                         return openMode;
@@ -85,17 +90,50 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    // TODO remove invisibility when print for RConnection works
+    /**
+     * Records the actual mode string that was used, which is needed by {@code summary}.
+     *
+     */
+    private static class OpenMode {
+        final AbstractOpenMode abstractOpenMode;
+        final String modeString;
+
+        OpenMode(String modeString) throws IOException {
+            this(modeString, AbstractOpenMode.getOpenMode(modeString));
+        }
+
+        OpenMode(String modeString, AbstractOpenMode mode) {
+            this.modeString = modeString;
+            this.abstractOpenMode = mode;
+        }
+    }
+
+    private enum ConnectionClass {
+        Terminal("terminal"),
+        File("file"),
+        GZFile("gzfile"),
+        Socket("socket"),
+        Text("textConnection"),
+        URL("url");
+
+        final String printName;
+
+        ConnectionClass(String printName) {
+            this.printName = printName;
+        }
+
+    }
+
     // TODO implement all open modes
     // TODO implement missing .Internal functions expected by connections.R
     // TODO revisit the use of InputStream for internal use, e.g. in RSerialize
     // TODO Use channels to support blocking/non-blockng mode
 
     /**
-     * Base class for all {@link RConnection} instances. It supports lazy opening, as required by
-     * the R spec, through the {@link #theConnection} field, which ultimately holds the actual
-     * connection instance when opened. The default implementations of the {@link RConnection}
-     * methods check whether the connection is open and if not, call
+     * Class that holds common state for all {@link RConnection} instances. It supports lazy
+     * opening, as required by the R spec, through the {@link #theConnection} field, which
+     * ultimately holds the actual connection instance when opened. The default implementations of
+     * the {@link RConnection} methods check whether the connection is open and if not, call
      * {@link #createDelegateConnection()} and then forward the operation. The result of
      * {@link #createDelegateConnection()} should be a subclass of {@link DelegateRConnection},
      * which subclasses {@link RConnection} directly. A subclass may choose not to use delegation by
@@ -103,8 +141,6 @@ public abstract class ConnectionFunctions {
      *
      */
     private abstract static class BaseRConnection extends RConnection {
-        private static final RStringVector DEFAULT_CLASSHR = RDataFactory.createStringVector(new String[]{"connection"}, RDataFactory.COMPLETE_VECTOR);
-
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy
          * opening, in particular, {@code opened == false} does not mean {@code closed}.
@@ -118,33 +154,48 @@ public abstract class ConnectionFunctions {
 
         /**
          * if {@link #opened} is {@code true} the {@link OpenMode} that this connection is opened
-         * in, otherwise {@link OpenMode#Lazy}.
+         * in, otherwise {@link AbstractOpenMode#Lazy}.
          */
-        protected OpenMode mode;
+        protected OpenMode openMode;
         /**
-         * If {@link #opened} is {@code false} and {@link OpenMode} is {@link OpenMode#Lazy}, the
-         * mode the connection should eventually be opned in.
+         * If {@link #opened} is {@code false} and {@link #openMode} is
+         * {@link AbstractOpenMode#Lazy}, the mode the connection should eventually be opened in.
          */
-        private OpenMode lazyMode;
+        private final OpenMode lazyOpenMode;
 
-        private RStringVector classHr;
+        private final RStringVector classHr;
 
         /**
          * The actual connection, if delegated.
          */
         private DelegateRConnection theConnection;
 
-        protected BaseRConnection(String modeString) throws IOException {
-            this(modeString, OpenMode.Read);
+        /**
+         * The constructor to use for a connection class whose default open mode is "read".
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString) throws IOException {
+            this(conClass, modeString, new OpenMode("r", AbstractOpenMode.Read));
         }
 
-        protected BaseRConnection(String modeString, OpenMode lazyMode) throws IOException {
-            this(OpenMode.getOpenMode(modeString), lazyMode);
+        /**
+         * The constructor to use for a connection class whose default open mode is not "read", but
+         * specified explicitly by "lazyMode".
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, OpenMode lazyMode) throws IOException {
+            this(conClass, new OpenMode(modeString), lazyMode);
         }
 
-        protected BaseRConnection(OpenMode mode, OpenMode lazyMode) {
-            this.mode = mode;
-            this.lazyMode = lazyMode;
+        /**
+         * Primitive constructor that just assigns state. USed by {@link StdConnection}s as they are
+         * a special case but should not be used by other connection types.
+         */
+        protected BaseRConnection(ConnectionClass conClass, OpenMode mode, OpenMode lazyMode) {
+            this.openMode = mode;
+            this.lazyOpenMode = lazyMode;
+            String[] classes = new String[2];
+            classes[0] = conClass.printName;
+            classes[1] = "connection";
+            this.classHr = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
         }
 
         protected void checkOpen() throws IOException {
@@ -153,24 +204,20 @@ public abstract class ConnectionFunctions {
             }
             if (!opened) {
                 // closed or lazy
-                if (mode == OpenMode.Lazy) {
-                    mode = lazyMode;
+                if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
+                    openMode = lazyOpenMode;
                     createDelegateConnection();
                 }
             }
         }
 
-        protected void setDelegate(DelegateRConnection conn, String rClass) {
-            this.theConnection = conn;
-            setClass(rClass);
-            opened = true;
+        String getRealOpenMode() {
+            return opened ? openMode.modeString : lazyOpenMode.modeString;
         }
 
-        protected void setClass(String rClass) {
-            String[] classes = new String[2];
-            classes[0] = rClass;
-            classes[1] = "connection";
-            this.classHr = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
+        protected void setDelegate(DelegateRConnection conn) {
+            this.theConnection = conn;
+            opened = true;
         }
 
         @Override
@@ -212,18 +259,15 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        /**
-         * Must always respond to {@code inherits("connection")} even when not open.
-         */
         public RStringVector getClassHierarchy() {
-            return classHr != null ? classHr : DEFAULT_CLASSHR;
+            return classHr;
         }
 
         /**
-         * Subclass-specific creation of the {@link DelegateRConnection} using {@link #mode}. To
+         * Subclass-specific creation of the {@link DelegateRConnection} using {@link #openMode}. To
          * support both lazy and non-lazy creation, the implementation of this method must
-         * explicitly call {@link #setDelegate(DelegateRConnection, String)} if it successfully
-         * creates the delegate connection.
+         * explicitly call {@link #setDelegate(DelegateRConnection)} if it successfully creates the
+         * delegate connection.
          */
         protected abstract void createDelegateConnection() throws IOException;
     }
@@ -317,9 +361,8 @@ public abstract class ConnectionFunctions {
      */
     private abstract static class StdConnection extends BaseRConnection {
         StdConnection(OpenMode openMode) {
-            super(openMode, null);
+            super(ConnectionClass.Terminal, openMode, null);
             this.opened = true;
-            setClass("terminal");
         }
 
         @Override
@@ -346,7 +389,7 @@ public abstract class ConnectionFunctions {
     private static class StdinConnection extends StdConnection {
 
         StdinConnection() {
-            super(OpenMode.Read);
+            super(new OpenMode("r", AbstractOpenMode.Read));
         }
 
         @Override
@@ -376,7 +419,7 @@ public abstract class ConnectionFunctions {
     private static StdinConnection stdin;
 
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
-    public abstract static class Stdin extends RInvisibleBuiltinNode {
+    public abstract static class Stdin extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RConnection stdin() {
@@ -393,9 +436,8 @@ public abstract class ConnectionFunctions {
         private final boolean isErr;
 
         StdoutConnection(boolean isErr) {
-            super(OpenMode.Write);
+            super(new OpenMode("w", AbstractOpenMode.Write));
             this.opened = true;
-            setClass("terminal");
             this.isErr = isErr;
         }
 
@@ -418,7 +460,7 @@ public abstract class ConnectionFunctions {
     private static StdoutConnection stdout;
 
     @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {})
-    public abstract static class Stdout extends RInvisibleBuiltinNode {
+    public abstract static class Stdout extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RConnection stdout() {
@@ -433,7 +475,7 @@ public abstract class ConnectionFunctions {
     private static StdoutConnection stderr;
 
     @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {})
-    public abstract static class Stderr extends RInvisibleBuiltinNode {
+    public abstract static class Stderr extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RConnection stderr() {
@@ -453,9 +495,9 @@ public abstract class ConnectionFunctions {
         protected final String path;
 
         protected FileRConnection(String path, String modeString) throws IOException {
-            super(modeString);
+            super(ConnectionClass.File, modeString);
             this.path = path;
-            if (mode != OpenMode.Lazy) {
+            if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
         }
@@ -463,7 +505,7 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
-            switch (mode) {
+            switch (openMode.abstractOpenMode) {
                 case Read:
                     delegate = new FileReadTextRConnection(this);
                     break;
@@ -474,9 +516,9 @@ public abstract class ConnectionFunctions {
                     delegate = new FileReadBinaryRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
+                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
             }
-            setDelegate(delegate, "file");
+            setDelegate(delegate);
         }
     }
 
@@ -571,12 +613,12 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
-    public abstract static class File extends RInvisibleBuiltinNode {
+    public abstract static class File extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object file(RAbstractStringVector description, RAbstractStringVector open, byte blocking, RAbstractStringVector encoding, byte raw) {
-            // temporarily return invisible to avoid missing print support
+            // temporarily return to avoid missing print support
             controlVisibility();
             try {
                 return new FileRConnection(description.getDataAt(0), open.getDataAt(0));
@@ -601,9 +643,9 @@ public abstract class ConnectionFunctions {
         protected final String path;
 
         GZIPRConnection(String path, String modeString) throws IOException {
-            super(modeString, OpenMode.ReadBinary);
+            super(ConnectionClass.GZFile, modeString, new OpenMode(modeString, AbstractOpenMode.ReadBinary));
             this.path = Utils.tildeExpand(path);
-            if (mode != OpenMode.Lazy) {
+            if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
         }
@@ -611,14 +653,14 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
-            switch (mode) {
+            switch (openMode.abstractOpenMode) {
                 case ReadBinary:
                     delegate = new GZIPInputRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
+                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
             }
-            setDelegate(delegate, "gzfile");
+            setDelegate(delegate);
         }
     }
 
@@ -649,12 +691,12 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"})
-    public abstract static class GZFile extends RInvisibleBuiltinNode {
+    public abstract static class GZFile extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object gzFile(RAbstractStringVector description, RAbstractStringVector open, RAbstractStringVector encoding, double compression) {
-            // temporarily return invisible to avoid missing print support
+            // temporarily return to avoid missing print support
             controlVisibility();
             try {
                 return new GZIPRConnection(description.getDataAt(0), open.getDataAt(0));
@@ -665,20 +707,17 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    /**
-     * Base class for all modes of gzfile connections.
-     */
     private static class TextRConnection extends BaseRConnection {
         @SuppressWarnings("unused") protected String nm;
         protected RAbstractStringVector object;
         @SuppressWarnings("unused") protected REnvironment env;
 
         protected TextRConnection(String nm, RAbstractStringVector object, REnvironment env, String modeString) throws IOException {
-            super(modeString);
+            super(ConnectionClass.Text, modeString);
             this.nm = nm;
             this.object = object;
             this.env = env;
-            if (mode != OpenMode.Lazy) {
+            if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
         }
@@ -686,14 +725,14 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
-            switch (mode) {
+            switch (openMode.abstractOpenMode) {
                 case Read:
                     delegate = new TextReadRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
+                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
             }
-            setDelegate(delegate, "textConnection");
+            setDelegate(delegate);
         }
     }
 
@@ -744,7 +783,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"nm", "object", "open", "env", "type"})
-    public abstract static class TextConnection extends RInvisibleBuiltinNode {
+    public abstract static class TextConnection extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RIntVector encoding) {
@@ -768,7 +807,7 @@ public abstract class ConnectionFunctions {
         protected BufferedWriter bufferedWriter;
 
         protected RSocketConnection(String modeString, @SuppressWarnings("unused") int port) throws IOException {
-            super(modeString);
+            super(ConnectionClass.Socket, modeString);
         }
 
         @Override
@@ -844,7 +883,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
-    public abstract static class SocketConnection extends RInvisibleBuiltinNode {
+    public abstract static class SocketConnection extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected Object socketConnection(RAbstractStringVector host, double port, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, RAbstractIntVector timeout) {
@@ -870,9 +909,9 @@ public abstract class ConnectionFunctions {
         protected final String urlString;
 
         protected URLRConnection(String url, String modeString) throws IOException {
-            super(modeString);
+            super(ConnectionClass.URL, modeString);
             this.urlString = url;
-            if (mode != OpenMode.Lazy) {
+            if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
         }
@@ -880,14 +919,14 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
-            switch (mode) {
+            switch (openMode.abstractOpenMode) {
                 case Read:
                     delegate = new URLReadRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + mode);
+                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
             }
-            setDelegate(delegate, "url");
+            setDelegate(delegate);
         }
     }
 
@@ -922,7 +961,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"})
-    public abstract static class URLConnection extends RInvisibleBuiltinNode {
+    public abstract static class URLConnection extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected Object urlConnection(RAbstractStringVector url, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking, @SuppressWarnings("unused") RAbstractStringVector encoding) {
@@ -937,11 +976,35 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private abstract static class CheckIsConnAdapter extends RInvisibleBuiltinNode {
-        protected void checkIsConnection(Object con) throws RError {
+    private abstract static class CheckIsConnAdapter extends RBuiltinNode {
+        protected RConnection checkIsConnection(Object con) throws RError {
             if (!(con instanceof RConnection)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_CONNECTION, "con");
+            } else {
+                return (RConnection) con;
             }
+        }
+    }
+
+    @RBuiltin(name = "summary.connection", kind = INTERNAL, parameterNames = {"object}"})
+    public abstract static class Summary extends CheckIsConnAdapter {
+        private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"description", "class", "mode", "text", "opened", "can read", "can write"},
+                        RDataFactory.COMPLETE_VECTOR);
+
+        @Specialization
+        @TruffleBoundary
+        protected RList summary(Object object) {
+            RConnection con = checkIsConnection(object);
+            BaseRConnection baseCon = getBaseConnection(con);
+            Object[] data = new Object[NAMES.getLength()];
+            data[0] = "TBD";
+            data[1] = baseCon.classHr.getDataAt(0);
+            data[2] = baseCon.getRealOpenMode();
+            data[3] = "TBD";
+            data[4] = baseCon.closed || !baseCon.opened ? "closed" : "opened";
+            data[5] = "TBD";
+            data[6] = "TBD";
+            return RDataFactory.createList(data, NAMES);
         }
     }
 
@@ -960,7 +1023,7 @@ public abstract class ConnectionFunctions {
                     RContext.getInstance().setEvalWarning(RError.Message.ALREADY_OPEN_CONNECTION.message);
                     return RNull.instance;
                 }
-                baseConn.mode = OpenMode.getOpenMode(open.getDataAt(0));
+                baseConn.openMode = new OpenMode(open.getDataAt(0));
                 baseConn.createDelegateConnection();
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
@@ -1032,7 +1095,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "writeLines", kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
-    public abstract static class WriteLines extends RInvisibleBuiltinNode {
+    public abstract static class WriteLines extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
@@ -1054,7 +1117,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "flush", kind = INTERNAL, parameterNames = {"con"})
-    public abstract static class Flush extends RInvisibleBuiltinNode {
+    public abstract static class Flush extends RBuiltinNode {
         @TruffleBoundary
         @Specialization
         protected RNull flush(RConnection con) {
@@ -1069,7 +1132,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "pushBack", kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
-    public abstract static class PushBack extends RInvisibleBuiltinNode {
+    public abstract static class PushBack extends RBuiltinNode {
 
         @CreateCast("arguments")
         protected RNode[] castTimesLength(RNode[] arguments) {
@@ -1134,7 +1197,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "clearPushBack", kind = INTERNAL, parameterNames = {"connection"})
-    public abstract static class PushBackClear extends RInvisibleBuiltinNode {
+    public abstract static class PushBackClear extends RBuiltinNode {
 
         @Specialization
         protected RNull pushBackClear(RConnection connection) {

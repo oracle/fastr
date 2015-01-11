@@ -47,6 +47,7 @@
 ^.*/build.xml
 ^.*/nbproject/
 dist
+foo1
 ^doc/.*/dot_temp_
 ^doc/doxygen/.*$
 \.orig$
