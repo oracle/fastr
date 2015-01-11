@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
@@ -69,12 +68,6 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private long[] childTimes;
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
-
-    /**
-     * Controls whether ASTs are instrumented after parse. The default value controlled by
-     * {@link FastROptions#Instrumentation}.
-     */
-    private static boolean instrumentingEnabled;
 
     /**
      * Only of relevance for in-process debugging, prevents most re-initialization on repeat calls
@@ -108,12 +101,9 @@ public final class REngine implements RContext.Engine {
         if (initialized) {
             REnvironment.resetForTest(globalFrame);
         } else {
-            instrumentingEnabled = FastROptions.Instrumentation.getValue();
-            if (instrumentingEnabled) {
-                RInstrument.initialize();
-            }
+            RInstrument.initialize();
+            RPerfAnalysis.initialize();
             Locale.setDefault(Locale.ROOT);
-            Load_RFFIFactory.initialize();
             RAccuracyInfo.initialize();
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
@@ -183,10 +173,6 @@ public final class REngine implements RContext.Engine {
 
     public long[] childTimesInNanos() {
         return childTimes;
-    }
-
-    public boolean instrumentingEnabled() {
-        return instrumentingEnabled;
     }
 
     public Object parseAndEval(Source sourceDesc, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {

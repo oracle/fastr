@@ -272,11 +272,6 @@ public final class RContext extends ExecutionContext {
          */
         void printRError(RError e);
 
-        /**
-         * Returns {@code} iff AST instrumentation is enabled.
-         */
-        boolean instrumentingEnabled();
-
     }
 
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();

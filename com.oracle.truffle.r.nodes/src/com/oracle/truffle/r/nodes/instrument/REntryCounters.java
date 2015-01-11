@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,23 @@
 package com.oracle.truffle.r.nodes.instrument;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Instrument;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.SimpleEventReceiver;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.function.FunctionUID;
-import java.util.WeakHashMap;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
+import java.util.*;
+
+/**
+ * Basic support for adding entry/exit counters to nodes. A counter must be identified with some
+ * unique value that enables it to be retrieved.
+ *
+ * The {@link Basic#instrument} field is used to attach the counter to a {@link Probe}.
+ *
+ */
 public class REntryCounters {
 
     private static WeakHashMap<Object, Basic> counterMap = new WeakHashMap<>();
@@ -65,14 +76,92 @@ public class REntryCounters {
         }
     }
 
+    /**
+     * A counter that is specialized for function entry, tagged with the {@link FunctionUID}.
+     */
     public static class Function extends Basic {
+
+        static {
+            RPerfAnalysis.register(new PerfHandler());
+        }
+
+        private static class PerfHandler implements RPerfAnalysis.Handler {
+            private static class FunctionCount implements Comparable<FunctionCount> {
+                int count;
+                String name;
+
+                FunctionCount(int count, String name) {
+                    this.count = count;
+                    this.name = name;
+                }
+
+                public int compareTo(FunctionCount o) {
+                    if (count < o.count) {
+                        return 1;
+                    } else if (count > o.count) {
+                        return -1;
+                    } else {
+                        return name.compareTo(o.name);
+                    }
+                }
+            }
+
+            static final String NAME = "functioncounts";
+
+            public void initialize() {
+            }
+
+            public String getName() {
+                return NAME;
+            }
+
+            /**
+             * R's anonymous function definitions don't help with reporting. We make an attempt to
+             * locate a function name in the global/package environments.
+             */
+            public void report() {
+                System.out.println("R Function Entry Counts");
+                ArrayList<FunctionCount> results = new ArrayList<>();
+                for (Map.Entry<Object, Basic> entry : counterMap.entrySet()) {
+                    if (entry.getValue() instanceof Function) {
+                        FunctionUID uid = (FunctionUID) entry.getKey();
+                        String functionName = RInstrument.findFunctionName(uid);
+                        if (functionName == null) {
+                            FunctionDefinitionNode fdn = RInstrument.getFunctionDefinitionNode(uid);
+                            if (fdn != null) {
+                                functionName = fdn.toString();
+                            }
+                        }
+                        if (functionName != null) {
+                            int count = entry.getValue().getEnterCount();
+                            if (count > 0) {
+                                results.add(new FunctionCount(count, functionName));
+                            }
+                        }
+                    }
+                }
+                FunctionCount[] sortedCounts = new FunctionCount[results.size()];
+                results.toArray(sortedCounts);
+                Arrays.sort(sortedCounts);
+                for (FunctionCount functionCount : sortedCounts) {
+                    System.out.printf("%6d: %s%n", functionCount.count, functionCount.name);
+                }
+            }
+        }
 
         public Function(FunctionUID uuid) {
             super(uuid);
         }
 
+        public static boolean enabled() {
+            return RPerfAnalysis.enabled(PerfHandler.NAME);
+        }
+
     }
 
+    /**
+     * Return the counter tagged with {@code tag}, or {@code null} if not found.
+     */
     public static REntryCounters.Basic findCounter(Object tag) {
         return counterMap.get(tag);
     }

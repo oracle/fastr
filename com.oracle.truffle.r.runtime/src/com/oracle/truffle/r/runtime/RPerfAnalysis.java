@@ -118,15 +118,36 @@ public class RPerfAnalysis {
     }
 
     private static final ArrayList<Handler> handlers = new ArrayList<>();
+    private static boolean initialized;
 
+    /**
+     * Register a {@link Handler}. This should be done in a {@code static} block so that, in an AOT
+     * VM, all handlers are included in the image. N.B. Owing to dynamic class loading in a standard
+     * VM, this may be called after {@link RPerfAnalysis#initialize}, so we may have to invoke
+     * {@code handler.initialize} from here.
+     */
     public static void register(Handler handler) {
         handlers.add(handler);
-        if (enabled(handler.getName())) {
-            handler.initialize();
+        if (initialized) {
+            if (enabled(handler.getName())) {
+                handler.initialize();
+            }
         }
     }
 
-    private static boolean enabled(String name) {
+    /**
+     * Called by the engine startup sequence to initialize all registered handlers.
+     */
+    public static void initialize() {
+        for (Handler handler : handlers) {
+            if (enabled(handler.getName())) {
+                handler.initialize();
+            }
+        }
+        initialized = true;
+    }
+
+    public static boolean enabled(String name) {
         return FastROptions.matchesElement(name, FastROptions.PerfStats);
     }
 
@@ -141,8 +162,13 @@ public class RPerfAnalysis {
             return;
         }
         reporting = true;
+        boolean headerOutput = false;
         for (Handler handler : handlers) {
             if (enabled(handler.getName())) {
+                if (!headerOutput) {
+                    System.out.println("RPerfAnalysis Reports");
+                    headerOutput = true;
+                }
                 handler.report();
             }
         }
