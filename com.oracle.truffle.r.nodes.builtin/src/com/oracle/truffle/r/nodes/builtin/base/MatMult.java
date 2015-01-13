@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""})
 @GenerateNodeFactory
 public abstract class MatMult extends RBuiltinNode {
+
+    private static final int BLOCK_SIZE = 64;
 
     @Child private BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
     @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
@@ -86,28 +88,80 @@ public abstract class MatMult extends RBuiltinNode {
 
     // double-double
 
+    private void multiplyBlock(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int bRows, double[] result, int row, int col, int k, int remainingCols, int remainingRows, int remainingK) {
+        for (int innerCol = 0; innerCol < remainingCols; innerCol++) {
+            for (int innerRow = 0; innerRow < remainingRows; innerRow++) {
+                if (!na.neverSeenNA() && RRuntime.isNA(result[(col + innerCol) * aRows + row + innerRow])) {
+                    continue;
+                }
+                double x = 0.0;
+                int bIndex = (col + innerCol) * bRows + k;
+                int aIndex = k * aRows + row + innerRow;
+                for (int innerK = 0; innerK < remainingK; innerK++) {
+                    x += a.getDataAt(aIndex) * b.getDataAt(bIndex);
+                    aIndex += aRows;
+                    bIndex++;
+                }
+                result[(col + innerCol) * aRows + row + innerRow] += x;
+            }
+        }
+    }
+
+    private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
+
     @Specialization(guards = "matmat")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
+        final int aRows = a.getDimensions()[0];
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
+        final int bCols = b.getDimensions()[1];
         if (aCols != bRows) {
             errorProfile.enter();
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        final int aRows = a.getDimensions()[0];
-        final int bCols = b.getDimensions()[1];
         double[] result = new double[aRows * bCols];
-        na.enable(a);
-        na.enable(b);
-        for (int row = 0; row < aRows; ++row) {
-            for (int col = 0; col < bCols; ++col) {
-                double x = 0.0;
-                for (int k = 0; k < aCols; ++k) {
-                    x = add.doDouble(x, mult.doDouble(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
-                    na.check(x);
+        for (int row = 0; row < aRows; row += BLOCK_SIZE) {
+            for (int col = 0; col < bCols; col += BLOCK_SIZE) {
+                for (int k = 0; k < aCols; k += BLOCK_SIZE) {
+                    int remainingCols = Math.min(BLOCK_SIZE, bCols - col);
+                    int remainingRows = Math.min(BLOCK_SIZE, aRows - row);
+                    int remainingK = BLOCK_SIZE;
+                    if (k + BLOCK_SIZE > aCols) {
+                        remainingK = aCols - k;
+                    }
+                    if (bigProfile.profile(remainingCols == BLOCK_SIZE && remainingRows == BLOCK_SIZE && remainingK == BLOCK_SIZE)) {
+                        multiplyBlock(a, b, aRows, bRows, result, row, col, k, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    } else {
+                        multiplyBlock(a, b, aRows, bRows, result, row, col, k, remainingCols, remainingRows, remainingK);
+                    }
                 }
-                result[col * aRows + row] = x;
+            }
+        }
+        if (!a.isComplete()) {
+            // NA's in a cause the whole row to be NA in the result
+            for (int row = 0; row < aRows; row++) {
+                for (int col = 0; col < aCols; col++) {
+                    if (RRuntime.isNA(col * aRows + row)) {
+                        for (int innerCol = 0; innerCol < bCols; innerCol++) {
+                            result[innerCol * aRows + row] = RRuntime.DOUBLE_NA;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if (!b.isComplete()) {
+            // NA's in b cause the whole column to be NA in the result
+            for (int col = 0; col < bCols; col++) {
+                for (int row = 0; row < bRows; row++) {
+                    if (RRuntime.isNA(col * bRows + row)) {
+                        for (int innerRow = 0; innerRow < aRows; innerRow++) {
+                            result[col * aRows + innerRow] = RRuntime.DOUBLE_NA;
+                        }
+                        break;
+                    }
+                }
             }
         }
         return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
