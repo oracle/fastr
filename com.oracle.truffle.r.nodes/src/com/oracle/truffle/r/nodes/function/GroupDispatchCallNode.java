@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,7 @@ public abstract class GroupDispatchCallNode extends RNode {
     private static final int INLINE_CACHE_SIZE = 4;
     @Child protected CallArgumentsNode callArgsNode;
 
-    public static GroupDispatchCallNode create(final String aGenericName, final String groupName, final CallArgumentsNode callArgNode, final SourceSection callSrc) {
+    public static GroupDispatchCallNode create(String aGenericName, String groupName, CallArgumentsNode callArgNode, SourceSection callSrc) {
         GroupDispatchCallNode gdcn = new UninitializedGroupDispatchCallNode(aGenericName, groupName, callArgNode);
         gdcn.assignSourceSection(callSrc);
         return gdcn;
