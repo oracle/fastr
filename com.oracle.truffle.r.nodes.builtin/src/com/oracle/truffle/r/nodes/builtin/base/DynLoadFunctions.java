@@ -47,7 +47,7 @@ public class DynLoadFunctions {
             controlVisibility();
             // Length checked by GnuR
             if (libVec.getLength() > 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
             }
             String lib = libVec.getDataAt(0);
             // Length not checked by GnuR

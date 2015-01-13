@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ public abstract class AsVector extends RBuiltinNode {
     @Child private CastRawNode castRaw;
     @Child private CastListNode castList;
     @Child private CastSymbolNode castSymbol;
+    @Child private CastExpressionNode castExpression;
 
     private RIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
@@ -91,6 +92,14 @@ public abstract class AsVector extends RBuiltinNode {
             castSymbol = insert(CastSymbolNodeGen.create(null, false, false, false));
         }
         return (RSymbol) castSymbol.executeSymbol(frame, operand);
+    }
+
+    private RExpression castExpression(VirtualFrame frame, Object operand) {
+        if (castExpression == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castExpression = insert(CastExpressionNodeGen.create(null, false, false, false));
+        }
+        return (RExpression) castExpression.executeExpression(frame, operand);
     }
 
     private RRawVector castRaw(VirtualFrame frame, Object operand) {
@@ -194,7 +203,7 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean isSymbol(@SuppressWarnings("unused") RSymbol x, String mode) {
-        return mode.equals("symbol");
+        return RType.Symbol.getName().equals(mode);
     }
 
     @Specialization(guards = "modeIsAny")
@@ -233,6 +242,12 @@ public abstract class AsVector extends RBuiltinNode {
         }
     }
 
+    @Specialization(guards = "castToExpression")
+    protected RExpression asVectorExpression(VirtualFrame frame, Object x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return castExpression(frame, x);
+    }
+
     @Specialization(guards = "modeIsAnyOrMatches")
     protected RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -264,27 +279,31 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     protected boolean castToList(RAbstractVector x, String mode) {
-        return x.getElementClass() != Object.class && mode.equals("list");
+        return x.getElementClass() != Object.class && RType.List.getName().equals(mode);
     }
 
     protected boolean castToList(@SuppressWarnings("unused") RLanguage x, String mode) {
-        return mode.equals("list");
+        return RType.List.getName().equals(mode);
     }
 
     protected boolean castToList(@SuppressWarnings("unused") RExpression x, String mode) {
-        return mode.equals("list");
+        return RType.List.getName().equals(mode);
     }
 
     protected boolean castToList(@SuppressWarnings("unused") RPairList x, String mode) {
-        return mode.equals("list");
+        return RType.List.getName().equals(mode);
     }
 
     protected boolean castToList(@SuppressWarnings("unused") RNull x, String mode) {
-        return mode.equals("list");
+        return RType.List.getName().equals(mode);
     }
 
     protected boolean castToSymbol(RAbstractVector x, String mode) {
-        return x.getElementClass() != Object.class && mode.equals("symbol");
+        return x.getElementClass() != Object.class && RType.Symbol.getName().equals(mode);
+    }
+
+    protected boolean castToExpression(@SuppressWarnings("unused") Object x, String mode) {
+        return RType.Expression.getName().equals(mode);
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {

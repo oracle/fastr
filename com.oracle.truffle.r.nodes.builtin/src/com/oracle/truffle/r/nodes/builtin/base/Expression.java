@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,11 +44,25 @@ public abstract class Expression extends RBuiltinNode {
     @ExplodeLoop
     protected Object doExpression(RArgsValuesAndNames args) {
         Object[] argValues = args.getValues();
+        String[] argNames = null;
         Object[] data = new Object[argValues.length];
+        String[] names = null;
+        if (!args.isAllNamesEmpty()) {
+            argNames = args.getNames();
+            names = new String[argValues.length];
+        }
         for (int i = 0; i < argValues.length; i++) {
             data[i] = convert((RPromise) argValues[i]);
+            if (names != null && argNames[i] != null) {
+                names[i] = argNames[i];
+            }
         }
-        RList list = RDataFactory.createList(data);
+        RList list;
+        if (names == null) {
+            list = RDataFactory.createList(data);
+        } else {
+            list = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+        }
         return RDataFactory.createExpression(list);
     }
 

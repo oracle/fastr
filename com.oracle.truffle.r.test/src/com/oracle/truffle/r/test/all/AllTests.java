@@ -4844,6 +4844,51 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsExpression_629b27e17acae78fdccebd2267cf39d7() {
+        assertEval("{ as.expression(\"name\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_b5526c794d08a161b310dd89b07bd106() {
+        assertEval("{ as.expression(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_f71c27316acec6fdbca0b100f45f46f5() {
+        assertEval("{ as.expression(123) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_aeb3c2111d43490f6e58dd3b8497140a() {
+        assertEval("{ as.expression(as.symbol(123)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_372a963064166dc1c111f6d8e03fedb3() {
+        assertEval("{ as.expression(c(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_da643a2e46c5c218d1484b50eadc550a() {
+        assertEval("{ as.expression(list(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_1eddac00c40ac3aeae9326676ebf3dae() {
+        assertEval("{ as.expression(list(\"x\" = 1, \"y\" = 2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_9de1fa7b4c2fcc19ce5f33c0057e5494() {
+        assertEvalError("{ as.expression(sum) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsExpression_8ba5bafd08310284367ccdc3a0d348c8() {
+        assertEvalError("{ as.expression(function()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsInteger_7141b813c63bfa1663f1f54d19e9a25e() {
         assertEval("{ as.integer(\"1\") }");
     }

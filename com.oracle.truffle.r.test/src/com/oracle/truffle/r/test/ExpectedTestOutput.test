@@ -4737,6 +4737,43 @@ NULL
 #{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, "foo")<-"foo"; y<-as.double(x); attributes(y) }
 NULL
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression("name") }
+expression("name")
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(123) }
+expression(123)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(NULL) }
+expression(NULL)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(as.symbol(123)) }
+expression(`123`)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(c(1,2)) }
+expression(1, 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(function()) }
+Error: unexpected ')' in "{ as.expression(function())"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(list("x" = 1, "y" = 2)) }
+expression(x = 1, y = 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(list(1,2)) }
+expression(1, 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsExpression
+#{ as.expression(sum) }
+Error in as.vector(x, "expression") :
+  cannot coerce type 'builtin' to vector of type 'expression'
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsInteger
 #{ as.integer("1") }
 [1] 1

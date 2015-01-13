@@ -789,6 +789,19 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testAsExpression() {
+        assertEval("{ as.expression(\"name\") }");
+        assertEval("{ as.expression(NULL) }");
+        assertEval("{ as.expression(123) }");
+        assertEval("{ as.expression(as.symbol(123)) }");
+        assertEval("{ as.expression(c(1,2)) }");
+        assertEval("{ as.expression(list(1,2)) }");
+        assertEval("{ as.expression(list(\"x\" = 1, \"y\" = 2)) }");
+        assertEvalError("{ as.expression(sum) }");
+        assertEvalError("{ as.expression(function()) }");
+    }
+
+    @Test
     public void testMatrix() {
         assertEval("{ matrix(c(1,2,3,4),2,2) }");
         assertEval("{ matrix(as.double(NA),2,2) }");

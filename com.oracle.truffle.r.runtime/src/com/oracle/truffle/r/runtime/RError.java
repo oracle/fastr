@@ -379,7 +379,7 @@ public final class RError extends RuntimeException {
         EXACTLY_ONE_WHICH("exactly one attribute 'which' must be given"),
         ATTRIBUTES_NAMED("attributes must be named"),
         MISSING_INVALID("missing value is invalid"),
-        CHARACTER_EXPECTED("character argument expected"),
+        TYPE_EXPECTED("%s argument expected"),
         CANNOT_CHANGE_DIRECTORY("cannot change working directory"),
         FIRST_ARG_MUST_BE_STRING("first argument must be a character string"),
         ZERO_LENGTH_VARIABLE("attempt to use zero-length variable name"),

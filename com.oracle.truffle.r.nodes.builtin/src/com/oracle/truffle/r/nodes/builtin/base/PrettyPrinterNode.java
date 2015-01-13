@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -270,9 +270,14 @@ public abstract class PrettyPrinterNode extends RNode {
         StringBuilder builder = new StringBuilder();
         builder.append("expression(");
         RList exprs = expr.getList();
+        RStringVector names = (RStringVector) expr.getAttr(RRuntime.NAMES_ATTR_KEY);
         for (int i = 0; i < exprs.getLength(); i++) {
             if (i != 0) {
                 builder.append(", ");
+            }
+            if (names != null && names.getDataAt(i) != null) {
+                builder.append(names.getDataAt(i));
+                builder.append(" = ");
             }
             builder.append(prettyPrintSingleVectorElement(exprs.getDataAt(i), quote));
         }
@@ -1248,6 +1253,12 @@ public abstract class PrettyPrinterNode extends RNode {
         @Specialization
         protected String prettyPrintVectorElement(RLanguage operand, byte isQuoted) {
             return prettyPrintLanguageInternal(operand);
+        }
+
+        @TruffleBoundary
+        @Specialization
+        protected String prettyPrintVectorElement(RSymbol operand, byte isQuoted) {
+            return operand.getName();
         }
 
         protected static boolean isVectorList(RAbstractVector v) {
