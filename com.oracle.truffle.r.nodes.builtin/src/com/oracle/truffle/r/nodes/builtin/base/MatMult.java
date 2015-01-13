@@ -108,6 +108,7 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile incompleteProfile = BranchProfile.create();
 
     @Specialization(guards = "matmat")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
@@ -138,33 +139,74 @@ public abstract class MatMult extends RBuiltinNode {
                 }
             }
         }
-        if (!a.isComplete()) {
-            // NA's in a cause the whole row to be NA in the result
-            for (int row = 0; row < aRows; row++) {
-                for (int col = 0; col < aCols; col++) {
-                    if (RRuntime.isNA(col * aRows + row)) {
-                        for (int innerCol = 0; innerCol < bCols; innerCol++) {
-                            result[innerCol * aRows + row] = RRuntime.DOUBLE_NA;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
+        boolean complete = true;
         if (!b.isComplete()) {
-            // NA's in b cause the whole column to be NA in the result
-            for (int col = 0; col < bCols; col++) {
-                for (int row = 0; row < bRows; row++) {
-                    if (RRuntime.isNA(col * bRows + row)) {
-                        for (int innerRow = 0; innerRow < aRows; innerRow++) {
-                            result[col * aRows + innerRow] = RRuntime.DOUBLE_NA;
+            incompleteProfile.enter();
+            fixNAColumns(b, aRows, result);
+            complete = false;
+        }
+        if (!a.isComplete()) {
+            incompleteProfile.enter();
+            fixNARows(a, bCols, result);
+            complete = false;
+        }
+        return RDataFactory.createDoubleVector(result, complete, new int[]{aRows, bCols});
+    }
+
+    private static void fixNARows(RAbstractDoubleVector a, int bCols, double[] result) {
+        final int aRows = a.getDimensions()[0];
+        final int aCols = a.getDimensions()[1];
+        // NA's in a cause the whole row to be NA in the result
+        for (int row = 0; row < aRows; row++) {
+            boolean hasNA = false;
+            for (int col = 0; col < aCols; col++) {
+                if (RRuntime.isNA(a.getDataAt(col * aRows + row))) {
+                    for (int innerCol = 0; innerCol < bCols; innerCol++) {
+                        result[innerCol * aRows + row] = RRuntime.DOUBLE_NA;
+                    }
+                    hasNA = true;
+                    break;
+                }
+            }
+            if (!hasNA) {
+                for (int col = 0; col < aCols; col++) {
+                    if (Double.isNaN(a.getDataAt(col * aRows + row))) {
+                        for (int innerCol = 0; innerCol < bCols; innerCol++) {
+                            result[innerCol * aRows + row] = Double.NaN;
                         }
                         break;
                     }
                 }
             }
         }
-        return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
+    }
+
+    private static void fixNAColumns(RAbstractDoubleVector b, int aRows, double[] result) {
+        final int bRows = b.getDimensions()[0];
+        final int bCols = b.getDimensions()[1];
+        // NA's in b cause the whole column to be NA in the result
+        for (int col = 0; col < bCols; col++) {
+            boolean hasNA = false;
+            for (int row = 0; row < bRows; row++) {
+                if (RRuntime.isNA(b.getDataAt(col * bRows + row))) {
+                    for (int innerRow = 0; innerRow < aRows; innerRow++) {
+                        result[col * aRows + innerRow] = RRuntime.DOUBLE_NA;
+                    }
+                    hasNA = true;
+                    break;
+                }
+            }
+            if (!hasNA) {
+                for (int row = 0; row < bRows; row++) {
+                    if (Double.isNaN(b.getDataAt(col * bRows + row))) {
+                        for (int innerRow = 0; innerRow < aRows; innerRow++) {
+                            result[col * aRows + innerRow] = Double.NaN;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Specialization(guards = "vecvec")
