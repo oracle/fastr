@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,7 @@ abstract class GetDimNamesNode extends RNode {
     private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile srcNamesNullProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyPosProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile diffDimLenProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization
     protected Object getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
@@ -96,7 +97,29 @@ abstract class GetDimNamesNode extends RNode {
                 dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
                 getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
             } else {
-                getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel, namesNACheck);
+                if (diffDimLenProfile.profile(currentSrcDimLevel > currentDstDimLevel)) {
+                    // skip source dimensions
+                    getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel, namesNACheck);
+                } else {
+                    RList srcDimNames = vector.getDimNames();
+                    RStringVector srcNames = srcDimNames == null ? null : (srcDimNames.getDataAt(currentSrcDimLevel - 1) == RNull.instance ? null
+                                    : (RStringVector) srcDimNames.getDataAt(currentSrcDimLevel - 1));
+                    if (srcNamesNullProfile.profile(srcNames == null)) {
+                        dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
+                    } else {
+                        namesNACheck.enable(!srcNames.isComplete() || !p.isComplete());
+                        String name;
+                        int pos = p.getDataAt(0);
+                        if (namesNACheck.check(pos)) {
+                            name = RRuntime.STRING_NA;
+                        } else {
+                            name = srcNames.getDataAt(pos - 1);
+                            namesNACheck.check(name);
+                        }
+                        dstDimNames.updateDataAt(currentDstDimLevel - 1, RDataFactory.createStringVector(new String[]{name}, namesNACheck.neverSeenNA()), null);
+                    }
+                    getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
+                }
             }
         }
         return null;

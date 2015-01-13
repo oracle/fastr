@@ -252,10 +252,7 @@ public final class RContext extends ExecutionContext {
 
         /**
          * Wraps the Truffle AST in {@code body} in an anonymous function and returns a
-         * {@link RootCallTarget} for it. We define the
-         * {@link com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition} environment to
-         * have the {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any
-         * existing environments, i.e. is truly anonymous.
+         * {@link RootCallTarget} for it.
          *
          * N.B. For certain expressions, there might be some value in enclosing the wrapper function
          * in a specific lexical scope. E.g., as a way to access names in the expression known to be

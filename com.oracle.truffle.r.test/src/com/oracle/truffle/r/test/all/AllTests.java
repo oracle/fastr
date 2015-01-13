@@ -609,6 +609,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testMatricesProduct_55006e423797641c7a010b819d05c2e0() {
+        assertEval("{ matrix(c(NaN,1,7,2,4,NA), nrow=3) %*% matrix(c(3,1,NA,2,NaN,5,6,7), nrow=2) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testMatricesProduct_6b9454263a04c54bc733dd613376e166() {
         assertEvalError("{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }");
     }
@@ -2811,6 +2816,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArrays_testAccess_23a36b90ec9ac75b7f4740c6bf7247ab() {
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testAccess_8c815a47302c9d0031c31f1fe98dca2e() {
+        assertEval("{ v<-c(\"a\", \"b\"); dim(v)<-c(1,2); dimnames(v)<-list(\"x\", c(\"y\", \"z\")); v[1, c(1,2), drop=FALSE] }");
     }
 
     @Test
@@ -11674,6 +11684,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMissing_537912b8640b5130f8da2ce9bc44495d() {
+        assertEval("{ f <- function(a,b,c,d,e,env) (length(objects(env, all.names = TRUE, pattern = \"^[.]__[CTA]_\"))); f2 <- function(env) (length(objects(env, all.names = TRUE, pattern = \"^[.]__[CTA]_\"))); f(); f2() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMod_9e8ae1303f27834ae87665ed2c4ae12c() {
         assertEval("{ round(Mod(1+1i)*10000) }");
     }
@@ -17211,6 +17226,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleComparison_testMatrices_6e89d79b793dfb2076088167e168c6e0() {
         assertEval("{ m <- matrix(1:6, nrow=2) ; m > c(1,2,3) }");
+    }
+
+    @Test
+    public void TestSimpleComparison_testOther_c79a102f522b39e79a10078ea0b5ba8d() {
+        assertEval("{ stdin() == 0L }");
     }
 
     @Test

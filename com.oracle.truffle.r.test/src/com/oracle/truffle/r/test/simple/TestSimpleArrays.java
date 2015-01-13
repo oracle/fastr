@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -59,6 +59,8 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }");
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }");
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }");
+
+        assertEval("{ v<-c(\"a\", \"b\"); dim(v)<-c(1,2); dimnames(v)<-list(\"x\", c(\"y\", \"z\")); v[1, c(1,2), drop=FALSE] }");
 
     }
 
