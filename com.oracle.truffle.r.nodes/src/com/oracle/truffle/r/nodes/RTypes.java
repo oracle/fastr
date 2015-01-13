@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,23 +44,23 @@ import com.oracle.truffle.r.runtime.env.*;
                 RPairList.class, RFormula.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RType.class, Object[].class})
 public class RTypes {
 
-    @TypeCheck
+    @TypeCheck(RNull.class)
     public static boolean isRNull(Object value) {
         return value == RNull.instance;
     }
 
-    @TypeCast
+    @TypeCast(RNull.class)
     @SuppressWarnings("unused")
     public static RNull asRNull(Object value) {
         return RNull.instance;
     }
 
-    @TypeCheck
+    @TypeCheck(RMissing.class)
     public static boolean isRMissing(Object value) {
         return value == RMissing.instance;
     }
 
-    @TypeCast
+    @TypeCast(RMissing.class)
     @SuppressWarnings("unused")
     public static RMissing asRMissing(Object value) {
         return RMissing.instance;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,8 @@ public class BuiltinProcessor extends AbstractProcessor {
             }
             // write out the class
             JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + ".RBuiltinClasses");
-            try (PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()))) {
+            PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()));
+            try {
                 wr.println("// DO NOT EDIT, generated automatically");
                 wr.printf("package %s;%n", packageName);
                 wr.println("public final class RBuiltinClasses {");
@@ -132,6 +133,15 @@ public class BuiltinProcessor extends AbstractProcessor {
                 }
                 wr.println("    };");
                 wr.println("}");
+            } finally {
+                if (wr != null) {
+                    try {
+                        wr.close();
+                    } catch (Throwable e1) {
+                        // see eclipse bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=361378
+                        // TODO temporary suppress errors on close.
+                    }
+                }
             }
 
         }

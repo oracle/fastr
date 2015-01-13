@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -468,6 +468,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ m <- matrix(c(NA,1,4,2), nrow=2) ; t(m) %*% m }");
         assertEval("{ matrix(c(3,1,0/0,2), nrow=2) %*% matrix(1:6,nrow=2) }");
         assertEvalError("{ as.raw(1:3) %*% 1:3 }");
+        assertEval("{ matrix(c(NaN,1,7,2,4,NA), nrow=3) %*% matrix(c(3,1,NA,2,NaN,5,6,7), nrow=2) }");
     }
 
     @Test

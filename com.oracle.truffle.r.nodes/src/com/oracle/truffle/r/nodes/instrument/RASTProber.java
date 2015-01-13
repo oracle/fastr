@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 
 /**
  * A visitor which traverses a completely parsed R AST (presumed not yet executed) and attaches
- * {@linkplain Probe Probes} at some of them for use by the debugging framework.
+ * {@linkplain Probe Probes} at some of them for use by the instrumentation framework.
  *
  * Syntax nodes in {@link SequenceNode}s are tagged with {@link StandardSyntaxTag#STATEMENT}.
  * Function calls are tagged with {@link StandardSyntaxTag#CALL}. {@link FunctionStatementsNode}s
@@ -45,14 +45,14 @@ import com.oracle.truffle.r.runtime.*;
  * N.B. The calls to {@code probe()} insert a {@link WrapperNode} as the parent of the associated
  * node.
  */
-public final class RASTDebugProber implements NodeVisitor, ASTProber {
+public final class RASTProber implements NodeVisitor, ASTProber {
 
-    private static final RASTDebugProber singleton = new RASTDebugProber();
+    private static final RASTProber singleton = new RASTProber();
 
-    private RASTDebugProber() {
+    private RASTProber() {
     }
 
-    public static RASTDebugProber getRASTProber() {
+    public static RASTProber getRASTProber() {
         return singleton;
     }
 
@@ -77,10 +77,10 @@ public final class RASTDebugProber implements NodeVisitor, ASTProber {
                     for (RNode n : sequence) {
                         boolean tag = false;
                         if (n.isSyntax()) {
-                            n.probe().tagAs(STATEMENT, null);
+                            n.probe().tagAs(STATEMENT, n);
                             tag = true;
                         }
-                        if (FastROptions.debugMatches("RASTDebugProber") && tag) {
+                        if (FastROptions.debugMatches("RASTProber") && tag) {
                             System.out.printf("Tag %s as STATEMENT: %b%n", n.toString(), tag);
                         }
                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,6 @@ public abstract class AccessArgumentNode extends RNode {
     /**
      * Used to cache {@link RPromise} evaluations.
      */
-    @Child private InlineCacheNode<VirtualFrame, RNode> promiseExpressionCache = InlineCacheNode.createExpression(3);
     @Child private RNode optDefaultArgNode = null;
     @CompilationFinal private FormalArguments formals = null;
     @CompilationFinal private RPromiseFactory factory = null;

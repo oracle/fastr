@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,13 +27,11 @@ import java.util.regex.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Access to the frame component, handled by delegation in {@link REnvironment}. The default
- * implementation throws an exception for all calls. It is used in the {@link FunctionDefinition}
- * environment which never has an associated frame.
+ * implementation throws an exception for all calls.
  */
 public class REnvFrameAccess {
     /**

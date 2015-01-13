@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,7 +144,6 @@ public class TestRPackages extends TestBase {
 
     @Test
     public void testLoadTestRFFI() {
-        // tmp disable until OS name is fixed
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_double(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }", new String[]{packagePaths.rpackagesLibs.toString()}));

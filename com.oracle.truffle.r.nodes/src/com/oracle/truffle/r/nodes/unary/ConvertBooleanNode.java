@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,11 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();
     private final BranchProfile errorBranch = BranchProfile.create();
+
+    @Override
+    public final Object execute(VirtualFrame frame) {
+        return executeByte(frame);
+    }
 
     @Override
     public abstract byte executeByte(VirtualFrame frame);

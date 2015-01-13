@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -53,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
@@ -69,12 +69,6 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private long[] childTimes;
     @CompilationFinal private RContext context;
     @CompilationFinal private RBuiltinLookup builtinLookup;
-
-    /**
-     * Controls whether ASTs are instrumented after parse. The default value controlled by
-     * {@link FastROptions#Instrumentation}.
-     */
-    private static boolean instrumentingEnabled;
 
     /**
      * Only of relevance for in-process debugging, prevents most re-initialization on repeat calls
@@ -108,12 +102,9 @@ public final class REngine implements RContext.Engine {
         if (initialized) {
             REnvironment.resetForTest(globalFrame);
         } else {
-            instrumentingEnabled = FastROptions.Instrumentation.getValue();
-            if (instrumentingEnabled) {
-                RInstrument.initialize();
-            }
+            RInstrument.initialize();
+            RPerfAnalysis.initialize();
             Locale.setDefault(Locale.ROOT);
-            Load_RFFIFactory.initialize();
             RAccuracyInfo.initialize();
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
@@ -185,10 +176,6 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
-    public boolean instrumentingEnabled() {
-        return instrumentingEnabled;
-    }
-
     public Object parseAndEval(Source sourceDesc, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
         return parseAndEvalImpl(new ANTLRStringStream(sourceDesc.getCode()), sourceDesc, frame, printResult, allowIncompleteSource);
     }
@@ -210,7 +197,7 @@ public final class REngine implements RContext.Engine {
     public Node parseSingle(String singleExpression) {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(singleExpression), Source.asPseudoFile(singleExpression, "<parse_input>"));
-            return transform(seq.getExpressions()[0], REnvironment.emptyEnv());
+            return transform(seq.getExpressions()[0]);
         } catch (RecognitionException ex) {
             throw Utils.fatalError("parseSingle failed");
         }
@@ -222,7 +209,7 @@ public final class REngine implements RContext.Engine {
             ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
-                data[i] = RDataFactory.createLanguage(transform(exprs[i], REnvironment.emptyEnv()));
+                data[i] = RDataFactory.createLanguage(transform(exprs[i]));
             }
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {
@@ -352,29 +339,24 @@ public final class REngine implements RContext.Engine {
      * @throws RecognitionException on parse error
      */
     private static RNode parseToRNode(ANTLRStringStream stream, Source source) throws RecognitionException {
-        return transform(ParseUtil.parseAST(stream, source), REnvironment.globalEnv());
+        return transform(ParseUtil.parseAST(stream, source));
     }
 
     /**
      * Transforms an AST produced by the parser into a Truffle AST.
      *
      * @param astNode parser AST instance
-     * @param environment the lexically enclosing environment that will be associated with top-level
-     *            function definitions in {@code astNode}
      * @return the root node of the Truffle AST
      */
-    private static RNode transform(ASTNode astNode, REnvironment environment) {
-        RTruffleVisitor transform = new RTruffleVisitor(environment);
+    private static RNode transform(ASTNode astNode) {
+        RTruffleVisitor transform = new RTruffleVisitor();
         RNode result = transform.transform(astNode);
         return result;
     }
 
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
-     * {@link RootCallTarget} for it. We define the
-     * {@link com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition} environment to have
-     * the {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
-     * environments, i.e. is truly anonymous.
+     * {@link RootCallTarget} for it.
      *
      * N.B. For certain expressions, there might be some value in enclosing the wrapper function in
      * a specific lexical scope. E.g., as a way to access names in the expression known to be
@@ -397,9 +379,9 @@ public final class REngine implements RContext.Engine {
      */
     @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
-        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, fbn, FormalArguments.NO_ARGS, funName, true, true);
+        FrameDescriptor descriptor = new FrameDescriptor();
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }

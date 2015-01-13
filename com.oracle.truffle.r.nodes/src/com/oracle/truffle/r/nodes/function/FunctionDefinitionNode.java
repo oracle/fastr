@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,16 +35,13 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.*;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
-    /**
-     * Identifies the lexical scope where this function is defined, through the "parent" field.
-     */
-    private final REnvironment.FunctionDefinition funcEnv;
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     private final RNode uninitializedBody; // copy for "body" builtin
     private final String description;
@@ -70,15 +67,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
-        this(src, funcEnv, body, formals, description, substituteFrame, false);
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
+        this(src, frameDesc, body, formals, description, substituteFrame, false);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
-    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit) {
-        super(src, formals, funcEnv.getDescriptor());
-        this.funcEnv = funcEnv;
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit) {
+        super(src, formals, frameDesc);
         this.body = body;
         this.uninitializedBody = body;
         this.description = description;
@@ -90,10 +86,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     public FunctionUID getUID() {
         return uuid;
-    }
-
-    public REnvironment.FunctionDefinition getEnv() {
-        return funcEnv;
     }
 
     public FunctionBodyNode getBody() {
@@ -195,7 +187,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * substitution, just the body.
      */
     public FunctionDefinitionNode substituteFDN(REnvironment env) {
-        return new FunctionDefinitionNode(null, funcEnv, body.substitute(env), getFormalArguments(), null, substituteFrame);
+        return new FunctionDefinitionNode(null, new FrameDescriptor(), body.substitute(env), getFormalArguments(), null, substituteFrame);
     }
 
     @Override
@@ -207,7 +199,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public void applyInstrumentation() {
-        if (RContext.getEngine().instrumentingEnabled() && !instrumentationApplied) {
+        if (RInstrument.instrumentingEnabled() && !instrumentationApplied) {
             Probe.applyASTProbers(body);
             instrumentationApplied = true;
         }

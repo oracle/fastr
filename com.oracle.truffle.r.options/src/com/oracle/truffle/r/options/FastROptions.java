@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.oracle.graal.options.*;
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
  * <b>not</b> part of the standard set of R options or command line options.
  *
- * Currently it is not possible to include the FastR options in Graal as FastR is not part of graal.
+ * Currently it is not possible to include the FastR options in Graal as FastR is not part of Graal.
  * Someday it may be possible to register such options with the Graal VM, but in the interim, we
  * override the implementation to use system properties. The syntax follows that for Graal options
  * except that a {@code D} (for setting system property) must be the first character,e.g.
@@ -49,10 +49,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> CheckResultCompleteness = new OptionValue<>(true);
     @Option(help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")
     public static final OptionValue<String> Debug = new OptionValue<>(null);
-    @Option(help = "Disable all Instrumentation")
-    public static final OptionValue<Boolean> Instrumentation = new OptionValue<>(false);
-    @Option(help = "Add function call counters")
-    public static final OptionValue<Boolean> AddFunctionCounters = new OptionValue<>(false);
+    @Option(help = "Enable Instrumentation")
+    public static final OptionValue<Boolean> Instrument = new OptionValue<>(false);
     @Option(help = "Enable binding of builtins into package environment")
     public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(false);
     @Option(help = "Trace all R function calls (requires +Instrumentation)")
@@ -141,7 +139,6 @@ public class FastROptions {
             }
         }
         return false;
-
     }
 
     private static OptionDescriptor findOption(String key) {

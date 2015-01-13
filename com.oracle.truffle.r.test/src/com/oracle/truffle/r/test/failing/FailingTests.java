@@ -209,16 +209,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testAnyDuplicatedIgnore_dcc2ba95aa8608d62368b2c9886bb0ba() {
-        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAnyDuplicatedIgnore_58cdce8ea781c0cdf349b42069b16727() {
-        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testAnyIgnore_a5514afb3c27ad5fad71696cb1db96a9() {
         assertEval("{ any(FALSE, NA,  na.rm=TRUE) }");
     }
