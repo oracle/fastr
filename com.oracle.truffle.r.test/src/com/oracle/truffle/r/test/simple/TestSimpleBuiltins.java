@@ -3846,60 +3846,54 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1 ; levels(x)<-c(1, \"cat\", 4.5, \"3\"); levels(x);}");
     }
 
+    private static final String[] DUPLICATED_FUNCTIONS = new String[]{"anyDuplicated", "duplicated"};
+
     @Test
     public void testAnyDuplicated() {
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables=FALSE,fromLast = TRUE)}");
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE, TRUE)}");
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), TRUE )}");
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE )}");
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L)) }");
-        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = TRUE) }");
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
+        assertTemplateEval(template("{ %0(c(1L, 2L, 3L, 4L, 2L, 3L)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables = TRUE )}", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }", DUPLICATED_FUNCTIONS));
 
         // strings
-        assertEval("{anyDuplicated(c(\"abc\"))}");
-        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"abc\"))}");
-        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"ghi\", \"jkl\"))}");
+        assertTemplateEval(template("{%0(c(\"abc\"))}", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{%0(c(\"abc\", \"def\", \"abc\"))}", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{%0(c(\"abc\", \"def\", \"ghi\", \"jkl\"))}", DUPLICATED_FUNCTIONS));
 
         // boolean
-        assertEval("{anyDuplicated(c(FALSE))}");
-        assertEval("{anyDuplicated(c(FALSE, TRUE))}");
-        assertEval("{anyDuplicated(c(FALSE, TRUE, FALSE))}");
+        assertTemplateEval(template("{%0(c(FALSE))}", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{%0(c(FALSE, TRUE))}", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{%0(c(FALSE, TRUE, FALSE))}", DUPLICATED_FUNCTIONS));
 
         // complex
-        assertEval("{anyDuplicated(c(2+2i)) }");
-        assertEval("{anyDuplicated(c(2+2i, 3+3i, 2+2i)) }");
-        assertEval("{anyDuplicated(c(2+2i, 3+3i, 4+4i, 5+5i)) }");
+        assertTemplateEval(template("{%0(c(2+2i)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{%0(c(2+2i, 3+3i, 2+2i)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{%0(c(2+2i, 3+3i, 4+4i, 5+5i)) }", DUPLICATED_FUNCTIONS));
 
         // Double Vector
-        assertEval("{ anyDuplicated(c(27.2, 68.4, 94.3, 22.2)) }");
-        assertEval("{ anyDuplicated(c(1, 1, 4, 5, 4), TRUE, TRUE) }");
-        assertEval("{ anyDuplicated(c(1,2,1)) }");
-        assertEval("{ anyDuplicated(c(1)) }");
-        assertEval("{ anyDuplicated(c(1,2,3,4)) }");
-        assertEval("{ anyDuplicated(list(76.5, 5L, 5L, 76.5, 5, 5), incomparables = c(5L, 76.5)) }");
+        assertTemplateEval(template("{ %0(c(27.2, 68.4, 94.3, 22.2)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1, 1, 4, 5, 4), TRUE, TRUE) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1,2,1)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1,2,3,4)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(list(76.5, 5L, 5L, 76.5, 5, 5), incomparables = c(5L, 76.5)) }", DUPLICATED_FUNCTIONS));
 
         // Logical Vector
-        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE) }");
-        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE, fromLast = 1) }");
+        assertTemplateEval(template("{ %0(c(TRUE, FALSE, TRUE), TRUE) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(TRUE, FALSE, TRUE), TRUE, fromLast = 1) }", DUPLICATED_FUNCTIONS));
 
         // String Vector
-        assertEval("{ anyDuplicated(c(\"abc\", \"good\", \"hello\", \"hello\", \"abc\")) }");
-        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), FALSE) }");
-        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), TRUE) }");
-        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), 1) }");
+        assertTemplateEval(template("{ %0(c(\"abc\", \"good\", \"hello\", \"hello\", \"abc\")) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), FALSE) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), TRUE) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), 1) }", DUPLICATED_FUNCTIONS));
 
         // Complex Vector
-        assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
-        assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
-        assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
-    }
+        assertTemplateEval(template("{ %0(c(1+0i, 6+7i, 1+0i), TRUE)}", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1+1i, 4-6i, 4-6i, 6+7i)) }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }", DUPLICATED_FUNCTIONS));
 
-    @Test
-    @Ignore
-    public void testAnyDuplicatedIgnore() {
-        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
-        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+        assertTemplateEval(template("{ %0(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }", DUPLICATED_FUNCTIONS));
+        assertTemplateEval(template("{ %0(c(1,2,3,2), incomparables = c(2+6i)) }", DUPLICATED_FUNCTIONS));
     }
 
     @Test
