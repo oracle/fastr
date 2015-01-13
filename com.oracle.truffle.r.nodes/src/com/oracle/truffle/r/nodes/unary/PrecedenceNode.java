@@ -45,9 +45,12 @@ public abstract class PrecedenceNode extends UnaryNode {
     public static final int EXPRESSION_PRECEDENCE = 7;
 
     @Override
-    public int executeInteger(VirtualFrame frame) {
-        return RTypesGen.asInteger(execute(frame));
+    public final Object execute(VirtualFrame frame) {
+        return executeInteger(frame);
     }
+
+    @Override
+    public abstract int executeInteger(VirtualFrame frame);
 
     public abstract int executeInteger(VirtualFrame frame, Object object, byte recursive);
 

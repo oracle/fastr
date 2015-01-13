@@ -31,6 +31,11 @@ import com.oracle.truffle.r.runtime.*;
 @NodeField(name = "level", type = int.class)
 public abstract class AccessEnclosingFrameNode extends RNode {
 
+    @Override
+    public final Object execute(VirtualFrame frame) {
+        return executeMaterializedFrame(frame);
+    }
+
     public abstract MaterializedFrame executeMaterializedFrame(VirtualFrame frame);
 
     @Specialization

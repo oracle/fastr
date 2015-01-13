@@ -41,6 +41,11 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     private final BranchProfile errorBranch = BranchProfile.create();
 
     @Override
+    public final Object execute(VirtualFrame frame) {
+        return executeByte(frame);
+    }
+
+    @Override
     public abstract byte executeByte(VirtualFrame frame);
 
     public abstract byte executeByte(VirtualFrame frame, Object operandValue);

@@ -88,8 +88,6 @@ public abstract class AccessArrayNode extends RNode {
 
     public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, RAbstractLogicalVector dropDim);
 
-    public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, int operand, RAbstractLogicalVector dropDim);
-
     @Override
     public boolean isSyntax() {
         return true;
