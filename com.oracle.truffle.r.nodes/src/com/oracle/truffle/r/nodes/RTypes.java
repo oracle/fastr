@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.internal.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -44,23 +45,23 @@ import com.oracle.truffle.r.runtime.env.*;
                 RPairList.class, RFormula.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RType.class, Object[].class})
 public class RTypes {
 
-    @TypeCheck
+    @TypeCheck(RNull.class)
     public static boolean isRNull(Object value) {
         return value == RNull.instance;
     }
 
-    @TypeCast
+    @TypeCast(RNull.class)
     @SuppressWarnings("unused")
     public static RNull asRNull(Object value) {
         return RNull.instance;
     }
 
-    @TypeCheck
+    @TypeCheck(RMissing.class)
     public static boolean isRMissing(Object value) {
         return value == RMissing.instance;
     }
 
-    @TypeCast
+    @TypeCast(RMissing.class)
     @SuppressWarnings("unused")
     public static RMissing asRMissing(Object value) {
         return RMissing.instance;
