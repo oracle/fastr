@@ -22,16 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.instrument;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import java.util.*;
+
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.impl.SimpleEventReceiver;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.instrument.impl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-
-import java.util.*;
 
 /**
  * Basic support for adding entry/exit counters to nodes. A counter must be identified with some
