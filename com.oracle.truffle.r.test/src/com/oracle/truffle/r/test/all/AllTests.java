@@ -609,6 +609,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testMatricesProduct_55006e423797641c7a010b819d05c2e0() {
+        assertEval("{ matrix(c(NaN,1,7,2,4,NA), nrow=3) %*% matrix(c(3,1,NA,2,NaN,5,6,7), nrow=2) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testMatricesProduct_6b9454263a04c54bc733dd613376e166() {
         assertEvalError("{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }");
     }
