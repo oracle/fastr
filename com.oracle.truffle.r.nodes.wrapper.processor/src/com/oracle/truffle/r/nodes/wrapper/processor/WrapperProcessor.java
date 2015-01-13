@@ -26,6 +26,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+
 import javax.annotation.processing.*;
 import javax.lang.model.*;
 import javax.lang.model.type.*;
@@ -63,12 +64,12 @@ public class WrapperProcessor extends AbstractProcessor {
                 if (element instanceof TypeElement) {
                     TypeElement classElement = (TypeElement) element;
                     PackageElement packageElement = getPackage(classElement);
-                    WrappedClassVisitor methodVisitor = new WrappedClassVisitor(classElement);
-                    classElement.accept(methodVisitor, null);
-                    generate(packageElement, classElement, methodVisitor.wrappedMethods);
+
+                    Set<ExecutableElement> wrappedMethods = resolveWrappedExecutes(classElement);
+                    generate(packageElement, classElement, wrappedMethods);
                 }
             }
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             error("error generating Wrapper classes: " + ex);
             StackTraceElement[] elements = ex.getStackTrace();
             for (StackTraceElement element : elements) {
@@ -78,12 +79,34 @@ public class WrapperProcessor extends AbstractProcessor {
         return true;
     }
 
+    private Set<ExecutableElement> resolveWrappedExecutes(TypeElement classElement) {
+        Set<ExecutableElement> wrappedMethods = new HashSet<>();
+        for (ExecutableElement wrappedMethod : ElementFilter.methodsIn(processingEnv.getElementUtils().getAllMembers(classElement))) {
+            Set<Modifier> modifiers = wrappedMethod.getModifiers();
+            if (modifiers.contains(Modifier.ABSTRACT) || hasCreateWrapper(wrappedMethod)) {
+                wrappedMethods.add(wrappedMethod);
+            }
+        }
+        return wrappedMethods;
+    }
+
+    private boolean hasCreateWrapper(ExecutableElement element) {
+        List<? extends AnnotationMirror> mirrors = element.getAnnotationMirrors();
+        for (AnnotationMirror m : mirrors) {
+            if (m.getAnnotationType().asElement() == createWrapperElement) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void generate(PackageElement packageElement, TypeElement classElement, Set<ExecutableElement> wrappedMethods) throws IOException {
         String packageName = packageElement.getQualifiedName().toString();
         String qualClassName = classElement.getQualifiedName().toString();
         String wrapperClassName = classElement.getSimpleName().toString() + "Wrapper";
         JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + "." + wrapperClassName);
-        try (PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()))) {
+        PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()));
+        try {
             wr.println("// DO NOT EDIT, generated automatically");
             wr.printf("package %s;%n", packageName);
             wr.println();
@@ -202,6 +225,15 @@ public class WrapperProcessor extends AbstractProcessor {
             wr.printf("%s}%n", INDENT8);
 
             wr.println("}");
+        } finally {
+            if (wr != null) {
+                try {
+                    wr.close();
+                } catch (Throwable e1) {
+                    // see eclipse bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=361378
+                    // TODO temporary suppress errors on close.
+                }
+            }
         }
 
     }
@@ -241,71 +273,6 @@ public class WrapperProcessor extends AbstractProcessor {
         if (trace) {
             diagnostic(Diagnostic.Kind.NOTE, msg);
         }
-    }
-
-    private class WrappedClassVisitor extends ElementScanner8<Void, Void> {
-        private final Set<ExecutableElement> wrappedMethods = new HashSet<>();
-        private final TypeElement root;
-
-        WrappedClassVisitor(TypeElement root) {
-            this.root = root;
-        }
-
-        @Override
-        public Void visitTypeParameter(TypeParameterElement e, Void p) {
-            return null;
-        }
-
-        @Override
-        public Void visitExecutable(ExecutableElement element, Void p) {
-            Set<Modifier> modifiers = element.getModifiers();
-            for (Modifier m : modifiers) {
-                if (m == Modifier.ABSTRACT || hasCreateWrapper(element)) {
-                    wrappedMethods.add(element);
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public Void visitVariable(VariableElement element, Void p) {
-            return null;
-        }
-
-        @Override
-        public Void visitType(TypeElement element, Void p) {
-            // note("visit: " + element.getSimpleName().toString() + " nkind " +
-            // element.getNestingKind());
-            if (element == root || element.getNestingKind() == NestingKind.TOP_LEVEL) {
-                // visit superclass
-                TypeMirror superClassMirror = element.getSuperclass();
-                if (superClassMirror instanceof DeclaredType) {
-                    TypeElement superClassElement = (TypeElement) ((DeclaredType) superClassMirror).asElement();
-                    superClassElement.accept(this, p);
-                }
-                // visit this class
-                return super.visitType(element, p);
-            } else {
-                // ignore nested classes
-                return null;
-            }
-        }
-
-        @Override
-        public Void visitPackage(PackageElement element, Void p) {
-            return null;
-        }
-
-        private boolean hasCreateWrapper(ExecutableElement element) {
-            List<? extends AnnotationMirror> mirrors = element.getAnnotationMirrors();
-            for (AnnotationMirror m : mirrors) {
-                if (m.getAnnotationType().asElement() == createWrapperElement) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
     }
 
 }
