@@ -11801,6 +11801,10 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a,b,c,d,e,env) (length(objects(env, all.names = TRUE, pattern = "^[.]__[CTA]_"))); f2 <- function(env) (length(objects(env, all.names = TRUE, pattern = "^[.]__[CTA]_"))); f(); f2() }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }
 [1] TRUE
 

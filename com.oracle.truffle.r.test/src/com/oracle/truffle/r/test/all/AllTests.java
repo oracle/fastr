@@ -11629,6 +11629,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMissing_537912b8640b5130f8da2ce9bc44495d() {
+        assertEval("{ f <- function(a,b,c,d,e,env) (length(objects(env, all.names = TRUE, pattern = \"^[.]__[CTA]_\"))); f2 <- function(env) (length(objects(env, all.names = TRUE, pattern = \"^[.]__[CTA]_\"))); f(); f2() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMod_9e8ae1303f27834ae87665ed2c4ae12c() {
         assertEval("{ round(Mod(1+1i)*10000) }");
     }
