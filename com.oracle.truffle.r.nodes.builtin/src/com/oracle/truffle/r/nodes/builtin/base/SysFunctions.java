@@ -208,7 +208,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysReadLink(String path) {
+        protected Object sysReadlink(String path) {
             controlVisibility();
             return RDataFactory.createStringVector(doSysReadLink(path));
         }
