@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -274,4 +274,8 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=2) ; m > c(1,2,3) }");
     }
 
+    @Test
+    public void testOther() {
+        assertEval("{ stdin() == 0L }");
+    }
 }

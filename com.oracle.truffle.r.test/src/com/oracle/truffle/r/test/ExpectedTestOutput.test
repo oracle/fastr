@@ -2209,6 +2209,11 @@ Error in x + y : non-conformable arrays
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
+#{ v<-c("a", "b"); dim(v)<-c(1,2); dimnames(v)<-list("x", c("y", "z")); v[1, c(1,2), drop=FALSE] }
+  y   z
+x "a" "b"
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }
 [1] 0 0 0
 
@@ -16785,6 +16790,10 @@ TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 $names
 [1] "121" "122" "123" "124"
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testOther
+#{ stdin() == 0L }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalars
 #{ "+1+1i" > 1+1i }

@@ -141,6 +141,9 @@ public abstract class ConnectionFunctions {
      *
      */
     private abstract static class BaseRConnection extends RConnection {
+
+        private static BaseRConnection[] allConnections = new BaseRConnection[127];
+
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy
          * opening, in particular, {@code opened == false} does not mean {@code closed}.
@@ -170,6 +173,8 @@ public abstract class ConnectionFunctions {
          */
         private DelegateRConnection theConnection;
 
+        private int descriptor;
+
         /**
          * The constructor to use for a connection class whose default open mode is "read".
          */
@@ -185,6 +190,17 @@ public abstract class ConnectionFunctions {
             this(conClass, new OpenMode(modeString), lazyMode);
         }
 
+        private void registerConnection() {
+            for (int i = 3; i < allConnections.length; i++) {
+                if (allConnections[i] == null) {
+                    allConnections[i] = this;
+                    descriptor = i;
+                    return;
+                }
+            }
+            throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
+        }
+
         /**
          * Primitive constructor that just assigns state. USed by {@link StdConnection}s as they are
          * a special case but should not be used by other connection types.
@@ -196,6 +212,9 @@ public abstract class ConnectionFunctions {
             classes[0] = conClass.printName;
             classes[1] = "connection";
             this.classHr = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
+            if (!isStdin() && !isStdout() && !isStderr()) {
+                registerConnection();
+            }
         }
 
         protected void checkOpen() throws IOException {
@@ -256,6 +275,8 @@ public abstract class ConnectionFunctions {
             if (theConnection != null) {
                 theConnection.close();
             }
+            assert allConnections[this.descriptor] != null;
+            allConnections[this.descriptor] = null;
         }
 
         @Override
@@ -270,6 +291,35 @@ public abstract class ConnectionFunctions {
          * delegate connection.
          */
         protected abstract void createDelegateConnection() throws IOException;
+
+        @Override
+        public int getDescriptor() {
+            return descriptor;
+        }
+
+        public static BaseRConnection getConnection(int descriptor) {
+            if (descriptor >= allConnections.length || allConnections[descriptor] == null) {
+                throw RError.error(RError.Message.INVALID_CONNECTION);
+            }
+            return allConnections[descriptor];
+        }
+
+        public static RIntVector getAllConnections() {
+            int resLen = 0;
+            for (int i = 0; i < allConnections.length; i++) {
+                if (allConnections[i] != null) {
+                    resLen++;
+                }
+            }
+            int[] data = new int[resLen];
+            int ind = 0;
+            for (int i = 0; i < allConnections.length; i++) {
+                if (allConnections[i] != null) {
+                    data[ind++] = i;
+                }
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
     }
 
     private static BaseRConnection getBaseConnection(RConnection conn) {
@@ -313,6 +363,11 @@ public abstract class ConnectionFunctions {
         @Override
         public RStringVector getClassHierarchy() {
             return base.getClassHierarchy();
+        }
+
+        @Override
+        public int getDescriptor() {
+            return base.getDescriptor();
         }
 
     }
@@ -390,6 +445,7 @@ public abstract class ConnectionFunctions {
 
         StdinConnection() {
             super(new OpenMode("r", AbstractOpenMode.Read));
+            BaseRConnection.allConnections[0] = this;
         }
 
         @Override
@@ -416,7 +472,7 @@ public abstract class ConnectionFunctions {
 
     }
 
-    private static StdinConnection stdin;
+    private static StdinConnection stdin = new StdinConnection();
 
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdin extends RBuiltinNode {
@@ -424,9 +480,6 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RConnection stdin() {
             controlVisibility();
-            if (stdin == null) {
-                stdin = new StdinConnection();
-            }
             return stdin;
         }
     }
@@ -439,6 +492,17 @@ public abstract class ConnectionFunctions {
             super(new OpenMode("w", AbstractOpenMode.Write));
             this.opened = true;
             this.isErr = isErr;
+            BaseRConnection.allConnections[isErr ? 2 : 1] = this;
+        }
+
+        @Override
+        public boolean isStdout() {
+            return isErr ? false : true;
+        }
+
+        @Override
+        public boolean isStderr() {
+            return isErr ? true : false;
         }
 
         @Override
@@ -457,7 +521,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private static StdoutConnection stdout;
+    private static StdoutConnection stdout = new StdoutConnection(false);
 
     @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdout extends RBuiltinNode {
@@ -465,14 +529,11 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RConnection stdout() {
             controlVisibility();
-            if (stdout == null) {
-                stdout = new StdoutConnection(false);
-            }
             return stdout;
         }
     }
 
-    private static StdoutConnection stderr;
+    private static StdoutConnection stderr = new StdoutConnection(true);
 
     @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {})
     public abstract static class Stderr extends RBuiltinNode {
@@ -480,9 +541,6 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RConnection stderr() {
             controlVisibility();
-            if (stderr == null) {
-                stderr = new StdoutConnection(true);
-            }
             return stderr;
         }
     }
@@ -994,8 +1052,16 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RList summary(Object object) {
-            RConnection con = checkIsConnection(object);
-            BaseRConnection baseCon = getBaseConnection(con);
+            BaseRConnection baseCon;
+            if (object instanceof Integer) {
+                baseCon = BaseRConnection.getConnection((int) object);
+            } else if (object instanceof Double) {
+                baseCon = BaseRConnection.getConnection((int) Math.floor((Double) object));
+
+            } else {
+                RConnection con = checkIsConnection(object);
+                baseCon = getBaseConnection(con);
+            }
             Object[] data = new Object[NAMES.getLength()];
             data[0] = "TBD";
             data[1] = baseCon.classHr.getDataAt(0);
@@ -1251,4 +1317,15 @@ public abstract class ConnectionFunctions {
         }
 
     }
+
+    @RBuiltin(name = "getAllConnections", kind = INTERNAL, parameterNames = {})
+    public abstract static class GetAllConnections extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RIntVector getAllConnections() {
+            controlVisibility();
+            return BaseRConnection.getAllConnections();
+        }
+    }
+
 }

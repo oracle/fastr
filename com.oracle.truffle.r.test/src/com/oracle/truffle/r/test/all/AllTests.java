@@ -2814,6 +2814,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testAccess_8c815a47302c9d0031c31f1fe98dca2e() {
+        assertEval("{ v<-c(\"a\", \"b\"); dim(v)<-c(1,2); dimnames(v)<-list(\"x\", c(\"y\", \"z\")); v[1, c(1,2), drop=FALSE] }");
+    }
+
+    @Test
     public void TestSimpleArrays_testAccess_ea7a54f82e5a448af49459e63e2f3a5c() {
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1, 1] }");
     }
@@ -17331,6 +17336,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleComparison_testMatrices_6e89d79b793dfb2076088167e168c6e0() {
         assertEval("{ m <- matrix(1:6, nrow=2) ; m > c(1,2,3) }");
+    }
+
+    @Test
+    public void TestSimpleComparison_testOther_c79a102f522b39e79a10078ea0b5ba8d() {
+        assertEval("{ stdin() == 0L }");
     }
 
     @Test

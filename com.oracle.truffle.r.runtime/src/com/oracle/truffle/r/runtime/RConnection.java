@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,6 +126,20 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     /**
+     * Returns {@code true} if this is the "stdour" connection.
+     */
+    public boolean isStdout() {
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if this is the "stderr" connection.
+     */
+    public boolean isStderr() {
+        return false;
+    }
+
+    /**
      * Return the underlying input stream (for internal use). TODO Replace with a more principled
      * solution.
      */
@@ -208,5 +222,7 @@ public abstract class RConnection implements RClassHierarchy {
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
 
     }
+
+    public abstract int getDescriptor();
 
 }
