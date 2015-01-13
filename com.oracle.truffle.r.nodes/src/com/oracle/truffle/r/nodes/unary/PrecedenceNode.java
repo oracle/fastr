@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,9 +45,12 @@ public abstract class PrecedenceNode extends UnaryNode {
     public static final int EXPRESSION_PRECEDENCE = 7;
 
     @Override
-    public int executeInteger(VirtualFrame frame) {
-        return RTypesGen.asInteger(execute(frame));
+    public final Object execute(VirtualFrame frame) {
+        return executeInteger(frame);
     }
+
+    @Override
+    public abstract int executeInteger(VirtualFrame frame);
 
     public abstract int executeInteger(VirtualFrame frame, Object object, byte recursive);
 
