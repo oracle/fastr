@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadVariableSuperMaterializedNode;
@@ -43,15 +44,8 @@ import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 public final class RTruffleVisitor extends BasicVisitor<RNode> {
-
-    private REnvironment environment;
-
-    public RTruffleVisitor(REnvironment enclosing) {
-        this.environment = enclosing;
-    }
 
     public RNode transform(ASTNode ast) {
         return ast.accept(this);
@@ -133,10 +127,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(Function func) {
-        // Introduce new environment for this function
-        REnvironment.FunctionDefinition funcEnvironment = new REnvironment.FunctionDefinition(environment);
-        this.environment = funcEnvironment; // Update the visitors state...
-
         RootCallTarget callTarget = null;
         try {
             // Parse function statements
@@ -189,13 +179,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
 
             String functionBody = func.getSource().getCode();
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, new FunctionBodyNode(saveArguments, statements), formals, functionBody.substring(0,
+            FrameDescriptor descriptor = new FrameDescriptor();
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, functionBody.substring(0,
                             Math.min(functionBody.length(), 50)).replace("\n", "\\n"), false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         } catch (Throwable err) {
             err.printStackTrace();
-        } finally {
-            this.environment = environment.getParent(); // ... and be sure to reset it!
         }
         return FunctionExpressionNode.create(callTarget);
     }

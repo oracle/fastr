@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,7 +107,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
-    private static final REnvFrameAccess noFrameAccess = new REnvFrameAccess();
 
     public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
@@ -435,12 +434,10 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * When functions are defined, the associated {@code FunctionDefinitionNode} contains an
-     * {@link FunctionDefinition} environment instance whose parent is the lexically enclosing
-     * environment. This chain can be followed back to whichever "base" (i.e. non-function)
-     * environment the outermost function was defined in, e.g. "global" or "base". The purpose of
-     * this method is to create an analogous lexical parent chain of {@link Function} instances with
-     * the correct {@link MaterializedFrame}.
+     * This chain can be followed back to whichever "base" (i.e. non-function) environment the
+     * outermost function was defined in, e.g. "global" or "base". The purpose of this method is to
+     * create an analogous lexical parent chain of {@link Function} instances with the correct
+     * {@link MaterializedFrame}.
      */
     @TruffleBoundary
     public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
@@ -616,15 +613,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
              * namespaces are a special case; they have no name attribute, but they print with the
              * name which is buried.
              */
-            if (frameAccess == noFrameAccess) {
-                return "function def";
+            RStringVector spec = getNamespaceSpec();
+            if (spec != null) {
+                return "namespace:" + spec.getDataAt(0);
             } else {
-                RStringVector spec = getNamespaceSpec();
-                if (spec != null) {
-                    return "namespace:" + spec.getDataAt(0);
-                } else {
-                    return String.format("%#x", hashCode());
-                }
+                return String.format("%#x", hashCode());
             }
         } else {
             return attrName;
@@ -882,28 +875,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
                 result = new Function(parent, frame);
             }
             return result;
-        }
-    }
-
-    /**
-     * Denotes an environment associated with a function definition during AST building.
-     *
-     * {@link FunctionDefinition} environments are created when a function is defined see
-     * {@code RFunctionDefinitonNode} and {@code RTruffleVisitor}. In that situation the
-     * {@code parent} is the lexically enclosing environment and there is no associated frame.
-     */
-
-    public static final class FunctionDefinition extends REnvironment {
-        private final FrameDescriptor descriptor;
-
-        public FunctionDefinition(REnvironment parent) {
-            // function environments are not named
-            super(parent, UNNAMED, noFrameAccess);
-            this.descriptor = new FrameDescriptor();
-        }
-
-        public FrameDescriptor getDescriptor() {
-            return descriptor;
         }
     }
 
