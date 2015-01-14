@@ -2351,13 +2351,20 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCrossprod() {
+        assertEval("{ x <- matrix(c(0.368962955428, 0.977400955511, 0.5002433417831, 0.0664379808586, 0.6384031679481, 0.4481831840239), nrow=2); crossprod(x) }");
         assertEval("{ x <- 1:6 ; crossprod(x) }");
         assertEval("{ x <- 1:2 ; crossprod(t(x)) }");
         assertEval("{ crossprod(1:3, matrix(1:6, ncol=2)) }");
         assertEval("{ crossprod(t(1:2), 5) }");
         assertEval("{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }");
+        assertEval("{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCrossprodIgnore() {
+        assertEval("{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
     }
 
     @Test

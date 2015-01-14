@@ -484,28 +484,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCrossprod_7f9549017d66ad3dd1583536fa7183d7() {
-        assertEval("{ x <- 1:6 ; crossprod(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCrossprod_1c6fdfbd19321f1f57a6f9260789424a() {
-        assertEval("{ x <- 1:2 ; crossprod(t(x)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCrossprod_0ceb7477eceaa0684310f07ef6b6865c() {
-        assertEval("{ crossprod(1:3, matrix(1:6, ncol=2)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCrossprod_57b1bcccff6a1f41d6a0c82a658a3c52() {
-        assertEval("{ crossprod(t(1:2), 5) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCrossprod_2770157f2b02bfda92abe04278a245f8() {
-        assertEval("{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }");
+    public void TestSimpleBuiltins_testCrossprodIgnore_3ef941ecde27e59a4984254d989a1d99() {
+        assertEval("{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
     }
 
     @Ignore

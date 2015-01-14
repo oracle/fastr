@@ -447,6 +447,26 @@ Error in as.raw(1:3) %*% 1:3 :
   requires numeric/complex matrix/vector arguments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ c(1,2,2,3) %*% c(1,3,NA,NaN) }
+     [,1]
+[1,]   NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ c(1,2,2,3) %*% c(1,3,NaN,NA) }
+     [,1]
+[1,]   NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ c(1,2,NA,NaN) %*% c(1,3,3,4) }
+     [,1]
+[1,]   NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ c(1,2,NaN,NA) %*% c(1,3,3,4) }
+     [,1]
+[1,]   NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
 #{ double() %*% double() }
      [,1]
 [1,]    0
@@ -7605,6 +7625,46 @@ In cor(cbind(c(1, 1, 1), c(1, 1, 1))) : the standard deviation is zero
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCov
 #{ cov(c(1,2,3),c(1,2,5)) }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ crossprod(1:3, matrix(1:6, ncol=2)) }
+     [,1] [,2]
+[1,]   14   32
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }
+     [,1] [,2]
+[1,]   NA   NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ crossprod(t(1:2), 5) }
+     [,1]
+[1,]    5
+[2,]   10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ x <- 1:2 ; crossprod(t(x)) }
+     [,1] [,2]
+[1,]    1    2
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ x <- 1:6 ; crossprod(x) }
+     [,1]
+[1,]   91
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ x <- matrix(c(0.368962955428, 0.977400955511, 0.5002433417831, 0.0664379808586, 0.6384031679481, 0.4481831840239), nrow=2); crossprod(x) }
+          [,1]      [,2]      [,3]
+[1,] 1.0914463 0.2495078 0.6736018
+[2,] 0.2495078 0.2546574 0.3491333
+[3,] 0.6736018 0.3491333 0.6084268
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCrossprod
+#{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }
+     [,1] [,2]
+[1,]  NaN  NaN
+[2,]  NaN   NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
 #{ cummax(1:10) }

@@ -614,6 +614,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testMatricesProduct_31b13aaa96cc8fb6be3358c9d1d80e55() {
+        assertEval("{ c(1,2,NA,NaN) %*% c(1,3,3,4) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testMatricesProduct_c3895e267b995858f8d3b54927084c6c() {
+        assertEval("{ c(1,2,NaN,NA) %*% c(1,3,3,4) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testMatricesProduct_84d9a65473e713c72e891eaf42b45759() {
+        assertEval("{ c(1,2,2,3) %*% c(1,3,NA,NaN) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testMatricesProduct_ab44a528969ed1444bb986ebe4627a57() {
+        assertEval("{ c(1,2,2,3) %*% c(1,3,NaN,NA) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testMatricesProduct_6b9454263a04c54bc733dd613376e166() {
         assertEvalError("{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }");
     }
@@ -6819,6 +6839,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCrossprod_e5cd218619cf1aa01d3bef116f1a8229() {
+        assertEval("{ x <- matrix(c(0.368962955428, 0.977400955511, 0.5002433417831, 0.0664379808586, 0.6384031679481, 0.4481831840239), nrow=2); crossprod(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCrossprod_7f9549017d66ad3dd1583536fa7183d7() {
         assertEval("{ x <- 1:6 ; crossprod(x) }");
     }
@@ -6841,6 +6866,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCrossprod_2770157f2b02bfda92abe04278a245f8() {
         assertEval("{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCrossprod_ed7305d918c154f160f85f73e178d028() {
+        assertEval("{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCrossprodIgnore_3ef941ecde27e59a4984254d989a1d99() {
+        assertEval("{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
     }
 
     @Test
