@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique3() {
         assertEval("argv <- list(c(1, 2, 4, 6, 8, 9, 11, 13, 14, 16, 3, 5, 7, 9, 10, 12, 14, 15, 17, 17), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -70,7 +69,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique10() {
         assertEval("argv <- list(c(1L, 2L, 2L, 2L, 1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 1L, 1L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 1L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 2L), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -82,7 +80,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique12() {
         assertEval("argv <- list(c(1.5, 1.5, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -106,7 +103,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique16() {
         assertEval("argv <- list(c(TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, NA, TRUE, NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, NA, TRUE, NA, TRUE, TRUE, NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE, NA, TRUE, NA, TRUE, NA, TRUE, TRUE, TRUE, TRUE, NA, TRUE, TRUE, NA, TRUE, NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, NA, NA, FALSE, TRUE, TRUE, NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -123,13 +119,11 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique19() {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4), .Tsp = c(1945, 1974.75, 4), class = \'ts\'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
-    @Ignore
     public void testunique20() {
         assertEval("argv <- list(c(4L, 6L, 9L, 15L, NA), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -141,13 +135,11 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique22() {
         assertEval("argv <- list(c(25, 50, 100, 250, 500, 1e+05), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
-    @Ignore
     public void testunique23() {
         assertEval("argv <- list(c(1, 2, NA, 2), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -177,35 +169,30 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique28() {
         assertEval("argv <- list(structure(c(1L, 1L, 1L, 1L), .Names = c(\'vector\', \'data.frameRowLabels\', \'SuperClassMethod\', \'atomicVector\')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
-    @Ignore
     public void testunique29() {
         assertEval("argv <- list(NULL, FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
-    @Ignore
     public void testunique30() {
         assertEval("argv <- list(c(TRUE, FALSE, TRUE, TRUE), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
-    @Ignore
     public void testunique31() {
         assertEval("argv <- list(c(2L, 1L, NA), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testunique33() {
-		assertEval("argv <- structure(list(x = structure(c(15, 37, 30, 18, 8, 20,     42.7, 29.3), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c(\'very good\',     \'good\', \'bad\', \'very bad\'), Location = c(\'city centre\', \'suburbs\')),     .Names = c(\'Evaluation\', \'Location\')))), .Names = \'x\');"+
-			"do.call(\'unique\', argv)");
-	}
+    public void testunique33() {
+        assertEval("argv <- structure(list(x = structure(c(15, 37, 30, 18, 8, 20,     42.7, 29.3), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c(\'very good\',     \'good\', \'bad\', \'very bad\'), Location = c(\'city centre\', \'suburbs\')),     .Names = c(\'Evaluation\', \'Location\')))), .Names = \'x\');"
+                        + "do.call(\'unique\', argv)");
+    }
 
 }
-

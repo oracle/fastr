@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -63,42 +63,34 @@ public class TestrGenBuiltinisunsorted extends TestBase {
         assertEval("argv <- list(c(1L, 3L, 2L, 4L), TRUE); .Internal(is.unsorted(argv[[1]], argv[[2]]))");
     }
 
-	@Test
-	public void testisunsorted11() {
-		assertEval("argv <- structure(list(x = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\', \'G\',     \'H\', \'I\', \'J\', \'K\', \'L\', \'M\', \'N\', \'O\', \'P\', \'Q\', \'R\', \'S\',     \'T\', \'U\', \'V\', \'W\', \'X\', \'Y\', \'Z\')), .Names = \'x\');"+
-			"do.call(\'is.unsorted\', argv)");
-	}
+    @Test
+    public void testisunsorted11() {
+        assertEval("argv <- structure(list(x = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\', \'G\',     \'H\', \'I\', \'J\', \'K\', \'L\', \'M\', \'N\', \'O\', \'P\', \'Q\', \'R\', \'S\',     \'T\', \'U\', \'V\', \'W\', \'X\', \'Y\', \'Z\')), .Names = \'x\');"
+                        + "do.call(\'is.unsorted\', argv)");
+    }
 
+    @Test
+    public void testisunsorted12() {
+        assertEval("argv <- structure(list(x = c(NA, 1, 2, 3, 2), na.rm = TRUE),     .Names = c(\'x\', \'na.rm\'));" + "do.call(\'is.unsorted\', argv)");
+    }
 
-	@Test
+    @Test
+    public void testisunsorted13() {
+        assertEval("argv <- structure(list(x = c(1L, 2L, 3L, 5L, 5L, 6L, 6L, 7L,     7L, 7L, 7L, 7L, 8L, 8L, 9L, 9L, 10L, 12L, 12L, 12L, 12L,     13L, 15L, 20L, 28L)), .Names = \'x\');"
+                        + "do.call(\'is.unsorted\', argv)");
+    }
+
+    @Test
     @Ignore
-	public void testisunsorted12() {
-		assertEval("argv <- structure(list(x = c(NA, 1, 2, 3, 2), na.rm = TRUE),     .Names = c(\'x\', \'na.rm\'));"+
-			"do.call(\'is.unsorted\', argv)");
-	}
+    public void testisunsorted14() {
+        assertEval("argv <- structure(list(x = structure(list(x = 3:4, y = 1:2),     .Names = c(\'x\', \'y\'), row.names = c(NA, -2L), class = \'data.frame\')),     .Names = \'x\');"
+                        + "do.call(\'is.unsorted\', argv)");
+    }
 
-
-	@Test
-	public void testisunsorted13() {
-		assertEval("argv <- structure(list(x = c(1L, 2L, 3L, 5L, 5L, 6L, 6L, 7L,     7L, 7L, 7L, 7L, 8L, 8L, 9L, 9L, 10L, 12L, 12L, 12L, 12L,     13L, 15L, 20L, 28L)), .Names = \'x\');"+
-			"do.call(\'is.unsorted\', argv)");
-	}
-
-
-	@Test
-    @Ignore
-	public void testisunsorted14() {
-		assertEval("argv <- structure(list(x = structure(list(x = 3:4, y = 1:2),     .Names = c(\'x\', \'y\'), row.names = c(NA, -2L), class = \'data.frame\')),     .Names = \'x\');"+
-			"do.call(\'is.unsorted\', argv)");
-	}
-
-
-	@Test
-    @Ignore
-	public void testisunsorted15() {
-		assertEval("argv <- structure(list(x = structure(list(x = c(2L, 1L)), .Names = \'x\',     row.names = c(NA, -2L), class = \'data.frame\')), .Names = \'x\');"+
-			"do.call(\'is.unsorted\', argv)");
-	}
+    @Test
+    public void testisunsorted15() {
+        assertEval("argv <- structure(list(x = structure(list(x = c(2L, 1L)), .Names = \'x\',     row.names = c(NA, -2L), class = \'data.frame\')), .Names = \'x\');"
+                        + "do.call(\'is.unsorted\', argv)");
+    }
 
 }
-

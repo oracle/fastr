@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinformals extends TestBase {
 
     @Test
-    @Ignore
     public void testformals1() {
         assertEval("argv <- list(.Primitive(\'length<-\')); .Internal(formals(argv[[1]]))");
     }
@@ -41,4 +40,3 @@ public class TestrGenBuiltinformals extends TestBase {
         assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\')); .Internal(formals(argv[[1]]))");
     }
 }
-

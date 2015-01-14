@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,6 @@ public class TestrGenBuiltinexpm1 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testexpm13() {
         assertEval("argv <- list(structure(c(-0.0996985539253204, -0.208486018303182, -0.412624920187971, -0.781459230080118, -1.41933833538431, -2.49413413365086, -4.24041092023363, -7.0213317713299), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\')));expm1(argv[[1]]);");
     }
@@ -41,9 +40,7 @@ public class TestrGenBuiltinexpm1 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testexpm15() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));expm1(argv[[1]]);");
     }
 }
-

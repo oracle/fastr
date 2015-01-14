@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,6 @@ public class TestrGenBuiltinpaste0 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testpaste04() {
         assertEval("argv <- list(list(\'  ‘help.search()’ or ‘\', \'??\'), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
@@ -86,4 +85,3 @@ public class TestrGenBuiltinpaste0 extends TestBase {
         assertEval("argv <- list(list(\'cnstrO> \', \'constrOptim(c(2,-1,-1), fQP, gQP, ui = t(Amat), ci = bvec)\'), \'\\n\'); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 }
-

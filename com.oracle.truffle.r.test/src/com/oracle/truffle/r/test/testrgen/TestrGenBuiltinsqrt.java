@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -44,7 +44,6 @@ public class TestrGenBuiltinsqrt extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsqrt6() {
         assertEval("argv <- list(structure(c(0.0101832147522745, 0.0107298799092166, 0.0605795647466432, 7.03601392438852e-05), .Names = c(\'ar1\', \'ar2\', \'intercept\', \'trend\')));sqrt(argv[[1]]);");
     }
@@ -79,4 +78,3 @@ public class TestrGenBuiltinsqrt extends TestBase {
         assertEval("argv <- list(0+1i);sqrt(argv[[1]]);");
     }
 }
-

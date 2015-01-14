@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -71,7 +71,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass10() {
         assertEval("argv <- list(structure(list(GNP.deflator = c(83, 88.5, 88.2, 89.5, 96.2, 98.1, 99, 100, 101.2, 104.6, 108.4, 110.8, 112.6, 114.2, 115.7, 116.9), GNP = c(234.289, 259.426, 258.054, 284.599, 328.975, 346.999, 365.385, 363.112, 397.469, 419.18, 442.769, 444.546, 482.704, 502.601, 518.173, 554.894), Unemployed = c(235.6, 232.5, 368.2, 335.1, 209.9, 193.2, 187, 357.8, 290.4, 282.2, 293.6, 468.1, 381.3, 393.1, 480.6, 400.7), Armed.Forces = c(159, 145.6, 161.6, 165, 309.9, 359.4, 354.7, 335, 304.8, 285.7, 279.8, 263.7, 255.2, 251.4, 257.2, 282.7), Population = c(107.608, 108.632, 109.773, 110.929, 112.075, 113.27, 115.094, 116.219, 117.388, 118.734, 120.445, 121.95, 123.366, 125.368, 127.852, 130.081), Year = 1947:1962), .Names = c(\'GNP.deflator\', \'GNP\', \'Unemployed\', \'Armed.Forces\', \'Population\', \'Year\'), row.names = 1947:1962));unclass(argv[[1]]);");
     }
@@ -101,7 +100,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass15() {
         assertEval("argv <- list(structure(c(8.79236, 8.79137, 8.81486, 8.81301, 8.90751, 8.93673, 8.96161, 8.96044, 9.00868, 9.03049, 9.06906, 9.05871, 9.10698, 9.12685, 9.17096, 9.18665, 9.23823, 9.26487, 9.28436, 9.31378, 9.35025, 9.35835, 9.39767, 9.4215, 9.44223, 9.48721, 9.52374, 9.5398, 9.58123, 9.60048, 9.64496, 9.6439, 9.69405, 9.69958, 9.68683, 9.71774, 9.74924, 9.77536, 9.79424), .Tsp = c(1962.25, 1971.75, 4)));unclass(argv[[1]]);");
     }
@@ -117,7 +115,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass18() {
         assertEval("argv <- list(structure(list(srcfile = c(\'/home/lzhao/hg/r-instrumented/library/base/R/base\', \'/home/lzhao/hg/r-instrumented/library/base/R/base\'), frow = 5852:5853, lrow = c(5852L, 5854L)), .Names = c(\'srcfile\', \'frow\', \'lrow\'), row.names = 1:2));unclass(argv[[1]]);");
     }
@@ -176,7 +173,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass28() {
         assertEval("argv <- list(structure(c(\'0\', \'list\', \'list\'), .Names = c(\'Length\', \'Class\', \'Mode\')));unclass(argv[[1]]);");
     }
@@ -223,4 +219,3 @@ public class TestrGenBuiltinunclass extends TestBase {
         assertEval("argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\')));unclass(argv[[1]]);");
     }
 }
-

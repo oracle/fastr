@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -44,13 +44,11 @@ public class TestSimpleAssignment extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAssignPoly1() {
         assertEval("test <- function(b) { if (b) f <- function() { 42 }; g <- function() { if (!b) f <- function() { 43 }; f() }; g() }; c(test(FALSE), test(TRUE))");
     }
 
     @Test
-    @Ignore
     public void testAssign() {
         // FIXME print regression
         assertEvalNoOutput("{ a<-1 }");
@@ -92,7 +90,6 @@ public class TestSimpleAssignment extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDynamic() {
         assertEval("{ l <- quote(x <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
         assertEval("{ l <- quote(x <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; f() }");

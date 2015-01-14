@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,9 +42,7 @@ public class TestrGenBuiltindigamma extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdigamma5() {
         assertEval("argv <- list(c(1e+30, 1e+60, 1e+90, 1e+120, 1e+150, 1e+180, 1e+210, 1e+240, 1e+270, 1e+300));digamma(argv[[1]]);");
     }
 }
-
