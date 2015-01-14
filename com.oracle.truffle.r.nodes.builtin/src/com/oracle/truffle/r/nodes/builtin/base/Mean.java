@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,6 +37,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 @GenerateNodeFactory
 public abstract class Mean extends RBuiltinNode {
 
+    private final BranchProfile emptyProfile = BranchProfile.create();
+
     public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
@@ -44,6 +47,10 @@ public abstract class Mean extends RBuiltinNode {
     @Specialization
     protected double mean(RAbstractDoubleVector x) {
         controlVisibility();
+        if (x.getLength() == 0) {
+            emptyProfile.enter();
+            return Double.NaN;
+        }
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
             sum = add.op(sum, x.getDataAt(k));
@@ -54,6 +61,10 @@ public abstract class Mean extends RBuiltinNode {
     @Specialization
     protected double mean(RAbstractIntVector x) {
         controlVisibility();
+        if (x.getLength() == 0) {
+            emptyProfile.enter();
+            return Double.NaN;
+        }
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
             sum = add.op(sum, x.getDataAt(k));
@@ -64,6 +75,10 @@ public abstract class Mean extends RBuiltinNode {
     @Specialization
     protected double mean(RAbstractLogicalVector x) {
         controlVisibility();
+        if (x.getLength() == 0) {
+            emptyProfile.enter();
+            return Double.NaN;
+        }
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
             sum = add.op(sum, x.getDataAt(k));
@@ -74,6 +89,10 @@ public abstract class Mean extends RBuiltinNode {
     @Specialization
     protected RComplex mean(RAbstractComplexVector x) {
         controlVisibility();
+        if (x.getLength() == 0) {
+            emptyProfile.enter();
+            return RDataFactory.createComplex(Double.NaN, Double.NaN);
+        }
         RComplex sum = x.getDataAt(0);
         RComplex comp;
         for (int k = 1; k < x.getLength(); ++k) {
