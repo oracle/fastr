@@ -69,7 +69,7 @@ public abstract class IsNA extends RBuiltinNode {
     @Specialization
     protected byte isNA(double value) {
         controlVisibility();
-        return RRuntime.asLogical(RRuntime.isNA(value));
+        return RRuntime.asLogical(RRuntime.isNAorNaN(value));
     }
 
     @Specialization
@@ -77,7 +77,18 @@ public abstract class IsNA extends RBuiltinNode {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
+            resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(vector.getDataAt(i)));
+        }
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+    }
+
+    @Specialization
+    protected RLogicalVector isNA(RComplexVector vector) {
+        controlVisibility();
+        byte[] resultVector = new byte[vector.getLength()];
+        for (int i = 0; i < vector.getLength(); i++) {
+            RComplex complex = vector.getDataAt(i);
+            resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(complex.getRealPart()) || RRuntime.isNAorNaN(complex.getImaginaryPart()));
         }
         return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
     }

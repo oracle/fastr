@@ -9279,6 +9279,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsNA_ebb7cfd6b0c0e012d6c7f1675026d3a1() {
+        assertEval("{ is.na(NaN) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsNA_edaacabd596ade1ca61f9c8197938e57() {
         assertEval("{ is.na(c(NA)) }");
     }

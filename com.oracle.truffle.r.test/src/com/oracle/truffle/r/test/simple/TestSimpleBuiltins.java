@@ -619,6 +619,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testIsNA() {
         assertEval("{ is.na(NA) }");
+        assertEval("{ is.na(NaN) }");
         assertEval("{ is.na(c(NA)) }");
         assertEval("{ is.na(c(1,2,3,4)) }");
         assertEval("{ is.na(c(1,2,NA,4)) }");

@@ -9585,6 +9585,10 @@ Error: object 'f' not found
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsNA
+#{ is.na(NaN) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsNA
 #{ is.na(c(1,2,3,4)) }
 [1] FALSE FALSE FALSE FALSE
 
