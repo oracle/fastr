@@ -68,7 +68,6 @@ public class LoadFunctions {
                     i++;
                 }
 
-                con.close();
                 return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
 
                 // TODO: see TODO comment above

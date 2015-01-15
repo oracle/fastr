@@ -4384,6 +4384,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAllEqual_a0454035b619e6e3d90ca847510ed858() {
+        assertEval("{ all.equal(data.frame(list(1,2,3)), data.frame(list(1,2,3))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAllIgnore_1cad38b2b58506e86b3faf337282af34() {
         assertEval("{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
     }
@@ -20964,6 +20969,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testFieldAccess_823992f81d1ea19d2b8351364977a82f() {
+        assertEval("{ x<-list(a=7, 42); x$a<-NULL; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_c39b44793865efedc498ecc39e957ce9() {
+        assertEval("{ x<-list(1, a=7, 42); x$a<-NULL; x }");
+    }
+
+    @Test
     public void TestSimpleVectors_testFieldAccess_5323930bd315d7a9d640f80f09658876() {
         assertEvalError("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(1:3) }");
     }
@@ -20976,6 +20991,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testFieldAccess_904541d16c10de1380f167ea3efaab85() {
         assertEvalWarning("{ a <- c(1,2); a$a = 3; a; }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFieldAccess_3d106d414ed412da5b7d4d4ec7e88214() {
+        assertEvalWarning("{ x<-c(a=7, 42); x$a<-NULL; x }");
     }
 
     @Test
