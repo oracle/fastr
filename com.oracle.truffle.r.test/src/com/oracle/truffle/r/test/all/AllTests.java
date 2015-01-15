@@ -9484,6 +9484,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsType_a345612b27280dd9629c1a58e57e3664() {
+        assertEval("{ is.integer(seq(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsType_98388f3bc6cbe0d64e6e2b78042972fa() {
+        assertEval("{ is.integer(seq(1L,2L)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsUnsorted_3b7257dae08d22cc08ee94a46df33918() {
         assertEval("{ is.unsorted(c(1,2,3,4)) }");
     }
@@ -14424,6 +14434,156 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSequenceStatement_75946a809edf7114c74144627996759a() {
+        assertEval("{ seq(to=10L, by=1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_a1d61b0287bbe0f361cf09ee74dca0a3() {
+        assertEval("{ seq(to=10L, by=1.1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_a780f6cf25cd0e7e781c50f550332ef3() {
+        assertEval("{ typeof(seq(1L, 3L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_b6da6e8943b937ad2bbc5ddfa10a4e8d() {
+        assertEval("{ typeof(seq(1, 3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_dace049d26e9fc1ee23eca66e1c80f21() {
+        assertEval("{ typeof(seq(1L, 3L, by=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_3ae6809aa5266ce09b2458902a9df7df() {
+        assertEval("{ typeof(seq(1L, 3L, by=2L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_1f34f885409d314fc4213f0c7cbff425() {
+        assertEval("{ typeof(seq(1L, 3L, length.out=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_89b1b8cb0345dae5be0bcc9c888d180c() {
+        assertEval("{ typeof(seq(1L, 3L, length.out=2L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_4951b517c9b032b55db3ae6a9df2a171() {
+        assertEval("{ typeof(seq(FALSE, TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_fa3d611e9e17c9824dbafe2616c22dd8() {
+        assertEval("{ typeof(seq(TRUE, FALSE, length.out=5)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_4fc39cacb3f9c841030c332f2d13b2c0() {
+        assertEval("{ typeof(seq(TRUE, FALSE, length.out=5L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_1cba5233ebf22eb347057ad138458da9() {
+        assertEval("{ typeof(seq(1L, 3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_fba13264f42d1394d979aa5c0323907c() {
+        assertEval("{ typeof(seq(1L, 3, by=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_c92288454f3449d63c54551b386d7bcf() {
+        assertEval("{ typeof(seq(1L, 3, by=2L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_428731ca28a8d0df1a378aa94393bb9f() {
+        assertEval("{ typeof(seq(1L, 3, length.out=5)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_7bf703b52f62d798e5247bace0ac408b() {
+        assertEval("{ typeof(seq(1L, 3, length.out=5L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_fcccfa9462a0a1226590fbd490fcdc00() {
+        assertEval("{ typeof(seq(1, 3L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_d8999a59f2ea067c561908fc6cbc9d19() {
+        assertEval("{ typeof(seq(1, 3L, by=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_f52fb06384077e170cc1bc6574febfcb() {
+        assertEval("{ typeof(seq(1, 3L, by=2L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_64f76354bdead638badf9db6152a241c() {
+        assertEval("{ typeof(seq(1, 3L, length.out=5)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_ad4ab71c8611c2964ed0d9846393cffb() {
+        assertEval("{ typeof(seq(1, 3L, length.out=5L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_e37feb44833001087e3582b61ea2f7c8() {
+        assertEval("{ typeof(seq(to=3L, length.out=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_11c636c685fe789bfcc6e463a3156c09() {
+        assertEval("{ typeof(seq(to=3L, length.out=2L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_8a397959072f2374da0aa2c4b0cae76f() {
+        assertEval("{ typeof(seq(to=3L, by=5)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_c9e40e1e30d3aaf4f1e762bbeb85e503() {
+        assertEval("{ typeof(seq(to=3L, by=5L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_99e7d39998641c4293fe720597df552b() {
+        assertEval("{ typeof(seq(along.with=c(1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_04f98cfb807228e92d4ad9e872652685() {
+        assertEval("{ typeof(seq(1, length.out=0)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_a030275e01850b1cabfa26a3efb54941() {
+        assertEval("{ typeof(seq(1, length.out=0L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_ef9c13e61506d289bc3262e9fd028a5d() {
+        assertEval("{ typeof(seq(1, along.with=double())) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_d0d50b7ff4a6e0d939764feed5a39fc8() {
+        assertEval("{ typeof(seq(1L, along.with=double())) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSequenceStatement_b940a1279877f01f5357ef57c949a8de() {
         assertEvalError("{ seq(integer(), 7) }");
     }
@@ -16296,6 +16456,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testTypeOf_847d333bfb40729281acd0b949d4c097() {
         assertEval("{ f <- function(...) typeof(...); f()}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTypeOf_d13f5458bc704d269731cbf4a8cf6e96() {
+        assertEval("{  typeof(seq(1,2)) }");
     }
 
     @Test

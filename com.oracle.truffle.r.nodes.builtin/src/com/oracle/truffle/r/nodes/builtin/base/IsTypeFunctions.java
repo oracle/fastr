@@ -224,7 +224,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(RDoubleVector value) {
+        protected byte isType(RAbstractDoubleVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
@@ -259,7 +259,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(RIntVector value) {
+        protected byte isType(RAbstractIntVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }

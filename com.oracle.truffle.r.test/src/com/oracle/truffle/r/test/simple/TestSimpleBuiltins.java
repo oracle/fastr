@@ -20,6 +20,12 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testIsType() {
+        assertEval("{ is.integer(seq(1,2)) }");
+        assertEval("{ is.integer(seq(1L,2L)) }");
+    }
+
+    @Test
     public void testAllEqual() {
         assertEval("{ all.equal(data.frame(list(1,2,3)), data.frame(list(1,2,3))) }");
     }
@@ -203,6 +209,37 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(integer()) }");
         assertEval("{ seq(double()) }");
         assertEval("{ seq(from=3L, length.out=3L) }");
+        assertEval("{ seq(to=10L, by=1) }");
+        assertEval("{ seq(to=10L, by=1.1) }");
+
+        assertEval("{ typeof(seq(1L, 3L)) }");
+        assertEval("{ typeof(seq(1, 3)) }");
+        assertEval("{ typeof(seq(1L, 3L, by=2)) }");
+        assertEval("{ typeof(seq(1L, 3L, by=2L)) }");
+        assertEval("{ typeof(seq(1L, 3L, length.out=2)) }");
+        assertEval("{ typeof(seq(1L, 3L, length.out=2L)) }");
+        assertEval("{ typeof(seq(FALSE, TRUE)) }");
+        assertEval("{ typeof(seq(TRUE, FALSE, length.out=5)) }");
+        assertEval("{ typeof(seq(TRUE, FALSE, length.out=5L)) }");
+        assertEval("{ typeof(seq(1L, 3)) }");
+        assertEval("{ typeof(seq(1L, 3, by=2)) }");
+        assertEval("{ typeof(seq(1L, 3, by=2L)) }");
+        assertEval("{ typeof(seq(1L, 3, length.out=5)) }");
+        assertEval("{ typeof(seq(1L, 3, length.out=5L)) }");
+        assertEval("{ typeof(seq(1, 3L)) }");
+        assertEval("{ typeof(seq(1, 3L, by=2)) }");
+        assertEval("{ typeof(seq(1, 3L, by=2L)) }");
+        assertEval("{ typeof(seq(1, 3L, length.out=5)) }");
+        assertEval("{ typeof(seq(1, 3L, length.out=5L)) }");
+        assertEval("{ typeof(seq(to=3L, length.out=2)) }");
+        assertEval("{ typeof(seq(to=3L, length.out=2L)) }");
+        assertEval("{ typeof(seq(to=3L, by=5)) }");
+        assertEval("{ typeof(seq(to=3L, by=5L)) }");
+        assertEval("{ typeof(seq(along.with=c(1,2))) }");
+        assertEval("{ typeof(seq(1, length.out=0)) }");
+        assertEval("{ typeof(seq(1, length.out=0L)) }");
+        assertEval("{ typeof(seq(1, along.with=double())) }");
+        assertEval("{ typeof(seq(1L, along.with=double())) }");
     }
 
     @Test
@@ -1663,6 +1700,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-data.frame(c(\"a\", \"b\", \"a\")); typeof(x) }");
 
         assertEval("{ f <- function(...) typeof(...); f()}");
+
+        assertEval("{  typeof(seq(1,2)) }");
     }
 
     @Test
