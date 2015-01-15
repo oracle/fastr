@@ -118,7 +118,7 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
-            controlVisibility();
+            forceVisibility(true);
             return RRuntime.asLogical(DebugHandling.isDebugged(func));
         }
     }
