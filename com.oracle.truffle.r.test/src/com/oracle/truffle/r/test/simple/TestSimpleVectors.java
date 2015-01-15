@@ -2053,6 +2053,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ e <- list(a=2) ; e$\"a\" }");
 
         assertEval("{ x<-NULL; x$a }");
+
+        assertEval("{ x<-list(a=7, 42); x$a<-NULL; x }");
+        assertEval("{ x<-list(1, a=7, 42); x$a<-NULL; x }");
+        assertEvalWarning("{ x<-c(a=7, 42); x$a<-NULL; x }");
     }
 
     @Test
