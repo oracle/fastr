@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltincumprod extends TestBase {
 
     @Test
-    @Ignore
     public void testcumprod1() {
         assertEval("argv <- list(structure(c(1, 60, 60, 24, 7), .Names = c(\'secs\', \'mins\', \'hours\', \'days\', \'weeks\')));cumprod(argv[[1]]);");
     }
@@ -36,7 +35,6 @@ public class TestrGenBuiltincumprod extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcumprod4() {
         assertEval("argv <- list(structure(0L, .Names = \'l0\'));cumprod(argv[[1]]);");
     }
@@ -74,4 +72,3 @@ public class TestrGenBuiltincumprod extends TestBase {
         assertEval("argv <- list(c(0.982149602642989, 0.91866776738084, 0.859369083800704, 0.921182928974104));cumprod(argv[[1]]);");
     }
 }
-

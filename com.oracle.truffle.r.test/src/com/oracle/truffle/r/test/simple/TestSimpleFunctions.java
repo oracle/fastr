@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -34,11 +34,6 @@ public class TestSimpleFunctions extends TestBase {
     public void testReturn() {
         assertEval("{ f<-function() { return() } ; f() }");
         assertEval("{ f<-function() { return(2) ; 3 } ; f() }");
-    }
-
-    @Test
-    @Ignore
-    public void testReturnIgnore() {
         assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
     }
 
@@ -73,18 +68,19 @@ public class TestSimpleFunctions extends TestBase {
 
         // replacement function
         assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
+
+        assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- \"sum\" ; sapply(1, x, 2) } ; f() }");
+        assertEval("{ x <- function(a,b) { a^b } ; g <- function() { x <- \"sum\" ; f <- function() { sapply(1, x, 2) } ; f() }  ; g() }");
+        assertEval("{ foo <- function (x) { x } ; foo() }");
     }
 
     @Test
     @Ignore
     public void testDefinitionsIgnore() {
         // function matching, builtins
-        assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- \"sum\" ; sapply(1, x, 2) } ; f() }");
-        assertEval("{ x <- function(a,b) { a^b } ; g <- function() { x <- \"sum\" ; f <- function() { sapply(1, x, 2) } ; f() }  ; g() }");
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
-        assertEval("{ foo <- function (x) { x } ; foo() }");
         assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
     }
 

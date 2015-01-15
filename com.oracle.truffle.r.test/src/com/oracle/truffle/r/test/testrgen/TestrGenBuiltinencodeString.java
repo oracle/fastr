@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,19 +24,16 @@ public class TestrGenBuiltinencodeString extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testencodeString3() {
         assertEval("argv <- list(c(\'a\', \'ab\', \'abcde\'), NA, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testencodeString4() {
         assertEval("argv <- list(c(\'a\', \'ab\', \'abcde\'), NA, \'\', 1L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testencodeString6() {
         assertEval("argv <- list(c(\'NA\', \'a\', \'b\', \'c\', \'d\', NA), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
@@ -83,4 +80,3 @@ public class TestrGenBuiltinencodeString extends TestBase {
         assertEval("argv <- list(structure(\'integer(0)\', .Names = \'c0\', row.names = character(0)), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 }
-

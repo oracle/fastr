@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -203,7 +203,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc34() {
         assertEval("argv <- list(\'exNSS4\', \'myLib\', structure(c(\'1.0\', NA, \'methods\', NA, NA, NA, NA, \'GPL (>= 2)\', NA, NA, NA, NA, NA, NA, \'3.0.1\'), .Names = c(\'Version\', NA, \'Depends\', NA, NA, NA, NA, \'License\', NA, NA, NA, NA, NA, NA, \'Built\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -274,7 +273,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc47() {
         assertEval("argv <- list(NULL, structure(list(names = structure(\'stats\', .Names = \'name\')), .Names = \'names\'));c(argv[[1]],argv[[2]]);");
     }
@@ -429,4 +427,3 @@ public class TestrGenBuiltinc extends TestBase {
         assertEval("argv <- list(structure(list(object = c(\'time\', \'status\')), .Names = \'object\'), structure(list(max.level = NA, vec.len = 4, digits.d = 3, nchar.max = 128, give.attr = TRUE, give.head = TRUE, width = 80L, envir = NULL, strict.width = \'no\', formatNum = function (x, ...) format(x, trim = TRUE, drop0trailing = TRUE, ...), list.len = 99), .Names = c(\'max.level\', \'vec.len\', \'digits.d\', \'nchar.max\', \'give.attr\', \'give.head\', \'width\', \'envir\', \'strict.width\', \'formatNum\', \'list.len\')), structure(list(give.length = TRUE, nest.lev = 2, indent.str = \'  .. ..\'), .Names = c(\'give.length\', \'nest.lev\', \'indent.str\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
 }
-

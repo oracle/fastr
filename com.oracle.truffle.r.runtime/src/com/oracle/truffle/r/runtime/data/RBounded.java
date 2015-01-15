@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -41,13 +42,16 @@ public abstract class RBounded {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
             if (RRuntime.isNA(newDimensions[i])) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NA);
             } else if (newDimensions[i] < 0) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
             }
             length *= newDimensions[i];
         }
         if (length != getLength()) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, getLength());
         }
     }

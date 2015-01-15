@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,13 +18,11 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinasvector extends TestBase {
 
     @Test
-    @Ignore
     public void testasvector1() {
         assertEval("argv <- list(\'ylog\', \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector2() {
         assertEval("argv <- list(structure(character(0), package = character(0), class = structure(\'ObjectsWithPackage\', package = \'methods\')), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -36,7 +34,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector4() {
         assertEval("argv <- list(NA_character_, \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -48,7 +45,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector6() {
         assertEval("argv <- list(structure(list(a1 = 1:3, a2 = 4:6, a3 = 3.14159265358979, a4 = c(\'a\', \'b\', \'c\')), .Names = c(\'a1\', \'a2\', \'a3\', \'a4\')), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -60,7 +56,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector8() {
         assertEval("argv <- list(c(-1L, -2L), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -72,7 +67,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector10() {
         assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c(\'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\', \'#ifdef\', \'\\\\Sexpr\', \'build\', \'install\', \'render\')), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -96,7 +90,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector14() {
         assertEval("argv <- list(structure(c(\'myTst\', \'Package\', \'What the package does (short line)\', \'1.0\', \'2014-03-17\', \'Who wrote it\', \'Who to complain to <yourfault@somewhere.net>\', \'More about what it does (maybe more than one line)\', \'What license is it under?\', \'methods\'), .Names = c(\'Package\', \'Type\', \'Title\', \'Version\', \'Date\', \'Author\', \'Maintainer\', \'Description\', \'License\', \'Depends\')), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -108,7 +101,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector16() {
         assertEval("argv <- list(1, \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -120,7 +112,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector18() {
         assertEval("argv <- list(NA, \'logical\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -144,25 +135,21 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector22() {
         assertEval("argv <- list(quote(list(ff <- factor(c(1:2, NA, 2), exclude = NULL))), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector23() {
         assertEval("argv <- list(c(-1, 3, 1, 1, 5, 1), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector24() {
         assertEval("argv <- list(quote(list(y, x1, x2)), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector25() {
         assertEval("argv <- list(structure(c(0.005, 50, 550), .Names = c(\'k\', \'g1\', \'g2\')), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -174,13 +161,11 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector27() {
         assertEval("argv <- list(NA, \'integer\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector28() {
         assertEval("argv <- list(c(NA, NaN), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -222,19 +207,16 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector35() {
         assertEval("argv <- list(structure(list(a = 1), .Names = \'a\'), \'double\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector36() {
         assertEval("argv <- list(structure(c(0, 0.0123079727211562, 0.00970882237374837, 0.62883302403078, 0.689843718945119, 0.689843718944881, 0.672453157851573, 0.534493702379921, 0.171039529097608, 0.17103952909345, 0.50219835346871, 0.530975095958163, 0.0050966004562048, 0.0106639382954144, 0.811192712625201, 0.0957932531337699), .Names = c(\'(Intercept)\', \'M.userY\', \'TempHigh\', \'M.userY:TempHigh\', \'SoftMedium\', \'SoftSoft\', \'M.userY:SoftMedium\', \'M.userY:SoftSoft\', \'TempHigh:SoftMedium\', \'TempHigh:SoftSoft\', \'M.userY:TempHigh:SoftMedium\', \'M.userY:TempHigh:SoftSoft\', \'BrandM\', \'M.userY:BrandM\', \'TempHigh:BrandM\', \'M.userY:TempHigh:BrandM\')), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector37() {
         assertEval("argv <- list(c(-2, -1.95959595959596, -1.91919191919192, -1.87878787878788, -1.83838383838384, -1.7979797979798, -1.75757575757576, -1.71717171717172, -1.67676767676768, -1.63636363636364, -1.5959595959596, -1.55555555555556, -1.51515151515152, -1.47474747474747, -1.43434343434343, -1.39393939393939, -1.35353535353535, -1.31313131313131, -1.27272727272727, -1.23232323232323, -1.19191919191919, -1.15151515151515, -1.11111111111111, -1.07070707070707, -1.03030303030303, -0.98989898989899, -0.949494949494949, -0.909090909090909, -0.868686868686869, -0.828282828282828, -0.787878787878788, -0.747474747474747, -0.707070707070707, -0.666666666666667, -0.626262626262626, -0.585858585858586, -0.545454545454545, -0.505050505050505, -0.464646464646465, -0.424242424242424, -0.383838383838384, -0.343434343434343, -0.303030303030303, -0.262626262626263, -0.222222222222222, -0.181818181818182, -0.141414141414141, -0.101010101010101, -0.0606060606060606, -0.0202020202020201, 0.0202020202020203, 0.060606060606061, 0.101010101010101, 0.141414141414141, 0.181818181818182, 0.222222222222222, 0.262626262626263, 0.303030303030303, 0.343434343434343, 0.383838383838384, 0.424242424242424, 0.464646464646465, 0.505050505050505, 0.545454545454546, 0.585858585858586, 0.626262626262626, 0.666666666666667, 0.707070707070707, 0.747474747474748, 0.787878787878788, 0.828282828282829, 0.868686868686869, 0.909090909090909, 0.94949494949495, 0.98989898989899, 1.03030303030303, 1.07070707070707, 1.11111111111111, 1.15151515151515, 1.19191919191919, 1.23232323232323, 1.27272727272727, 1.31313131313131, 1.35353535353535, 1.39393939393939, 1.43434343434343, 1.47474747474747, 1.51515151515152, 1.55555555555556, 1.5959595959596, 1.63636363636364, 1.67676767676768, 1.71717171717172, 1.75757575757576, 1.7979797979798, 1.83838383838384, 1.87878787878788, 1.91919191919192, 1.95959595959596, 2), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -246,7 +228,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector39() {
         assertEval("argv <- list(structure(\'lightblue\', .Names = \'bg\'), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -264,7 +245,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector42() {
         assertEval("argv <- list(NA, \'double\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -288,31 +268,26 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector47() {
         assertEval("argv <- list(structure(c(0.1, 0.8, 1, 0.5, 0.8, 1, 0, 0.5, 1), .Dim = c(3L, 3L), .Dimnames = list(c(\'(3.59,4.5]\', \'(4.5,5.4]\', \'(5.4,6.31]\'), c(\'ctrl\', \'trt1\', \'trt2\'))), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector48() {
         assertEval("argv <- list(integer(0), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector49() {
         assertEval("argv <- list(structure(c(1L, 1L), .Label = \'registered S3method for $\', class = \'factor\'), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector50() {
         assertEval("argv <- list(\'1.3\', \'double\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector51() {
         assertEval("argv <- list(c(8L, 11L, 14L, 16L, 19L, 4L, 6L, 9L, 15L, NA, 7L, 10L, 20L), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -336,7 +311,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector55() {
         assertEval("argv <- list(NULL, \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -360,7 +334,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector60() {
         assertEval("argv <- list(1L, \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -372,7 +345,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector63() {
         assertEval("argv <- list(2, \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -396,7 +368,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector68() {
         assertEval("argv <- list(NA, \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -420,7 +391,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector72() {
         assertEval("argv <- list(structure(1.6, class = \'object_size\'), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -432,7 +402,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector74() {
         assertEval("argv <- list(FALSE, \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -450,21 +419,17 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector77() {
         assertEval("argv <- list(structure(list(), .Dim = 0L), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector80() {
         assertEval("argv <- list(structure(\'1\', .Tsp = c(1, 1, 1), class = \'ts\'), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testasvector81() {
         assertEval("argv <- list(\'diff\', \'symbol\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 }
-

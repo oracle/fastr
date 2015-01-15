@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,13 +24,11 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint2() {
         assertEval("argv <- list(0.9, 0.95, length.out = 16);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint3() {
         assertEval("argv <- list(FALSE);seq.int(argv[[1]]);");
     }
@@ -42,7 +40,6 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint5() {
         assertEval("argv <- list(structure(0.88, .Names = \'Other\'), structure(1, .Names = \'Vanilla Cream\'), length.out = 24);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -77,13 +74,11 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint11() {
         assertEval("argv <- list(10L, 99L, 1);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint12() {
         assertEval("argv <- list(1L);seq.int(argv[[1]]);");
     }
@@ -106,7 +101,6 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint16() {
         assertEval("argv <- list(-0.2, 1, length.out = 7);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -118,7 +112,6 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint18() {
         assertEval("argv <- list(105L, 112L, 3L);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -129,13 +122,11 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint20() {
         assertEval("argv <- list(0, structure(345600, tzone = \'GMT\'), 43200);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint21() {
         assertEval("argv <- list(-7, 7, length.out = 11);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -152,41 +143,32 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint24() {
         assertEval("argv <- list(1, 1, by = 1);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testseqint26() {
-		assertEval("argv <- list(NaN, NaN);"+
-			"do.call(\'seq.int\', argv)");
-	}
+    public void testseqint26() {
+        assertEval("argv <- list(NaN, NaN);" + "do.call(\'seq.int\', argv)");
+    }
 
-
-	@Test
+    @Test
     @Ignore
-	public void testseqint27() {
-		assertEval("argv <- structure(list(1.2, 1, by = 1), .Names = c(\'\', \'\', \'by\'));"+
-			"do.call(\'seq.int\', argv)");
-	}
+    public void testseqint27() {
+        assertEval("argv <- structure(list(1.2, 1, by = 1), .Names = c(\'\', \'\', \'by\'));" + "do.call(\'seq.int\', argv)");
+    }
 
-
-	@Test
+    @Test
     @Ignore
-	public void testseqint28() {
-		assertEval("argv <- structure(list(to = NaN), .Names = \'to\');"+
-			"do.call(\'seq.int\', argv)");
-	}
+    public void testseqint28() {
+        assertEval("argv <- structure(list(to = NaN), .Names = \'to\');" + "do.call(\'seq.int\', argv)");
+    }
 
-
-	@Test
+    @Test
     @Ignore
-	public void testseqint29() {
-		assertEval("argv <- list(NaN);"+
-			"do.call(\'seq.int\', argv)");
-	}
+    public void testseqint29() {
+        assertEval("argv <- list(NaN);" + "do.call(\'seq.int\', argv)");
+    }
 
 }
-

@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,6 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testinvisible3() {
         assertEval("argv <- list(quote(Y ~ X));invisible(argv[[1]]);");
     }
@@ -61,7 +60,6 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testinvisible9() {
         assertEval("argv <- list(quote(breaks ~ (wool + tension)^2));invisible(argv[[1]]);");
     }
@@ -181,7 +179,6 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testinvisible32() {
         assertEval("argv <- list(structure(list(name = \'list\', objs = structure(list(`package:base` = .Primitive(\'list\'), .Primitive(\'list\')), .Names = c(\'package:base\', \'\')), where = c(\'package:base\', \'namespace:base\'), visible = c(TRUE, FALSE), dups = c(FALSE, TRUE)), .Names = c(\'name\', \'objs\', \'where\', \'visible\', \'dups\'), class = \'getAnywhere\'));invisible(argv[[1]]);");
     }
@@ -276,4 +273,3 @@ public class TestrGenBuiltininvisible extends TestBase {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), .Dim = c(10L, 2L), .Dimnames = list(NULL, c(\'tt\', \'tt + 1\')), .Tsp = c(1920.5, 1921.25, 12), class = c(\'mts\', \'ts\', \'matrix\')));invisible(argv[[1]]);");
     }
 }
-

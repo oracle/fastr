@@ -1688,11 +1688,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ buf <- character() ; buf[[1]] <- \"hello\" ; buf[[3]] <- \"world\" ; buf }");
         assertEval("{ b <- 1:3 ; dim(b) <- c(1,3) ;  b[integer()] <- 3:5 ; b }");
 
-    }
-
-    @Test
-    @Ignore
-    public void testVectorUpdateIgnore() {
         // lazy evaluation...
         assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
         assertEval("{ x<-5:1 ; x[x[2]<-2] }");

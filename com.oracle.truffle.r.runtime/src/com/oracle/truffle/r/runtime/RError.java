@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -379,7 +379,7 @@ public final class RError extends RuntimeException {
         EXACTLY_ONE_WHICH("exactly one attribute 'which' must be given"),
         ATTRIBUTES_NAMED("attributes must be named"),
         MISSING_INVALID("missing value is invalid"),
-        CHARACTER_EXPECTED("character argument expected"),
+        TYPE_EXPECTED("%s argument expected"),
         CANNOT_CHANGE_DIRECTORY("cannot change working directory"),
         FIRST_ARG_MUST_BE_STRING("first argument must be a character string"),
         ZERO_LENGTH_VARIABLE("attempt to use zero-length variable name"),
@@ -591,7 +591,8 @@ public final class RError extends RuntimeException {
         FILE_APPEND_TO("nothing to append to"),
         FILE_APPEND_WRITE("write error during file append"),
         REQUIRES_CHAR_VECTOR("'%s' requires a character vector"),
-        NOT_VALID_NAMES("not a valid named list");
+        NOT_VALID_NAMES("not a valid named list"),
+        CHAR_ARGUMENT("character argument expected");
 
         public final String message;
         private final boolean hasArgs;

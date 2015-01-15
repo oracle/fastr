@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -106,7 +106,6 @@ public class TestrGenBuiltinisfinite extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisfinite17() {
         assertEval("argv <- list(NULL);is.finite(argv[[1]]);");
     }
@@ -146,7 +145,6 @@ public class TestrGenBuiltinisfinite extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisfinite24() {
         assertEval("argv <- list(c(13L, 13L));is.finite(argv[[1]]);");
     }
@@ -156,4 +154,3 @@ public class TestrGenBuiltinisfinite extends TestBase {
         assertEval("argv <- list(structure(c(13991, 13995), class = \'Date\'));is.finite(argv[[1]]);");
     }
 }
-

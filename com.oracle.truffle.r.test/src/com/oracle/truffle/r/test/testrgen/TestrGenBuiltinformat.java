@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -120,7 +120,6 @@ public class TestrGenBuiltinformat extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testformat20() {
         assertEval("argv <- list(c(\'abc\', NA, \'def\'), FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
@@ -138,7 +137,6 @@ public class TestrGenBuiltinformat extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testformat25() {
         assertEval("argv <- list(c(\'  9 \', \' 13 \', \' 13+\', \' 18 \', \' 23 \', \' 28+\', \' 31 \', \' 34 \', \' 45+\', \' 48 \'), TRUE, NULL, 0L, NULL, 0L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
@@ -305,7 +303,7 @@ public class TestrGenBuiltinformat extends TestBase {
 
     @Test
     @Ignore
-    public void testformat55(){
+    public void testformat55() {
         assertEval("argv <- list(1e-11, FALSE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
@@ -316,4 +314,3 @@ public class TestrGenBuiltinformat extends TestBase {
     }
 
 }
-

@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,12 +32,9 @@ public class TestrGenBuiltinsample extends TestBase {
         assertEval("argv <- list(2L, 499, TRUE, c(0, 0.525)); .Internal(sample(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
-	@Test
-    @Ignore
-	public void testsample5() {
-		assertEval("argv <- structure(list(x = c(0, 0)), .Names = \'x\');"+
-			"do.call(\'sample\', argv)");
-	}
+    @Test
+    public void testsample5() {
+        assertEval("argv <- structure(list(x = c(0, 0)), .Names = \'x\');" + "do.call(\'sample\', argv)");
+    }
 
 }
-

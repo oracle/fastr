@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -59,7 +59,6 @@ public class TestrGenBuiltingsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgsub8() {
         assertEval("argv <- list(\''([^']*)'\', \'‘\\\\1’\', \'‘/home/lzhao/hg/r-instrumented/tests/rpart.Rcheck’\', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -77,7 +76,6 @@ public class TestrGenBuiltingsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgsub11() {
         assertEval("argv <- list(\'é\', \'gh\', \'«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè\', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -136,7 +134,6 @@ public class TestrGenBuiltingsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgsub21() {
         assertEval("argv <- list(\'[[:space:]]*%+[[:space:]]*\\\\\\\\VignetteEngine\\\\{([^}]*)\\\\}\', \'\\\\1\', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -154,7 +151,6 @@ public class TestrGenBuiltingsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgsub24() {
         assertEval("argv <- list(\'.__M__(.*):([^:]+)\', \'\\\\1\', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -183,20 +179,17 @@ public class TestrGenBuiltingsub extends TestBase {
         assertEval("argv <- list(\'([^\\\\])\\\\(\', \'\\\\1\\\\\\\\(\', \'^.*{n.*$\', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testgsub30() {
-		assertEval("argv <- structure(list(pattern = \'a*\', replacement = \'x\', x = \'baaaac\',     perl = TRUE), .Names = c(\'pattern\', \'replacement\', \'x\', \'perl\'));"+
-			"do.call(\'gsub\', argv)");
-	}
+    public void testgsub30() {
+        assertEval("argv <- structure(list(pattern = \'a*\', replacement = \'x\', x = \'baaaac\',     perl = TRUE), .Names = c(\'pattern\', \'replacement\', \'x\', \'perl\'));"
+                        + "do.call(\'gsub\', argv)");
+    }
 
-
-	@Test
+    @Test
     @Ignore
-	public void testgsub31() {
-		assertEval("argv <- structure(list(pattern = \'a*\', replacement = \'x\', x = \'baaaac\'),     .Names = c(\'pattern\', \'replacement\', \'x\'));"+
-			"do.call(\'gsub\', argv)");
-	}
+    public void testgsub31() {
+        assertEval("argv <- structure(list(pattern = \'a*\', replacement = \'x\', x = \'baaaac\'),     .Names = c(\'pattern\', \'replacement\', \'x\'));" + "do.call(\'gsub\', argv)");
+    }
 
 }
-

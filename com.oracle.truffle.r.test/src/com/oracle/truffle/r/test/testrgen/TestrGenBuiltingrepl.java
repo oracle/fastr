@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,6 @@ public class TestrGenBuiltingrepl extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgrepl3() {
         assertEval("argv <- list(\'\\n\', structure(\'c(person(\\\'José\\\', \\\'Pinheiro\\\', role = \\\'aut\\\',\\n                    comment = \\\'S version\\\'),\\n             person(\\\'Douglas\\\', \\\'Bates\\\', role = \\\'aut\\\',\\n                    comment = \\\'up to 2007\\\'),\\n             person(\\\'Saikat\\\', \\\'DebRoy\\\', role = \\\'ctb\\\',\\n                    comment = \\\'up to 2002\\\'),\\n             person(\\\'Deepayan\\\', \\\'Sarkar\\\', role = \\\'ctb\\\',\\n                    comment = \\\'up to 2005\\\'),\\n\\t     person(\\\'R-core\\\', email = \\\'R-core@R-project.org\\\',\\n                    role = c(\\\'aut\\\', \\\'cre\\\')),\\n             person(\\\'EISPACK authors\\\', role = \\\'ctb\\\'))\', .Names = \'Authors@R\'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
@@ -40,7 +39,6 @@ public class TestrGenBuiltingrepl extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgrepl6() {
         assertEval("argv <- list(\'x\', \'x\', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
@@ -58,13 +56,11 @@ public class TestrGenBuiltingrepl extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgrepl9() {
         assertEval("argv <- list(\'\\n\', \'\\nqr(x, ...)\\nqrR(qr, complete=FALSE, backPermute=TRUE)\\n\', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
-    @Ignore
     public void testgrepl10() {
         assertEval("argv <- list(\'{refObject}\', c(\'\\\\section{Extends}{\', \'Class \\\\code{\\\'\\\\linkS4class{refClassA}\\\'}, directly.\', \'Class \\\\code{\\\'\\\\linkS4class{envRefClass}\\\'}, by class \\\'refClassA\\\', distance 2.\', \'Class \\\\code{\\\'\\\\linkS4class{.environment}\\\'}, by class \\\'refClassA\\\', distance 3.\', \'Class \\\\code{\\\'\\\\linkS4class{refClass}\\\'}, by class \\\'refClassA\\\', distance 3.\', \'Class \\\\code{\\\'\\\\linkS4class{environment}\\\'}, by class \\\'refClassA\\\', distance 4, with explicit coerce.\', \'Class \\\\code{\\\'\\\\linkS4class{refObject}\\\'}, by class \\\'refClassA\\\', distance 4.\', \'}\'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
@@ -74,12 +70,10 @@ public class TestrGenBuiltingrepl extends TestBase {
         assertEval("argv <- list(\'^prepare_Rd\', structure(character(0), class = \'checkRd\'), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testgrepl12() {
-		assertEval("argv <- structure(list(pattern = \'length\', x = \'Lengths: 0, 1\',     ignore.case = TRUE), .Names = c(\'pattern\', \'x\', \'ignore.case\'));"+
-			"do.call(\'grepl\', argv)");
-	}
+    public void testgrepl12() {
+        assertEval("argv <- structure(list(pattern = \'length\', x = \'Lengths: 0, 1\',     ignore.case = TRUE), .Names = c(\'pattern\', \'x\', \'ignore.case\'));" + "do.call(\'grepl\', argv)");
+    }
 
 }
-
