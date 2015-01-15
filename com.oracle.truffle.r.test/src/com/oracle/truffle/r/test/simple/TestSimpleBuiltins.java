@@ -20,6 +20,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testAllEqual() {
+        assertEval("{ all.equal(data.frame(list(1,2,3)), data.frame(list(1,2,3))) }");
+    }
+
+    @Test
     public void testModeSet() {
         assertEval("{  x<-c(1,2); mode(x)<-\"character\"; x }");
     }
