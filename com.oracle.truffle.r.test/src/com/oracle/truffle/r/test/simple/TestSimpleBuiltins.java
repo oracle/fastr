@@ -2365,11 +2365,6 @@ public class TestSimpleBuiltins extends TestBase {
     public void testSort() {
         assertEval("{ sort(c(1L,10L,2L)) }");
         assertEval("{ sort(c(3,10,2)) }");
-    }
-
-    @Test
-    @Ignore
-    public void testSortIgnore() {
         assertEval("{ sort(c(1,2,0/0,NA)) }");
         assertEval("{ sort(c(2,1,0/0,NA), na.last=NA) }");
         assertEval("{ sort(c(3,0/0,2,NA), na.last=TRUE) }");
@@ -2384,6 +2379,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sort(c(a=NA,b=NA,c=3L,d=-1L),na.last=TRUE, decreasing=FALSE) }");
         assertEval("{ sort(c(3,NA,1,d=10), decreasing=FALSE, index.return=TRUE) }");
         assertEval("{ sort(3:1, index.return=TRUE) }");
+
+        assertEval("{ sort(c(1L,10L,2L), method=\"quick\") }");
+        assertEval("{ sort(c(\"abc\", \"aba\", \"aa\")) }");
+
     }
 
     @Test

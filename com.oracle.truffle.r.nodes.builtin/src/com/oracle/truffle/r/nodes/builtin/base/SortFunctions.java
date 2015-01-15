@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,93 +22,170 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-import java.util.Arrays;
+import java.util.*;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 /**
- * Temporary minimal implementation for b25 benchmarks. Eventually this should be combined with
- * {@link Order} and made consistent with {@code sort.R}.
- *
+ * The internal functions mandated by {@code base/sort.R}. N.B. We use the standard JDK sorting
+ * algorithms and not the specific algorithms specified in the R manual entry. TODO: implement psort
+ * and radixsort.
  */
 public class SortFunctions {
 
-    @RBuiltin(name = "sort.list", kind = SUBSTITUTE, parameterNames = {"x", "partial", "na.last", "decreasing", "method"})
-    // TODO Implement in R
-    public abstract static class SortList extends RBuiltinNode {
-        private final ConditionProfile orderProfile = ConditionProfile.createBinaryProfile();
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RMissing.instance)};
+    private abstract static class Adapter extends RBuiltinNode {
+        @TruffleBoundary
+        private static double[] sort(double[] data, byte decreasing) {
+            // no reverse comparator for primitives
+            Arrays.sort(data);
+            if (RRuntime.fromLogical(decreasing)) {
+                int len = data.length;
+                double[] revData = new double[len];
+                for (int i = 0; i < len; i++) {
+                    revData[i] = data[len - i - 1];
+                }
+                return revData;
+            } else {
+                return data;
+            }
         }
 
-        @Child private Order order;
+        @TruffleBoundary
+        private static int[] sort(int[] data, byte decreasing) {
+            Arrays.sort(data);
+            if (RRuntime.fromLogical(decreasing)) {
+                int len = data.length;
+                int[] revData = new int[len];
+                for (int i = 0; i < len; i++) {
+                    revData[i] = data[len - i - 1];
+                }
+                return revData;
+            } else {
+                return data;
+            }
+        }
+
+        @TruffleBoundary
+        private static byte[] sort(byte[] data, byte decreasing) {
+            Arrays.sort(data);
+            if (RRuntime.fromLogical(decreasing)) {
+                int len = data.length;
+                byte[] revData = new byte[len];
+                for (int i = 0; i < len; i++) {
+                    revData[i] = data[len - i - 1];
+                }
+                return revData;
+            } else {
+                return data;
+            }
+        }
+
+        @TruffleBoundary
+        private static String[] sort(String[] data, byte decreasing) {
+            if (RRuntime.fromLogical(decreasing)) {
+                Arrays.sort(data, Collections.reverseOrder());
+            } else {
+                Arrays.sort(data);
+            }
+            return data;
+        }
+
+        protected RDoubleVector jdkSort(RAbstractDoubleVector vec, byte decreasing) {
+            double[] data = vec.materialize().getDataCopy();
+            return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
+        }
+
+        protected RIntVector jdkSort(RAbstractIntVector vec, byte decreasing) {
+            int[] data = vec.materialize().getDataCopy();
+            return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
+        }
+
+        protected RStringVector jdkSort(RAbstractStringVector vec, byte decreasing) {
+            String[] data = vec.materialize().getDataCopy();
+            return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
+        }
+
+        protected RLogicalVector jdkSort(RAbstractLogicalVector vec, byte decreasing) {
+            byte[] data = vec.materialize().getDataCopy();
+            return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
+        }
+
+    }
+
+    /**
+     * In GnuR this is a shell sort variant, see <a href =
+     * "https://stat.ethz.ch/R-manual/R-devel/library/base/html/sort.html>here">here</a>. The JDK
+     * does not have a shell sort so for now we just use the default JDK sort (quicksort).
+     *
+     * N.B. The R code strips out {@code NA} and {@code NaN} values before calling the builtin.
+     */
+    @RBuiltin(name = "sort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
+    public abstract static class Sort extends Adapter {
+        @Specialization
+        protected RDoubleVector sort(RAbstractDoubleVector vec, byte decreasing) {
+            return jdkSort(vec, decreasing);
+        }
+
+        @Specialization
+        protected RIntVector sort(RAbstractIntVector vec, byte decreasing) {
+            return jdkSort(vec, decreasing);
+        }
+
+        @Specialization
+        protected RStringVector sort(RAbstractStringVector vec, byte decreasing) {
+            return jdkSort(vec, decreasing);
+        }
+
+        @Specialization
+        protected RLogicalVector sort(RAbstractLogicalVector vec, byte decreasing) {
+            return jdkSort(vec, decreasing);
+        }
 
         @SuppressWarnings("unused")
+        @Fallback
+        protected Object sort(Object vec, Object decreasing) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " .Internal(sort)");
+        }
+
+    }
+
+    @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
+    public abstract static class QSort extends Adapter {
+
         @Specialization
-        protected RIntVector sortList(VirtualFrame frame, RAbstractVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
-            controlVisibility();
-            if (order == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                order = insert(OrderFactory.create(new RNode[3], getBuiltin(), getSuppliedArgsNames()));
-            }
-            RIntVector result = order.executeRIntVector(frame, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, new RArgsValuesAndNames(new Object[]{vec}, null));
-            if (orderProfile.profile(RRuntime.fromLogical(decreasing))) {
-                int[] data = result.getDataWithoutCopying();
-                int[] rdata = new int[data.length];
-                for (int i = 0; i < data.length; i++) {
-                    rdata[i] = data[data.length - (i + 1)];
-                }
-                return RDataFactory.createIntVector(rdata, RDataFactory.COMPLETE_VECTOR);
-            } else {
-                return result;
-            }
+        protected RDoubleVector qsort(RAbstractDoubleVector vec, byte decreasing) {
+            return jdkSort(vec, decreasing);
+        }
+
+        @Specialization
+        protected RIntVector qsort(RAbstractIntVector vec, byte decreasing) {
+            return jdkSort(vec, decreasing);
+        }
+
+    }
+
+    @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
+    public abstract static class PartialSort extends RBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object pSort(Object zz, Object naLast, Object decreasing) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " .Internal(psort)");
         }
     }
 
-    @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "index.return"})
-    // TODO full implementation in Java handling NAs
-    public abstract static class QSort extends RBuiltinNode {
-
-        @TruffleBoundary
-        private static void sort(double[] data) {
-            Arrays.sort(data);
-        }
-
-        @TruffleBoundary
-        private static void sort(int[] data) {
-            Arrays.sort(data);
-        }
-
+    @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"zz", "na.last", "decreasing"})
+    public abstract static class RadixSort extends RBuiltinNode {
+        @SuppressWarnings("unused")
         @Specialization
-        protected RDoubleVector qsort(RAbstractDoubleVector vec, @SuppressWarnings("unused") Object indexReturn) {
-            double[] data = vec.materialize().getDataCopy();
-            sort(data);
-            return RDataFactory.createDoubleVector(data, vec.isComplete());
-        }
-
-        @Specialization
-        protected RIntVector qsort(RAbstractIntVector vec, @SuppressWarnings("unused") Object indexReturn) {
-            int[] data = vec.materialize().getDataCopy();
-            sort(data);
-            return RDataFactory.createIntVector(data, vec.isComplete());
+        protected Object radixSort(Object zz, Object naLast, Object decreasing) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " .Internal(raxdixsort)");
         }
     }
 

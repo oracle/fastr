@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,17 @@ public class ReplacementNode extends RNode {
          * update.
          */
         WriteVariableNode tmpAssignNode = (WriteVariableNode) sequence[1];
-        WriteVariableNode updateNode = (WriteVariableNode) sequence[2];
+        WriteVariableNode updateNode = null;
+        RNode s2 = sequence[2];
+        if (s2 instanceof WriteVariableNode) {
+            updateNode = (WriteVariableNode) s2;
+        } else if (s2 instanceof ReplacementNode) {
+            // FIXME this does not produce the right result
+            ReplacementNode rn = (ReplacementNode) s2;
+            updateNode = (WriteVariableNode) rn.sequence[2];
+        } else {
+            RInternalError.shouldNotReachHere();
+        }
         RNode updateNodeRhs = (RNode) RASTUtils.unwrap(updateNode.getRhs());
         if (updateNodeRhs instanceof UpdateFieldNode) {
             UpdateFieldNode ufn = (UpdateFieldNode) updateNodeRhs;

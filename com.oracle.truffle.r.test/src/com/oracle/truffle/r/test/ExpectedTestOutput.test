@@ -14769,12 +14769,91 @@ Error: object 'x' not found
 Error: object 'y' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(3:1, index.return=TRUE) }
+$x
+[1] 1 2 3
+
+$ix
+[1] 3 2 1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c("abc", "aba", "aa")) }
+[1] "aa"  "aba" "abc"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(1,2,0/0,NA)) }
+[1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
 #{ sort(c(1L,10L,2L)) }
 [1]  1  2 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(1L,10L,2L), method="quick") }
+[1]  1  2 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(2,1,0/0,NA), na.last=NA) }
+[1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3,0/0,2,NA), na.last=TRUE) }
+[1]   2   3 NaN  NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
 #{ sort(c(3,10,2)) }
 [1]  2  3 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3,NA,0/0,2), na.last=FALSE) }
+[1]  NA NaN   2   3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3,NA,1,d=10), decreasing=FALSE, index.return=TRUE) }
+$x
+       d
+ 1  3 10
+
+$ix
+[1] 2 1 3
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3L,NA,-2L), na.last=FALSE) }
+[1] NA -2  3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3L,NA,-2L), na.last=TRUE) }
+[1] -2  3 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3L,NA,2L)) }
+[1] 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(a=0/0,b=1/0,c=3,d=NA),na.last=TRUE, decreasing=FALSE) }
+  c   b   a   d
+  3 Inf NaN  NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(a=NA,b=NA,c=3,d=1),na.last=FALSE, decreasing=FALSE) }
+ a  b  d  c
+NA NA  1  3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(a=NA,b=NA,c=3,d=1),na.last=TRUE, decreasing=TRUE) }
+ c  d  a  b
+ 3  1 NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(a=NA,b=NA,c=3L,d=-1L),na.last=TRUE, decreasing=FALSE) }
+ d  c  a  b
+-1  3 NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(double()) }
+numeric(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSplit
 #{ fu <- c("a","b") ; split(1:8,fu) }
@@ -69306,10 +69385,6 @@ integer(0)
  [85]  2.14210348  2.24069623  2.41673698  2.52876619  2.58289965  2.63908820
  [91]  2.70643682  2.73273128  2.74780046  2.76040208  2.78059692  2.89307818
  [97]  2.93497854  2.97978562  2.98530493  2.99806873
-
-##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsort.testsort18
-#argv <- structure(list(x = structure(c(8092, 8092, 8048, 8093,     8066), origin = structure(c(1, 1, 1970), .Names = c('month',     'day', 'year')), class = c('dates', 'times'))), .Names = 'x');do.call('sort', argv)
-[1] 8048 8066 8092 8092 8093
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf21
 #argv <- structure(list(fmt = '%9.4g', 12345.6789), .Names = c('fmt',     ''));do.call('sprintf', argv)
