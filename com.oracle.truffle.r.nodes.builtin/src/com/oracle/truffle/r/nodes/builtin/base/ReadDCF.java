@@ -62,7 +62,7 @@ public abstract class ReadDCF extends RBuiltinNode {
             }
             return RDataFactory.createStringVector(data, complete, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
 
     }
