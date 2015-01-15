@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,7 +39,6 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testclass5() {
         assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')));class(argv[[1]]);");
     }
@@ -106,7 +105,6 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testclass18() {
         assertEval("argv <- list(structure(numeric(0), .Dim = 0L));class(argv[[1]]);");
     }
@@ -117,13 +115,11 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testclass20() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), .Dim = c(24L, 13L), .Dimnames = list(c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\'), c(\'(Intercept)\', \'block2\', \'block3\', \'block4\', \'block5\', \'block6\', \'N1\', \'P1\', \'K1\', \'N1:P1\', \'N1:K1\', \'P1:K1\', \'N1:P1:K1\')), assign = c(0L, 1L, 1L, 1L, 1L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L), contrasts = structure(list(block = \'contr.treatment\', N = \'contr.treatment\', P = \'contr.treatment\', K = \'contr.treatment\'), .Names = c(\'block\', \'N\', \'P\', \'K\'))));class(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testclass21() {
         assertEval("argv <- list(.Primitive(\'dimnames<-\'));class(argv[[1]]);");
     }
@@ -173,18 +169,14 @@ public class TestrGenBuiltinclass extends TestBase {
         assertEval("argv <- list(structure(1:10, .Tsp = c(1959.25, 1961.5, 4), class = \'ts\'));class(argv[[1]]);");
     }
 
-	@Test
-	public void testclass31() {
-		assertEval("argv <- list(c(71.128, 69.70625, 70.9566666666667, 71.7, 71.435,     72.5766666666667, 70.6916666666667));"+
-			"do.call(\'class\', argv)");
-	}
+    @Test
+    public void testclass31() {
+        assertEval("argv <- list(c(71.128, 69.70625, 70.9566666666667, 71.7, 71.435,     72.5766666666667, 70.6916666666667));" + "do.call(\'class\', argv)");
+    }
 
-
-	@Test
-	public void testclass32() {
-		assertEval("argv <- list(structure(c(0.909297426825682, 0.141120008059867,     -0.756802495307928), class = c(\'foo\', \'bar\')));"+
-			"do.call(\'class\', argv)");
-	}
+    @Test
+    public void testclass32() {
+        assertEval("argv <- list(structure(c(0.909297426825682, 0.141120008059867,     -0.756802495307928), class = c(\'foo\', \'bar\')));" + "do.call(\'class\', argv)");
+    }
 
 }
-

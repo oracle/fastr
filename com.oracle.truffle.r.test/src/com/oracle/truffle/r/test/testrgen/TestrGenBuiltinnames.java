@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames3() {
         assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'));names(argv[[1]]);");
     }
@@ -51,7 +50,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames8() {
         assertEval("argv <- list(structure(c(12L, 120L, 116L), .Dim = 3L, .Dimnames = structure(list(c(\'0-5yrs\', \'6-11yrs\', \'12+ yrs\')), .Names = \'\'), class = \'table\'));names(argv[[1]]);");
     }
@@ -93,7 +91,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames16() {
         assertEval("argv <- list(structure(list(), .Names = character(0)));names(argv[[1]]);");
     }
@@ -134,7 +131,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames24() {
         assertEval("argv <- list(structure(c(0.434200949779115, NA, 0.907914219551846, 0.907914219551846, 0.907914219551846, 0.434200949779115, 0.434200949779115), .Names = c(\'1\', NA, \'3\', \'4\', \'5\', \'6\', \'7\')));names(argv[[1]]);");
     }
@@ -206,4 +202,3 @@ public class TestrGenBuiltinnames extends TestBase {
         assertEval("argv <- list(structure(list(head = logical(0)), .Names = \'head\', class = \'data.frame\', row.names = integer(0)));names(argv[[1]]);");
     }
 }
-

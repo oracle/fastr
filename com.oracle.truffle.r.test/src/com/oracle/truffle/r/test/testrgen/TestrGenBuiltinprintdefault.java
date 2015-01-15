@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinprintdefault extends TestBase {
 
     @Test
-    @Ignore
     public void testprintdefault1() {
         assertEval("argv <- list(structure(c(\'-3.001e+155\', \'-1.067e+107\', \' -1.976e+62\', \'-9.961e+152\', \' -2.059e+23\', \'  1.000e+00\'), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -48,7 +47,6 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintdefault6() {
         assertEval("argv <- list(quote(y ~ A:U + A:V - 1), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -72,13 +70,11 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintdefault10() {
         assertEval("argv <- list(structure(c(245L, 250L, 255L, 260L, 265L, 270L, 275L, 280L, 285L, 290L, 295L, 300L, 305L, 310L, 315L, 320L, 325L, 330L, 335L, 340L, 345L, 350L, 355L, 360L), .Dim = 2:4, .Dimnames = list(NULL, c(\'a\', \'b\', \'c\'), NULL)), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault11() {
         assertEval("argv <- list(Inf, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -90,7 +86,6 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintdefault13() {
         assertEval("argv <- list(\'2014-03-17 13:47:59 EDT\', NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -108,55 +103,46 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintdefault17() {
         assertEval("argv <- list(NULL, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault18() {
         assertEval("argv <- list(quote(breaks ~ (wool + tension) - tension), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault19() {
         assertEval("argv <- list(c(\'2007-11-06\', \'2007-11-06\'), NULL, TRUE, NULL, NULL, FALSE, 99999L, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault20() {
         assertEval("argv <- list(structure(c(NA, NA, 1L, 9L), .Names = c(\'size\', \'current\', \'direction\', \'eval_depth\')), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault21() {
         assertEval("argv <- list(character(0), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault22() {
         assertEval("argv <- list(structure(\'0.01587\', .Names = \'(Intercept)\'), NULL, FALSE, NULL, 2, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault23() {
         assertEval("argv <- list(quote(Y ~ X), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault24() {
         assertEval("argv <- list(c(0.944550219923258, 0.336629745550454, 0.629688071087003, 0.591416056267917), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault25() {
         assertEval("argv <- list(c(\'surname\', \'nationality\', \'deceased\', \'title\', \'other.author\'), NULL, FALSE, NULL, NULL, FALSE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -168,19 +154,16 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintdefault27() {
         assertEval("argv <- list(c(TRUE, TRUE, TRUE), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault28() {
         assertEval("argv <- list(c(1L, 2L, 3L, 4L, 5L, 1L, 2L, 3L, 4L, 5L, 1L, 2L, 3L, 4L, 5L), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
-    @Ignore
     public void testprintdefault29() {
         assertEval("argv <- list(structure(c(\'\', \' 1\', \' 1\', \' 1\', \'\', \'  9.93\', \' 26.79\', \'820.91\', \' 47.97\', \' 57.90\', \' 74.76\', \'868.88\', \'24.974\', \'25.420\', \'28.742\', \'60.629\'), .Dim = c(4L, 4L), .Dimnames = list(c(\'<none>\', \'- x4\', \'- x2\', \'- x1\'), c(\'Df\', \'Sum of Sq\', \'RSS\', \'AIC\'))), NULL, FALSE, \'\', NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -198,9 +181,7 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintdefault32() {
         assertEval("argv <- list(structure(c(495L, 515L, 535L, 555L, 575L, 595L, 615L, 635L, 655L, 675L, 695L, 715L), .Dim = 3:4, .Dimnames = list(c(\'a\', \'b\', \'c\'), NULL)), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 }
-

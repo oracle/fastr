@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -54,7 +54,6 @@ public class TestrGenBuiltinisnumeric extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisnumeric8() {
         assertEval("argv <- list(structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L), .Label = c(\'1\', \'2\', \'3\', \'4\'), class = \'factor\'));is.numeric(argv[[1]]);");
     }
@@ -132,12 +131,10 @@ public class TestrGenBuiltinisnumeric extends TestBase {
         assertEval("argv <- list(structure(c(-3.001e+155, -1.067e+107, -1.976e+62, -9.961e+152, -2.059e+23, 0.5104), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\'), class = c(\'summaryDefault\', \'table\')));is.numeric(argv[[1]]);");
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testisnumeric24() {
-		assertEval("argv <- list(structure(16352, class = \'Date\'));"+
-			"do.call(\'is.numeric\', argv)");
-	}
+    public void testisnumeric24() {
+        assertEval("argv <- list(structure(16352, class = \'Date\'));" + "do.call(\'is.numeric\', argv)");
+    }
 
 }
-

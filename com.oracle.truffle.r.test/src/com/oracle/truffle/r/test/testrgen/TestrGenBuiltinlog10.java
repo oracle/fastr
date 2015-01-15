@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,6 @@ public class TestrGenBuiltinlog10 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlog103() {
         assertEval("argv <- list(structure(7.94649180820227e-05, .Names = \'value\'));log10(argv[[1]]);");
     }
@@ -56,4 +55,3 @@ public class TestrGenBuiltinlog10 extends TestBase {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(20L, 0L), .Dimnames = list(c(\'ant\', \'bee\', \'cat\', \'cpl\', \'chi\', \'cow\', \'duc\', \'eag\', \'ele\', \'fly\', \'fro\', \'her\', \'lio\', \'liz\', \'lob\', \'man\', \'rab\', \'sal\', \'spi\', \'wha\'), NULL)));log10(argv[[1]]);");
     }
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,22 +32,22 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"})
 public abstract class Crossprod extends RBuiltinNode {
 
-    // TODO: this is supposed to be slightly faster than t(x) %*% y but for now it should suffice
-
     @Child private MatMult matMult;
     @Child private Transpose transpose;
-    protected final NACheck na = NACheck.create();
 
-    private Object matMult(VirtualFrame frame, Object op1, Object op2) {
+    private void ensureMatMult() {
         if (matMult == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             matMult = insert(MatMultFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
         }
+    }
+
+    private Object matMult(VirtualFrame frame, Object op1, Object op2) {
+        ensureMatMult();
         return matMult.executeObject(frame, op1, op2);
     }
 
@@ -59,54 +59,59 @@ public abstract class Crossprod extends RBuiltinNode {
         return transpose.execute(frame, value);
     }
 
-    @Specialization
-    protected Object crossprod(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
+    @Specialization(guards = {"isMatrix(arguments[0])", "isMatrix(arguments[1])"})
+    protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
         controlVisibility();
-        return matMult(frame, transpose(frame, a), b);
+        ensureMatMult();
+        int xRows = x.getDimensions()[0];
+        int xCols = x.getDimensions()[1];
+        int yRows = y.getDimensions()[0];
+        int yCols = y.getDimensions()[1];
+        return matMult.doubleMatrixMultiply(x, y, xCols, xRows, yRows, yCols, xRows, 1, 1, yRows, false);
     }
 
-    @Specialization(guards = "!matdouble")
-    protected Object crossprod(VirtualFrame frame, RAbstractVector b, @SuppressWarnings("unused") RNull a) {
-        controlVisibility();
-        return matMult(frame, transpose(frame, b), b);
-    }
-
-    @Specialization(guards = "matdouble")
-    protected Object crossprodDoubleMatrix(RAbstractDoubleVector a, @SuppressWarnings("unused") RNull b) {
-        controlVisibility();
-        final int aCols = a.getDimensions()[1];
-        final int bRows = a.getDimensions()[0];
-        assert aCols == bRows;
-        final int aRows = aCols;
-        final int bCols = bRows;
-        double[] result = new double[aRows * bCols];
-        na.enable(a);
-        for (int row = 0; row < aRows; ++row) {
-            for (int col = 0; col < bCols; ++col) {
-                double x = 0.0;
-                for (int k = 0; k < aCols; ++k) {
-                    double op1 = a.getDataAt(row * bRows + k);
-                    double op2 = a.getDataAt(col * bRows + k);
-                    if (na.checkNAorNaN(op1)) {
-                        x = op1;
-                        break;
-                    } else if (na.check(op2)) {
-                        x = op2;
-                        break;
-                    } else {
-                        double mul = op1 * op2;
-                        x = x + mul;
-                    }
-                }
-                result[col * aRows + row] = x;
+    private static RDoubleVector mirror(RDoubleVector result) {
+        /*
+         * Mirroring the result is not only good for performance, but it is also required to produce
+         * the same result as GNUR.
+         */
+        assert result.isMatrix() && result.getDimensions()[0] == result.getDimensions()[1];
+        int size = result.getDimensions()[0];
+        double[] data = result.getDataWithoutCopying();
+        for (int row = 0; row < size; row++) {
+            int destIndex = row * size + row + 1;
+            int sourceIndex = (row + 1) * size + row;
+            for (int col = row + 1; col < size; col++) {
+                data[destIndex] = data[sourceIndex];
+                destIndex++;
+                sourceIndex += size;
             }
         }
-        return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
-
+        return result;
     }
 
-    protected static boolean matdouble(RAbstractVector vector1) {
-        return vector1.getElementClass() == RDouble.class && vector1.isMatrix();
+    @Specialization
+    protected Object crossprod(VirtualFrame frame, RAbstractVector x, RAbstractVector y) {
+        controlVisibility();
+        return matMult(frame, transpose(frame, x), y);
     }
 
+    @Specialization(guards = "isMatrix(arguments[0])")
+    protected Object crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
+        controlVisibility();
+        ensureMatMult();
+        int xRows = x.getDimensions()[0];
+        int xCols = x.getDimensions()[1];
+        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true));
+    }
+
+    @Specialization
+    protected Object crossprod(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") RNull y) {
+        controlVisibility();
+        return matMult(frame, transpose(frame, x), x);
+    }
+
+    protected static boolean isMatrix(RAbstractVector v) {
+        return v.isMatrix();
+    }
 }

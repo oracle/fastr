@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinoptions extends TestBase {
 
     @Test
-    @Ignore
     public void testoptions1() {
         assertEval("argv <- list(\'survfit.print.n\'); .Internal(options(argv[[1]]))");
     }
@@ -47,4 +46,3 @@ public class TestrGenBuiltinoptions extends TestBase {
         assertEval("argv <- list(NULL); .Internal(options(argv[[1]]))");
     }
 }
-

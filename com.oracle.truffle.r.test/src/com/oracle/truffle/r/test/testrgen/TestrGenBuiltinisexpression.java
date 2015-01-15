@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -108,7 +108,6 @@ public class TestrGenBuiltinisexpression extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisexpression19() {
         assertEval("argv <- list(quote(print(.leap.seconds, tz = \'PST8PDT\')));is.expression(argv[[1]]);");
     }
@@ -133,11 +132,9 @@ public class TestrGenBuiltinisexpression extends TestBase {
         assertEval("argv <- list(3.97376540705816e-12);is.expression(argv[[1]]);");
     }
 
-	@Test
-	public void testisexpression25() {
-		assertEval("argv <- list(expression(quote(expression(b = pi^3))));"+
-			"do.call(\'is.expression\', argv)");
-	}
+    @Test
+    public void testisexpression25() {
+        assertEval("argv <- list(expression(quote(expression(b = pi^3))));" + "do.call(\'is.expression\', argv)");
+    }
 
 }
-

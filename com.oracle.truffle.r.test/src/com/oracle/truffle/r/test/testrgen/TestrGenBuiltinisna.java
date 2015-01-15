@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna2() {
         assertEval("argv <- list(structure(c(1, 2, 3, 0, 10, NA), .Dim = c(3L, 2L)));is.na(argv[[1]]);");
     }
@@ -58,7 +57,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna10() {
         assertEval("argv <- list(structure(TRUE, .Names = NA_character_));is.na(argv[[1]]);");
     }
@@ -85,19 +83,16 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna15() {
         assertEval("argv <- list(structure(\'graphics\', .Names = \'plot\'));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna16() {
         assertEval("argv <- list(structure(c(1.47191076131574, 0.586694550701453, NA, 0.258706725324317), .Names = c(\'(Intercept)\', \'x1\', \'x2\', \'x3\')));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna17() {
         assertEval("argv <- list(structure(0.0129709025545593, .Names = \'value\'));is.na(argv[[1]]);");
     }
@@ -155,7 +150,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna27() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));is.na(argv[[1]]);");
     }
@@ -179,7 +173,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna31() {
         assertEval("argv <- list(structure(c(\'R (>= 2.10.0), methods, DBI (>= 0.2-5)\', \'methods, DBI (>= 0.2-3)\', NA), .Names = c(\'Depends\', \'Imports\', \'LinkingTo\')));is.na(argv[[1]]);");
     }
@@ -191,7 +184,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna33() {
         assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(8L, 5L)));is.na(argv[[1]]);");
     }
@@ -248,7 +240,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna43() {
         assertEval("argv <- list(structure(c(-3.001e+155, -1.067e+107, -1.976e+62, -9.961e+152, -2.059e+23, 0.5104), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\'), class = c(\'summaryDefault\', \'table\')));is.na(argv[[1]]);");
     }
@@ -260,7 +251,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna45() {
         assertEval("argv <- list(119:120);is.na(argv[[1]]);");
     }
@@ -270,4 +260,3 @@ public class TestrGenBuiltinisna extends TestBase {
         assertEval("argv <- list(integer(0));is.na(argv[[1]]);");
     }
 }
-

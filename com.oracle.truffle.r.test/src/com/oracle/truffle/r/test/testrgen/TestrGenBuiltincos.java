@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,7 +30,6 @@ public class TestrGenBuiltincos extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcos3() {
         assertEval("argv <- list(structure(c(2, 3, 4, 5, 6, 2, 5, 10, 17, 26, 5, 15, 31, 53, 81), .Dim = c(5L, 3L)));cos(argv[[1]]);");
     }
@@ -53,4 +52,3 @@ public class TestrGenBuiltincos extends TestBase {
         assertEval("argv <- list(logical(0));cos(argv[[1]]);");
     }
 }
-

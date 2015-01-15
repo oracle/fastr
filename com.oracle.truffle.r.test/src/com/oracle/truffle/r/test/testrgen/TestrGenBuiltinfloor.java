@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -44,13 +44,11 @@ public class TestrGenBuiltinfloor extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testfloor6() {
         assertEval("argv <- list(structure(c(0.555857947411444, 2.74659181662125, NA, 6.01634386021798, 3.26975214359673, 2.19073396920981, 2.74659181662125, NA, 0.555857947411444, 3.82560999100817, 0.555857947411444, 2.19073396920981, 2.74659181662125, 2.74659181662125, 1.07901827438692, 4.38146783841962, 1.11171579482289, 1e-07, 7.09536203460491, 11.9999901, 4.93732568583106, 5.46048601280654), .Dim = c(22L, 1L)));floor(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testfloor7() {
         assertEval("argv <- list(structure(c(3.08577921002324, 0.531033162063639, 1.47434325842442, 5.64214292692797, 6.21994378924106, 2.27200744902353, 11.9999901, 0.424434048635841, 0.549397569660826, 0.973929660925175, 1e-07, 3.54172739357752, 11.9999901, 2.27200744902353, 4.47284349010678, 6.43648940805496, 7.50963843787849, 7.11757579203344, 11.9999901, 3.54172739357752, 6.21994378924106, 5.1224060214714, 6.89175397596987, 6.52603528890926, 11.9999901, 7.11757579203344, 1e-07, 5.64214292692797, 6.00414304408873, 9.63018799510384, 11.9999901, 6.52603528890926, 7.50963843787849, 0.973929660925175, 1.47434325842442, 4.2100341139702, 11.9999901, 9.63018799510384, 6.89175397596987, 6.43648940805496, 0.549397569660826, 0.531033162063639, 11.9999901, 4.2100341139702, 6.00414304408873, 5.1224060214714, 4.47284349010678, 0.424434048635841, 3.08577921002324), .Dim = c(7L, 7L), .Dimnames = list(c(\'privileges\', \'rating\', \'complaints\', \'learning\', \'raises\', \'critical\', \'advance\'), c(\'advance\', \'critical\', \'raises\', \'learning\', \'complaints\', \'rating\', \'privileges\'))));floor(argv[[1]]);");
     }
@@ -67,4 +65,3 @@ public class TestrGenBuiltinfloor extends TestBase {
         assertEval("argv <- list(logical(0));floor(argv[[1]]);");
     }
 }
-

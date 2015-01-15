@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
@@ -35,17 +35,28 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "setwd", kind = INTERNAL, parameterNames = "path")
 public abstract class Setwd extends RInvisibleBuiltinNode {
-    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
+
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
     @TruffleBoundary
-    protected Object setwd(RAbstractStringVector dirVec) {
+    protected Object setwd(RAbstractStringVector path) {
         controlVisibility();
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dirVec.getDataAt(0));
-        if (conditionProfile.profile(rc != 0)) {
+        if (path.getLength() == 0) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_ARGUMENT);
+        }
+        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(path.getDataAt(0));
+        if (rc != 0) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
             return RFFIFactory.getRFFI().getBaseRFFI().getwd();
         }
+    }
+
+    @Fallback
+    protected Object setwd(@SuppressWarnings("unused") Object path) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_ARGUMENT);
     }
 }
