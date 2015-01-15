@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,6 @@ public class TestrGenBuiltinexp extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testexp2() {
         assertEval("argv <- list(structure(3.3059560902335, .Names = \'lymax\'));exp(argv[[1]]);");
     }
@@ -74,4 +73,3 @@ public class TestrGenBuiltinexp extends TestBase {
         assertEval("argv <- list(c(-745, -744, -743, -742, -741, -740, -730, -720, -710, -709, -708, -707, -706, -705));exp(argv[[1]]);");
     }
 }
-

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -167,40 +168,173 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn"})
     public abstract static class FileInfo extends RBuiltinNode {
-        @CompilationFinal private static final String[] NAMES = new String[]{"size", "isdir", "mode", "mtime", "ctime", "atime", "uid", "gid", "uname", "grname"};
+        // @formatter:off
+        private static enum Column {
+            size, isdir, mode, mtime, ctime, atime, uid, gid, uname, grname;
+            private static final Column[] VALUES = values();
+        }
+        // @formatter:on
+        private static final String[] NAMES = new String[]{Column.size.name(), Column.isdir.name(), Column.mode.name(), Column.mtime.name(), Column.ctime.name(), Column.atime.name(),
+                        Column.uid.name(), Column.gid.name(), Column.uname.name(), Column.grname.name()};
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
+        private static final RStringVector OCTMODE = RDataFactory.createStringVectorFromScalar("octmode");
 
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
         protected RList doFileInfo(RAbstractStringVector vec) {
-            // TODO fill out all fields, create data frame, handle multiple files
+            /*
+             * Create a list, the elements of which are vectors of length vec.getLength() containing
+             * the information. The R closure that called the .Internal turns the result into a
+             * dataframe and sets the row.names attributes to the paths in vec. It also updates the
+             * mtime, ctime, atime fields using .POSIXct.
+             * 
+             * We try to use the JDK classes, even though they provide a more abstract interface
+             * than R. In particular there seems to be no way to get the uid/gid values. We might be
+             * better off justing using a native call.
+             */
             controlVisibility();
             int vecLength = vec.getLength();
-            Object[] data = new Object[vecLength * NAMES.length];
-            String[] rowNames = new String[vecLength];
+            Object[] data = new Object[NAMES.length];
+            boolean[] complete = new boolean[NAMES.length];
+            for (int n = 0; n < Column.values().length; n++) {
+                data[n] = createColumnData(Column.VALUES[n], vecLength);
+                complete[n] = RDataFactory.COMPLETE_VECTOR; // optimistic
+            }
+            FileSystem fileSystem = FileSystems.getDefault();
             for (int i = 0; i < vecLength; i++) {
-                int j = i * NAMES.length;
-                for (int k = 0; k < NAMES.length; k++) {
-                    data[j + k] = RRuntime.INT_NA;
+                String vecPath = vec.getDataAt(i);
+                Object colVec = data[i];
+                Path path = fileSystem.getPath(Utils.tildeExpand(vecPath));
+                // missing defaults to NA
+                if (Files.exists(path)) {
+                    double size = RRuntime.DOUBLE_NA;
+                    byte isdir = RRuntime.LOGICAL_NA;
+                    int mode = RRuntime.INT_NA;
+                    int mtime = RRuntime.INT_NA;
+                    int atime = RRuntime.INT_NA;
+                    int ctime = RRuntime.INT_NA;
+                    int uid = RRuntime.INT_NA;
+                    int gid = RRuntime.INT_NA;
+                    String uname = RRuntime.STRING_NA;
+                    String grname = RRuntime.STRING_NA;
+                    try {
+                        PosixFileAttributes pfa = Files.readAttributes(path, PosixFileAttributes.class);
+                        size = pfa.size();
+                        isdir = RRuntime.asLogical(pfa.isDirectory());
+                        mtime = getTimeInSecs(pfa.lastModifiedTime());
+                        ctime = getTimeInSecs(pfa.creationTime());
+                        atime = getTimeInSecs(pfa.lastAccessTime());
+                        uname = pfa.owner().getName();
+                        grname = pfa.group().getName();
+                        mode = intFilePermissions(pfa.permissions());
+                    } catch (IOException ex) {
+                        // ok, NA value is used
+                    }
+                    setColumnValue(Column.size, data, complete, i, size);
+                    setColumnValue(Column.isdir, data, complete, i, isdir);
+                    setColumnValue(Column.mode, data, complete, i, mode);
+                    setColumnValue(Column.mtime, data, complete, i, mtime);
+                    setColumnValue(Column.ctime, data, complete, i, ctime);
+                    setColumnValue(Column.atime, data, complete, i, atime);
+                    setColumnValue(Column.uid, data, complete, i, uid);
+                    setColumnValue(Column.gid, data, complete, i, gid);
+                    setColumnValue(Column.uname, data, complete, i, uname);
+                    setColumnValue(Column.grname, data, complete, i, grname);
+                } else {
+                    for (int n = 0; n < Column.VALUES.length; n++) {
+                        setNA(Column.VALUES[n], data, i);
+                        complete[n] = true;
+                    }
                 }
-                String path = vec.getDataAt(i);
-                File f = new File(Utils.tildeExpand(path));
-                if (f.exists()) {
-                    data[j] = (int) f.length();
-                    data[j + 1] = RRuntime.asLogical(f.isDirectory());
+            }
+            for (int n = 0; n < Column.VALUES.length; n++) {
+                data[n] = createColumnResult(Column.VALUES[n], data[n], complete[n]);
+            }
+            return RDataFactory.createList(data, NAMES_VECTOR);
+        }
+
+        private static int getTimeInSecs(Object fileTime) {
+            if (fileTime == null) {
+                return RRuntime.INT_NA;
+            } else {
+                return (int) ((FileTime) fileTime).toMillis() / 1000;
+            }
+        }
+
+        int intFilePermissions(Set<PosixFilePermission> permissions) {
+            int r = 0;
+            for (PosixFilePermission pfp : permissions) {
+                // @formatter:off
+                switch (pfp) {
+                    case OTHERS_EXECUTE: r |= 1; break;
+                    case OTHERS_WRITE: r |= 2; break;
+                    case OTHERS_READ: r |= 4; break;
+                    case GROUP_EXECUTE: r |= 8; break;
+                    case GROUP_WRITE: r |= 16; break;
+                    case GROUP_READ: r |= 32; break;
+                    case OWNER_EXECUTE: r |= 64; break;
+                    case OWNER_WRITE: r |= 128; break;
+                    case OWNER_READ: r |= 256; break;
                 }
-                rowNames[i] = path;
-                // just 1 for now
-                break;
+                // @formatter:on
             }
-            RList list = RDataFactory.createList(data, new int[]{vecLength, NAMES.length});
-            Object[] dimNamesData = new Object[]{RDataFactory.createStringVector(rowNames, vec.isComplete()), NAMES_VECTOR};
-            list.setDimNames(RDataFactory.createList(dimNamesData));
-            if (vecLength > 0) {
-                list.setNames(NAMES_VECTOR);
+            return r;
+        }
+
+        private static Object createColumnData(Column column, int vecLength) {
+            // @formatter:off
+            switch(column) {
+                case size: return new double[vecLength];
+                case isdir: return new byte[vecLength];
+                case mode: case mtime: case ctime: case atime:
+                case uid: case gid: return new int[vecLength];
+                case uname: case grname: return new String[vecLength];
+                default: throw RInternalError.shouldNotReachHere();
             }
-            return list;
+            // @formatter:on
+        }
+
+        private static void setColumnValue(Column column, Object[] data, boolean[] complete, int index, Object value) {
+            int slot = column.ordinal();
+            // @formatter:off
+            switch(column) {
+                case size: ((double[]) data[slot])[index] = (double) value; complete[slot] = (double) value != RRuntime.DOUBLE_NA; return;
+                case isdir: ((byte[]) data[slot])[index] = (byte) value; complete[slot] = (byte) value == RRuntime.LOGICAL_NA; return;
+                case mode: case mtime: case ctime: case atime:
+                case uid: case gid: ((int[]) data[slot])[index] = (int) value; complete[slot] = (int) value == RRuntime.INT_NA; return;
+                case uname: case grname: ((String[]) data[slot])[index] = (String) value; complete[slot] = (String) value == RRuntime.STRING_NA; return;
+                default: throw RInternalError.shouldNotReachHere();
+            }
+            // @formatter:on
+        }
+
+        private static void setNA(Column column, Object[] data, int index) {
+            int slot = column.ordinal();
+            // @formatter:off
+            switch(column) {
+                case size: ((double[]) data[slot])[index] = RRuntime.DOUBLE_NA; return;
+                case isdir: ((byte[]) data[slot])[index] = RRuntime.LOGICAL_NA; return;
+                case mode: case mtime: case ctime: case atime:
+                case uid: case gid: ((int[]) data[slot])[index] = RRuntime.INT_NA; return;
+                case uname: case grname: ((String[]) data[slot])[index] = RRuntime.STRING_NA; return;
+                default: throw RInternalError.shouldNotReachHere();
+            }
+            // @formatter:on
+        }
+
+        private static Object createColumnResult(Column column, Object data, boolean complete) {
+            // @formatter:off
+            switch(column) {
+                case size: return RDataFactory.createDoubleVector((double[]) data, complete);
+                case isdir: return RDataFactory.createLogicalVector((byte[]) data, complete);
+                case mode: RIntVector res = RDataFactory.createIntVector((int[]) data, complete); res.setClassAttr(OCTMODE); return res;
+                case mtime: case ctime: case atime:
+                case uid: case gid: return RDataFactory.createIntVector((int[]) data, complete);
+                case uname: case grname: return RDataFactory.createStringVector((String[]) data, complete);
+                default: throw RInternalError.shouldNotReachHere();
+            }
+            // @formatter:on
         }
     }
 
@@ -424,7 +558,8 @@ public class FileFunctions {
                 }
             }
             if (files.size() == 0) {
-                return RDataFactory.createStringVectorFromScalar("");
+                // The manual says "" but GnuR returns an empty vector
+                return RDataFactory.createEmptyStringVector();
             } else {
                 String[] data = new String[files.size()];
                 files.toArray(data);

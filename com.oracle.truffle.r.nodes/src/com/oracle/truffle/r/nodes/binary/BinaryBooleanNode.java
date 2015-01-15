@@ -1096,28 +1096,44 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     // factor and vectors
 
     @Specialization(guards = "meaningfulOp")
-    protected Object doFactorOp(VirtualFrame frame, RFactor left, RAbstractContainer right) {
-        return recursiveOp(frame, RClosures.createFactorToVector(left, rightNACheck), right);
+    protected Object doFactorOp(VirtualFrame frame, RFactor left, RFactor right) {
+        return recursiveOp(frame, RClosures.createFactorToVector(left, leftNACheck), RClosures.createFactorToVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "meaningfulOp")
+    @Specialization(guards = {"meaningfulOp", "!isFactor"})
+    protected Object doFactorOp(VirtualFrame frame, RFactor left, RAbstractContainer right) {
+        return recursiveOp(frame, RClosures.createFactorToVector(left, leftNACheck), right);
+    }
+
+    @Specialization(guards = {"meaningfulOp", "!isFactor"})
     protected Object doFactorOp(VirtualFrame frame, RAbstractContainer left, RFactor right) {
         return recursiveOp(frame, left, RClosures.createFactorToVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!meaningfulOp")
+    protected RLogicalVector doFactorOpNotMeaningful(RFactor left, RFactor right) {
+        RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
+        return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
+    }
+
+    @Specialization(guards = {"!meaningfulOp", "!isFactor"})
     protected RLogicalVector doFactorOpNotMeaningful(RFactor left, RAbstractContainer right) {
         RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
         return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
     }
 
-    @Specialization(guards = "!meaningfulOp")
+    @Specialization(guards = {"!meaningfulOp", "!isFactor"})
     protected RLogicalVector doFactorOpNotMeaningful(RAbstractContainer left, RFactor right) {
         RError.warning(getEncapsulatingSourceSection(), RError.Message.NOT_MEANINGFUL_FOR_FACTORS, logic.opName());
         return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
     }
 
     // connection and vectors
+
+    @Specialization
+    protected Object doConnectionOp(VirtualFrame frame, RConnection left, RConnection right) {
+        return recursiveOp(frame, left.getDescriptor(), right.getDescriptor());
+    }
 
     @Specialization
     protected Object doConnectionOp(VirtualFrame frame, RConnection left, RAbstractContainer right) {
@@ -1238,6 +1254,14 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     public boolean isFactor(RAbstractContainer left, RFactor right) {
         return left.getElementClass() == RFactor.class;
+    }
+
+    public boolean isDataFrame(RDataFrame left, RAbstractContainer right) {
+        return right.getElementClass() == RDataFrame.class;
+    }
+
+    public boolean isDataFrame(RAbstractContainer left, RDataFrame right) {
+        return left.getElementClass() == RDataFrame.class;
     }
 
     public boolean meaningfulOp(RFactor left, RFactor right) {

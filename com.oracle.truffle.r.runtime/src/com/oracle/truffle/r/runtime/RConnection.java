@@ -113,6 +113,9 @@ public abstract class RConnection implements RClassHierarchy {
     public String[] readLines(int n) throws IOException {
         if (pushBack == null) {
             return readLinesInternal(n);
+        } else if (pushBack.size() == 0) {
+            pushBack = null;
+            return readLinesInternal(n);
         } else {
             return readLinesWithPushBack(n);
         }

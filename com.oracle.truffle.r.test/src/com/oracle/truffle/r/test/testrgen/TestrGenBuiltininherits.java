@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -124,7 +124,6 @@ public class TestrGenBuiltininherits extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testinherits22() {
         assertEval("argv <- list(.Primitive(\'[\'), \'try-error\', FALSE); .Internal(inherits(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -180,11 +179,10 @@ public class TestrGenBuiltininherits extends TestBase {
         assertEval("argv <- list(quote(breaks ~ (wool + tension) - tension), \'formula\', FALSE); .Internal(inherits(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
-	@Test
-	public void testinherits34() {
-		assertEval("argv <- structure(list(x = structure(c(1412799280.04908, 1412799280.04908),     class = c(\'POSIXct\', \'POSIXt\')), what = \'POSIXt\'), .Names = c(\'x\',     \'what\'));"+
-			"do.call(\'inherits\', argv)");
-	}
+    @Test
+    public void testinherits34() {
+        assertEval("argv <- structure(list(x = structure(c(1412799280.04908, 1412799280.04908),     class = c(\'POSIXct\', \'POSIXt\')), what = \'POSIXt\'), .Names = c(\'x\',     \'what\'));"
+                        + "do.call(\'inherits\', argv)");
+    }
 
 }
-

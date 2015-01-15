@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,6 @@ public class TestrGenBuiltinseq extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseq3() {
         assertEval("argv <- list(0L);seq_len(argv[[1]]);");
     }
@@ -40,7 +39,6 @@ public class TestrGenBuiltinseq extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseq5() {
         assertEval("argv <- list(FALSE);seq_len(argv[[1]]);");
     }
@@ -76,7 +74,6 @@ public class TestrGenBuiltinseq extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseq13() {
         assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));seq_len(argv[[1]]);");
     }
@@ -143,39 +140,31 @@ public class TestrGenBuiltinseq extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseq26() {
         assertEval("argv <- list(structure(2, .Names = \'Ind\'));seq_len(argv[[1]]);");
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testseq27() {
-		assertEval("argv <- list(c(2L, 2L));"+
-			"do.call(\'seq_len\', argv)");
-	}
+    public void testseq27() {
+        assertEval("argv <- list(c(2L, 2L));" + "do.call(\'seq_len\', argv)");
+    }
 
-
-	@Test
+    @Test
     @Ignore
-	public void testseq28() {
-		assertEval("argv <- list(structure(list(num = 1:4, fac = structure(11:14,     .Label = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\', \'j\',         \'k\', \'l\', \'m\', \'n\', \'o\'), class = \'factor\'), date = structure(c(15065,     15066, 15067, 15068), class = \'Date\'), pv = structure(list(1:3,     4:5, 6:7, 8:10), class = c(\'package_version\', \'numeric_version\'))),     .Names = c(\'num\', \'fac\', \'date\', \'pv\'), row.names = c(NA,         -4L), class = \'data.frame\'));"+
-			"do.call(\'seq_along\', argv)");
-	}
+    public void testseq28() {
+        assertEval("argv <- list(structure(list(num = 1:4, fac = structure(11:14,     .Label = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\', \'j\',         \'k\', \'l\', \'m\', \'n\', \'o\'), class = \'factor\'), date = structure(c(15065,     15066, 15067, 15068), class = \'Date\'), pv = structure(list(1:3,     4:5, 6:7, 8:10), class = c(\'package_version\', \'numeric_version\'))),     .Names = c(\'num\', \'fac\', \'date\', \'pv\'), row.names = c(NA,         -4L), class = \'data.frame\'));"
+                        + "do.call(\'seq_along\', argv)");
+    }
 
+    @Test
+    public void testseq29() {
+        assertEval("argv <- structure(list(0, 38431.66015625, by = 1000), .Names = c(\'\',     \'\', \'by\'));" + "do.call(\'seq\', argv)");
+    }
 
-	@Test
-	public void testseq29() {
-		assertEval("argv <- structure(list(0, 38431.66015625, by = 1000), .Names = c(\'\',     \'\', \'by\'));"+
-			"do.call(\'seq\', argv)");
-	}
-
-
-	@Test
-	public void testseq30() {
-		assertEval("argv <- structure(list(18000, 28000, length = 50L), .Names = c(\'\',     \'\', \'length\'));"+
-			"do.call(\'seq\', argv)");
-	}
+    @Test
+    public void testseq30() {
+        assertEval("argv <- structure(list(18000, 28000, length = 50L), .Names = c(\'\',     \'\', \'length\'));" + "do.call(\'seq\', argv)");
+    }
 
 }
-

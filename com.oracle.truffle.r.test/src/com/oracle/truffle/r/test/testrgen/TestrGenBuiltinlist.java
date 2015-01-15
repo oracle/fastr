@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist2() {
         assertEval("argv <- list(`_R_NS_LOAD_` = structure(\'survival\', .Names = \'name\'));list(argv[[1]]);");
     }
@@ -138,19 +137,16 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist21() {
         assertEval("argv <- list(Df = structure(c(NA, 2, 1), .Names = c(\'<none>\', \'Soft\', \'M.user:Temp\')), Deviance = structure(c(8.44399377410362, 8.2279889309135, 5.65604443125997), .Names = c(\'<none>\', \'Soft\', \'M.user:Temp\')), AIC = structure(c(72.1419514890413, 75.9259466458512, 71.3540021461976), .Names = c(\'<none>\', \'Soft\', \'M.user:Temp\')));list(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testlist22() {
         assertEval("argv <- list(structure(TRUE, .Dim = c(1L, 1L)));list(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testlist23() {
         assertEval("argv <- list(V1 = c(1L, 1L, 2L, 3L), V2 = structure(c(1L, 1L, 2L, 3L), .Label = c(\'A\', \'D\', \'E\'), class = \'factor\'), V3 = c(6, 6, 9, 10));list(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -168,7 +164,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist26() {
         assertEval("argv <- list(1L, 3.14159265358979, 3+5i, \'testit\', TRUE, structure(1L, .Label = \'foo\', class = \'factor\'));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]]);");
     }
@@ -197,7 +192,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist31() {
         assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = 2:3, .Dimnames = list(NULL, c(\'a\', \'b\', \'c\'))), structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L, 5L)), TRUE);list(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -215,7 +209,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist34() {
         assertEval("argv <- list(itemBullet = \'• \');list(argv[[1]]);");
     }
@@ -227,13 +220,11 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist36() {
         assertEval("argv <- list(name = \'list\', objs = structure(list(`package:base` = .Primitive(\'list\'), .Primitive(\'list\')), .Names = c(\'package:base\', \'\')), where = c(\'package:base\', \'namespace:base\'), visible = c(TRUE, FALSE), dups = c(FALSE, TRUE));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
     }
 
     @Test
-    @Ignore
     public void testlist37() {
         assertEval("argv <- list(structure(-1.81670076485116, .Names = \'5%\'), structure(c(-0.569903669351869, -3.58817618394987, 1.7002237104195, 0.247262299686774, -1.6099565644337, -0.117004990933267, 2.26201852051082, 1.27765184061634, -0.585159452768219, 0.777745165779344, -0.299055554574658, -0.10613560158199, -0.96347850905908, 2.01298478288055, -0.65898967614864, 0.497719980170775, 0.113843920033269, -0.766958149949393, 3.9222560854539, -0.936533336103743, 0.287536526568389, -1.36853788163704, 0.875060974238616, 6.63795852562496, -1.7181964535622, -1.84566355665129, -2.51563250429738, -0.197885450775488, 0.343408036526242, 0.0203380393884578, 0.207160904400713, 0.869565410777187, -0.815315222368209, -0.0998963343276999, 0.656114271672876, 1.27566552196184, 0.0658788246994603, -1.69200573781689, -0.0369929356350034, -0.342061734014624, 0.31798622848054, -1.52242182038666, -1.33617654990952, 0.0175687049379899, -0.093090859182165, -0.0507330478224399, -0.431715933999334, 0.37428759377223, -1.51710077889452, 0.148230661369186, 0.214909263767934, 0.178494903424769, -2.69339417614172, 0.644025806665703, -0.287978582462478, 3.36345700350871, 1.39656784449323, -0.344866954524567, -0.270662469024608, -1.32424067954204), .Dim = 60L, .Dimnames = list(c(\'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\', \'1\'))), c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L));list(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -261,7 +252,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist42() {
         assertEval("argv <- list(structure(c(NA, NA, FALSE), .Names = c(\'perm\', \'LDL\', \'super\')));list(argv[[1]]);");
     }
@@ -297,13 +287,11 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist49() {
         assertEval("argv <- list(structure(list(stats = c(7, 35, 60, 80, 135), n = 26L, conf = c(46.0561427916751, 73.9438572083249), out = integer(0)), .Names = c(\'stats\', \'n\', \'conf\', \'out\')));list(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testlist50() {
         assertEval("argv <- list(\'‘\', \'Matrix\', \'’\');list(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -361,7 +349,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist60() {
         assertEval("argv <- list(Depends = structure(logical(0), .Dim = c(0L, 3L)), Installed = structure(logical(0), .Dim = c(0L, 3L)), R = structure(logical(0), .Dim = c(0L, 3L)));list(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -395,4 +382,3 @@ public class TestrGenBuiltinlist extends TestBase {
         assertEval("argv <- list(ANY = structure(function (x, y = NULL) .Internal(crossprod(x, y)), target = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'x\', package = \'methods\'), defined = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'x\', package = \'methods\'), generic = structure(\'crossprod\', package = \'base\'), class = structure(\'derivedDefaultMethod\', package = \'methods\')));list(argv[[1]]);");
     }
 }
-

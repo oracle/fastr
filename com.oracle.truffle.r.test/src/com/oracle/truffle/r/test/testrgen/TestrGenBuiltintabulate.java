@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,25 +18,21 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltintabulate extends TestBase {
 
     @Test
-    @Ignore
     public void testtabulate1() {
         assertEval("argv <- list(1L, 1L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testtabulate2() {
         assertEval("argv <- list(1:6, 6L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testtabulate3() {
         assertEval("argv <- list(integer(0), 1L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testtabulate4() {
         assertEval("argv <- list(c(1L, 9L, 13L, 25L, 11L, 24L, 3L, 20L, 20L, 15L, 20L, 14L, 24L, 19L, 12L, 8L, 1L, 11L, 4L, 3L, 21L, 25L, 10L, 3L, 12L), 25L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
@@ -48,17 +44,13 @@ public class TestrGenBuiltintabulate extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testtabulate6() {
         assertEval("argv <- list(integer(0), 0L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
 
-	@Test
-    @Ignore
-	public void testtabulate8() {
-		assertEval("argv <- structure(list(bin = numeric(0)), .Names = \'bin\');"+
-			"do.call(\'tabulate\', argv)");
-	}
+    @Test
+    public void testtabulate8() {
+        assertEval("argv <- structure(list(bin = numeric(0)), .Names = \'bin\');" + "do.call(\'tabulate\', argv)");
+    }
 
 }
-

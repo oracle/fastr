@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinattributes extends TestBase {
 
     @Test
-    @Ignore
     public void testattributes1() {
         assertEval("argv <- list(structure(c(5.79821692617331, 1.82341879820553, 2.78390295547843, 5.76851897647876, 1.96728131351224, 1.64012180629841, 0.76150764829566, 8.78324957466388, 0.711713280005232, 0.0432245134694077, 0.484038236738706, 2.2604286525194), .Names = c(\'1\', \'3\', \'5\', \'7\', \'9\', \'11\', \'13\', \'15\', \'17\', \'19\', \'21\', \'23\')));attributes(argv[[1]]);");
     }
@@ -29,7 +28,6 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes3() {
         assertEval("argv <- list(structure(list(x = c(55, 55.4, 55.8, 56.2, 56.6, 57, 57.4, 57.8, 58.2, 58.6, 59, 59.4, 59.8, 60.2, 60.6, 61, 61.4, 61.8, 62.2, 62.6, 63, 63.4, 63.8, 64.2, 64.6, 65, 65.4, 65.8, 66.2, 66.6, 67, 67.4, 67.8, 68.2, 68.6, 69, 69.4, 69.8, 70.2, 70.6, 71, 71.4, 71.8, 72.2, 72.6, 73, 73.4, 73.8, 74.2, 74.6, 75), y = c(NA, NA, NA, NA, NA, NA, NA, NA, 115.348528272371, 116.097056544742, 117, 118.121358638144, 119.369358638144, 120.616754451341, 121.816150264538, 123, 124.196077478756, 125.399549206385, 126.598034046405, 127.793047158796, 129, 130.223726064439, 131.424330251242, 132.555722198323, 133.686509958601, 135, 136.60008742339, 138.253074310999, 139.654076730115, 140.802092261622, 142, 143.481497863021, 145.150710102743, 146.833352023286, 148.446781704108, 150, 151.524882658905, 153.128867127397, 154.93285159589, 156.93285159589, 159, 161.026859361644, 163.013429680822, NA, NA, NA, NA, NA, NA, NA, NA)), .Names = c(\'x\', \'y\')));attributes(argv[[1]]);");
     }
@@ -63,13 +61,11 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes9() {
         assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), .S3Class = \'data.frame\', extra = character(0)));attributes(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testattributes10() {
         assertEval("argv <- list(structure(list(zi.si. = c(-2.73014251717135, -2.16787987308811, -1.61026765290054, -1.06093652746977, -0.523224065200069, 0, 0.506450782357207, 0.994479058519472, 1.46306067722175, 1.91173866627745, 2.34053598638487, 2.74985599456053)), .Names = \'zi.si.\', row.names = c(NA, -12L), class = \'data.frame\'));attributes(argv[[1]]);");
     }
@@ -81,7 +77,6 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes12() {
         assertEval("argv <- list(structure(character(0), .Names = character(0), package = character(0), class = structure(\'signature\', package = \'methods\')));attributes(argv[[1]]);");
     }
@@ -104,7 +99,6 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes16() {
         assertEval("argv <- list(structure(1, .Dim = c(1L, 1L), a = c(NA, 3, -1, 2), class = structure(\'B\', package = \'.GlobalEnv\')));attributes(argv[[1]]);");
     }
@@ -133,7 +127,6 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes21() {
         assertEval("argv <- list(structure(c(82, 82, 82, 75, 63, 50, 43, 35, 35, 54, 54, 54, 39, 36, 0, 0, 57, 57, 57, 51, 45, 45, 39, 39, 36, 32, 25, 25, 25, 25, 32, 32, 59, 74, 74, 71, 71, 71, 71, 71, 71, 71, 73, 73, 73, 71, 71, 75, 75, 63, 62, 60, 57, 49, 49, 52, 57, 61, 62, 66, 66, 62, 61, 61, 72, 72, 78, 78, 78, 71, 71, 74, 74, 64, 62, 62, 73, 73, 69, 69, 69, 69, 64, 63, 62, 56, 46, 44, 44, 44, 44, 44, 44, 44, 44, 44, 59, 65, 65, 65, 61, 56, 53, 52, 51, 51, 49, 49, 49, 49, 0, 0, 44, 44, 40, 28, 27, 25, 24, 24), .Tsp = c(1945, 1974.75, 4), class = \'ts\'));attributes(argv[[1]]);");
     }
@@ -150,7 +143,6 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes24() {
         assertEval("argv <- list(structure(list(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1), y = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), fac = structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = c(\'x\', \'y\', \'fac\'), row.names = c(NA, -10L), class = \'data.frame\'));attributes(argv[[1]]);");
     }
@@ -179,9 +171,7 @@ public class TestrGenBuiltinattributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattributes29() {
         assertEval("argv <- list(structure(list(tau = c(-0.704193760852047, 0, 1.5847914530377, 2.07658624888165, 2.62779840842982, 3.16900609499152, 3.70430313207003), par.vals = structure(c(1.19410356771918, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.0145810141529953, 0.24263452560295, 0.470688037052905, 0.562956252821107, 0.683253495496408, 0.823187854524599, 0.98897386701965), .Dim = c(7L, 2L), .Dimnames = list(NULL, c(\'a\', \'b\')))), .Names = c(\'tau\', \'par.vals\')));attributes(argv[[1]]);");
     }
 }
-

@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,7 +40,6 @@ public class TestrGenBuiltinsin extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsin5() {
         assertEval("argv <- list(structure(c(-0.416146836547142, -0.989992496600445, -0.653643620863612, 0.283662185463226, 0.960170286650366, -0.416146836547142, 0.283662185463226, -0.839071529076452, -0.275163338051597, 0.64691932232864, 0.283662185463226, -0.759687912858821, 0.914742357804531, -0.918282786212119, 0.776685982021631), .Dim = c(5L, 3L)));sin(argv[[1]]);");
     }
@@ -57,4 +56,3 @@ public class TestrGenBuiltinsin extends TestBase {
         assertEval("argv <- list(Inf);sin(argv[[1]]);");
     }
 }
-

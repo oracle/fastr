@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -56,7 +56,6 @@ public class TestrGenBuiltinpaste extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testpaste8() {
         assertEval("argv <- list(list(\'detaching\', \'‘package:splines’\'), \' \', NULL); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -76,4 +75,3 @@ public class TestrGenBuiltinpaste extends TestBase {
         assertEval("argv <- list(list(character(0)), \' \', \'\'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

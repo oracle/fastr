@@ -88,19 +88,17 @@ public abstract class MatMult extends RBuiltinNode {
 
     // double-double
 
-    private void multiplyBlock(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int bRows, double[] result, int row, int col, int k, int remainingCols, int remainingRows, int remainingK) {
+    private static void multiplyBlock(double[] a, double[] b, int aRows, double[] result, int row, int col, int k, int aRowStride, int aColStride, int bRowStride, int bColStride, int remainingCols,
+                    int remainingRows, int remainingK) {
         for (int innerCol = 0; innerCol < remainingCols; innerCol++) {
             for (int innerRow = 0; innerRow < remainingRows; innerRow++) {
-                if (!na.neverSeenNA() && RRuntime.isNA(result[(col + innerCol) * aRows + row + innerRow])) {
-                    continue;
-                }
                 double x = 0.0;
-                int bIndex = (col + innerCol) * bRows + k;
-                int aIndex = k * aRows + row + innerRow;
+                int bIndex = (col + innerCol) * bColStride + k * bRowStride;
+                int aIndex = k * aColStride + (row + innerRow) * aRowStride;
                 for (int innerK = 0; innerK < remainingK; innerK++) {
-                    x += a.getDataAt(aIndex) * b.getDataAt(bIndex);
-                    aIndex += aRows;
-                    bIndex++;
+                    x += a[aIndex] * b[bIndex];
+                    aIndex += aColStride;
+                    bIndex += bRowStride;
                 }
                 result[(col + innerCol) * aRows + row + innerRow] += x;
             }
@@ -113,17 +111,41 @@ public abstract class MatMult extends RBuiltinNode {
     @Specialization(guards = "matmat")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
-        final int aRows = a.getDimensions()[0];
-        final int aCols = a.getDimensions()[1];
-        final int bRows = b.getDimensions()[0];
-        final int bCols = b.getDimensions()[1];
+        return doubleMatrixMultiply(a, b, a.getDimensions()[0], a.getDimensions()[1], b.getDimensions()[0], b.getDimensions()[1]);
+    }
+
+    private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
+        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
+    }
+
+    /**
+     * Performs matrix multiplication, generating the appropriate error if the input matrices are
+     * not of compatible size.
+     *
+     * @param a the first input matrix
+     * @param b the second input matrix
+     * @param aRows the number of rows in the first input matrix
+     * @param aCols the number of columns in the first input matrix
+     * @param bRows the number of rows in the second input matrix
+     * @param bCols the number of columns in the second input matrix
+     * @param aRowStride distance between elements in row X and X+1
+     * @param aColStride distance between elements in column X and X+1
+     * @param bRowStride distance between elements in row X and X+1
+     * @param bColStride distance between elements in column X and X+1
+     * @param mirrored true if only the upper right triangle of the result needs to be calculated
+     * @return the result vector
+     */
+    public RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols, int aRowStride, int aColStride, int bRowStride,
+                    int bColStride, boolean mirrored) {
         if (aCols != bRows) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
+        double[] dataA = a.materialize().getDataWithoutCopying();
+        double[] dataB = b.materialize().getDataWithoutCopying();
         double[] result = new double[aRows * bCols];
         for (int row = 0; row < aRows; row += BLOCK_SIZE) {
-            for (int col = 0; col < bCols; col += BLOCK_SIZE) {
+            for (int col = mirrored ? row : 0; col < bCols; col += BLOCK_SIZE) {
                 for (int k = 0; k < aCols; k += BLOCK_SIZE) {
                     int remainingCols = Math.min(BLOCK_SIZE, bCols - col);
                     int remainingRows = Math.min(BLOCK_SIZE, aRows - row);
@@ -132,78 +154,64 @@ public abstract class MatMult extends RBuiltinNode {
                         remainingK = aCols - k;
                     }
                     if (bigProfile.profile(remainingCols == BLOCK_SIZE && remainingRows == BLOCK_SIZE && remainingK == BLOCK_SIZE)) {
-                        multiplyBlock(a, b, aRows, bRows, result, row, col, k, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        multiplyBlock(dataA, dataB, aRows, result, row, col, k, aRowStride, aColStride, bRowStride, bColStride, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
                     } else {
-                        multiplyBlock(a, b, aRows, bRows, result, row, col, k, remainingCols, remainingRows, remainingK);
+                        multiplyBlock(dataA, dataB, aRows, result, row, col, k, aRowStride, aColStride, bRowStride, bColStride, remainingCols, remainingRows, remainingK);
                     }
                 }
             }
         }
+        // NAs are checked in bulk here, because doing so during multiplication is too costly
         boolean complete = true;
         if (!b.isComplete()) {
             incompleteProfile.enter();
-            fixNAColumns(b, aRows, result);
+            fixNAColumns(dataB, aRows, aCols, bCols, bRowStride, bColStride, result);
             complete = false;
         }
-        if (!a.isComplete()) {
+        if (!complete || !a.isComplete()) {
+            /*
+             * In case b is not complete, NaN rows need to be restored because the NaN in a takes
+             * precedence over the NA in b.
+             */
             incompleteProfile.enter();
-            fixNARows(a, bCols, result);
+            fixNARows(dataA, aRows, bRows, bCols, aRowStride, aColStride, result);
             complete = false;
         }
         return RDataFactory.createDoubleVector(result, complete, new int[]{aRows, bCols});
     }
 
-    private static void fixNARows(RAbstractDoubleVector a, int bCols, double[] result) {
-        final int aRows = a.getDimensions()[0];
-        final int aCols = a.getDimensions()[1];
+    private static void fixNARows(double[] dataA, int aRows, int aCols, int bCols, int aRowStride, int aColStride, double[] result) {
         // NA's in a cause the whole row to be NA in the result
-        for (int row = 0; row < aRows; row++) {
-            boolean hasNA = false;
+        outer: for (int row = 0; row < aRows; row++) {
+            boolean hasNaN = false;
             for (int col = 0; col < aCols; col++) {
-                if (RRuntime.isNA(a.getDataAt(col * aRows + row))) {
+                double value = dataA[col * aColStride + row * aRowStride];
+                if (RRuntime.isNA(value)) {
                     for (int innerCol = 0; innerCol < bCols; innerCol++) {
                         result[innerCol * aRows + row] = RRuntime.DOUBLE_NA;
                     }
-                    hasNA = true;
-                    break;
+                    continue outer;
+                } else if (Double.isNaN(value)) {
+                    hasNaN = true;
                 }
             }
-            if (!hasNA) {
-                for (int col = 0; col < aCols; col++) {
-                    if (Double.isNaN(a.getDataAt(col * aRows + row))) {
-                        for (int innerCol = 0; innerCol < bCols; innerCol++) {
-                            result[innerCol * aRows + row] = Double.NaN;
-                        }
-                        break;
-                    }
+            if (hasNaN) {
+                for (int innerCol = 0; innerCol < bCols; innerCol++) {
+                    result[innerCol * aRows + row] = Double.NaN;
                 }
             }
         }
     }
 
-    private static void fixNAColumns(RAbstractDoubleVector b, int aRows, double[] result) {
-        final int bRows = b.getDimensions()[0];
-        final int bCols = b.getDimensions()[1];
+    private static void fixNAColumns(double[] dataB, int aRows, int bRows, int bCols, int bRowStride, int bColStride, double[] result) {
         // NA's in b cause the whole column to be NA in the result
-        for (int col = 0; col < bCols; col++) {
-            boolean hasNA = false;
+        outer: for (int col = 0; col < bCols; col++) {
             for (int row = 0; row < bRows; row++) {
-                if (RRuntime.isNA(b.getDataAt(col * bRows + row))) {
+                if (RRuntime.isNA(dataB[col * bColStride + row * bRowStride])) {
                     for (int innerRow = 0; innerRow < aRows; innerRow++) {
                         result[col * aRows + innerRow] = RRuntime.DOUBLE_NA;
                     }
-                    hasNA = true;
-                    break;
-                }
-            }
-            if (!hasNA) {
-                for (int row = 0; row < bRows; row++) {
-                    if (Double.isNaN(b.getDataAt(col * bRows + row))) {
-                        for (int innerRow = 0; innerRow < aRows; innerRow++) {
-                            result[col * aRows + innerRow] = Double.NaN;
-                        }
-                        break;
-                    }
+                    continue outer;
                 }
             }
         }
@@ -214,86 +222,54 @@ public abstract class MatMult extends RBuiltinNode {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         double result = 0.0;
         na.enable(a);
         na.enable(b);
         for (int k = 0; k < a.getLength(); ++k) {
-            result = add.doDouble(result, mult.doDouble(a.getDataAt(k), b.getDataAt(k)));
-            na.check(result);
+            double aValue = a.getDataAt(k);
+            double bValue = b.getDataAt(k);
+            if (na.check(aValue) || na.check(bValue)) {
+                return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
+            }
+            result = add.doDouble(result, mult.doDouble(aValue, bValue));
         }
-        return RDataFactory.createDoubleVector(new double[]{result}, na.neverSeenNA(), new int[]{1, 1});
+        return RDataFactory.createDoubleVector(new double[]{result}, true, new int[]{1, 1});
     }
 
     @Specialization(guards = "matvec")
     protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
-        final int aCols = a.getDimensions()[1];
-        final int aRows = a.getDimensions()[0];
-        if (aCols != 1 && aCols != b.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        na.enable(a);
-        na.enable(b);
-        if (notOneColumn.profile(aCols != 1)) {
-            double[] result = new double[aRows];
-            for (int row = 0; row < aRows; ++row) {
-                double x = 0;
-                for (int k = 0; k < b.getLength(); ++k) {
-                    x = add.doDouble(x, mult.doDouble(a.getDataAt(k * aRows + row), b.getDataAt(k)));
-                    na.check(x);
-                }
-                result[row] = x;
-            }
-            return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{aRows, 1});
+        int aRows = a.getDimensions()[0];
+        int aCols = a.getDimensions()[1];
+        int bRows;
+        int bCols;
+        if (aCols == b.getLength()) {
+            bRows = b.getLength();
+            bCols = 1;
         } else {
-            double[] result = new double[aRows * b.getLength()];
-            for (int row = 0; row < aRows; ++row) {
-                for (int k = 0; k < b.getLength(); ++k) {
-                    double x = mult.doDouble(a.getDataAt(row), b.getDataAt(k));
-                    na.check(x);
-                    result[k * aRows + row] = x;
-                }
-            }
-            return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
+            bRows = 1;
+            bCols = b.getLength();
         }
+        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
     }
 
     @Specialization(guards = "vecmat")
     protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
-        final int bCols = b.getDimensions()[1];
-        final int bRows = b.getDimensions()[0];
-        if (bRows != 1 && bRows != a.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        na.enable(a);
-        na.enable(b);
-        if (notOneRow.profile(bRows != 1)) {
-            double[] result = new double[bCols];
-            for (int k = 0; k < bCols; ++k) {
-                double x = 0.0;
-                for (int row = 0; row < a.getLength(); ++row) {
-                    x = add.doDouble(x, mult.doDouble(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
-                    na.check(x);
-                }
-                result[k] = x;
-            }
-            return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{1, bCols});
+        int bRows = b.getDimensions()[0];
+        int bCols = b.getDimensions()[1];
+        int aRows;
+        int aCols;
+        if (bRows == a.getLength()) {
+            aRows = 1;
+            aCols = a.getLength();
         } else {
-            double[] result = new double[bCols * a.getLength()];
-            for (int row = 0; row < a.getLength(); ++row) {
-                for (int k = 0; k < bCols; ++k) {
-                    double x = mult.doDouble(a.getDataAt(row), b.getDataAt(k));
-                    na.check(x);
-                    result[k * a.getLength() + row] = x;
-                }
-            }
-            return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
+            aRows = a.getLength();
+            aCols = 1;
         }
+        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
     }
 
     // complex-complex

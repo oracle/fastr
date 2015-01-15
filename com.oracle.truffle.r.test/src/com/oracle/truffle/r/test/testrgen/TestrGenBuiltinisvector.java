@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,6 @@ public class TestrGenBuiltinisvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisvector4() {
         assertEval("argv <- list(structure(list(character = character(0), numeric = numeric(0), numeric = numeric(0), complex = complex(0), integer = integer(0), logical = logical(0), character = character(0)), .Names = c(\'character\', \'numeric\', \'numeric\', \'complex\', \'integer\', \'logical\', \'character\')), \'any\'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
@@ -65,7 +64,6 @@ public class TestrGenBuiltinisvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisvector10() {
         assertEval("argv <- list(structure(list(`1` = c(0, 0, 0, 0, 0, 0, 2.96439387504748e-323, 0, 0, 0, 0, 0)), .Names = \'1\'), \'any\'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
@@ -96,7 +94,6 @@ public class TestrGenBuiltinisvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisvector16() {
         assertEval("argv <- list(structure(list(row.names = character(0), A = numeric(0), B = numeric(0), C = complex(0), D = integer(0), E = logical(0), F = character(0)), .Names = c(\'row.names\', \'A\', \'B\', \'C\', \'D\', \'E\', \'F\')), \'any\'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
@@ -117,13 +114,11 @@ public class TestrGenBuiltinisvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisvector20() {
         assertEval("argv <- list(list(), \'list\'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testisvector21() {
         assertEval("argv <- list(structure(list(`1` = c(256.266652076228, 529.998452486383, 655.612271403493, 31.5607377310524, 10.1780771257452, 0.82654086298349, 0.192588149393303, 0.27340160887417, 0.420761091220242, 0.212073424883136, 6006.37649011526, 8.9782737548589e+42)), .Names = \'1\'), \'any\'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
@@ -183,11 +178,9 @@ public class TestrGenBuiltinisvector extends TestBase {
         assertEval("argv <- list(structure(list(Df = c(NA, 0L), Deviance = c(NA, 0), `Resid. Df` = c(10L, 10L), `Resid. Dev` = c(2.74035772634541, 2.74035772634541)), .Names = c(\'Df\', \'Deviance\', \'Resid. Df\', \'Resid. Dev\'), row.names = c(\'NULL\', \'x\'), class = c(\'anova\', \'data.frame\'), heading = \'Analysis of Deviance Table\\n\\nModel: gaussian, link: identity\\n\\nResponse: y\\n\\nTerms added sequentially (first to last)\\n\\n\'), \'any\'); .Internal(is.vector(argv[[1]], argv[[2]]))");
     }
 
-	@Test
-	public void testisvector34() {
-		assertEval("argv <- structure(list(x = 3), .Names = \'x\');"+
-			"do.call(\'is.vector\', argv)");
-	}
+    @Test
+    public void testisvector34() {
+        assertEval("argv <- structure(list(x = 3), .Names = \'x\');" + "do.call(\'is.vector\', argv)");
+    }
 
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,10 +48,12 @@ public abstract class UpdateFieldNode extends RNode {
     public abstract String getField();
 
     private final BranchProfile inexactMatch = BranchProfile.create();
+    private final BranchProfile noRemoval = BranchProfile.create();
+    private final ConditionProfile nullValueProfile = ConditionProfile.createBinaryProfile();
 
     @Child private CastListNode castList;
 
-    @Specialization
+    @Specialization(guards = "!isNullValue")
     protected Object updateField(RList object, Object value) {
         String field = getField();
         int index = object.getElementIndexByName(field);
@@ -88,6 +90,52 @@ public abstract class UpdateFieldNode extends RNode {
         return result;
     }
 
+    @Specialization(guards = "isNullValue")
+    protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value) {
+        String field = getField();
+        int index = object.getElementIndexByName(field);
+        if (index == -1) {
+            inexactMatch.enter();
+            index = object.getElementIndexByNameInexact(field);
+        }
+
+        if (index == -1) {
+            noRemoval.enter();
+            return object;
+        }
+
+        int newLength = object.getLength() - 1;
+
+        Object[] resultData = new Object[newLength];
+        int ind = 0;
+        for (int i = 0; i < object.getLength(); i++) {
+            if (i != index) {
+                resultData[ind++] = object.getDataAt(i);
+            }
+        }
+
+        String[] resultNames = new String[newLength];
+        boolean namesComplete = true;
+        if (object.getNames() == RNull.instance) {
+            Arrays.fill(resultNames, "");
+        } else {
+            RStringVector names = (RStringVector) object.getNames();
+            ind = 0;
+            for (int i = 0; i < names.getLength(); i++) {
+                if (i != index) {
+                    resultNames[ind++] = names.getDataAt(i);
+                }
+            }
+            namesComplete = names.isComplete();
+        }
+
+        RList result = RDataFactory.createList(resultData);
+        result.copyAttributesFrom(object);
+        result.setNames(RDataFactory.createStringVector(resultNames, namesComplete));
+
+        return result;
+    }
+
     @Specialization
     protected Object updateField(REnvironment env, Object value) {
         // reference semantics for environments
@@ -106,7 +154,15 @@ public abstract class UpdateFieldNode extends RNode {
             castList = insert(CastListNodeGen.create(null, true, true, false));
         }
         RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
-        return updateField(castList.executeList(frame, object), value);
+        if (nullValueProfile.profile(value == RNull.instance)) {
+            return updateFieldNullValue(castList.executeList(frame, object), value);
+        } else {
+            return updateField(castList.executeList(frame, object), value);
+        }
+    }
+
+    protected boolean isNullValue(@SuppressWarnings("unused") RAbstractVector object, Object value) {
+        return value == RNull.instance;
     }
 
     @Override

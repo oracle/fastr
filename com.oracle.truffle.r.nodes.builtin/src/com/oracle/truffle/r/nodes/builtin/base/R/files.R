@@ -157,8 +157,8 @@ file.info <- function(...)
 #    res$mtime <- .POSIXct(res$mtime)
 #    res$ctime <- .POSIXct(res$ctime)
 #    res$atime <- .POSIXct(res$atime)
-#    class(res) <- "data.frame"
-#    attr(res, "row.names") <- fn # not row.names<- as that does a length check
+    class(res) <- "data.frame"
+    attr(res, "row.names") <- fn # not row.names<- as that does a length check
     res
 }
 

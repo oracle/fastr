@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     protected RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
         controlVisibility();
         if (dimensions.getLength() == 0) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
         }
         int[] dimsData = castInteger(frame, dimensions).materialize().getDataCopy();

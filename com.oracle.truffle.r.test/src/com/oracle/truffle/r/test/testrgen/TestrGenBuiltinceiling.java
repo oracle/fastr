@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,7 +43,6 @@ public class TestrGenBuiltinceiling extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testceiling6() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));ceiling(argv[[1]]);");
     }
@@ -54,11 +53,9 @@ public class TestrGenBuiltinceiling extends TestBase {
         assertEval("argv <- list(1e+05);ceiling(argv[[1]]);");
     }
 
-	@Test
-	public void testceiling9() {
-		assertEval("argv <- list(c(-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3,     3.5, 4));"+
-			"do.call(\'ceiling\', argv)");
-	}
+    @Test
+    public void testceiling9() {
+        assertEval("argv <- list(c(-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3,     3.5, 4));" + "do.call(\'ceiling\', argv)");
+    }
 
 }
-
