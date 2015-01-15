@@ -127,7 +127,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
-        defineVarsNew(newFrame);
+        defineVarsAsArguments(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);
         return indirectCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }

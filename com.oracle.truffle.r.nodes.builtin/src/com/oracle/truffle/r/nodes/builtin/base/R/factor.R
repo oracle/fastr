@@ -158,46 +158,46 @@ print.factor <- function (x, quote = FALSE, max.levels = NULL,
 }
 
 
-#Math.factor <- function(x, ...) {
-#    stop(.Generic, " not meaningful for factors")
-#}
-### The next two have an .ordered method:
-#Summary.factor <- function(..., na.rm)
-#    stop(.Generic, " not meaningful for factors")
-#Ops.factor <- function(e1, e2)
-#{
-#    ok <- switch(.Generic, "=="=, "!="=TRUE, FALSE)
-#    if(!ok) {
-#	warning(.Generic, " not meaningful for factors")
-#	return(rep.int(NA, max(length(e1), if(!missing(e2)) length(e2))))
-#    }
-#    nas <- is.na(e1) | is.na(e2)
-#    ## Need this for NA *levels* as opposed to missing
-#    noNA.levels <- function(f) {
-#	r <- levels(f)
-#	if(any(ina <- is.na(r))) {
-#	    n <- "  NA "
-#	    while(n %in% r) n <- paste(n, ".")
-#	    r[ina] <- n
-#	}
-#	r
-#    }
-#    if (nzchar(.Method[1L])) { # e1 *is* a factor
-#	l1 <- noNA.levels(e1)
-#	e1 <- l1[e1]
-#    }
-#    if (nzchar(.Method[2L])) { # e2 *is* a factor
-#	l2 <- noNA.levels(e2)
-#	e2 <- l2[e2]
-#    }
-#    if (all(nzchar(.Method)) &&
-#	(length(l1) != length(l2) || !all(sort.int(l2) == sort.int(l1))))
-#	stop("level sets of factors are different")
-#    value <- NextMethod(.Generic)
-#    value[nas] <- NA
-#    value
-#}
-#
+Math.factor <- function(x, ...) {
+    stop(.Generic, " not meaningful for factors")
+}
+## The next two have an .ordered method:
+Summary.factor <- function(..., na.rm)
+    stop(.Generic, " not meaningful for factors")
+Ops.factor <- function(e1, e2)
+{
+    ok <- switch(.Generic, "=="=, "!="=TRUE, FALSE)
+    if(!ok) {
+	warning(.Generic, " not meaningful for factors")
+	return(rep.int(NA, max(length(e1), if(!missing(e2)) length(e2))))
+    }
+    nas <- is.na(e1) | is.na(e2)
+    ## Need this for NA *levels* as opposed to missing
+    noNA.levels <- function(f) {
+	r <- levels(f)
+	if(any(ina <- is.na(r))) {
+	    n <- "  NA "
+	    while(n %in% r) n <- paste(n, ".")
+	    r[ina] <- n
+	}
+	r
+    }
+    if (nzchar(.Method[1L])) { # e1 *is* a factor
+	l1 <- noNA.levels(e1)
+	e1 <- l1[e1]
+    }
+    if (nzchar(.Method[2L])) { # e2 *is* a factor
+	l2 <- noNA.levels(e2)
+	e2 <- l2[e2]
+    }
+    if (all(nzchar(.Method)) &&
+	(length(l1) != length(l2) || !all(sort.int(l2) == sort.int(l1))))
+	stop("level sets of factors are different")
+    value <- NextMethod(.Generic)
+    value[nas] <- NA
+    value
+}
+
 ### NB for next four:
 ### a factor has levels before class in attribute list (PR#6799)
 #`[.factor` <- function(x, ..., drop = FALSE)
@@ -259,49 +259,49 @@ ordered <- function(x, ...) factor(x, ..., ordered=TRUE)
 is.ordered <- function(x) inherits(x, "ordered")
 as.ordered <- function(x) if(is.ordered(x)) x else ordered(x)
 
-#Ops.ordered <- function (e1, e2)
-#{
-#    ok <- switch(.Generic,
-#		 "<" = , ">" = , "<=" = , ">=" = ,"=="=, "!=" =TRUE,
-#		 FALSE)
-#    if(!ok) {
-#	warning(sprintf("'%s' is not meaningful for ordered factors",
-#                        .Generic))
-#	return(rep.int(NA, max(length(e1), if(!missing(e2)) length(e2))))
-#    }
-#    if (.Generic %in% c("==", "!="))
-#      return(NextMethod(.Generic))  ##not S-PLUS compatible, but saner
-#    nas <- is.na(e1) | is.na(e2)
-#    ord1 <- FALSE
-#    ord2 <- FALSE
-#    if (nzchar(.Method[1L])) {
-#	l1 <- levels(e1)
-#	ord1 <- TRUE
-#    }
-#    if (nzchar(.Method[2L])) {
-#	l2 <- levels(e2)
-#	ord2 <- TRUE
-#    }
-#    if (all(nzchar(.Method)) &&
-#        (length(l1) != length(l2) || !all(l2 == l1)))
-#	stop("level sets of factors are different")
-#    if (ord1 && ord2) {
-#	e1 <- as.integer(e1) # was codes, but same thing for ordered factor.
-#	e2 <- as.integer(e2)
-#    }
-#    else if (!ord1) {
-#	e1 <- match(e1, l2)
-#	e2 <- as.integer(e2)
-#    }
-#    else if (!ord2) {
-#	e2 <- match(e2, l1)
-#	e1 <- as.integer(e1)
-#    }
-#    value <- get(.Generic, mode = "function")(e1, e2)
-#    value[nas] <- NA
-#    value
-#}
-#
+Ops.ordered <- function (e1, e2)
+{
+    ok <- switch(.Generic,
+		 "<" = , ">" = , "<=" = , ">=" = ,"=="=, "!=" =TRUE,
+		 FALSE)
+    if(!ok) {
+	warning(sprintf("'%s' is not meaningful for ordered factors",
+                        .Generic))
+	return(rep.int(NA, max(length(e1), if(!missing(e2)) length(e2))))
+    }
+    if (.Generic %in% c("==", "!="))
+      return(NextMethod(.Generic))  ##not S-PLUS compatible, but saner
+    nas <- is.na(e1) | is.na(e2)
+    ord1 <- FALSE
+    ord2 <- FALSE
+    if (nzchar(.Method[1L])) {
+	l1 <- levels(e1)
+	ord1 <- TRUE
+    }
+    if (nzchar(.Method[2L])) {
+	l2 <- levels(e2)
+	ord2 <- TRUE
+    }
+    if (all(nzchar(.Method)) &&
+        (length(l1) != length(l2) || !all(l2 == l1)))
+	stop("level sets of factors are different")
+    if (ord1 && ord2) {
+	e1 <- as.integer(e1) # was codes, but same thing for ordered factor.
+	e2 <- as.integer(e2)
+    }
+    else if (!ord1) {
+	e1 <- match(e1, l2)
+	e2 <- as.integer(e2)
+    }
+    else if (!ord2) {
+	e2 <- match(e2, l1)
+	e1 <- as.integer(e1)
+    }
+    value <- get(.Generic, mode = "function")(e1, e2)
+    value[nas] <- NA
+    value
+}
+
 #Summary.ordered <- function(..., na.rm)
 #{
 #    ok <- switch(.Generic, max = , min = , range = TRUE,

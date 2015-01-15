@@ -69,7 +69,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         // TODO: implement names passing
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(frame) + 1, mergedArgs, RArguments.EMPTY_STRING_ARRAY);
         final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
-        defineVarsNew(newFrame);
+        defineVarsAsArguments(newFrame);
         if (storedFunctionName != null) {
             RArguments.setS3Method(newFrame, storedFunctionName);
         } else {
