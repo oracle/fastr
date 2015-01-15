@@ -545,16 +545,28 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    private abstract static class BasePathRConnection extends BaseRConnection {
+        protected final String path;
+
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString) throws IOException {
+            super(connectionClass, modeString);
+            this.path = Utils.tildeExpand(path);
+        }
+
+        protected BasePathRConnection(String path, ConnectionClass conClass, String modeString, OpenMode lazyMode) throws IOException {
+            super(conClass, modeString, lazyMode);
+            this.path = Utils.tildeExpand(path);
+        }
+    }
+
     /**
      * Base class for all modes of file connections.
      *
      */
-    private static class FileRConnection extends BaseRConnection {
-        protected final String path;
+    private static class FileRConnection extends BasePathRConnection {
 
         protected FileRConnection(String path, String modeString) throws IOException {
-            super(ConnectionClass.File, modeString);
-            this.path = path;
+            super(path, ConnectionClass.File, modeString);
             if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
@@ -584,7 +596,7 @@ public abstract class ConnectionFunctions {
         private BufferedInputStream inputStream;
         private BufferedReader bufferedReader;
 
-        FileReadTextRConnection(FileRConnection base) throws IOException {
+        FileReadTextRConnection(BasePathRConnection base) throws IOException {
             super(base);
             inputStream = new BufferedInputStream(new FileInputStream(base.path));
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -697,12 +709,9 @@ public abstract class ConnectionFunctions {
     /**
      * Base class for all modes of gzfile connections.
      */
-    private static class GZIPRConnection extends BaseRConnection {
-        protected final String path;
-
+    private static class GZIPRConnection extends BasePathRConnection {
         GZIPRConnection(String path, String modeString) throws IOException {
-            super(ConnectionClass.GZFile, modeString, new OpenMode(modeString, AbstractOpenMode.ReadBinary));
-            this.path = Utils.tildeExpand(path);
+            super(path, ConnectionClass.GZFile, modeString, new OpenMode(modeString, AbstractOpenMode.ReadBinary));
             if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
@@ -712,8 +721,13 @@ public abstract class ConnectionFunctions {
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
             switch (openMode.abstractOpenMode) {
+                case Read:
                 case ReadBinary:
-                    delegate = new GZIPInputRConnection(this);
+                    try {
+                        delegate = new GZIPInputRConnection(this);
+                    } catch (ZipException ex) {
+                        delegate = new FileReadTextRConnection(this);
+                    }
                     break;
                 default:
                     throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
@@ -748,20 +762,35 @@ public abstract class ConnectionFunctions {
 
     }
 
+    /**
+     * {@code gzfile} is very versatile (unfortunately); it can open uncompressed files, and files
+     * compressed by {@code bzip2, xz, lzma}. Currently we only support {@code gzip} and
+     * uncompressed.
+     */
     @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"})
     public abstract static class GZFile extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object gzFile(RAbstractStringVector description, RAbstractStringVector open, RAbstractStringVector encoding, double compression) {
-            // temporarily return to avoid missing print support
             controlVisibility();
             try {
                 return new GZIPRConnection(description.getDataAt(0), open.getDataAt(0));
+            } catch (ZipException ex) {
+                // wasn't a gzip file, try uncompressed text
+                try {
+                    return new FileRConnection(description.getDataAt(0), "r");
+                } catch (IOException ex1) {
+                    throw reportError(description.getDataAt(0), ex1);
+                }
             } catch (IOException ex) {
-                RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+                throw reportError(description.getDataAt(0), ex);
             }
+        }
+
+        private RError reportError(String path, IOException ex) throws RError {
+            RError.warning(RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
         }
     }
 

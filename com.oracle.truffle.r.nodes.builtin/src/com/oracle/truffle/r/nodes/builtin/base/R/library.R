@@ -722,11 +722,9 @@ find.package <-
                   ## this must have these fields to get installed
                   readRDS(pfile)$DESCRIPTION[c("Package", "Version")]
                 else {
-#                  info <- tryCatch(read.dcf(file.path(p, "DESCRIPTION"),
-#                          c("Package", "Version"))[1, ],
-#                      error = identity)
-                  info <- read.dcf(file.path(p, "DESCRIPTION"),
-                          c("Package", "Version"))[1, ]
+                  info <- tryCatch(read.dcf(file.path(p, "DESCRIPTION"),
+                          c("Package", "Version"))[1, ],
+                      error = identity)
                                 if(inherits(info, "error")
                       || (length(info) != 2L)
                       || any(is.na(info)))
@@ -812,14 +810,14 @@ print.packageInfo <-
   invisible(x)
 }
 
-#.getRequiredPackages <-
-#    function(file="DESCRIPTION", lib.loc = NULL, quietly = FALSE, useImports = FALSE)
-#{
-#  ## OK to call tools as only used during installation.
-#  pkgInfo <- tools:::.split_description(tools:::.read_description(file))
-#  .getRequiredPackages2(pkgInfo, quietly, lib.loc, useImports)
-#  invisible()
-#}
+.getRequiredPackages <-
+    function(file="DESCRIPTION", lib.loc = NULL, quietly = FALSE, useImports = FALSE)
+{
+  ## OK to call tools as only used during installation.
+  pkgInfo <- tools:::.split_description(tools:::.read_description(file))
+  .getRequiredPackages2(pkgInfo, quietly, lib.loc, useImports)
+  invisible()
+}
 
 .getRequiredPackages2 <-
     function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)

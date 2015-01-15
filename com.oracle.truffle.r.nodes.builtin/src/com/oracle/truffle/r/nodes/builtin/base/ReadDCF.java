@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector doReadDCF(RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
         try {
             DCF dcf = DCF.read(conn.readLines(0));
@@ -60,9 +62,13 @@ public abstract class ReadDCF extends RBuiltinNode {
                 }
                 names[i] = fieldName;
             }
-            return RDataFactory.createStringVector(data, complete, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+            int[] dims = new int[]{1, data.length};
+            RList dimnames = RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)});
+            RStringVector result = RDataFactory.createStringVector(data, complete, dims);
+            result.setDimNames(dimnames);
+            return result;
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
 
     }
