@@ -592,6 +592,8 @@ public final class RError extends RuntimeException {
         FILE_APPEND_WRITE("write error during file append"),
         REQUIRES_CHAR_VECTOR("'%s' requires a character vector"),
         NOT_VALID_NAMES("not a valid named list"),
+        UnKNOWN_VALUE("unknown '%s' value"),
+        NO_SUCH_CONNECTION("this is no connection %d"),
         CHAR_ARGUMENT("character argument expected");
 
         public final String message;
