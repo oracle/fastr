@@ -42,6 +42,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ConnectionFunctions {
+    /**
+     * Records all connections. The index in the array is the "descriptor" used in
+     * {@code getConnection}. Defined at this level so that {@link #stdin} etc. are initialized
+     * before any attempt to return them via, e.g., {@code getConnection}.
+     */
+    private static BaseRConnection[] allConnections = new BaseRConnection[127];
+
     private static final class ModeException extends IOException {
         private static final long serialVersionUID = 1L;
 
@@ -137,12 +144,12 @@ public abstract class ConnectionFunctions {
      * {@link #createDelegateConnection()} and then forward the operation. The result of
      * {@link #createDelegateConnection()} should be a subclass of {@link DelegateRConnection},
      * which subclasses {@link RConnection} directly. A subclass may choose not to use delegation by
-     * overriding the default implementations of the methods in this class.
+     * overriding the default implementations of the methods in this class. A
+     * {@link DelegateRConnection} can get to its {@link BaseRConnection} through the
+     * {@link #getBaseConnection} method.
      *
      */
     private abstract static class BaseRConnection extends RConnection {
-
-        private static BaseRConnection[] allConnections = new BaseRConnection[127];
 
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy
@@ -171,7 +178,7 @@ public abstract class ConnectionFunctions {
         /**
          * The actual connection, if delegated.
          */
-        private DelegateRConnection theConnection;
+        protected DelegateRConnection theConnection;
 
         private int descriptor;
 
@@ -190,17 +197,6 @@ public abstract class ConnectionFunctions {
             this(conClass, new OpenMode(modeString), lazyMode);
         }
 
-        private void registerConnection() {
-            for (int i = 3; i < allConnections.length; i++) {
-                if (allConnections[i] == null) {
-                    allConnections[i] = this;
-                    descriptor = i;
-                    return;
-                }
-            }
-            throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
-        }
-
         /**
          * Primitive constructor that just assigns state. USed by {@link StdConnection}s as they are
          * a special case but should not be used by other connection types.
@@ -215,6 +211,48 @@ public abstract class ConnectionFunctions {
             if (!isStdin() && !isStdout() && !isStderr()) {
                 registerConnection();
             }
+        }
+
+        /**
+         * A connection is "active" if it has been opened and not yet closed.
+         */
+        protected boolean isActive() {
+            return !closed && opened;
+        }
+
+        /**
+         * Return value for "can read" for {@code summary.connection}.
+         */
+        protected boolean canRead() {
+            if (isActive()) {
+                return theConnection instanceof DelegateReadRConnection;
+            } else {
+                // Might think to check the lazy open mode, but GnuR doesn't
+                return true;
+            }
+        }
+
+        /**
+         * Return value for "can read" for {@code summary.connection}.
+         */
+        protected boolean canWrite() {
+            if (isActive()) {
+                return theConnection instanceof DelegateWriteRConnection;
+            } else {
+                // Might think to check the lazy open mode, but GnuR doesn't
+                return true;
+            }
+        }
+
+        private void registerConnection() {
+            for (int i = 3; i < allConnections.length; i++) {
+                if (allConnections[i] == null) {
+                    allConnections[i] = this;
+                    descriptor = i;
+                    return;
+                }
+            }
+            throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
         protected void checkOpen() throws IOException {
@@ -291,6 +329,20 @@ public abstract class ConnectionFunctions {
          * delegate connection.
          */
         protected abstract void createDelegateConnection() throws IOException;
+
+        /**
+         * Return the value that is used in the "description" field by {@code summary.connection}.
+         */
+        protected abstract String getSummaryDescription();
+
+        /**
+         * Return the value that is used in the "text" field by {@code summary.connection}. TODO
+         * determine what this really means, e.g., In GnuR {gzfile} on a binary file still reports
+         * "text".
+         */
+        protected String getSummaryText() {
+            return "text";
+        }
 
         @Override
         public int getDescriptor() {
@@ -445,12 +497,27 @@ public abstract class ConnectionFunctions {
 
         StdinConnection() {
             super(new OpenMode("r", AbstractOpenMode.Read));
-            BaseRConnection.allConnections[0] = this;
+            allConnections[0] = this;
         }
 
         @Override
         public boolean isStdin() {
             return true;
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            return "stdin";
+        }
+
+        @Override
+        protected boolean canRead() {
+            return true;
+        }
+
+        @Override
+        protected boolean canWrite() {
+            return false;
         }
 
         @Override
@@ -492,7 +559,22 @@ public abstract class ConnectionFunctions {
             super(new OpenMode("w", AbstractOpenMode.Write));
             this.opened = true;
             this.isErr = isErr;
-            BaseRConnection.allConnections[isErr ? 2 : 1] = this;
+            allConnections[isErr ? 2 : 1] = this;
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            return isErr ? "stderr" : "stdout";
+        }
+
+        @Override
+        protected boolean canRead() {
+            return false;
+        }
+
+        @Override
+        protected boolean canWrite() {
+            return true;
         }
 
         @Override
@@ -557,6 +639,12 @@ public abstract class ConnectionFunctions {
             super(conClass, modeString, lazyMode);
             this.path = Utils.tildeExpand(path);
         }
+
+        @Override
+        public String getSummaryDescription() {
+            return path;
+        }
+
     }
 
     /**
@@ -711,7 +799,7 @@ public abstract class ConnectionFunctions {
      */
     private static class GZIPRConnection extends BasePathRConnection {
         GZIPRConnection(String path, String modeString) throws IOException {
-            super(path, ConnectionClass.GZFile, modeString, new OpenMode(modeString, AbstractOpenMode.ReadBinary));
+            super(path, ConnectionClass.GZFile, modeString, new OpenMode("rb", AbstractOpenMode.ReadBinary));
             if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
@@ -795,7 +883,7 @@ public abstract class ConnectionFunctions {
     }
 
     private static class TextRConnection extends BaseRConnection {
-        @SuppressWarnings("unused") protected String nm;
+        protected String nm;
         protected RAbstractStringVector object;
         @SuppressWarnings("unused") protected REnvironment env;
 
@@ -807,6 +895,21 @@ public abstract class ConnectionFunctions {
             if (openMode.abstractOpenMode != AbstractOpenMode.Lazy) {
                 createDelegateConnection();
             }
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            return nm;
+        }
+
+        @Override
+        protected boolean canRead() {
+            return true;
+        }
+
+        @Override
+        protected boolean canWrite() {
+            return false;
         }
 
         @Override
@@ -900,6 +1003,12 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createDelegateConnection() throws IOException {
             throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            // TODO get this right
+            return "socket";
         }
 
         protected void openStreams() throws IOException {
@@ -1004,6 +1113,11 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public String getSummaryDescription() {
+            return urlString;
+        }
+
+        @Override
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate = null;
             switch (openMode.abstractOpenMode) {
@@ -1092,13 +1206,13 @@ public abstract class ConnectionFunctions {
                 baseCon = getBaseConnection(con);
             }
             Object[] data = new Object[NAMES.getLength()];
-            data[0] = "TBD";
+            data[0] = baseCon.getSummaryDescription();
             data[1] = baseCon.classHr.getDataAt(0);
             data[2] = baseCon.getRealOpenMode();
-            data[3] = "TBD";
+            data[3] = baseCon.getSummaryText();
             data[4] = baseCon.closed || !baseCon.opened ? "closed" : "opened";
-            data[5] = "TBD";
-            data[6] = "TBD";
+            data[5] = baseCon.canRead() ? "yes" : "no";
+            data[6] = baseCon.canWrite() ? "yes" : "no";
             return RDataFactory.createList(data, NAMES);
         }
     }
@@ -1108,7 +1222,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object open(RConnection con, RAbstractStringVector open, @SuppressWarnings("unused") byte blocking) {
-            controlVisibility();
+            forceVisibility(false);
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
                 if (baseConn.closed) {
@@ -1133,6 +1247,37 @@ public abstract class ConnectionFunctions {
             checkIsConnection(con);
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
         }
+    }
+
+    @RBuiltin(name = "isOpen", kind = INTERNAL, parameterNames = {"con", "rw"})
+    public abstract static class IsOpen extends CheckIsConnAdapter {
+        @Specialization
+        @TruffleBoundary
+        protected RLogicalVector isOpen(RConnection con, RAbstractIntVector rw) {
+            controlVisibility();
+            BaseRConnection baseCon = getBaseConnection(con);
+            boolean result = !baseCon.closed && baseCon.opened;
+            switch (rw.getDataAt(0)) {
+                case 0:
+                    break;
+                case 1:
+                    result &= baseCon.canRead();
+                    break;
+                case 2:
+                    result &= baseCon.canWrite();
+                    break;
+                default:
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UnKNOWN_VALUE, "rw");
+            }
+            return RDataFactory.createLogicalVectorFromScalar(result);
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object isOpen(Object con, @SuppressWarnings("unused") Object rw) {
+            checkIsConnection(con);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+        }
 
     }
 
@@ -1152,7 +1297,7 @@ public abstract class ConnectionFunctions {
 
         @Fallback
         @TruffleBoundary
-        protected Object open(Object con) {
+        protected Object close(Object con) {
             checkIsConnection(con);
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
         }
@@ -1163,6 +1308,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding, @SuppressWarnings("unused") byte skipNul) {
+            // TODO implement all the arguments
             controlVisibility();
             try {
                 String[] lines = con.readLines(n);
@@ -1345,6 +1491,27 @@ public abstract class ConnectionFunctions {
             return useBytes.getLength() == 0;
         }
 
+    }
+
+    @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"})
+    public abstract static class GetConnection extends RBuiltinNode {
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[0] = CastIntegerNodeGen.create(arguments[0], false, false, false);
+            return arguments;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RConnection getConnection(int what) {
+            controlVisibility();
+            boolean error = what < 0 || what >= allConnections.length || allConnections[what] == null;
+            if (error) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_CONNECTION, what);
+            } else {
+                return allConnections[what];
+            }
+        }
     }
 
     @RBuiltin(name = "getAllConnections", kind = INTERNAL, parameterNames = {})

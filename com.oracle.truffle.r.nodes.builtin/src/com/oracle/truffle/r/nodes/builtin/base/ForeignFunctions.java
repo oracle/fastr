@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -653,6 +653,26 @@ public class ForeignFunctions {
         public boolean isCountFields(RList f) {
             return matchName(f, "countfields");
         }
+
+        @TruffleBoundary
+        @Specialization(guards = "isReadTableHead")
+        protected Object doReadTableHead(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            // TODO This is quite incomplete and just uses readLines, which works for some inputs
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            RConnection conn = (RConnection) argValues[0];
+            int nlines = castInt(frame, argValues[1]);
+            try {
+                return RDataFactory.createStringVector(conn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
+            }
+        }
+
+        public boolean isReadTableHead(RList f) {
+            return matchName(f, "readtablehead");
+        }
+
     }
 
     @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
@@ -752,6 +772,23 @@ public class ForeignFunctions {
         public boolean isWriteTable(RList f) {
             return matchName(f, "writetable");
         }
+
+        @TruffleBoundary
+        @Specialization(guards = "isTypeConvert")
+        protected Object doTypeConvert(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            RAbstractStringVector x = (RAbstractStringVector) argValues[0];
+            RAbstractStringVector naStrings = (RAbstractStringVector) argValues[1];
+            byte asIs = (byte) argValues[2];
+            String numeral = RRuntime.asString(argValues[3]);
+            return TypeConvert.typeConvert(x, naStrings, asIs, numeral);
+        }
+
+        public boolean isTypeConvert(RList f) {
+            return matchName(f, "typeconvert");
+        }
+
     }
 
 }
