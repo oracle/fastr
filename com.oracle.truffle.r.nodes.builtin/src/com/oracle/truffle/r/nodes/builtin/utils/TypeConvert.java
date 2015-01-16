@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
-
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+package com.oracle.truffle.r.nodes.builtin.utils;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-// TODO: turn into .External2
-// TODO: cover remaining cases (in particular complex numbers)
-@RBuiltin(name = "type.convert", kind = INTERNAL, parameterNames = {"x", "na.strings", "as.is", "dec", "numeral"})
-public abstract class TypeConvert extends RBuiltinNode {
+public class TypeConvert {
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
         for (int i = 0; i < naStrings.getLength(); i++) {
@@ -80,10 +72,7 @@ public abstract class TypeConvert extends RBuiltinNode {
         return RDataFactory.createLogicalVector(data, firstPos > 0 ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    @TruffleBoundary
-    protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, byte asIs, @SuppressWarnings("unused") String numeral) {
-        controlVisibility();
+    public static Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, byte asIs, @SuppressWarnings("unused") String numeral) {
         if (x.getLength() == 0) {
             return RDataFactory.createEmptyLogicalVector();
         }
