@@ -30,6 +30,7 @@ import com.oracle.truffle.api.instrument.SyntaxTag;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.nodes.instrument.trace.*;
 import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.data.*;
@@ -92,6 +93,12 @@ public class RInstrument {
      */
     private static boolean instrumentingEnabled;
 
+    /**
+     * The function names that were requested to be used in implicit {@code debug(f)} calls, when
+     * those functions are defined.
+     */
+    private static String[] debugFunctionNames;
+
     private static void putProbe(FunctionUID uid, Probe probe) {
         ArrayList<Probe> list = probeMap.get(uid);
         if (list == null) {
@@ -110,15 +117,32 @@ public class RInstrument {
      * features that need it are also enabled.
      */
     public static void initialize() {
-        instrumentingEnabled = FastROptions.Instrument.getValue() || REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
+        // @formatter:off
+        instrumentingEnabled = FastROptions.Instrument.getValue() || FastROptions.TraceCalls.getValue() || FastROptions.Rdebug.getValue() != null ||
+                        REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
+        // @formatter:on
         if (instrumentingEnabled) {
             Probe.registerASTProber(RASTProber.getRASTProber());
             Probe.addProbeListener(new RProbeListener());
+        }
+        String rdebugValue = FastROptions.Rdebug.getValue();
+        if (rdebugValue != null) {
+            debugFunctionNames = rdebugValue.split(",");
         }
     }
 
     public static boolean instrumentingEnabled() {
         return instrumentingEnabled;
+    }
+
+    public static void checkDebugRequested(String name, RFunction func) {
+        if (debugFunctionNames != null) {
+            for (String debugFunctionName : debugFunctionNames) {
+                if (debugFunctionName.equals(name)) {
+                    DebugHandling.enableDebug(func, "", RNull.instance, false);
+                }
+            }
+        }
     }
 
     /**

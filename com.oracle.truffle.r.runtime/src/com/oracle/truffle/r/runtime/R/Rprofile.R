@@ -21,9 +21,9 @@
 ### Mostly commented out as FastR currently does a lot of this in Java, which may change.
 
 #.GlobalEnv <- globalenv()
-#attach(NULL, name = "Autoloads")
-#.AutoloadEnv <- as.environment(2)
-#assign(".Autoloaded", NULL, envir = .AutoloadEnv)
+attach(NULL, name = "Autoloads")
+.AutoloadEnv <- as.environment(2)
+assign(".Autoloaded", NULL, envir = .AutoloadEnv)
 T <- TRUE
 F <- FALSE
 R.version <- structure(R.Version(), class = "simple.list")
@@ -35,32 +35,33 @@ R.version.string <- R.version$version.string
 ### NOTA BENE: options() for non-base package functionality are in places like
 ###            --------- ../utils/R/zzz.R
 #
-#options(keep.source = interactive())
-#options(warn = 0)
-## options(repos = c(CRAN="@CRAN@"))
-## options(BIOC = "http://www.bioconductor.org")
-#
-#options(timeout = 60)
-#options(encoding = "native.enc")
-#options(show.error.messages = TRUE)
-### keep in sync with PrintDefaults() in  ../../main/print.c :
-#options(scipen = 0)
-#options(max.print = 99999)# max. #{entries} in internal printMatrix()
-#options(add.smooth = TRUE)# currently only used in 'plot.lm'
-#options(stringsAsFactors = TRUE)
-#if(!interactive() && is.null(getOption("showErrorCalls")))
-#    options(showErrorCalls = TRUE)
-#
-#local({dp <- Sys.getenv("R_DEFAULT_PACKAGES")
-#       if(identical(dp, "")) # marginally faster to do methods last
-#           dp <- c("datasets", "utils", "grDevices", "graphics",
-#                   "stats", "methods")
-#       else if(identical(dp, "NULL")) dp <- character(0)
-#       else dp <- strsplit(dp, ",")[[1]]
+options(keep.source = interactive())
+options(warn = 0)
+# options(repos = c(CRAN="@CRAN@"))
+# options(BIOC = "http://www.bioconductor.org")
+
+options(timeout = 60)
+options(encoding = "native.enc")
+options(show.error.messages = TRUE)
+## keep in sync with PrintDefaults() in  ../../main/print.c :
+options(scipen = 0)
+options(max.print = 99999)# max. #{entries} in internal printMatrix()
+options(add.smooth = TRUE)# currently only used in 'plot.lm'
+options(stringsAsFactors = TRUE)
+if(!interactive() && is.null(getOption("showErrorCalls")))
+    options(showErrorCalls = TRUE)
+
+local({dp <- Sys.getenv("R_DEFAULT_PACKAGES")
+       if(identical(dp, "")) # marginally faster to do methods last
+           dp <- c("datasets", "utils", "grDevices", "graphics",
+                   "stats", "methods")
+       else if(identical(dp, "NULL")) dp <- character(0)
+       else dp <- strsplit(dp, ",")[[1]]
+	   # There is a problem with the \\1
 #       dp <- sub("[[:blank:]]*([[:alnum:]]+)", "\\1", dp) # strip whitespace
-#       options(defaultPackages = dp)
-#    })
-#
+       options(defaultPackages = dp)
+    })
+
 ## Expand R_LIBS_* environment variables.
 Sys.setenv(R_LIBS_SITE =
            .expand_R_libs_env_var(Sys.getenv("R_LIBS_SITE")))
@@ -70,6 +71,8 @@ Sys.setenv(R_LIBS_USER =
 #.First.sys <- function()
 #{
 #    for(pkg in getOption("defaultPackages")) {
+#		# for the moment we only handle "utils" this way
+#		if (pkg != "utils") next
 #        res <- require(pkg, quietly = TRUE, warn.conflicts = FALSE,
 #                       character.only = TRUE)
 #        if(!res)
@@ -87,7 +90,7 @@ Sys.setenv(R_LIBS_USER =
 #            warning('package "methods" in options("defaultPackages") was not found', call.=FALSE)
 #    }
 #}
-#
+
 #if(nzchar(Sys.getenv("R_BATCH"))) {
 #    .Last.sys <- function()
 #    {

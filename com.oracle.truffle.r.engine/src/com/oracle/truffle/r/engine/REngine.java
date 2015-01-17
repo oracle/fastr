@@ -106,6 +106,7 @@ public final class REngine implements RContext.Engine {
             RPerfAnalysis.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
+            ROptions.initialize();
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
@@ -115,28 +116,57 @@ public final class REngine implements RContext.Engine {
             RVersionInfo.initialize();
             RRNG.initialize();
             TempDirPath.initialize();
-            ROptions.initialize();
             RProfile.initialize();
             /*
-             * eval the system profile. Experimentally GnuR does not report warnings during this
-             * evaluation, but does for the site/user profiles
+             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
+             * during system profile evaluation, but does for the site/user profiles.
              */
-            singleton.parseAndEval(RProfile.systemProfile(), baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+            MaterializedFrame baseFrameMaterialized = baseFrame.materialize();
+            MaterializedFrame globalFrameMaterialized = globalFrame.materialize();
+            singleton.parseAndEval(RProfile.systemProfile(), baseFrameMaterialized, REnvironment.baseEnv(), false, false);
+            checkAndRunStartupFunction(".OptRequireMethods");
+
             reportWarnings = true;
-            REnvironment.packagesInitialize(RPackages.initialize());
-            RPackageVariables.initialize(); // TODO replace with R code
             Source siteProfile = RProfile.siteProfile();
             if (siteProfile != null) {
-                singleton.parseAndEval(siteProfile, baseFrame.materialize(), REnvironment.baseEnv(), false, false);
+                singleton.parseAndEval(siteProfile, baseFrameMaterialized, REnvironment.baseEnv(), false, false);
             }
+            Source userProfile = RProfile.userProfile();
+            if (userProfile != null) {
+                singleton.parseAndEval(userProfile, globalFrameMaterialized, REnvironment.globalEnv(), false, false);
+            }
+            /*
+             * TODO This is where we would load any saved user data
+             */
+            checkAndRunStartupFunction(".First");
+            checkAndRunStartupFunction(".First.sys");
+            /*
+             * TODO The following calls will eventually go away as this will be done in the system
+             * profile
+             */
+            REnvironment.packagesInitialize(RPackages.initialize());
+            RPackageVariables.initialize(); // TODO replace with R code
             initialized = true;
-        }
-        Source userProfile = RProfile.userProfile();
-        if (userProfile != null) {
-            singleton.parseAndEval(userProfile, globalFrame.materialize(), REnvironment.globalEnv(), false, false);
         }
         registerBaseGraphicsSystem();
         return globalFrame;
+    }
+
+    public static void checkAndRunStartupFunction(String name) {
+        Object func = REnvironment.globalEnv().findVar(name);
+        if (func != null && func instanceof RFunction) {
+            /*
+             * We could just invoke runCall, but that way causes problems for debugging, so we parse
+             * and eval a "fake" call.
+             */
+            RInstrument.checkDebugRequested(name, (RFunction) func);
+            String call = name + "()";
+            singleton.parseAndEval(Source.asPseudoFile(call, "<startup>"), REnvironment.globalEnv().getFrame(), REnvironment.globalEnv(), true, false);
+        }
+    }
+
+    public void checkAndRunLast(String name) {
+        checkAndRunStartupFunction(name);
     }
 
     private static void registerBaseGraphicsSystem() {

@@ -400,7 +400,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     private static int getMaxPrintLength() {
         int maxPrint = -1; // infinity
-        Object maxPrintObj = ROptions.getValue(BaseOptions.Name.MaxPrint.getName());
+        Object maxPrintObj = ROptions.getValue("max.print");
         if (maxPrintObj != null) {
 
             if (maxPrintObj instanceof Integer) {

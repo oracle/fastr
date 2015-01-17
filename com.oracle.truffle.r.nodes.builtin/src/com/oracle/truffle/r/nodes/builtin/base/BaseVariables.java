@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * The (global) variables defined in the {@code base} package, e.g. {@code .Platform}. As per
- * {@link BaseOptions} the definition and initialization is two-step process handled through the
- * {@link RPackageVariables} class.
+ * The (global) variables defined in the {@code base} package, e.g. {@code .Platform}. The
+ * definition and initialization is two-step process handled through the {@link RPackageVariables}
+ * class.
  *
  * N.B. Some variables are assigned explicitly in the R source files associated with the base
  * package.
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
     @CompilationFinal private static final String[] VARS = new String[]{
-        ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform"
+        ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform"
     };
     // @formatter:on
 
@@ -86,9 +86,6 @@ private int initialized = -1;
                 switch (var) {
                     case ".GlobalEnv":
                         value = REnvironment.globalEnv();
-                        break;
-                    case ".AutoloadEnv":
-                        value = REnvironment.autoloadEnv();
                         break;
                     case ".Machine":
                         value = createMachine();

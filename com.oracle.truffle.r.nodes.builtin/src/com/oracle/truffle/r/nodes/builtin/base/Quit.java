@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,7 +91,9 @@ public abstract class Quit extends RInvisibleBuiltinNode {
             consoleHandler.println("Image saving is not implemented");
         }
         if (runLast != 0) {
-            consoleHandler.println(".Last execution not implemented");
+            RContext.getEngine().checkAndRunLast(".Last");
+            // TODO errors should return to prompt if interactive
+            RContext.getEngine().checkAndRunLast(".Last.sys");
         }
         Utils.exit(status);
         return null;

@@ -116,7 +116,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static Global globalEnv;
     private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
-    private static REnvironment autoloadEnv;
     private static REnvironment namespaceRegistry;
 
     /**
@@ -199,14 +198,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Value set in the {@code .AutoloadEnv} variable.
-     */
-    public static REnvironment autoloadEnv() {
-        assert autoloadEnv != null;
-        return autoloadEnv;
-    }
-
-    /**
      * Invoked on startup to setup the global values and package search path. Owing to the
      * restrictions on storing {@link VirtualFrame} instances, this method creates the
      * {@link VirtualFrame} instance(s) for the packages and evaluates any associated R code using
@@ -224,9 +215,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
         baseEnv = new Base(baseFrame);
 
-        // autoload always next
-        autoloadEnv = NewEnv.createAutoload();
-        globalEnv = new Global(autoloadEnv, globalFrame);
+        globalEnv = new Global(baseEnv, globalFrame);
         initSearchList();
 
         // load base package first
@@ -235,7 +224,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     public static void packagesInitialize(ArrayList<RPackage> rPackages) {
         // now load rPackages, we need a new VirtualFrame for each
-        REnvironment pkgParent = autoloadEnv;
+        REnvironment pkgParent = globalEnv.parent;
         for (RPackage rPackage : rPackages) {
             VirtualFrame pkgFrame = RRuntime.createNonFunctionFrame();
             Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
@@ -700,6 +689,23 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         frameAccess.rm(key);
     }
 
+    /**
+     * Explicit search for a variable {@code name}; used in startup sequence.
+     *
+     * @return the value of the variable or {@code null} if not found.
+     */
+    public Object findVar(String varName) {
+        REnvironment env = this;
+        while (env != emptyEnv) {
+            Object value = env.get(varName);
+            if (value != null) {
+                return value;
+            }
+            env = env.parent;
+        }
+        return null;
+    }
+
     public RStringVector ls(boolean allNames, Pattern pattern) {
         return frameAccess.ls(allNames, pattern);
     }
@@ -905,12 +911,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             if (name != UNNAMED) {
                 setAttr(NAME_ATTR_KEY, name);
             }
-        }
-
-        private static REnvironment createAutoload() {
-            REnvironment autoload = RDataFactory.createNewEnv(baseEnv, 0);
-            autoload.setAttr(NAME_ATTR_KEY, "Autoloads");
-            return autoload;
         }
 
         public REnvMapFrameAccess getFrameAccess() {
