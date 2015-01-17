@@ -668,7 +668,10 @@ public abstract class ConnectionFunctions {
                     delegate = new FileReadTextRConnection(this);
                     break;
                 case Write:
-                    delegate = new FileWriteTextRConnection(this);
+                    delegate = new FileWriteTextRConnection(this, false);
+                    break;
+                case Append:
+                    delegate = new FileWriteTextRConnection(this, true);
                     break;
                 case ReadBinary:
                     delegate = new FileReadBinaryRConnection(this);
@@ -713,9 +716,9 @@ public abstract class ConnectionFunctions {
         private BufferedOutputStream outputStream;
         private BufferedWriter bufferedWriter;
 
-        FileWriteTextRConnection(FileRConnection base) throws IOException {
+        FileWriteTextRConnection(FileRConnection base, boolean append) throws IOException {
             super(base);
-            outputStream = new BufferedOutputStream(new FileOutputStream(base.path));
+            outputStream = new BufferedOutputStream(new FileOutputStream(base.path, append));
             bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
         }
 
