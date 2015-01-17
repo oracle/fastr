@@ -1,24 +1,13 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2015, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 package com.oracle.truffle.r.runtime;
 
@@ -28,10 +17,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * Central location for all R options, that is for the {@code options(...)} and {@code getOption}
- * builtins. When a package is loaded, it must call {@link #registerHandler}, which will immediately
- * callback the {@code addOptions} method that should register the options for that package. The
- * {@code initialize} method will be called (later) which can set values based on the current
- * execution environment.
+ * builtins.
  *
  * An unset option does not appear in the map but is represented as the value {@link RNull#instance}
  * . Setting with {@link RNull#instance} removes the option from the map and, therefore, from being
@@ -40,24 +26,37 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class ROptions {
 
-    public interface Handler {
-        void initialize();
-
-        void addOptions();
-    }
-
     private static final HashMap<String, Object> map = new HashMap<>();
-    private static final ArrayList<Handler> handlers = new ArrayList<>();
+
+    // Transcribed from src/main.options.c
 
     public static void initialize() {
-        for (Handler handler : handlers) {
-            handler.initialize();
-        }
+        ROptions.setValue("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
+        ROptions.setValue("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
+        ROptions.setValue("continue", RDataFactory.createStringVector("+ "));
+        ROptions.setValue("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
+        ROptions.setValue("digits", RDataFactory.createIntVectorFromScalar(7));
+        ROptions.setValue("echo", RDataFactory.createLogicalVectorFromScalar(true));
+        ROptions.setValue("echo", RDataFactory.createStringVector("native.enc"));
+        ROptions.setValue("expressions", RDataFactory.createIntVectorFromScalar(5000));
+        boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE");
+        ROptions.setValue("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
+        ROptions.setValue("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
+        ROptions.setValue("OutDec", RDataFactory.createStringVector("."));
+        ROptions.setValue("prompt", RDataFactory.createStringVector("> "));
+        ROptions.setValue("verbose", RDataFactory.createLogicalVectorFromScalar(false));
+        ROptions.setValue("nwarnings", RDataFactory.createIntVectorFromScalar(50));
+        ROptions.setValue("warning.length", RDataFactory.createIntVectorFromScalar(1000));
+        ROptions.setValue("width", RDataFactory.createIntVectorFromScalar(80));
+        ROptions.setValue("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
+        boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK");
+        ROptions.setValue("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
     }
 
-    public static void registerHandler(Handler handler) {
-        handlers.add(handler);
-        handler.addOptions();
+    private static boolean optionFromEnvVar(String envVar) {
+        String envValue = REnvVars.get(envVar);
+        return envValue != null && envValue.equals("yes");
+
     }
 
     public static Set<Map.Entry<String, Object>> getValues() {

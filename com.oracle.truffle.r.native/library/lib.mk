@@ -21,23 +21,45 @@
 # questions.
 #
 
-.PHONY: all clean libdir make_subdirs clean_subdirs
+include ../../platform.mk
 
-SUBDIRS = tools utils methods
+.PHONY: all clean cleanlib cleanobj force libr
 
-all: libdir make_subdirs
+PKG = $(PACKAGE)
 
-make_subdirs:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir; \
-	done
+SRC = src
+OBJ = lib/$(OS_DIR)
 
-clean: clean_subdirs
+C_SOURCES := $(wildcard $(SRC)/*.c)
 
-clean_subdirs:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir clean	; \
-	done
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+
+LIBDIR := $(OBJ)
+
+# packages seem to use .so even on Mac OS X and no "lib"
+LIB_PKG := $(OBJ)/$(PKG).so
+
+
+all: $(LIB_PKG)
+
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(LIB_PKG): $(OBJ) $(OBJ)/$(PACKAGE).o
+	mkdir -p $(LIBDIR)
+	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(OBJ)/$(PACKAGE).o
+
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ)/%.o: $(SRC)/%.f
+	$(FC) $(CFLAGS) -c $< -o $@
+
+clean: cleanobj cleanlib
+
+cleanlib:
+	rm -f $(LIB_PKG)
+
+cleanobj:
+	rm -f $(LIBDIR)/*.o
 	
-libdir:
-	mkdir -p $(TOPDIR)/../library

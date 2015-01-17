@@ -251,6 +251,12 @@ public final class RContext extends ExecutionContext {
         Object evalPromise(RPromise expr, SourceSection callSrc);
 
         /**
+         * Checks for the existence of {@code .Last/.Last.sys} and if present and bound to a
+         * function, invokes the (parameterless) function.
+         */
+        void checkAndRunLast(String name);
+
+        /**
          * Wraps the Truffle AST in {@code body} in an anonymous function and returns a
          * {@link RootCallTarget} for it.
          *

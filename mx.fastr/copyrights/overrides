@@ -17,6 +17,8 @@ com.oracle.truffle.r.native/include/jni/Rconfig.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rdefines.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rinternals.h,gnu_r.copyright
 com.oracle.truffle.r.native/library/tools/src/tools.c,no.copyright
+com.oracle.truffle.r.native/library/utils/src/utils.c,no.copyright
+com.oracle.truffle.r.native/library/methods/src/methods.c,no.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/BinaryOpsGroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchedCallNode.java,purdue.copyright
@@ -143,6 +145,7 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/TreeViewer.jav
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RSerialize.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ROptions.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RRNG.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RNGInitAdapter.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mt/MersenneTwister.java,hiroshima.copyright
