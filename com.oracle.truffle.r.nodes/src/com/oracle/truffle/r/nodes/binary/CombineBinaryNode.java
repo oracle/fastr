@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -30,14 +31,16 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class CombineBinaryNode extends BinaryNode {
 
-    private static final NACheck naCheck = NACheck.create();
+    private final NACheck naCheck = NACheck.create();
+    private final BranchProfile hasNamesProfile = BranchProfile.create();
 
     public abstract Object executeCombine(VirtualFrame frame, Object left, Object right);
 
-    protected static RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty) {
+    protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty) {
         if (orgVector.getNames() == null || orgVector.getNames() == RNull.instance) {
             return null;
         }
+        hasNamesProfile.enter();
         RStringVector orgNames = (RStringVector) orgVector.getNames();
         int orgLength = orgVector.getLength();
         String[] namesData = new String[orgLength + 1];
@@ -58,12 +61,13 @@ public abstract class CombineBinaryNode extends BinaryNode {
         return RDataFactory.createStringVector(namesData, naCheck.neverSeenNA());
     }
 
-    protected static RStringVector combineNames(RAbstractVector left, RAbstractVector right) {
+    protected RStringVector combineNames(RAbstractVector left, RAbstractVector right) {
         Object leftNames = left.getNames();
         Object rightNames = right.getNames();
         if ((leftNames == null || leftNames == RNull.instance) && (rightNames == null || rightNames == RNull.instance)) {
             return null;
         }
+        hasNamesProfile.enter();
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         String[] namesData = new String[leftLength + rightLength];

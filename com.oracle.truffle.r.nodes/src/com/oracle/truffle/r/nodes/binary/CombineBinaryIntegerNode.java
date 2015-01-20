@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,28 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
     }
 
     @Specialization
+    protected RIntVector performAbstractIntVectorInt(RAbstractIntVector left, int right) {
+        int dataLength = left.getLength();
+        int[] result = new int[dataLength + 1];
+        for (int i = 0; i < dataLength; ++i) {
+            result[i] = left.getDataAt(i);
+        }
+        result[dataLength] = right;
+        return RDataFactory.createIntVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false));
+    }
+
+    @Specialization
+    protected RIntVector performIntAbstractIntVector(int left, RAbstractIntVector right) {
+        int dataLength = right.getLength();
+        int[] result = new int[dataLength + 1];
+        for (int i = 0; i < dataLength; ++i) {
+            result[i + 1] = right.getDataAt(i);
+        }
+        result[0] = left;
+        return RDataFactory.createIntVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true));
+    }
+
+    @Specialization
     protected RIntVector combine(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
@@ -65,25 +87,4 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
         }
         return RDataFactory.createIntVector(result, left.isComplete() && right.isComplete(), combineNames(left, right));
     }
-
-    private static RIntVector performAbstractIntVectorInt(RAbstractIntVector left, int right) {
-        int dataLength = left.getLength();
-        int[] result = new int[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
-            result[i] = left.getDataAt(i);
-        }
-        result[dataLength] = right;
-        return RDataFactory.createIntVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false));
-    }
-
-    private static RIntVector performIntAbstractIntVector(int left, RAbstractIntVector right) {
-        int dataLength = right.getLength();
-        int[] result = new int[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
-            result[i + 1] = right.getDataAt(i);
-        }
-        result[0] = left;
-        return RDataFactory.createIntVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true));
-    }
-
 }
