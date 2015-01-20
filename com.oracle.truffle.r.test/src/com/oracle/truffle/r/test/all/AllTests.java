@@ -29464,6 +29464,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testVectorUpdateIgnore_dfb7b60a1fc99c12c275f5b97da0d293() {
+        assertEval("{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
+    }
+
+    @Test
     public void TestrGenBuiltinArg_testArg1_53fffbb7c52c1ba577a8291133bbfdf8() {
         assertEval("argv <- list(1+2i);Arg(argv[[1]]);");
     }

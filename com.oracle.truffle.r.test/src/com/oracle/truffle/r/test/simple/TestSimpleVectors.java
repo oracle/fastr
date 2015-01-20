@@ -1694,6 +1694,12 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void testVectorUpdateIgnore() {
+        assertEval("{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
+    }
+
+    @Test
     public void testListDefinitions() {
         assertEval("{ list(1:4) }");
         assertEval("{ list(1,list(2,list(3,4))) }");
