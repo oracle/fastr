@@ -102,27 +102,27 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
-    private final String name;
+    private final String identifier;
     private final RType mode;
     private final ReadKind kind;
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    public ReadVariableNode(String name, RType mode, ReadKind kind) {
-        this.name = name;
+    public ReadVariableNode(String identifier, RType mode, ReadKind kind) {
+        this.identifier = identifier;
         this.mode = mode;
         this.kind = kind;
         assert kind != ReadKind.Local;
     }
 
     protected ReadVariableNode() {
-        this.name = null;
+        this.identifier = null;
         this.mode = null;
         this.kind = null;
     }
 
-    public String getName() {
-        return name;
+    public String getIdentifier() {
+        return identifier;
     }
 
     public RType getMode() {
@@ -139,12 +139,12 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
     @Override
     public void deparse(State state) {
-        state.append(name);
+        state.append(identifier);
     }
 
     @Override
     public RNode substitute(REnvironment env) {
-        RNode result = RASTUtils.substituteName(name, env);
+        RNode result = RASTUtils.substituteName(identifier, env);
         if (result == null) {
             result = NodeUtil.cloneNode(this);
         }
@@ -306,7 +306,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            throw RError.error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, name);
+            throw RError.error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
         }
 
         @Override
@@ -474,7 +474,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         boolean match = false;
         do {
             // see if the current frame has a value of the given name
-            FrameSlot frameSlot = currentDescriptor.findFrameSlot(name);
+            FrameSlot frameSlot = currentDescriptor.findFrameSlot(identifier);
             StableValue<Object> valueAssumption = null;
             if (frameSlot != null) {
                 Object value = getValue(current, frameSlot);
@@ -534,10 +534,10 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
             if (level.slot == null) {
                 if (lastLevel instanceof DescriptorLevel) {
-                    lastLevel = new DescriptorSlotMissing((DescriptorLevel) lastLevel, level.descriptor.getNotInFrameAssumption(name));
+                    lastLevel = new DescriptorSlotMissing((DescriptorLevel) lastLevel, level.descriptor.getNotInFrameAssumption(identifier));
                 } else {
                     complex = true;
-                    lastLevel = new SlotMissing(lastLevel, level.descriptor.getNotInFrameAssumption(name));
+                    lastLevel = new SlotMissing(lastLevel, level.descriptor.getNotInFrameAssumption(identifier));
                 }
             } else {
                 if (level.valueAssumption != null && lastLevel instanceof DescriptorLevel) {
@@ -549,7 +549,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             }
         }
         if (complex && FastROptions.PrintComplexReads.getValue()) {
-            System.out.println("Building read '" + name + "': " + lastLevel + " " + kind);
+            System.out.println("Building read '" + identifier + "': " + lastLevel + " " + kind);
         }
 
         return lastLevel;
@@ -610,7 +610,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
         if (obj == RMissing.instance) {
             unexpectedMissingProfile.enter();
-            throw RError.error(RError.Message.ARGUMENT_MISSING, getName());
+            throw RError.error(RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {
             return true;

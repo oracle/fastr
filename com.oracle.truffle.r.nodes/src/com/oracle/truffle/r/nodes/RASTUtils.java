@@ -125,7 +125,7 @@ public class RASTUtils {
      */
     @TruffleBoundary
     public static RSymbol createRSymbol(Node readVariableNode) {
-        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getName());
+        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getIdentifier());
     }
 
     /**
@@ -337,7 +337,7 @@ public class RASTUtils {
                 throw RInternalError.unimplemented();
             }
         } else if (node instanceof ReadVariableNode) {
-            return ((ReadVariableNode) node).getName();
+            return ((ReadVariableNode) node).getIdentifier();
         } else {
             throw RInternalError.unimplemented();
         }

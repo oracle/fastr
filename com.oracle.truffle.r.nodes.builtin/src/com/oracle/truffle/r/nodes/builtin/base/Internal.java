@@ -79,7 +79,7 @@ public abstract class Internal extends RBuiltinNode {
 
         RootCallNode callNode = (RootCallNode) operand;
         RNode func = callNode.getFunctionNode();
-        String name = ((ReadVariableNode) func).getName();
+        String name = ((ReadVariableNode) func).getIdentifier();
         RFunction function = RContext.getEngine().lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
             errorProfile.enter();

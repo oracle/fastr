@@ -115,7 +115,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
                 if (arg instanceof ReadVariableNode) {
                     // Check for presence of "..." in the arguments
                     ReadVariableNode rvn = (ReadVariableNode) arg;
-                    if (ArgumentsTrait.isVarArg(rvn.getName())) {
+                    if (ArgumentsTrait.isVarArg(rvn.getIdentifier())) {
                         varArgsSymbolIndices.add(i);
                     }
                 }

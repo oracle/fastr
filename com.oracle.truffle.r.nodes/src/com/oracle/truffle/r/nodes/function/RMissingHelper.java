@@ -85,7 +85,7 @@ public class RMissingHelper {
 
         // ReadVariableNode denotes a name
         if (rvnArg instanceof ReadVariableNode) {
-            return ((ReadVariableNode) rvnArg).getName();
+            return ((ReadVariableNode) rvnArg).getIdentifier();
         }
         return null;
     }
@@ -145,7 +145,7 @@ public class RMissingHelper {
                     }
                     // promise.materialize(globalMissingPromiseProfile);
                     promise.setUnderEvaluation(true);
-                    result = isMissingArgument(promise.getFrame(), rvn.getName());
+                    result = isMissingArgument(promise.getFrame(), rvn.getIdentifier());
                 } finally {
                     promise.setUnderEvaluation(false);
                 }
