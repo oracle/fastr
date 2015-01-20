@@ -48,6 +48,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     private final NACheck na = NACheck.create();
 
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile warningProfile = BranchProfile.create();
 
     public UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
@@ -75,6 +76,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     private void emptyWarning() {
         if (semantics.getEmptyWarning() != null) {
+            warningProfile.enter();
             RError.warning(semantics.emptyWarning);
         }
     }
@@ -202,8 +204,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             opCount++;
         }
-        if (opCount == 0 && semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
+        if (opCount == 0) {
+            emptyWarning();
         }
         return result;
     }
@@ -228,8 +230,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             opCount++;
         }
-        if (opCount == 0 && semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
+        if (opCount == 0) {
+            emptyWarning();
         }
         return result;
     }
@@ -254,8 +256,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             opCount++;
         }
-        if (opCount == 0 && semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
+        if (opCount == 0) {
+            emptyWarning();
         }
         return result;
     }
@@ -268,8 +270,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
-        if (operand.getLength() == 0 && semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
+        if (operand.getLength() == 0) {
+            emptyWarning();
         }
         return result;
     }
@@ -282,8 +284,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
-        if (operand.getLength() == 0 && semantics.getEmptyWarning() != null) {
-            RError.warning(semantics.emptyWarning);
+        if (operand.getLength() == 0) {
+            emptyWarning();
         }
         return result;
     }
@@ -308,8 +310,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
                 }
                 opCount++;
             }
-            if (opCount == 0 && semantics.getEmptyWarning() != null) {
-                RError.warning(semantics.emptyWarning);
+            if (opCount == 0) {
+                emptyWarning();
             }
             return result;
         } else {
