@@ -641,8 +641,7 @@ public abstract class AccessArrayNode extends RNode {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createList(new Object[]{RNull.instance});
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createList(new Object[]{RNull.instance}, names);
+            return RDataFactory.createList(new Object[]{RNull.instance}, RDataFactory.createNAStringVector());
         }
     }
 
@@ -819,8 +818,7 @@ public abstract class AccessArrayNode extends RNode {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR, names);
+            return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
         }
     }
 
@@ -957,8 +955,7 @@ public abstract class AccessArrayNode extends RNode {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR, names);
+            return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
         }
     }
 
@@ -1095,8 +1092,7 @@ public abstract class AccessArrayNode extends RNode {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR, names);
+            return RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
         }
     }
 
@@ -1231,10 +1227,9 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RStringVector accessNA(RStringVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (vector.getNames() == RNull.instance) {
-            return RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
+            return RDataFactory.createNAStringVector();
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR, names);
+            return RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
         }
     }
 
@@ -1376,8 +1371,8 @@ public abstract class AccessArrayNode extends RNode {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR, names);
+            return RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR,
+                            RDataFactory.createNAStringVector());
         }
     }
 
@@ -1514,8 +1509,7 @@ public abstract class AccessArrayNode extends RNode {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createRawVector(new byte[]{0});
         } else {
-            RStringVector names = RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR);
-            return RDataFactory.createRawVector(new byte[]{0}, names);
+            return RDataFactory.createRawVector(new byte[]{0}, RDataFactory.createNAStringVector());
         }
     }
 

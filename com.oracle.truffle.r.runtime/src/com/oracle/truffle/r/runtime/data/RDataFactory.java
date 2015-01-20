@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,8 @@ public final class RDataFactory {
     private static final RStringVector EMPTY_STRING_VECTOR = createStringVector(0);
     private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(0);
     private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(0);
+
+    private static final RStringVector NA_STRING_VECTOR = createStringVector(new String[]{RRuntime.STRING_NA}, false);
 
     @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
     @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
@@ -140,6 +142,7 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVector(String value) {
+        assert RRuntime.isComplete(value);
         return createStringVector(new String[]{value}, true, null, null);
     }
 
@@ -235,6 +238,10 @@ public final class RDataFactory {
 
     public static RStringVector createEmptyStringVector() {
         return EMPTY_STRING_VECTOR;
+    }
+
+    public static RStringVector createNAStringVector() {
+        return NA_STRING_VECTOR;
     }
 
     public static RComplexVector createEmptyComplexVector() {
