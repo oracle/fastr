@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         return true;
     }
 
-    private static final class ConstantDoubleScalarNode extends ConstantNode {
+    public static final class ConstantDoubleScalarNode extends ConstantNode {
 
         private final Double objectValue;
         private final double doubleValue;
@@ -128,7 +128,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    private static final class ConstantLogicalScalarNode extends ConstantNode {
+    public static final class ConstantLogicalScalarNode extends ConstantNode {
 
         private final double doubleValue;
         private final int intValue;
@@ -171,7 +171,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    private static final class ConstantIntegerScalarNode extends ConstantNode {
+    public static final class ConstantIntegerScalarNode extends ConstantNode {
 
         private final Integer objectValue;
         private final int intValue;
@@ -202,7 +202,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    private static final class ConstantStringScalarNode extends ConstantNode {
+    public static final class ConstantStringScalarNode extends ConstantNode {
 
         private final String objectValue;
 

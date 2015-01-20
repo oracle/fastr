@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,10 +84,9 @@ public abstract class Repeat extends RBuiltinNode {
 
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] arguments) {
-        // times is at index 1; length.out, at 2; each, at 3
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        arguments[2] = FirstIntNodeGen.create(CastIntegerNodeGen.create(arguments[2], true, false, false));
-        arguments[3] = CastIntegerNodeGen.create(arguments[3], true, false, false);
+        arguments[1] = CastNode.toInteger(arguments[1], true, false, false); // times
+        arguments[2] = FirstIntNode.createWithWarning(CastNode.toInteger(arguments[2], false, false, false), RError.Message.FIRST_ELEMENT_USED, "length.out", RRuntime.INT_NA); // length.out
+        arguments[3] = CastNode.toInteger(arguments[3], true, false, false); // each
         return arguments;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,9 +58,9 @@ public abstract class Matrix extends RBuiltinNode {
         // nrow/ncol, at positions 1/2, are cast to int
         // from nrow/ncol, if they are vectors, the first element must be extracted
         // byrow, at position 3, is cast to logical
-        args[1] = FirstIntNodeGen.create(CastIntegerNodeGen.create(args[1], false, false, false));
-        args[2] = FirstIntNodeGen.create(CastIntegerNodeGen.create(args[2], false, false, false));
-        args[3] = CastLogicalNodeGen.create(args[3], false, false, false);
+        args[1] = FirstIntNodeGen.createWithError(CastNode.toInteger(args[1], false, false, false), RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // nrow
+        args[2] = FirstIntNodeGen.createWithError(CastNode.toInteger(args[2], false, false, false), RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // ncol
+        args[3] = CastLogicalNodeGen.create(args[3], false, false, false); // byrow
         return args;
     }
 
