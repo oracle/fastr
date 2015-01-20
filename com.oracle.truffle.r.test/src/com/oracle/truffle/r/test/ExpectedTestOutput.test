@@ -75326,6 +75326,12 @@ B FALSE TRUE
 [1] "Keywords:" ""          "device"
 
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit7
+#argv <- list('', '', FALSE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
+[[1]]
+character(0)
+
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit9
 #argv <- list('M.user:Temp', ':', FALSE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
 [[1]]

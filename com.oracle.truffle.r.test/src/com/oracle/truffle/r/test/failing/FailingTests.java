@@ -10399,11 +10399,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestrGenBuiltinstrsplit_teststrsplit7_c1054c01a38a718df1a22d3dc6da5081() {
-        assertEval("argv <- list('', '', FALSE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
-    }
-
-    @Ignore
     public void TestrGenBuiltinstrsplit_teststrsplit8_027f322702ffd271952f87c9dd4247bf() {
         assertEval("argv <- list('The \\\\usage entries for S3 methods should use the \\\\method markup and not their full name.\\n', '\\n', FALSE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
