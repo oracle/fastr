@@ -43,6 +43,11 @@ public class IsTypeFunctions {
     protected abstract static class ErrorAdapter extends RBuiltinNode {
         protected final BranchProfile errorProfile = BranchProfile.create();
 
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        }
+
         protected RError missingError() throws RError {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, "x");
@@ -50,10 +55,6 @@ public class IsTypeFunctions {
     }
 
     protected abstract static class IsFalseAdapter extends ErrorAdapter {
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
-        }
 
         @Specialization
         protected byte isType(RMissing value) throws RError {
@@ -63,25 +64,8 @@ public class IsTypeFunctions {
 
         @Fallback
         protected byte isType(Object value) {
+            controlVisibility();
             return RRuntime.LOGICAL_FALSE;
-        }
-    }
-
-    protected abstract static class IsTrueAdapter extends ErrorAdapter {
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
-        }
-
-        @Specialization
-        protected byte isType(RMissing value) throws RError {
-            controlVisibility();
-            throw missingError();
-        }
-
-        @Fallback
-        protected byte isType(Object value) {
-            return RRuntime.LOGICAL_TRUE;
         }
     }
 
@@ -97,7 +81,13 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsRecursive extends IsTrueAdapter {
+    public abstract static class IsRecursive extends ErrorAdapter {
+
+        @Specialization
+        protected byte isRecursive(RMissing value) throws RError {
+            controlVisibility();
+            throw missingError();
+        }
 
         @Specialization
         protected byte isRecursive(RNull arg) {
@@ -112,13 +102,13 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isAtomic(RList arg) {
+        protected byte isRecursive(RList arg) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
-        protected byte isAtomic(RFactor arg) {
+        protected byte isRecursive(RFactor arg) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
@@ -127,6 +117,11 @@ public class IsTypeFunctions {
             return arg.getElementClass() == Object.class;
         }
 
+        @Fallback
+        protected byte isRecursiveFallback(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_TRUE;
+        }
     }
 
     @RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"})
