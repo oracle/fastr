@@ -17,11 +17,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
+
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
         this.genericName = generic;
@@ -139,6 +142,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     private void findTargetFunction(Frame callerFrame) {
         findTargetFunctionLookup(callerFrame);
         if (targetFunction == null) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
         }
     }
