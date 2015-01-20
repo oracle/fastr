@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,7 +38,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"})
 public abstract class Strsplit extends RBuiltinNode {
 
-    protected final NACheck na = NACheck.create();
+    private final NACheck na = NACheck.create();
+    private final ConditionProfile emptySplitProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -48,26 +50,38 @@ public abstract class Strsplit extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RList split(RAbstractStringVector x, String split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
         RStringVector[] result = new RStringVector[x.getLength()];
         na.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
-            result[i] = splitIntl(x.getDataAt(i), split, na);
+        if (emptySplitProfile.profile(split.isEmpty())) {
+            for (int i = 0; i < x.getLength(); ++i) {
+                String data = x.getDataAt(i);
+                result[i] = na.check(data) ? RDataFactory.createNAStringVector() : emptySplitIntl(data);
+            }
+        } else {
+            for (int i = 0; i < x.getLength(); ++i) {
+                String data = x.getDataAt(i);
+                result[i] = na.check(data) ? RDataFactory.createNAStringVector() : splitIntl(data, split);
+            }
         }
         return RDataFactory.createList(result);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RList split(RAbstractStringVector x, RAbstractStringVector split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
         RStringVector[] result = new RStringVector[x.getLength()];
         na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
-            result[i] = splitIntl(x.getDataAt(i), getSplit(split, i), na);
+            String data = x.getDataAt(i);
+            String currentSplit = getSplit(split, i);
+            if (emptySplitProfile.profile(currentSplit.isEmpty())) {
+                result[i] = na.check(data) ? RDataFactory.createNAStringVector() : emptySplitIntl(data);
+            } else {
+                result[i] = na.check(data) ? RDataFactory.createNAStringVector() : splitIntl(data, currentSplit);
+            }
         }
         return RDataFactory.createList(result);
     }
@@ -77,8 +91,17 @@ public abstract class Strsplit extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static RStringVector splitIntl(String input, String separator, NACheck check) {
-        String[] result = input.split(separator);
-        return RDataFactory.createStringVector(result, check.neverSeenNA());
+    private static RStringVector splitIntl(String input, String separator) {
+        assert !RRuntime.isNA(input);
+        return RDataFactory.createStringVector(input.split(separator), true);
+    }
+
+    private static RStringVector emptySplitIntl(String input) {
+        assert !RRuntime.isNA(input);
+        String[] result = new String[input.length()];
+        for (int i = 0; i < input.length(); i++) {
+            result[i] = new String(new char[]{input.charAt(i)});
+        }
+        return RDataFactory.createStringVector(result, true);
     }
 }
