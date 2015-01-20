@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @CreateWrapper
 public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
-    @Child private ReadVariableNode varArgsSlotNode;
+    @Child private FrameSlotNode varArgsSlotNode;
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
@@ -82,7 +82,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
-        this.varArgsSlotNode = !containsVarArgsSymbol() ? null : ReadVariableNode.create(ArgumentsTrait.VARARG_NAME, RType.Any, false, false, true, false);
+        this.varArgsSlotNode = !containsVarArgsSymbol() ? null : FrameSlotNode.create(ArgumentsTrait.VARARG_NAME);
         ArgumentsTrait.internalize(names);
     }
 
@@ -163,20 +163,23 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         }
 
         // Unroll "..."s and insert their arguments into VarArgsSignature
-        Object varArgContent = varArgsSlotNode.execute(frame);
-
         int times = varArgsSymbolIndices.length;
-        return createSignature(varArgContent, times, true);
+        return createSignature(getVarargsAndNames(frame), times, true);
     }
 
-    public static VarArgsSignature createSignature(Object varArgContent, int times, boolean allowConstants) {
-        Object[] content;
-        if (!(varArgContent instanceof RArgsValuesAndNames)) {
+    private RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+        RArgsValuesAndNames varArgsAndNames;
+        try {
+            varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
+        } catch (FrameSlotTypeException | ClassCastException e) {
             throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
         }
+        return varArgsAndNames;
+    }
 
+    public static VarArgsSignature createSignature(RArgsValuesAndNames varArgsAndNames, int times, boolean allowConstants) {
+        Object[] content;
         // "..." empty?
-        RArgsValuesAndNames varArgsAndNames = (RArgsValuesAndNames) varArgContent;
         if (varArgsAndNames.isEmpty()) {
             content = new Object[]{VarArgsSignature.NO_VARARGS};
         } else {
@@ -219,8 +222,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
                     // reason for this whole method: Before argument matching, we have to unroll
                     // passed "..." every time, as their content might change per call site each
                     // call!
-                    Object varArgContent = varArgsSlotNode.execute(frame);
-                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
+                    RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame);
                     if (varArgInfo.isEmpty()) {
                         // An empty "..." vanishes
                         values = Utils.resizeArray(values, values.length - 1);
