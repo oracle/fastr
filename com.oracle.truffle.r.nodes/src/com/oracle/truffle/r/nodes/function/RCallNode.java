@@ -77,13 +77,13 @@ import com.oracle.truffle.r.runtime.env.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -96,11 +96,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -108,7 +108,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -120,7 +120,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -229,10 +229,6 @@ public abstract class RCallNode extends RNode {
         return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(function), arguments);
     }
 
-    public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(src, ConstantNode.create(function), arguments);
-    }
-
     /**
      * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
      * original call.
@@ -246,11 +242,8 @@ public abstract class RCallNode extends RNode {
      */
     public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerDirectives.transferToInterpreter();
-        ConstantNode functionNode = ConstantNode.create(function);
         assert internalCallArg instanceof UninitializedCallNode;
-        UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
-        current.assignSourceSection(src);
-        return current.createCacheNode(frame, function);
+        return UninitializedCallNode.createCacheNode(frame, function, ((UninitializedCallNode) internalCallArg).args, src);
     }
 
     /**
@@ -433,22 +426,14 @@ public abstract class RCallNode extends RNode {
         private final int depth;
 
         protected UninitializedCallNode(RNode function, CallArgumentsNode args) {
-            this(function, args, 0);
-        }
-
-        private UninitializedCallNode(RNode function, CallArgumentsNode args, int depth) {
             super(function, args);
-            this.depth = depth;
+            this.depth = 0;
         }
 
         protected UninitializedCallNode(UninitializedCallNode copy) {
-            this(copy, copy.depth + 1);
-        }
-
-        private UninitializedCallNode(UninitializedCallNode org, int depth) {
-            super(null, org.args);
-            this.depth = depth;
-            this.assignSourceSection(org.getSourceSection());
+            super(null, copy.args);
+            this.depth = copy.depth + 1;
+            this.assignSourceSection(copy.getSourceSection());
         }
 
         @Override
@@ -476,10 +461,8 @@ public abstract class RCallNode extends RNode {
             }
         }
 
-        private RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
+        private static RCallNode createCacheNode(VirtualFrame frame, RFunction function, CallArgumentsNode args, SourceSection callSrc) {
             CompilerDirectives.transferToInterpreter();
-            CallArgumentsNode clonedArgs = getClonedArgs();
-            SourceSection callSrc = getSourceSection();
             SourceSection argsSrc = args.getEncapsulatingSourceSection();
 
             RCallNode callNode = null;
@@ -490,25 +473,30 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, clonedArgs, callSrc, argsSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, callSrc, argsSrc);
                     callNode = root.inline(inlinedArgs);
                 }
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
-                if (clonedArgs.containsVarArgsSymbol()) {
+                if (args.containsVarArgsSymbol()) {
                     // Yes, maybe.
-                    VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(clonedArgs);
-                    VarArgsSignature varArgsSignature = clonedArgs.createSignature(frame);
-                    callNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, nextNode, callSrc, function, varArgsSignature, true);
+                    VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args);
+                    VarArgsSignature varArgsSignature = args.createSignature(frame);
+                    callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature, true);
                 } else {
                     // Nope! (peeewh)
-                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, callSrc, argsSrc);
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, callSrc, argsSrc);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
 
             callNode.assignSourceSection(callSrc);
             return callNode;
+        }
+
+        private RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
+            CompilerDirectives.transferToInterpreter();
+            return createCacheNode(frame, function, getClonedArgs(), getSourceSection());
         }
 
         public CallArgumentsNode getClonedArgs() {

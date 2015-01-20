@@ -192,7 +192,7 @@ public class RASTUtils {
             return GroupDispatchCallNode.create(gdcn.getGenericName(), gdcn.getGroupName(), callArgsNode, gdcn.getCallSrc());
         } else {
             RFunction rfn = (RFunction) fn;
-            return RCallNode.createStaticCall(null, rfn, callArgsNode);
+            return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode);
         }
     }
 
