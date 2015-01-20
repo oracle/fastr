@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,6 +19,8 @@ public final class Function extends ASTNode {
     private final List<ArgNode> signature;
     private final ASTNode body;
 
+    private String debugName;
+
     private Function(SourceSection source, List<ArgNode> signature, ASTNode body) {
         super(source);
         this.signature = signature;
@@ -31,6 +33,14 @@ public final class Function extends ASTNode {
 
     public ASTNode getBody() {
         return body;
+    }
+
+    public String getDebugName() {
+        return debugName;
+    }
+
+    public void setDebugName(String debugName) {
+        this.debugName = debugName;
     }
 
     @Override

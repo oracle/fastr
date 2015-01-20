@@ -179,16 +179,24 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
             FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
 
-            String functionBody = func.getSource().getCode();
             FrameDescriptor descriptor = new FrameDescriptor();
             FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, functionBody.substring(0,
-                            Math.min(functionBody.length(), 50)).replace("\n", "\\n"), false);
+            String description = getFunctionDescription(func);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         } catch (Throwable err) {
             err.printStackTrace();
         }
         return FunctionExpressionNode.create(callTarget);
+    }
+
+    private static String getFunctionDescription(Function func) {
+        if (func.getDebugName() != null) {
+            return func.getDebugName();
+        } else {
+            String functionBody = func.getSource().getCode();
+            return functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
+        }
     }
 
     @Override
@@ -513,6 +521,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(SimpleAssignVariable n) {
+        if (n.getExpr() instanceof Function) {
+            ((Function) n.getExpr()).setDebugName(n.getVariable().toString());
+        }
         RNode expression = n.getExpr().accept(this);
         return WriteVariableNode.create(n.getSource(), RRuntime.toString(n.getVariable()), expression, false, n.isSuper());
     }
