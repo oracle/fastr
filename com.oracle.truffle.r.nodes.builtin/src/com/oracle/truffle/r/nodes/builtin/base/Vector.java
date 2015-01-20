@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Vector extends RBuiltinNode {
 
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {
@@ -72,6 +73,7 @@ public abstract class Vector extends RBuiltinNode {
                 Arrays.fill(data, RNull.instance);
                 return RDataFactory.createList(data);
             default:
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
     }
