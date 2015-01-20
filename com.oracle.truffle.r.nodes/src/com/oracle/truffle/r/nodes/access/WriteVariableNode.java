@@ -424,6 +424,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
         private final BranchProfile invalidateProfile = BranchProfile.create();
+        private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
 
         protected abstract FrameSlotNode getFrameSlotNode();
 
@@ -432,29 +433,30 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization(guards = "isFrameLogicalKind")
         protected byte doLogical(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrame, frameSlot, value, invalidateProfile);
+            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization(guards = "isFrameIntegerKind")
         protected int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrame, frameSlot, value, invalidateProfile);
+            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization(guards = "isFrameDoubleKind")
         protected double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrame, frameSlot, value, invalidateProfile);
+            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization
         protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            Object newValue = shareObjectValue(enclosingFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(enclosingFrame, frameSlot, newValue, invalidateProfile);
+            MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
+            Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, invalidateProfile);
             return value;
         }
 
