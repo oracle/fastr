@@ -119,10 +119,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
                 return GroupDispatchCallNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, callSource);
             }
-            return RCallNode.createCall(callSource, ReadVariableNode.createForced(functionName, RType.Function), aCallArgNode);
+            return RCallNode.createCall(callSource, ReadVariableNode.createForced(functionName, RType.Function), aCallArgNode, callParam);
         } else {
             RNode lhs = call.getLhsNode().accept(this);
-            return RCallNode.createCall(callSource, lhs, aCallArgNode);
+            return RCallNode.createCall(callSource, lhs, aCallArgNode, callParam);
         }
     }
 
@@ -207,7 +207,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
             return GroupDispatchCallNode.create(functionName, RGroupGenerics.GROUP_OPS, aCallArgNode, op.getSource());
         }
-        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
+        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode, op);
     }
 
     @Override
@@ -219,7 +219,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
             return GroupDispatchCallNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, op.getSource());
         }
-        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
+        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode, op);
     }
 
     @Override

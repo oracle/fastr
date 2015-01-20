@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.*;
+import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.Func;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -77,13 +78,13 @@ import com.oracle.truffle.r.runtime.env.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -96,11 +97,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -108,7 +109,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -120,7 +121,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -225,8 +226,8 @@ public abstract class RCallNode extends RNode {
         return RTypesGen.expectDouble(execute(frame, function));
     }
 
-    public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(function), arguments);
+    public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments, ASTNode parserNode) {
+        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(function), arguments, parserNode);
     }
 
     /**
@@ -260,8 +261,8 @@ public abstract class RCallNode extends RNode {
         return callClone;
     }
 
-    public static RCallNode createCall(SourceSection src, RNode function, CallArgumentsNode arguments) {
-        RCallNode cn = new UninitializedCallNode(function, arguments);
+    public static RCallNode createCall(SourceSection src, RNode function, CallArgumentsNode arguments, ASTNode parserNode) {
+        RCallNode cn = new UninitializedCallNode(function, arguments, parserNode);
         cn.assignSourceSection(src);
         return cn;
     }
@@ -423,15 +424,18 @@ public abstract class RCallNode extends RNode {
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public static final class UninitializedCallNode extends RootCallNode {
 
-        private final int depth;
+        private int depth;
+        private final ASTNode parserNode;
 
-        protected UninitializedCallNode(RNode function, CallArgumentsNode args) {
+        protected UninitializedCallNode(RNode function, CallArgumentsNode args, ASTNode parserNode) {
             super(function, args);
             this.depth = 0;
+            this.parserNode = parserNode;
         }
 
         protected UninitializedCallNode(UninitializedCallNode copy) {
             super(null, copy.args);
+            this.parserNode = copy.parserNode;
             this.depth = copy.depth + 1;
             this.assignSourceSection(copy.getSourceSection());
         }
@@ -443,8 +447,8 @@ public abstract class RCallNode extends RNode {
         }
 
         private RCallNode specialize(VirtualFrame frame, RFunction function) {
-            RCallNode current = createCacheNode(frame, function);
             RootCallNode next = createNextNode();
+            RCallNode current = createCacheNode(frame, function, next instanceof UninitializedLazyCallNode);
             RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
             this.replace(cachedNode);
             return cachedNode;
@@ -452,7 +456,11 @@ public abstract class RCallNode extends RNode {
 
         private RootCallNode createNextNode() {
             if (depth + 1 < FUNCTION_INLINE_CACHE_SIZE) {
-                return new UninitializedCallNode(this);
+                if (parserNode != null) {
+                    return new UninitializedLazyCallNode(depth, parserNode);
+                } else {
+                    return new UninitializedCallNode(this);
+                }
             } else {
                 // 2 possible cases: G (Multiple functions, no varargs) or GV (Multiple function
                 // arbitrary varargs)
@@ -494,15 +502,40 @@ public abstract class RCallNode extends RNode {
             return callNode;
         }
 
-        private RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
+        private RCallNode createCacheNode(VirtualFrame frame, RFunction function, boolean reuseArgs) {
             CompilerDirectives.transferToInterpreter();
-            return createCacheNode(frame, function, getClonedArgs(), getSourceSection());
+            return createCacheNode(frame, function, reuseArgs ? args : getClonedArgs(), getSourceSection());
         }
 
         public CallArgumentsNode getClonedArgs() {
             return NodeUtil.cloneNode(args);
         }
 
+    }
+
+    @NodeInfo(cost = NodeCost.UNINITIALIZED)
+    public static final class UninitializedLazyCallNode extends RootCallNode {
+
+        private final int depth;
+        private final ASTNode parserNode;
+
+        protected UninitializedLazyCallNode(int depth, ASTNode parserNode) {
+            super(null, null);
+            this.depth = depth;
+            this.parserNode = parserNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction function) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return specialize().execute(frame, function);
+        }
+
+        private RCallNode specialize() {
+            UninitializedCallNode callNode = (UninitializedCallNode) parserNode.accept(new RTruffleVisitor());
+            callNode.depth = depth;
+            return replace(callNode);
+        }
     }
 
     /**

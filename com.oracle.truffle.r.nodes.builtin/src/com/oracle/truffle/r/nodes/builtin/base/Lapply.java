@@ -311,7 +311,7 @@ public abstract class Lapply extends RBuiltinNode {
                         System.arraycopy(varArgs.getNames(), 0, names, 1, varArgs.length());
                     }
                     CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, names);
-                    return RCallNode.createCall(null, owner.functionNode, argsNode);
+                    return RCallNode.createCall(null, owner.functionNode, argsNode, null);
                 }
             }
 

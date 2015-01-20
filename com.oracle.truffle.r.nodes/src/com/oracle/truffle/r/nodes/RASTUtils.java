@@ -184,15 +184,15 @@ public class RASTUtils {
             fn = ((ConstantNode) fn).getValue();
         }
         if (fn instanceof String) {
-            return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
+            return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode, null);
         } else if (fn instanceof ReadVariableNode) {
-            return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
+            return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode, null);
         } else if (fn instanceof GroupDispatchCallNode) {
             GroupDispatchCallNode gdcn = (GroupDispatchCallNode) fn;
             return GroupDispatchCallNode.create(gdcn.getGenericName(), gdcn.getGroupName(), callArgsNode, gdcn.getCallSrc());
         } else {
             RFunction rfn = (RFunction) fn;
-            return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode);
+            return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode, null);
         }
     }
 
