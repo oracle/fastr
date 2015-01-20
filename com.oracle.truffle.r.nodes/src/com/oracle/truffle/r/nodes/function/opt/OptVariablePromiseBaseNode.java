@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,8 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.UnResolvedReadLocalVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -42,10 +43,10 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
     public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn) {
         super(factory);
-        assert rvn.getForcePromise() == false;  // Should be caught by optimization check
+        assert rvn.getKind() != ReadKind.Forced;  // Should be caught by optimization check
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getName(), false);
-        this.readNode = UnResolvedReadLocalVariableNode.create(rvn.getName(), rvn.getMode(), rvn.getCopyValue(), rvn.getReadMissing());
+        this.readNode = ReadVariableNode.create(rvn.getName(), rvn.getMode(), ReadKind.Local);
     }
 
     @Override

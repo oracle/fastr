@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot} holds an
@@ -37,20 +41,61 @@ import com.oracle.truffle.r.runtime.*;
  * "<<-" but invalidates the assumption as soon as "eval" and the like comes into play.<br/>
  *
  *
- * @see #createMonitor()
- * @see #checkAndInvalidate(Frame, FrameSlot)
+ * @see #checkAndInvalidate(Frame, FrameSlot, BranchProfile)
  * @see #getMonitor(FrameSlot)
- * @see #isMonitorValid(FrameSlot)
  */
 public final class FrameSlotChangeMonitor {
-    private static final String ASSUMPTION_NAME = "slot change monitor";
 
-    /**
-     * @return An {@link Assumption} for this {@link FrameSlot} not be changed locally.
-     */
-    public static Assumption createMonitor() {
-        return Truffle.getRuntime().createAssumption(ASSUMPTION_NAME);
+    @SuppressWarnings("unused")
+    private static void out(String format, Object... args) {
+// System.out.println(String.format(format, args));
     }
+
+    private static final class FrameSlotInfo {
+        @CompilationFinal private StableValue<Object> stableValue;
+        public final Assumption localAssumption = Truffle.getRuntime().createAssumption(ASSUMPTION_NAME);
+        private final Object identifier;
+
+        public FrameSlotInfo(boolean isSingletonFrame, Object identifier) {
+            this.identifier = identifier;
+            if (isSingletonFrame) {
+                stableValue = new StableValue<>(null, identifier.toString());
+            } else {
+                stableValue = null;
+            }
+        }
+
+        public boolean needsInvalidation() {
+            return stableValue != null;
+        }
+
+        public void setValue(Object value) {
+            if (stableValue != null && stableValue.getValue() != value) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                stableValue.getAssumption().invalidate();
+                if (stableValue.getValue() == null && value instanceof RFunction) {
+                    out("setting singleton value %s = %s", identifier, value.getClass());
+                    stableValue = new StableValue<>(value, identifier.toString());
+                } else {
+                    out("setting non-singleton value %s", identifier);
+                    stableValue = null;
+                }
+            }
+        }
+
+        public void invalidateValue() {
+            if (stableValue != null) {
+                stableValue.getAssumption().invalidate();
+                stableValue = null;
+            }
+        }
+
+        public StableValue<Object> getStableValue() {
+            return stableValue;
+        }
+    }
+
+    private static final String ASSUMPTION_NAME = "slot change monitor";
 
     /**
      * Retrieves the not-changed-locally {@link Assumption} in the {@link FrameSlot#getInfo()}
@@ -62,116 +107,213 @@ public final class FrameSlotChangeMonitor {
      * @see FrameSlotChangeMonitor
      */
     public static Assumption getMonitor(FrameSlot slot) {
+        return getFrameSlotInfo(slot).localAssumption;
+    }
+
+    public static FrameSlotInfo getFrameSlotInfo(FrameSlot slot) {
         Object info = slot.getInfo();
-        if (!(info instanceof Assumption)) {
+        if (!(info instanceof FrameSlotInfo)) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold an Assumption in it's info field!");
+            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in it's info field!");
         }
-        return (Assumption) info;
+        return (FrameSlotInfo) info;
     }
 
-    /**
-     * Convenience method for {@link #getMonitor(FrameSlot)} and {@link Assumption#isValid()}.
-     *
-     * @param slot
-     * @return Directly returns whether a {@link FrameSlot} has ever been updated from a non-local
-     *         frame.
-     */
-    public static boolean isMonitorValid(FrameSlot slot) {
-        return getMonitor(slot).isValid();
-    }
+    // method for creating new frame slots
 
-    /**
-     * Invalidates the not-changed-locally {@link Assumption} of the given {@link FrameSlot}.
-     *
-     * @param slot
-     */
-    public static void invalidate(FrameSlot slot) {
-        Assumption notChangedLocally = getMonitor(slot);
-        notChangedLocally.invalidate();
-    }
-
-    /**
-     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
-     *
-     * @param curFrame
-     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
-     *            {@link RInternalError} otherwise
-     * @param invalidateProfile Used to guard the invalidation code.
-     */
-    public static void checkAndInvalidate(Frame curFrame, FrameSlot slot, BranchProfile invalidateProfile) {
-        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
-
-        // Check whether current frame is used outside a regular stack
-        if (RArguments.getIsIrregular(curFrame)) {
-            // False positive: Also invalidates a slot in the current active frame if that one is
-            // used inside eval or the like, but this cost is definitely neglectable.
-            invalidateProfile.enter();
-            getMonitor(slot).invalidate();
-        }
-    }
-
-    /**
-     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
-     *
-     * @param curFrame
-     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
-     *            {@link RInternalError} otherwise
-     * @param invalidateProfile Used to guard the invalidation code.
-     */
-    public static void checkAndInvalidate(VirtualFrame curFrame, FrameSlot slot, BranchProfile invalidateProfile) {
-        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
-
-        // Check whether current frame is used outside a regular stack
-        if (RArguments.getIsIrregular(curFrame)) {
-            // False positive: Also invalidates a slot in the current active frame if that one is
-            // used inside eval or the like, but this cost is definitely neglectable.
-            invalidateProfile.enter();
-            getMonitor(slot).invalidate();
-        }
-    }
-
-    /**
-     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
-     *
-     * @param curFrame
-     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
-     *            {@link RInternalError} otherwise
-     */
-    public static void checkAndInvalidate(Frame curFrame, FrameSlot slot) {
-        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
-
-        // Check whether current frame is used outside a regular stack
-        if (RArguments.getIsIrregular(curFrame)) {
-            // False positive: Also invalidates a slot in the current active frame if that one is
-            // used inside eval or the like
-            getMonitor(slot).invalidate();
-        }
-    }
-
-    /**
-     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
-     *
-     * @param curFrame
-     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
-     *            {@link RInternalError} otherwise
-     */
-    public static void checkAndInvalidate(VirtualFrame curFrame, FrameSlot slot) {
-        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
-
-        // Check whether current frame is used outside a regular stack
-        if (RArguments.getIsIrregular(curFrame)) {
-            // False positive: Also invalidates a slot in the current active frame if that one is
-            // used inside eval or the like
-            getMonitor(slot).invalidate();
-        }
+    public static FrameSlot addFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
+        boolean isSingletonFrame = descriptorSingletonAssumptions.containsKey(fd);
+        return fd.addFrameSlot(identifier, new FrameSlotInfo(isSingletonFrame, identifier), kind);
     }
 
     public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
-        return fd.findOrAddFrameSlot(identifier, createMonitor(), FrameSlotKind.Illegal);
+        FrameSlot frameSlot = fd.findFrameSlot(identifier);
+        return frameSlot != null ? frameSlot : addFrameSlot(fd, identifier, FrameSlotKind.Illegal);
     }
 
     public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
-        return fd.findOrAddFrameSlot(identifier, createMonitor(), initialKind);
+        FrameSlot frameSlot = fd.findFrameSlot(identifier);
+        return frameSlot != null ? frameSlot : addFrameSlot(fd, identifier, initialKind);
+    }
+
+    // methods for changing frame slot contents
+
+    /**
+     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
+     *
+     * @param curFrame
+     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
+     *            {@link RInternalError} otherwise
+     * @param invalidateProfile Used to guard the invalidation code.
+     */
+    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, BranchProfile invalidateProfile) {
+        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
+
+        // Check whether current frame is used outside a regular stack
+        if (RArguments.getIsIrregular(curFrame)) {
+            // False positive: Also invalidates a slot in the current active frame if that one is
+            // used inside eval or the like, but this cost is definitely negligible.
+            if (invalidateProfile != null) {
+                invalidateProfile.enter();
+            }
+            getMonitor(slot).invalidate();
+        }
+    }
+
+    public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, BranchProfile invalidateProfile) {
+        frame.setByte(frameSlot, newValue);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue);
+        }
+        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+    }
+
+    public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, BranchProfile invalidateProfile) {
+        frame.setInt(frameSlot, newValue);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue);
+        }
+        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+    }
+
+    public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, BranchProfile invalidateProfile) {
+        frame.setDouble(frameSlot, newValue);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue);
+        }
+        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+    }
+
+    public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, BranchProfile invalidateProfile) {
+        frame.setObject(frameSlot, newValue);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue);
+        }
+        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+    }
+
+    // update enclosing frames
+
+    public static void invalidateEnclosingFrame(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(frame);
+        getOrInitializeEnclosingFrameAssumption(frame.getFrameDescriptor(), null, enclosingFrame);
+        getOrInitializeEnclosingFrameDescriptorAssumption(frame.getFrameDescriptor(), null, enclosingFrame == null ? null : enclosingFrame.getFrameDescriptor());
+    }
+
+    private static final WeakHashMap<FrameDescriptor, StableValue<MaterializedFrame>> descriptorEnclosingFrameAssumptions = new WeakHashMap<>();
+    private static final WeakHashMap<FrameDescriptor, Boolean> descriptorSingletonAssumptions = new WeakHashMap<>();
+    private static final WeakHashMap<FrameDescriptor, StableValue<FrameDescriptor>> descriptorEnclosingDescriptorAssumptions = new WeakHashMap<>();
+
+    private static int rewriteFrameDescriptorAssumptionsCount;
+
+    public static synchronized void initializeFrameDescriptor(FrameDescriptor frameDescriptor, boolean frameCreated) {
+        descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorSingletonAssumptions.put(frameDescriptor, frameCreated ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    public static synchronized StableValue<MaterializedFrame> getEnclosingFrameAssumption(FrameDescriptor descriptor) {
+        return descriptorEnclosingFrameAssumptions.get(descriptor);
+    }
+
+    public static synchronized StableValue<FrameDescriptor> getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
+        return descriptorEnclosingDescriptorAssumptions.get(descriptor);
+    }
+
+    public static synchronized StableValue<FrameDescriptor> getOrInitializeEnclosingFrameDescriptorAssumption(FrameDescriptor frameDescriptor, StableValue<FrameDescriptor> value,
+                    FrameDescriptor newValue) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (value != null) {
+            value.getAssumption().invalidate();
+        }
+        StableValue<FrameDescriptor> currentValue = descriptorEnclosingDescriptorAssumptions.get(frameDescriptor);
+        if (currentValue.getAssumption().isValid()) {
+            if (currentValue.getValue() == newValue) {
+                return currentValue;
+            } else {
+                currentValue.getAssumption().invalidate();
+            }
+        }
+        currentValue = new StableValue<>(newValue, "enclosing frame descriptor");
+        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, currentValue);
+        if (value != null && value != StableValue.<FrameDescriptor> invalidated()) {
+            assert rewriteFrameDescriptorAssumptionsCount++ < 100;
+        }
+        return currentValue;
+    }
+
+    public static synchronized StableValue<MaterializedFrame> getOrInitializeEnclosingFrameAssumption(FrameDescriptor frameDescriptor, StableValue<MaterializedFrame> value, MaterializedFrame newValue) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (value != null) {
+            value.getAssumption().invalidate();
+        }
+        StableValue<MaterializedFrame> currentValue = descriptorEnclosingFrameAssumptions.get(frameDescriptor);
+        if (currentValue == null) {
+            return null;
+        }
+        if (currentValue.getAssumption().isValid()) {
+            if (currentValue.getValue() == newValue) {
+                return currentValue;
+            } else {
+                currentValue.getAssumption().invalidate();
+            }
+        }
+        if (currentValue == StableValue.<MaterializedFrame> invalidated()) {
+            currentValue = new StableValue<>(newValue, "enclosing frame");
+            descriptorEnclosingFrameAssumptions.put(frameDescriptor, currentValue);
+            return currentValue;
+        } else {
+            descriptorEnclosingFrameAssumptions.remove(frameDescriptor);
+            return null;
+        }
+    }
+
+    public static boolean checkSingletonFrame(VirtualFrame vf) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        return checkSingletonFrameInternal(vf);
+    }
+
+    private static synchronized boolean checkSingletonFrameInternal(VirtualFrame vf) {
+        Boolean value = descriptorSingletonAssumptions.get(vf.getFrameDescriptor());
+        if (value == null) {
+            return false;
+        } else if (value == Boolean.FALSE) {
+            out("marking frame descriptor %s as singleton", vf.getFrameDescriptor());
+            descriptorSingletonAssumptions.put(vf.getFrameDescriptor(), Boolean.TRUE);
+            return true;
+        } else {
+            out("marking frame descriptor %s as non-singleton", vf.getFrameDescriptor());
+            for (FrameSlot slot : vf.getFrameDescriptor().getSlots()) {
+                if (getFrameSlotInfo(slot).needsInvalidation()) {
+                    getFrameSlotInfo(slot).invalidateValue();
+                    out("  invalidating singleton slot %s", slot.getIdentifier());
+                }
+            }
+            descriptorSingletonAssumptions.remove(vf.getFrameDescriptor());
+            return false;
+        }
+    }
+
+    public static synchronized StableValue<Object> getStableValueAssumption(FrameDescriptor descriptor, FrameSlot frameSlot, Object value) {
+        CompilerAsserts.neverPartOfCompilation();
+        StableValue<Object> stableValue = getFrameSlotInfo(frameSlot).getStableValue();
+        if (stableValue != null) {
+            assert descriptorSingletonAssumptions.containsKey(descriptor) : "single frame slot within non-singleton descriptor";
+            assert stableValue.getValue() == value || (stableValue.getValue() != null && (stableValue.getValue().equals(value) || !stableValue.getAssumption().isValid())) : stableValue.getValue() +
+                            " vs. " + value;
+        }
+        return stableValue;
+    }
+
+    public static void updateValue(FrameSlot slot, Object value) {
+        FrameSlotInfo info = getFrameSlotInfo(slot);
+        if (info.needsInvalidation()) {
+            info.setValue(value);
+        }
     }
 }

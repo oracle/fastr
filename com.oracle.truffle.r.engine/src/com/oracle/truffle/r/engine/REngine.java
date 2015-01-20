@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
@@ -332,8 +333,7 @@ public final class REngine implements RContext.Engine {
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
             RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source), "<repl wrapper>");
-            Object result = runCall(callTarget, frame, printResult, true);
-            return result;
+            return runCall(callTarget, frame, printResult, true);
         } catch (NoViableAltException | MismatchedTokenException e) {
             if (e.token.getType() == Token.EOF && allowIncompleteSource) {
                 // the parser got stuck at the eof, request another line
@@ -411,6 +411,7 @@ public final class REngine implements RContext.Engine {
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
         FrameDescriptor descriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;

@@ -22,23 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {
 
@@ -50,6 +51,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
+
+    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
+    @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
+    private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
+    @CompilationFinal private boolean checkSingletonFrame = true;
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -79,9 +85,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
-        this.onExitSlot = skipExit ? null : FrameSlotNode.create(InternalFrameSlot.OnExit, false);
+        this.onExitSlot = skipExit ? null : FrameSlotNode.create(RFrameSlot.OnExit, false);
         this.instrumentationApplied = substituteFrame;
         this.uuid = substituteFrame ? null : FunctionUIDFactory.get().createUID();
+
+        this.enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(frameDesc);
+        this.enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(frameDesc);
     }
 
     public FunctionUID getUID() {
@@ -103,12 +112,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
+            verifyEnclosingAssumptions(vf);
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
             return ex.getResult();
         } finally {
-            if (onExitProfile.profile(onExitSlot != null && onExitSlot.hasValue(vf))) {
+            if (onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
                 if (onExitExpressionCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
@@ -124,6 +134,42 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     onExitExpressionCache.execute(vf, node);
                 }
                 RContext.setVisible(isVisible);
+            }
+        }
+    }
+
+    private void verifyEnclosingAssumptions(VirtualFrame vf) {
+        if (!substituteFrame && checkSingletonFrame) {
+            checkSingletonFrame = FrameSlotChangeMonitor.checkSingletonFrame(vf);
+        }
+        if (enclosingFrameAssumption != null) {
+            try {
+                enclosingFrameAssumption.getAssumption().check();
+            } catch (InvalidAssumptionException e) {
+                enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(getFrameDescriptor());
+            }
+            if (enclosingFrameAssumption != null) {
+                MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
+                if (enclosingFrameAssumption.getValue() != enclosingFrame) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
+                }
+            }
+        }
+        if (enclosingFrameDescriptorAssumption != null) {
+            try {
+                enclosingFrameDescriptorAssumption.getAssumption().check();
+            } catch (InvalidAssumptionException e) {
+                enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(getFrameDescriptor());
+            }
+            if (enclosingFrameDescriptorAssumption != null) {
+                MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
+                FrameDescriptor enclosingFrameDescriptor = enclosingFrame == null ? null : enclosingFrameProfile.profile(enclosingFrame).getFrameDescriptor();
+                if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(getFrameDescriptor(), enclosingFrameDescriptorAssumption,
+                                    enclosingFrameDescriptor);
+                }
             }
         }
     }

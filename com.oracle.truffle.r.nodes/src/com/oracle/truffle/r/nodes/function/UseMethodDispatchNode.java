@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,6 +19,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
@@ -125,7 +126,10 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @TruffleBoundary
     private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
-        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
+        // todo: cannot create frame descriptors in compiled code
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
+        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);

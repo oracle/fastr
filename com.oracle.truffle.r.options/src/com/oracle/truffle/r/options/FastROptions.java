@@ -52,13 +52,15 @@ public class FastROptions {
     @Option(help = "Enable Instrumentation")
     public static final OptionValue<Boolean> Instrument = new OptionValue<>(false);
     @Option(help = "Enable binding of builtins into package environment")
-    public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(false);
+    public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(true);
     @Option(help = "Trace all R function calls (requires +Instrumentation)")
     public static final OptionValue<Boolean> TraceCalls = new OptionValue<>(false);
     @Option(help = "Collect Performance Data")
     public static final OptionValue<String> PerfStats = new OptionValue<>(null);
     @Option(help = "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)")
     public static final OptionValue<String> Rdebug = new OptionValue<>(null);
+    @Option(help = "Print complex (non-local, non-assumption) reads to the console")
+    public static final OptionValue<Boolean> PrintComplexReads = new OptionValue<>(false);
 
     // Promises optimizations
     @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,11 +94,10 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             Object result = frame.getValue(slot);
-            frame.setObject(slot, null); // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot, invalidateProfile);
+
+            // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
             return result;
         }
-
     }
-
 }

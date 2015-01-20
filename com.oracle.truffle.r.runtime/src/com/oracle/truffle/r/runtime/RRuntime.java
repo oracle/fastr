@@ -14,11 +14,12 @@ package com.oracle.truffle.r.runtime;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 import edu.umd.cs.findbugs.annotations.*;
 
@@ -145,14 +146,9 @@ public class RRuntime {
      * global environment.
      */
     public static VirtualFrame createNonFunctionFrame() {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(), new FrameDescriptor());
-    }
-
-    /**
-     * Create a {@link VirtualFrame} for {@link RFunction} {@code function}.
-     */
-    public static VirtualFrame createFunctionFrame(RFunction function, SourceSection callSrc, int depth) {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function, callSrc, depth), new FrameDescriptor());
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
+        return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(), frameDescriptor);
     }
 
     public static RComplex createComplexNA() {

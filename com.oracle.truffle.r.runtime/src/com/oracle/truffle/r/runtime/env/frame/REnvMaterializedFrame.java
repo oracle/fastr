@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,20 +39,22 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  * was immutable. No attempt is currently being made to make variable access efficient.
  */
 public class REnvMaterializedFrame implements MaterializedFrame {
-    private final Map<String, Object> map;
+    private final Map<Object, Object> map;
     private final FrameDescriptor descriptor;
     @CompilationFinal private final Object[] arguments;
     private byte[] tags;
 
     public REnvMaterializedFrame(UsesREnvMap env) {
         descriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, true);
         REnvMapFrameAccess frameAccess = env.getFrameAccess();
         map = frameAccess.getMap();
         tags = new byte[map.size()];
         int i = 0;
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
+        for (Map.Entry<Object, Object> entry : map.entrySet()) {
             FrameSlotKind kind = getFrameSlotKindForValue(entry.getValue());
-            addFrameSlot(entry.getKey(), kind);
+            FrameSlot slot = FrameSlotChangeMonitor.addFrameSlot(descriptor, entry.getKey(), kind);
+            FrameSlotChangeMonitor.updateValue(slot, entry.getValue());
             tags[i++] = (byte) kind.ordinal();
         }
         frameAccess.setMaterializedFrame(this);
@@ -71,14 +73,11 @@ public class REnvMaterializedFrame implements MaterializedFrame {
         FrameSlot slot = descriptor.findFrameSlot(name);
         if (slot == null) {
             FrameSlotKind kind = getFrameSlotKindForValue(value);
-            slot = addFrameSlot(name, kind);
+            slot = FrameSlotChangeMonitor.addFrameSlot(descriptor, name, kind);
             resize();
             tags[slot.getIndex()] = (byte) kind.ordinal();
         }
-    }
-
-    private FrameSlot addFrameSlot(String name, FrameSlotKind kind) {
-        return descriptor.addFrameSlot(name, FrameSlotChangeMonitor.createMonitor(), kind);
+        FrameSlotChangeMonitor.updateValue(slot, value);
     }
 
     /**
@@ -115,7 +114,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setObject(FrameSlot slot, Object value) {
         verifySet(slot, FrameSlotKind.Object);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
@@ -125,7 +124,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setByte(FrameSlot slot, byte value) {
         verifySet(slot, FrameSlotKind.Byte);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
@@ -135,7 +134,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setBoolean(FrameSlot slot, boolean value) {
         verifySet(slot, FrameSlotKind.Boolean);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     public int getInt(FrameSlot slot) throws FrameSlotTypeException {
@@ -145,7 +144,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setInt(FrameSlot slot, int value) {
         verifySet(slot, FrameSlotKind.Int);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     public long getLong(FrameSlot slot) throws FrameSlotTypeException {
@@ -155,7 +154,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setLong(FrameSlot slot, long value) {
         verifySet(slot, FrameSlotKind.Long);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
@@ -165,7 +164,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setFloat(FrameSlot slot, float value) {
         verifySet(slot, FrameSlotKind.Float);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
@@ -175,7 +174,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public void setDouble(FrameSlot slot, double value) {
         verifySet(slot, FrameSlotKind.Double);
-        map.put((String) slot.getIdentifier(), value);
+        map.put(slot.getIdentifier(), value);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,15 +70,17 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     @Override
     @TruffleBoundary
     public void lockBindings() {
-        Set<String> bindings = getBindingsForLock();
+        Set<Object> bindings = getBindingsForLock();
         if (bindings != null) {
-            for (String binding : bindings) {
-                lockBinding(binding);
+            for (Object binding : bindings) {
+                if (binding instanceof String) {
+                    lockBinding((String) binding);
+                }
             }
         }
     }
 
-    protected Set<String> getBindingsForLock() {
+    protected Set<Object> getBindingsForLock() {
         return null;
     }
 

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,12 +13,14 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 public class NextMethodDispatchNode extends S3DispatchNode {
 
@@ -68,7 +70,10 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
         // TODO: implement names passing
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(frame) + 1, mergedArgs, RArguments.EMPTY_STRING_ARRAY);
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
+        // todo: cannot create frame descriptors in compiled code
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
+        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
         defineVarsNew(newFrame);
         if (storedFunctionName != null) {
             RArguments.setS3Method(newFrame, storedFunctionName);

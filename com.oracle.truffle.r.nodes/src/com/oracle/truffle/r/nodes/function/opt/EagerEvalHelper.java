@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
+import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.*;
 
@@ -106,7 +108,7 @@ public class EagerEvalHelper {
     public static boolean isVariableArgument(RNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
-        return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).getForcePromise();
+        return expr instanceof ReadVariableNode && ((ReadVariableNode) expr).getKind() != ReadKind.Forced;
     }
 
     /**

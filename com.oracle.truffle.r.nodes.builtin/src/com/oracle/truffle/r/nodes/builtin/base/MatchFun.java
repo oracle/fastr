@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -61,7 +62,7 @@ public abstract class MatchFun extends RBuiltinNode {
         if (lookup == null || !fun.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = fun;
-            ReadVariableNode rvn = ReadVariableNode.create(fun, RType.Function, false);
+            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(fun);
             lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
         Object r = lookup.execute(frame);

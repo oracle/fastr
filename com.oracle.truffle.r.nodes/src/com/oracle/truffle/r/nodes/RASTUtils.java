@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,20 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
-import com.oracle.truffle.r.nodes.instrument.RInstrumentableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * A collection of useful methods for working with {@code AST} instances.
@@ -71,7 +71,7 @@ public class RASTUtils {
      */
     @TruffleBoundary
     public static ReadVariableNode createReadVariableNode(String name) {
-        return ReadVariableNode.create(name, RType.Any, false, true, false, true);
+        return ReadVariableNode.createForced(name, RType.Any);
     }
 
     /**
@@ -236,13 +236,10 @@ public class RASTUtils {
      */
     public static Object findFunctionName(Node node, boolean quote) {
         RNode child = (RNode) unwrap(findFunctionNode(node));
-        if (child instanceof ReadVariableNode) {
-            if (child instanceof BuiltinFunctionVariableNode) {
-                BuiltinFunctionVariableNode bvn = (BuiltinFunctionVariableNode) child;
-                return bvn.getFunction();
-            } else {
-                return createRSymbol(child);
-            }
+        if (child instanceof ConstantNode && ((ConstantNode) child).getValue() instanceof RFunction) {
+            return ((ConstantNode) child).getValue();
+        } else if (child instanceof ReadVariableNode) {
+            return createRSymbol(child);
         } else if (child instanceof GroupDispatchCallNode) {
             GroupDispatchCallNode groupDispatchNode = (GroupDispatchCallNode) child;
             String gname = groupDispatchNode.getGenericName();

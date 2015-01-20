@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,7 +45,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "on.exit", kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = {0})
 public abstract class OnExit extends RInvisibleBuiltinNode {
 
-    @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(InternalFrameSlot.OnExit, true);
+    @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);
 
     private final ConditionProfile addProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile existingProfile = ConditionProfile.createBinaryProfile();
@@ -84,8 +83,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
             }
         } else {
             // initialize the list of exit handlers
-            frame.setObject(slot, current = new ArrayList<>());
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, current = new ArrayList<>(), invalidateProfile);
         }
         if (!empty) {
             current.add(expr.getRep());

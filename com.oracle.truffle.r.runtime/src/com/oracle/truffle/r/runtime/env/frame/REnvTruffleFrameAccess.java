@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,11 +74,10 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         // Handle RPromise: It cannot be cast to a int/double/byte!
         if (value instanceof RPromise) {
             if (slot == null) {
-                slot = addFrameSlot(fd, key, FrameSlotKind.Object);
+                slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, FrameSlotKind.Object);
             }
             // Overwrites former FrameSlotKind
-            frame.setObject(slot, value);
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, slot);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, null);
             return;
         }
 
@@ -88,7 +87,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         // Handle all other values
         if (slot == null) {
             if (valueSlotKind != FrameSlotKind.Illegal) {
-                slot = addFrameSlot(fd, key, valueSlotKind);
+                slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, valueSlotKind);
             }
         } else {
             if (valueSlotKind != FrameSlotKind.Illegal && valueSlotKind != slot.getKind()) {
@@ -97,27 +96,22 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         }
         switch (valueSlotKind) {
             case Byte:
-                frame.setByte(slot, (byte) value);
+                FrameSlotChangeMonitor.setByteAndInvalidate(frame, slot, (byte) value, null);
                 break;
             case Int:
-                frame.setInt(slot, (int) value);
+                FrameSlotChangeMonitor.setIntAndInvalidate(frame, slot, (int) value, null);
                 break;
             case Double:
-                frame.setDouble(slot, (double) value);
+                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, slot, (double) value, null);
                 break;
             case Object:
-                frame.setObject(slot, value);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, null);
                 break;
             case Illegal:
                 break;
             default:
                 throw new PutException(Message.GENERIC, "frame slot exception");
         }
-        FrameSlotChangeMonitor.checkAndInvalidate(frame, slot);
-    }
-
-    private static FrameSlot addFrameSlot(FrameDescriptor fd, String key, FrameSlotKind kind) {
-        return fd.addFrameSlot(key, FrameSlotChangeMonitor.createMonitor(), kind);
     }
 
     @Override
@@ -144,7 +138,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    protected Set<String> getBindingsForLock() {
+    protected Set<Object> getBindingsForLock() {
         // TODO Auto-generated method stub
         return null;
     }

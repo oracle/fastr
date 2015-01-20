@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     // is needed for the replacement forms of vector updates where a vector is assigned to a
     // temporary (visible) variable and then, again, to the original variable (which would cause the
     // vector to be copied each time);
-    protected final void writeObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
+    protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
         Object newValue = value;
         if (!isArgWrite()) {
             // for the meaning of INVISIBLE mode see the comment preceding the current method
@@ -133,8 +133,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 }
             }
         }
-
-        frame.setObject(frameSlot, newValue);
+        return newValue;
     }
 
     protected void deparseHelper(State state, String op) {
@@ -245,40 +244,37 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return ResolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, name, frameSlot, mode);
         }
 
-        @Specialization(guards = "isFrameBooleanKind")
+        @Specialization(guards = "isFrameLogicalKind")
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
-            frame.setByte(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
+            FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization(guards = "isFrameIntegerKind")
         protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
-            frame.setInt(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
+            FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization(guards = "isFrameDoubleKind")
         protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
-            frame.setDouble(frameSlot, value);
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
+            FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization
         protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
-            writeObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
-            FrameSlotChangeMonitor.checkAndInvalidate(frame, frameSlot, invalidateProfile);
+            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, invalidateProfile);
             return value;
         }
 
-        protected boolean isFrameBooleanKind(FrameSlot frameSlot, @SuppressWarnings("unused") byte value) {
-            return isBooleanKind(frameSlot);
+        protected boolean isFrameLogicalKind(FrameSlot frameSlot, @SuppressWarnings("unused") byte value) {
+            return isLogicalKind(frameSlot);
         }
 
         protected boolean isFrameIntegerKind(FrameSlot frameSlot, @SuppressWarnings("unused") int value) {
@@ -427,45 +423,43 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
+        private final BranchProfile invalidateProfile = BranchProfile.create();
 
         protected abstract FrameSlotNode getFrameSlotNode();
 
         public abstract Mode getMode();
 
-        @Specialization(guards = "isFrameBooleanKind")
-        protected byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        @Specialization(guards = "isFrameLogicalKind")
+        protected byte doLogical(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            enclosingFrame.setByte(frameSlot, value);
-            FrameSlotChangeMonitor.invalidate(frameSlot);
+            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrame, frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization(guards = "isFrameIntegerKind")
         protected int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            enclosingFrame.setInt(frameSlot, value);
-            FrameSlotChangeMonitor.invalidate(frameSlot);
+            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrame, frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization(guards = "isFrameDoubleKind")
         protected double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            enclosingFrame.setDouble(frameSlot, value);
-            FrameSlotChangeMonitor.invalidate(frameSlot);
+            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrame, frameSlot, value, invalidateProfile);
             return value;
         }
 
         @Specialization
         protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            writeObjectValue(enclosingFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
-            FrameSlotChangeMonitor.invalidate(frameSlot);
+            Object newValue = shareObjectValue(enclosingFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(enclosingFrame, frameSlot, newValue, invalidateProfile);
             return value;
         }
 
-        protected boolean isFrameBooleanKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
-            return isBooleanKind(frameSlot);
+        protected boolean isFrameLogicalKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+            return isLogicalKind(frameSlot);
         }
 
         protected boolean isFrameIntegerKind(int arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
@@ -477,7 +471,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
     }
 
-    protected boolean isBooleanKind(FrameSlot frameSlot) {
+    protected boolean isLogicalKind(FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Boolean);
     }
 

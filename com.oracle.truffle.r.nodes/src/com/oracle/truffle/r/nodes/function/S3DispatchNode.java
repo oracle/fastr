@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,6 +20,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -119,7 +120,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (lookup == null || !functionName.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = functionName;
-            ReadVariableNode rvn = ReadVariableNode.create(functionName, RType.Function, false, true);
+            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName);
             lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
         Object func = targetFunction = null;

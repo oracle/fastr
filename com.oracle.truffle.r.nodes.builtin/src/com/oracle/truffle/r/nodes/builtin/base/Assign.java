@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,10 +114,9 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     private void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
         FrameSlot fs = frameSlot;
         if (fs == null) {
-            fs = frame.getFrameDescriptor().addFrameSlot(variableName, FrameSlotChangeMonitor.createMonitor(), FrameSlotKind.Illegal);
+            fs = FrameSlotChangeMonitor.addFrameSlot(frame.getFrameDescriptor(), variableName, FrameSlotKind.Illegal);
         }
-        frame.setObject(fs, variableValue);
-        FrameSlotChangeMonitor.checkAndInvalidate(frame, fs, invalidateProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, variableValue, invalidateProfile);
     }
 
     private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {

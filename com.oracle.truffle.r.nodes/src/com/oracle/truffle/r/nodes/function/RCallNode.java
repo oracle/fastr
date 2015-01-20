@@ -30,14 +30,15 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.RDeparse.Func;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This class denotes a call site to a function,e.g.:
@@ -225,11 +226,11 @@ public abstract class RCallNode extends RNode {
     }
 
     public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(src, ReadVariableNode.create(function, RType.Function, false), arguments);
+        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(function), arguments);
     }
 
     public static RCallNode createStaticCall(SourceSection src, RFunction function, CallArgumentsNode arguments) {
-        return RCallNode.createCall(src, BuiltinFunctionVariableNode.create(function, function.getName()), arguments);
+        return RCallNode.createCall(src, ConstantNode.create(function), arguments);
     }
 
     /**
@@ -245,7 +246,7 @@ public abstract class RCallNode extends RNode {
      */
     public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerDirectives.transferToInterpreter();
-        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNode.create(function, name);
+        ConstantNode functionNode = ConstantNode.create(function);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
         current.assignSourceSection(src);

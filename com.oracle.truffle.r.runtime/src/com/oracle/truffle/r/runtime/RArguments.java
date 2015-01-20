@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -29,6 +30,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 // @formatter:off
 /**
@@ -188,19 +190,11 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs) {
-        return create(functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs);
-    }
-
-    public static Object[] createS3Args(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs, String[] names) {
-        return createS3Args(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, names);
+        return create(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, EMPTY_STRING_ARRAY);
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs, String[] names) {
         return create(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, names);
-    }
-
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
-        return create(null, functionObj, callSrc, depth, enclosingFrame, evaluatedArgs, EMPTY_STRING_ARRAY);
     }
 
     public static Object[] create(REnvironment env, RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
@@ -209,9 +203,9 @@ public final class RArguments {
         return a;
     }
 
-    public static Object[] createS3Args(REnvironment env, RFunction functionObj, SourceSection callSrc, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
+    public static Object[] createS3Args(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs, String[] names) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + names.length + S3_VAR_COUNT];
-        createHelper(a, env, functionObj, callSrc, depth, enclosingFrame, evaluatedArgs, names);
+        createHelper(a, null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, names);
         return a;
     }
 
@@ -407,11 +401,13 @@ public final class RArguments {
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
+        CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = getArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;
         if (arguments[INDEX_FUNCTION] != null) {
             ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
         }
+        FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 
     /**
@@ -420,11 +416,14 @@ public final class RArguments {
      * for {@code frame}. assert {@code} does not denote a function.
      */
     public static void attachFrame(Frame frame, MaterializedFrame newEncl) {
+        CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = getArgumentsWithEvalCheck(frame);
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] newArguments = newEncl.getArguments();
         newArguments[INDEX_ENCLOSING_FRAME] = encl;
         arguments[INDEX_ENCLOSING_FRAME] = newEncl;
+        FrameSlotChangeMonitor.invalidateEnclosingFrame(newEncl);
+        FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 
     /**
@@ -432,9 +431,11 @@ public final class RArguments {
      * enclosing frame of its current enclosing frame. assert {@code} does not denote a function.
      */
     public static void detachFrame(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = getArgumentsWithEvalCheck(frame);
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] enclArguments = encl.getArguments();
         arguments[INDEX_ENCLOSING_FRAME] = enclArguments[INDEX_ENCLOSING_FRAME];
+        FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 }

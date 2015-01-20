@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,11 @@ public final class RInternalError extends Error {
         reportError(this, null);
     }
 
+    public RInternalError(Throwable cause, String message, Object... args) {
+        super(String.format(message, args), cause);
+        reportError(this, null);
+    }
+
     public static RuntimeException unimplemented() {
         CompilerDirectives.transferToInterpreter();
         throw new RInternalError("not implemented");
@@ -48,6 +53,11 @@ public final class RInternalError extends Error {
     public static RuntimeException shouldNotReachHere() {
         CompilerDirectives.transferToInterpreter();
         throw new RInternalError("should not reach here");
+    }
+
+    public static RuntimeException shouldNotReachHere(Throwable cause) {
+        CompilerDirectives.transferToInterpreter();
+        throw new RInternalError(cause, "should not reach here");
     }
 
     public static RuntimeException shouldNotReachHere(String msg) {

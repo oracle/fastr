@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,11 @@ package com.oracle.truffle.r.runtime.env.frame;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Variant of {@link REnvFrameAccess} environments where the "frame" is a {@link LinkedHashMap},
@@ -39,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  * {@link REnvMaterializedFrame} is created.
  */
 public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
-    private final Map<String, Object> map;
+    private final Map<Object, Object> map;
     private REnvMaterializedFrame frame;
 
     public REnvMapFrameAccess(int size) {
@@ -51,7 +50,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @TruffleBoundary
-    private static LinkedHashMap<String, Object> newHashMap(int size) {
+    private static LinkedHashMap<Object, Object> newHashMap(int size) {
         return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
     }
 
@@ -81,22 +80,21 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     @Override
     public RStringVector ls(boolean allNames, Pattern pattern) {
-        if (allNames && pattern == null) {
-            return RDataFactory.createStringVector(map.keySet().toArray(RRuntime.STRING_ARRAY_SENTINEL), RDataFactory.COMPLETE_VECTOR);
-        } else {
-            ArrayList<String> matchedNamesList = new ArrayList<>(map.size());
-            for (String name : map.keySet()) {
-                if (REnvironment.includeName(name, allNames, pattern)) {
-                    matchedNamesList.add(name);
+        ArrayList<String> matchedNamesList = new ArrayList<>(map.size());
+        for (Object name : map.keySet()) {
+            if (name instanceof String) {
+                String stringName = (String) name;
+                if (REnvironment.includeName(stringName, allNames, pattern)) {
+                    matchedNamesList.add(stringName);
                 }
             }
-            String[] names = new String[matchedNamesList.size()];
-            return RDataFactory.createStringVector(matchedNamesList.toArray(names), RDataFactory.COMPLETE_VECTOR);
         }
+        String[] names = new String[matchedNamesList.size()];
+        return RDataFactory.createStringVector(matchedNamesList.toArray(names), RDataFactory.COMPLETE_VECTOR);
     }
 
     @Override
-    protected Set<String> getBindingsForLock() {
+    protected Set<Object> getBindingsForLock() {
         return map.keySet();
     }
 
@@ -109,7 +107,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
         frame = null;
     }
 
-    public Map<String, Object> getMap() {
+    public Map<Object, Object> getMap() {
         return map;
     }
 

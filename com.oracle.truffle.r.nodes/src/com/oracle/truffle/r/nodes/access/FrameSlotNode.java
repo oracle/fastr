@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,17 +31,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 @TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends Node {
-
-    public static enum InternalFrameSlot {
-        /**
-         * Stores the expression that needs to be executed when the function associated with the
-         * frame terminates.
-         */
-        OnExit
-    }
 
     public abstract boolean hasValue(Frame frame);
 
@@ -65,7 +58,7 @@ public abstract class FrameSlotNode extends Node {
         return new UnresolvedFrameSlotNode(name, createIfAbsent);
     }
 
-    public static FrameSlotNode create(InternalFrameSlot slot, boolean createIfAbsent) {
+    public static FrameSlotNode create(RFrameSlot slot, boolean createIfAbsent) {
         return new UnresolvedFrameSlotNode(slot, createIfAbsent);
     }
 

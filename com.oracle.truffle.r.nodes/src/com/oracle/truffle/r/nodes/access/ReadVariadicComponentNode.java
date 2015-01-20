@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class ReadVariadicComponentNode extends RNode {
 
-    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RType.Any, false, true);
+    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", false);
     @Child private PromiseHelperNode promiseHelper;
 
     private final int index;

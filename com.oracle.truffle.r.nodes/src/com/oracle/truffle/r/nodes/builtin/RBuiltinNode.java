@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedArgsNames", type = String[].class)})
 @NodeChild(value = "arguments", type = RNode[].class)
@@ -177,7 +178,9 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         FormalArguments formals = FormalArguments.create(names, node.getParameterValues());
 
         // Setup
-        RBuiltinRootNode root = new RBuiltinRootNode(node, formals, new FrameDescriptor());
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        RBuiltinRootNode root = new RBuiltinRootNode(node, formals, frameDescriptor);
+        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, false);
         return Truffle.getRuntime().createCallTarget(root);
     }
 

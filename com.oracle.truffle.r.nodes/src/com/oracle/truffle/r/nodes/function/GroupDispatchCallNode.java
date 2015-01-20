@@ -18,13 +18,14 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 import edu.umd.cs.findbugs.annotations.*;
 
@@ -290,7 +291,7 @@ class GroupDispatchNode extends S3DispatchNode {
         // assuming builtin functions don't get redefined.
         if (builtInNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            builtInNode = insert(ReadVariableNode.create(this.genericName, RType.Function, false));
+            builtInNode = insert(ReadVariableNode.createFunctionLookup(genericName));
             try {
                 builtinFunc = builtInNode.executeFunction(frame);
             } catch (UnexpectedResultException e) {
@@ -356,7 +357,10 @@ class GroupDispatchNode extends S3DispatchNode {
     protected Object executeHelper(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
         Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
-        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
+        // todo: cannot create frame descriptors in compiled code
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
+        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
         defineVarsNew(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);
         if (writeGroup) {
