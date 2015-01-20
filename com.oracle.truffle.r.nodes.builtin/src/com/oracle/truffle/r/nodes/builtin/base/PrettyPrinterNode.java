@@ -467,9 +467,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 if (!printNamesHeader) {
                     int position = index + 1;
                     String positionString = intString(position);
-                    for (int i = 0; i < maxPositionLength - positionString.length(); ++i) {
-                        builder.append(' ');
-                    }
+                    appendSpaces(builder, maxPositionLength - positionString.length());
                     builder.append("[").append(positionString).append("]");
                 }
                 for (int j = 0; j < numberOfColumns && index < vector.getLength(); ++j) {
@@ -479,11 +477,9 @@ public abstract class PrettyPrinterNode extends RNode {
                         // for some reason vectors of strings are printed differently
                         if (isStringVector) {
                             builder.append(valueString);
-                        }
-                        for (int k = 0; k < (columnWidth - 1) - valueString.length(); ++k) {
-                            builder.append(' ');
-                        }
-                        if (!isStringVector) {
+                            appendSpaces(builder, (columnWidth - 1) - valueString.length());
+                        } else {
+                            appendSpaces(builder, (columnWidth - 1) - valueString.length());
                             builder.append(valueString);
                         }
                     } else {
@@ -493,9 +489,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         }
                         // for some reason vectors of raw values are printed differently
                         if (!isRawVector) {
-                            for (int k = 0; k < actualColumnWidth - valueString.length(); ++k) {
-                                builder.append(' ');
-                            }
+                            appendSpaces(builder, actualColumnWidth - valueString.length());
                         }
                         builder.append(valueString);
                         if (isRawVector) {
@@ -505,9 +499,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         if (RRuntime.isNA(headerString)) {
                             headerString = RRuntime.NA_HEADER;
                         }
-                        for (int k = 0; k < actualColumnWidth - headerString.length(); ++k) {
-                            headerBuilder.append(' ');
-                        }
+                        appendSpaces(headerBuilder, actualColumnWidth - headerString.length());
                         headerBuilder.append(headerString);
                     }
                     index++;
@@ -541,6 +533,12 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
             }
             return builderToString(resultBuilder);
+        }
+    }
+
+    private static void appendSpaces(StringBuilder builder, int spaces) {
+        for (int k = 0; k < spaces; ++k) {
+            builder.append(' ');
         }
     }
 
@@ -599,9 +597,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     public static StringBuilder spaces(StringBuilder sb, int s) {
         if (s > 0) {
-            for (int i = 0; i < s; ++i) {
-                sb.append(' ');
-            }
+            appendSpaces(sb, s);
         }
         return sb;
     }
