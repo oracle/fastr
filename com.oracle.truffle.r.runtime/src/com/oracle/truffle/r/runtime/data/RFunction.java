@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -44,14 +45,14 @@ public final class RFunction extends RScalar implements RAttributable {
     private final String name;
     private final RootCallTarget target;
     private final RBuiltin builtin;
-    private MaterializedFrame enclosingFrame;
+    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrame;
     protected RAttributes attributes;
 
     RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
-        this.enclosingFrame = enclosingFrame;
+        this.enclosingFrame = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
     }
 
     public boolean isBuiltin() {
@@ -75,15 +76,27 @@ public final class RFunction extends RScalar implements RAttributable {
     }
 
     public MaterializedFrame getEnclosingFrame() {
-        return enclosingFrame;
+        while (true) {
+            StableValue<MaterializedFrame> value = enclosingFrame;
+            try {
+                value.getAssumption().check();
+            } catch (InvalidAssumptionException e) {
+                // in this case execution fell back to the interpreter
+                continue;
+            }
+            return value.getValue();
+        }
     }
 
     public void setEnclosingFrame(MaterializedFrame frame) {
-        this.enclosingFrame = frame;
+        if (enclosingFrame.getValue() != frame) {
+            enclosingFrame.getAssumption().invalidate();
+            enclosingFrame = new StableValue<>(frame, "RFunction enclosing frame");
+        }
     }
 
     public RFunction copy() {
-        return new RFunction(name, target, builtin, enclosingFrame);
+        return new RFunction(name, target, builtin, enclosingFrame.getValue());
     }
 
     public RAttributes initAttributes() {
