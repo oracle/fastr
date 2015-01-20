@@ -84,7 +84,7 @@ public abstract class Lapply extends RBuiltinNode {
         @Child LapplyIteratorNode iterator = new LapplyIteratorNode();
         @Child LapplyFunctionNode functionNode = new LapplyFunctionNode();
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(LAPPLY_VEC_ELEM, iterator, false, false);
-        @Child private ReadVariableNode readVectorElement = ReadVariableNode.create(LAPPLY_VEC_ELEM, true);
+        @Child private ReadVariableNode readVectorElement = ReadVariableNode.create(LAPPLY_VEC_ELEM, false);
 
         public Object[] execute(VirtualFrame frame, RVector vecMat, RFunction fun, RArgsValuesAndNames optionalArgs) {
             // zero the iterator value in the current frame
