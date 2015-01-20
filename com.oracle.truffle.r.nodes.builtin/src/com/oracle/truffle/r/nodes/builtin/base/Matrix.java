@@ -58,8 +58,8 @@ public abstract class Matrix extends RBuiltinNode {
         // nrow/ncol, at positions 1/2, are cast to int
         // from nrow/ncol, if they are vectors, the first element must be extracted
         // byrow, at position 3, is cast to logical
-        args[1] = FirstIntNodeGen.createWithError(CastNode.toInteger(args[1], false, false, false), RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // nrow
-        args[2] = FirstIntNodeGen.createWithError(CastNode.toInteger(args[2], false, false, false), RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // ncol
+        args[1] = FirstIntNode.createWithError(CastNode.toInteger(args[1], false, false, false), RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // nrow
+        args[2] = FirstIntNode.createWithError(CastNode.toInteger(args[2], false, false, false), RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // ncol
         args[3] = CastLogicalNodeGen.create(args[3], false, false, false); // byrow
         return args;
     }
