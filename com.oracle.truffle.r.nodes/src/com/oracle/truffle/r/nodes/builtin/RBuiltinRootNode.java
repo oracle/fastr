@@ -119,4 +119,8 @@ public final class RBuiltinRootNode extends RRootNode {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
+    public String toString() {
+        return "RBuiltin(" + (builtin.getRBuiltin() == null ? "" : builtin.getRBuiltin().name()) + ")";
+    }
 }
