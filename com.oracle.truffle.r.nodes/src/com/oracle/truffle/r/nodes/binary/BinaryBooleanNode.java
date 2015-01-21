@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode.*;
@@ -62,6 +63,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private final NACheck rightNACheck = NACheck.create();
 
     private final NAProfile resultNAProfile = NAProfile.create();
+    private final ConditionProfile noDimensionsProfile = ConditionProfile.createBinaryProfile();
 
     public BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
@@ -747,8 +749,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
-    protected static boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
-        if (!left.hasDimensions() || !right.hasDimensions()) {
+    protected boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
+        if (noDimensionsProfile.profile(!left.hasDimensions() || !right.hasDimensions())) {
             return false;
         }
         int[] leftDimensions = left.getDimensions();
