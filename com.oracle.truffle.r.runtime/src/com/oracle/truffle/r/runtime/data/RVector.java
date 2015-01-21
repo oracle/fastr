@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,6 +89,10 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     protected RVector(boolean complete, int length, int[] dimensions) {
         this(complete, length, dimensions, null);
+    }
+
+    public void setComplete(boolean complete) {
+        this.complete = complete;
     }
 
     private void removeAttributeMapping(String key) {

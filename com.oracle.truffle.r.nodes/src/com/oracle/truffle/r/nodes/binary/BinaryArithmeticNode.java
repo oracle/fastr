@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -496,6 +496,44 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     // double vector and vectors
+
+    public boolean isTemporary(RDoubleVector vector) {
+        return vector.isTemporary();
+    }
+
+    @Specialization(guards = "isTemporary(arguments[0])")
+    protected RDoubleVector doDoubleVector(RDoubleVector left, double right) {
+        int length = left.getLength();
+        if (emptyVector.profile(length == 0)) {
+            return left;
+        }
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
+        double[] result = left.getDataWithoutCopying();
+        for (int i = 0; i < length; ++i) {
+            result[i] = performArithmeticDouble(result[i], right);
+        }
+        left.setComplete(isComplete());
+        return left;
+    }
+
+    @Specialization(guards = "isTemporary(arguments[1])")
+    protected RDoubleVector doDoubleVector(double left, RDoubleVector right) {
+        int length = right.getLength();
+        if (emptyVector.profile(length == 0)) {
+            return right;
+        }
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        resultNACheck.enable(arithmetic.introducesNA());
+        double[] result = right.getDataWithoutCopying();
+        for (int i = 0; i < length; ++i) {
+            result[i] = performArithmeticDouble(left, result[i]);
+        }
+        right.setComplete(isComplete());
+        return right;
+    }
 
     @Specialization
     protected RDoubleVector doDoubleVector(RAbstractDoubleVector left, double right) {
