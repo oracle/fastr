@@ -407,6 +407,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (operand > dimSize) {
                 outOfBoundsPositive.enter();
                 if (numDimensions != 1 || (!isSubset && !assignment)) {
+                    error.enter();
                     throw RError.error(assignment ? getEncapsulatingSourceSection() : null, RError.Message.SUBSCRIPT_BOUNDS);
                 } else {
                     return assignment ? operand : RRuntime.INT_NA;
@@ -553,6 +554,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (numDimensions == 1) {
                 return RRuntime.INT_NA;
             } else {
+                error.enter();
                 throw RError.error(isSubset ? null : getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
@@ -617,6 +619,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                         // container is a list
                         return RNull.instance;
                     } else {
+                        error.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
                     }
                 }
@@ -632,6 +635,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     return findPosition(container, dimNames.getDataAt(dimension), operand, exact);
                 }
             } else {
+                error.enter();
                 if (isSubset || container.getElementClass() == Object.class) {
                     throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
                 } else {
@@ -671,6 +675,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (emptyOperandProfile.profile(operand.getLength() == 0)) {
                     if (listProfile.profile(container.getElementClass() == Object.class)) {
                         // container is a list
+                        error.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
                     } else {
                         return 0;
@@ -811,6 +816,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                         data[i] = RRuntime.INT_NA;
                         hasSeenNA = true;
                     } else {
+                        error.enter();
                         throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
                     }
                 }
@@ -896,6 +902,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                                 return findPositions(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             }
                         } else {
+                            error.enter();
                             throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
                         }
                     }
@@ -956,12 +963,14 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     hasSeenNA = true;
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
+                        error.enter();
                         throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
                     }
                     if (numDimensions == 1 && pos > container.getLength()) {
                         if (isSubset) {
                             outOfBounds = true;
                         } else {
+                            error.enter();
                             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
                         }
                     }
@@ -969,6 +978,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     hasSeenPositive = true;
                 } else if (pos == 0) {
                     if (!isSubset) {
+                        error.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
                     }
                     seenZero.enter();
@@ -981,6 +991,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             }
             if (hasSeenPositive || hasSeenNA) {
                 if (hasSeenNegative) {
+                    error.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
                 } else if (hasSeenZero || (outOfBounds && numDimensions == 1)) {
                     // eliminate 0-s and handle out-of-bounds for single-subscript accesses
@@ -1001,6 +1012,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 }
             } else if (hasSeenNegative) {
                 if (hasSeenNA) {
+                    error.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
                 }
                 boolean[] excludedPositions = new boolean[dimLength];
