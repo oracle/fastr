@@ -244,7 +244,7 @@ public final class Utils {
     @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, int depth) {
         return Truffle.getRuntime().iterateFrames(frameInstance -> {
-            Frame f = frameInstance.getFrame(fa, false);
+            Frame f = frameInstance.getFrame(fa, true);
             return RArguments.getDepth(f) == depth ? f : null;
         });
     }
