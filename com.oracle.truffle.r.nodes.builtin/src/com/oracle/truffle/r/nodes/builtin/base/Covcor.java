@@ -5,12 +5,13 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -76,25 +77,18 @@ public abstract class Covcor extends RBuiltinNode {
         double[] answerData = new double[ncx * ncy];
 
         double[] xm = new double[ncx];
-        double[] ym = new double[ncy];
-
         if (y == null) {
             if (everything) {
-                boolean[] ind = new boolean[ncx];
-                findNA1(n, ncx, x, ind);
-                sd0 = covNA1(n, ncx, x, xm, ind, answerData, cor, iskendall);
+                sd0 = covNA1(n, ncx, x, xm, answerData, cor, iskendall);
             } else {
                 RIntVector ind = RDataFactory.createIntVector(n);
                 complete1(n, ncx, x, ind, naFail);
                 sd0 = covComplete1(n, ncx, x, xm, ind, answerData, cor, iskendall);
             }
         } else {
+            double[] ym = new double[ncy];
             if (everything) {
-                boolean[] hasNAx = new boolean[ncx];
-                boolean[] hasNAy = new boolean[ncy];
-                sd0 = false;
-                findNA2(n, ncx, ncy, x, y, hasNAx, hasNAy);
-                sd0 = covNA2(n, ncx, ncy, x, y, xm, ym, hasNAx, hasNAy, answerData, cor, iskendall);
+                sd0 = covNA2(n, ncx, ncy, x, y, xm, ym, answerData, cor, iskendall);
             } else {
                 RIntVector ind = RDataFactory.createIntVector(n);
                 complete2(n, ncx, ncy, x, y, ind, naFail);
@@ -103,7 +97,7 @@ public abstract class Covcor extends RBuiltinNode {
         }
 
         if (sd0) { /* only in cor() */
-            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.SD_ZERO);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.SD_ZERO);
         }
 
         boolean seenNA = false;
@@ -374,29 +368,29 @@ public abstract class Covcor extends RBuiltinNode {
         }
     }
 
-    private static void findNA1(int n, int nc, RDoubleVector v, boolean[] hasNA) {
+    private static boolean[] findNAs(int n, int nc, RDoubleVector v) {
+        boolean[] hasNA = new boolean[nc];
+        double[] data = v.getDataWithoutCopying();
         for (int j = 0; j < nc; j++) {
-            hasNA[j] = false;
             for (int i = 0; i < n; i++) {
-                if (Double.isNaN(v.getDataAt(j * n + i))) {
+                if (Double.isNaN(data[j * n + i])) {
                     hasNA[j] = true;
                     break;
                 }
             }
         }
+        return hasNA;
     }
 
-    private static void findNA2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, boolean[] hasNAx, boolean[] hasNAy) {
-        findNA1(n, ncx, x, hasNAx);
-        findNA1(n, ncy, y, hasNAy);
-    }
-
-    private boolean covNA1(int n, int ncx, RDoubleVector x, double[] xm, boolean[] hasNA, double[] ans, boolean cor, boolean iskendall) {
+    private boolean covNA1(int n, int ncx, RDoubleVector x, double[] xm, double[] ans, boolean cor, boolean iskendall) {
         double sum;
         double xxm;
         double yym;
         int n1 = -1;
         boolean sd0 = false;
+
+        double[] xData = x.getDataWithoutCopying();
+        boolean[] hasNAx = findNAs(n, ncx, x);
 
         if (n <= 1) { /* too many missing */
             for (int i = 0; i < ncx; i++) {
@@ -408,12 +402,12 @@ public abstract class Covcor extends RBuiltinNode {
         }
 
         if (!iskendall) {
-            mean(n, ncx, x, xm, hasNA);
+            mean(n, ncx, xData, xm, hasNAx);
             n1 = n - 1;
         }
 
         for (int i = 0; i < ncx; i++) {
-            if (hasNA[i]) {
+            if (hasNAx[i]) {
                 for (int j = 0; j <= i; j++) {
                     ans[j + i * ncx] = RRuntime.DOUBLE_NA;
                     ans[i + j * ncx] = RRuntime.DOUBLE_NA;
@@ -422,25 +416,25 @@ public abstract class Covcor extends RBuiltinNode {
                 if (!iskendall) {
                     xxm = xm[i];
                     for (int j = 0; j <= i; j++) {
-                        if (hasNA[j]) {
-                            ans[j + i * ncx] = RRuntime.DOUBLE_NA;
-                            ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                        double r;
+                        if (hasNAx[j]) {
+                            r = RRuntime.DOUBLE_NA;
                         } else {
                             yym = xm[j];
-                            sum = 0.0;
-                            for (int k = 0; k < n; k++) {
-                                double u = x.getDataAt(i * n + k);
-                                double v = x.getDataAt(j * n + k);
-                                if (checkNAs(u, v, xxm, yym)) {
-                                    sum = RRuntime.DOUBLE_NA;
-                                    break;
+                            if (checkNAs(xxm, yym)) {
+                                r = RRuntime.DOUBLE_NA;
+                            } else {
+                                sum = 0.0;
+                                for (int k = 0; k < n; k++) {
+                                    double u = xData[i * n + k];
+                                    double v = xData[j * n + k];
+                                    sum += (u - xxm) * (v - yym);
                                 }
-                                sum += (u - xxm) * (v - yym);
+                                r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
                             }
-                            double r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
-                            ans[j + i * ncx] = r;
-                            ans[i + j * ncx] = r;
                         }
+                        ans[j + i * ncx] = r;
+                        ans[i + j * ncx] = r;
                     }
                 } else { /* Kendall's tau */
                     throw new UnsupportedOperationException("kendall's unsupported");
@@ -450,13 +444,13 @@ public abstract class Covcor extends RBuiltinNode {
 
         if (cor) {
             for (int i = 0; i < ncx; i++) {
-                if (!hasNA[i]) {
+                if (!hasNAx[i]) {
                     double u = ans[i + i * ncx];
                     xm[i] = checkNAs(u) ? RRuntime.DOUBLE_NA : Math.sqrt(u);
                 }
             }
             for (int i = 0; i < ncx; i++) {
-                if (!hasNA[i]) {
+                if (!hasNAx[i]) {
                     for (int j = 0; j < i; j++) {
                         if (xm[i] == 0 || xm[j] == 0) {
                             sd0 = true;
@@ -482,7 +476,7 @@ public abstract class Covcor extends RBuiltinNode {
         return sd0;
     }
 
-    private void mean(int n, int ncx, RDoubleVector x, double[] xm, boolean[] hasNA) {
+    private void mean(int n, int ncx, double[] x, double[] xm, boolean[] hasNA) {
         double sum;
         double tmp;
         /* variable means (has_na) */
@@ -492,7 +486,7 @@ public abstract class Covcor extends RBuiltinNode {
             } else {
                 sum = 0.0;
                 for (int k = 0; k < n; k++) {
-                    double u = x.getDataAt(i * n + k);
+                    double u = x[i * n + k];
                     if (checkNAs(u)) {
                         sum = RRuntime.DOUBLE_NA;
                         break;
@@ -503,7 +497,7 @@ public abstract class Covcor extends RBuiltinNode {
                 if (RRuntime.isFinite(tmp)) {
                     sum = 0.0;
                     for (int k = 0; k < n; k++) {
-                        double u = x.getDataAt(i * n + k);
+                        double u = x[i * n + k];
                         if (checkNAs(u)) {
                             sum = RRuntime.DOUBLE_NA;
                             break;
@@ -521,12 +515,17 @@ public abstract class Covcor extends RBuiltinNode {
         }
     }
 
-    private boolean covNA2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, double[] xm, double[] ym, boolean[] hasNAx, boolean[] hasNAy, double[] ans, boolean cor, boolean iskendall) {
+    private boolean covNA2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, double[] xm, double[] ym, double[] ans, boolean cor, boolean iskendall) {
         double sum;
         double xxm;
         double yym;
         int n1 = -1;
         boolean sd0 = false;
+
+        double[] xData = x.getDataWithoutCopying();
+        double[] yData = y.getDataWithoutCopying();
+        boolean[] hasNAx = findNAs(n, ncx, x);
+        boolean[] hasNAy = findNAs(n, ncy, y);
 
         if (n <= 1) { /* too many missing */
             for (int i = 0; i < ncx; i++) {
@@ -538,8 +537,8 @@ public abstract class Covcor extends RBuiltinNode {
         }
 
         if (!iskendall) {
-            mean(n, ncx, x, xm, hasNAx);
-            mean(n, ncy, y, ym, hasNAy);
+            mean(n, ncx, xData, xm, hasNAx);
+            mean(n, ncy, yData, ym, hasNAy);
             n1 = n - 1;
         }
 
@@ -552,22 +551,24 @@ public abstract class Covcor extends RBuiltinNode {
                 if (!iskendall) {
                     xxm = xm[i];
                     for (int j = 0; j < ncy; j++) {
+                        double r;
                         if (hasNAy[j]) {
-                            ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                            r = RRuntime.DOUBLE_NA;
                         } else {
                             yym = ym[j];
-                            sum = 0.0;
-                            for (int k = 0; k < n; k++) {
-                                double u = x.getDataAt(i * n + k);
-                                double v = y.getDataAt(j * n + k);
-                                if (checkNAs(u, v, xxm, yym)) {
-                                    sum = RRuntime.DOUBLE_NA;
-                                    break;
+                            if (checkNAs(xxm, yym)) {
+                                r = RRuntime.DOUBLE_NA;
+                            } else {
+                                sum = 0.0;
+                                for (int k = 0; k < n; k++) {
+                                    double u = xData[i * n + k];
+                                    double v = yData[j * n + k];
+                                    sum += (u - xxm) * (v - yym);
                                 }
-                                sum += (u - xxm) * (v - yym);
+                                r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
                             }
-                            ans[i + j * ncx] = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
                         }
+                        ans[i + j * ncx] = r;
                     }
                 } else { /* Kendall's tau */
                     throw new UnsupportedOperationException("kendall's unsupported");
@@ -641,6 +642,7 @@ public abstract class Covcor extends RBuiltinNode {
         throw new UnsupportedOperationException("error: " + string);
     }
 
+    @ExplodeLoop
     private boolean checkNAs(double... xs) {
         for (double x : xs) {
             check.enable(x);
@@ -649,6 +651,11 @@ public abstract class Covcor extends RBuiltinNode {
             }
         }
         return false;
+    }
+
+    private boolean checkNAs(double x) {
+        check.enable(x);
+        return check.check(x);
     }
 
 }
