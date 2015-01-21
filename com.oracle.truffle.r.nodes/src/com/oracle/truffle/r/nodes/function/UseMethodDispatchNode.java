@@ -25,6 +25,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
 public class UseMethodDispatchNode extends S3DispatchNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
         this.genericName = generic;
@@ -35,7 +36,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame) {
         Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
         // S3 method can be dispatched from top-level where there is no caller frame
-        if (funFrame == null) {
+        if (topLevelFrameProfile.profile(funFrame == null)) {
             funFrame = frame;
         }
         if (targetFunction == null) {
