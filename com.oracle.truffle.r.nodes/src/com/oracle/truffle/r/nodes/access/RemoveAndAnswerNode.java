@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAnswerResolvedNodeGen;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -37,10 +39,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * {@linkplain RTruffleVisitor#visit(Replacement) replacement}.
  */
 public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
-
-    public static RemoveAndAnswerNode create(String name) {
-        return new RemoveAndAnswerUninitializedNode(name);
-    }
 
     public static RemoveAndAnswerNode create(Object name) {
         return new RemoveAndAnswerUninitializedNode(name.toString());
@@ -68,16 +66,11 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             if (fs == null) {
                 RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, name);
             }
-            return replace(new RemoveAndAnswerResolvedNode(fs));
+            return replace(RemoveAndAnswerResolvedNodeGen.create(fs));
         }
     }
 
-    protected static final class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode implements VisibilityController {
-
-        @Override
-        public boolean getVisibility() {
-            return false;
-        }
+    protected abstract static class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode implements VisibilityController {
 
         /**
          * The frame slot representing the variable that is to be removed and whose value is to be
@@ -90,10 +83,85 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             this.slot = slot;
         }
 
+        protected RemoveAndAnswerResolvedNode(RemoveAndAnswerResolvedNode other) {
+            slot = other.slot;
+        }
+
         @Override
-        public Object execute(VirtualFrame frame) {
+        public boolean getVisibility() {
+            return false;
+        }
+
+        protected boolean isObject(VirtualFrame frame) {
+            return frame.isObject(slot);
+        }
+
+        protected boolean isInt(VirtualFrame frame) {
+            return frame.isInt(slot);
+        }
+
+        protected boolean isDouble(VirtualFrame frame) {
+            return frame.isDouble(slot);
+        }
+
+        protected boolean isByte(VirtualFrame frame) {
+            return frame.isByte(slot);
+        }
+
+        @Specialization(guards = "isObject")
+        public Object doObject(VirtualFrame frame) {
             controlVisibility();
-            Object result = frame.getValue(slot);
+            Object result;
+            try {
+                result = frame.getObject(slot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+
+            // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            return result;
+        }
+
+        @Specialization(guards = "isInt")
+        public int doInt(VirtualFrame frame) {
+            controlVisibility();
+            int result;
+            try {
+                result = frame.getInt(slot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+
+            // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            return result;
+        }
+
+        @Specialization(guards = "isDouble")
+        public double doDouble(VirtualFrame frame) {
+            controlVisibility();
+            double result;
+            try {
+                result = frame.getDouble(slot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+
+            // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            return result;
+        }
+
+        @Specialization(guards = "isByte")
+        public byte doByte(VirtualFrame frame) {
+            controlVisibility();
+            byte result;
+            try {
+                result = frame.getByte(slot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
 
             // use null (not an R value) to represent "undefined"
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
