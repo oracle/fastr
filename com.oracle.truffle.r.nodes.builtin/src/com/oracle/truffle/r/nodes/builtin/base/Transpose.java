@@ -84,11 +84,12 @@ public abstract class Transpose extends RBuiltinNode {
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
-    private RIntVector performAbstractIntVector(RAbstractIntVector vector, int[] dim) {
+    private static RIntVector performAbstractIntVector(RAbstractIntVector vector, int[] dim) {
         int firstDim = dim[0]; // rows
         int secondDim = dim[1];
         int[] result = new int[vector.getLength()];
-        for (int i = 0, j = 0; i < result.length; i++, j += firstDim) {
+        int j = 0;
+        for (int i = 0; i < result.length; i++, j += firstDim) {
             if (j > (result.length - 1)) {
                 j -= (result.length - 1);
             }
@@ -108,11 +109,12 @@ public abstract class Transpose extends RBuiltinNode {
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
-    private RDoubleVector performAbstractDoubleVector(RAbstractDoubleVector vector, int[] dim) {
+    private static RDoubleVector performAbstractDoubleVector(RAbstractDoubleVector vector, int[] dim) {
         int firstDim = dim[0];
         int secondDim = dim[1];
         double[] result = new double[vector.getLength()];
-        for (int i = 0, j = 0; i < result.length; i++, j += firstDim) {
+        int j = 0;
+        for (int i = 0; i < result.length; i++, j += firstDim) {
             if (j > (result.length - 1)) {
                 j -= (result.length - 1);
             }
@@ -132,11 +134,12 @@ public abstract class Transpose extends RBuiltinNode {
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
-    private RStringVector performAbstractStringVector(RAbstractStringVector vector, int[] dim) {
+    private static RStringVector performAbstractStringVector(RAbstractStringVector vector, int[] dim) {
         int firstDim = dim[0];
         int secondDim = dim[1];
         String[] result = new String[vector.getLength()];
-        for (int i = 0, j = 0; i < result.length; i++, j += firstDim) {
+        int j = 0;
+        for (int i = 0; i < result.length; i++, j += firstDim) {
             if (j > (result.length - 1)) {
                 j -= (result.length - 1);
             }
