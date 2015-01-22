@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.stats;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -54,11 +55,21 @@ public abstract class Sd extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected double sd(VirtualFrame frame, RDoubleVector x, byte narm) {
         controlVisibility();
+
         double xmean = (double) mean.executeDouble(frame, x);
         double distSum = 0.0;
         for (int i = 0; i < x.getLength(); ++i) {
             distSum = add.op(distSum, pow.op(sub.op(x.getDataAt(i), xmean), 2));
         }
         return sqrt.sqrt(div.op(distSum, x.getLength() - 1));
+    }
+
+    @Specialization
+    protected double sd(VirtualFrame frame, RDoubleVector x, RArgsValuesAndNames rargs) {
+        if (rargs.getValues().length > 0) {
+            CompilerDirectives.transferToInterpreter();
+            throw RInternalError.unimplemented();
+        }
+        return sd(frame, x, RRuntime.LOGICAL_FALSE);
     }
 }
