@@ -119,6 +119,8 @@ public class RRuntime {
 
     public static final String RDotGenericDefEnv = ".GenericDefEnv";
 
+    public static final String RDotGroup = ".Group";
+
     public static final String RDOT = ".";
 
     public static final String USE_METHOD = "UseMethod";

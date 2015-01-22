@@ -48,7 +48,7 @@ class GenericUnaryOpsGroupDispatchNode extends UnaryOpsGroupDispatchNode {
         }
         findTargetFunction(frame);
         if (targetFunction != null) {
-            dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName}, true);
+            dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName, ""}, true);
         }
         if (targetFunction == null) {
             callBuiltin(frame, evaluatedArgs, argNames);

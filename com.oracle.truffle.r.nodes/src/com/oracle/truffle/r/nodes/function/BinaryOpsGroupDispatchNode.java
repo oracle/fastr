@@ -74,7 +74,6 @@ public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
         } else {
             targetFunction = null;
         }
-
         if (targetFunctionR == null && targetFunction == null) {
             isBuiltinCalled = true;
             return;
@@ -102,6 +101,7 @@ public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
         }
         String[] methods = new String[evaluatedArgs.length];
         for (int i = 0; i < methods.length; ++i) {
+            methods[i] = "";
             RStringVector classHr = getArgClass(evaluatedArgs[i]);
             if (classHr == null) {
                 continue;

@@ -74,7 +74,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
         final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
-        defineVarsNew(newFrame);
+        defineVarsAsArguments(newFrame);
         if (storedFunctionName != null) {
             RArguments.setS3Method(newFrame, storedFunctionName);
         } else {
