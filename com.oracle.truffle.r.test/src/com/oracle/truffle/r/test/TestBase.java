@@ -249,7 +249,7 @@ public class TestBase {
      * Set {@code false} at the start of a JUnit test, then set to {@code true} if a micro-test
      * fails.
      */
-    private static boolean microTestFailed;
+    protected static boolean microTestFailed;
 
     /**
      * A way to limit which tests are actually run. TODO requires more JUnit support for filtering

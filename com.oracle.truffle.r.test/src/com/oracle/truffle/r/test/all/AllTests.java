@@ -8,6 +8,7 @@ import com.oracle.truffle.r.test.*;
 
 //Checkstyle: stop
 public class AllTests extends TestBase {
+
     @Test
     public void TestConnections_testPushBack_57eb33ce24132c578875659c3672161c() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBackLength(con) }");

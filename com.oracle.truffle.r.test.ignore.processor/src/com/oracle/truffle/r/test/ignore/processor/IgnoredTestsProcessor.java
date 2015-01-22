@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,10 +154,34 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
         wr.println("// DO NOT EDIT, update using 'mx rignoredtests'");
         wr.printf("// This contains a copy of the @%s tests one micro-test per method%n", annKind);
         wr.printf("package com.oracle.truffle.r.test.%s;%n%n", packageName);
-        wr.printf("import org.junit.%s;%n%n", annKind);
+        if (ignore) {
+            wr.println("import java.util.*;\n");
+            wr.println("import org.junit.*;\n");
+        } else {
+            wr.println("import org.junit.Test;\n");
+        }
         wr.println("import com.oracle.truffle.r.test.*;\n");
         wr.println("//Checkstyle: stop");
         wr.printf("public class %s extends TestBase {%n", className);
+        if (ignore) {
+            wr.println();
+            wr.println("    private static final ArrayList<String> passingTests = new ArrayList<>();");
+            wr.println();
+            wr.println("    private static void check(String name) {");
+            wr.println("        if (!microTestFailed) {");
+            wr.println("            passingTests.add(name);");
+            wr.println("        }");
+            wr.println("        microTestFailed = false;");
+            wr.println("    }");
+            wr.println();
+            wr.println("    @AfterClass");
+            wr.println("    public static void afterClass() {");
+            wr.println("        for (String test : passingTests) {");
+            wr.println("            System.out.println(\"passing: \" + test);");
+            wr.println("        }");
+            wr.println("    }");
+        }
+        wr.println();
         boolean duplicates = false;
         Map<String, String> methodTags = new HashMap<>();
         for (Map.Entry<String, SortedSet<CallAndArg>> entrySet : testMap.entrySet()) {
@@ -177,9 +201,12 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
                 } else {
                     methodTags.put(tag, methodName);
                 }
-                wr.printf("    @%s%n", ignore ? "Ignore" : "Test");
+                wr.printf("    @%s%n", "Test");
                 wr.printf("    public void %s_%s() {%n", methodNameTrans, tag);
                 wr.printf("        %s;%n", testCall);
+                if (ignore) {
+                    wr.printf("        check(\"%s_%s\");%n", methodNameTrans, tag);
+                }
                 wr.println("    }\n");
             }
         }
