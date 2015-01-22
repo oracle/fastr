@@ -100,6 +100,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile copyProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
+    private final ValueProfile superEnclosingFrameProfile = ValueProfile.createClassProfile();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     private final String identifier;
@@ -153,11 +154,11 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return executeInternal(frame, kind == ReadKind.Super ? RArguments.getEnclosingFrame(frame) : frame);
+        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(frame)) : frame);
     }
 
     public Object execute(VirtualFrame frame, MaterializedFrame variableFrame) {
-        return executeInternal(frame, kind == ReadKind.Super ? RArguments.getEnclosingFrame(variableFrame) : variableFrame);
+        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(variableFrame)) : variableFrame);
     }
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
