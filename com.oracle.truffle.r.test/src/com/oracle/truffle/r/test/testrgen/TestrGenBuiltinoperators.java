@@ -46,13 +46,11 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators6() {
         assertEval("argv <- list(structure(5.34872109992236, .Names = \'x\'), structure(-17494.4659893938, .Names = \'x\'));`*`(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testoperators7() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0.5, 0.5, 1, 1, 0, 0, 0, 0, 0, 1), .Dim = c(6L, 4L)), c(1, 1, 1, 0, 0, 0));`*`(argv[[1]],argv[[2]]);");
     }
@@ -74,7 +72,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators11() {
         assertEval("argv <- list(structure(68.6851383798793, .Names = \'\'), structure(35.9756377289347, .Names = \'Var1\'));`+`(argv[[1]],argv[[2]]);");
     }
@@ -190,7 +187,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators32() {
         assertEval("argv <- list(2.11111111111111, structure(c(3, 2, 2, 1, 1, 2), .Dim = 6L, .Dimnames = list(c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\'))));`+`(argv[[1]],argv[[2]]);");
     }
@@ -224,7 +220,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators38() {
         assertEval("argv <- list(structure(c(0.2, -1.84560926910116e-17, -3.69226410848886e-17, 2.11212282911474e-17, 9.44321399451751e-18, 3.05608209061811e-17, 0.2, -5.35638147485559e-17, 5.12150597333887e-17, 1.92692213766805e-17, 6.57361167807833e-17, -7.28393619263486e-17, 0.2, 7.17735727503349e-17, 3.10850404080861e-17, -2.28831714606547e-17, 2.83709294123644e-17, 7.98995130974544e-17, 0.2, 0, 8.8841915809257e-17, -1.17177477007305e-16, -1.30709215062431e-16, 1.04641694001652e-16, 0.2), .Dim = c(5L, 5L), fracs = c(\'1/5\', \'0\', \'0\', \'0\', \'0\', \'0\', \'1/5\', \'0\', \'0\', \'0\', \'0\', \'0\', \'1/5\', \'0\', \'0\', \'0\', \'0\', \'0\', \'1/5\', \'0\', \'0\', \'0\', \'0\', \'0\', \'1/5\'), class = c(\'fractions\', \'matrix\')), 1);`+`(argv[[1]],argv[[2]]);");
     }
@@ -1665,7 +1660,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators311() {
         assertEval("argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\', \'25\', \'26\', \'27\', \'28\', \'29\', \'30\', \'31\', \'32\', \'33\', \'34\', \'35\', \'36\', \'37\', \'38\', \'39\', \'40\', \'42\', \'43\', \'44\', \'45\', \'46\', \'47\', \'48\', \'49\', \'50\', \'51\', \'52\', \'53\')), structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\', \'25\', \'26\', \'27\', \'28\', \'29\', \'30\', \'31\', \'32\', \'33\', \'34\', \'35\', \'36\', \'37\', \'38\', \'39\', \'40\', \'42\', \'43\', \'44\', \'45\', \'46\', \'47\', \'48\', \'49\', \'50\', \'51\', \'52\', \'53\')));`|`(argv[[1]],argv[[2]]);");
     }

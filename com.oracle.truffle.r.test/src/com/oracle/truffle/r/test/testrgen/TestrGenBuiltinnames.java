@@ -33,7 +33,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames4() {
         assertEval("argv <- list(structure(list(A = NULL, B = NULL, `NA` = NULL), .Names = c(\'A\', \'B\', NA)));names(argv[[1]]);");
     }
@@ -176,7 +175,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames34() {
         assertEval("argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(\' 100\', \'-1e-13\', \' Inf\', \'-Inf\', \' NaN\', \'3.14\', \'  NA\')));names(argv[[1]]);");
     }
@@ -187,7 +185,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames36() {
         assertEval("argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\'), class = \'table\'));names(argv[[1]]);");
     }

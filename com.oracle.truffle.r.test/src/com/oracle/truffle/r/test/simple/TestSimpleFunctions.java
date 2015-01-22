@@ -85,20 +85,23 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testErrors() {
-        assertEvalError("{ x<-function(){1} ; x(y=1) }");
-        assertEvalError("{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
-        assertEvalError("{ x<-function(){1} ; x(1) }");
-        assertEvalError("{ x<-function(a){1} ; x(1,) }");
         assertEvalError("{ x<-function(){1} ; x(y=sum(1:10)) }");
+        assertEvalError("{ x<-function(){1} ; x(1) }");
         assertEvalError("{ f <- function(x) { x } ; f() }");
         assertEvalError("{ x<-function(y,b){1} ; x(y=1,y=3,4) }");
         assertEvalError("{ x<-function(foo,bar){foo*bar} ; x(fo=10,f=1,2) }");
+    }
 
-        assertEvalError("{ f <- function(a,a) {1} }"); // note
-        // exactly GNU-R message
+    @Test
+    @Ignore
+    public void testErrorsIgnore() {
         assertEvalError("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
+        assertEvalError("{ x<-function(){1} ; x(y=1) }");
+        assertEvalError("{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
+        assertEvalError("{ x<-function(a){1} ; x(1,) }");
+
+        assertEvalError("{ f <- function(a,a) {1} }"); // note exactly GNU-R message
     }
 
     @Test

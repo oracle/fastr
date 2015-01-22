@@ -141,7 +141,6 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter23() {
         assertEval("argv <- list(structure(c(1L, 2L, 2L, 3L, 3L, 1L, NA), .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'));as.character(argv[[1]]);");
     }

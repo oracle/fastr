@@ -33,7 +33,6 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix4() {
         assertEval("argv <- list(\'foo\', 1L, 1, FALSE, list(structure(\'object\', simpleOnly = TRUE), NULL), FALSE, TRUE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -49,7 +48,6 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix7() {
         assertEval("argv <- list(\'ANY\', 2L, 3L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -111,7 +109,6 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix19() {
         assertEval("argv <- list(c(\'315.45\', \'363.01\', \'405.02\', \'443.06\', \'478.09\', \'510.72\'), 1L, 1, TRUE, list(\'1979\', c(\'Jan\', \'Feb\', \'Mar\', \'Apr\', \'May\', \'Jun\')), FALSE, TRUE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -243,13 +240,11 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix43() {
         assertEval("argv <- list(c(\'\', \'\', \'\', \'\', \'\', \'\', \' 1\', \' 2\', \' 3\', \' 4\', \' 5\', \' 6\', \' 7\', \' 8\', \' 9\', \'10\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'\'), 1, 12, TRUE, list(c(\'1920\', \'1921\'), c(\'Jan\', \'Feb\', \'Mar\', \'Apr\', \'May\', \'Jun\', \'Jul\', \'Aug\', \'Sep\', \'Oct\', \'Nov\', \'Dec\')), TRUE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testmatrix44() {
         assertEval("argv <- list(structure(list(a1 = 1:3, a2 = 4:6, a3 = 3.14159265358979, a4 = c(\'a\', \'b\', \'c\')), .Names = c(\'a1\', \'a2\', \'a3\', \'a4\')), 2, 2, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }

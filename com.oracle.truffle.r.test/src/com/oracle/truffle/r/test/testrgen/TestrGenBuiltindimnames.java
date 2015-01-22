@@ -33,7 +33,6 @@ public class TestrGenBuiltindimnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdimnames4() {
         assertEval("argv <- list(structure(c(NA, 1, 2, 5.65604443125997, 8.44399377410362, 5.49523049516867, 71.3540021461976, 72.1419514890413, 75.1931882101063), .Dim = c(3L, 3L), .Dimnames = list(c(\'<none>\', \'- M.user:Temp\', \'+ Soft\'), c(\'Df\', \'Deviance\', \'AIC\'))));dimnames(argv[[1]]);");
     }
@@ -77,7 +76,6 @@ public class TestrGenBuiltindimnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdimnames12() {
         assertEval("argv <- list(structure(logical(0), .Dim = c(0L, 4L), .Dimnames = list(NULL, c(\'Estimate\', \'Std. Error\', \'t value\', \'Pr(>|t|)\'))));dimnames(argv[[1]]);");
     }
@@ -115,13 +113,11 @@ public class TestrGenBuiltindimnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdimnames19() {
         assertEval("argv <- list(structure(c(28L, 138L, 16L), .Dim = 3L, .Dimnames = structure(list(object = c(\'FALSE\', \'TRUE\', NA)), .Names = \'object\'), class = \'table\'));dimnames(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testdimnames20() {
         assertEval("argv <- list(structure(c(\'myTst\', \'myLib\', \'1.0\', NA, \'methods\', NA, NA, NA, NA, \'What license is it under?\', NA, NA, NA, NA, NA, NA, \'3.0.1\'), .Dim = c(1L, 17L), .Dimnames = list(\'ret0\', c(\'Package\', \'LibPath\', \'Version\', \'Priority\', \'Depends\', \'Imports\', \'LinkingTo\', \'Suggests\', \'Enhances\', \'License\', \'License_is_FOSS\', \'License_restricts_use\', \'OS_type\', \'Archs\', \'MD5sum\', \'NeedsCompilation\', \'Built\'))));dimnames(argv[[1]]);");
     }
@@ -133,7 +129,6 @@ public class TestrGenBuiltindimnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdimnames22() {
         assertEval("argv <- list(structure(c(1L, 2L, 1L), .Dim = 3L, .Dimnames = structure(list(c(\'1\', \'2\', NA)), .Names = \'\'), class = \'table\'));dimnames(argv[[1]]);");
     }
@@ -149,7 +144,6 @@ public class TestrGenBuiltindimnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdimnames26() {
         assertEval("argv <- list(structure(c(-15.7095066647243, 0.26727943386171, 0.297238382214578, 0.257897591876632, 0.340108731286838, 0.236310380889319, 0.317311605722827, 0.262866287094154, 0.338086383499512, 0.234905236792884, 0.325336667185977, 0.218927692395608, -7.51574917378772, 7.84743436370915, -0.381048703752012, -0.330615253498497, 0.244844953659604, 0.170120314286586, -0.406781840034597, -0.336984938523255, 0.243389061455961, 0.169108748250409, -0.417069674483433, -0.280657271719851, -5.36168424071406, 0.204399594459056, 7.44580265802875, 0.18731755950565, -0.56882795084156, -0.395226400731518, -0.439007571789656, -0.363681278343691, 0.147865047400615, 0.10273786720867, 0.236300269698257, 0.159012733501467, -5.07819471343419, -0.0276453301370831, -3.65602301353979, 6.37342950130462, 0.0099206539914638, 0.0068929530698134, 0.118301269982087, 0.0980027677458417, -0.620575419067553, -0.431180972906935, -0.48536920518568, -0.326617841666301), .Dim = c(12L, 4L), .Dimnames = list(c(\'1\', \'3\', \'5\', \'7\', \'9\', \'11\', \'13\', \'15\', \'17\', \'19\', \'21\', \'23\'), c(\'(Intercept)\', \'M.userY\', \'SoftMedium\', \'SoftSoft\'))));dimnames(argv[[1]]);");
     }

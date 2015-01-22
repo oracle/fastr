@@ -23,7 +23,6 @@ public class TestrGenBuiltintoupper extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testtoupper2() {
         assertEval("argv <- list(c(\'\', \'\', \'remission\', \'\', \'\', \'\', \'\', \'\', \'\')); .Internal(toupper(argv[[1]]))");
     }

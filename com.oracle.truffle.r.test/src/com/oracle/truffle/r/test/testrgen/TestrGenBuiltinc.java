@@ -49,7 +49,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc7() {
         assertEval("argv <- list(expression(data.frame), list(), check.names = TRUE, stringsAsFactors = TRUE);c(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
     }
@@ -208,7 +207,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc35() {
         assertEval("argv <- list(c(\'‘?’ for shortcuts to help topics.\', \'\', \'  ‘help.search()’ or ‘??’ for finding help pages\', \'  on a vague topic;\', \'  ‘help.start()’ which opens the HTML version of the R\', \'  help pages;\', \'  ‘library()’ for listing available packages and the\', \'  help objects they contain;\', \'  ‘data()’ for listing available data sets;\', \'  ‘methods()’.\', \'\', \'  Use ‘prompt\'), character(0));c(argv[[1]],argv[[2]]);");
     }
@@ -278,7 +276,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc48() {
         assertEval("argv <- list(list(c(\'foo\', \'bar\'), FALSE, structure(list(a = 1, b = structure(c(1, 3, 2, 4), .Dim = c(2L, 2L)), c = \'foo\'), .Names = c(\'a\', \'b\', \'c\')), structure(list(1, \'foo\', structure(c(1, 3, 2, 4), .Dim = c(2L, 2L)), \'bar\'), .Dim = c(2L, 2L)), 0+1i, list(1, structure(c(1, 3, 2, 4), .Dim = c(2L, 2L)), \'foo\'), structure(c(1+2i, 5+0i, 3-4i, -6+0i), .Dim = c(2L, 2L)), c(1, 2, 3, 4, 5), 1, structure(c(1+1i, 3+1i, 2+1i, 4+1i, 5-1i, 7-1i, 6-1i, 8-1i), .Dim = c(2L, 2L, 2L)), structure(c(1, 3, 2, 4, 5, 7, 6, 8), .Dim = c(2L, 2L, 2L)), structure(c(1, 3, 2, 4), .Dim = c(2L, 2L))), list(structure(c(TRUE, FALSE, FALSE, TRUE), .Dim = c(2L, 2L))));c(argv[[1]],argv[[2]]);");
     }
@@ -371,7 +368,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc65() {
         assertEval("argv <- list(\'BiocInstaller\', \'/home/lzhao/R/x86_64-unknown-linux-gnu-library/3.0\', structure(c(\'1.12.0\', NA, \'R (>= 3.0.0)\', NA, NA, \'RUnit, BiocGenerics\', NA, \'Artistic-2.0\', NA, NA, NA, NA, NA, NA, \'3.0.1\'), .Names = c(\'Version\', NA, \'Depends\', NA, NA, \'Suggests\', NA, \'License\', NA, NA, NA, NA, NA, NA, \'Built\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }

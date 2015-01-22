@@ -113,7 +113,6 @@ public class TestrGenBuiltinlist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlist17() {
         assertEval("argv <- list(deviance.resid = structure(c(-0.667819876370237, 0.170711734013213, 0.552921941721332, -0.253162069270378, -0.00786394222146348, 0.0246733498130512, 0.0730305465518564, -1.36919169254062, 0.0881443844426084, -0.0834190388782434), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\')), coefficients = structure(logical(0), .Dim = c(0L, 4L), .Dimnames = list(NULL, c(\'Estimate\', \'Std. Error\', \'t value\', \'Pr(>|t|)\'))), aliased = structure(TRUE, .Names = \'x\'), dispersion = 0.274035772634541, df = c(0L, 10L, 1L), cov.unscaled = structure(logical(0), .Dim = c(0L, 0L)), cov.scaled = structure(logical(0), .Dim = c(0L, 0L)));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]]);");
     }

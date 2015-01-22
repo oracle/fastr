@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinencodeString extends TestBase {
 
     @Test
-    @Ignore
     public void testencodeString1() {
         assertEval("argv <- list(c(\'1\', \'2\', NA), 0L, \'\\\'\', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
@@ -45,7 +44,6 @@ public class TestrGenBuiltinencodeString extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testencodeString8() {
         assertEval("argv <- list(c(\'FALSE\', NA), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }

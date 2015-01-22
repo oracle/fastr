@@ -67,6 +67,7 @@ public class TestSimpleComparison extends TestBase {
 
         assertEvalError("{ x<-1+1i; x > FALSE }");
         assertEval("{ z <- TRUE; dim(z) <- c(1) ; dim(z == TRUE) }");
+        assertEvalError("{ z <- TRUE; dim(z) <- c(1) ; u <- 1:3 ; dim(u) <- 3 ; u == z }");
     }
 
     @Test
@@ -155,12 +156,6 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ f <- function(a,b) { a > b } ; f(1,2) ; f(1L,2) ; f(2[2], 1) }");
         assertEval("{ f <- function(a,b) { a > b } ; f(1,2) ; f(1L,2) ; f(\"hello\", \"hi\"[2]) }");
         assertEval("{ f <- function(a,b) { a > b } ; f(1,2) ; f(1L,2) ; f(\"hello\"[2], \"hi\") }");
-    }
-
-    @Test
-    @Ignore
-    public void testScalarsIgnore() {
-        assertEvalError("{ z <- TRUE; dim(z) <- c(1) ; u <- 1:3 ; dim(u) <- 3 ; u == z }");
     }
 
     @Test

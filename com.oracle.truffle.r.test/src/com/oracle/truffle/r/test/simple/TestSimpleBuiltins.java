@@ -1504,11 +1504,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=FALSE) }");
 
         assertEval("{ order(c(-1480,  -974, -1576,  -970), c(\"a\", \"b\", \"c\", \"d\")) }");
-    }
 
-    @Test
-    @Ignore
-    public void testOrderIgnore() {
         assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
     }
 
@@ -1959,6 +1955,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
 
         assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }"); // requires promises
+
+        assertEval("{ exists(\"sum\") }");
     }
 
     @Test
@@ -1971,8 +1969,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
         assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
 
-        // top-level lookups
-        assertEval("{ exists(\"sum\") }");
     }
 
     @Test
@@ -2960,7 +2956,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDiagnostics() {
         assertEvalError("{ f <- function() { stop(\"hello\",\"world\") } ; f() }");
     }
@@ -3011,12 +3006,16 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testFileListing() {
         assertEval("{ list.files(\"test/r/simple/data/tree1\") }");
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE) }");
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\".*dummy.*\") }");
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\"dummy\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testFileListingIgnore() {
         assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
     }
 
@@ -3518,13 +3517,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-c(1,2,3);class(x)}");
 
         assertEval("{ x<-1; oldClass(x) }");
-    }
 
-    @Test
-    @Ignore
-    public void testGetClassIgnore() {
-        // TODO: Fails as seq(1,10) is integer seq in GNU R while
-        // double seq in FastR
         assertEval("{x<-seq(1,10);class(x)}");
     }
 

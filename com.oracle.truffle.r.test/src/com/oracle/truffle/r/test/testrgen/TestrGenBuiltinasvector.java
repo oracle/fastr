@@ -171,7 +171,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector29() {
         assertEval("argv <- list(c(NA, NaN), \'integer\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }

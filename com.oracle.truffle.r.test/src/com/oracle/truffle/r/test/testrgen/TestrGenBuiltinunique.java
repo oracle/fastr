@@ -57,7 +57,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique8() {
         assertEval("argv <- list(c(1, 258, 516, 774, 1032, 1290, 1548, 1806, 2064, 2322, 2580, 2838, 3096, 3354, 3612, 3870, 4128, 4386, 4644, 4902, 5160, 1, 259, 517, 775, 1033, 1291, 1549, 1807, 2065, 2323, 2581, 2839, 3097, 3355, 3613, 3871, 4129, 4387, 4645, 4903, 5160), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }

@@ -24,7 +24,6 @@ public class TestrGenBuiltinaperm extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testaperm2() {
         assertEval("argv <- list(structure(c(\'[\', \'as.data.frame\', \'plot\', \'print\', \'summary\', \'as.character\', \'print\', \'print\', \'plot\', \'update\', \'dim\', \'dimnames\', \'dimnames<-\', \'[\', \'t\', \'summary\', \'print\', \'barchart\', \'barchart\', \'barchart\', \'barchart\', \'barchart\', \'barchart\', \'bwplot\', \'bwplot\', \'densityplot\', \'densityplot\', \'dotplot\', \'dotplot\', \'dotplot\', \'dotplot\', \'dotplot\', \'dotplot\', \'histogram\', \'histogram\', \'histogram\', \'qqmath\', \'qqmath\', \'stripplot\', \'stripplot\', \'qq\', \'xyplot\', \'xyplot\', \'levelplot\', \'levelplot\', \'levelplot\', \'levelplot\', \'contourplot\', \'contourplot\', \'contourplot\', \'contourplot\', \'cloud\', \'cloud\', \'cloud\', \'wireframe\', \'wireframe\', \'splom\', \'splom\', \'splom\', \'parallelplot\', \'parallelplot\', \'parallelplot\', \'parallel\', \'parallel\', \'parallel\', \'tmd\', \'tmd\', \'llines\', \'ltext\', \'lpoints\', \'shingle\', \'shingle\', \'shingle\', \'shingle\', \'shingle\', \'shingleLevel\', \'shingleLevel\', \'trellis\', \'trellis\', \'trellis\', \'trellis\', \'trellis\', \'trellis\', \'trellis\', \'trellis\', \'trellis\', \'summary.trellis\', \'formula\', \'array\', \'default\', \'matrix\', \'numeric\', \'table\', \'formula\', \'numeric\', \'formula\', \'numeric\', \'formula\', \'array\', \'default\', \'matrix\', \'numeric\', \'table\', \'formula\', \'factor\', \'numeric\', \'formula\', \'numeric\', \'formula\', \'numeric\', \'formula\', \'formula\', \'ts\', \'formula\', \'table\', \'array\', \'matrix\', \'formula\', \'table\', \'array\', \'matrix\', \'formula\', \'matrix\', \'table\', \'formula\', \'matrix\', \'formula\', \'matrix\', \'data.frame\', \'formula\', \'matrix\', \'data.frame\', \'formula\', \'matrix\', \'data.frame\', \'formula\', \'trellis\', \'default\', \'default\', \'default\', NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA), .Dim = c(70L, 3L)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -77,7 +76,6 @@ public class TestrGenBuiltinaperm extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testaperm11() {
         assertEval("argv <- list(structure(list(3, 3, 3, 3, 3, \'fred\'), .Dim = 2:3), NULL, TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -111,7 +109,6 @@ public class TestrGenBuiltinaperm extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testaperm17() {
         assertEval("argv <- list(structure(c(\'add1\', \'anova\', \'coef\', \'confint\', \'drop1\', \'extractAIC\', \'logLik\', \'model.frame\', \'predict\', \'print\', \'print\', \'summary\', \'vcov\', \'coef\', \'predict\', \'print\', \'print\', \'summary\', \'nnet\', \'nnet\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'multinom\', \'summary.multinom\', \'multinom\', \'multinom\', \'nnet\', \'nnet\', \'nnet\', \'summary.nnet\', \'nnet\', \'default\', \'formula\', NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA), .Dim = c(20L, 3L)), c(2L, 1L), TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
     }

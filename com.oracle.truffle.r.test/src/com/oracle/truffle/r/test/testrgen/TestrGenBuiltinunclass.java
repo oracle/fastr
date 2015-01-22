@@ -53,7 +53,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass7() {
         assertEval("argv <- list(structure(list(A = c(1L, NA, 1L), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA, NA, NA), E = c(FALSE, NA, TRUE), F = structure(c(1L, NA, 2L), .Label = c(\'abc\', \'def\'), class = \'factor\')), .Names = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), row.names = c(\'1\', \'2\', \'3\')));unclass(argv[[1]]);");
     }
@@ -65,7 +64,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass9() {
         assertEval("argv <- list(structure(c(\'Min.   : 1.00  \', \'1st Qu.: 3.25  \', \'Median : 5.50  \', \'Mean   : 5.50  \', \'3rd Qu.: 7.75  \', \'Max.   :10.00  \', \'Min.   : 1.00    Min.   :11.00  \', \'1st Qu.: 3.25    1st Qu.:13.25  \', \'Median : 5.50    Median :15.50  \', \'Mean   : 5.50    Mean   :15.50  \', \'3rd Qu.: 7.75    3rd Qu.:17.75  \', \'Max.   :10.00    Max.   :20.00  \'), .Dim = c(6L, 2L), .Dimnames = list(c(\'\', \'\', \'\', \'\', \'\', \'\'), c(\'    X1.10\', \'      z.x             z.yyy     \'))));unclass(argv[[1]]);");
     }
@@ -149,7 +147,6 @@ public class TestrGenBuiltinunclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunclass24() {
         assertEval("argv <- list(structure(c(\'Min.   :14.00  \', \'1st Qu.:26.00  \', \'Median :29.50  \', \'Mean   :36.39  \', \'3rd Qu.:49.25  \', \'Max.   :70.00  \', \'A:9  \', \'B:9  \', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c(\'\', \'\', \'\', \'\', \'\', \'\'), c(\'    breaks\', \'wool\'))));unclass(argv[[1]]);");
     }

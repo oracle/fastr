@@ -123,7 +123,6 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattr22() {
         assertEval("argv <- list(structure(c(0, 3, 3, 0), .Dim = c(2L, 2L), counts = structure(c(0L, 0L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 2L, 2L, 0L), .Dim = c(2L, 2L, 3L), .Dimnames = list(NULL, NULL, c(\'ins\', \'del\', \'sub\'))), trafos = structure(c(\'MMMMMM\', \'SMMMSMD\', \'SMMMSMI\', \'MMMMMMM\'), .Dim = c(2L, 2L))), \'trafos\');attr(argv[[1]],argv[[2]]);");
     }
@@ -135,7 +134,6 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattr24() {
         assertEval("argv <- list(structure(c(804.851443135267, 3.3994157758076, 28.3699038266834, 1.84375046462573), .Dim = c(2L, 2L), .Dimnames = list(c(\'(Intercept)\', \'day\'), c(\'Variance\', \'StdDev\')), formStr = \'pdLogChol(day)\', corr = structure(c(\'(Intr)\', \'-0.555\'), .Dim = c(2L, 1L), .Dimnames = list(c(\'(Intercept)\', \'day\'), \'Corr\'))), which = \'corr\');attr(argv[[1]],argv[[2]]);");
     }
@@ -171,7 +169,6 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattr31() {
         assertEval("argv <- list(structure(c(2L, 1L, 3L), .Label = c(\'1\', \'2\', NA), class = c(\'ordered\', \'factor\')), \'levels\');attr(argv[[1]],argv[[2]]);");
     }
@@ -238,7 +235,6 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testattr44() {
         assertEval("argv <- list(structure(c(2L, NA, NA, 4L, 3L, 2L, 1L, 5L, 5L, 6L), .Label = c(\'NA\', \'a\', \'b\', \'c\', \'d\', NA), class = \'factor\'), \'levels\');attr(argv[[1]],argv[[2]]);");
     }

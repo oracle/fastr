@@ -35,7 +35,6 @@ public class TestrGenBuiltiniconv extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testiconv4() {
         assertEval("argv <- list(c(\'\', \'Compute a Survival Curve for Censored Data\'), \'UTF-8\', \'\', \'byte\', FALSE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }

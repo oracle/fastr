@@ -156,7 +156,6 @@ public class TestrGenBuiltinarray extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testarray26() {
         assertEval("argv <- list(\'\', c(4L, 3L), list(c(\'<none>\', \'Hair:Eye\', \'Hair:Sex\', \'Eye:Sex\'), c(\'Df\', \'Deviance\', \'AIC\'))); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }

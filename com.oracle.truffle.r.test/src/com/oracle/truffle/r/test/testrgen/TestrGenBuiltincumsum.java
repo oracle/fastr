@@ -34,7 +34,6 @@ public class TestrGenBuiltincumsum extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcumsum4() {
         assertEval("argv <- list(structure(c(-191.999930599838, 7.71626352011359e-309), .Names = c(\'\', \'\')));cumsum(argv[[1]]);");
     }
