@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014-2015, Purdue University
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -48,7 +48,7 @@ class GenericUnaryOpsGroupDispatchNode extends UnaryOpsGroupDispatchNode {
         }
         findTargetFunction(frame);
         if (targetFunction != null) {
-            dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName}, true);
+            dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName, ""}, true);
         }
         if (targetFunction == null) {
             callBuiltin(frame, evaluatedArgs, argNames);

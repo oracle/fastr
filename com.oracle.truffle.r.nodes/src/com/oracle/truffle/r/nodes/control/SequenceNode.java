@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,8 @@ public class SequenceNode extends RNode {
 
     /**
      * Ensures that {@code node} is a {@link SequenceNode} by converting any other node to a single
-     * length sequence.
+     * length sequence. This is important because sequences are meaningful to the instrumentation
+     * framework.
      */
     public static RNode ensureSequence(RNode node) {
         if (node == null || node instanceof SequenceNode) {

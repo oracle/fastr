@@ -153,7 +153,7 @@ public final class RArguments {
         a[INDEX_N_NAMES] = names.length;
         copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
         copyArguments(names, a, INDEX_ARGUMENTS + evaluatedArgs.length);
-        assert envFunctionInvariant(a);
+        // assert envFunctionInvariant(a);
     }
 
     /**
@@ -190,7 +190,10 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs) {
-        return create(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, EMPTY_STRING_ARRAY);
+        if (functionObj != null) {
+            return create(null, functionObj, callSrc, depth, functionObj.getEnclosingFrame(), evaluatedArgs, EMPTY_STRING_ARRAY);
+        }
+        return create(null, functionObj, callSrc, depth, null, evaluatedArgs, EMPTY_STRING_ARRAY);
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, int depth, Object[] evaluatedArgs, String[] names) {
@@ -358,6 +361,10 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
+        Object[] arguments = getArgumentsWithEvalCheck(frame);
+        if (arguments[INDEX_FUNCTION] != null) {
+            return ((RFunction) arguments[INDEX_FUNCTION]).getEnclosingFrame();
+        }
         return (MaterializedFrame) getArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
     }
 

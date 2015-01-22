@@ -8956,6 +8956,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestrGenBuiltinoperators_testoperators113_01361d047460f0e4f1c56abbee309be7() {
+        assertEval("argv <- list(structure(c(2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), .Label = c('fm2', 'original'), class = c('ordered', 'factor')), 'original');`!=`(argv[[1]],argv[[2]]);");
+        check("TestrGenBuiltinoperators_testoperators113_01361d047460f0e4f1c56abbee309be7");
+    }
+
+    @Test
     public void TestrGenBuiltinoperators_testoperators117_f4d25de202ad38dda3ae11229b98daf1() {
         assertEval("argv <- list(structure(c(9L, 4L, 6L, 5L, 3L, 10L, 5L, 3L, 5L), .Dim = 9L, .Dimnames = structure(list(x = c('0', '1', '2', '3', '4', '5', '6', '7', '8')), .Names = 'x'), class = 'table'), c(9, 4, 6, 5, 3, 10, 5, 3, 5));`==`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators117_f4d25de202ad38dda3ae11229b98daf1");

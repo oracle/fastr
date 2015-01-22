@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014-2015, Purdue University
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -74,7 +74,6 @@ public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
         } else {
             targetFunction = null;
         }
-
         if (targetFunctionR == null && targetFunction == null) {
             isBuiltinCalled = true;
             return;
@@ -102,6 +101,7 @@ public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
         }
         String[] methods = new String[evaluatedArgs.length];
         for (int i = 0; i < methods.length; ++i) {
+            methods[i] = "";
             RStringVector classHr = getArgClass(evaluatedArgs[i]);
             if (classHr == null) {
                 continue;
