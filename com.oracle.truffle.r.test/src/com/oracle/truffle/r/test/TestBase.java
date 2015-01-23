@@ -654,6 +654,7 @@ public class TestBase {
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */
     protected static String expectedEval(String input, String testIdOrNull, String invokeMethodName) {
+        assert !input.contains("\n") : "test input cannot contain newlines - not supported by ExpectedTestOutput.test file format";
         String testId = testIdOrNull == null ? input : testIdOrNull;
         if (generatingExpected()) {
             // generation mode
