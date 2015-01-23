@@ -17150,6 +17150,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testVapply_f5a64de73b5707d7dcbe1361fbabab9d() {
+        assertEval("{ iv <- integer(1); iv[[1]] = 1L; vapply(c(1L, 2L, 3L, 4L), function(x) x+5L, iv) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testVapply_1ecd5d73f89477e7b4f1b620af35ef91() {
         assertEval("{ vapply(c(10, 20, 30, 40), function(x) x/2, c(1)) }");
     }

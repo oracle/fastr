@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
 import edu.umd.cs.findbugs.annotations.*;
@@ -705,8 +706,7 @@ public class RRuntime {
     }
 
     /**
-     * Checks and converts an object into a String. Usefuk for non-fast path code, e.g. in
-     * {@code Fallback} specializations.
+     * Checks and converts an object into a String.
      */
     public static String asString(Object obj) {
         if (obj instanceof String) {
@@ -735,6 +735,28 @@ public class RRuntime {
             return obj instanceof Integer || obj instanceof Double;
         }
         return false;
+    }
+
+    /**
+     * Runtime variant of DSL support for converting scalar values to {@link RAbstractVector}.
+     */
+    public static Object asAbstractVector(Object obj) {
+        if (obj instanceof Integer) {
+            return RDataFactory.createIntVectorFromScalar((Integer) obj);
+        } else if (obj instanceof Double) {
+            return RDataFactory.createDoubleVectorFromScalar((Double) obj);
+        } else if (obj instanceof Byte) {
+            return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
+        } else if (obj instanceof String) {
+            return RDataFactory.createStringVectorFromScalar((String) obj);
+        } else if (obj instanceof RComplex) {
+            RComplex complex = (RComplex) obj;
+            return RDataFactory.createComplexVector(new double[]{complex.getRealPart(), complex.getImaginaryPart()}, RDataFactory.COMPLETE_VECTOR);
+        } else if (obj instanceof RRaw) {
+            return RDataFactory.createRawVector(new byte[]{((RRaw) obj).getValue()});
+        } else {
+            return obj;
+        }
     }
 
 }

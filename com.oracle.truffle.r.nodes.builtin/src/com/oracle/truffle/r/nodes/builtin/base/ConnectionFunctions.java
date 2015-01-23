@@ -1270,7 +1270,7 @@ public abstract class ConnectionFunctions {
                     result &= baseCon.canWrite();
                     break;
                 default:
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UnKNOWN_VALUE, "rw");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_VALUE, "rw");
             }
             return RDataFactory.createLogicalVectorFromScalar(result);
         }

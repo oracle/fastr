@@ -594,7 +594,8 @@ public final class RError extends RuntimeException {
         NOT_VALID_NAMES("not a valid named list"),
         CHAR_ARGUMENT("character argument expected"),
         CANNOT_BE_INVALID("'%s' cannot be NA, NaN or infinite"),
-        UnKNOWN_VALUE("unknown '%s' value"),
+        UNKNOWN_VALUE("unknown '%s' value"),
+        MUST_BE_VECTOR("'%s' must be a vector"),
         NO_SUCH_CONNECTION("there is no connection %d");
 
         public final String message;

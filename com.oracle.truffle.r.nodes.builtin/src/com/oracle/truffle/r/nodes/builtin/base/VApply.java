@@ -50,65 +50,63 @@ public abstract class VApply extends RCastingBuiltinNode {
 
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile dimsProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
     @Specialization
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {
-        controlVisibility();
         RArgsValuesAndNames optionalArgs = (RArgsValuesAndNames) RArguments.getArgument(frame, 3);
-        return delegateToLapply(frame, vec, fun, funValue, useNames, optionalArgs);
+        RVector result = delegateToLapply(frame, vec, fun, funValue, useNames, optionalArgs);
+        // set here else it gets overridden by the iterator evaluation
+        controlVisibility();
+        return result;
     }
 
     private RVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, byte useNames, RArgsValuesAndNames optionalArgs) {
+        /*
+         * The implementation is complicated by the existence of scalar length 1 vectors (e.g.
+         * Integer) and concrete length 1 vectors (e.g. RIntVector), as either form can occur in
+         * both funValueArg and the result of the doApply. At a slight performance cost this code
+         * works exclusively in terms of concrete vectors.
+         */
+        Object funValueObj = RRuntime.asAbstractVector(funValueArg);
+        if (!(funValueObj instanceof RAbstractVector)) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_VECTOR, "FUN.VALUE");
+        }
+        RAbstractVector funValueVec = funValueProfile.profile((RAbstractVector) funValueObj);
+        int funValueVecLen = funValueVec.getLength();
+
         RVector vecMat = vec.materialize();
         Object[] applyResult = doApply.execute(frame, vecMat, fun, optionalArgs);
 
         RVector result = null;
         boolean applyResultZeroLength = applyResult.length == 0;
-        Object funValue = funValueProfile.profile(funValueArg);
-        if (funValue instanceof Integer) {
-            int[] data = applyResultZeroLength ? new int[0] : convertInt(applyResult);
+
+        // TODO check funValueLen against length of result
+        if (funValueVec instanceof RAbstractIntVector) {
+            int[] data = applyResultZeroLength ? new int[0] : convertIntVector(frame, applyResult, funValueVecLen);
             result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-        } else if (funValue instanceof Double) {
-            double[] data = applyResultZeroLength ? new double[0] : convertDouble(applyResult);
+        } else if (funValueVec instanceof RAbstractDoubleVector) {
+            double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(frame, applyResult, funValueVecLen);
             result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
-        } else if (funValue instanceof Byte) {
-            byte[] data = applyResultZeroLength ? new byte[0] : convertByte(applyResult);
+        } else if (funValueVec instanceof RAbstractLogicalVector) {
+            byte[] data = applyResultZeroLength ? new byte[0] : convertLogicalVector(frame, applyResult, funValueVecLen);
             result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
-        } else if (funValue instanceof String) {
-            String[] data = applyResultZeroLength ? new String[0] : convertString(applyResult);
+        } else if (funValueVec instanceof RAbstractStringVector) {
+            String[] data = applyResultZeroLength ? new String[0] : convertStringVector(frame, applyResult, funValueVecLen);
             result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-        } else if (funValue instanceof RComplex) {
-            double[] data = applyResultZeroLength ? new double[1] : convertComplex(applyResult);
+        } else if (funValueVec instanceof RAbstractComplexVector) {
+            double[] data = applyResultZeroLength ? new double[1] : convertComplexVector(frame, applyResult, funValueVecLen);
             result = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
-        } else if (funValue instanceof RAbstractIntVector) {
-            int funValLen = ((RAbstractVector) funValue).getLength();
-            int[] data = applyResultZeroLength ? new int[0] : convertIntVector(frame, applyResult, funValLen);
-            result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-            result.setDimensions(new int[]{funValLen, applyResult.length});
-        } else if (funValue instanceof RAbstractDoubleVector) {
-            int funValLen = ((RAbstractVector) funValue).getLength();
-            double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(frame, applyResult, funValLen);
-            result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
-            result.setDimensions(new int[]{funValLen, applyResult.length});
-        } else if (funValue instanceof RAbstractLogicalVector) {
-            int funValLen = ((RAbstractVector) funValue).getLength();
-            byte[] data = applyResultZeroLength ? new byte[0] : convertLogicalVector(frame, applyResult, funValLen);
-            result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
-            result.setDimensions(new int[]{funValLen, applyResult.length});
-        } else if (funValue instanceof RAbstractStringVector) {
-            int funValLen = ((RAbstractVector) funValue).getLength();
-            String[] data = applyResultZeroLength ? new String[0] : convertStringVector(frame, applyResult, funValLen);
-            result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-            result.setDimensions(new int[]{funValLen, applyResult.length});
-        } else if (funValue instanceof RAbstractComplexVector) {
-            int funValLen = ((RAbstractVector) funValue).getLength();
-            double[] data = applyResultZeroLength ? new double[1] : convertComplexVector(frame, applyResult, funValLen);
-            result = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
-            result.setDimensions(new int[]{funValLen, applyResult.length});
         } else {
-            assert false;
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        if (dimsProfile.profile(funValueVecLen > 1)) {
+            result.setDimensions(new int[]{funValueVecLen, applyResult.length});
         }
 
         // TODO: handle names in case of matrices
@@ -128,32 +126,14 @@ public abstract class VApply extends RCastingBuiltinNode {
     }
 
     @ExplodeLoop
-    private static double[] convertDouble(Object[] values) {
-        double[] newArray = new double[values.length];
-        for (int i = 0; i < values.length; i++) {
-            newArray[i] = (double) values[i];
-        }
-        return newArray;
-    }
-
-    @ExplodeLoop
     private double[] convertDoubleVector(VirtualFrame frame, Object[] values, int len) {
         double[] newArray = new double[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractDoubleVector v = (RAbstractDoubleVector) castDouble(frame, values[i], false);
-            for (int j = 0; j < len; j++) {
+            RAbstractDoubleVector v = (RAbstractDoubleVector) RRuntime.asAbstractVector(castDouble(frame, values[i], false));
+            for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
-        }
-        return newArray;
-    }
-
-    @ExplodeLoop
-    private static int[] convertInt(Object[] values) {
-        int[] newArray = new int[values.length];
-        for (int i = 0; i < values.length; i++) {
-            newArray[i] = (int) values[i];
         }
         return newArray;
     }
@@ -163,19 +143,10 @@ public abstract class VApply extends RCastingBuiltinNode {
         int[] newArray = new int[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractIntVector v = (RAbstractIntVector) castInteger(frame, values[i], false);
-            for (int j = 0; j < len; j++) {
+            RAbstractIntVector v = (RAbstractIntVector) RRuntime.asAbstractVector(castInteger(frame, values[i], false));
+            for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
-        }
-        return newArray;
-    }
-
-    @ExplodeLoop
-    private static byte[] convertByte(Object[] values) {
-        byte[] newArray = new byte[values.length];
-        for (int i = 0; i < values.length; i++) {
-            newArray[i] = (byte) values[i];
         }
         return newArray;
     }
@@ -185,19 +156,10 @@ public abstract class VApply extends RCastingBuiltinNode {
         byte[] newArray = new byte[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractLogicalVector v = (RAbstractLogicalVector) castLogical(frame, values[i], false);
-            for (int j = 0; j < len; j++) {
+            RAbstractLogicalVector v = (RAbstractLogicalVector) RRuntime.asAbstractVector(castLogical(frame, values[i], false));
+            for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
-        }
-        return newArray;
-    }
-
-    @ExplodeLoop
-    private static String[] convertString(Object[] values) {
-        String[] newArray = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            newArray[i] = (String) values[i];
         }
         return newArray;
     }
@@ -207,21 +169,10 @@ public abstract class VApply extends RCastingBuiltinNode {
         String[] newArray = new String[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractStringVector v = (RAbstractStringVector) castString(frame, values[i], false);
-            for (int j = 0; j < len; j++) {
+            RAbstractStringVector v = (RAbstractStringVector) RRuntime.asAbstractVector(castString(frame, values[i], false));
+            for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
-        }
-        return newArray;
-    }
-
-    @ExplodeLoop
-    private static double[] convertComplex(Object[] values) {
-        double[] newArray = new double[values.length * 2];
-        for (int i = 0; i < values.length; i++) {
-            int index = i << 1;
-            newArray[index] = ((RComplex) values[i]).getRealPart();
-            newArray[index + 1] = ((RComplex) values[i]).getImaginaryPart();
         }
         return newArray;
     }
@@ -231,8 +182,8 @@ public abstract class VApply extends RCastingBuiltinNode {
         double[] newArray = new double[values.length * len * 2];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractComplexVector v = (RAbstractComplexVector) castComplex(frame, values[i], false);
-            for (int j = 0; j < len; j++) {
+            RAbstractComplexVector v = (RAbstractComplexVector) RRuntime.asAbstractVector(castComplex(frame, values[i], false));
+            for (int j = 0; j < v.getLength(); j++) {
                 RComplex val = v.getDataAt(j);
                 newArray[ind++] = val.getRealPart();
                 newArray[ind++] = val.getImaginaryPart();
