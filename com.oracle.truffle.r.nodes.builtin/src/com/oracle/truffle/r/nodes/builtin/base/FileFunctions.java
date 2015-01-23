@@ -188,7 +188,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             * 
+             *
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -594,7 +594,6 @@ public class FileFunctions {
         }
 
         @Specialization(guards = "!lengthZero")
-        @TruffleBoundary
         protected RStringVector doFilePath(VirtualFrame frame, RList args, RAbstractStringVector fsepVec) {
             Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;

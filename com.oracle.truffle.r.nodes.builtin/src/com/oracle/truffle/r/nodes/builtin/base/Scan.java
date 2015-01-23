@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,6 +22,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -40,6 +41,7 @@ public abstract class Scan extends RBuiltinNode {
     private static final int NO_COMCHAR = 100000; /* won't occur even in Unicode */
 
     private final NACheck naCheck = new NACheck();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private CastToVectorNode castVector;
 
@@ -105,16 +107,18 @@ public abstract class Scan extends RBuiltinNode {
 
         LocalData data = new LocalData();
 
-        int nmax = nmaxVec.getLength() == 0 ? RRuntime.INT_NA : nmaxVec.getDataAt(0);
+        int nmax = firstElementOrNA(nmaxVec);
 
         if (sepVec.getLength() == 0) {
             data.sepchar = null;
         } else if (sepVec.getElementClass() != RString.class) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "sep");
         }
         // TODO: some sort of character translation happens here?
         String sep = ((RAbstractStringVector) sepVec).getDataAt(0);
         if (sep.length() > 1) {
+            errorProfile.enter();
             throw RError.error(RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
         }
         data.sepchar = sep.length() == 0 ? null : sep.substring(0, 1);
@@ -122,6 +126,7 @@ public abstract class Scan extends RBuiltinNode {
         if (decVec.getLength() == 0) {
             data.decchar = '.';
         } else if (decVec.getElementClass() != RString.class) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_DECIMAL_SEP);
         }
         // TODO: some sort of character translation happens here?
@@ -134,56 +139,64 @@ public abstract class Scan extends RBuiltinNode {
         if (quotesVec.getLength() == 0) {
             data.quoteset = "";
         } else if (quotesVec.getElementClass() != RString.class) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_QUOTE_SYMBOL);
         }
         // TODO: some sort of character translation happens here?
         data.quoteset = ((RAbstractStringVector) quotesVec).getDataAt(0);
 
-        int nskip = nskipVec.getLength() == 0 ? RRuntime.INT_NA : nskipVec.getDataAt(0);
+        int nskip = firstElementOrNA(nskipVec);
 
-        int nlines = nlinesVec.getLength() == 0 ? RRuntime.INT_NA : nlinesVec.getDataAt(0);
+        int nlines = firstElementOrNA(nlinesVec);
 
         if (naStringsVec.getElementClass() != RString.class) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "na.strings");
         }
         data.naStrings = (RAbstractStringVector) naStringsVec;
 
-        byte flush = flushVec.getLength() == 0 ? RRuntime.LOGICAL_NA : flushVec.getDataAt(0);
+        byte flush = firstElementOrNA(flushVec);
 
-        byte fill = fillVec.getLength() == 0 ? RRuntime.LOGICAL_NA : fillVec.getDataAt(0);
+        byte fill = firstElementOrNA(fillVec);
 
         if (stripVec.getElementClass() != RLogical.class) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "strip.white");
         }
         if (stripVec.getLength() != 1 && stripVec.getLength() != what.getLength()) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_LENGTH, "strip.white");
         }
         byte strip = ((RAbstractLogicalVector) stripVec).getDataAt(0);
 
         data.quiet = dataQuietVec.getLength() == 0 || RRuntime.isNA(dataQuietVec.getDataAt(0)) ? false : dataQuietVec.getDataAt(0) == RRuntime.LOGICAL_TRUE;
 
-        byte blSkip = blSkipVec.getLength() == 0 ? RRuntime.LOGICAL_NA : blSkipVec.getDataAt(0);
+        byte blSkip = firstElementOrNA(blSkipVec);
 
-        byte multiLine = multiLineVec.getLength() == 0 ? RRuntime.LOGICAL_NA : multiLineVec.getDataAt(0);
+        byte multiLine = firstElementOrNA(multiLineVec);
 
         if (commentCharVec.getElementClass() != RString.class || commentCharVec.getLength() != 1) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "comment.char");
         }
         String commentChar = ((RAbstractStringVector) commentCharVec).getDataAt(0);
         data.comchar = NO_COMCHAR;
         if (commentChar.length() > 1) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "comment.char");
         } else if (commentChar.length() == 1) {
             data.comchar = commentChar.charAt(0);
         }
 
-        byte escapes = escapesVec.getLength() == 0 ? RRuntime.LOGICAL_NA : escapesVec.getDataAt(0);
+        byte escapes = firstElementOrNA(escapesVec);
         if (RRuntime.isNA(escapes)) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "allowEscapes");
         }
         data.escapes = escapes != RRuntime.LOGICAL_FALSE;
 
         if (encodingVec.getElementClass() != RString.class || encodingVec.getLength() != 1) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "encoding");
         }
         String encoding = ((RAbstractStringVector) encodingVec).getDataAt(0);
@@ -194,8 +207,9 @@ public abstract class Scan extends RBuiltinNode {
             data.isUTF8 = true;
         }
 
-        byte skipNull = skipNullVec.getLength() == 0 ? RRuntime.LOGICAL_NA : skipNullVec.getDataAt(0);
+        byte skipNull = firstElementOrNA(skipNullVec);
         if (RRuntime.isNA(skipNull)) {
+            errorProfile.enter();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "skipNull");
         }
         data.skipNull = skipNull != RRuntime.LOGICAL_FALSE;
@@ -236,6 +250,14 @@ public abstract class Scan extends RBuiltinNode {
         } catch (IOException x) {
             throw RError.error(RError.Message.CANNOT_READ_CONNECTION);
         }
+    }
+
+    private int firstElementOrNA(RAbstractIntVector nmaxVec) {
+        return nmaxVec.getLength() == 0 ? RRuntime.INT_NA : nmaxVec.getDataAt(0);
+    }
+
+    private static byte firstElementOrNA(RAbstractLogicalVector flushVec) {
+        return flushVec.getLength() == 0 ? RRuntime.LOGICAL_NA : flushVec.getDataAt(0);
     }
 
     private static String[] getQuotedItems(LocalData data, String s) {
@@ -341,7 +363,6 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
     private RVector scanFrame(VirtualFrame frame, RList what, int maxRecords, int maxLines, boolean flush, boolean fill, boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data)
                     throws IOException {
 
@@ -354,6 +375,7 @@ public abstract class Scan extends RBuiltinNode {
         RList list = RDataFactory.createList(new Object[nc]);
         for (int i = 0; i < nc; i++) {
             if (what.getDataAt(i) == RNull.instance) {
+                errorProfile.enter();
                 throw RError.error(RError.Message.INVALID_ARGUMENT, "what");
             } else {
                 RAbstractVector vec = castVector(frame, what.getDataAt(i));
@@ -364,6 +386,13 @@ public abstract class Scan extends RBuiltinNode {
 
         naCheck.enable(true);
 
+        return scanFrameInternal(maxRecords, maxLines, flush, fill, blSkip, multiLine, data, nc, blockSize, list);
+    }
+
+    @TruffleBoundary
+    private RVector scanFrameInternal(int maxRecords, int maxLines, boolean flush, boolean fill, boolean blSkip, boolean multiLine, LocalData data, int nc, int initialBlockSize, RList list)
+                    throws IOException {
+        int blockSize = initialBlockSize;
         int n = 0;
         int lines = 0;
         int records = 0;

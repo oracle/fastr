@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,6 @@ public abstract class Substitute extends RBuiltinNode {
      * @return in general an {@link RLanguage} instance, but simple cases could be a constant value
      *         or {@link RSymbol}
      */
-    @TruffleBoundary
     private Object doSubstituteWithEnv(VirtualFrame frame, RPromise expr, REnvironment envArg) {
         // In the global environment, substitute behaves like quote
         // TODO It may be too early to do this check, GnuR doesn't work this way (re promises)
@@ -112,6 +111,11 @@ public abstract class Substitute extends RBuiltinNode {
         // Check for missing env, which means current
         REnvironment env = envArg != null ? envArg : REnvironment.frameToEnvironment(frame.materialize());
 
+        return doSubstituteInternal(expr, env);
+    }
+
+    @TruffleBoundary
+    private static Object doSubstituteInternal(RPromise expr, REnvironment env) {
         // We have to examine all the names in the expression:
         // 1. Ordinary variable, replace by value (if bound), else unchanged
         // 2. promise (aka function argument): replace by expression associated with the promise

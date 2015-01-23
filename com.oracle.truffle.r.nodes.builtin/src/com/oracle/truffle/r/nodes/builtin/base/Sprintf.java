@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -169,7 +169,6 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "oneElement")
-    @TruffleBoundary
     protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         if (sprintfRecursive == null) {
@@ -186,7 +185,6 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = {"oneElement", "fmtLengthOne"})
-    @TruffleBoundary
     protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(frame, fmt.getDataAt(0), args);
     }
