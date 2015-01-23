@@ -170,22 +170,29 @@ public class SequenceNode extends RNode {
         public void report() {
             if (timedSequences != null) {
                 for (SequenceNode sequence : timedSequences) {
-                    Source source = sequence.getSourceSection().getSource();
-                    long[] time = new long[source.getLineCount() + 1];
                     long total = 0;
-                    for (int i = 0; i < sequence.timing.length; i++) {
-                        SourceSection src = sequence.sequence[i].getSourceSection();
-                        if (src != null) {
-                            time[src.getLineLocation().getLineNumber()] += sequence.timing[i];
+                    if (sequence.getSourceSection() == null) {
+                        for (int i = 0; i < sequence.timing.length; i++) {
                             total += sequence.timing[i];
                         }
-                    }
-                    if (total > 1000000000L) {
-                        int startLine = sequence.getSourceSection().getStartLine();
-                        int endLine = startLine + sequence.getSourceSection().getCode().split("\n").length - 1;
-                        System.out.println("File " + source.getName() + " lines " + startLine + "-" + endLine + ", total: " + (total / 1000000) + "ms");
-                        for (int i = startLine; i <= endLine; i++) {
-                            System.out.printf("%2d%%: %s%n", (time[i] + (total / 200)) * 100 / total, source.getCode(i));
+                        System.out.println("UNNOWN SOURCE total: " + (total / 1000000) + "ms");
+                    } else {
+                        Source source = sequence.getSourceSection().getSource();
+                        long[] time = new long[source.getLineCount() + 1];
+                        for (int i = 0; i < sequence.timing.length; i++) {
+                            SourceSection src = sequence.sequence[i].getSourceSection();
+                            if (src != null) {
+                                time[src.getLineLocation().getLineNumber()] += sequence.timing[i];
+                                total += sequence.timing[i];
+                            }
+                        }
+                        if (total > 1000000000L) {
+                            int startLine = sequence.getSourceSection().getStartLine();
+                            int endLine = startLine + sequence.getSourceSection().getCode().split("\n").length - 1;
+                            System.out.println("File " + source.getName() + " lines " + startLine + "-" + endLine + ", total: " + (total / 1000000) + "ms");
+                            for (int i = startLine; i <= endLine; i++) {
+                                System.out.printf("%2d%%: %s%n", (time[i] + (total / 200)) * 100 / total, source.getCode(i));
+                            }
                         }
                     }
                 }

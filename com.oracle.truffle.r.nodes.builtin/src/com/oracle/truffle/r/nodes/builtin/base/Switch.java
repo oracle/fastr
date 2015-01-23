@@ -157,7 +157,6 @@ public abstract class Switch extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }
 
-    @TruffleBoundary
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
         Object[] optionalArgValues = optionalArgs.getValues();
         if (index >= 1 && index <= optionalArgValues.length) {
