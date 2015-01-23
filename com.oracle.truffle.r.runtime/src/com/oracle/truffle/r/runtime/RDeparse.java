@@ -73,6 +73,7 @@ public class RDeparse {
     }
 
     public static final int PREC_SUM = 9;
+    public static final int PREC_PERCENT = 11;
     public static final int PREC_SIGN = 13;
 
     public static class PPInfo {
@@ -142,6 +143,7 @@ public class RDeparse {
     // @formatter:on
 
     public static final PPInfo BUILTIN = new PPInfo(PP.FUNCALL, 0, false);
+    private static final PPInfo USERBINOP = new PPInfo(PP.BINARY2, PREC_PERCENT, false);
 
     public static Func getFunc(String op) {
         for (Func func : FUNCTAB) {
@@ -149,7 +151,16 @@ public class RDeparse {
                 return func;
             }
         }
+        // user binary op?
+        if (isUserBinop(op)) {
+            return new Func(op, USERBINOP);
+        }
         return null;
+    }
+
+    private static boolean isUserBinop(String op) {
+        int len = op.length();
+        return op.charAt(0) == '%' && op.charAt(len - 1) == '%';
     }
 
     public static PPInfo ppInfo(String op) {
@@ -338,7 +349,6 @@ public class RDeparse {
         return data;
     }
 
-    @SuppressWarnings("unused")
     @TruffleBoundary
     public static State deparse2buff(State state, final Object objArg) {
         Object obj = objArg;
@@ -453,10 +463,16 @@ public class RDeparse {
                 if (carType == SEXPTYPE.SYMSXP) {
                     RSymbol symbol = (RSymbol) car;
                     String op = symbol.getName();
-                    if (RContext.getEngine().isBuiltin(op)) {
+                    boolean userBinop = false;
+                    if (RContext.getEngine().isBuiltin(op) || (userBinop = isUserBinop(op))) {
                         RPairList pl = (RPairList) cdr;
-                        // TODO BUILTINSXP, SPECIALSXP, userBinOp
-                        PPInfo fop = ppInfo(op);
+                        PPInfo fop;
+                        if (userBinop) {
+                            // TODO check for named args and deparse as normal function
+                            fop = USERBINOP;
+                        } else {
+                            fop = ppInfo(op);
+                        }
                         if (fop.kind == PP.BINARY) {
                             switch (pl.getLength()) {
                                 case 1:
@@ -470,8 +486,7 @@ public class RDeparse {
                         } else if (fop.kind == PP.BINARY2) {
                             if (pl.getLength() != 2) {
                                 fop = new PPInfo(PP.FUNCALL, 0, false);
-                            } else if (/* userbinop */false) {
-                                // TODO
+                            } else if (userBinop) {
                                 fop = new PPInfo(PP.BINARY, fop.prec, fop.rightassoc);
                             }
                         }

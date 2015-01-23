@@ -232,32 +232,46 @@ public class RASTUtils {
      * Returns the name (as an {@link RSymbol} or the function associated with an {@link RCallNode}
      * or {@link DispatchedCallNode}.
      *
-     * @param quote TODO
+     * @param escape Add escape characters to non-standard names
      */
-    public static Object findFunctionName(Node node, boolean quote) {
+    public static Object findFunctionName(Node node, boolean escape) {
         RNode child = (RNode) unwrap(findFunctionNode(node));
         if (child instanceof ConstantNode && ((ConstantNode) child).getValue() instanceof RFunction) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
-            return createRSymbol(child);
+            String name = ((ReadVariableNode) child).getIdentifier();
+            if (escape) {
+                name = escapeName(name);
+            }
+            return RDataFactory.createSymbol(name);
         } else if (child instanceof GroupDispatchCallNode) {
             GroupDispatchCallNode groupDispatchNode = (GroupDispatchCallNode) child;
             String gname = groupDispatchNode.getGenericName();
-            if (quote) {
-                gname = "`" + gname + "`";
+            if (escape) {
+                gname = escapeName(gname);
             }
             return RDataFactory.createSymbol(gname);
         } else if (child instanceof RBuiltinNode) {
             RBuiltinNode builtinNode = (RBuiltinNode) child;
             return RDataFactory.createSymbol((builtinNode.getBuiltin().getRBuiltin().name()));
         } else if (child instanceof RCallNode) {
-            return findFunctionName(child, quote);
+            return findFunctionName(child, escape);
         } else {
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
             child.deparse(state);
             return RDataFactory.createSymbol(state.toString());
         }
+    }
+
+    private static String escapeName(String name) {
+        if (name.length() > 0) {
+            char ch = name.charAt(0);
+            if (!(Character.isLetter(ch) || ch == '.')) {
+                return "`" + name + "`";
+            }
+        }
+        return name;
     }
 
     /**
