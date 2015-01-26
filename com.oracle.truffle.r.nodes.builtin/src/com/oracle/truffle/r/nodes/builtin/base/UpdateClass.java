@@ -115,14 +115,9 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(RFunction arg, String className) {
-        return setClass(arg, RDataFactory.createStringVectorFromScalar(className));
-    }
-
-    @Specialization
-    public Object setClass(RFunction arg, RStringVector className) {
+    public Object setClass(RFunction arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
@@ -134,19 +129,42 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(REnvironment arg, String className) {
-        return setClass(arg, RDataFactory.createStringVectorFromScalar(className));
-    }
-
-    @Specialization
-    public Object setClass(REnvironment arg, RStringVector className) {
+    public Object setClass(REnvironment arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className);
+        arg.setClassAttr(className.materialize());
         return arg;
     }
 
     @Specialization
     public Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(RSymbol arg, RAbstractStringVector className) {
+        controlVisibility();
+        arg.setClassAttr(className.materialize());
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
+        arg.setClassAttr(null);
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(RExternalPtr arg, RAbstractStringVector className) {
+        controlVisibility();
+        arg.setClassAttr(className.materialize());
+        return arg;
+    }
+
+    @Specialization
+    public Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         arg.setClassAttr(null);
         return arg;

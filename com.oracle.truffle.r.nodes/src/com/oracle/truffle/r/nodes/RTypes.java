@@ -32,8 +32,8 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * Whenever you add a type {@code T} to the list below, make sure a corresponding {@code executeT()}
  * method is added to {@link RNode}, {@code wrap} and {@code proxy} methods are added to
- * {@link RProxyNode}, a {@code typeof} method is added to {@code TypeNode} and a {@code print}
- * method added to {code PrettyPrint}.
+ * {@link RProxyNode}, a {@code typeof} method is added to {@code TypeoNode} and a {@code print}
+ * method added to {code PrettyPrinterNode}.
  *
  * @see RNode
  */
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.env.*;
                 RRawVector.class, RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REnvironment.class, RExpression.class,
                 RConnection.class, MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
                 RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RDataFrame.class, RFactor.class, RSymbol.class, RPromise.class, RLanguage.class,
-                RPairList.class, RFormula.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RType.class, Object[].class})
+                RPairList.class, RFormula.class, RExternalPtr.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RType.class, Object[].class})
 public class RTypes {
 
     @TypeCheck(RNull.class)

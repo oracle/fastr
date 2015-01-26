@@ -124,6 +124,11 @@ public abstract class TypeofNode extends UnaryNode {
     }
 
     @Specialization
+    protected RType typeof(RExternalPtr symbol) {
+        return RType.ExternalPtr;
+    }
+
+    @Specialization
     protected RType typeof(RLanguage language) {
         return RType.Language;
     }

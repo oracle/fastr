@@ -267,6 +267,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    protected RExternalPtr wrap(RExternalPtr x) {
+        return proxy(x);
+    }
+
+    protected RExternalPtr proxy(RExternalPtr x) {
+        return (RExternalPtr) proxyScalar(x);
+    }
+
+    @Specialization
     protected RLanguage wrap(RLanguage x) {
         return proxy(x);
     }

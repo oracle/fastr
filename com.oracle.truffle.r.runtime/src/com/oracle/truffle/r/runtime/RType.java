@@ -40,7 +40,8 @@ public enum RType {
     Promise("promise"),
     Expression("expression"),
     DefunctReal("real"),
-    DefunctSingle("single");
+    DefunctSingle("single"),
+    ExternalPtr("externalptr");
 
     private final String name;
 

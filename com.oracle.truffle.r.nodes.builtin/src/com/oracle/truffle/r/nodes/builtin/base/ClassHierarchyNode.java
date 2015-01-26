@@ -78,6 +78,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RExternalPtr arg) {
+        return RDataFactory.createStringVector(RType.ExternalPtr.getName());
+    }
+
+    @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") REnvironment arg) {
         return RDataFactory.createStringVector(RType.Environment.getName());
     }

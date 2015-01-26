@@ -84,7 +84,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return (VirtualFrame) Truffle.getRuntime().getCurrentFrame().getFrame(FRAME_ACCESS, true);
     }
 
-    private String prettyPrintAttributes(Object o) {
+    private String prettyPrintAttribute(Object o) {
         if (attributePrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             attributePrettyPrinter = insert(PrettyPrinterNodeGen.create(null, null, null, null, true));
@@ -214,6 +214,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrint(RFunction operand, Object listElementName, byte quote, byte right) {
+        String string;
         if (operand.isBuiltin()) {
             RBuiltin rBuiltin = operand.getRBuiltin();
             RRootNode node = (RRootNode) operand.getTarget().getRootNode();
@@ -238,30 +239,22 @@ public abstract class PrettyPrinterNode extends RNode {
             sb.append(")  .Primitive(\"");
             sb.append(rBuiltin.name());
             sb.append("\")");
-            return sb.toString();
+            string = sb.toString();
         } else {
             String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());
             if (env != null && env.isNamespaceEnv()) {
                 source += "\n" + env.getPrintName();
             }
-            return source;
+            string = source;
         }
+        return printValueAndAttributes(string, operand);
     }
 
     @TruffleBoundary
     @Specialization
     protected String prettyPrint(REnvironment operand, Object listElementName, byte quote, byte right) {
-        RAttributes attributes = operand.getAttributes();
-        if (attributes == null) {
-            return operand.toString();
-        } else {
-            StringBuilder builder = new StringBuilder(operand.toString());
-            for (RAttribute attr : attributes) {
-                printAttribute(builder, attr);
-            }
-            return builderToString(builder);
-        }
+        return printValueAndAttributes(operand.toString(), operand);
     }
 
     @TruffleBoundary
@@ -288,7 +281,13 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrintSymbol(RSymbol operand, Object listElementName, byte quote, byte right) {
-        return operand.getName();
+        return printValueAndAttributes(operand.getName(), operand);
+    }
+
+    @TruffleBoundary
+    @Specialization
+    protected String prettyPrintExternalPtr(RExternalPtr operand, Object listElementName, byte quote, byte right) {
+        return printValueAndAttributes(String.format("<pointer: %#x>", operand.getValue()), operand);
     }
 
     @TruffleBoundary
@@ -304,7 +303,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrintLanguage(RLanguage language, Object listElementName, byte quote, byte right) {
-        return prettyPrintLanguageInternal(language);
+        return printValueAndAttributes(prettyPrintLanguageInternal(language), language);
     }
 
     private static String prettyPrintLanguageInternal(RLanguage language) {
@@ -392,10 +391,26 @@ public abstract class PrettyPrinterNode extends RNode {
         return builderToString(builder);
     }
 
+    /**
+     * Encapsulates the printing of the value and attributes for {@link RAttributable} types.
+     */
+    private String printValueAndAttributes(String value, RAttributable object) {
+        RAttributes attributes = object.getAttributes();
+        if (attributes == null) {
+            return value;
+        } else {
+            StringBuilder builder = new StringBuilder(value);
+            for (RAttribute attr : attributes) {
+                printAttribute(builder, attr);
+            }
+            return builderToString(builder);
+        }
+    }
+
     private void printAttribute(StringBuilder builder, RAttribute attr) {
         builder.append("\n");
         builder.append(concat("attr(,\"", attr.getName(), "\")\n"));
-        builder.append(prettyPrintAttributes(attr.getValue()));
+        builder.append(prettyPrintAttribute(attr.getValue()));
     }
 
     private static int getMaxPrintLength() {
