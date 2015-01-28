@@ -38,6 +38,11 @@ public interface CallRFFI {
     Object invokeCall(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
 
     /**
+     * Variant that does not return a result (primarily for library "init" methods.
+     */
+    void invokeVoidCall(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
+
+    /**
      * Variant of {@link #invokeCall} for {@code .External}, where args are wrapped up as a single
      * argument to the native call.
      *

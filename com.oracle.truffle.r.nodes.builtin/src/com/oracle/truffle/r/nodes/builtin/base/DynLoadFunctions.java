@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -36,8 +38,8 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 public class DynLoadFunctions {
 
-    private static final String DLLINFO_CLASS = "DLLInfo";
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
+    private static final String R_INIT_PREFIX = "R_init_";
 
     @RBuiltin(name = "dyn.load", kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
@@ -53,9 +55,17 @@ public class DynLoadFunctions {
             // Length not checked by GnuR
             byte local = localVec.getDataAt(0);
             try {
-                DLLInfo info = DLL.load(lib, asBoolean(local), asBoolean(now));
-                RList result = createDLLInfoList(info.toRValues());
-                return result;
+                DLLInfo dllInfo = DLL.load(lib, asBoolean(local), asBoolean(now));
+                // Search for init method
+                DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(R_INIT_PREFIX + dllInfo.name, dllInfo);
+                if (symbolInfo != null) {
+                    try {
+                        RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo, new Object[]{dllInfo});
+                    } catch (Throwable ex) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    }
+                }
+                return dllInfo.toRList();
             } catch (DLLException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), ex);
             }
@@ -82,33 +92,25 @@ public class DynLoadFunctions {
 
     }
 
-    // TODO remove .dynLibs when missing functionality (local) is available
-    @RBuiltin(name = "getLoadedDLLs", aliases = {".dynlibs"}, kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL, parameterNames = {})
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RList doGetLoadedDLLs() {
             controlVisibility();
-            Object[][] dlls = DLL.getLoadedDLLs();
-            String[] names = new String[dlls.length];
-            Object[] data = new Object[dlls.length];
-            for (int i = 0; i < dlls.length; i++) {
-                Object[] dllRawInfo = dlls[i];
-                RList dllInfo = createDLLInfoList(dllRawInfo);
+            ArrayList<DLLInfo> dlls = DLL.getLoadedDLLs();
+            String[] names = new String[dlls.size()];
+            Object[] data = new Object[names.length];
+            for (int i = 0; i < names.length; i++) {
+                DLLInfo dllInfo = dlls.get(i);
                 // name field is used a list element name
-                names[i] = (String) dllRawInfo[0];
-                data[i] = dllInfo;
+                names[i] = dllInfo.name;
+                data[i] = dllInfo.toRList();
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            RVector.setVectorClassAttr(result, RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS), null, null);
+            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
             return result;
         }
-    }
-
-    private static RList createDLLInfoList(Object[] data) {
-        RList dllInfo = RDataFactory.createList(data, RDataFactory.createStringVector(DLLInfo.NAMES, RDataFactory.COMPLETE_VECTOR));
-        RVector.setVectorClassAttr(dllInfo, RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), null, null);
-        return dllInfo;
     }
 
     @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "package", "type"})
@@ -118,10 +120,52 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected byte isLoaded(String symbol, String packageName, String type) {
             controlVisibility();
-            // TODO Pay attention to packageName
-            boolean found = DLL.findSymbolInfo(symbol, null) != null;
+            boolean found = DLL.findSymbolInfo(symbol, packageName) != null;
             return RRuntime.asLogical(found);
         }
+    }
+
+    @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withReg"})
+    public abstract static class GetSymbolInfo extends RBuiltinNode {
+
+        @Specialization
+        @TruffleBoundary
+        protected Object getSymbolInfo(String symbol, String packageName, byte withReg) {
+            controlVisibility();
+            DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(symbol, packageName);
+            return getResult(symbolInfo, withReg);
+        }
+
+        @Specialization(guards = "isDLLInfo")
+        @TruffleBoundary
+        protected Object getSymbolInfo(String symbol, RExternalPtr externalPtr, byte withReg) {
+            controlVisibility();
+            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.value);
+            if (dllInfo == null) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
+            }
+            DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(symbol, dllInfo);
+            return getResult(symbolInfo, withReg);
+        }
+
+        private static Object getResult(DLL.SymbolInfo symbolInfo, byte withReg) {
+            if (symbolInfo != null) {
+                return symbolInfo.createRSymbolObject(new DLL.RegisteredNativeType(DLL.NativeSymbolType.Any, null, null), RRuntime.fromLogical(withReg));
+            } else {
+                return RNull.instance;
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object getSymbolInfo(Object symbol, Object packageName, Object withReg) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
+        }
+
+        public static boolean isDLLInfo(@SuppressWarnings("unused") String symbol, RExternalPtr externalPtr) {
+            return DLL.isDLLInfo(externalPtr);
+        }
+
     }
 
 }

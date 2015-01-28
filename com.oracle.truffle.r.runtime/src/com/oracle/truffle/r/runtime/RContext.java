@@ -156,9 +156,9 @@ public final class RContext extends ExecutionContext {
         void loadDefaultPackage(String name, MaterializedFrame frame, REnvironment envForFrame);
 
         /**
-         * Is {@code name} a builtin function?
+         * Is {@code name} a builtin function (but not a {@link RBuiltinKind#INTERNAL}?
          */
-        boolean isBuiltin(String name);
+        boolean isPrimitiveBuiltin(String name);
 
         /**
          * Return the {@link RFunction} for the builtin {@code name}.

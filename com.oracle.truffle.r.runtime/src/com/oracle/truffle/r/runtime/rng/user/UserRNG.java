@@ -69,7 +69,7 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
                 return 0;
             }
         } else {
-            return symbolInfo.getAddress();
+            return symbolInfo.address;
         }
     }
 

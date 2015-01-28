@@ -464,8 +464,8 @@ public class RDeparse {
                     RSymbol symbol = (RSymbol) car;
                     String op = symbol.getName();
                     boolean userBinop = false;
-                    if (RContext.getEngine().isBuiltin(op) || (userBinop = isUserBinop(op))) {
-                        RPairList pl = (RPairList) cdr;
+                    if (RContext.getEngine().isPrimitiveBuiltin(op) || (userBinop = isUserBinop(op))) {
+                        RPairList pl = cdr instanceof RPairList ? (RPairList) cdr : null;
                         PPInfo fop;
                         if (userBinop) {
                             // TODO check for named args and deparse as normal function

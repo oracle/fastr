@@ -37,7 +37,7 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(OS_DIR)/$(C_LIBNAME)
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_DIR)
-FFI_INCLUDES = -I$(TOPDIR)/include/jni
+FFI_INCLUDES = -I$(TOPDIR)/include/jni -I$(TOPDIR)/include/jni/R_ext
 
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 

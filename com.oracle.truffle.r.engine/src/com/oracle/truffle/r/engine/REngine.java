@@ -191,8 +191,8 @@ public final class REngine implements RContext.Engine {
         RBuiltinPackages.load(name, frame, envForFrame);
     }
 
-    public boolean isBuiltin(String name) {
-        return builtinLookup.isBuiltin(name);
+    public boolean isPrimitiveBuiltin(String name) {
+        return builtinLookup.isPrimitiveBuiltin(name);
     }
 
     public RFunction lookupBuiltin(String name) {

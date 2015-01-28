@@ -137,13 +137,14 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     /**
-     * Used by {@link RDeparse} to detect whether a symbol is a builtin (or special). N.B. special
-     * functions are not explicitly denoted currently, only by virtue of the
-     * {@link RBuiltin#nonEvalArgs} attribute.
+     * Used by {@link RDeparse} to detect whether a symbol is a builtin (or special), i.e. not an
+     * {@link RBuiltinKind#INTERNAL}. N.B. special functions are not explicitly denoted currently,
+     * only by virtue of the {@link RBuiltin#nonEvalArgs} attribute.
      */
-    public boolean isBuiltin(String name) {
+    public boolean isPrimitiveBuiltin(String name) {
         for (RBuiltinPackage pkg : packages.values()) {
-            if (pkg.lookupByName(name) != null) {
+            RBuiltinFactory rbf = pkg.lookupByName(name);
+            if (rbf != null && rbf.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
                 return true;
             }
         }

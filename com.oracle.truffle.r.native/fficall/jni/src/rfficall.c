@@ -14,6 +14,7 @@
 #include <jni.h>
 
 #include <Rinternals.h>
+#include <Rdynload.h>
 
 /*
  * All calls pass through one of the call(N) methods, which carry the JNIEnv value,
@@ -24,17 +25,30 @@
 static JNIEnv *curenv = NULL;
 
 JNIEnv *getEnv() {
+//	printf("getEnv()=%p\n", curenv);
 	return curenv;
+}
+
+void setEnv(JNIEnv *env) {
+//	printf("setEnv(%p)\n", env);
+	curenv = env;
 }
 
 static jclass RDataFactoryClass;
 static jclass CallRFFIHelperClass;
+static jclass DLLClass;
+static jclass DotSymbolClass;
+
 static jmethodID scalarIntegerMethodID;
 static jmethodID scalarDoubleMethodID;
 static jmethodID createIntArrayMethodID;
 static jmethodID createDoubleArrayMethodID;
 static jmethodID getIntDataAtZeroID;
 static jmethodID getDoubleDataAtZeroID;
+static jmethodID registerRoutinesID;
+static jmethodID useDynamicSymbolsID;
+static jmethodID forceSymbolsID;
+static jmethodID setDotSymbolValuesID;
 
 static jclass checkFindClass(JNIEnv *env, const char *name);
 static jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
@@ -43,6 +57,8 @@ JNIEXPORT void JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env, jclass c) {
 	RDataFactoryClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RDataFactory");
 	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper");
+	DLLClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL");
+	DotSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$DotSymbol");
 
 	scalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
 	scalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
@@ -50,6 +66,95 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	createDoubleArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createDoubleVector", "(I)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
 	getIntDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getIntDataAtZero", "(Ljava/lang/Object;)I", 1);
 	getDoubleDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getDoubleDataAtZero", "(Ljava/lang/Object;)D", 1);
+	registerRoutinesID = checkGetMethodID(env, DLLClass, "registerRoutines", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;IIJ)V", 1);
+	useDynamicSymbolsID = checkGetMethodID(env, DLLClass, "useDynamicSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
+	forceSymbolsID = checkGetMethodID(env, DLLClass, "forceSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
+	setDotSymbolValuesID = checkGetMethodID(env, DLLClass, "setDotSymbolValues", "(Ljava/lang/String;JI)Lcom/oracle/truffle/r/runtime/ffi/DLL$DotSymbol;", 1);
+}
+
+// Must match ordinal value for DLL.NativeSymbolType
+#define C_NATIVE_TYPE 0
+#define CALL_NATIVE_TYPE 1
+#define FORTRAN_NATIVE_TYPE 2
+#define EXTERNAL_NATIVE_TYPE 3
+
+int
+R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
+		   const R_CallMethodDef * const callRoutines,
+		   const R_FortranMethodDef * const fortranRoutines,
+		   const R_ExternalMethodDef * const externalRoutines) {
+	// To avoid callbacks to convert the data in the R_CallMethodDef piece by piece, create it here.
+	JNIEnv *thisenv = getEnv();
+	int num;
+	if (croutines) {
+		for(num = 0; croutines[num].name != NULL; num++) {;}
+		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, C_NATIVE_TYPE, num, croutines);
+	}
+	if (callRoutines) {
+		for(num = 0; callRoutines[num].name != NULL; num++) {;}
+		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, CALL_NATIVE_TYPE, num, callRoutines);
+	}
+	if (fortranRoutines) {
+		for(num = 0; fortranRoutines[num].name != NULL; num++) {;}
+		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, FORTRAN_NATIVE_TYPE, num, fortranRoutines);
+	}
+	if (externalRoutines) {
+		for(num = 0; externalRoutines[num].name != NULL; num++) {;}
+		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, EXTERNAL_NATIVE_TYPE, num, externalRoutines);
+	}
+    return 1;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_DLL_setSymbol(JNIEnv *env, jclass c, jint nstOrd, jlong routinesAddr, jint index) {
+	const char *name;
+	long fun;
+	int numArgs;
+
+	switch (nstOrd) {
+	case C_NATIVE_TYPE: {
+		R_CMethodDef *croutines = (R_CMethodDef *) routinesAddr;
+		name = croutines[index].name;
+		fun = (long) croutines[index].fun;
+		numArgs = croutines[index].numArgs;
+		break;
+	}
+	case CALL_NATIVE_TYPE: {
+		R_CallMethodDef *callRoutines = (R_CallMethodDef *) routinesAddr;
+		name = callRoutines[index].name;
+		fun = (long) callRoutines[index].fun;
+		numArgs = callRoutines[index].numArgs;
+		break;
+	}
+	case FORTRAN_NATIVE_TYPE: {
+		R_FortranMethodDef * fortranRoutines = (R_FortranMethodDef *) routinesAddr;
+		name = fortranRoutines[index].name;
+		fun = (long) fortranRoutines[index].fun;
+		numArgs = fortranRoutines[index].numArgs;
+	}
+	case EXTERNAL_NATIVE_TYPE: {
+		R_ExternalMethodDef * externalRoutines = (R_ExternalMethodDef *) routinesAddr;
+		name = externalRoutines[index].name;
+		fun = (long) externalRoutines[index].fun;
+		numArgs = externalRoutines[index].numArgs;
+		break;
+	}
+	default: (*env)->FatalError(env, "NativeSynbolTyope out of range");
+	}
+//	printf("name %s, fun %0lx, numArgs %d\n", name, fun, numArgs);
+	jstring nameString = (*env)->NewStringUTF(env, name);
+	return (*env)->CallStaticObjectMethod(env, DLLClass, setDotSymbolValuesID, nameString, fun, numArgs);
+
+}
+
+Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticIntMethod(thisenv, DLLClass, useDynamicSymbolsID, dllInfo, value);
+}
+
+Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticIntMethod(thisenv, DLLClass, forceSymbolsID, dllInfo, value);
 
 }
 
@@ -134,21 +239,21 @@ typedef SEXP (*call10func)(SEXP arg1, SEXP arg2, SEXP arg3, SEXP arg4, SEXP arg5
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call0(JNIEnv *env, jclass c, jlong address) {
-	curenv = env;
+	setEnv(env);
 	call0func call0 = (call0func) address;
 	return (*call0)();
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
-	curenv = env;
+	setEnv(env);
 	call1func call1 = (call1func) address;
 	return (*call1)(arg1);
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call2(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2) {
-	curenv = env;
+	setEnv(env);
 	call2func call2 = (call2func) address;
 	return (*call2)(arg1, arg2);
 }
@@ -156,7 +261,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call2(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call3(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3) {
-	curenv = env;
+	setEnv(env);
 	call3func call3 = (call3func) address;
 	return (*call3)(arg1, arg2, arg3);
 }
@@ -164,7 +269,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call3(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call4(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4) {
-	curenv = env;
+	setEnv(env);
 	call4func call4 = (call4func) address;
 	return (*call4)(arg1, arg2, arg3, arg4);
 }
@@ -172,7 +277,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call4(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call5(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5) {
-	curenv = env;
+	setEnv(env);
 	call5func call5 = (call5func) address;
 	return (*call5)(arg1, arg2, arg3, arg4, arg5);
 }
@@ -180,7 +285,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call5(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call6(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6) {
-	curenv = env;
+	setEnv(env);
 	call6func call6 = (call6func) address;
 	return (*call6)(arg1, arg2, arg3, arg4, arg5, arg6);
 }
@@ -188,7 +293,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call6(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call7(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7) {
-	curenv = env;
+	setEnv(env);
 	call7func call7 = (call7func) address;
 	return (*call7)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
@@ -196,7 +301,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call7(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call8(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7, jobject arg8) {
-	curenv = env;
+	setEnv(env);
 	call8func call8 = (call8func) address;
 	return (*call8)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
@@ -204,14 +309,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call8(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call9(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7, jobject arg8, jobject arg9) {
-	curenv = env;
+	setEnv(env);
 	call9func call9 = (call9func) address;
 	return (*call9)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
-	curenv = env;
+	setEnv(env);
 	jsize len = (*env)->GetArrayLength(env, args);
 	switch (len) {
 	case 10: {
@@ -234,5 +339,15 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call(JNIEnv *env, jcla
 		return NULL;
 	}
 }
+
+typedef void (*callVoid1func)(SEXP arg1);
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_callVoid1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
+	setEnv(env);
+	callVoid1func call1 = (callVoid1func) address;
+	(*call1)(arg1);
+}
+
 
 

@@ -39,18 +39,22 @@ LIBDIR := $(OBJ)
 # packages seem to use .so even on Mac OS X and no "lib"
 LIB_PKG := $(OBJ)/$(PKG).so
 
+JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_DIR)
+FFI_INCLUDES = -I$(TOPDIR)/include/jni
+
+INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 all: $(LIB_PKG)
 
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(LIB_PKG): $(OBJ) $(OBJ)/$(PACKAGE).o
+$(LIB_PKG): $(OBJ) $(C_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(OBJ)/$(PACKAGE).o
+	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
 
 $(OBJ)/%.o: $(SRC)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.f
 	$(FC) $(CFLAGS) -c $< -o $@

@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.UpdateFieldNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.array.write.UpdateArrayHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
@@ -63,6 +64,13 @@ public class ReplacementNode extends RNode {
 
     @Override
     public void deparse(RDeparse.State state) {
+        if (FastROptions.debugMatches("dprepl")) {
+            RDeparse.State debugState = RDeparse.State.createPrintableState();
+            sequence[0].deparse(debugState);
+            sequence[1].deparse(debugState);
+            sequence[2].deparse(debugState);
+            System.console();
+        }
         WriteVariableNode valueStoreNode = (WriteVariableNode) sequence[0];
         /*
          * The rhs of valueStoreNode is the rhs of our result. sequence[1] is the copy of the object

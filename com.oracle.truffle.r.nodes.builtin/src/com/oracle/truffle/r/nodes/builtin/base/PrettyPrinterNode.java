@@ -287,7 +287,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrintExternalPtr(RExternalPtr operand, Object listElementName, byte quote, byte right) {
-        return printValueAndAttributes(String.format("<pointer: %#x>", operand.getValue()), operand);
+        return printValueAndAttributes(String.format("<pointer: %#x>", operand.value), operand);
     }
 
     @TruffleBoundary

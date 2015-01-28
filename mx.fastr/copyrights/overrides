@@ -147,6 +147,7 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RSerialize.java,gn
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ROptions.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RRNG.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RNGInitAdapter.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mt/MersenneTwister.java,hiroshima.copyright

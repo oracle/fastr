@@ -105,4 +105,14 @@ public class CallRFFIWithJNI implements CallRFFI {
     private static native Object call8(long address, Object arg1, Object arg2,  Object arg3,  Object arg4,  Object arg5,  Object arg6,  Object arg7,  Object arg8);
     private static native Object call9(long address, Object arg1, Object arg2,  Object arg3,  Object arg4,  Object arg5,  Object arg6,  Object arg7,  Object arg8,  Object arg9);
 
+    public void invokeVoidCall(SymbolInfo symbolInfo, Object[] args) throws Throwable {
+        long address = symbolInfo.address;
+        switch (args.length) {
+            case 1: callVoid1(address, args[0]); break;
+            default: assert false;
+        }
+    }
+
+    private static native void callVoid1(long address, Object arg1);
+
 }

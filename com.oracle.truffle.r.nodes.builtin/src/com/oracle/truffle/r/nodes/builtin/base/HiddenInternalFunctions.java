@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.RegisteredNativeType;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR.
@@ -211,18 +212,49 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info")
     public abstract static class GetRegisteredRoutines extends RBuiltinNode {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{".C", ".Call", ".Fortran", ".External"}, RDataFactory.COMPLETE_VECTOR);
-        private static final RList EMPTY = RDataFactory.createList();
+        private static final RStringVector NATIVE_ROUTINE_LIST = RDataFactory.createStringVectorFromScalar("NativeRoutineList");
 
         @Specialization
-        protected RList getRegisteredRoutines(Object info) {
-            Object[] data;
-            if (info == RNull.instance) {
-                data = new Object[]{EMPTY, EMPTY, EMPTY, EMPTY};
-                return RDataFactory.createList(data, NAMES);
-            } else {
-                throw RError.nyi(getEncapsulatingSourceSection(), " getRegisteredRoutines with non-null info");
-            }
+        protected RList getRegisteredRoutines(RNull info) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_DLLINFO);
         }
+
+        @Specialization(guards = "isDLLInfo")
+        @TruffleBoundary
+        protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
+            Object[] data = new Object[NAMES.getLength()];
+            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.value);
+            if (dllInfo == null) {
+                throw RInternalError.shouldNotReachHere();
+            }
+            for (DLL.NativeSymbolType nst : DLL.NativeSymbolType.values()) {
+                DLL.DotSymbol[] symbols = dllInfo.getNativeSymbols(nst);
+                if (symbols == null) {
+                    symbols = new DLL.DotSymbol[0];
+                }
+                Object[] symbolData = new Object[symbols.length];
+                for (int i = 0; i < symbols.length; i++) {
+                    DLL.DotSymbol symbol = symbols[i];
+                    DLL.RegisteredNativeType rnt = new DLL.RegisteredNativeType(nst, symbol, dllInfo);
+                    DLL.SymbolInfo symbolInfo = new DLL.SymbolInfo(dllInfo, symbol.name, symbol.fun);
+                    symbolData[i] = symbolInfo.createRSymbolObject(rnt, true);
+                }
+                RList symbolDataList = RDataFactory.createList(symbolData);
+                symbolDataList.setClassAttr(NATIVE_ROUTINE_LIST);
+                data[nst.ordinal()] = symbolDataList;
+            }
+            return RDataFactory.createList(data, NAMES);
+        }
+
+        @Fallback
+        protected RList getRegisteredRoutines(@SuppressWarnings("unused") Object info) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_DLLINFO);
+        }
+
+        public static boolean isDLLInfo(RExternalPtr externalPtr) {
+            return DLL.isDLLInfo(externalPtr);
+        }
+
     }
 
 }

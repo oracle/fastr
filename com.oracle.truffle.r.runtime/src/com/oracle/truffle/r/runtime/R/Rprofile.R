@@ -68,28 +68,28 @@ Sys.setenv(R_LIBS_SITE =
 Sys.setenv(R_LIBS_USER =
            .expand_R_libs_env_var(Sys.getenv("R_LIBS_USER")))
 
-#.First.sys <- function()
-#{
-#    for(pkg in getOption("defaultPackages")) {
-#		# for the moment we only handle "utils" this way
-#		if (pkg != "utils") next
-#        res <- require(pkg, quietly = TRUE, warn.conflicts = FALSE,
-#                       character.only = TRUE)
-#        if(!res)
-#            warning(gettextf('package %s in options("defaultPackages") was not found', sQuote(pkg)),
-#                    call.=FALSE, domain = NA)
-#    }
-#}
-#
-#.OptRequireMethods <- function()
-#{
-#      if("methods" %in% getOption("defaultPackages")) {
-#        res <- require("methods", quietly = TRUE, warn.conflicts = FALSE,
-#                       character.only = TRUE)
-#        if(!res)
-#            warning('package "methods" in options("defaultPackages") was not found', call.=FALSE)
-#    }
-#}
+.First.sys <- function()
+{
+    for(pkg in getOption("defaultPackages")) {
+		# for the moment we only handle "utils" this way
+		if (pkg != "utils") next
+        res <- require(pkg, quietly = TRUE, warn.conflicts = FALSE,
+                       character.only = TRUE)
+        if(!res)
+            warning(gettextf('package %s in options("defaultPackages") was not found', sQuote(pkg)),
+                    call.=FALSE, domain = NA)
+    }
+}
+
+.OptRequireMethods <- function()
+{
+      if("methods" %in% getOption("defaultPackages")) {
+        res <- require("methods", quietly = TRUE, warn.conflicts = FALSE,
+                       character.only = TRUE)
+        if(!res)
+            warning('package "methods" in options("defaultPackages") was not found', call.=FALSE)
+    }
+}
 
 #if(nzchar(Sys.getenv("R_BATCH"))) {
 #    .Last.sys <- function()
