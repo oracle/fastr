@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.utils;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -51,9 +52,9 @@ public class CountFields {
                 }
             }
         }
-
     }
 
+    @TruffleBoundary
     public static Object execute(RConnection file, char sepChar, String quoteSet, int nskip, boolean blskip, char comChar) throws IOException {
         LocalData data = new LocalData();
         data.sepchar = sepChar;

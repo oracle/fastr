@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,13 +41,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  */
 public class EvalFunctions {
     public abstract static class EvalAdapter extends RBuiltinNode {
-        protected Object doEvalBody(VirtualFrame frame, Object exprArg, REnvironment envir, REnvironment enclos) {
+        @TruffleBoundary
+        protected Object doEvalBody(int depth, Object exprArg, REnvironment envir, REnvironment enclos) {
             Object expr = RASTUtils.checkForRSymbol(exprArg);
 
             if (RASTUtils.isLanguageOrExpression(expr)) {
                 try {
                     Object result;
-                    int depth = RArguments.getDepth(frame) + 1;
                     if (expr instanceof RExpression) {
                         result = RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
                     } else {
@@ -62,7 +62,6 @@ public class EvalFunctions {
                 return expr;
             }
         }
-
     }
 
     @RBuiltin(name = "eval", kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
@@ -72,43 +71,38 @@ public class EvalFunctions {
         public abstract Object execute(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos);
 
         @Specialization
-        @TruffleBoundary
         protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos) {
             controlVisibility();
-            return doEvalBody(frame, expr, envir, enclos);
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, envir, enclos);
         }
 
         @Specialization
-        @TruffleBoundary
         protected Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RNull envir, REnvironment enclos) {
             controlVisibility();
-            return doEvalBody(frame, expr, REnvironment.emptyEnv(), enclos);
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.emptyEnv(), enclos);
         }
 
         @SuppressWarnings("unused")
         @Fallback
         @TruffleBoundary
-        protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos) {
+        protected Object doEval(Object expr, Object envir, Object enclos) {
             throw RError.nyi(getEncapsulatingSourceSection(), " eval arg type");
         }
-
     }
 
     @RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = -1)
     public abstract static class WithVisible extends EvalAdapter {
         private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
 
-        @TruffleBoundary
         @Specialization
         protected RList withVisible(VirtualFrame frame, RPromise expr) {
             controlVisibility();
-            Object result = doEvalBody(frame, RDataFactory.createLanguage(expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()), REnvironment.emptyEnv());
+            Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage(expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()), REnvironment.emptyEnv());
             Object[] data = new Object[]{result, RRuntime.asLogical(RContext.isVisible())};
             // Visibility is changed by the evaluation (else this code would not work),
             // so we have to force it back on.
             RContext.setVisible(true);
             return RDataFactory.createList(data, LISTNAMES);
         }
-
     }
 }

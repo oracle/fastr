@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.utils;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -22,6 +23,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 //Checkstyle: stop
 public class WriteTable {
     // @formatter:off
+    @TruffleBoundary
     public static Object execute(RConnection con, Object xx, int nr, int nc, Object rnames, String csep, String ceol, String cna,
                   char cdec, boolean qmethod, boolean[] quoteCol, boolean quoteRn) throws IOException, IllegalArgumentException {
         // @formatter:on

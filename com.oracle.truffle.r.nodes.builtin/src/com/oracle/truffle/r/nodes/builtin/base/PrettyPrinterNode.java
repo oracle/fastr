@@ -1165,17 +1165,30 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         // TODO: this should be handled by an S3 function
-        @TruffleBoundary
         @Specialization
         protected String prettyPrintListElement(VirtualFrame frame, RFactor operand, Object listElementName, byte quote, byte right) {
+            RVector vec = operand.getLevels();
+            String[] strings;
+            if (vec == null) {
+                strings = new String[0];
+            } else {
+                initCast();
+                strings = new String[vec.getLength()];
+                for (int i = 0; i < vec.getLength(); i++) {
+                    strings[i] = (String) castStringNode.executeString(frame, vec.getDataAtAsObject(i));
+                }
+            }
+            return formatLevelStrings(operand, listElementName, right, vec, strings);
+        }
+
+        @TruffleBoundary
+        private String formatLevelStrings(RFactor operand, Object listElementName, byte right, RVector vec, String[] strings) {
             StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck), listElementName, RRuntime.LOGICAL_FALSE, right));
             sb.append("\nLevels:");
-            RVector vec = operand.getLevels();
             if (vec != null) {
                 for (int i = 0; i < vec.getLength(); i++) {
-                    initCast();
                     sb.append(" ");
-                    sb.append((String) castStringNode.executeString(frame, vec.getDataAtAsObject(i)));
+                    sb.append(strings[i]);
                 }
             }
             return sb.toString();

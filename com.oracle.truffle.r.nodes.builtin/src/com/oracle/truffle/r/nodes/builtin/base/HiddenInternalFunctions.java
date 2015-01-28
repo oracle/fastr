@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -148,8 +148,12 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        @TruffleBoundary
         public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed, envhook);
+        }
+
+        @TruffleBoundary
+        public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -186,7 +190,8 @@ public class HiddenInternalFunctions {
 
                         public Object eval(Object arg) {
                             Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, new Object[]{arg}, new String[0]);
-                            return callCache.execute(frame, envhook.getTarget(), callArgs);
+                            // TODO this cast is problematic
+                            return callCache.execute((VirtualFrame) frame, envhook.getTarget(), callArgs);
                         }
 
                     };
@@ -202,7 +207,6 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
-        @TruffleBoundary
         protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
             initCast();
             return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);

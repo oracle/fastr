@@ -481,8 +481,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isFlushconsole")
-        @TruffleBoundary
-        protected RNull flushConsole(VirtualFrame frame, RList f, Object[] args, RMissing packageName) {
+        protected RNull flushConsole(RList f, Object[] args, RMissing packageName) {
             return RNull.instance;
         }
 
@@ -531,7 +530,6 @@ public class ForeignFunctions {
         public static boolean isMenu(RList f) {
             return matchName(f, "menu");
         }
-
     }
 
     /**
@@ -590,9 +588,10 @@ public class ForeignFunctions {
     @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class DotExternal extends CastAdapter {
 
+        private final BranchProfile errorProfile = BranchProfile.create();
+
         // Transcribed from GnuR, library/utils/src/io.c
         @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization(guards = "isCountFields")
         protected Object countFields(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
@@ -646,6 +645,7 @@ public class ForeignFunctions {
             try {
                 return CountFields.execute(conn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
             } catch (IllegalStateException | IOException ex) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
         }
@@ -654,7 +654,6 @@ public class ForeignFunctions {
             return matchName(f, "countfields");
         }
 
-        @TruffleBoundary
         @Specialization(guards = "isReadTableHead")
         protected Object doReadTableHead(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             // TODO This is quite incomplete and just uses readLines, which works for some inputs
@@ -665,6 +664,7 @@ public class ForeignFunctions {
             try {
                 return RDataFactory.createStringVector(conn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
             } catch (IOException ex) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
             }
         }
@@ -672,13 +672,13 @@ public class ForeignFunctions {
         public boolean isReadTableHead(RList f) {
             return matchName(f, "readtablehead");
         }
-
     }
 
     @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
     public abstract static class DotExternal2 extends CastAdapter {
 
         @Child private CastToVectorNode castVector;
+        private final BranchProfile errorProfile = BranchProfile.create();
 
         private RAbstractVector castVector(VirtualFrame frame, Object value) {
             if (castVector == null) {
@@ -689,7 +689,6 @@ public class ForeignFunctions {
         }
 
         // Transcribed from GnuR, library/utils/src/io.c
-        @TruffleBoundary
         @Specialization(guards = "isWriteTable")
         protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
@@ -697,6 +696,7 @@ public class ForeignFunctions {
             Object conArg = argValues[1];
             RConnection con;
             if (!(conArg instanceof RConnection)) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
             } else {
                 con = (RConnection) conArg;
@@ -743,6 +743,7 @@ public class ForeignFunctions {
                 invalidArgument("qmethod");
             }
             if (cdec.length() != 1) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
             }
             boolean[] quoteCol = new boolean[nc];
@@ -760,12 +761,14 @@ public class ForeignFunctions {
             try {
                 WriteTable.execute(con, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
             } catch (IOException | IllegalArgumentException ex) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
             return RNull.instance;
         }
 
         protected void invalidArgument(String name) throws RError {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
         }
 
@@ -788,7 +791,5 @@ public class ForeignFunctions {
         public boolean isTypeConvert(RList f) {
             return matchName(f, "typeconvert");
         }
-
     }
-
 }
