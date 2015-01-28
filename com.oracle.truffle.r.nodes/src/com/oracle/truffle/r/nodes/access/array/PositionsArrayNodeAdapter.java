@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.access.array;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public abstract class PositionsArrayNodeAdapter extends RNode {
+public abstract class PositionsArrayNodeAdapter extends PositionsArrayConversionNodeAdapter {
 
-    @Children protected final ArrayPositionCast[] elements;
     @Children protected final RNode[] positions;
-    @Children protected final OperatorConverterNode[] operatorConverters;
 
     @Override
     public void deparse(State state) {
@@ -67,17 +63,8 @@ public abstract class PositionsArrayNodeAdapter extends RNode {
         return new SubstitutedNodes(elements, subPositions, operatorConverters);
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        // this node is meant to be used only for evaluation by "executeWith" that uses
-        // executeEvaluated method above
-        RInternalError.shouldNotReachHere();
-        return null;
-    }
-
     public PositionsArrayNodeAdapter(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
-        this.elements = elements;
+        super(elements, operatorConverters);
         this.positions = positions;
-        this.operatorConverters = operatorConverters;
     }
 }

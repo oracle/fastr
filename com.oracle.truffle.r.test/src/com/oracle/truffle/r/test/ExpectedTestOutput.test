@@ -53663,6 +53663,70 @@ $a$b
 NULL
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-list(7, list(1, 42)); y<-`[[`(x, c(2,2)); y }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[[`(x); y }
+Error in x[[]] : no index specified
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[[`(x, exact=FALSE); y }
+Error in x[[exact = FALSE]] : no index specified
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x); y }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x, 1, 2); y }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x, 1, 2, drop=FALSE); y }
+     [,1]
+[1,]    3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x, 2); y }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=FALSE); y }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=FALSE, 1, 2); y }
+     [,1]
+[1,]    3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=TRUE); y }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2, dimnames=list(c("a", "b"), c("c", "dd"))); `[[`(x, "a", "d") }
+Error in x[["a", "d"]] : subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2, dimnames=list(c("a", "b"), c("c", "dd"))); `[[`(x, "a", "d", exact=FALSE) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2, dimnames=list(c("a", "b"), c("c", "dd"))); `[[`(x, "a", "dd") }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testFunctionAccess
+#{ x<-matrix(1:4, ncol=2, dimnames=list(c("a", "b"), c("c", "dd"))); `[[`(x, exact=FALSE, "a", "d") }
+[1] 3
+
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testGenericUpdate
 #{ a <- TRUE; a[[2]] <- FALSE; a; }
 [1]  TRUE FALSE

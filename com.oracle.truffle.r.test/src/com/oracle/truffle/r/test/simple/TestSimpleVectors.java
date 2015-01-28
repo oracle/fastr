@@ -17,6 +17,24 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleVectors extends TestBase {
 
     @Test
+    public void testFunctionAccess() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=TRUE); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=FALSE); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, 2); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, 1, 2); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, 1, 2, drop=FALSE); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=FALSE, 1, 2); y }");
+        assertEvalError("{ x<-matrix(1:4, ncol=2); y<-`[[`(x); y }");
+        assertEvalError("{ x<-matrix(1:4, ncol=2); y<-`[[`(x, exact=FALSE); y }");
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"dd\") }");
+        assertEvalError("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"d\") }");
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"d\", exact=FALSE) }");
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, exact=FALSE, \"a\", \"d\") }");
+        assertEval("{ x<-list(7, list(1, 42)); y<-`[[`(x, c(2,2)); y }");
+    }
+
+    @Test
     public void testScalarIntIndexScalarValueUpdateOnVector() {
         // Update logical vector
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[2.3] <- FALSE; x }");

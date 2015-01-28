@@ -252,7 +252,7 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
-    private int firstElementOrNA(RAbstractIntVector nmaxVec) {
+    private static int firstElementOrNA(RAbstractIntVector nmaxVec) {
         return nmaxVec.getLength() == 0 ? RRuntime.INT_NA : nmaxVec.getDataAt(0);
     }
 
