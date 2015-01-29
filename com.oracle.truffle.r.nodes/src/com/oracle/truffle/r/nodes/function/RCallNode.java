@@ -536,6 +536,13 @@ public abstract class RCallNode extends RNode {
             callNode.depth = depth;
             return replace(callNode);
         }
+
+        @Override
+        public CallArgumentsNode getArgumentsNode() {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            UninitializedCallNode callNode = (UninitializedCallNode) specialize();
+            return callNode.getArgumentsNode();
+        }
     }
 
     /**
