@@ -157,7 +157,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Override
-    public WrapperNode createWrapperNode(RNode node) {
-        return new ConvertBooleanNodeWrapper((ConvertBooleanNode) node);
+    public WrapperNode createWrapperNode() {
+        return new ConvertBooleanNodeWrapper(this);
     }
 }
