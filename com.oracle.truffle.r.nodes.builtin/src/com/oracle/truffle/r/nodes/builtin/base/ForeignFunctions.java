@@ -32,6 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.methods.*;
 import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -411,7 +412,21 @@ public class ForeignFunctions {
             return matchName(f, "fft");
         }
 
-        // Translated from GnuR: library/methods/src/methods_list_dispatch.c
+        @SuppressWarnings("unused")
+        @Specialization(guards = "initMethodDispatch")
+        @TruffleBoundary
+        protected REnvironment initMethodDispatch(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            REnvironment env = (REnvironment) argValues[0];
+            // TBD what should we actually do here
+            return MethodsListDispatch.getInstance().initMethodDispatch(env);
+        }
+
+        public boolean initMethodDispatch(RList f) {
+            return matchName(f, "R_initMethodDispatch");
+        }
+
         @SuppressWarnings("unused")
         @TruffleBoundary
         @Specialization(guards = "methodsPackageMetaName")
@@ -422,18 +437,13 @@ public class ForeignFunctions {
             String prefixString = (String) argValues[0];
             String nameString = (String) argValues[1];
             String pkgString = (String) argValues[2];
-            if (pkgString.length() == 0) {
-                return String.format(".__%s__%s", prefixString, nameString);
-            } else {
-                return String.format(".__%s__%s:%s", prefixString, nameString, pkgString);
-            }
+            return MethodsListDispatch.getInstance().methodsPackageMetaName(prefixString, nameString, pkgString);
         }
 
         public boolean methodsPackageMetaName(RList f) {
             return matchName(f, "R_methodsPackageMetaName");
         }
 
-        // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
         @TruffleBoundary
         @Specialization(guards = "getClassFromCache")
@@ -443,13 +453,7 @@ public class ForeignFunctions {
             REnvironment table = (REnvironment) argValues[1];
             String klassString = RRuntime.asString(argValues[0]);
             if (klassString != null) {
-                Object value = table.get(klassString);
-                if (value == null) {
-                    return RNull.instance;
-                } else {
-                    // TODO check PACKAGE equality
-                    return value;
-                }
+                return MethodsListDispatch.getInstance().getClassFromCache(table, klassString);
             } else {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
             }
@@ -457,6 +461,20 @@ public class ForeignFunctions {
 
         public boolean getClassFromCache(RList f) {
             return matchName(f, "R_getClassFromCache");
+        }
+
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization(guards = "setMethodDispatch")
+        protected Object callSetMethodDispatch(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            byte onOff = (byte) argValues[0];
+            return MethodsListDispatch.getInstance().setMethodDispatch(onOff);
+        }
+
+        public boolean setMethodDispatch(RList f) {
+            return matchName(f, "R_set_method_dispatch");
         }
 
         @Specialization
