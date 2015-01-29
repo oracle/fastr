@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,55 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.instrument;
 
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.ProbeNode.Instrumentable;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 
 /**
- * Denotes an {@link RNode} that can be instrumented using the {@link Instrumentable}. By default
- * all {@link RNode} instances are instrumentable.
+ * Some additional support for instrumentable node.
  */
 public interface RInstrumentableNode {
-
-    default boolean isInstrumentable() {
-        return true;
-    }
-
-    default Probe probe() {
-        RNode thisNode = (RNode) this;
-        Node parent = thisNode.getParent();
-
-        if (parent == null) {
-            throw new IllegalStateException("Cannot call probe() on a node without a parent.");
-        }
-
-        if (parent instanceof WrapperNode) {
-            return ((WrapperNode) parent).getProbe();
-        }
-
-        // Create a new wrapper/probe with this node as its child.
-        WrapperNode wrapper = createWrapperNode(thisNode);
-
-        // Connect it to a Probe
-        Probe probe = ProbeNode.insertProbe(wrapper);
-
-        // Replace this node in the AST with the wrapper
-        thisNode.replace((RNode) wrapper);
-        return probe;
-
-    }
-
-    /**
-     * Any AST nodes that are used as exactly typed fields of other nodes, i.e., not just
-     * {@link RNode} must override this method to create an explicit subclass that implements
-     * {@link WrapperNode} and forwards all pertinent behavior to {@code child}. The default
-     * implementation is suitable for all children typed as plain {@link RNode}.
-     */
-    default WrapperNode createWrapperNode(RNode child) {
-        return new RNodeWrapper(child);
-    }
 
     /**
      * Unwrap a (potentially) wrapped node, returning the child. Since an AST may contain wrapper

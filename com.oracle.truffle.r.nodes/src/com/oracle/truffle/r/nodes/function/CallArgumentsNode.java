@@ -373,8 +373,8 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
     }
 
     @Override
-    public ProbeNode.WrapperNode createWrapperNode(RNode node) {
-        return new CallArgumentsNodeWrapper((CallArgumentsNode) node);
+    public ProbeNode.WrapperNode createWrapperNode() {
+        return new CallArgumentsNodeWrapper(this);
     }
 
     protected CallArgumentsNode() {
