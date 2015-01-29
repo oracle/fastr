@@ -20,6 +20,11 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testUnique() {
+        assertEval("{x<-factor(c(\"a\", \"b\", \"a\")); unique(x) }");
+    }
+
+    @Test
     public void testIsType() {
         assertEval("{ is.integer(seq(1,2)) }");
         assertEval("{ is.integer(seq(1L,2L)) }");
