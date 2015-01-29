@@ -21250,6 +21250,76 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testFunctionAccess_2945aa56c3d2bc16fa32acf472b7e610() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_668d24bf3b03808250ed03b251140434() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=TRUE); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_3878767cd185009e9f0754ae5645470e() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=FALSE); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_4afa6c23098ff6e8d51b1cf43926f414() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_87fbb599b1cfc07646df56f8afb3c0a2() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, 1, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_0e2b7394c9dd56a7fd1637d642d98e17() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, 1, 2, drop=FALSE); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_dae434b7f9e9807e66f49f55529a9eb1() {
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=FALSE, 1, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_7ab3b9db306f8323378665293bf30b78() {
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"dd\") }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_53600969efac2f3feeceb00eeaec1afb() {
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"d\", exact=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_3d3f98c5b54ae381cb0c3bd07d7dbead() {
+        assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, exact=FALSE, \"a\", \"d\") }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_d292fe3657d46bc34f0641c976c0439f() {
+        assertEval("{ x<-list(7, list(1, 42)); y<-`[[`(x, c(2,2)); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_55e09a92898c054c46b9e3584e0260b8() {
+        assertEvalError("{ x<-matrix(1:4, ncol=2); y<-`[[`(x); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_91aa4dd2f9913a8995ae054c8f71faa9() {
+        assertEvalError("{ x<-matrix(1:4, ncol=2); y<-`[[`(x, exact=FALSE); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testFunctionAccess_8d21f23fbbd49dbdd370f206bb11b055() {
+        assertEvalError("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"d\") }");
+    }
+
+    @Test
     public void TestSimpleVectors_testGenericUpdate_c628a46d95cf59bdaa3de23cb6ced1a4() {
         assertEval("{ a <- TRUE; a[[2]] <- FALSE; a; }");
     }

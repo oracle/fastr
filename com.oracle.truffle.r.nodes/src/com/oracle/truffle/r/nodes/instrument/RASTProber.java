@@ -62,27 +62,24 @@ public final class RASTProber implements NodeVisitor, ASTProber {
 
     @Override
     public boolean visit(Node node) {
-        if (node instanceof RInstrumentableNode) {
-            RInstrumentableNode iNode = (RInstrumentableNode) node;
-            if (iNode.isInstrumentable()) {
-                if (iNode instanceof RCallNode) {
-                    iNode.probe().tagAs(CALL, RASTUtils.findFunctionName(node, false));
-                } else if (iNode instanceof FunctionStatementsNode) {
-                    iNode.probe().tagAs(START_METHOD, getFunctionDefinitionNode((Node) iNode).getUID());
-                } else if (iNode instanceof FunctionBodyNode) {
-                    iNode.probe().tagAs(RSyntaxTag.FUNCTION_BODY, getFunctionDefinitionNode((Node) iNode).getUID());
-                }
-                if (iNode instanceof SequenceNode) {
-                    RNode[] sequence = ((SequenceNode) iNode).getSequence();
-                    for (RNode n : sequence) {
-                        boolean tag = false;
-                        if (n.isSyntax()) {
-                            n.probe().tagAs(STATEMENT, n);
-                            tag = true;
-                        }
-                        if (FastROptions.debugMatches("RASTProber") && tag) {
-                            System.out.printf("Tag %s as STATEMENT: %b%n", n.toString(), tag);
-                        }
+        if (node.isInstrumentable()) {
+            if (node instanceof RCallNode) {
+                node.probe().tagAs(CALL, RASTUtils.findFunctionName(node, false));
+            } else if (node instanceof FunctionStatementsNode) {
+                node.probe().tagAs(START_METHOD, getFunctionDefinitionNode((Node) node).getUID());
+            } else if (node instanceof FunctionBodyNode) {
+                node.probe().tagAs(RSyntaxTag.FUNCTION_BODY, getFunctionDefinitionNode((Node) node).getUID());
+            }
+            if (node instanceof SequenceNode) {
+                RNode[] sequence = ((SequenceNode) node).getSequence();
+                for (RNode n : sequence) {
+                    boolean tag = false;
+                    if (n.isSyntax()) {
+                        n.probe().tagAs(STATEMENT, n);
+                        tag = true;
+                    }
+                    if (FastROptions.debugMatches("RASTProber") && tag) {
+                        System.out.printf("Tag %s as STATEMENT: %b%n", n.toString(), tag);
                     }
                 }
             }

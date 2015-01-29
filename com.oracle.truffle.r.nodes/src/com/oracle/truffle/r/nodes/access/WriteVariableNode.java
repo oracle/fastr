@@ -503,8 +503,8 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     }
 
     @Override
-    public ProbeNode.WrapperNode createWrapperNode(RNode child) {
-        return new WriteVariableNodeWrapper((WriteVariableNode) child);
+    public ProbeNode.WrapperNode createWrapperNode() {
+        return new WriteVariableNodeWrapper(this);
     }
 
 }

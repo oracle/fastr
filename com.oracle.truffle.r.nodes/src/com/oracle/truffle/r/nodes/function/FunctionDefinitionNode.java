@@ -150,9 +150,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
             if (enclosingFrameAssumption != null) {
                 MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
-                if (enclosingFrameAssumption.getValue() != enclosingFrame) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
+                if (enclosingFrameAssumption != null) {
+                    if (enclosingFrameAssumption.getValue() != enclosingFrame) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
+                    }
                 }
             }
         }

@@ -170,6 +170,7 @@ public final class RArguments {
         }
     }
 
+    @SuppressWarnings("unused")
     private static boolean envFunctionInvariant(Object[] a) {
         return !(a[INDEX_ENVIRONMENT] == null && a[INDEX_FUNCTION] == null);
     }

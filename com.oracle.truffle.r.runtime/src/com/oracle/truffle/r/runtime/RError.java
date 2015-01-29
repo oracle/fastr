@@ -596,7 +596,8 @@ public final class RError extends RuntimeException {
         CANNOT_BE_INVALID("'%s' cannot be NA, NaN or infinite"),
         UNKNOWN_VALUE("unknown '%s' value"),
         MUST_BE_VECTOR("'%s' must be a vector"),
-        NO_SUCH_CONNECTION("there is no connection %d");
+        NO_SUCH_CONNECTION("there is no connection %d"),
+        NO_INDEX("no index specified");
 
         public final String message;
         private final boolean hasArgs;

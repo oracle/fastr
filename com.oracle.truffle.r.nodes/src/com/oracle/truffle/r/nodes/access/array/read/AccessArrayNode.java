@@ -86,7 +86,7 @@ public abstract class AccessArrayNode extends RNode {
 
     protected abstract RNode getRecursionLevel();
 
-    public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, RAbstractLogicalVector dropDim);
+    public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, Object dropDim);
 
     @Override
     public boolean isSyntax() {
