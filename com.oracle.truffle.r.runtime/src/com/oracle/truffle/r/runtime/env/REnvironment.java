@@ -583,7 +583,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * is the value returned by the R {@code environmentName} function.
      */
     public String getName() {
-        String attrName = attributes == null ? null : (String) attributes.get(NAME_ATTR_KEY);
+        String attrName = attributes == null ? null : (String) RRuntime.asString(attributes.get(NAME_ATTR_KEY));
         return attrName != null ? attrName : name;
     }
 
