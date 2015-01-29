@@ -196,7 +196,7 @@ public class GrepFunctions {
         protected static String findMatch(String pattern, String text) {
             Matcher m = Regexp.getPatternMatcher(pattern, text);
             if (m.find()) {
-                return m.group();
+                return text;
             } else {
                 return null;
             }
