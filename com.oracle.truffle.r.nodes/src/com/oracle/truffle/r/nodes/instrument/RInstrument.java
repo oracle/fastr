@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.instrument;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.Probe.ProbeListener;
-import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import com.oracle.truffle.api.instrument.SyntaxTag;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.function.*;

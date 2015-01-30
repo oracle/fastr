@@ -20,37 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument;
+package com.oracle.truffle.r.nodes.access.array;
 
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
+import com.oracle.truffle.r.runtime.*;
 
-/**
- * Some additional support for instrumentable node.
- */
-public interface RInstrumentableNode {
+public abstract class PositionsArrayConversionNodeAdapter extends RNode {
 
-    /**
-     * Unwrap a (potentially) wrapped node, returning the child. Since an AST may contain wrapper
-     * nodes <b>anywhere</b>, this method <b>must</b> be called before casting or checking the type
-     * of a node.
-     */
-    default RNode unwrap() {
-        if (this instanceof WrapperNode) {
-            return (RNode) ((WrapperNode) this).getChild();
-        } else {
-            return (RNode) this;
-        }
+    @Children protected final ArrayPositionCast[] elements;
+    @Children protected final OperatorConverterNode[] operatorConverters;
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        // this node is meant to be used only for evaluation by "executeWith" that uses
+        // executeEvaluated method above
+        RInternalError.shouldNotReachHere();
+        return null;
     }
 
-    default Node unwrapParent() {
-        Node p = ((Node) this).getParent();
-        if (p instanceof WrapperNode) {
-            return p.getParent();
-        } else {
-            return p;
-        }
+    public PositionsArrayConversionNodeAdapter(ArrayPositionCast[] elements, OperatorConverterNode[] operatorConverters) {
+        this.elements = elements;
+        this.operatorConverters = operatorConverters;
     }
-
 }

@@ -170,9 +170,13 @@ public abstract class S3DispatchNode extends DispatchNode {
         return wvnCopy;
     }
 
-    @TruffleBoundary
     private static void addVar(VirtualFrame frame, final String varName) {
-        findOrAddFrameSlot(frame.getFrameDescriptor(), varName);
+        addVarHelper(frame.getFrameDescriptor(), varName);
+    }
+
+    @TruffleBoundary
+    private static void addVarHelper(FrameDescriptor frameDescriptor, final String varName) {
+        findOrAddFrameSlot(frameDescriptor, varName);
     }
 
     protected void defineVarsInFrame(VirtualFrame frame) {
