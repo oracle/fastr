@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -45,9 +47,9 @@ public abstract class Attributes extends RBuiltinNode {
     }
 
     @Specialization(guards = "hasAttributes")
-    protected RList attributes(RAbstractContainer container) {
+    protected Object attributes(RAbstractContainer container) {
         controlVisibility();
-        return createResult(container);
+        return createResult(container, container instanceof RLanguage);
     }
 
     /**
@@ -62,28 +64,43 @@ public abstract class Attributes extends RBuiltinNode {
             if (!hasAttributesRA((RAttributable) object)) {
                 return RNull.instance;
             } else {
-                return createResult((RAttributable) object);
+                return createResult((RAttributable) object, false);
             }
         } else {
             throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
         }
     }
 
-    private RList createResult(RAttributable attributable) {
+    /**
+     * {@code language} objects behave differently regarding "names"; they don't get included.
+     */
+    private Object createResult(RAttributable attributable, boolean ignoreNames) {
         RAttributes attributes = attributable.getAttributes();
         int size = attributes.size();
         String[] names = new String[size];
         Object[] values = new Object[size];
         int z = 0;
         for (RAttribute attr : attributes) {
-            names[z] = attr.getName();
-            if (names[z].equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            String name = attr.getName();
+            if (ignoreNames && name.equals(RRuntime.NAMES_ATTR_KEY)) {
+                continue;
+            }
+            names[z] = name;
+            if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 rownamesBranch.enter();
                 values[z] = Attr.getFullRowNames(attr.getValue());
             } else {
                 values[z] = attr.getValue();
             }
             ++z;
+        }
+        if (ignoreNames && z != names.length) {
+            if (z == 0) {
+                return RNull.instance;
+            } else {
+                names = Arrays.copyOfRange(names, 0, names.length - 1);
+                values = Arrays.copyOfRange(values, 0, values.length - 1);
+            }
         }
         RList result = RDataFactory.createList(values);
         result.setNames(RDataFactory.createStringVector(names, true));

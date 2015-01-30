@@ -248,13 +248,13 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             string = source;
         }
-        return printValueAndAttributes(string, operand);
+        return printValueAndAttributes(string, operand, false);
     }
 
     @TruffleBoundary
     @Specialization
     protected String prettyPrint(REnvironment operand, Object listElementName, byte quote, byte right) {
-        return printValueAndAttributes(operand.toString(), operand);
+        return printValueAndAttributes(operand.toString(), operand, false);
     }
 
     @TruffleBoundary
@@ -281,13 +281,13 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrintSymbol(RSymbol operand, Object listElementName, byte quote, byte right) {
-        return printValueAndAttributes(operand.getName(), operand);
+        return printValueAndAttributes(operand.getName(), operand, false);
     }
 
     @TruffleBoundary
     @Specialization
     protected String prettyPrintExternalPtr(RExternalPtr operand, Object listElementName, byte quote, byte right) {
-        return printValueAndAttributes(String.format("<pointer: %#x>", operand.value), operand);
+        return printValueAndAttributes(String.format("<pointer: %#x>", operand.value), operand, false);
     }
 
     @TruffleBoundary
@@ -303,7 +303,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @TruffleBoundary
     @Specialization
     protected String prettyPrintLanguage(RLanguage language, Object listElementName, byte quote, byte right) {
-        return printValueAndAttributes(prettyPrintLanguageInternal(language), language);
+        return printValueAndAttributes(prettyPrintLanguageInternal(language), language, true);
     }
 
     private static String prettyPrintLanguageInternal(RLanguage language) {
@@ -393,14 +393,19 @@ public abstract class PrettyPrinterNode extends RNode {
 
     /**
      * Encapsulates the printing of the value and attributes for {@link RAttributable} types.
+     * 
+     * @param ignoreNames TODO
      */
-    private String printValueAndAttributes(String value, RAttributable object) {
+    private String printValueAndAttributes(String value, RAttributable object, boolean ignoreNames) {
         RAttributes attributes = object.getAttributes();
         if (attributes == null) {
             return value;
         } else {
             StringBuilder builder = new StringBuilder(value);
             for (RAttribute attr : attributes) {
+                if (ignoreNames && attr.getName().equals(RRuntime.NAMES_ATTR_KEY)) {
+                    continue;
+                }
                 printAttribute(builder, attr);
             }
             return builderToString(builder);
