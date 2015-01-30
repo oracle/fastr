@@ -24,6 +24,7 @@
 .PHONY: all clean libdir make_subdirs clean_subdirs
 
 SUBDIRS = tools utils methods
+FASTR_LIBDIR = $(TOPDIR)/../library
 
 all: libdir make_subdirs
 
@@ -36,8 +37,8 @@ clean: clean_subdirs
 
 clean_subdirs:
 	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir clean	; \
+		$(MAKE) PACKAGE=$$dir LIBDIR=-C $$dir clean	; \
 	done
 	
 libdir:
-	mkdir -p $(TOPDIR)/../library
+	mkdir -p $(FASTR_LIBDIR)

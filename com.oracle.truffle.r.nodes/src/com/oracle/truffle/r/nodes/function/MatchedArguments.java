@@ -62,6 +62,10 @@ public final class MatchedArguments extends Arguments<RNode> {
         public String[] getNames() {
             return names;
         }
+
+        public RNode[] getArguments() {
+            return arguments;
+        }
     }
 
     /**

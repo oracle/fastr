@@ -78,13 +78,13 @@ import com.oracle.truffle.r.runtime.env.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -97,11 +97,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -109,7 +109,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -121,7 +121,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -169,6 +169,14 @@ public abstract class RCallNode extends RNode {
     public abstract RNode getFunctionNode();
 
     public abstract CallArgumentsNode getArgumentsNode();
+
+    /**
+     * A temporary hack to allow promises in {@link PromiseNode.VarArgNode} instances to be reset.
+     * Overridden in the appropriate subclasses.
+     */
+    public MatchedArgumentsNode getMatchedArgumentsNode() {
+        return null;
+    }
 
     @Override
     public boolean isSyntax() {
@@ -293,6 +301,8 @@ public abstract class RCallNode extends RNode {
 
         @Child protected RNode functionNode;
         @Child protected CallArgumentsNode args;
+        @Child private PromiseHelperNode promiseHelper;
+        private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
         public RootCallNode(RNode function, CallArgumentsNode args) {
             this.functionNode = function;
@@ -300,11 +310,22 @@ public abstract class RCallNode extends RNode {
         }
 
         private RFunction executeFunctionNode(VirtualFrame frame) {
-            try {
-                return functionNode.executeFunction(frame);
-            } catch (UnexpectedResultException e) {
-                // TODO unsupported yet
-                throw Utils.nyi();
+            /**
+             * Expressions such as "pkg:::f" can result in (delayedAssign) promises that must be
+             * explicitly resolved.
+             */
+            Object value = functionNode.execute(frame);
+            if (isPromiseProfile.profile(value instanceof RPromise)) {
+                if (promiseHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseHelper = insert(new PromiseHelperNode());
+                }
+                value = promiseHelper.evaluate(frame, (RPromise) value);
+            }
+            if (value instanceof RFunction) {
+                return (RFunction) value;
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.APPLY_NON_FUNCTION);
             }
         }
 
@@ -413,6 +434,11 @@ public abstract class RCallNode extends RNode {
             // (maintained by UninitializedCallNode.specialize), where it's head is one of U/UV or
             // G/GV - which are all RootCallNodes, and as such hold their own CallArgumentsNode.
             return nextNode.getArgumentsNode();
+        }
+
+        @Override
+        public MatchedArgumentsNode getMatchedArgumentsNode() {
+            return currentNode.getMatchedArgumentsNode();
         }
     }
 
@@ -566,6 +592,11 @@ public abstract class RCallNode extends RNode {
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
+
+        @Override
+        public MatchedArgumentsNode getMatchedArgumentsNode() {
+            return matchedArgs;
+        }
     }
 
     /**
@@ -717,6 +748,11 @@ public abstract class RCallNode extends RNode {
             // Our cached function and matched arguments do match, simply execute!
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
+        }
+
+        @Override
+        public MatchedArgumentsNode getMatchedArgumentsNode() {
+            return matchedArgs;
         }
     }
 

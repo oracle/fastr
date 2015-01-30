@@ -13,7 +13,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -25,6 +28,7 @@ import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.GeneralLApplyNode.LapplyIteratorNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -244,8 +248,20 @@ public abstract class Lapply extends RBuiltinNode {
 
             private static final class ResolvedCachedCallNode extends CachedCallNode {
 
+                private static class VarArgNodeState {
+                    final PromiseNode.VarArgNode varArgNode;
+                    final int argIndex;
+
+                    VarArgNodeState(PromiseNode.VarArgNode varArgNode, int argIndex) {
+                        this.varArgNode = varArgNode;
+                        this.argIndex = argIndex;
+                    }
+
+                }
+
                 private final RootCallTarget originalTarget;
                 private final VarArgsSignature originalSignature;
+                @CompilationFinal private ArrayList<VarArgNodeState> varArgNodeStates;
                 @Child private RCallNode callNode;
                 @Child private CachedCallNode next;
 
@@ -268,7 +284,28 @@ public abstract class Lapply extends RBuiltinNode {
                     if (target != originalTarget || signature.isNotEqualTo(originalSignature)) {
                         return next.execute(frame, target, varArgs);
                     } else {
+                        MatchedArgumentsNode m = callNode.getMatchedArgumentsNode();
+                        if (m != null && varArgNodeStates != null) {
+                            RNode[] matchedArgs = m.getArguments();
+                            for (RNode matchedArg : matchedArgs) {
+                                if (matchedArg instanceof PromiseNode.VarargPromiseNode) {
+                                    PromiseNode.VarArgNode varArgNode = ((PromiseNode.VarargPromiseNode) matchedArg).getVarArgNode();
+                                    updatePromise(varArgNode, varArgs);
+                                }
+                            }
+                        }
                         return callNode.execute(frame);
+                    }
+                }
+
+                private void updatePromise(PromiseNode.VarArgNode varArgNode, RArgsValuesAndNames varArgs) {
+                    Object varArgNodePromiseRep = varArgNode.getPromise().getRep();
+                    for (VarArgNodeState varArgNodeState : varArgNodeStates) {
+                        Object thisRep = varArgNodeState.varArgNode.getPromise().getRep();
+                        if (varArgNodePromiseRep == thisRep) {
+                            RPromise promise = (RPromise) varArgs.getValues()[varArgNodeState.argIndex];
+                            varArgNode.setPromise(promise);
+                        }
                     }
                 }
 
@@ -302,8 +339,17 @@ public abstract class Lapply extends RBuiltinNode {
                         // Insert expressions found inside "..." as arguments
                         args = new RNode[varArgs.length() + 1];
                         args[0] = owner.readVectorElement;
+                        Object[] varArgsValues = varArgs.getValues();
                         for (int i = 0; i < varArgs.length(); i++) {
-                            args[i + 1] = CallArgumentsNode.wrapVarArgValue(varArgs.getValues()[i]);
+                            RNode node = CallArgumentsNode.wrapVarArgValue(varArgsValues[i]);
+                            if (node instanceof PromiseNode.VarArgNode) {
+                                if (varArgNodeStates == null) {
+                                    varArgNodeStates = new ArrayList<>(varArgs.length());
+                                }
+                                varArgNodeStates.add(new VarArgNodeState((PromiseNode.VarArgNode) node, i));
+                            }
+                            args[i + 1] = node;
+
                         }
 
                         names = new String[varArgs.length() + 1];

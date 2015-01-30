@@ -206,6 +206,10 @@ public abstract class PromiseNode extends RNode {
             // knows that it contains a RPromise..
             return factory.createVarargPromise(varargNode.getPromise());
         }
+
+        public VarArgNode getVarArgNode() {
+            return varargNode;
+        }
     }
 
     /**
@@ -302,10 +306,16 @@ public abstract class PromiseNode extends RNode {
      * In a certain sense this is the class corresponding class for GNU R's PROMSXP (AST equivalent
      * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
      * other varargs classes)
+     *
+     * FIXME This class effectively captures frame-specific state since the {@link RPromise} value
+     * refers to a specific frame through the {@code execFrame} field. So subsequent calls to a
+     * function containing one of these nodes will return a stale value when the promise is
+     * evaluated. We need to find a better way. The current workaround is to call
+     * {@link #setPromise} to update the state.
      */
     public static final class VarArgNode extends RNode {
-        private final RPromise promise;
-        @CompilationFinal private boolean isEvaluated = false;
+        private RPromise promise;
+        private boolean isEvaluated = false;
 
         private VarArgNode(RPromise promise) {
             this.promise = promise;
@@ -328,6 +338,11 @@ public abstract class PromiseNode extends RNode {
 
         public RPromise getPromise() {
             return promise;
+        }
+
+        public void setPromise(RPromise promise) {
+            isEvaluated = false;
+            this.promise = promise;
         }
     }
 

@@ -461,7 +461,7 @@ public class RDeparse {
                 Object cdr = f.cdr();
                 SEXPTYPE carType = typeof(car);
                 if (carType == SEXPTYPE.SYMSXP) {
-                    RSymbol symbol = (RSymbol) car;
+                    RSymbol symbol = (RSymbol) car; // TODO could be a promise according to GnuR
                     String op = symbol.getName();
                     boolean userBinop = false;
                     if (RContext.getEngine().isPrimitiveBuiltin(op) || (userBinop = isUserBinop(op))) {
@@ -658,6 +658,9 @@ public class RDeparse {
                         // TODO promise?
                         if (op.equals("::") || op.equals(":::")) {
                             // special case
+                            deparse2buff(state, f.cadr());
+                            state.append(op);
+                            deparse2buff(state, f.caddr());
                         } else {
                             state.append(quotify(op));
                             state.append('(');

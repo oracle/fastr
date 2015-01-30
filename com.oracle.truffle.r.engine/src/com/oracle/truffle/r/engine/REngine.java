@@ -145,7 +145,7 @@ public final class REngine implements RContext.Engine {
              * TODO The following calls will eventually go away as this will be done in the system
              * profile
              */
-            REnvironment.packagesInitialize(RPackages.initialize());
+            REnvironment.packagesInitialize((RStringVector) ROptions.getValue("defaultPackages"));
             RPackageVariables.initialize(); // TODO replace with R code
             initialized = true;
         }
@@ -162,7 +162,8 @@ public final class REngine implements RContext.Engine {
              */
             RInstrument.checkDebugRequested(name, (RFunction) func);
             String call = name + "()";
-            singleton.parseAndEval(Source.asPseudoFile(call, "<startup>"), REnvironment.globalEnv().getFrame(), REnvironment.globalEnv(), true, false);
+            // Should this print the result?
+            singleton.parseAndEval(Source.asPseudoFile(call, "<startup>"), REnvironment.globalEnv().getFrame(), REnvironment.globalEnv(), false, false);
         }
     }
 

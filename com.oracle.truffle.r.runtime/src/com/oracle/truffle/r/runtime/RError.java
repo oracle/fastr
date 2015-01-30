@@ -599,7 +599,8 @@ public final class RError extends RuntimeException {
         NO_SUCH_CONNECTION("there is no connection %d"),
         REQUIRES_DLLINFO("R_getRegisteredRoutines() expects a DllInfo reference"),
         NULL_DLLINFO("NULL value passed for DllInfo"),
-        REQUIRES_NAME_DLLINFO("must pass package name or DllInfo reference");
+        REQUIRES_NAME_DLLINFO("must pass package name or DllInfo reference"),
+        APPLY_NON_FUNCTION("attempt to apply non-function");
 
         public final String message;
         private final boolean hasArgs;

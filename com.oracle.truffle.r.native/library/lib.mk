@@ -52,6 +52,7 @@ $(OBJ):
 $(LIB_PKG): $(OBJ) $(C_OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
+	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
