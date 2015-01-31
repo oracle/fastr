@@ -16699,6 +16699,11 @@ Error in typeof(...) : unused arguments (2, 3, 4)
 #{ x<-factor(c("a", "b", "a")); typeof(x) }
 [1] "integer"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnique
+#{x<-factor(c("a", "b", "a")); unique(x) }
+[1] a b
+Levels: a b
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ names(unlist(list(a=list(b=list("1"))))) }
 [1] "a.b"
@@ -58177,6 +58182,40 @@ Error in x[[NA]] <- c(7, 42) : attempt to select more than one element
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testNAIndex
 #{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[NA]]<-c(7, 42, 1); x }
 Error in x[[NA]] <- c(7, 42, 1) : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1, drop=FALSE) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1, drop=TRUE) }
+[1] a
+Levels: a
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[[.factor`(x, 1) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", z="b", "a")); `[[.factor`(x, "z") }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", zz="b", "a")); `[[.factor`(x, "z", exact=FALSE) }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", zz="b", "a")); `[[.factor`(x, "z", exact=TRUE) }
+Error in `[[.default`(x, "z", exact = TRUE) : subscript out of bounds
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ mp<-getOption("max.print"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, "foo")<-"foo"; print(x); options(max.print=mp) }

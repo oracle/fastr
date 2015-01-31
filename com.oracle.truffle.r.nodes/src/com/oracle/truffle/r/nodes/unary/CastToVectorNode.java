@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,4 +62,10 @@ public abstract class CastToVectorNode extends CastNode {
     protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
     }
+
+    @Specialization
+    protected RAbstractVector cast(RFactor factor) {
+        return factor.getVector();
+    }
+
 }

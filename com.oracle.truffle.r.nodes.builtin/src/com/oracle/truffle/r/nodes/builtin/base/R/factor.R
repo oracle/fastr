@@ -200,17 +200,17 @@ Ops.factor <- function(e1, e2)
 
 ### NB for next four:
 ### a factor has levels before class in attribute list (PR#6799)
-#`[.factor` <- function(x, ..., drop = FALSE)
-#{
-#    y <- NextMethod("[")
-#    attr(y,"contrasts") <- attr(x,"contrasts")
-#    attr(y,"levels") <- attr(x,"levels")
-#    class(y) <- oldClass(x)
-#    lev <- levels(x)
-#    if (drop)
-#        factor(y, exclude = if(anyNA(levels(x))) NULL else NA ) else y
-#}
-#
+`[.factor` <- function(x, ..., drop = FALSE)
+{
+    y <- NextMethod("[")
+    attr(y,"contrasts") <- attr(x,"contrasts")
+    attr(y,"levels") <- attr(x,"levels")
+    class(y) <- oldClass(x)
+    lev <- levels(x)
+    if (drop)
+        factor(y, exclude = if(anyNA(levels(x))) NULL else NA ) else y
+}
+
 #`[<-.factor` <- function(x, ..., value)
 #{
 #    lx <- levels(x)
@@ -226,15 +226,15 @@ Ops.factor <- function(e1, e2)
 #    x
 #}
 #
-#`[[.factor` <- function(x, ...)
-#{
-#    y <- NextMethod("[[")
-#    attr(y,"contrasts") <- attr(x,"contrasts")
-#    attr(y,"levels") <- attr(x,"levels")
-#    class(y) <- oldClass(x)
-#    y
-#}
-#
+`[[.factor` <- function(x, ...)
+{
+    y <- NextMethod("[[")
+    attr(y,"contrasts") <- attr(x,"contrasts")
+    attr(y,"levels") <- attr(x,"levels")
+    class(y) <- oldClass(x)
+    y
+}
+
 ### added for 2.12.0
 #`[[<-.factor` <- function(x, ..., value)
 #{

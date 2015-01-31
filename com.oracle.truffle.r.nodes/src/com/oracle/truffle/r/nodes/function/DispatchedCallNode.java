@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,11 @@ public abstract class DispatchedCallNode extends RNode {
     }
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args) {
-        return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
+        return new UninitializedDispatchedCallNode(genericName, null, dispatchType, args);
+    }
+
+    public static DispatchedCallNode create(final String genericName, final String enclosingName, final String dispatchType, final Object[] args) {
+        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args);
     }
 
     @Override
@@ -49,23 +53,26 @@ public abstract class DispatchedCallNode extends RNode {
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
         private final int depth;
         private final String genericName;
+        private final String enclosingName;
         private final String dispatchType;
         @CompilationFinal private final Object[] args;
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, Object[] args) {
+        public UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args) {
             this.genericName = genericName;
+            this.enclosingName = enclosingName;
             this.depth = 0;
             this.dispatchType = dispatchType;
             this.args = args;
         }
 
         public UninitializedDispatchedCallNode(final String genericName, final String dispatchType) {
-            this(genericName, dispatchType, null);
+            this(genericName, dispatchType, null, null);
         }
 
         private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
             this.depth = depth;
             this.genericName = copy.genericName;
+            this.enclosingName = copy.enclosingName;
             this.dispatchType = copy.dispatchType;
             this.args = null;
         }
@@ -98,7 +105,7 @@ public abstract class DispatchedCallNode extends RNode {
                 return new UseMethodDispatchNode(this.genericName, type);
             }
             if (this.dispatchType == RRuntime.NEXT_METHOD) {
-                return new NextMethodDispatchNode(this.genericName, type, this.args);
+                return new NextMethodDispatchNode(this.genericName, type, this.args, enclosingName);
             }
             throw RInternalError.shouldNotReachHere();
         }

@@ -34,6 +34,8 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -99,9 +101,69 @@ public class InfixEmulationFunctions {
 
     }
 
+    @NodeChild(value = "op")
+    protected abstract static class PromiseEvaluator extends RNode {
+
+        protected abstract Object execute(VirtualFrame frame, Object op);
+
+        @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+        @Child private PromiseEvaluator evalRecursive;
+
+        protected Object evalRecursive(VirtualFrame frame, Object op) {
+            if (evalRecursive == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                evalRecursive = insert(PromiseEvaluatorNodeGen.create(null));
+            }
+            return evalRecursive.execute(frame, op);
+        }
+
+        @Specialization
+        protected Object eval(VirtualFrame frame, RPromise p) {
+            return promiseHelper.evaluate(frame, p);
+        }
+
+        @Specialization
+        protected RAbstractVector eval(RAbstractVector op) {
+            return op;
+        }
+
+        @ExplodeLoop
+        @Specialization(guards = "!argsEmpty")
+        protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
+            Object[] values = args.getValues();
+            for (int i = 0; i < values.length; i++) {
+                values[i] = evalRecursive(frame, values[i]);
+            }
+            return args;
+        }
+
+        @Specialization(guards = "argsEmpty")
+        protected RArgsValuesAndNames evalEmpty(RArgsValuesAndNames args) {
+            return args;
+        }
+
+        @Fallback
+        protected Object eval(Object op) {
+            return op;
+        }
+
+        protected boolean argsEmpty(RArgsValuesAndNames args) {
+            return args.length() == 0;
+        }
+
+    }
+
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
         @Child private AccessArrayNode accessNode;
         @Child private AccessPositions positions;
+
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            for (int i = 0; i < arguments.length; i++) {
+                arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
+            }
+            return arguments;
+        }
 
         @ExplodeLoop
         protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim, boolean isSubset) {

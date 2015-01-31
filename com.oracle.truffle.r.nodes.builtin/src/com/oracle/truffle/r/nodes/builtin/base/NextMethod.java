@@ -33,6 +33,7 @@ public abstract class NextMethod extends RBuiltinNode {
     @Child private DispatchedCallNode dispatchedCallNode;
     @Child private ReadVariableNode rvnClass;
     @Child private ReadVariableNode rvnGeneric;
+    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
     @CompilationFinal private String lastGenericName;
 
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -46,14 +47,19 @@ public abstract class NextMethod extends RBuiltinNode {
     protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
         controlVisibility();
         final RStringVector type = readType(frame);
-        final String genericName = readGenericName(frame, genericMethod);
+        final String genericName = genericMethod == null ? readGenericName(frame, genericMethod) : genericMethod;
         if (genericName == null) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args);
+            RFunction enclosingFunction = RArguments.getFunction(frame);
+            String enclosingFunctionName = null;
+            if (!RArguments.hasS3Args(frame)) {
+                enclosingFunctionName = enclosingFunction.getRootNode().toString();
+            }
+            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, enclosingFunctionName, RRuntime.NEXT_METHOD, args);
             dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = genericName;
         }
@@ -73,11 +79,16 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
-        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
+        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null ||
+                        (!(RArguments.getArgument(frame, 0) instanceof RAbstractVector) && !(RArguments.getArgument(frame, 0) instanceof RPromise))) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
-        RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
+        Object arg = RArguments.getArgument(frame, 0);
+        if (arg instanceof RPromise) {
+            arg = promiseHelper.evaluate(frame, (RPromise) arg);
+        }
+        RAbstractContainer enclosingArg = (RAbstractContainer) arg;
         if (!enclosingArg.isObject()) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);

@@ -17,6 +17,18 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleVectors extends TestBase {
 
     @Test
+    public void testObjectDirectAccess() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=TRUE) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=FALSE) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[.factor`(x, 1) }");
+        assertEval("{ x<-factor(c(\"a\", z=\"b\", \"a\")); `[[.factor`(x, \"z\") }");
+        assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=TRUE) }");
+        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=FALSE) }");
+    }
+
+    @Test
     public void testFunctionAccess() {
         assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x); y }");
         assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=TRUE); y }");

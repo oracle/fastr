@@ -86,7 +86,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argNames[fi] = RArguments.getName(frame, fi);
             }
         }
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection());
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection(), false);
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
@@ -115,7 +115,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         // ...and use them as 'supplied' arguments...
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
