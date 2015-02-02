@@ -32,7 +32,7 @@ ifeq ($(OSNAME), Linux)
   SHARED_EXT  := so
   LIBS        := -lgfortran
 else ifeq ($(OSNAME), SunOS)
-  OS_DIR      := sunos
+  OS_DIR      := solaris
   CC          := cc
   FC          := f90
   CFLAGS      := -m64 -O -xcode=pic13
