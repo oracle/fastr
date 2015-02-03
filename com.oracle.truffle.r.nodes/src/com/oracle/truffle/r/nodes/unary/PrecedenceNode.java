@@ -139,6 +139,11 @@ public abstract class PrecedenceNode extends UnaryNode {
         return STRING_PRECEDENCE;
     }
 
+    @Specialization
+    protected int doFunction(RFunction func, byte recursive) {
+        return LIST_PRECEDENCE;
+    }
+
     @Specialization(guards = "isRecursive")
     protected int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
         int precedence = -1;

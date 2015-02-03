@@ -7584,6 +7584,10 @@ x y
 1 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
+#{ f <- function() { }; length(c(f, 2)) == 2 }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
 #{ f <- function(x,y) { c(x,y) } ; f(1,1) ; f(1, TRUE) ; f(NULL, NULL) }
 NULL
 
