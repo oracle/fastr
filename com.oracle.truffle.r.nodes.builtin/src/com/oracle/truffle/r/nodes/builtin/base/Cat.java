@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -39,21 +38,17 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * The {@code cat .Internal}. TODO Implement the "fill", "labels" and "append" arguments. Open/close
- * unopen connections for the duration. Fix {@link ToStringNode} to take a vector of separators and
- * rework to not store state in {@link #currentSep} as this will break in a nested call (unlikely
- * scenario).
+ * unopen connections for the duration.
  */
 @RBuiltin(name = "cat", kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
 public abstract class Cat extends RInvisibleBuiltinNode {
+
     @Child private ToStringNode toString;
 
-    @CompilationFinal private String currentSep;
-
-    private void ensureToString(String sep) {
-        if (toString == null || !sep.equals(currentSep)) {
+    private void ensureToString() {
+        if (toString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            toString = insert(ToStringNodeGen.create(null, false, sep, false));
-            currentSep = sep;
+            toString = insert(ToStringNodeGen.create(null, null, null));
         }
     }
 
@@ -62,7 +57,8 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         if (RRuntime.fromLogical(fill) || RRuntime.fromLogical(append)) {
             throw RError.nyi(getEncapsulatingSourceSection(), " fill/append = TRUE");
         }
-        ensureToString(sepVec.getDataAt(0));
+        ensureToString();
+        String sep = sepVec.getDataAt(0);
         int length = args.getLength();
 
         String[] values = new String[length];
@@ -72,7 +68,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
                 if (zeroLength(obj)) {
                     values[i] = "";
                 } else {
-                    values[i] = toString.executeString(frame, obj);
+                    values[i] = toString.executeString(frame, obj, false, sep);
                 }
             }
         }

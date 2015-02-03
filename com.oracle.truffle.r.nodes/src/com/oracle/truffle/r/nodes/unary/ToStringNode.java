@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.function.*;
-
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -34,87 +31,85 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@NodeFields({@NodeField(name = "quotes", type = boolean.class), @NodeField(name = "separator", type = String.class), @NodeField(name = "appendIntL", type = boolean.class)})
+@NodeChildren({@NodeChild("quotes"), @NodeChild("separator")})
 public abstract class ToStringNode extends UnaryNode {
 
     public static final String DEFAULT_SEPARATOR = ", ";
 
     @Child private ToStringNode recursiveToString;
-    @CompilationFinal private Boolean separatorContainsNewlineCache;
 
-    protected abstract boolean isQuotes();
-
-    protected abstract String getSeparator();
-
-    protected abstract boolean isAppendIntL();
-
-    private String toStringRecursive(VirtualFrame frame, Object o) {
+    private String toStringRecursive(VirtualFrame frame, Object o, boolean quotes, String separator) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringNodeGen.create(null, isQuotes(), getSeparator(), isAppendIntL()));
+            recursiveToString = insert(ToStringNodeGen.create(null, null, null));
         }
-        return recursiveToString.executeString(frame, o);
+        return recursiveToString.executeString(frame, o, quotes, separator);
     }
 
-    // FIXME custom separators require breaking some rules
-    // FIXME separator should be a @NodeField - not possible as default values cannot be set
+    public abstract String executeString(VirtualFrame frame, Object o, boolean quotes, String separator);
 
-    @Override
-    public abstract String execute(VirtualFrame frame);
-
-    public abstract String execute(VirtualFrame frame, Object o);
-
-    public abstract String executeString(VirtualFrame frame, Object o);
-
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(String value) {
+    protected String toString(String value, boolean quotes, String separator) {
         if (RRuntime.isNA(value)) {
             return value;
         }
-        if (isQuotes()) {
+        if (quotes) {
             return RRuntime.quoteString(value);
         }
         return value;
 
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(@SuppressWarnings("unused") RNull vector) {
+    protected String toString(RNull vector, boolean quotes, String separator) {
         return "NULL";
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RFunction function) {
+    protected String toString(RFunction function, boolean quotes, String separator) {
         return RRuntime.toString(function);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RComplex complex) {
+    protected String toString(RComplex complex, boolean quotes, String separator) {
         return complex.toString();
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RRaw raw) {
+    protected String toString(RRaw raw, boolean quotes, String separator) {
         return raw.toString();
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(int operand) {
-        return RRuntime.intToString(operand, isAppendIntL());
+    protected String toString(int operand, boolean quotes, String separator) {
+        return RRuntime.intToString(operand, false);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(double operand) {
+    protected String toString(double operand, boolean quotes, String separator) {
         return RRuntime.doubleToString(operand);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(byte operand) {
+    protected String toString(byte operand, boolean quotes, String separator) {
         return RRuntime.logicalToString(operand);
     }
 
+    @FunctionalInterface
+    private interface ElementFunction {
+        String apply(int index, boolean quotes, String separator);
+    }
+
     @TruffleBoundary
-    private String createResultForVector(RAbstractVector vector, String empty, IntFunction<String> elementFunction) {
+    private static String createResultForVector(RAbstractVector vector, boolean quotes, String separator, String empty, ElementFunction elementFunction) {
         int length = vector.getLength();
         if (length == 0) {
             return empty;
@@ -122,74 +117,75 @@ public abstract class ToStringNode extends UnaryNode {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < length; i++) {
             if (i > 0) {
-                b.append(getSeparator());
+                b.append(separator);
             }
-            b.append(elementFunction.apply(i));
+            b.append(elementFunction.apply(i, quotes, separator));
         }
         return RRuntime.toString(b);
     }
 
     @Specialization
-    protected String toString(RIntVector vector) {
-        return createResultForVector(vector, "integer(0)", index -> toString(vector.getDataAt(index)));
+    protected String toString(RIntVector vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "integer(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @TruffleBoundary
     @Specialization
-    protected String toString(RDoubleVector vector) {
-        return createResultForVector(vector, "numeric(0)", index -> toString(vector.getDataAt(index)));
+    protected String toString(RDoubleVector vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "numeric(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @TruffleBoundary
     @Specialization
-    protected String toString(RStringVector vector) {
-        return createResultForVector(vector, "character(0)", index -> toString(vector.getDataAt(index)));
+    protected String toString(RStringVector vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "character(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(RLogicalVector vector) {
-        return createResultForVector(vector, "logical(0)", index -> toString(vector.getDataAt(index)));
+    protected String toString(RLogicalVector vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "logical(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(RRawVector vector) {
-        return createResultForVector(vector, "raw(0)", index -> toString(vector.getDataAt(index)));
+    protected String toString(RRawVector vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "raw(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(RComplexVector vector) {
-        return createResultForVector(vector, "complex(0)", index -> toString(vector.getDataAt(index)));
+    protected String toString(RComplexVector vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "complex(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(VirtualFrame frame, RList vector) {
-        return createResultForVector(vector, "list()", index -> {
+    protected String toString(VirtualFrame frame, RList vector, boolean quotes, String separator) {
+        return createResultForVector(vector, quotes, separator, "list()", (index, q, s) -> {
             Object value = vector.getDataAt(index);
             if (value instanceof RList) {
                 RList l = (RList) value;
                 if (l.getLength() == 0) {
                     return "list()";
                 } else {
-                    return "list(" + toStringRecursive(frame, l) + ')';
+                    return "list(" + toStringRecursive(frame, l, q, s) + ')';
                 }
             } else {
-                return toStringRecursive(frame, value);
+                return toStringRecursive(frame, value, q, s);
             }
         });
     }
 
     @Specialization
-    protected String toString(VirtualFrame frame, RIntSequence vector) {
-        return toStringRecursive(frame, vector.createVector());
+    protected String toString(VirtualFrame frame, RIntSequence vector, boolean quotes, String separator) {
+        return toStringRecursive(frame, vector.createVector(), quotes, separator);
     }
 
     @Specialization
-    protected String toString(VirtualFrame frame, RDoubleSequence vector) {
-        return toStringRecursive(frame, vector.createVector());
+    protected String toString(VirtualFrame frame, RDoubleSequence vector, boolean quotes, String separator) {
+        return toStringRecursive(frame, vector.createVector(), quotes, separator);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(REnvironment env) {
+    protected String toString(REnvironment env, boolean quotes, String separator) {
         return env.toString();
     }
 }

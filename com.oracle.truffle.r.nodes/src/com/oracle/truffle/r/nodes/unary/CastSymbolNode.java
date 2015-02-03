@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,13 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class CastSymbolNode extends CastNode {
 
-    @Child private ToStringNode toString = ToStringNodeGen.create(null, true, ToStringNode.DEFAULT_SEPARATOR, false);
+    @Child private ToStringNode toString = ToStringNodeGen.create(null, null, null);
 
     public abstract Object executeSymbol(VirtualFrame frame, Object o);
+
+    private String toString(VirtualFrame frame, Object value) {
+        return toString.executeString(frame, value, true, ToStringNode.DEFAULT_SEPARATOR);
+    }
 
     @Specialization
     protected RSymbol doNull(@SuppressWarnings("unused") RNull value) {
@@ -41,17 +45,17 @@ public abstract class CastSymbolNode extends CastNode {
 
     @Specialization
     protected RSymbol doInteger(VirtualFrame frame, int value) {
-        return backQuote(toString.executeString(frame, value));
+        return backQuote(toString(frame, value));
     }
 
     @Specialization
     protected RSymbol doDouble(VirtualFrame frame, double value) {
-        return backQuote(toString.executeString(frame, value));
+        return backQuote(toString(frame, value));
     }
 
     @Specialization
     protected RSymbol doLogical(VirtualFrame frame, byte value) {
-        return backQuote(toString.executeString(frame, value));
+        return backQuote(toString(frame, value));
     }
 
     @Specialization
