@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
 
     private RVector passVector(RVector vector) {
         controlVisibility();
-        if (noAttributesAndNamesProfile.profile(vector.getAttributes() == null && vector.getNames() == RNull.instance && vector.getDimNames() == null)) {
+        if (noAttributesAndNamesProfile.profile(vector.getAttributes() == null && vector.getNames() == null && vector.getDimNames() == null)) {
             return vector;
         } else {
             RVector result = vector.copyDropAttributes();
@@ -237,11 +237,11 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     }
 
     public static RAbstractVector namesMerge(RAbstractVector vector, String name) {
-        Object orgNamesObject = vector.getNames();
-        if (((orgNamesObject == null || orgNamesObject == RNull.instance) && name == null) || vector.getLength() == 0) {
+        RStringVector orgNamesObject = vector.getNames();
+        if ((orgNamesObject == null && name == null) || vector.getLength() == 0) {
             return vector;
         }
-        if (orgNamesObject == null || orgNamesObject == RNull.instance) {
+        if (orgNamesObject == null) {
             assert (name != null);
             assert (!name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE));
             RVector v = vector.materialize();
@@ -258,7 +258,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
             }
             return v;
         } else {
-            RStringVector orgNames = (RStringVector) orgNamesObject;
+            RStringVector orgNames = orgNamesObject;
             if (vector.getLength() == 1) {
                 // single value
                 if (name == null) {

@@ -97,7 +97,7 @@ public abstract class Repeat extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     protected static boolean hasNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
-        return x.getNames() != RNull.instance;
+        return x.getNames() != null;
     }
 
     private RError invalidTimes() {
@@ -134,14 +134,14 @@ public abstract class Repeat extends RBuiltinNode {
             throw invalidTimes();
         }
         RAbstractVector input = handleEach(x, each);
-        RAbstractVector names = handleEach((RAbstractVector) x.getNames(), each);
+        RStringVector names = (RStringVector) handleEach(x.getNames(), each);
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-            names = handleLengthOut(names, lengthOut, false);
+            names = (RStringVector) handleLengthOut(names, lengthOut, false);
             RVector r = handleLengthOut(input, lengthOut, false);
             r.setNames(names);
             return r;
         } else {
-            names = handleTimes(names, times, false);
+            names = (RStringVector) handleTimes(names, times, false);
             RVector r = handleTimes(input, times, false);
             r.setNames(names);
             return r;
@@ -151,12 +151,12 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(guards = {"!eachGreaterOne", "hasNames"})
     public RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-            RAbstractVector names = handleLengthOut((RAbstractVector) x.getNames(), lengthOut, true);
+            RStringVector names = (RStringVector) handleLengthOut(x.getNames(), lengthOut, true);
             RVector r = handleLengthOut(x, lengthOut, true);
             r.setNames(names);
             return r;
         } else {
-            RAbstractVector names = handleTimes((RAbstractVector) x.getNames(), times, true);
+            RStringVector names = (RStringVector) handleTimes(x.getNames(), times, true);
             RVector r = handleTimes(x, times, true);
             r.setNames(names);
             return r;

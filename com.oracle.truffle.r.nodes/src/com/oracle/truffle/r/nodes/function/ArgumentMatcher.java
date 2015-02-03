@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
  * . The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
- * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseHelperNode)}
+ * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseHelperNode, boolean)}
  * for 'UseMethod' and
  * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
  * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
@@ -156,15 +156,17 @@ public class ArgumentMatcher {
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
      * @param callSrc The source code of the call
+     * @param forNextMethod matching when evaluating NextMethod
      *
      * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, PromiseHelperNode promiseHelper) {
+    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, PromiseHelperNode promiseHelper,
+                    boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(), callSrc,
-                        null);
+                        null, forNextMethod);
 
         // Replace RMissing with default value!
         RNode[] defaultArgs = formals.getDefaultArgs();
@@ -220,7 +222,7 @@ public class ArgumentMatcher {
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
      * @see #permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory,
-     *      ArrayFactory, SourceSection, SourceSection)
+     *      ArrayFactory, SourceSection, SourceSection, boolean)
      */
     private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
                     ClosureCache closureCache) {
@@ -229,7 +231,7 @@ public class ArgumentMatcher {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), callSrc, argsSrc);
+        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), callSrc, argsSrc, false);
 
         PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
         return wrapInPromises(function, resultArgs, formals, wrapper, closureCache, callSrc);
@@ -247,13 +249,14 @@ public class ArgumentMatcher {
      * @param arrFactory An abstraction for the generic creation of type safe arrays
      * @param callSrc The source of the function call currently executed
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
+     * @param forNextMethod matching when evaluating NextMethod
      *
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
     private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
-                    SourceSection callSrc, SourceSection argsSrc) {
+                    SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod) {
         String[] formalNames = formals.getNames();
 
         // Preparations
@@ -272,7 +275,7 @@ public class ArgumentMatcher {
             }
 
             // Search for argument name inside formal arguments
-            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], callSrc, argsSrc, varArgIndex);
+            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], callSrc, argsSrc, varArgIndex, forNextMethod);
             if (fi >= 0) {
                 resultArgs[fi] = suppliedArgs[si];
                 matchedSuppliedArgs.set(si);
@@ -289,8 +292,11 @@ public class ArgumentMatcher {
         for (int fi = 0; fi < resultArgs.length; fi++) {
             // Unmatched?
             if (!matchedFormalArgs.get(fi)) {
-                while (siCursor.hasNext() && siCursor.nextIndex() < suppliedNames.length && suppliedNames[siCursor.nextIndex()] != null && !suppliedNames[siCursor.nextIndex()].isEmpty()) {
+                while (siCursor.hasNext() && siCursor.nextIndex() < suppliedNames.length && suppliedNames[siCursor.nextIndex()] != null && !suppliedNames[siCursor.nextIndex()].isEmpty() &&
+                                !forNextMethod) {
                     // Slide over named parameters and find subsequent location of unnamed parameter
+                    // (if processing args for NextMethod, try to match yet unmatched named
+                    // parameters - do not slide over them)
                     siCursor.next();
                 }
                 boolean followsDots = hasVarArgs && fi >= varArgIndex;
@@ -374,7 +380,7 @@ public class ArgumentMatcher {
 
     /**
      * Used in
-     * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection, SourceSection)}
+     * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection, SourceSection, boolean)}
      * for iteration over suppliedArgs.
      *
      * @param <T>
@@ -461,12 +467,13 @@ public class ArgumentMatcher {
      * @param callSrc
      * @param argsSrc
      * @param varArgIndex
+     * @param forNextMethod
      *
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
      */
     private static <T> int findParameterPosition(String[] formalNames, String suppliedName, BitSet matchedSuppliedArgs, int suppliedIndex, boolean hasVarArgs, T debugArgNode, SourceSection callSrc,
-                    SourceSection argsSrc, int varArgIndex) {
+                    SourceSection argsSrc, int varArgIndex, boolean forNextMethod) {
         int found = -1;
         for (int i = 0; i < formalNames.length; i++) {
             if (formalNames[i] == null) {
@@ -494,7 +501,7 @@ public class ArgumentMatcher {
                 matchedSuppliedArgs.set(found);
             }
         }
-        if (found >= 0 || hasVarArgs) {
+        if (found >= 0 || hasVarArgs || forNextMethod) {
             return found;
         }
         // Error!

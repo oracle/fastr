@@ -72,10 +72,10 @@ public abstract class UpdateFieldNode extends RNode {
 
         String[] resultNames = new String[newLength];
         boolean namesComplete = true;
-        if (object.getNames() == RNull.instance) {
+        if (object.getNames() == null) {
             Arrays.fill(resultNames, "");
         } else {
-            RStringVector names = (RStringVector) object.getNames();
+            RStringVector names = object.getNames();
             System.arraycopy(names.getDataWithoutCopying(), 0, resultNames, 0, names.getLength());
             namesComplete = names.isComplete();
         }
@@ -116,10 +116,10 @@ public abstract class UpdateFieldNode extends RNode {
 
         String[] resultNames = new String[newLength];
         boolean namesComplete = true;
-        if (object.getNames() == RNull.instance) {
+        if (object.getNames() == null) {
             Arrays.fill(resultNames, "");
         } else {
-            RStringVector names = (RStringVector) object.getNames();
+            RStringVector names = object.getNames();
             ind = 0;
             for (int i = 0; i < names.getLength(); i++) {
                 if (i != index) {

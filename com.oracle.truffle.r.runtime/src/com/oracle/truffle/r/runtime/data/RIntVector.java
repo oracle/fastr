@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         System.arraycopy(implicitClassHr, 0, implicitClassHrDyn, 1, implicitClassHr.length);
     }
 
-    RIntVector(int[] data, boolean complete, int[] dims, Object names) {
+    RIntVector(int[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
         this.data = data;
     }

@@ -111,12 +111,12 @@ public abstract class VApply extends RCastingBuiltinNode {
 
         // TODO: handle names in case of matrices
         if (useNamesProfile.profile(RRuntime.fromLogical(useNames))) {
-            Object names = vecMat.getNames();
-            Object newNames = null;
-            if (names != RNull.instance) {
+            RStringVector names = vecMat.getNames();
+            RStringVector newNames = null;
+            if (names != null) {
                 newNames = names;
             } else if (vecMat instanceof RStringVector) {
-                newNames = ((RStringVector) vecMat).copy();
+                newNames = (RStringVector) vecMat.copy();
             }
             if (newNames != null) {
                 result.setNames(newNames);

@@ -447,12 +447,12 @@ public abstract class PrettyPrinterNode extends RNode {
         int maxPrint = getMaxPrintLength();
         if (values.length == 0) {
             String result = concat(RRuntime.classToString(vector.getElementClass()), "(0)");
-            if (vector.getNames() != RNull.instance) {
+            if (vector.getNames() != null) {
                 result = concat("named ", result);
             }
             return result;
         } else {
-            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames() != null && vector.getNames() != RNull.instance);
+            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames() != null);
             RStringVector names = printNamesHeader ? (RStringVector) vector.getNames() : null;
             int maxWidth = 0;
             for (String s : values) {
@@ -686,7 +686,7 @@ public abstract class PrettyPrinterNode extends RNode {
         int length = operand.getLength();
         if (length == 0) {
             String result = "list()";
-            if (operand.getNames() != RNull.instance) {
+            if (operand.getNames() != null) {
                 result = concat("named ", result);
             }
             return result;

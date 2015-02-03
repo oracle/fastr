@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,7 +95,7 @@ public abstract class AccessFieldNode extends RNode {
     @Specialization(guards = "hasNames")
     protected Object accessFieldHasNames(RLanguage object) {
         String field = getField();
-        RStringVector names = (RStringVector) object.getNames();
+        RStringVector names = object.getNames();
         for (int i = 0; i < names.getLength(); i++) {
             if (field.equals(names.getDataAt(i))) {
                 return RContext.getRASTHelper().getDataAtAsObject(object, i);
@@ -110,7 +110,7 @@ public abstract class AccessFieldNode extends RNode {
     }
 
     protected static boolean hasNames(RAbstractContainer object) {
-        return object.getNames() != RNull.instance;
+        return object.getNames() != null;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,10 +66,10 @@ public abstract class DoCall extends RBuiltinNode {
     @Specialization()
     protected Object doDoCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         Object[] argValues = argsAsList.getDataNonShared();
-        Object n = argsAsList.getNames();
-        String[] argNames = n == RNull.instance ? null : ((RStringVector) n).getDataNonShared();
+        RStringVector n = argsAsList.getNames();
+        String[] argNames = n == null ? null : n.getDataNonShared();
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseHelper);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);

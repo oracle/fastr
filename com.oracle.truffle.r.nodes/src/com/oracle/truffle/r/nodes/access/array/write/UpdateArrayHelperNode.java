@@ -411,24 +411,24 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     private RStringVector getNamesVector(RVector resultVector) {
-        if (noResultNames.profile(resultVector.getNames() == RNull.instance)) {
+        if (noResultNames.profile(resultVector.getNames() == null)) {
             String[] namesData = new String[resultVector.getLength()];
             Arrays.fill(namesData, RRuntime.NAMES_ATTR_EMPTY_VALUE);
             RStringVector names = RDataFactory.createStringVector(namesData, RDataFactory.COMPLETE_VECTOR);
             resultVector.setNames(names);
             return names;
         } else {
-            return (RStringVector) resultVector.getNames();
+            return resultVector.getNames();
         }
     }
 
     private final BranchProfile posNames = BranchProfile.create();
 
     private void updateNames(RVector resultVector, RIntVector positions) {
-        if (positions.getNames() != RNull.instance) {
+        if (positions.getNames() != null) {
             posNames.enter();
             RStringVector names = getNamesVector(resultVector);
-            RStringVector newNames = (RStringVector) positions.getNames();
+            RStringVector newNames = positions.getNames();
             namesNACheck.enable(newNames);
             for (int i = 0; i < positions.getLength(); i++) {
                 int p = positions.getDataAt(i);
@@ -849,9 +849,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         Object[] data = new Object[vector.getLength() - 1];
         RStringVector orgNames = null;
         String[] namesData = null;
-        if (vector.getNames() != RNull.instance) {
+        if (vector.getNames() != null) {
             namesData = new String[vector.getLength() - 1];
-            orgNames = (RStringVector) vector.getNames();
+            orgNames = vector.getNames();
         }
 
         int ind = 0;
@@ -916,7 +916,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         Object[] data = new Object[resultVectorLength];
 
         RList result;
-        if (noResultNames.profile(vector.getNames() == RNull.instance)) {
+        if (noResultNames.profile(vector.getNames() == null)) {
             int ind = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 Object el = list.getDataAt(i);
@@ -926,10 +926,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 }
             }
             Arrays.fill(data, ind, data.length, RNull.instance);
-            result = RDataFactory.createList(data, null);
+            result = RDataFactory.createList(data);
         } else {
             String[] namesData = new String[resultVectorLength];
-            RStringVector orgNames = (RStringVector) vector.getNames();
+            RStringVector orgNames = vector.getNames();
             int ind = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 Object el = list.getDataAt(i);
@@ -2330,7 +2330,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     protected boolean posNames(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
-        return positions.getNames() != RNull.instance;
+        return positions.getNames() != null;
     }
 
     protected boolean isPositionNegative(Object v, RAbstractContainer value, int recLevel, int position) {

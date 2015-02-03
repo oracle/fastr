@@ -39,7 +39,7 @@ public abstract class Names extends RBuiltinNode {
     @Specialization
     protected Object getNames(RAbstractContainer container) {
         controlVisibility();
-        if (hasNames.profile(container.getNames() != null && container.getNames() != RNull.instance)) {
+        if (hasNames.profile(container.getNames() != null)) {
             return container.getNames();
         } else {
             return RNull.instance;

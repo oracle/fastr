@@ -58,8 +58,8 @@ public abstract class AsCall extends RBuiltinNode {
         Object[] values = new Object[length];
         String[] names = new String[length];
         System.arraycopy(x.getDataWithoutCopying(), 1, values, 0, length);
-        if (x.getNames() != RNull.instance) {
-            RStringVector ns = (RStringVector) x.getNames();
+        if (x.getNames() != null) {
+            RStringVector ns = x.getNames();
             System.arraycopy(ns.getDataWithoutCopying(), 1, names, 0, length);
         }
         return new RArgsValuesAndNames(values, names);

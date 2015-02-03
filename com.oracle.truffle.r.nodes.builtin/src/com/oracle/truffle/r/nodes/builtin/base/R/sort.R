@@ -125,7 +125,9 @@ order <- function(..., na.last = TRUE, decreasing = FALSE)
 sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
                       method = c("shell", "quick", "radix"))
 {
-    if (missing(method) && is.factor(x) && nlevels(x) < 100000) method <-"radix"
+	# TODO: implement radix sort
+	if (missing(method) && is.factor(x) && nlevels(x) < 100000) method <-"shell"
+#    if (missing(method) && is.factor(x) && nlevels(x) < 100000) method <-"radix"
     method <- match.arg(method)
     if(!is.atomic(x))
         stop("'x' must be atomic for 'sort.list'\nHave you called 'sort' on a list?")

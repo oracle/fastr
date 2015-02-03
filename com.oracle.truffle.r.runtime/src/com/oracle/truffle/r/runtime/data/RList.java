@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public final class RList extends RVector implements RAbstractVector {
     @CompilationFinal public String elementNamePrefix;
 
     @SuppressWarnings("unused")
-    RList(Object[] data, boolean isComplete, int[] dims, Object names) {
+    RList(Object[] data, boolean isComplete, int[] dims, RStringVector names) {
         super(false, data.length, dims, names);
         this.data = data;
     }
@@ -164,8 +164,8 @@ public final class RList extends RVector implements RAbstractVector {
 
     @TruffleBoundary
     public Object getNameAt(int index) {
-        if (names != null && names != RNull.instance) {
-            String name = ((RStringVector) names).getDataAt(index);
+        if (names != null && names != null) {
+            String name = names.getDataAt(index);
             if (name == RRuntime.STRING_NA) {
                 return "$" + RRuntime.NA_HEADER;
             } else if (name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {

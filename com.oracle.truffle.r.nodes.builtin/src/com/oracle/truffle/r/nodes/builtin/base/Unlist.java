@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -162,7 +162,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (precedence == PrecedenceNode.RAW_PRECEDENCE) {
             byte[] result = new byte[totalSize];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -176,7 +176,7 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (precedence == PrecedenceNode.LOGICAL_PRECEDENCE) {
             byte[] result = new byte[totalSize];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -191,7 +191,7 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (precedence == PrecedenceNode.INT_PRECEDENCE) {
             int[] result = new int[totalSize];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -206,7 +206,7 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (precedence == PrecedenceNode.DOUBLE_PRECEDENCE) {
             double[] result = new double[totalSize];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -221,7 +221,7 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (precedence == PrecedenceNode.COMPLEX_PRECEDENCE) {
             double[] result = new double[totalSize << 1];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -236,7 +236,7 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (precedence == PrecedenceNode.STRING_PRECEDENCE) {
             String[] result = new String[totalSize];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -251,7 +251,7 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (precedence == PrecedenceNode.LIST_PRECEDENCE) {
             Object[] result = new Object[totalSize];
             if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
                 int position = 0;
                 for (int i = 0; i < list.getLength(); i++) {
                     if (list.getDataAt(i) != RNull.instance) {
@@ -301,7 +301,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -337,7 +337,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -373,7 +373,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -409,7 +409,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -445,7 +445,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -490,7 +490,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -526,7 +526,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);

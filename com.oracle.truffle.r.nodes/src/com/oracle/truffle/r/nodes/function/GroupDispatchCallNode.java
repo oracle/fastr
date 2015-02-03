@@ -350,14 +350,14 @@ class GroupDispatchNode extends S3DispatchNode {
 
     protected Object callBuiltin(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
         initBuiltin(frame);
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, builtinFunc, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, builtinFunc, evaluatedArgs, argNames, this.hasVararg, this.callSrc, false);
         Object[] argObject = RArguments.create(builtinFunc, this.callSrc, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         indirectCallNode.assignSourceSection(this.callSrc);
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
     }
 
     protected Object executeHelper(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc, false);
         Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         // todo: cannot create frame descriptors in compiled code
         FrameDescriptor s3VarDefFrameDescriptor = new FrameDescriptor();

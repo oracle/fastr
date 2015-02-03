@@ -50,20 +50,20 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     protected boolean complete; // "complete" means: does not contain NAs
     private int matrixDimension;
     protected int[] dimensions;
-    protected Object names;
+    protected RStringVector names;
     protected RList dimNames;
     private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
 
-    protected RVector(boolean complete, int length, int[] dimensions, Object names) {
+    protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
         this.dimensions = dimensions;
         setMatrixDimensions(dimensions, length);
         this.names = names;
-        if (names != null && names != RNull.instance) {
+        if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
-            assert ((RStringVector) names).getLength() == length;
+            assert names.getLength() == length;
             if (dimensions == null || dimensions.length != 1) {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, names);
                 if (dimensions != null) {
@@ -115,27 +115,26 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public final Object getNames() {
+    public final RStringVector getNames() {
         if (names == null) {
             if (dimNames != null && dimNames.getLength() == 1) {
-                return dimNames.getDataAt(0);
+                RStringVector res = (RStringVector) dimNames.getDataAt(0);
+                return res.isShared() ? (RStringVector) res.copy() : res;
             } else {
-                return RNull.instance;
+                return null;
             }
         } else {
-            return names;
+            return names.isShared() ? (RStringVector) names.copy() : names;
         }
     }
 
     @TruffleBoundary
     public final int getElementIndexByName(String name) {
-        if (getNames() == RNull.instance) {
+        if (getNames() == null) {
             return -1;
         }
-        assert names instanceof RStringVector;
-        RStringVector ns = (RStringVector) names;
-        for (int i = 0; i < ns.getLength(); ++i) {
-            if (ns.getDataAt(i).equals(name)) {
+        for (int i = 0; i < names.getLength(); ++i) {
+            if (names.getDataAt(i).equals(name)) {
                 return i;
             }
         }
@@ -149,15 +148,13 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
      */
     @TruffleBoundary
     public final int getElementIndexByNameInexact(String name) {
-        if (getNames() == RNull.instance) {
+        if (getNames() == null) {
             return -1;
         }
-        assert names instanceof RStringVector;
-        RStringVector ns = (RStringVector) names;
         boolean oneMatch = false;
         int match = -1;
-        for (int i = 0; i < ns.getLength(); ++i) {
-            if (ns.getDataAt(i).startsWith(name)) {
+        for (int i = 0; i < names.getLength(); ++i) {
+            if (names.getDataAt(i).startsWith(name)) {
                 if (oneMatch) {
                     return -1;
                 } else {
@@ -193,7 +190,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             initAttributes();
         }
         if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
-            setNames(value);
+            setNames((RStringVector) value);
         } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             if (value instanceof Integer) {
                 setDimensions(new int[]{(int) value});
@@ -254,20 +251,20 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return (RVector) attributes.get(RRuntime.LEVELS_ATTR_KEY);
     }
 
-    public final void setNames(Object newNames) {
+    public final void setNames(RStringVector newNames) {
         setNames(newNames, null);
     }
 
     @TruffleBoundary
-    public final void setNames(Object newNames, SourceSection sourceSection) {
-        if (attributes != null && (newNames == null || newNames == RNull.instance)) {
+    public final void setNames(RStringVector newNames, SourceSection sourceSection) {
+        if (attributes != null && newNames == null) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
             removeAttributeMapping(RRuntime.NAMES_ATTR_KEY);
             this.names = null;
-        } else if (newNames != null && newNames != RNull.instance) {
-            if (newNames != RNull.instance && ((RStringVector) newNames).getLength() > this.getLength()) {
-                throw RError.error(sourceSection, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, ((RStringVector) newNames).getLength(), this.getLength());
+        } else if (newNames != null) {
+            if (newNames.getLength() > this.getLength()) {
+                throw RError.error(sourceSection, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), this.getLength());
             }
             if (this.dimensions != null && dimensions.length == 1) {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R documentation
@@ -623,7 +620,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         assert (this.names == null);
         assert (this.dimNames == null);
         if (this.dimensions == null) {
-            if (vector.getNames() != RNull.instance) {
+            if (vector.getNames() != null) {
                 this.setNames(vector.getNames());
                 return true;
             } else {
@@ -659,8 +656,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         // reset all atributes other than names;
         setDimNames(null);
         setDimensions(null);
-        if (names != null && names != RNull.instance) {
-            ((RStringVector) names).resizeWithEmpty(size);
+        if (names != null) {
+            names.resizeWithEmpty(size);
         }
     }
 

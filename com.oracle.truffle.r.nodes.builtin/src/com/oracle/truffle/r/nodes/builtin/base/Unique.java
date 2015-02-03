@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -42,7 +44,11 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 // types
 public abstract class Unique extends RBuiltinNode {
 
+    protected abstract Object execute(VirtualFrame frame, Object vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg);
+
     private static final long BIG_THRESHOLD = 100;
+
+    @Child private Unique uniqueRecursive;
 
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
@@ -53,15 +59,28 @@ public abstract class Unique extends RBuiltinNode {
                         ConstantNode.create(RMissing.instance)};
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
-        return vec;
+    protected RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+        if (uniqueRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            uniqueRecursive = insert(UniqueFactory.create(new RNode[5], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return (RVector) uniqueRecursive.execute(frame, vec, incomparables, fromLast, nmax, vararg);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
+    protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+        return vec;
+    }
+
+    @Specialization
+    protected RAbstractContainer doUnique(VirtualFrame frame, RFactor factor, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+        return uniqueRecursive(frame, factor.getVector(), incomparables, fromLast, nmax, vararg);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             Utils.NonRecursiveHashSet<String> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
             String[] data = new String[vec.getLength()];
@@ -217,7 +236,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
+    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSetInt set = new NonRecursiveHashSetInt();
             int[] data = new int[16];
@@ -295,7 +314,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
+    protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             Utils.NonRecursiveHashSetDouble set = new Utils.NonRecursiveHashSetDouble(vec.getLength());
             double[] data = new double[vec.getLength()];
@@ -321,7 +340,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
+    protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             byte val = vec.getDataAt(i);
@@ -334,7 +353,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
+    protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             Utils.NonRecursiveHashSet<RComplex> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
             double[] data = new double[vec.getLength() * 2];
@@ -361,7 +380,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RArgsValuesAndNames vararg) {
+    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             Utils.NonRecursiveHashSet<RRaw> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
             byte[] data = new byte[vec.getLength()];

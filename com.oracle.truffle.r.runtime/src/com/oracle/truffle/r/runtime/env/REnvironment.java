@@ -446,7 +446,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     public static REnvironment createFromList(RList list, REnvironment parent) {
         REnvironment result = RDataFactory.createNewEnv(parent, 0);
-        RStringVector names = (RStringVector) list.getNames();
+        RStringVector names = list.getNames();
         for (int i = 0; i < list.getLength(); i++) {
             try {
                 result.put(names.getDataAt(i), list.getDataAt(i));

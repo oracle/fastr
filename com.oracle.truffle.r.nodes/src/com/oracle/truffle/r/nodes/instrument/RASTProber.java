@@ -66,9 +66,9 @@ public final class RASTProber implements NodeVisitor, ASTProber {
             if (node instanceof RCallNode) {
                 node.probe().tagAs(CALL, RASTUtils.findFunctionName(node, false));
             } else if (node instanceof FunctionStatementsNode) {
-                node.probe().tagAs(START_METHOD, getFunctionDefinitionNode((Node) node).getUID());
+                node.probe().tagAs(START_METHOD, getFunctionDefinitionNode(node).getUID());
             } else if (node instanceof FunctionBodyNode) {
-                node.probe().tagAs(RSyntaxTag.FUNCTION_BODY, getFunctionDefinitionNode((Node) node).getUID());
+                node.probe().tagAs(RSyntaxTag.FUNCTION_BODY, getFunctionDefinitionNode(node).getUID());
             }
             if (node instanceof SequenceNode) {
                 RNode[] sequence = ((SequenceNode) node).getSequence();

@@ -34,6 +34,8 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -99,16 +101,76 @@ public class InfixEmulationFunctions {
 
     }
 
+    @NodeChild(value = "op")
+    protected abstract static class PromiseEvaluator extends RNode {
+
+        protected abstract Object execute(VirtualFrame frame, Object op);
+
+        @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+        @Child private PromiseEvaluator evalRecursive;
+
+        protected Object evalRecursive(VirtualFrame frame, Object op) {
+            if (evalRecursive == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                evalRecursive = insert(PromiseEvaluatorNodeGen.create(null));
+            }
+            return evalRecursive.execute(frame, op);
+        }
+
+        @Specialization
+        protected Object eval(VirtualFrame frame, RPromise p) {
+            return promiseHelper.evaluate(frame, p);
+        }
+
+        @Specialization
+        protected RAbstractVector eval(RAbstractVector op) {
+            return op;
+        }
+
+        @ExplodeLoop
+        @Specialization(guards = "!argsEmpty")
+        protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
+            Object[] values = args.getValues();
+            for (int i = 0; i < values.length; i++) {
+                values[i] = evalRecursive(frame, values[i]);
+            }
+            return args;
+        }
+
+        @Specialization(guards = "argsEmpty")
+        protected RArgsValuesAndNames evalEmpty(RArgsValuesAndNames args) {
+            return args;
+        }
+
+        @Fallback
+        protected Object eval(Object op) {
+            return op;
+        }
+
+        protected boolean argsEmpty(RArgsValuesAndNames args) {
+            return args.length() == 0;
+        }
+
+    }
+
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
         @Child private AccessArrayNode accessNode;
         @Child private AccessPositions positions;
+
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            for (int i = 0; i < arguments.length; i++) {
+                arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
+            }
+            return arguments;
+        }
 
         @ExplodeLoop
         protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim, boolean isSubset) {
             if (accessNode == null || positions.getLength() != inds.length()) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (accessNode == null) {
-                    accessNode = insert(AccessArrayNodeGen.create(isSubset, false, false, null, null, null, null, null));
+                    accessNode = insert(AccessArrayNodeGen.create(isSubset, false, false, false, null, null, null, null, null));
                 }
                 int len = inds.length();
                 ArrayPositionCast[] castPositions = new ArrayPositionCast[len];
@@ -127,8 +189,14 @@ public class InfixEmulationFunctions {
             return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(frame, vector, pos, exact, pos), dropDim);
         }
 
-        protected boolean noInd(@SuppressWarnings("unused") Object x, RArgsValuesAndNames inds) {
+        protected boolean noInd(@SuppressWarnings("unused") RAbstractContainer x, RArgsValuesAndNames inds) {
             return inds.length() == 0;
+        }
+
+        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
+            // do not dispatch on this object if we ended up here as part of S3 dispatch already
+            // (otherwise me may end up with infinite recursion)
+            return x.isObject() && !RArguments.hasS3Args(frame);
         }
 
     }
@@ -136,25 +204,40 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArrayBuiltin {
 
+        @Child private DispatchedCallNode dcn;
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
         }
 
-        @Specialization(guards = "!noInd")
-        protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVect) {
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVect, true);
+        @Specialization(guards = {"!noInd", "isObject"})
+        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(DispatchedCallNode.create("[", RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+            }
+            try {
+                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
+            } catch (RError e) {
+                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, true);
+            }
+        }
+
+        @Specialization(guards = {"!noInd", "!isObject"})
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, true);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd")
-        protected Object getNoInd(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVect) {
+        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVect) {
             return x;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object get(Object x, RMissing inds, RAbstractLogicalVector dropVect) {
+        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector dropVect) {
             return x;
         }
 
@@ -163,6 +246,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArrayBuiltin {
 
+        @Child private DispatchedCallNode dcn;
+
         private final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
 
         @Override
@@ -170,8 +255,27 @@ public class InfixEmulationFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
         }
 
-        @Specialization(guards = "!noInd")
-        protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        @Specialization(guards = {"!noInd", "isObject"})
+        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+            byte exact;
+            if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
+                exact = RRuntime.LOGICAL_FALSE;
+            } else {
+                exact = exactVec.getDataAt(0);
+            }
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(DispatchedCallNode.create("[[", RRuntime.USE_METHOD, new String[]{"", "", "exact"}));
+            }
+            try {
+                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
+            } catch (RError e) {
+                return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, false);
+            }
+        }
+
+        @Specialization(guards = {"!noInd", "!isObject"})
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
                 exact = RRuntime.LOGICAL_FALSE;
@@ -183,13 +287,13 @@ public class InfixEmulationFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd")
-        protected Object getNoInd(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object get(Object x, RMissing inds, RAbstractLogicalVector exactVec) {
+        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector exactVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
 

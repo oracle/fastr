@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class AccessArrayNode extends RNode {
 
     public final boolean isSubset;
+    public final boolean forObjects;
     public final boolean exactInSource;
     public final boolean dropInSource;
 
@@ -68,6 +69,7 @@ public abstract class AccessArrayNode extends RNode {
     @CompilationFinal private boolean recursiveIsSubset;
 
     @Child private AccessArrayNode accessRecursive;
+    @Child private AccessArrayNode accessRecursiveNonObject;
     @Child private CastToVectorNode castVector;
     @Child private ArrayPositionCast castPosition;
     @Child private OperatorConverterNode operatorConverter;
@@ -115,11 +117,12 @@ public abstract class AccessArrayNode extends RNode {
         PositionsArrayNode positions = (PositionsArrayNode) getPositions().substitute(env);
         RNode exact = getExact().substitute(env);
         RNode dropDim = getDropDim().substitute(env);
-        return AccessArrayNodeGen.create(isSubset, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
+        return AccessArrayNodeGen.create(isSubset, forObjects, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
     }
 
-    public AccessArrayNode(boolean isSubset, boolean exactInSource, boolean dropInSource) {
+    public AccessArrayNode(boolean isSubset, boolean forObjects, boolean exactInSource, boolean dropInSource) {
         this.isSubset = isSubset;
+        this.forObjects = forObjects;
         this.recursiveIsSubset = isSubset;
         this.exactInSource = exactInSource;
         this.dropInSource = dropInSource;
@@ -127,6 +130,7 @@ public abstract class AccessArrayNode extends RNode {
 
     public AccessArrayNode(AccessArrayNode other) {
         this.isSubset = other.isSubset;
+        this.forObjects = other.forObjects;
         this.recursiveIsSubset = other.recursiveIsSubset;
         this.exactInSource = other.exactInSource;
         this.dropInSource = other.dropInSource;
@@ -141,7 +145,7 @@ public abstract class AccessArrayNode extends RNode {
             if (forDataFrame && isSubset) {
                 newIsSubset = false;
             }
-            accessRecursive = insert(AccessArrayNodeGen.create(newIsSubset, false, false, null, null, null, null, null));
+            accessRecursive = insert(AccessArrayNodeGen.create(newIsSubset, forObjects, false, false, null, null, null, null, null));
         }
         return accessRecursive.executeAccess(frame, vector, exact, recLevel, operand, dropDim);
     }
@@ -338,7 +342,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     private RStringVector getName(RAbstractVector vector, int position) {
-        RStringVector srcNames = (RStringVector) vector.getNames();
+        RStringVector srcNames = vector.getNames();
         namesNACheck.enable(srcNames);
         String name = srcNames.getDataAt(position - 1);
         namesNACheck.check(name);
@@ -514,11 +518,11 @@ public abstract class AccessArrayNode extends RNode {
     // support for recursive access
 
     public static int getPositionInRecursion(RList vector, String position, int recLevel, SourceSection sourceSection, final BranchProfile error) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             error.enter();
             throw RError.error(sourceSection, RError.Message.NO_SUCH_INDEX, recLevel + 1);
         }
-        RStringVector names = (RStringVector) vector.getNames();
+        RStringVector names = vector.getNames();
         int i = 0;
         for (; i < names.getLength(); i++) {
             if (position.equals(names.getDataAt(i))) {
@@ -638,7 +642,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RList accessNA(RList vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createList(new Object[]{RNull.instance});
         } else {
             return RDataFactory.createList(new Object[]{RNull.instance}, RDataFactory.createNAStringVector());
@@ -700,7 +704,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createList();
         } else {
             return RDataFactory.createList(new Object[0], RDataFactory.createEmptyStringVector());
@@ -815,7 +819,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RIntVector accessNA(RAbstractIntVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
             return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
@@ -854,7 +858,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createEmptyIntVector();
         } else {
             return RDataFactory.createIntVector(new int[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
@@ -952,7 +956,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RDoubleVector accessNA(RAbstractDoubleVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
             return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
@@ -991,7 +995,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createEmptyDoubleVector();
         } else {
             return RDataFactory.createDoubleVector(new double[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
@@ -1089,7 +1093,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RLogicalVector accessNA(RLogicalVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
             return RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
@@ -1128,7 +1132,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createEmptyLogicalVector();
         } else {
             return RDataFactory.createLogicalVector(new byte[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
@@ -1226,7 +1230,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RStringVector accessNA(RStringVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createNAStringVector();
         } else {
             return RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR, RDataFactory.createNAStringVector());
@@ -1265,7 +1269,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createEmptyStringVector();
         } else {
             return RDataFactory.createStringVector(new String[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
@@ -1368,7 +1372,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RComplexVector accessNA(RComplexVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR);
         } else {
             return RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR,
@@ -1408,7 +1412,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createEmptyComplexVector();
         } else {
             return RDataFactory.createComplexVector(new double[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
@@ -1506,7 +1510,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isPositionNA", "isSubset"})
     protected RRawVector accessNA(RRawVector vector, Object exact, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createRawVector(new byte[]{0});
         } else {
             return RDataFactory.createRawVector(new byte[]{0}, RDataFactory.createNAStringVector());
@@ -1544,7 +1548,7 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
-        if (vector.getNames() == RNull.instance) {
+        if (vector.getNames() == null) {
             return RDataFactory.createEmptyRawVector();
         } else {
             return RDataFactory.createRawVector(new byte[0], RDataFactory.createEmptyStringVector());
@@ -1626,9 +1630,9 @@ public abstract class AccessArrayNode extends RNode {
             Object[] data = new Object[secondIndVec.getLength()];
             RStringVector names = null;
             String[] namesData = null;
-            if (dataFrame.getNames() != RNull.instance) {
+            if (dataFrame.getNames() != null) {
                 withNames.enter();
-                names = (RStringVector) dataFrame.getNames();
+                names = dataFrame.getNames();
                 namesData = new String[secondIndVec.getLength()];
             }
             for (int i = 0; i < secondIndVec.getLength(); i++) {
@@ -1741,7 +1745,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     protected static boolean hasNames(RAbstractContainer container) {
-        return container.getNames() != RNull.instance;
+        return container.getNames() != null;
     }
 
     protected static boolean hasDimNames(RAbstractContainer container) {
@@ -1793,8 +1797,8 @@ public abstract class AccessArrayNode extends RNode {
         return recLevel > 0;
     }
 
-    public static AccessArrayNode create(boolean isSubset, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
-        return AccessArrayNodeGen.create(isSubset, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
+    public static AccessArrayNode create(boolean isSubset, boolean forObjects, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
+        return AccessArrayNodeGen.create(isSubset, forObjects, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
     }
 
 }

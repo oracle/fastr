@@ -39,10 +39,11 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private boolean lastHasGroup;
     @CompilationFinal private final Object[] args;
 
-    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args) {
+    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, String storedFunctionName) {
         this.genericName = genericName;
         this.type = type;
         this.args = args;
+        this.storedFunctionName = storedFunctionName;
     }
 
     @Override
@@ -63,13 +64,53 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         return executeHelper(frame);
     }
 
+    private EvaluatedArguments processArgs(VirtualFrame frame) {
+        int argsLength = args == null ? 0 : args.length;
+        // Extract arguments from current frame...
+        int funArgsLength = RArguments.getArgumentsLength(frame);
+        assert RArguments.getNamesLength(frame) == 0 || RArguments.getNamesLength(frame) == funArgsLength;
+        boolean hasNames = RArguments.getNamesLength(frame) > 0;
+        Object[] argValues = new Object[funArgsLength + argsLength];
+        String[] argNames = hasNames ? new String[funArgsLength + argsLength] : null;
+        int index = 0;
+        for (int fi = 0; fi < funArgsLength; fi++) {
+            Object argVal = RArguments.getArgument(frame, fi);
+            if (argVal instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) argVal;
+                int varArgsLength = varArgs.length();
+                if (varArgsLength > 1) {
+                    argValues = Utils.resizeArray(argValues, argValues.length + varArgsLength - 1);
+                }
+                System.arraycopy(varArgs.getValues(), 0, argValues, index, varArgsLength);
+                if (hasNames) {
+                    if (varArgsLength > 1) {
+                        argNames = Utils.resizeArray(argNames, argNames.length + varArgsLength - 1);
+                    }
+                    if (varArgs.getNames() != null) {
+                        System.arraycopy(varArgs.getNames(), 0, argNames, index, varArgsLength);
+                    }
+                } else if (varArgs.getNames() != null) {
+                    argNames = new String[funArgsLength + argsLength];
+                    System.arraycopy(varArgs.getNames(), 0, argNames, index, varArgsLength);
+                }
+                index += varArgsLength;
+            } else {
+                argValues[index] = argVal;
+                if (hasNames) {
+                    argNames[index] = RArguments.getName(frame, fi);
+                }
+                index++;
+            }
+        }
+        if (argsLength > 0) {
+            System.arraycopy(args, 0, argValues, RArguments.getArgumentsLength(frame), args.length);
+        }
+        return reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection(), true);
+    }
+
     private Object executeHelper(VirtualFrame frame) {
-        // Merge arguments passed to current function with arguments passed to NextMethod call.
-        final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
-        RArguments.copyArgumentsInto(frame, mergedArgs);
-        System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
-        // TODO: implement names passing
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(frame) + 1, mergedArgs, RArguments.EMPTY_STRING_ARRAY);
+        EvaluatedArguments evaledArgs = processArgs(frame);
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getNames());
         // todo: cannot create frame descriptors in compiled code
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
@@ -145,7 +186,9 @@ public class NextMethodDispatchNode extends S3DispatchNode {
 
     private void readGenericVars(VirtualFrame frame) {
         genDefEnv = RArguments.getS3DefEnv(frame);
-        // TODO if(genDefEnv == null) genDefEnv = globalenv
+        if (genDefEnv == null) {
+            genDefEnv = RArguments.getEnclosingFrame(frame);
+        }
         genCallEnv = RArguments.getS3CallEnv(frame);
         if (genCallEnv == null) {
             genCallEnv = frame.materialize();
@@ -156,7 +199,10 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         } else {
             handlePresentGroup();
         }
-        storedFunctionName = RArguments.getS3Method(frame);
+        String functionName = RArguments.getS3Method(frame);
+        if (functionName != null) {
+            storedFunctionName = functionName;
+        }
     }
 
     private void handleMissingGroup() {

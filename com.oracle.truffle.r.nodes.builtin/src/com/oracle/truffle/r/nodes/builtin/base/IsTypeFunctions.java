@@ -505,7 +505,7 @@ public class IsTypeFunctions {
 
         protected static boolean namesOnlyOrNoAttr(RAbstractVector x) {
             // there should be no attributes other than names
-            if (x.getNames() == RNull.instance) {
+            if (x.getNames() == null) {
                 assert x.getAttributes() == null || x.getAttributes().size() > 0;
                 return x.getAttributes() == null ? true : false;
             } else {
