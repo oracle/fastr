@@ -300,7 +300,8 @@ public class ForeignFunctions {
     }
 
     /**
-     * For now, just some special case functions that are built in to the implementation.
+     * Handles the generic case, but also many special case functions that are called from the
+     * default packages.
      */
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class DotCall extends RBuiltinNode {
@@ -548,6 +549,17 @@ public class ForeignFunctions {
         public static boolean isMenu(RList f) {
             return matchName(f, "menu");
         }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isCairoProps")
+        protected byte cairoProps(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        public static boolean isCairoProps(RList f) {
+            return matchName(f, "cairoProps");
+        }
+
     }
 
     /**

@@ -265,13 +265,7 @@ public class RASTUtils {
     }
 
     private static String escapeName(String name) {
-        if (name.length() > 0) {
-            char ch = name.charAt(0);
-            if (!(Character.isLetter(ch) || ch == '.')) {
-                return "`" + name + "`";
-            }
-        }
-        return name;
+        return RDeparse.quotify(name, "`");
     }
 
     /**

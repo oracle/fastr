@@ -70,7 +70,7 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     // @formatter:off
     public Object invokeCall(SymbolInfo symbolInfo, Object[] args) throws Throwable {
-        long address = symbolInfo.getAddress();
+        long address = symbolInfo.address;
         switch (args.length) {
             case 0: return call0(address);
             case 1: return call1(address, args[0]);

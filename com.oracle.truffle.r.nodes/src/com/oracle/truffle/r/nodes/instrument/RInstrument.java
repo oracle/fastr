@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.instrument;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.instrument.Probe;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.Source;
@@ -89,13 +89,13 @@ public class RInstrument {
      * Controls whether ASTs are instrumented after parse. The default value controlled by
      * {@link FastROptions#Instrument}.
      */
-    private static boolean instrumentingEnabled;
+    @CompilationFinal private static boolean instrumentingEnabled;
 
     /**
      * The function names that were requested to be used in implicit {@code debug(f)} calls, when
      * those functions are defined.
      */
-    private static String[] debugFunctionNames;
+    @CompilationFinal private static String[] debugFunctionNames;
 
     private static void putProbe(FunctionUID uid, Probe probe) {
         ArrayList<Probe> list = probeMap.get(uid);

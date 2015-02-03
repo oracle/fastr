@@ -56,7 +56,7 @@ public enum SEXPTYPE {
     NILVALUE_SXP(254, null),
     GLOBALENV_SXP(253, null),
     UNBOUNDVALUE_SXP(252, null),
-    MISSINGARG_SXP(251, null),
+    MISSINGARG_SXP(251, RMissing.class),
     BASENAMESPACE_SXP(250, null),
     NAMESPACESXP(249, null),
     PACKAGESXP(248, null),

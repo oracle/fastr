@@ -249,6 +249,15 @@ public class InfixEmulationFunctions {
         }
     }
 
+    @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})
+    public abstract static class ColonBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object from, Object to) {
+            throw nyi();
+        }
+    }
+
     @RBuiltin(name = "{", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class BraceBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")

@@ -192,21 +192,21 @@ typeof <- function(x) .Internal(typeof(x))
 #
 #memory.profile <- function() .Internal(memory.profile())
 #
-#capabilities <- function(what = NULL)
-#{
-#  z  <- .Internal(capabilities())
-#  if(!is.null(what))
-#    z <- z[match(what, names(z), 0L)]
-#  if(.Platform$OS.type == "windows") return(z)
-#  ## Now we need to deal with any NA entries if X11 is unknown.
-#  nas <- names(z[is.na(z)])
-#  if(any(nas %in% c("X11", "jpeg", "png", "tiff"))) {
-#    ## This might throw an X11 error
-#    z[nas] <- tryCatch(.Internal(capabilitiesX11()),
-#        error = function(e) FALSE)
-#  }
-#  z
-#}
+capabilities <- function(what = NULL)
+{
+  z  <- .Internal(capabilities())
+  if(!is.null(what))
+    z <- z[match(what, names(z), 0L)]
+  if(.Platform$OS.type == "windows") return(z)
+  ## Now we need to deal with any NA entries if X11 is unknown.
+  nas <- names(z[is.na(z)])
+  if(any(nas %in% c("X11", "jpeg", "png", "tiff"))) {
+    ## This might throw an X11 error
+    z[nas] <- tryCatch(.Internal(capabilitiesX11()),
+        error = function(e) FALSE)
+  }
+  z
+}
 
 inherits <- function(x, what, which = FALSE)
   .Internal(inherits(x, what, which))

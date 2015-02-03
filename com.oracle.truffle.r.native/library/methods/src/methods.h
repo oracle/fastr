@@ -19,7 +19,7 @@
 
 #include <Rinternals.h>
 #ifdef ENABLE_NLS
-//#include <libintl.h>
+#include <libintl.h>
 #define _(String) dgettext ("methods", String)
 #else
 #define _(String) (String)

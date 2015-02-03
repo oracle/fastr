@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
@@ -92,6 +93,7 @@ public class RSerialize {
     private int refTableIndex;
     private final CallHook hook;
     private static boolean trace;
+    private static boolean traceInit;
     private final int depth;
 
     private RSerialize(RConnection conn, int depth) throws IOException {
@@ -105,19 +107,21 @@ public class RSerialize {
         is.read(buf);
         switch (buf[0]) {
             case 'A':
-                // TODO error
-                break;
             case 'B':
-                // TODO error
-                break;
+                throw formatError(buf[0], true);
             case 'X':
                 stream = new XdrFormat(is);
                 break;
             case '\n':
-                // TODO special case in 'A'
+                // special case in 'A'
+                throw formatError((byte) 'A', true);
             default:
-                // TODO error
+                throw formatError(buf[0], false);
         }
+    }
+
+    private static IOException formatError(byte format, boolean ok) throws IOException {
+        throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
     }
 
     private int inRefIndex(Flags flags) {
@@ -143,19 +147,27 @@ public class RSerialize {
         return refTable[index - 1];
     }
 
+    private static boolean trace() {
+        if (!traceInit) {
+            trace = FastROptions.debugMatches("serialize");
+            traceInit = true;
+        }
+        return trace;
+    }
+
     public static Object unserialize(RConnection conn, int depth) throws IOException {
-        RSerialize instance = trace ? new TracingRSerialize(conn, depth) : new RSerialize(conn, depth);
+        RSerialize instance = trace() ? new TracingRSerialize(conn, depth) : new RSerialize(conn, depth);
         return instance.unserialize();
     }
 
     /**
-     * This variant exists for the {@code laxyLoadDBFetch} function. In certain cases, when
+     * This variant exists for the {@code lazyLoadDBFetch} function. In certain cases, when
      * {@link #persistentRestore} is called, an R function needs to be evaluated with an argument
      * read from the serialized stream. This is handled with a callback object.
      */
     public static Object unserialize(byte[] data, CallHook hook, int depth) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        RSerialize instance = trace ? new TracingRSerialize(is, hook, depth) : new RSerialize(is, hook, depth);
+        RSerialize instance = trace() ? new TracingRSerialize(is, hook, depth) : new RSerialize(is, hook, depth);
         return instance.unserialize();
     }
 
@@ -209,6 +221,108 @@ public class RSerialize {
                 result = persistentRestore(sv);
                 return addReadRef(result);
             }
+
+            case ENVSXP: {
+                /*
+                 * Behavior varies depending on whether hashtab is present, since this is optional
+                 * in GnuR.
+                 */
+                int locked = stream.readInt();
+                Object enclos = readItem();
+                REnvironment env = RDataFactory.createNewEnv(enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos, 0);
+                addReadRef(result);
+                Object frame = readItem();
+                Object hashtab = readItem();
+                if (frame == RNull.instance) {
+                    RList hashList = (RList) hashtab;
+                    // GnuR sizes its hash tables, empty slots indicated by RNull
+                    for (int i = 0; i < hashList.getLength(); i++) {
+                        Object val = hashList.getDataAt(i);
+                        if (val == RNull.instance) {
+                            continue;
+                        }
+                        RPairList pl = (RPairList) val;
+                        env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
+                    }
+                } else {
+                    while (frame != RNull.instance) {
+                        RPairList pl = (RPairList) frame;
+                        env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
+                        frame = pl.cdr();
+                    }
+                }
+                if (locked != 0) {
+                    env.lock(false);
+                }
+                Object attr = readItem();
+                if (attr != RNull.instance) {
+                    setAttributes(env, attr);
+                }
+                return env;
+            }
+
+            case PACKAGESXP: {
+                RStringVector s = inStringVec(false);
+                /*
+                 * TODO GnuR eval's findPackageEnv, but we don't want to eval here. That will call
+                 * require, so we can only find packages that are already loaded.
+                 */
+                REnvironment pkgEnv = REnvironment.lookupOnSearchPath(s.getDataAt(0));
+                if (pkgEnv == null) {
+                    pkgEnv = REnvironment.globalEnv();
+                }
+                return pkgEnv;
+            }
+
+            case LISTSXP:
+            case LANGSXP:
+            case CLOSXP:
+            case PROMSXP:
+            case DOTSXP: {
+                Object attrItem = null;
+                Object tagItem = null;
+                if (flags.hasAttr) {
+                    attrItem = readItem();
+
+                }
+                if (flags.hasTag) {
+                    tagItem = readItem();
+                }
+                Object carItem = readItem();
+                Object cdrItem = readItem();
+                RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
+                result = pairList;
+                if (attrItem != null) {
+                    setAttributes(pairList, attrItem);
+                }
+                if (type == SEXPTYPE.CLOSXP) {
+                    // must convert the RPairList to a FastR RFunction
+                    // We could convert to an AST directly, but it is easier and more robust
+                    // to deparse and reparse.
+                    RPairList rpl = (RPairList) result;
+                    String deparse = RDeparse.deparse(rpl);
+                    try {
+                        /*
+                         * The tag of result is the enclosing environment (from NAMESPACESEXP) for
+                         * the function. However the namespace is locked, so can't just eval there
+                         * (and overwrite the promise), so we fix the enclosing frame up on return.
+                         */
+                        RExpression expr = RContext.getEngine().parse(deparse);
+                        RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
+                        func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
+                        result = func;
+                    } catch (RContext.Engine.ParseException | PutException ex) {
+                        // denotes a deparse/eval error, which is an unrecoverable bug
+                        Utils.fail("internal deparse error");
+                    }
+                }
+                return result;
+            }
+
+            /*
+             * These break out of the switch to have their ATTR, LEVELS, and OBJECT fields filled
+             * in.
+             */
 
             case VECSXP: {
                 int len = stream.readInt();
@@ -287,53 +401,6 @@ public class RSerialize {
                 break;
             }
 
-            case LISTSXP:
-            case LANGSXP:
-            case CLOSXP:
-            case PROMSXP:
-            case DOTSXP: {
-                Object attrItem = null;
-                Object tagItem = null;
-                if (flags.hasAttr) {
-                    attrItem = readItem();
-
-                }
-                if (flags.hasTag) {
-                    tagItem = readItem();
-                }
-                Object carItem = readItem();
-                Object cdrItem = readItem();
-                RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
-                result = pairList;
-                if (attrItem != null) {
-                    assert false;
-                    // TODO figure out what attrItem is
-                    // pairList.setAttr(name, value);
-                }
-                if (type == SEXPTYPE.CLOSXP) {
-                    // must convert the RPairList to a FastR RFunction
-                    // We could convert to an AST directly, but it is easier and more robust
-                    // to deparse and reparse.
-                    RPairList rpl = (RPairList) result;
-                    String deparse = RDeparse.deparse(rpl);
-                    try {
-                        /*
-                         * The tag of result is the enclosing environment (from NAMESPACESEXP) for
-                         * the function. However the namespace is locked, so can't just eval there
-                         * (and overwrite the promise), so we fix the enclosing frame up on return.
-                         */
-                        RExpression expr = RContext.getEngine().parse(deparse);
-                        RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
-                        func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
-                        result = func;
-                    } catch (RContext.Engine.ParseException | PutException ex) {
-                        // denotes a deparse/eval error, which is an unrecoverable bug
-                        Utils.fail("internal deparse error");
-                    }
-                }
-                break;
-            }
-
             case SYMSXP: {
                 String name = (String) readItem();
                 result = RDataFactory.createSymbol(name);
@@ -363,32 +430,38 @@ public class RSerialize {
         } else {
             if (flags.hasAttr) {
                 Object attr = readItem();
-                RAttributable rAttributable = (RAttributable) result;
-                /*
-                 * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract
-                 * RAttributes class. FastR also uses different types to represent data/frame and
-                 * factor which is handled in the setClassAttr
-                 */
-                RPairList pl = (RPairList) attr;
-                while (true) {
-                    RSymbol tagSym = (RSymbol) pl.getTag();
-                    String tag = tagSym.getName();
-                    // this may convert a plain vector to a data.frame or factor
-                    if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
-                        result = ((RVector) result).setClassAttr((RStringVector) pl.car());
-                    } else {
-                        rAttributable.setAttr(tag, pl.car());
-                    }
-                    Object cdr = pl.cdr();
-                    if (cdr instanceof RNull) {
-                        break;
-                    } else {
-                        pl = (RPairList) cdr;
-                    }
-                }
+                result = setAttributes(result, attr);
             }
         }
 
+        return result;
+    }
+
+    /**
+     * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes
+     * class. FastR also uses different types to represent data/frame and factor which is handled in
+     * the setClassAttr
+     */
+    private static Object setAttributes(final Object object, Object attr) {
+        RAttributable rAttributable = (RAttributable) object;
+        RPairList pl = (RPairList) attr;
+        Object result = object;
+        while (true) {
+            RSymbol tagSym = (RSymbol) pl.getTag();
+            String tag = tagSym.getName();
+            // this may convert a plain vector to a data.frame or factor
+            if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                result = ((RVector) result).setClassAttr((RStringVector) pl.car());
+            } else {
+                rAttributable.setAttr(tag, pl.car());
+            }
+            Object cdr = pl.cdr();
+            if (cdr instanceof RNull) {
+                break;
+            } else {
+                pl = (RPairList) cdr;
+            }
+        }
         return result;
     }
 

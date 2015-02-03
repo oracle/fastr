@@ -21,9 +21,15 @@
 # questions.
 #
 
+# Common Makefile for creating FastR variants of the default packages
+# The common part of the archive (everything except the .so) is created
+# by untar'ing the comnressed archive (from GnuR). Then the FastR .so file is created
+# and overwrites the default. The libraries are stored in the directory denoted
+# FASTR_LIBDIR.
+
 include ../../platform.mk
 
-.PHONY: all clean cleanlib cleanobj force libr
+.PHONY: all clean cleanlib cleanobj force libr libcommon 
 
 PKG = $(PACKAGE)
 
@@ -33,6 +39,8 @@ OBJ = lib/$(OS_DIR)
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+
+H_SOURCES := $(wildcard $(SRC)/*.h)
 
 LIBDIR := $(OBJ)
 
@@ -44,7 +52,15 @@ FFI_INCLUDES = -I$(TOPDIR)/include/jni
 
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
-all: $(LIB_PKG)
+PKGDIR := $(FASTR_LIBDIR)/$(PKG)
+PKGTAR := $(SRC)/$(PKG).tar.gz
+
+all: libcommon $(LIB_PKG)
+
+libcommon: $(PKGDIR)
+
+$(PKGDIR):
+	tar xf $(PKGTAR) -C $(FASTR_LIBDIR)
 
 $(OBJ):
 	mkdir -p $(OBJ)
@@ -54,7 +70,7 @@ $(LIB_PKG): $(OBJ) $(C_OBJECTS)
 	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 
-$(OBJ)/%.o: $(SRC)/%.c
+$(OBJ)/%.o: $(SRC)/%.c  $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.f

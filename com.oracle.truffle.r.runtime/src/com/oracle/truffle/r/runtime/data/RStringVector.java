@@ -111,7 +111,9 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     public RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {
-        assert !this.isShared();
+        if (this.isShared()) {
+            throw RInternalError.shouldNotReachHere("update shared vector");
+        }
         data[i] = right;
         if (rightNACheck.check(right)) {
             complete = false;

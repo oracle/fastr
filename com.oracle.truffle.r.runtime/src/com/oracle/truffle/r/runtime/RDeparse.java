@@ -51,6 +51,8 @@ public class RDeparse {
     public static final int MIN_Cutoff = 20;
     public static final int MAX_Cutoff = 500;
     public static final int DEFAULT_Cutoff = 60;
+    private static final String BACKTICK = "`";
+    private static final String DQUOTE = "\"";
 
     public static enum PP {
         FUNCALL,
@@ -363,10 +365,17 @@ public class RDeparse {
                 state.append("NULL");
                 break;
 
-            case SYMSXP:
-                // TODO backtick
-                state.append(((RSymbol) obj).getName());
+            case MISSINGARG_SXP:
                 break;
+
+            case SYMSXP: {
+                String name = ((RSymbol) obj).getName();
+                if (state.backtick) {
+                    name = quotify(name, BACKTICK);
+                }
+                state.append(name);
+                break;
+            }
 
             case CHARSXP:
                 state.append((String) obj);
@@ -562,9 +571,13 @@ public class RDeparse {
                             case BINARY2: {
                                 // TODO parens
                                 deparse2buff(state, pl.car());
-                                state.append(' ');
+                                if (fop.kind == PP.BINARY) {
+                                    state.append(' ');
+                                }
                                 state.append(op);
-                                state.append(' ');
+                                if (fop.kind == PP.BINARY) {
+                                    state.append(' ');
+                                }
                                 if (fop.kind == PP.BINARY) {
                                     lbreak = state.linebreak(lbreak);
                                 }
@@ -637,11 +650,9 @@ public class RDeparse {
                             case FUNCALL:
                             case RETURN: {
                                 if (state.backtick) {
-                                    state.append('`');
-                                    state.append(op);
-                                    state.append('`');
+                                    state.append(quotify(op, BACKTICK));
                                 } else {
-                                    state.append(op);
+                                    state.append(quotify(op, DQUOTE)); // quote?
                                 }
                                 state.append('(');
                                 state.inlist++;
@@ -651,8 +662,16 @@ public class RDeparse {
                                 break;
                             }
 
+                            case NEXT:
+                                state.append("next");
+                                break;
+
+                            case BREAK:
+                                state.append("break");
+                                break;
+
                             default:
-                                assert false;
+                                RInternalError.unimplemented();
                         }
                     } else {
                         // TODO promise?
@@ -662,7 +681,7 @@ public class RDeparse {
                             state.append(op);
                             deparse2buff(state, f.caddr());
                         } else {
-                            state.append(quotify(op));
+                            state.append(quotify(op, BACKTICK));
                             state.append('(');
                             args2buff(state, cdr, false, false);
                             state.append(')');
@@ -815,7 +834,13 @@ public class RDeparse {
         while (arglist != null) {
             Object argTag = arglist.getTag();
             if (argTag != null && argTag != RNull.instance) {
-                state.append(((RSymbol) arglist.getTag()).getName());
+                String rs = ((RSymbol) arglist.getTag()).getName();
+                if (rs.equals("...")) {
+                    state.append(rs);
+                } else {
+                    state.append(quotify(rs, state.backtick ? BACKTICK : DQUOTE));
+                }
+
                 if (formals) {
                     if (arglist.car() != RMissing.instance) {
                         state.append(" = ");
@@ -938,7 +963,7 @@ public class RDeparse {
                             state.append("\\f");
                             break;
                         case '\\':
-                            state.append("\\");
+                            state.append("\\\\");
                             break;
                         case '"':
                             state.append("\\\"");
@@ -975,8 +1000,13 @@ public class RDeparse {
         return state;
     }
 
-    private static String quotify(String name) {
-        // TODO implement
+    public static String quotify(String name, String qc) {
+        if (name.length() > 0) {
+            char ch = name.charAt(0);
+            if (!(Character.isLetter(ch) || ch == '.')) {
+                return qc + name + qc;
+            }
+        }
         return name;
     }
 

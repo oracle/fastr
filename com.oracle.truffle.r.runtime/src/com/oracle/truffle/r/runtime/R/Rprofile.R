@@ -71,8 +71,6 @@ Sys.setenv(R_LIBS_USER =
 .First.sys <- function()
 {
     for(pkg in getOption("defaultPackages")) {
-		# for the moment we only handle "utils" this way
-		if (pkg != "utils") next
         res <- require(pkg, quietly = TRUE, warn.conflicts = FALSE,
                        character.only = TRUE)
         if(!res)

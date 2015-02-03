@@ -52,7 +52,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
         Signature sig = Signature.getSignature(ResultType.primitive(NativeType.VOID, void.class), parameterTypes);
 
         // We already have up the symbol address
-        MethodHandle mh = Native.getMethodHandle(sig, new CodeAddress(symbolInfo.getAddress()));
+        MethodHandle mh = Native.getMethodHandle(sig, new CodeAddress(symbolInfo.address));
         mh.invokeWithArguments(args);
     }
 }
