@@ -118,4 +118,9 @@ public abstract class CastListNode extends CastNode {
         }
         return RDataFactory.createList(data, RDataFactory.createStringVector(names, complete));
     }
+
+    @Specialization
+    protected RList doFunction(RFunction func) {
+        return RDataFactory.createList(new Object[]{func});
+    }
 }

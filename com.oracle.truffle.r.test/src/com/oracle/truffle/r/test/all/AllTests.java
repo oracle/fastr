@@ -6740,6 +6740,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCombine_85e7fa7a14d25590b451c65e76fb380a() {
+        assertEval("{ f <- function() { }; length(c(f, 2)) == 2 }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCombineBroken_d365e1ffe5f8c886f6d1911c69b3af00() {
         assertEval("{ c(1i,0/0) }");
     }

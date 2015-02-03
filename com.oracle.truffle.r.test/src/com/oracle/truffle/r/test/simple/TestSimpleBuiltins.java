@@ -611,6 +611,10 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x<-expression(1); c(x) }");
         assertEval("{ x<-expression(1); c(x,2) }");
+
+        // print output for a function in a list doesn't match GnuR,
+        // which seems to invoke deparse, so we just check the c didn't fail.
+        assertEval("{ f <- function() { }; length(c(f, 2)) == 2 }");
     }
 
     @Test
