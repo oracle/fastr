@@ -37,11 +37,11 @@ public abstract class CombineBinaryNode extends BinaryNode {
     public abstract Object executeCombine(VirtualFrame frame, Object left, Object right);
 
     protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty) {
-        if (orgVector.getNames() == null || orgVector.getNames() == RNull.instance) {
+        if (orgVector.getNames() == null) {
             return null;
         }
         hasNamesProfile.enter();
-        RStringVector orgNames = (RStringVector) orgVector.getNames();
+        RStringVector orgNames = orgVector.getNames();
         int orgLength = orgVector.getLength();
         String[] namesData = new String[orgLength + 1];
         int i = 0;

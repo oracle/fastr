@@ -538,10 +538,10 @@ public class ForeignFunctions {
      * efficient basis.
      */
     private static boolean matchName(RList f, String name) {
-        if (f.getNames() == RNull.instance) {
+        if (f.getNames() == null) {
             return false;
         }
-        RStringVector names = (RStringVector) f.getNames();
+        RStringVector names = f.getNames();
         for (int i = 0; i < names.getLength(); i++) {
             if (names.getDataAt(i).equals("name")) {
                 return f.getDataAt(i).equals(name) ? true : false;

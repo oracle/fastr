@@ -156,7 +156,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
     @Specialization
     protected Object doIntVector(RAbstractContainer container, RAbstractIntVector operand) {
-        if (primitiveProfile.profile(operand.getLength() == 1 && operand.getNames() == RNull.instance)) {
+        if (primitiveProfile.profile(operand.getLength() == 1 && operand.getNames() == null)) {
             return operand.getDataAtAsObject(0);
         } else if (emptyOpProfile.profile(operand.getLength() == 0)) {
             return 0;
@@ -170,7 +170,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
     }
 
     protected boolean operandHasNames(RAbstractContainer container, RAbstractIntVector operand) {
-        return operand.getNames() != RNull.instance;
+        return operand.getNames() != null;
     }
 
     protected boolean numDimensionsOne() {
@@ -559,20 +559,37 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             }
         }
 
-        private static RIntVector findPositionWithNames(RAbstractContainer container, Object namesObj, String operand) {
+        private static int getSingleNamesPos(RAbstractContainer container, RStringVector names, String operand) {
+            int position = -1;
+            for (int j = 0; j < names.getLength(); j++) {
+                if (operand.equals(names.getDataAt(j))) {
+                    position = j + 1;
+                    break;
+                }
+            }
+            if (position == -1) {
+                position = container.getLength() + 1;
+            }
+            return position;
+        }
+
+        private static RIntVector findPositionWithNames(RAbstractContainer container, RStringVector names, String operand) {
+            RStringVector resNames = RDataFactory.createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
+            int position = -1;
+            if (names != null) {
+                position = getSingleNamesPos(container, names, operand);
+            } else {
+                position = container.getLength() + 1;
+            }
+            return RDataFactory.createIntVector(new int[]{position}, RDataFactory.COMPLETE_VECTOR, resNames);
+        }
+
+        private static RIntVector findPositionWithDimNames(RAbstractContainer container, Object namesObj, String operand) {
             RStringVector resNames = RDataFactory.createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
             int position = -1;
             if (namesObj != RNull.instance) {
                 RStringVector names = (RStringVector) namesObj;
-                for (int j = 0; j < names.getLength(); j++) {
-                    if (operand.equals(names.getDataAt(j))) {
-                        position = j + 1;
-                        break;
-                    }
-                }
-                if (position == -1) {
-                    position = container.getLength() + 1;
-                }
+                position = getSingleNamesPos(container, names, operand);
             } else {
                 position = container.getLength() + 1;
             }
@@ -599,7 +616,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (assignment) {
                 // with assignment, container's names can be set by the operand
                 return findPositionWithNames(container, container.getNames(), operand);
-            } else if (container.getNames() != RNull.instance) {
+            } else if (container.getNames() != null) {
                 // with vector read, we need names to even try finding container components
                 int result = findPosition(container, container.getNames(), operand, exact);
 
@@ -630,7 +647,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private Object doStringMultiDim(RAbstractContainer container, String operand, RList dimNames, boolean exact) {
             if (dimNames != null) {
                 if (assignment) {
-                    return findPositionWithNames(container, dimNames.getDataAt(dimension), operand);
+                    return findPositionWithDimNames(container, dimNames.getDataAt(dimension), operand);
                 } else {
                     return findPosition(container, dimNames.getDataAt(dimension), operand, exact);
                 }
@@ -846,29 +863,49 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return position;
         }
 
-        private static RIntVector findPositionsWithNames(VirtualFrame frame, RAbstractContainer container, Object namesObj, RAbstractStringVector operand, boolean retainNames) {
+        private static int getNamesPos(RStringVector names, RAbstractStringVector operand, int[] data, int initialPos, int i) {
+            int newInitialPos = initialPos;
+            String positionName = operand.getDataAt(i);
+            int j = 0;
+            for (; j < names.getLength(); j++) {
+                if (positionName.equals(names.getDataAt(j))) {
+                    data[i] = j + 1;
+                    break;
+                }
+            }
+            if (j == names.getLength()) {
+                // TODO: this is slow - is it important to make it faster?
+                newInitialPos = eliminateDuplicate(operand, data, newInitialPos, i);
+            }
+            return newInitialPos;
+        }
+
+        private static RIntVector findPositionsWithNames(VirtualFrame frame, RAbstractContainer container, RStringVector names, RAbstractStringVector operand, boolean retainNames) {
+            RStringVector resNames = operand.materialize();
+            int initialPos = container.getLength();
+            int[] data = new int[operand.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                if (names != null) {
+                    initialPos = getNamesPos(names, operand, data, initialPos, i);
+                } else {
+                    // TODO: this is slow - is it important to make it faster?
+                    initialPos = eliminateDuplicate(operand, data, initialPos, i);
+                }
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, resNames);
+        }
+
+        private static RIntVector findPositionsWithDimNames(VirtualFrame frame, RAbstractContainer container, Object namesObj, RAbstractStringVector operand, boolean retainNames) {
             RStringVector resNames = operand.materialize();
             int initialPos = container.getLength();
             int[] data = new int[operand.getLength()];
             for (int i = 0; i < data.length; i++) {
                 if (namesObj != RNull.instance) {
                     RStringVector names = (RStringVector) namesObj;
-                    String positionName = operand.getDataAt(i);
-                    int j = 0;
-                    for (; j < names.getLength(); j++) {
-                        if (positionName.equals(names.getDataAt(j))) {
-                            data[i] = j + 1;
-                            break;
-                        }
-                    }
-                    if (j == names.getLength()) {
-                        // TODO: this is slow - is it important to make it faster?
-                        initialPos = eliminateDuplicate(operand, data, initialPos, i);
-                    }
+                    initialPos = getNamesPos(names, operand, data, initialPos, i);
                 } else {
                     // TODO: this is slow - is it important to make it faster?
                     initialPos = eliminateDuplicate(operand, data, initialPos, i);
-                    // data[i] = (initialPos++) + 1;
                 }
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, resNames);
@@ -887,7 +924,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (numDimensions == 1) {
                         if (assignment) {
                             return findPositionsWithNames(frame, container, container.getNames(), operand, assignment);
-                        } else if (namesProfile.profile(container.getNames() != RNull.instance)) {
+                        } else if (namesProfile.profile(container.getNames() != null)) {
                             return findPositions(frame, container, container.getNames(), operand, assignment);
                         } else {
                             int[] data = new int[operand.getLength()];
@@ -897,7 +934,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     } else {
                         if (namesProfile.profile(getContainerDimNames(frame, container) != null)) {
                             if (assignment) {
-                                return findPositionsWithNames(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
+                                return findPositionsWithDimNames(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             } else {
                                 return findPositions(frame, container, getContainerDimNames(frame, container).getDataAt(dimension), operand, assignment);
                             }
@@ -1092,7 +1129,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         protected boolean operandHasNames(RNull vector, RAbstractIntVector operand) {
-            return operand.getNames() != RNull.instance;
+            return operand.getNames() != null;
         }
     }
 

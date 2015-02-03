@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,9 +100,8 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return RContext.getRASTHelper().getDataAtAsObject(this, index);
     }
 
-    public Object getNames() {
-        Object r = getAttr(RRuntime.NAMES_ATTR_KEY);
-        return r == null ? RNull.instance : r;
+    public RStringVector getNames() {
+        return (RStringVector) getAttr(RRuntime.NAMES_ATTR_KEY);
     }
 
     public RList getDimNames() {

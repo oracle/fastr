@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,7 @@ public class WhichFunctions {
             controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
             ArrayList<String> n = new ArrayList<>();
-            RStringVector oldNames = (RStringVector) x.getNames();
+            RStringVector oldNames = x.getNames();
             naCheck.enable(oldNames);
             for (int i = 0; i < x.getLength(); ++i) {
                 if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
@@ -96,7 +96,7 @@ public class WhichFunctions {
         }
 
         protected boolean hasNames(RAbstractLogicalVector x) {
-            return x.getNames() != RNull.instance;
+            return x.getNames() != null;
         }
     }
 

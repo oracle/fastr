@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @TruffleBoundary
     @ExplodeLoop
     private void checkAttributeForEmptyValue(RList rlist) {
-        RStringVector listNames = (RStringVector) rlist.getNames();
+        RStringVector listNames = rlist.getNames();
         int length = rlist.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 1; i < length; i++) {
@@ -135,7 +135,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @ExplodeLoop
     private void setDimAttribute(VirtualFrame virtualFrame, RVector resultVector, RList sourceList) {
-        RStringVector listNames = (RStringVector) sourceList.getNames();
+        RStringVector listNames = sourceList.getNames();
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 0; i < sourceList.getLength(); i++) {
@@ -157,7 +157,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @ExplodeLoop
     private RAbstractContainer setRemainingAttributes(VirtualFrame virtualFrame, RAbstractContainer container, RVector resultVector, RList sourceList) {
-        RStringVector listNames = (RStringVector) sourceList.getNames();
+        RStringVector listNames = sourceList.getNames();
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         RAbstractContainer res = resultVector;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Complex.getName()};
 
-    RComplexVector(double[] data, boolean complete, int[] dims, Object names) {
+    RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length >> 1, dims, names);
         assert data.length % 2 == 0;
         this.data = data;

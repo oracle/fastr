@@ -73,11 +73,11 @@ public final class RDataFactory {
         return createIntVector(data, complete, dims, null);
     }
 
-    public static RIntVector createIntVector(int[] data, boolean complete, Object names) {
+    public static RIntVector createIntVector(int[] data, boolean complete, RStringVector names) {
         return createIntVector(data, complete, null, names);
     }
 
-    public static RIntVector createIntVector(int[] data, boolean complete, int[] dims, Object names) {
+    public static RIntVector createIntVector(int[] data, boolean complete, int[] dims, RStringVector names) {
         return traceDataCreated(new RIntVector(data, complete, dims, names));
     }
 
@@ -93,11 +93,11 @@ public final class RDataFactory {
         return createDoubleVector(data, complete, dims, null);
     }
 
-    public static RDoubleVector createDoubleVector(double[] data, boolean complete, Object names) {
+    public static RDoubleVector createDoubleVector(double[] data, boolean complete, RStringVector names) {
         return createDoubleVector(data, complete, null, names);
     }
 
-    public static RDoubleVector createDoubleVector(double[] data, boolean complete, int[] dims, Object names) {
+    public static RDoubleVector createDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names) {
         return traceDataCreated(new RDoubleVector(data, complete, dims, names));
     }
 
@@ -113,11 +113,11 @@ public final class RDataFactory {
         return createRawVector(data, dims, null);
     }
 
-    public static RRawVector createRawVector(byte[] data, Object names) {
+    public static RRawVector createRawVector(byte[] data, RStringVector names) {
         return createRawVector(data, null, names);
     }
 
-    public static RRawVector createRawVector(byte[] data, int[] dims, Object names) {
+    public static RRawVector createRawVector(byte[] data, int[] dims, RStringVector names) {
         return traceDataCreated(new RRawVector(data, dims, names));
     }
 
@@ -133,11 +133,11 @@ public final class RDataFactory {
         return createComplexVector(data, complete, dims, null);
     }
 
-    public static RComplexVector createComplexVector(double[] data, boolean complete, Object names) {
+    public static RComplexVector createComplexVector(double[] data, boolean complete, RStringVector names) {
         return createComplexVector(data, complete, null, names);
     }
 
-    public static RComplexVector createComplexVector(double[] data, boolean complete, int[] dims, Object names) {
+    public static RComplexVector createComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
         return traceDataCreated(new RComplexVector(data, complete, dims, names));
     }
 
@@ -166,11 +166,11 @@ public final class RDataFactory {
         return createStringVector(data, complete, dims, null);
     }
 
-    public static RStringVector createStringVector(String[] data, boolean complete, Object names) {
+    public static RStringVector createStringVector(String[] data, boolean complete, RStringVector names) {
         return createStringVector(data, complete, null, names);
     }
 
-    public static RStringVector createStringVector(String[] data, boolean complete, int[] dims, Object names) {
+    public static RStringVector createStringVector(String[] data, boolean complete, int[] dims, RStringVector names) {
         return traceDataCreated(new RStringVector(data, complete, dims, names));
     }
 
@@ -186,11 +186,11 @@ public final class RDataFactory {
         return createLogicalVector(data, complete, dims, null);
     }
 
-    public static RLogicalVector createLogicalVector(byte[] data, boolean complete, Object names) {
+    public static RLogicalVector createLogicalVector(byte[] data, boolean complete, RStringVector names) {
         return createLogicalVector(data, complete, null, names);
     }
 
-    public static RLogicalVector createLogicalVector(byte[] data, boolean complete, int[] dims, Object names) {
+    public static RLogicalVector createLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names) {
         return traceDataCreated(new RLogicalVector(data, complete, dims, names));
     }
 
@@ -308,7 +308,7 @@ public final class RDataFactory {
         return createList(data, newDimensions, null);
     }
 
-    public static RList createList(Object[] data, Object names) {
+    public static RList createList(Object[] data, RStringVector names) {
         return createList(data, null, names);
     }
 
@@ -316,7 +316,7 @@ public final class RDataFactory {
         return createList(new Object[0], null, null);
     }
 
-    public static RList createList(Object[] data, int[] newDimensions, Object names) {
+    public static RList createList(Object[] data, int[] newDimensions, RStringVector names) {
         return traceDataCreated(new RList(data, false, newDimensions, names));
     }
 

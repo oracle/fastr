@@ -1672,7 +1672,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
+        ret.copyNamesFrom(left.getNames() != null ? left : right);
         return ret;
     }
 
@@ -1726,7 +1726,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
+        ret.copyNamesFrom(left.getNames() != null ? left : right);
         return ret;
     }
 
@@ -1780,7 +1780,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
+        ret.copyNamesFrom(left.getNames() != null ? left : right);
         return ret;
     }
 
@@ -1834,7 +1834,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
+        ret.copyNamesFrom(left.getNames() != null ? left : right);
         return ret;
     }
 
@@ -1885,7 +1885,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             result[i] = resultValue;
         }
         RRawVector ret = RDataFactory.createRawVector(result, left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null && left.getNames() != RNull.instance ? left : right);
+        ret.copyNamesFrom(left.getNames() != null ? left : right);
         return ret;
     }
 

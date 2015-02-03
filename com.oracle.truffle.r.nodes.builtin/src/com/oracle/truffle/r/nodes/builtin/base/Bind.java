@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -252,7 +252,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         int[] dims = getDimensions(vec, cbind);
         // for cbind dimNamesA is names for the 1st dim and dimNamesB is names for 2nd dim; for
         // rbind the other way around
-        Object dimNamesA = vec.getNames();
+        Object dimNamesA = vec.getNames() == null ? RNull.instance : vec.getNames();
         Object dimNamesB = args.getNamesNull();
 
         if (dimNamesB == null) {
@@ -292,13 +292,14 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 firstDimNames = vecDimNames.getDataAt(dimInd);
             }
         } else if (!vec.isArray() || vec.getDimensions().length == 1) {
-            firstDimNames = vec.getNames();
+            RStringVector names = vec.getNames();
+            firstDimNames = names == null ? RNull.instance : names;
         } else {
             Utils.nyi("binding multi-dimensional arrays is not supported");
         }
         if (firstDimNames != RNull.instance) {
             RStringVector names = (RStringVector) firstDimNames;
-            if (names.getLength() == dimLength) {
+            if (names != null && names.getLength() == dimLength) {
                 firstDimResultNames = names;
             }
         }
