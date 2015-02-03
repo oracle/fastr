@@ -428,6 +428,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (positions.getNames() != null) {
             posNames.enter();
             RStringVector names = getNamesVector(resultVector);
+            if (names.isShared()) {
+                names = (RStringVector) names.copy();
+            }
             RStringVector newNames = positions.getNames();
             namesNACheck.enable(newNames);
             for (int i = 0; i < positions.getLength(); i++) {
