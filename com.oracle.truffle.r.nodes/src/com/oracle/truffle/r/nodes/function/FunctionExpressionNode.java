@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -85,7 +86,11 @@ public abstract class FunctionExpressionNode extends RNode {
                 // Deoptimize every promise which is now in this frame, as it might leave it's stack
                 deoptFrameNode.deoptimizeFrame(matFrame);
             }
-            return RDataFactory.createFunction("", callTarget, matFrame);
+            RFunction func = RDataFactory.createFunction("", callTarget, matFrame);
+            if (RInstrument.instrumentingEnabled()) {
+                RInstrument.checkDebugRequested(callTarget.toString(), func);
+            }
+            return func;
         }
 
         public RootCallTarget getCallTarget() {
