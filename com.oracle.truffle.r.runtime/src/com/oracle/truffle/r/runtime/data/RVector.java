@@ -118,13 +118,12 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RStringVector getNames() {
         if (names == null) {
             if (dimNames != null && dimNames.getLength() == 1) {
-                RStringVector res = (RStringVector) dimNames.getDataAt(0);
-                return res.isShared() ? (RStringVector) res.copy() : res;
+                return (RStringVector) dimNames.getDataAt(0);
             } else {
                 return null;
             }
         } else {
-            return names.isShared() ? (RStringVector) names.copy() : names;
+            return names;
         }
     }
 
