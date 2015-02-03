@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class AccessArrayNode extends RNode {
 
     public final boolean isSubset;
+    public final boolean forObjects;
     public final boolean exactInSource;
     public final boolean dropInSource;
 
@@ -68,6 +69,7 @@ public abstract class AccessArrayNode extends RNode {
     @CompilationFinal private boolean recursiveIsSubset;
 
     @Child private AccessArrayNode accessRecursive;
+    @Child private AccessArrayNode accessRecursiveNonObject;
     @Child private CastToVectorNode castVector;
     @Child private ArrayPositionCast castPosition;
     @Child private OperatorConverterNode operatorConverter;
@@ -115,11 +117,12 @@ public abstract class AccessArrayNode extends RNode {
         PositionsArrayNode positions = (PositionsArrayNode) getPositions().substitute(env);
         RNode exact = getExact().substitute(env);
         RNode dropDim = getDropDim().substitute(env);
-        return AccessArrayNodeGen.create(isSubset, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
+        return AccessArrayNodeGen.create(isSubset, forObjects, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
     }
 
-    public AccessArrayNode(boolean isSubset, boolean exactInSource, boolean dropInSource) {
+    public AccessArrayNode(boolean isSubset, boolean forObjects, boolean exactInSource, boolean dropInSource) {
         this.isSubset = isSubset;
+        this.forObjects = forObjects;
         this.recursiveIsSubset = isSubset;
         this.exactInSource = exactInSource;
         this.dropInSource = dropInSource;
@@ -127,6 +130,7 @@ public abstract class AccessArrayNode extends RNode {
 
     public AccessArrayNode(AccessArrayNode other) {
         this.isSubset = other.isSubset;
+        this.forObjects = other.forObjects;
         this.recursiveIsSubset = other.recursiveIsSubset;
         this.exactInSource = other.exactInSource;
         this.dropInSource = other.dropInSource;
@@ -141,7 +145,7 @@ public abstract class AccessArrayNode extends RNode {
             if (forDataFrame && isSubset) {
                 newIsSubset = false;
             }
-            accessRecursive = insert(AccessArrayNodeGen.create(newIsSubset, false, false, null, null, null, null, null));
+            accessRecursive = insert(AccessArrayNodeGen.create(newIsSubset, forObjects, false, false, null, null, null, null, null));
         }
         return accessRecursive.executeAccess(frame, vector, exact, recLevel, operand, dropDim);
     }
@@ -1793,8 +1797,8 @@ public abstract class AccessArrayNode extends RNode {
         return recLevel > 0;
     }
 
-    public static AccessArrayNode create(boolean isSubset, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
-        return AccessArrayNodeGen.create(isSubset, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
+    public static AccessArrayNode create(boolean isSubset, boolean forObjects, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
+        return AccessArrayNodeGen.create(isSubset, forObjects, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
     }
 
 }

@@ -25020,6 +25020,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testObjectDirectAccess_4833fbe2c62756ace2e149c452458e59() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_4eccdd1f73e019373d9d154b833fece5() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1, drop=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_945fe85394239f5303dea1a491a918d1() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[`(x, 1) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_b51fa52db3d6fc7ed30f6cffba2dadff() {
+        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[`(x, \"z\", exact=FALSE) }");
+    }
+
+    @Test
     public void TestSimpleVectors_testObjectDirectAccess_68b89b4e74c36289fd7aef12dbd3c682() {
         assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=TRUE) }");
     }

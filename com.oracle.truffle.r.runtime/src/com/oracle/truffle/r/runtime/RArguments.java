@@ -215,8 +215,12 @@ public final class RArguments {
 
     public static boolean hasS3Args(Frame frame) {
         Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        return args.length > s3StartIndex;
+        if (args[INDEX_N_ARGS] == null || args[INDEX_N_NAMES] == null) {
+            return false;
+        } else {
+            int s3StartIndex = getS3StartIndex(args);
+            return args.length > s3StartIndex;
+        }
     }
 
     public static String getS3Generic(Frame frame) {

@@ -26,6 +26,12 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-factor(c(\"a\", z=\"b\", \"a\")); `[[.factor`(x, \"z\") }");
         assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=TRUE) }");
         assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=FALSE) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1, drop=FALSE) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[`(x, 1) }");
+        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[`(x, \"z\", exact=FALSE) }");
     }
 
     @Test

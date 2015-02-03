@@ -301,7 +301,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             assert castContainer != null;
             assert dropDim != null;
             PositionsArrayNode posArrayNode = new PositionsArrayNode(castPositions, positions, operatorConverters, multiDimConverters);
-            return AccessArrayNode.create(isSubset, exactInSource, dropInSource, castContainer, exact, posArrayNode, dropDim);
+            return AccessArrayNode.create(isSubset, true, exactInSource, dropInSource, castContainer, exact, posArrayNode, dropDim);
         } else {
             PositionsArrayNodeValue posArrayNodeValue = new PositionsArrayNodeValue(castPositions, positions, operatorConverters, multiDimConvertersValue);
             assert tmpVarAccess != null;
