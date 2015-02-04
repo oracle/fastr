@@ -28,11 +28,11 @@ public abstract class DispatchedCallNode extends RNode {
     }
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args) {
-        return new UninitializedDispatchedCallNode(genericName, null, dispatchType, args);
+        return new UninitializedDispatchedCallNode(genericName, null, dispatchType, args, null);
     }
 
-    public static DispatchedCallNode create(final String genericName, final String enclosingName, final String dispatchType, final Object[] args) {
-        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args);
+    public static DispatchedCallNode create(final String genericName, final String enclosingName, final String dispatchType, final Object[] args, final String[] argNames) {
+        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, argNames);
     }
 
     @Override
@@ -56,17 +56,19 @@ public abstract class DispatchedCallNode extends RNode {
         private final String enclosingName;
         private final String dispatchType;
         @CompilationFinal private final Object[] args;
+        @CompilationFinal private final String[] argNames;
 
-        public UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args) {
+        public UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args, String[] argNames) {
             this.genericName = genericName;
             this.enclosingName = enclosingName;
             this.depth = 0;
             this.dispatchType = dispatchType;
             this.args = args;
+            this.argNames = argNames;
         }
 
         public UninitializedDispatchedCallNode(final String genericName, final String dispatchType) {
-            this(genericName, dispatchType, null, null);
+            this(genericName, dispatchType, null, null, null);
         }
 
         private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
@@ -75,6 +77,7 @@ public abstract class DispatchedCallNode extends RNode {
             this.enclosingName = copy.enclosingName;
             this.dispatchType = copy.dispatchType;
             this.args = null;
+            this.argNames = null; // TODO: is it OK to nullify these two?
         }
 
         @Override
@@ -105,7 +108,7 @@ public abstract class DispatchedCallNode extends RNode {
                 return new UseMethodDispatchNode(this.genericName, type);
             }
             if (this.dispatchType == RRuntime.NEXT_METHOD) {
-                return new NextMethodDispatchNode(this.genericName, type, this.args, enclosingName);
+                return new NextMethodDispatchNode(this.genericName, type, this.args, this.argNames, enclosingName);
             }
             throw RInternalError.shouldNotReachHere();
         }
