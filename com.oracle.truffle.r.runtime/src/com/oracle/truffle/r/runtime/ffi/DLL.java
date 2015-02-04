@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,9 +69,9 @@ public class DLL {
         }
     }
 
-    private static ArrayList<DLLInfo> list = new ArrayList<>();
+    private static final ArrayList<DLLInfo> list = new ArrayList<>();
 
-    public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
+    public static synchronized DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         File file = new File(Utils.tildeExpand(path));
         String absPath = file.getAbsolutePath();
         Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
@@ -89,7 +89,7 @@ public class DLL {
         return result;
     }
 
-    public static void unload(String path) throws DLLException {
+    public static synchronized void unload(String path) throws DLLException {
         String absPath = new File(Utils.tildeExpand(path)).getAbsolutePath();
         for (DLLInfo info : list) {
             if (info.path.equals(absPath)) {
@@ -103,7 +103,7 @@ public class DLL {
         throw new DLLException(RError.Message.DLL_NOT_LOADED, path);
     }
 
-    public static Object[][] getLoadedDLLs() {
+    public static synchronized Object[][] getLoadedDLLs() {
         Object[][] result = new Object[list.size()][];
         for (int i = 0; i < list.size(); i++) {
             DLLInfo info = list.get(i);
@@ -144,7 +144,7 @@ public class DLL {
      * @param libName if not {@code null} restrict search to this library.
      * @return a {@code SymbolInfo} instance or {@code null} if not found.
      */
-    public static SymbolInfo findSymbolInfo(String symbol, String libName) {
+    public static synchronized SymbolInfo findSymbolInfo(String symbol, String libName) {
         long val = 0;
         DLLInfo dllInfo = null;
         for (DLLInfo info : list) {
@@ -169,7 +169,7 @@ public class DLL {
         }
     }
 
-    public static DLLInfo findLibraryContainingSymbol(String symbol) {
+    public static synchronized DLLInfo findLibraryContainingSymbol(String symbol) {
         SymbolInfo symbolInfo = findSymbolInfo(symbol, null);
         if (symbolInfo == null) {
             return null;
