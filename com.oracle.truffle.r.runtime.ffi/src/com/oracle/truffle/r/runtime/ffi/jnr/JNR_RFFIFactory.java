@@ -58,7 +58,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
      * Functions missing from JNR POSIX.
      */
     public interface LibCX {
-        int getcwd(@Out byte[] path);
+        int getwd(@Out byte[] path);
 
         long mkdtemp(@In @Out ByteBuffer template);
 
@@ -112,7 +112,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     @TruffleBoundary
     public String getwd() {
         byte[] buf = new byte[4096];
-        int rc = libcx().getcwd(buf);
+        int rc = libcx().getwd(buf);
         if (rc == 0) {
             return null;
         } else {
