@@ -18,6 +18,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.function.*;
 import java.util.regex.*;
 
 import com.oracle.truffle.api.*;
@@ -188,7 +189,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             *
+             * 
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -725,11 +726,8 @@ public class FileFunctions {
     }
 
     abstract static class XyzNameAdapter extends RBuiltinNode {
-        public abstract static class PathFunction {
-            protected abstract String invoke(FileSystem fileSystem, String name);
-        }
 
-        protected RStringVector doXyzName(RAbstractStringVector vec, PathFunction fun) {
+        protected RStringVector doXyzName(RAbstractStringVector vec, BiFunction<FileSystem, String, String> fun) {
             FileSystem fileSystem = FileSystems.getDefault();
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             String[] data = new String[vec.getLength()];
@@ -741,10 +739,8 @@ public class FileFunctions {
                 } else if (name.length() == 0) {
                     data[i] = name;
                 } else {
-                    data[i] = fun.invoke(fileSystem, name);
-
+                    data[i] = fun.apply(fileSystem, name);
                 }
-
             }
             return RDataFactory.createStringVector(data, complete);
         }
@@ -752,43 +748,27 @@ public class FileFunctions {
 
     @RBuiltin(name = "dirname", kind = INTERNAL, parameterNames = {"path"})
     public abstract static class DirName extends XyzNameAdapter {
-        private static class ParentPathFunction extends XyzNameAdapter.PathFunction {
-
-            @Override
-            protected String invoke(FileSystem fileSystem, String name) {
-                Path path = fileSystem.getPath(Utils.tildeExpand(name));
-                Path parent = path.getParent();
-                return parent != null ? parent.toString() : name;
-            }
-        }
-
-        private static final ParentPathFunction parentPathFunction = new ParentPathFunction();
-
         @Specialization
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
-            return doXyzName(vec, parentPathFunction);
+            return doXyzName(vec, (fileSystem, name) -> {
+                Path path = fileSystem.getPath(Utils.tildeExpand(name));
+                Path parent = path.getParent();
+                return parent != null ? parent.toString() : name;
+            });
         }
     }
 
     @RBuiltin(name = "basename", kind = INTERNAL, parameterNames = {"path"})
     public abstract static class BaseName extends XyzNameAdapter {
-        private static class BasePathFunction extends XyzNameAdapter.PathFunction {
-
-            @Override
-            protected String invoke(FileSystem fileSystem, String name) {
-                Path path = fileSystem.getPath(name);
-                Path parent = path.getFileName();
-                return parent != null ? parent.toString() : name;
-            }
-        }
-
-        private static final BasePathFunction basePathFunction = new BasePathFunction();
-
         @Specialization
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
-            return doXyzName(vec, basePathFunction);
+            return doXyzName(vec, (fileSystem, name) -> {
+                Path path = fileSystem.getPath(name);
+                Path parent = path.getFileName();
+                return parent != null ? parent.toString() : name;
+            });
         }
     }
 
