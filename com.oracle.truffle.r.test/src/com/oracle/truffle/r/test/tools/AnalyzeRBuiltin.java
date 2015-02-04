@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,9 +112,9 @@ public class AnalyzeRBuiltin {
 
     private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.nodes.builtin.";
 
-    private static SortedMap<String, RInfo> rInfoMap = new TreeMap<>();
-    private static ArrayList<RInfo> rInfoList = new ArrayList<>();
-    private static ArrayList<String> unkownToGnuR = new ArrayList<>();
+    private static final SortedMap<String, RInfo> rInfoMap = new TreeMap<>();
+    private static final ArrayList<RInfo> rInfoList = new ArrayList<>();
+    private static final ArrayList<String> unkownToGnuR = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         // Checkstyle: stop system print check

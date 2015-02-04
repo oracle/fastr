@@ -22,7 +22,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     private int level = 0;
     private final PrintStream out;
     private final StringBuilder buff = new StringBuilder();
-    private static PrettyPrinter pp = getStringPrettyPrinter();
+    private static final PrettyPrinter pp = getStringPrettyPrinter();
 
     public PrettyPrinter(PrintStream stream) {
         out = stream;
