@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,14 +14,14 @@ import com.oracle.truffle.api.source.*;
 
 public class SimpleAssignVariable extends AssignVariable {
 
-    private final Symbol variable;
+    private final String variable;
 
-    public SimpleAssignVariable(SourceSection source, boolean isSuper, Symbol variable, ASTNode rhs) {
+    public SimpleAssignVariable(SourceSection source, boolean isSuper, String variable, ASTNode rhs) {
         super(source, isSuper, rhs);
         this.variable = variable;
     }
 
-    public Symbol getVariable() {
+    public String getVariable() {
         return variable;
     }
 

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -56,13 +56,13 @@ public abstract class AssignVariable extends ASTNode {
             assert c.getType() == Constant.ConstantType.STRING;
             assert c.getValues().length == 1;
             String value = c.getValues()[0];
-            return writeVariable(src, isSuper, Symbol.getSymbol(value), rhs);
+            return writeVariable(src, isSuper, value, rhs);
         }
         Utils.nyi();
         return null;
     }
 
-    public static ASTNode writeVariable(SourceSection src, boolean isSuper, Symbol name, ASTNode rhs) {
+    public static ASTNode writeVariable(SourceSection src, boolean isSuper, String name, ASTNode rhs) {
         return new SimpleAssignVariable(src, isSuper, name, rhs);
     }
 
@@ -104,8 +104,8 @@ public abstract class AssignVariable extends ASTNode {
     public static ASTNode writeFunction(SourceSection src, boolean isSuper, FunctionCall lhs, ASTNode rhs) {
         // FIXME Probably we need a special node, for now all assign function should return value
         if (lhs.isSymbol()) {
-            String builtinName = lhs.getName().pretty() + "<-";
-            lhs.setSymbol(Symbol.getSymbol(builtinName));
+            String builtinName = lhs.getName() + "<-";
+            lhs.setSymbol(builtinName);
         } else {
             assert false;
         }

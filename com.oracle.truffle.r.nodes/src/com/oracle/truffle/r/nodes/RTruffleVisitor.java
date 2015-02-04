@@ -94,14 +94,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(FunctionCall callParam) {
         FunctionCall call = callParam;
-        Symbol callName = call.isSymbol() ? call.getName() : null;
+        String callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
 
         int index = 0;
         String[] argumentNames = new String[call.getArguments().size()];
         RNode[] nodes = new RNode[call.getArguments().size()];
         for (ArgNode e : call.getArguments()) {
-            Symbol argName = e.getName();
+            String argName = e.getName();
             argumentNames[index] = (argName == null ? null : RRuntime.toString(argName));
             ASTNode val = e.getValue();
             if (val != null) {
@@ -262,7 +262,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             for (int i = 0; i < argLength; i++) {
                 ArgNode argNode = argList.get(i);
                 ASTNode node = argNode.getValue();
-                Symbol name = argNode.getName();
+                String name = argNode.getName();
                 if (name != null && name.toString() != null && name.toString().equals("exact")) {
                     exact = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
                     exactInSource = true;
@@ -281,7 +281,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             int ind = 0;
             for (int i = 0; i < argLength; i++) {
                 ArgNode argNode = argList.get(i);
-                Symbol name = argNode.getName();
+                String name = argNode.getName();
                 ASTNode node = argNode.getValue();
                 if (name != null && name.toString() != null && name.toString().equals("exact")) {
                     continue;
@@ -364,13 +364,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     private static final String varSymbol = "*tmp*";
 
-    private static Object constructReplacementPrefix(RNode[] seq, RNode rhs, RNode replacementArg, WriteVariableNode.Mode rhsWriteMode) {
+    private static String constructReplacementPrefix(RNode[] seq, RNode rhs, RNode replacementArg, WriteVariableNode.Mode rhsWriteMode) {
         //@formatter:off
         // store a - need to use temporary, otherwise there is a failure in case multiple calls to
         // the replacement form are chained:
         // x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, "dimnames")<-(attr(y, "dimnames")<-list("b"))
         //@formatter:on
-        final Object rhsSymbol = new Object();
+        final String rhsSymbol = new Object().toString();
 
         WriteVariableNode rhsAssign = WriteVariableNode.create(rhsSymbol.toString(), rhs, false, false, rhsWriteMode);
         WriteVariableNode varAssign = WriteVariableNode.create(varSymbol, replacementArg, false, false, WriteVariableNode.Mode.TEMP);
@@ -464,7 +464,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             AccessVector vecAST = (AccessVector) a.getVector();
             SimpleAccessVariable varAST = getVectorVariable(vecAST);
             RNode[] seq = new RNode[3];
-            Object rhsSymbol;
+            String rhsSymbol;
             if (varAST != null) {
                 String vSymbol = RRuntime.toString(varAST.getVariable());
 
@@ -483,7 +483,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             SimpleAccessVariable varAST = getFieldAccessVariable(accessAST);
 
             RNode[] seq = new RNode[3];
-            Object rhsSymbol;
+            String rhsSymbol;
             if (varAST != null) {
                 String vSymbol = RRuntime.toString(varAST.getVariable());
                 ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
@@ -528,16 +528,16 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         return WriteVariableNode.create(n.getSource(), RRuntime.toString(n.getVariable()), expression, false, n.isSuper());
     }
 
-    private RCallNode prepareReplacementCall(FunctionCall f, List<ArgNode> args, final Object rhsSymbol, boolean simpleReplacement) {
+    private RCallNode prepareReplacementCall(FunctionCall f, List<ArgNode> args, String rhsSymbol, boolean simpleReplacement) {
         // massage arguments to replacement function call (replace v with tmp, append a)
         List<ArgNode> rfArgs = new ArrayList<>();
-        rfArgs.add(ArgNode.create(null, (Symbol) null, AccessVariable.create(null, varSymbol, false)));
+        rfArgs.add(ArgNode.create(null, null, AccessVariable.create(null, varSymbol, false)));
         if (args.size() > 1) {
             for (int i = 1; i < args.size(); ++i) {
                 rfArgs.add(args.get(i));
             }
         }
-        rfArgs.add(ArgNode.create(null, (Symbol) null, AccessVariable.create(null, rhsSymbol)));
+        rfArgs.add(ArgNode.create(null, null, AccessVariable.create(null, rhsSymbol)));
 
         // replacement function call (use visitor for FunctionCall)
         FunctionCall rfCall = new FunctionCall(f.getSource(), f.getName(), rfArgs, simpleReplacement);
@@ -573,7 +573,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String vSymbol = RRuntime.toString(callArg.getVariable());
             RNode[] seq = createReplacementSequence();
             ReadVariableNode replacementCallArg = createReplacementForVariableUsing(callArg, vSymbol, replacement);
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, replacementCallArg, WriteVariableNode.Mode.COPY);
+            String rhsSymbol = constructReplacementPrefix(seq, rhs, replacementCallArg, WriteVariableNode.Mode.COPY);
             RNode replacementCall = prepareReplacementCall(f, args, rhsSymbol, true);
             RNode assignFromTemp = WriteVariableNode.create(vSymbol, replacementCall, false, replacement.isSuper(), WriteVariableNode.Mode.TEMP);
             return constructReplacementSuffix(seq, assignFromTemp, rhsSymbol, replacement.getSource());
@@ -581,7 +581,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             AccessVector callArgAst = (AccessVector) val;
             RNode replacementArg = callArgAst.accept(this);
             RNode[] seq = createReplacementSequence();
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, replacementArg, WriteVariableNode.Mode.COPY);
+            String rhsSymbol = constructReplacementPrefix(seq, rhs, replacementArg, WriteVariableNode.Mode.COPY);
             RNode replacementCall = prepareReplacementCall(f, args, rhsSymbol, false);
             // see AssignVariable.writeVector (number of args must match)
             callArgAst.getArguments().add(ArgNode.create(rhsAst.getSource(), "value", rhsAst));
@@ -591,7 +591,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             FieldAccess callArgAst = (FieldAccess) val;
             RNode replacementArg = callArgAst.accept(this);
             RNode[] seq = createReplacementSequence();
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, replacementArg, WriteVariableNode.Mode.COPY);
+            String rhsSymbol = constructReplacementPrefix(seq, rhs, replacementArg, WriteVariableNode.Mode.COPY);
             RNode replacementCall = prepareReplacementCall(f, args, rhsSymbol, false);
             RNode assignFromTemp = createFieldUpdate(callArgAst, replacementCall, replacement.isSuper(), replacement.getSource());
             return constructReplacementSuffix(seq, assignFromTemp, rhsSymbol, replacement.getSource());
@@ -689,7 +689,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             AccessVector vecAST = (AccessVector) a.getLhs();
             SimpleAccessVariable varAST = getVectorVariable(vecAST);
             RNode[] seq = new RNode[3];
-            Object rhsSymbol;
+            String rhsSymbol;
             if (varAST != null) {
                 String vSymbol = RRuntime.toString(varAST.getVariable());
 
@@ -713,7 +713,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String vSymbol = RRuntime.toString(varAST.getVariable());
             RNode[] seq = new RNode[3];
             ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
-            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
+            String rhsSymbol = constructReplacementPrefix(seq, rhs, v, WriteVariableNode.Mode.INVISIBLE);
             RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
             UpdateFieldNode ufn = UpdateFieldNodeGen.create(accessAST.accept(this), rhsAccess, RRuntime.toString(a.getFieldName()));
             return constructRecursiveFieldUpdateSuffix(seq, ufn, accessAST, source, isSuper);
