@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
@@ -121,6 +121,6 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public String toString() {
-        return "RBuiltin(" + (builtin.getRBuiltin() == null ? "" : builtin.getRBuiltin().name()) + ")";
+        return "RBuiltin(" + builtin + ")";
     }
 }
