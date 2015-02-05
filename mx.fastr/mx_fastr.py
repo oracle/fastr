@@ -329,6 +329,13 @@ def rbcheck(args):
         if not classNameX.endswith('Factory'):
             classes.append([className, path])
 
+    class_map = mx.project('com.oracle.truffle.r.nodes.builtin').find_classes_with_matching_source_line(None, lambda line: "@RBuiltin" in line, True)
+    for className, path in class_map.iteritems():
+        classNameX = className.split("$")[0] if '$' in className else className
+
+        if not classNameX.endswith('Factory'):
+            classes.append([className, path])
+
     (_, testfile) = tempfile.mkstemp(".classes", "mx")
     os.close(_)
     with open(testfile, 'w') as f:
