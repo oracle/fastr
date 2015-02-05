@@ -35,22 +35,30 @@ public class RSerialize {
         static final int TYPE_MASK = 255;
         static final int LEVELS_SHIFT = 12;
 
-        int value;
-        int ptype;
-        @SuppressWarnings("unused") int plevs;
-        @SuppressWarnings("unused") boolean isObj;
-        boolean hasAttr;
-        boolean hasTag;
+        private Flags() {
+            // prevent construction
+        }
 
-        static Flags decodeFlags(int flagsValue) {
-            Flags flags = new Flags();
-            flags.value = flagsValue;
-            flags.ptype = flagsValue & Flags.TYPE_MASK;
-            flags.plevs = flagsValue >> Flags.LEVELS_SHIFT;
-            flags.isObj = (flagsValue & IS_OBJECT_BIT_MASK) != 0;
-            flags.hasAttr = (flagsValue & HAS_ATTR_BIT_MASK) != 0;
-            flags.hasTag = (flagsValue & HAS_TAG_BIT_MASK) != 0;
-            return flags;
+        public static int ptype(int flagsValue) {
+            return flagsValue & Flags.TYPE_MASK;
+        }
+
+        @SuppressWarnings("unused")
+        public static int plevs(int flagsValue) {
+            return flagsValue >> Flags.LEVELS_SHIFT;
+        }
+
+        @SuppressWarnings("unused")
+        public static boolean isObj(int flagsValue) {
+            return (flagsValue & IS_OBJECT_BIT_MASK) != 0;
+        }
+
+        public static boolean hasAttr(int flagsValue) {
+            return (flagsValue & HAS_ATTR_BIT_MASK) != 0;
+        }
+
+        public static boolean hasTag(int flagsValue) {
+            return (flagsValue & HAS_TAG_BIT_MASK) != 0;
         }
     }
 
@@ -70,7 +78,6 @@ public class RSerialize {
         int pos() {
             return pos;
         }
-
     }
 
     public interface CallHook {
@@ -121,8 +128,8 @@ public class RSerialize {
         }
     }
 
-    private int inRefIndex(Flags flags) {
-        int i = unpackRefIndex(flags.value);
+    private int inRefIndex(int flags) {
+        int i = unpackRefIndex(flags);
         if (i == 0) {
             return stream.readInt();
         } else {
@@ -172,14 +179,14 @@ public class RSerialize {
     }
 
     protected Object readItem() throws IOException {
-        Flags flags = Flags.decodeFlags(stream.readInt());
+        int flags = stream.readInt();
         return readItem(flags);
     }
 
-    protected Object readItem(Flags flags) throws IOException {
+    protected Object readItem(int flags) throws IOException {
         Object result = null;
 
-        SEXPTYPE type = SEXPTYPE.mapInt(flags.ptype);
+        SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
         switch (type) {
             case NILVALUE_SXP:
                 return RNull.instance;
@@ -294,11 +301,11 @@ public class RSerialize {
             case DOTSXP: {
                 Object attrItem = null;
                 Object tagItem = null;
-                if (flags.hasAttr) {
+                if (Flags.hasAttr(flags)) {
                     attrItem = readItem();
 
                 }
-                if (flags.hasTag) {
+                if (Flags.hasTag(flags)) {
                     tagItem = readItem();
                 }
                 Object carItem = readItem();
@@ -357,11 +364,11 @@ public class RSerialize {
              * there is an attribute (as there might be if the serialized data was created by an
              * older version) we read and ignore the value.
              */
-            if (flags.hasAttr) {
+            if (Flags.hasAttr(flags)) {
                 readItem();
             }
         } else {
-            if (flags.hasAttr) {
+            if (Flags.hasAttr(flags)) {
                 Object attr = readItem();
                 RAttributable rAttributable = (RAttributable) result;
                 /*
@@ -755,8 +762,8 @@ public class RSerialize {
         @Override
         protected Object readItem() throws IOException {
             // CheckStyle: stop system..print check
-            Flags flags = Flags.decodeFlags(stream.readInt());
-            SEXPTYPE type = SEXPTYPE.mapInt(flags.ptype);
+            int flags = stream.readInt();
+            SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
             for (int i = 0; i < depth; i++) {
                 System.out.print("  ");
             }
