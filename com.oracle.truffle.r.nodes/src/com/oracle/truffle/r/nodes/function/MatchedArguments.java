@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,15 +74,6 @@ public final class MatchedArguments extends Arguments<RNode> {
 
     public MatchedArgumentsNode createNode() {
         return new MatchedArgumentsNode(arguments, names);
-    }
-
-    /**
-     * @param arguments
-     * @return ad
-     */
-    public static MatchedArguments createUnnamed(RNode[] arguments) {
-        String[] names = new String[arguments.length];
-        return create(arguments, names);
     }
 
     /**
