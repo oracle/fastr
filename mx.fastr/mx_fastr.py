@@ -319,6 +319,8 @@ def rbcheck(args):
     parser.add_argument('--no-eval-args', action='store_const', const='--no-eval-args', help='list functions that do not evaluate their args')
     parser.add_argument('--visibility', action='store_const', const='--visibility', help='list visibility specification')
     parser.add_argument('--printGnuRFunctions', action='store', help='ask GnuR to "print" value of functions')
+    parser.add_argument('--packageBase', action='store', help='directory to be recursively scanned for R sources (used to get frequencies for builtins)')
+    parser.add_argument('--interactive', action='store_const', const='--interactive', help='interactive querying of the word frequencies')
     args = parser.parse_args(args)
 
     class_map = mx.project('com.oracle.truffle.r.nodes').find_classes_with_matching_source_line(None, lambda line: "@RBuiltin" in line, True)
@@ -352,9 +354,14 @@ def rbcheck(args):
         analyzeArgs.append(args.no_eval_args)
     if args.visibility:
         analyzeArgs.append(args.visibility)
+    if args.interactive:
+        analyzeArgs.append(args.interactive)
     if args.printGnuRFunctions:
         analyzeArgs.append('--printGnuRFunctions')
         analyzeArgs.append(args.printGnuRFunctions)
+    if args.packageBase:
+        analyzeArgs.append('--packageBase')
+        analyzeArgs.append(args.packageBase)
     analyzeArgs.append(testfile)
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)

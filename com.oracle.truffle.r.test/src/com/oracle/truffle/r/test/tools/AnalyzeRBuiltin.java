@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.test.tools;
 
 import java.io.*;
+import java.nio.charset.*;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.generate.*;
@@ -116,6 +119,8 @@ public class AnalyzeRBuiltin {
     private static final ArrayList<RInfo> rInfoList = new ArrayList<>();
     private static final ArrayList<String> unkownToGnuR = new ArrayList<>();
 
+    private static HashMap<String, AtomicLong> wordCounts = new HashMap<>();
+
     public static void main(String[] args) throws Exception {
         // Checkstyle: stop system print check
 
@@ -124,15 +129,19 @@ public class AnalyzeRBuiltin {
         boolean toDo = false;
         boolean noEvalArgs = false;
         boolean visibility = false;
+        boolean interactive = false;
         String printGnuRFunctions = null;
 
         String classFilePath = null;
+
+        String packageBase = null;
 
         if (args.length == 1) {
             classFilePath = args[0];
             checkInternal = true;
             checkUnknownToGnuR = true;
             toDo = true;
+            interactive = false;
             noEvalArgs = true;
             visibility = true;
         } else {
@@ -151,6 +160,9 @@ public class AnalyzeRBuiltin {
                     case "--todo":
                         toDo = true;
                         break;
+                    case "--interactive":
+                        interactive = true;
+                        break;
                     case "--no-eval-args":
                         noEvalArgs = true;
                         break;
@@ -160,6 +172,10 @@ public class AnalyzeRBuiltin {
                     case "--printGnuRFunctions":
                         i++;
                         printGnuRFunctions = args[i];
+                        break;
+                    case "--packageBase":
+                        i++;
+                        packageBase = args[i];
                         break;
                     default:
                         classFilePath = arg;
@@ -210,6 +226,13 @@ public class AnalyzeRBuiltin {
             }
         }
 
+        if (packageBase != null) {
+            analyzePackages(packageBase);
+            if (interactive) {
+                interactiveWordCounts();
+            }
+        }
+
         if (checkInternal) {
             checkInternals();
         }
@@ -232,6 +255,125 @@ public class AnalyzeRBuiltin {
 
         if (printGnuRFunctions != null) {
             printGnuRFunctions(printGnuRFunctions);
+        }
+    }
+
+    private static void interactiveWordCounts() throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String line;
+        System.out.print("  > ");
+        while ((line = in.readLine()) != null) {
+            if (line.isEmpty()) {
+                break;
+            }
+            AtomicLong counter = wordCounts.get(line);
+            if (counter == null) {
+                System.out.println("not found");
+            } else {
+                System.out.println("count: " + counter.get());
+            }
+            System.out.print("  > ");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void analyzePackages(String packageBase) {
+        ArrayList<File> files = new ArrayList<>();
+        Deque<File> directories = new ArrayDeque<>();
+        File base = new File(packageBase);
+
+        File data = new File(base, "word_counts.dat");
+        if (data.exists()) {
+            try {
+                wordCounts = (HashMap<String, AtomicLong>) new ObjectInputStream(new FileInputStream(data)).readObject();
+                System.out.println("loaded " + wordCounts.size() + " word counts from " + data.getAbsolutePath());
+                return;
+            } catch (ClassNotFoundException | IOException e) {
+                System.out.println("unable to read cached data:");
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("traversing directories at " + packageBase);
+        directories.add(base);
+        while (!directories.isEmpty()) {
+            File directory = directories.removeFirst();
+
+            for (File sub : directory.listFiles()) {
+                if (sub.isDirectory()) {
+                    directories.addFirst(sub);
+                } else if (sub.getName().endsWith(".r") || sub.getName().endsWith(".R")) {
+                    files.add(sub);
+                }
+            }
+        }
+        System.out.println("analyzing " + files.size() + " files");
+        int cnt = 0;
+        int points = 0;
+        System.out.println("__________________________________________________");
+        for (File file : files) {
+            cnt++;
+            while (cnt * 50 / files.size() > points) {
+                System.out.print('=');
+                points++;
+            }
+            try {
+                List<String> contents = null;
+                try {
+                    contents = Files.readAllLines(file.toPath());
+                } catch (MalformedInputException | UnmappableCharacterException e) {
+                    for (Charset charset : new Charset[]{Charset.forName("ISO-8859-1")}) {
+                        try {
+                            contents = Files.readAllLines(file.toPath(), charset);
+                            break;
+                        } catch (MalformedInputException | UnmappableCharacterException e2) {
+                        }
+                    }
+                }
+                if (contents == null) {
+                    continue;
+                }
+                for (String line : contents) {
+                    int pos = 0;
+                    while (pos < line.length() && Character.isWhitespace(line.charAt(pos))) {
+                        pos++;
+                    }
+                    if (pos == line.length() || line.charAt(pos) == '#') {
+                        continue;
+                    }
+                    while (pos < line.length()) {
+                        int startPos = pos;
+                        while (startPos < line.length() && !Character.isJavaIdentifierStart(line.charAt(startPos))) {
+                            startPos++;
+                        }
+                        int endPos = startPos;
+                        while (endPos < line.length() && Character.isJavaIdentifierStart(line.charAt(endPos))) {
+                            endPos++;
+                        }
+                        pos = endPos;
+                        if (startPos < line.length() && (endPos - startPos) <= 20 && (endPos - startPos) > 1) {
+                            String word = line.substring(startPos, endPos);
+                            AtomicLong counter = wordCounts.get(word);
+                            if (counter == null) {
+                                wordCounts.put(word, counter = new AtomicLong());
+                            }
+                            counter.incrementAndGet();
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("\ncollected " + wordCounts.size() + " names");
+
+        try {
+            ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(data));
+            output.writeObject(wordCounts);
+            output.close();
+        } catch (IOException e) {
+            System.out.println("unable to write data file:");
+            e.printStackTrace();
         }
     }
 
@@ -266,6 +408,12 @@ public class AnalyzeRBuiltin {
         System.out.println("Functions not implemented by FastR (as an RBuiltin)");
         for (RInfo rInfo : rInfoList) {
             if (rInfo.classInfo == null) {
+                if (wordCounts != null) {
+                    AtomicLong counter = wordCounts.get(rInfo.name);
+                    if (counter != null) {
+                        System.out.printf("%8d ", counter.get());
+                    }
+                }
                 System.out.printf("%s (%s)%n", rInfo.name, rInfo.kind);
             }
         }
