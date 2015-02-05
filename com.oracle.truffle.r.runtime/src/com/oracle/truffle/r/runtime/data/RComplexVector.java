@@ -52,7 +52,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length >> 1;
     }
 

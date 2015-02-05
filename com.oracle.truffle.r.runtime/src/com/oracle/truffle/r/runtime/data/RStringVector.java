@@ -50,7 +50,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length;
     }
 

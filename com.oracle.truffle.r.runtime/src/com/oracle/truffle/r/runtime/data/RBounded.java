@@ -28,15 +28,11 @@ import com.oracle.truffle.r.runtime.*;
 
 public abstract class RBounded {
 
-    public final int getLength() {
-        return internalGetLength();
-    }
+    public abstract int getLength();
 
     public boolean isInBounds(int position) {
         return position >= 1 && position <= getLength();
     }
-
-    protected abstract int internalGetLength();
 
     public final void verifyDimensions(int[] newDimensions, SourceSection sourceSection) {
         int length = 1;
