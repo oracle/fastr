@@ -5,13 +5,14 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.util.*;
 
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -87,7 +88,7 @@ public class RSerialize {
         return i >> 8;
     }
 
-    protected PStream stream;
+    protected final PStream stream;
     private Object[] refTable = new Object[128];
     private int refTableIndex;
     private final CallHook hook;
@@ -104,19 +105,19 @@ public class RSerialize {
         byte[] buf = new byte[2];
         is.read(buf);
         switch (buf[0]) {
-            case 'A':
-                // TODO error
-                break;
-            case 'B':
-                // TODO error
-                break;
             case 'X':
                 stream = new XdrFormat(is);
                 break;
             case '\n':
                 // TODO special case in 'A'
+                stream = null;
+                break;
+            case 'A':
+            case 'B':
             default:
                 // TODO error
+                stream = null;
+                break;
         }
     }
 
@@ -256,7 +257,6 @@ public class RSerialize {
                     } else {
                         data[i] = (byte) intVal;
                     }
-
                 }
                 result = RDataFactory.createLogicalVector(data, complete);
                 break;
@@ -563,18 +563,9 @@ public class RSerialize {
             @SuppressWarnings("unused") private int size;
             private int offset;
 
-            /**
-             * Build a new Xdr object with a buffer of given size.
-             *
-             * @param size of the buffer in bytes
-             */
-            Xdr(int size) {
-                this(new byte[size], 0);
-            }
-
-            Xdr(byte[] data, int offset) {
+            Xdr(byte[] data, int size, int offset) {
                 this.buf = data;
-                this.size = data.length;
+                this.size = size;
                 this.offset = offset;
 
             }
@@ -702,26 +693,6 @@ public class RSerialize {
                 System.arraycopy(b, boff, buf, offset, len);
                 offset += len;
             }
-
-            /**
-             * Put a counted array of bytes into the buffer. The length is not encoded.
-             *
-             * @param b byte array
-             * @param boff offset into byte array
-             * @param len number of bytes to encode
-             */
-            void putRawBytes(byte[] b, int boff, int len) {
-                System.arraycopy(b, boff, buf, offset, len);
-                offset += len;
-            }
-
-            void ensureCanAdd(int n) {
-                if (offset + n > buf.length) {
-                    byte[] b = new byte[offset + n];
-                    System.arraycopy(buf, 0, b, 0, buf.length);
-                    buf = b;
-                }
-            }
         }
 
         private final Xdr xdr;
@@ -731,23 +702,22 @@ public class RSerialize {
             if (is instanceof PByteArrayInputStream) {
                 // we already have the data and we have read the beginning
                 PByteArrayInputStream pbis = (PByteArrayInputStream) is;
-                xdr = new Xdr(pbis.getData(), pbis.pos());
+                xdr = new Xdr(pbis.getData(), pbis.getData().length, pbis.pos());
             } else {
-                byte[] isbuf = new byte[RConnection.GZIP_BUFFER_SIZE];
-                xdr = new Xdr(0);
-                int count = 0;
+                byte[] buf = new byte[1024];
+                int size = 0;
                 // read entire stream
                 while (true) {
-                    int nr = is.read(isbuf, 0, isbuf.length);
+                    int nr = is.read(buf, size, buf.length - size);
                     if (nr == -1) {
                         break;
                     }
-                    xdr.ensureCanAdd(nr);
-                    xdr.putRawBytes(isbuf, 0, nr);
-                    count += nr;
+                    size += nr;
+                    if (size == buf.length) {
+                        buf = Arrays.copyOf(buf, buf.length * 2);
+                    }
                 }
-                xdr.size = count;
-                xdr.offset = 0;
+                xdr = new Xdr(buf, size, 0);
             }
         }
 
