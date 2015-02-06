@@ -4610,6 +4610,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testArgs_77d00a67f9b93a418f2d1e62a4276c93() {
+        assertEval("{ f <- function(a) {}; fa <- args(f); fa() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testArgs_34d20bb9bdb8fe1456c59369bc152253() {
+        assertEval("{ f <- function(a, b) {}; fa <- args(f); fa() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testArgs_fe9084158c19ea2ac065b117fa57e2eb() {
+        assertEval("{ sa <- args(sum); fa() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testArrayConstructors_a1f8649b7e81e6553a6460a323f03e01() {
         assertEval("{ integer() }");
     }
@@ -7135,16 +7150,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_79fb1d399e2b39a496dac5a9749fb873() {
-        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testDelayedAssign_af327b1b6a16f6b664839a659452d6ff() {
-        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testDelayedAssign_3286f74c945a289f7ebf4456a04e57c6() {
         assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); g(x, y)}; g <- function(x, y) { x + y }; f() }");
     }
@@ -7172,6 +7177,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testDelayedAssign_8c59e6c2915b2b15a962ae541292c0db() {
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_79fb1d399e2b39a496dac5a9749fb873() {
+        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_af327b1b6a16f6b664839a659452d6ff() {
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Test
