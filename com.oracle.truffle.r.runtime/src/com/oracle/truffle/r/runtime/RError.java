@@ -435,6 +435,7 @@ public final class RError extends RuntimeException {
         DIMNAMES_DONT_MATCH_EXTENT("length of 'dimnames' [%d] not equal to array extent"),
         MUST_BE_ATOMIC("'%s' must be atomic"),
         MUST_BE_NULL_OR_STRING("'%s' must be NULL or a character vector"),
+        IS_NULL("'%s' is NULL"),
         MUST_BE_SCALAR("'%s' must be of length 1"),
         ROWS_MUST_MATCH("number of rows of matrices must match (see arg %d)"),
         ROWS_NOT_MULTIPLE("number of rows of result is not a multiple of vector length (arg %d)"),

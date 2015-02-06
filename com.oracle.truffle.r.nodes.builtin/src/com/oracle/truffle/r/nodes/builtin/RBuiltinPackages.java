@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
-import com.oracle.truffle.r.nodes.builtin.fastr.*;
-import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -49,8 +47,6 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     static {
         RBuiltinPackages.add(new BasePackage());
-        RBuiltinPackages.add(new FastRPackage());
-        RBuiltinPackages.add(new StatsPackage());
     }
 
     protected static void add(RBuiltinPackage builtins) {

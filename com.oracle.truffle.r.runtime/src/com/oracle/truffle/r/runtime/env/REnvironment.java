@@ -221,23 +221,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         RContext.getEngine().loadDefaultPackage("base", baseFrame.materialize(), baseEnv);
     }
 
-    public static void packagesInitialize(RStringVector rPackages) {
-        // now load rPackages, we need a new VirtualFrame for each
-        REnvironment pkgParent = globalEnv.parent;
-        for (int i = 0; i < rPackages.getLength(); i++) {
-            String pkgName = rPackages.getDataAt(i);
-            if (pkgName.equals("utils") || pkgName.equals("methods") || pkgName.equals("datasets") || pkgName.equals("grDevices")) {
-                continue;
-            }
-            VirtualFrame pkgFrame = RRuntime.createNonFunctionFrame();
-            Package pkgEnv = new Package(pkgParent, pkgName, pkgFrame, REnvVars.rHome());
-            RContext.getEngine().loadDefaultPackage(pkgName, pkgFrame.materialize(), pkgEnv);
-            attach(2, pkgEnv);
-            pkgParent = pkgEnv;
-        }
-        initialGlobalEnvParent = pkgParent;
+    public static void defaultPackagesInitialized() {
+        initialGlobalEnvParent = globalEnv.parent;
         baseEnv.getNamespace().setParent(globalEnv);
-        // set up the initial search path
     }
 
     private static void initSearchList() {

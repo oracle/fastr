@@ -120,7 +120,7 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected byte isLoaded(String symbol, String packageName, String type) {
             controlVisibility();
-            boolean found = DLL.findSymbolInfo(symbol, packageName) != null;
+            boolean found = DLL.findRegisteredSymbolinInDLL(symbol, packageName) != null;
             return RRuntime.asLogical(found);
         }
     }

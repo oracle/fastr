@@ -92,9 +92,4 @@ public class ROptions {
         setValue(name, value);
     }
 
-    public static void addOptions(String[] names, Object[] values) {
-        for (int i = 0; i < names.length; i++) {
-            map.put(names[i], values == null ? null : values[i]);
-        }
-    }
 }

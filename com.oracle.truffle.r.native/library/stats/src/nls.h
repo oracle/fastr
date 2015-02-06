@@ -24,7 +24,7 @@
 #define _(String) (String)
 #endif
 
-SEXP nls_iter(SEXP m, SEXP control, SEXP doTraceArg);
-SEXP numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir);
+SEXP nls_iter(SEXP m, SEXP control, SEXP doTraceArg) { return NULL; }
+SEXP numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir) { return NULL; }
 
 

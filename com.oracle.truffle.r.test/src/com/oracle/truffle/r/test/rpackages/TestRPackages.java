@@ -44,11 +44,18 @@ public class TestRPackages extends TestBase {
      * in the test string. So the install is destructive, but ok as there is never a clash.
      *
      * Currently we are using GnuR to do the install of the FastR-compiled package. The install
-     * environment is handled in the Makefile using environment variables set in
-     * {@link #installPackage(String)}.
+     * environment for packageds with nativge code is handled in the Makefile using environment
+     * variables set in {@link #installPackage(String)}.
      */
     private static final class PackagePaths {
+        /**
+         * The path containing the package distributions as tar files. These are built in the
+         * {@code com.oracle.truffle.r.test.native} project in the {@code packages} directory.
+         */
         private final Path rpackagesDists;
+        /**
+         * The path to where the package will be installed (R_LIBS_USER).
+         */
         private final Path rpackagesLibs;
 
         private PackagePaths() {
@@ -57,11 +64,11 @@ public class TestRPackages extends TestBase {
             if (!rpackagesLibs.toFile().exists()) {
                 rpackagesLibs.toFile().mkdir();
             }
-            rpackagesDists = rpackages.resolve("distributions");
+            rpackagesDists = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
         }
 
-        private boolean installPackage(String packageZip) {
-            Path packagePath = rpackagesDists.resolve(packageZip);
+        private boolean installPackage(String packageName) {
+            Path packagePath = rpackagesDists.resolve(packageName).resolve("lib").resolve(packageName + ".tar");
             // install the package (using GnuR for now)
             ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", packagePath.toString());
             Map<String, String> env = pb.environment();
@@ -84,8 +91,7 @@ public class TestRPackages extends TestBase {
             }
         }
 
-        private boolean uninstallPackage(String packageZip) {
-            String packageName = packageZip.substring(0, packageZip.indexOf('_'));
+        private boolean uninstallPackage(String packageName) {
             Path packageDir = rpackagesLibs.resolve(packageName);
             try {
                 Files.walkFileTree(packageDir, DELETE_VISITOR);
@@ -119,7 +125,7 @@ public class TestRPackages extends TestBase {
 
     private static final PackagePaths packagePaths = new PackagePaths();
 
-    private static final String[] TEST_PACKAGES = new String[]{"vanilla_1.0.tar.gz", "testrffi_1.0.tar.gz"};
+    private static final String[] TEST_PACKAGES = new String[]{"vanilla", "testrffi"};
 
     @BeforeClass
     public static void setupInstallTestPackages() {

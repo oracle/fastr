@@ -53,7 +53,7 @@ if(!interactive() && is.null(getOption("showErrorCalls")))
 
 local({dp <- Sys.getenv("R_DEFAULT_PACKAGES")
        if(identical(dp, "")) # marginally faster to do methods last
-           dp <- c("datasets", "utils", "grDevices", "graphics",
+           dp <- c("fastr", "datasets", "utils", "grDevices", "graphics",
                    "stats", "methods")
        else if(identical(dp, "NULL")) dp <- character(0)
        else dp <- strsplit(dp, ",")[[1]]

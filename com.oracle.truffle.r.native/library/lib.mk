@@ -55,7 +55,11 @@ INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 PKGDIR := $(FASTR_LIBDIR)/$(PKG)
 PKGTAR := $(SRC)/$(PKG).tar.gz
 
+ifneq ($(C_SOURCES),)
 all: libcommon $(LIB_PKG)
+else
+all: libcommon
+endif
 
 libcommon: $(PKGDIR)
 

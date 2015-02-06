@@ -141,12 +141,7 @@ public final class REngine implements RContext.Engine {
              */
             checkAndRunStartupFunction(".First");
             checkAndRunStartupFunction(".First.sys");
-            /*
-             * TODO The following calls will eventually go away as this will be done in the system
-             * profile
-             */
-            REnvironment.packagesInitialize((RStringVector) ROptions.getValue("defaultPackages"));
-            RPackageVariables.initialize(); // TODO replace with R code
+            REnvironment.defaultPackagesInitialized();
             initialized = true;
         }
         registerBaseGraphicsSystem();

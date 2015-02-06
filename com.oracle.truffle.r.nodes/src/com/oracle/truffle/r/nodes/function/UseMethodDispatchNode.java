@@ -22,6 +22,17 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
+/**
+ * {@code UseMethod} is typically called like this:
+ *
+ * <pre>
+ * f <- function(x, ...) UseMethod("f")
+ * </pre>
+ *
+ * Locating the correct call depends on the class of {@code x}, and the search starts in the
+ * enclosing (parent) environment of {@code f}, which, for packages, which is where most of these
+ * definitions occur, will be the package {@code namepace} enviromnent.
+ */
 public class UseMethodDispatchNode extends S3DispatchNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -40,7 +51,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             funFrame = frame;
         }
         if (targetFunction == null) {
-            findTargetFunction(funFrame);
+            findTargetFunction(RArguments.getEnclosingFrame(frame));
         }
         return executeHelper(frame, funFrame);
     }
@@ -53,13 +64,14 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (funFrame == null) {
             funFrame = frame;
         }
-        findTargetFunction(funFrame);
+        findTargetFunction(RArguments.getEnclosingFrame(frame));
         return executeHelper(frame, funFrame);
     }
 
     @Override
     public Object executeInternal(VirtualFrame frame, Object[] args) {
         if (targetFunction == null) {
+            // TBD getEnclosing?
             findTargetFunction(frame);
         }
         return executeHelper(frame, args);
@@ -68,6 +80,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
         this.type = aType;
+        // TBD getEnclosing?
         findTargetFunction(frame);
         return executeHelper(frame, args);
     }

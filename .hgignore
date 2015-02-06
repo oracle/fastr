@@ -91,3 +91,4 @@ findbugs.html
 com.oracle.truffle.r.native/builtinlibs/lib/*/librfficall.*
 com.oracle.truffle.r.native/builtinlibs/lib/*/libR.dylib
 com.oracle.truffle.r.native/library/*/lib/*/*.*
+com.oracle.truffle.r.native/library/fastr/lib/*

@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -155,6 +156,7 @@ public class RSerialize {
         return trace;
     }
 
+    @TruffleBoundary
     public static Object unserialize(RConnection conn, int depth) throws IOException {
         RSerialize instance = trace() ? new TracingRSerialize(conn, depth) : new RSerialize(conn, depth);
         return instance.unserialize();
@@ -165,6 +167,7 @@ public class RSerialize {
      * {@link #persistentRestore} is called, an R function needs to be evaluated with an argument
      * read from the serialized stream. This is handled with a callback object.
      */
+    @TruffleBoundary
     public static Object unserialize(byte[] data, CallHook hook, int depth) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
         RSerialize instance = trace() ? new TracingRSerialize(is, hook, depth) : new RSerialize(is, hook, depth);

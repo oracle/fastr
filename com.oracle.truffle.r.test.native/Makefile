@@ -27,6 +27,8 @@ export TOPDIR = $(CURDIR)
 
 all:
 	$(MAKE) -C urand
+	$(MAKE) -C packages
 
 clean:
 	$(MAKE) -C urand clean
+	$(MAKE) -C packages clean

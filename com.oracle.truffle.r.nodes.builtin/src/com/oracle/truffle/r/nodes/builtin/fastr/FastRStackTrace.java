@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,28 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin(name = "fastr.stacktrace", kind = PRIMITIVE, parameterNames = {"print.frame.contents"})
-@RBuiltinComment("Prints current stack trace. If 'print.frame.contents' is TRUE, each frame's content is printed, too.")
-public abstract class FastRStackTrace extends RInvisibleBuiltinNode {
+public class FastRStackTrace {
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected Object printStackTrace(byte printFrameContents) {
-        controlVisibility();
+    public static Object printStackTrace(byte printFrameContents) {
         boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
         RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
         return RRuntime.NULL;

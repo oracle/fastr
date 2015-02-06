@@ -264,7 +264,8 @@ public class DLL {
     }
 
     /**
-     * Attempts to locate a symbol in the given library.
+     * Attempts to locate a symbol in the given library. This does no filtering on registered
+     * symbols, it uses the OS level search of the library.
      */
     public static SymbolInfo findSymbolInDLL(String symbol, DLLInfo dllInfo) {
         boolean found = false;
@@ -291,6 +292,34 @@ public class DLL {
         } else {
             return symbolInfo.libInfo;
         }
+    }
+
+    /**
+     * Similar to {@link #findSymbolInDLL(String, DLLInfo)} but restricts the search to those
+     * symbols that have been registered from packages, i.e. that can be used in {@code .Call} etc.
+     * functions.
+     */
+    public static SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName) {
+        for (DLLInfo dllInfo : list) {
+            if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
+                if (dllInfo.forceSymbols) {
+                    continue;
+                }
+                for (NativeSymbolType nst : NativeSymbolType.values()) {
+                    DotSymbol[] dotSymbols = dllInfo.getNativeSymbols(nst);
+                    if (dotSymbols == null) {
+                        continue;
+                    }
+                    for (DotSymbol dotSymbol : dotSymbols) {
+                        if (dotSymbol.name.equals(symbol)) {
+                            return new SymbolInfo(dllInfo, symbol, dotSymbol.fun);
+                        }
+                    }
+                }
+
+            }
+        }
+        return null;
     }
 
     // Methods called from native code during library loading.
@@ -325,6 +354,18 @@ public class DLL {
         int old = dllInfo.forceSymbols ? 1 : 0;
         dllInfo.forceSymbols = value == 0 ? false : true;
         return old;
+    }
+
+    @SuppressWarnings("unused")
+    public static void registerCCallable(String pkgName, String functionName, long address) {
+        // TBD
+    }
+
+    @SuppressWarnings("unused")
+    public static long getCCallable(String pkgName, String functionName) {
+        // TBD
+        RInternalError.unimplemented();
+        return 0;
     }
 
 }

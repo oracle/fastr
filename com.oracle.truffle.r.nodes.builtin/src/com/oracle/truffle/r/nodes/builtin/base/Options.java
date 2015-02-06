@@ -42,6 +42,7 @@ public abstract class Options extends RBuiltinNode {
 
     private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
 
+    @TruffleBoundary
     @Specialization
     protected RList options(@SuppressWarnings("unused") RMissing x) {
         controlVisibility();
@@ -87,7 +88,7 @@ public abstract class Options extends RBuiltinNode {
                     if (nn instanceof RStringVector) {
                         thisListnames = (RStringVector) nn;
                     } else {
-                        assert false;
+                        throw RInternalError.shouldNotReachHere();
                     }
                     Object[] listData = new Object[list.getLength()];
                     String[] listNames = new String[listData.length];

@@ -1,0 +1,11 @@
+## exported functions
+export(fastr.createcc)
+export(fastr.getcc)
+export(fastr.compile)
+export(fastr.dumptrees)
+export(fastr.source)
+export(fastr.stacktrace)
+export(fastr.syntaxtree)
+export(fastr.seqlengths)
+export(fastr.tree)
+export(fastr.typeof)

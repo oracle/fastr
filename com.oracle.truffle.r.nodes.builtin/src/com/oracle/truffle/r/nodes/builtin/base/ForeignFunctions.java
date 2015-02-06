@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.methods.*;
+import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -304,43 +305,15 @@ public class ForeignFunctions {
      * default packages.
      */
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
-    public abstract static class DotCall extends RBuiltinNode {
+    public abstract static class DotCall extends CastAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
         private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
 
-        @Child private CastComplexNode castComplex;
-        @Child private CastLogicalNode castLogical;
-        @Child private CastToVectorNode castVector;
-
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(EMPTY_OBJECT_ARRAY), ConstantNode.create(RMissing.instance)};
-        }
-
-        private Object castComplex(VirtualFrame frame, Object operand) {
-            if (castComplex == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
-            }
-            return castComplex.executeCast(frame, operand);
-        }
-
-        private Object castLogical(VirtualFrame frame, Object operand) {
-            if (castLogical == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castLogical = insert(CastLogicalNodeGen.create(null, true, false, false));
-            }
-            return castLogical.executeCast(frame, operand);
-        }
-
-        private RAbstractVector castVector(VirtualFrame frame, Object value) {
-            if (castVector == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
-            }
-            return (RAbstractVector) castVector.executeObject(frame, value);
         }
 
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
@@ -349,10 +322,10 @@ public class ForeignFunctions {
         protected RComplexVector callFFT(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
-            RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, argValues[0]));
+            RComplexVector zVec = castComplexVector(frame, castVector(frame, argValues[0]));
             double[] z = zVec.getDataTemp();
-            RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, argValues[1]));
-            int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
+            byte inverse = castLogical(frame, castVector(frame, argValues[1]));
+            int inv = RRuntime.isNA(inverse) || inverse == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;
             if (zVecLgt1.profile(zVec.getLength() > 1)) {
                 int[] maxf = new int[1];
@@ -560,6 +533,68 @@ public class ForeignFunctions {
             return matchName(f, "cairoProps");
         }
 
+        @Specialization(guards = "isCor")
+        protected Object doCor(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            return doCovCor(frame, false, args);
+        }
+
+        public boolean isCor(RList f) {
+            return matchName(f, "cor");
+        }
+
+        @Specialization(guards = "isCov")
+        protected Object doCov(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            return doCovCor(frame, true, args);
+        }
+
+        public boolean isCov(RList f) {
+            return matchName(f, "cov");
+        }
+
+        private Object doCovCor(VirtualFrame frame, boolean isCov, RArgsValuesAndNames args) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            if (argValues[0] == RNull.instance) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_NULL, "x");
+            }
+            // TODO error checks/coercions
+            RDoubleVector x = (RDoubleVector) argValues[0];
+            RDoubleVector y = argValues[1] == RNull.instance ? null : (RDoubleVector) argValues[1];
+            int method = ((RIntVector) argValues[2]).getDataAt(0);
+            if (method != 4) {
+                throw RError.nyi(getEncapsulatingSourceSection(), " method ");
+            }
+            boolean iskendall = RRuntime.fromLogical(castLogical(frame, castVector(frame, argValues[3])));
+            return Covcor.getInstance().corcov(x, y, method, iskendall, !isCov, getEncapsulatingSourceSection());
+
+        }
+
+        @Specialization(guards = "isSplineCoef")
+        protected RList splineCoef(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            Object[] argValues = args.getValues();
+            int method = castInt(frame, castVector(frame, argValues[0]));
+            RDoubleVector x = (RDoubleVector) castVector(frame, argValues[1]);
+            RDoubleVector y = (RDoubleVector) castVector(frame, argValues[2]);
+            return SplineFunctions.splineCoef(method, x, y);
+        }
+
+        public boolean isSplineCoef(RList f) {
+            return matchName(f, "SplineCoef");
+        }
+
+        @Specialization(guards = "isSplineEval")
+        protected RDoubleVector splineEval(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            Object[] argValues = args.getValues();
+            RDoubleVector xout = (RDoubleVector) castVector(frame, argValues[0]);
+            // This is called with the result of SplineCoef, so it is surely an RList
+            RList z = (RList) argValues[1];
+            return SplineFunctions.splineEval(xout, z);
+        }
+
+        public boolean isSplineEval(RList f) {
+            return matchName(f, "SplineEval");
+        }
+
     }
 
     /**
@@ -594,25 +629,57 @@ public class ForeignFunctions {
         }
     }
 
+    /**
+     * Casts for use on value elements of {@link RArgsValuesAndNames}. Since the starting value
+     * could a scalar, first use {@link #castVector}.
+     */
     private abstract static class CastAdapter extends RBuiltinNode {
         @Child private CastLogicalNode castLogical;
         @Child private CastIntegerNode castInt;
+        @Child private CastDoubleNode castDouble;
+        @Child private CastComplexNode castComplex;
+        @Child private CastToVectorNode castVector;
 
-        protected byte castLogical(VirtualFrame frame, Object operand) {
+        protected byte castLogical(VirtualFrame frame, RAbstractVector operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
             }
-            return (byte) castLogical.executeCast(frame, operand);
+            return ((RLogicalVector) castLogical.executeCast(frame, operand)).getDataAt(0);
         }
 
-        protected int castInt(VirtualFrame frame, Object operand) {
+        protected int castInt(VirtualFrame frame, RAbstractVector operand) {
             if (castInt == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
             }
-            return (int) castInt.executeCast(frame, operand);
+            return ((RIntVector) castInt.executeCast(frame, operand)).getDataAt(0);
         }
+
+        protected RDoubleVector castDouble(VirtualFrame frame, RAbstractVector operand) {
+            if (castDouble == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
+            }
+            return (RDoubleVector) castDouble.executeCast(frame, operand);
+        }
+
+        protected RComplexVector castComplexVector(VirtualFrame frame, Object operand) {
+            if (castComplex == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
+            }
+            return (RComplexVector) castComplex.executeCast(frame, operand);
+        }
+
+        protected RAbstractVector castVector(VirtualFrame frame, Object value) {
+            if (castVector == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            }
+            return (RAbstractVector) castVector.executeObject(frame, value);
+        }
+
     }
 
     @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
@@ -630,8 +697,8 @@ public class ForeignFunctions {
             Object sepArg = argValues[1];
             char sepChar;
             Object quoteArg = argValues[2];
-            int nskip = castInt(frame, argValues[3]);
-            byte blskip = castLogical(frame, argValues[4]);
+            int nskip = castInt(frame, castVector(frame, argValues[3]));
+            byte blskip = castLogical(frame, castVector(frame, argValues[4]));
             String commentCharArg = isString(argValues[5]);
             char comChar;
             if (!(commentCharArg != null && commentCharArg.length() == 1)) {
@@ -690,7 +757,7 @@ public class ForeignFunctions {
             controlVisibility();
             Object[] argValues = args.getValues();
             RConnection conn = (RConnection) argValues[0];
-            int nlines = castInt(frame, argValues[1]);
+            int nlines = castInt(frame, castVector(frame, argValues[1]));
             try {
                 return RDataFactory.createStringVector(conn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
             } catch (IOException ex) {
@@ -702,21 +769,62 @@ public class ForeignFunctions {
         public boolean isReadTableHead(RList f) {
             return matchName(f, "readtablehead");
         }
+
+        @Specialization(guards = "isRnorm")
+        protected Object doRnorm(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            int n = castInt(frame, castVector(frame, argValues[0]));
+            // TODO full error checks
+            double mean = (double) argValues[1];
+            double standardd = (double) argValues[2];
+            return Random2.rnorm(n, mean, standardd);
+        }
+
+        public boolean isRnorm(RList f) {
+            return matchName(f, "rnorm");
+        }
+
+        @Specialization(guards = "isRunif")
+        protected Object doRunif(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            // TODO full error checks
+            int n = castInt(frame, castVector(frame, argValues[0]));
+            double min = (castDouble(frame, castVector(frame, argValues[1]))).getDataAt(0);
+            double max = (castDouble(frame, castVector(frame, argValues[2]))).getDataAt(0);
+            return Runif.runif(n, min, max);
+        }
+
+        public boolean isRunif(RList f) {
+            return matchName(f, "runif");
+        }
+
+        @Specialization(guards = "isQgamma")
+        protected RDoubleVector doQgamma(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            RDoubleVector p = (RDoubleVector) castVector(frame, argValues[0]);
+            RDoubleVector shape = (RDoubleVector) castVector(frame, argValues[1]);
+            RDoubleVector scale = (RDoubleVector) castVector(frame, argValues[2]);
+            if (shape.getLength() == 0 || scale.getLength() == 0) {
+                return RDataFactory.createEmptyDoubleVector();
+            }
+            byte lowerTail = castLogical(frame, castVector(frame, argValues[3]));
+            byte logP = castLogical(frame, castVector(frame, argValues[4]));
+            return GammaFunctions.Qgamma.getInstance().qgamma(p, shape, scale, lowerTail, logP);
+        }
+
+        public boolean isQgamma(RList f) {
+            return matchName(f, "qgamma");
+        }
+
     }
 
     @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
     public abstract static class DotExternal2 extends CastAdapter {
 
-        @Child private CastToVectorNode castVector;
         private final BranchProfile errorProfile = BranchProfile.create();
-
-        private RAbstractVector castVector(VirtualFrame frame, Object value) {
-            if (castVector == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
-            }
-            return (RAbstractVector) castVector.executeObject(frame, value);
-        }
 
         // Transcribed from GnuR, library/utils/src/io.c
         @Specialization(guards = "isWriteTable")
@@ -733,15 +841,15 @@ public class ForeignFunctions {
             }
             // TODO check connection writeable
 
-            int nr = castInt(frame, argValues[2]);
-            int nc = castInt(frame, argValues[3]);
+            int nr = castInt(frame, castVector(frame, argValues[2]));
+            int nc = castInt(frame, castVector(frame, argValues[3]));
             Object rnamesArg = argValues[4];
             Object sepArg = argValues[5];
             Object eolArg = argValues[6];
             Object naArg = argValues[7];
             Object decArg = argValues[8];
             Object quoteArg = argValues[9];
-            byte qmethod = castLogical(frame, argValues[10]);
+            byte qmethod = castLogical(frame, castVector(frame, argValues[10]));
 
             String csep;
             String ceol;

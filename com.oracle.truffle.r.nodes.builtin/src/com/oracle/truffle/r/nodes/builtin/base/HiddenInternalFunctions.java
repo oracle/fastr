@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.RegisteredNativeType;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR.
@@ -149,11 +148,16 @@ public class HiddenInternalFunctions {
          */
         @Specialization
         public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
-            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed, envhook);
+            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed.getDataAt(0), envhook);
+        }
+
+        @Specialization
+        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RDoubleVector compressed, RFunction envhook) {
+            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
         }
 
         @TruffleBoundary
-        public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -175,7 +179,6 @@ public class HiddenInternalFunctions {
             dataLengthBuf.position(0);
             byte[] data = new byte[length - 4];
             System.arraycopy(dbData, offset + 4, data, 0, data.length);
-            int compression = compressed.getDataAt(0);
             if (compression == 1) {
                 int outlen = dataLengthBuf.getInt();
                 byte[] udata = new byte[outlen];
@@ -219,7 +222,7 @@ public class HiddenInternalFunctions {
         private static final RStringVector NATIVE_ROUTINE_LIST = RDataFactory.createStringVectorFromScalar("NativeRoutineList");
 
         @Specialization
-        protected RList getRegisteredRoutines(RNull info) {
+        protected RList getRegisteredRoutines(@SuppressWarnings("unused") RNull info) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_DLLINFO);
         }
 
