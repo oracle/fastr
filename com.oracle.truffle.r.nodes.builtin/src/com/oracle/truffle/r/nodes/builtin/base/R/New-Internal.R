@@ -82,7 +82,7 @@ commandArgs <- function(trailingOnly = FALSE) {
   } else args
 }
 
-#args <- function(name) .Internal(args(name))
+args <- function(name) .Internal(args(name))
 
 cbind <- function(..., deparse.level = 1)
   .Internal(cbind(deparse.level, ...))

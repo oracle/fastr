@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -373,9 +373,12 @@ public class FrameFunctions {
      * The environment of the caller of the function that called parent.frame.
      */
     @RBuiltin(name = "parent.frame", kind = INTERNAL, parameterNames = {"n"})
+    @GenerateNodeFactory
     public abstract static class ParentFrame extends FrameHelper {
 
         private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
+
+        public abstract Object execute(VirtualFrame frame, int n);
 
         @Override
         protected final FrameAccess frameAccess() {

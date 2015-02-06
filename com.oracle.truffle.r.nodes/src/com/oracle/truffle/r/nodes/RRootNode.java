@@ -68,7 +68,12 @@ public abstract class RRootNode extends RootNode {
 
     @TruffleBoundary
     public String getSourceCode() {
-        return getSourceSection().getCode();
+        SourceSection ss = getSourceSection();
+        if (ss != null) {
+            return ss.getCode();
+        } else {
+            return null;
+        }
     }
 
     @Override

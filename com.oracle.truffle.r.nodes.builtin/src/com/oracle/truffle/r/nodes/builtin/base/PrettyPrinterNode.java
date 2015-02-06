@@ -242,6 +242,9 @@ public abstract class PrettyPrinterNode extends RNode {
             string = sb.toString();
         } else {
             String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
+            if (source == null) {
+                source = RDeparse.deparseForPrint(operand);
+            }
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());
             if (env != null && env.isNamespaceEnv()) {
                 source += "\n" + env.getPrintName();
@@ -393,7 +396,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     /**
      * Encapsulates the printing of the value and attributes for {@link RAttributable} types.
-     * 
+     *
      * @param ignoreNames TODO
      */
     private String printValueAndAttributes(String value, RAttributable object, boolean ignoreNames) {
