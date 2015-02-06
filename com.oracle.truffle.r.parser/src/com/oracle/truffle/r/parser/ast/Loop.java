@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,6 +41,6 @@ public abstract class Loop extends ASTNode {
     }
 
     public static For create(SourceSection src, String cvar, ASTNode range, ASTNode body) {
-        return new For(src, Symbol.getSymbol(cvar), range, body);
+        return new For(src, cvar, range, body);
     }
 }

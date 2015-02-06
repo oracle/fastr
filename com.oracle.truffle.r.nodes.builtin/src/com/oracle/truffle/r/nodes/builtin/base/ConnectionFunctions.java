@@ -539,7 +539,7 @@ public abstract class ConnectionFunctions {
 
     }
 
-    private static StdinConnection stdin = new StdinConnection();
+    private static final StdinConnection stdin = new StdinConnection();
 
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdin extends RBuiltinNode {
@@ -603,7 +603,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private static StdoutConnection stdout = new StdoutConnection(false);
+    private static final StdoutConnection stdout = new StdoutConnection(false);
 
     @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdout extends RBuiltinNode {
@@ -615,7 +615,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    private static StdoutConnection stderr = new StdoutConnection(true);
+    private static final StdoutConnection stderr = new StdoutConnection(true);
 
     @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {})
     public abstract static class Stderr extends RBuiltinNode {

@@ -74,7 +74,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length;
     }
 

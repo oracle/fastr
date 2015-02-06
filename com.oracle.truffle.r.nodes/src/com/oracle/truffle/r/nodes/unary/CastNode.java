@@ -35,6 +35,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class CastNode extends UnaryNode {
 
     private final BranchProfile listCoercionErrorBranch = BranchProfile.create();
+    private final ConditionProfile hasDimNamesProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile hasDimensionsProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
 
     public abstract Object executeCast(VirtualFrame frame, Object value);
 
@@ -53,9 +56,22 @@ public abstract class CastNode extends UnaryNode {
         throw RError.error(getSourceSection(), RError.Message.LIST_COERCION, type);
     }
 
+    protected int[] getPreservedDimensions(RAbstractVector operand) {
+        int[] dimensions = isPreserveDimensions() ? operand.getDimensions() : null;
+        int[] preservedDimensions = hasDimensionsProfile.profile(dimensions != null) ? dimensions : null;
+        return preservedDimensions;
+    }
+
+    protected RStringVector getPreservedNames(RAbstractVector operand) {
+        RStringVector names = isPreserveNames() ? operand.getNames() : null;
+        RStringVector preservedNames = hasNamesProfile.profile(names != null) ? names : null;
+        return preservedNames;
+    }
+
     protected void preserveDimensionNames(RAbstractVector operand, RVector ret) {
-        if (isPreserveDimensions() && operand.getDimNames() != null) {
-            ret.setDimNames((RList) operand.getDimNames().copy());
+        RList dimNames = isPreserveDimensions() ? operand.getDimNames() : null;
+        if (hasDimNamesProfile.profile(dimNames != null)) {
+            ret.setDimNames((RList) dimNames.copy());
         }
     }
 

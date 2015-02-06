@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,24 +28,20 @@ import com.oracle.truffle.api.source.*;
 
 public final class ArgNode extends ASTNode {
 
-    private final Symbol name;
+    private final String name;
     private final ASTNode value;
 
-    private ArgNode(SourceSection source, Symbol name, ASTNode value) {
+    private ArgNode(SourceSection source, String name, ASTNode value) {
         super(source);
         this.name = name;
         this.value = value;
     }
 
     public static ArgNode create(SourceSection source, String name, ASTNode value) {
-        return new ArgNode(source, Symbol.getSymbol(name), value);
-    }
-
-    public static ArgNode create(SourceSection source, Symbol name, ASTNode value) {
         return new ArgNode(source, name, value);
     }
 
-    public Symbol getName() {
+    public String getName() {
         return name;
     }
 

@@ -64,7 +64,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length;
     }
 

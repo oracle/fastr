@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -47,7 +47,7 @@ public abstract class Call extends ASTNode {
             Constant c = (Constant) call;
             assert c.getType() == Constant.ConstantType.STRING;
             assert c.getValues().length == 1;
-            return create(source, Symbol.getSymbol(c.getValues()[0]), arguments);
+            return create(source, c.getValues()[0], arguments);
         } else if (call instanceof FunctionCall) {
             return new FunctionCall(source, (FunctionCall) call, arguments);
         } else {
@@ -55,7 +55,7 @@ public abstract class Call extends ASTNode {
         }
     }
 
-    public static ASTNode create(SourceSection src, Symbol funName, List<ArgNode> args) {
+    public static ASTNode create(SourceSection src, String funName, List<ArgNode> args) {
         return new FunctionCall(src, funName, args);
     }
 

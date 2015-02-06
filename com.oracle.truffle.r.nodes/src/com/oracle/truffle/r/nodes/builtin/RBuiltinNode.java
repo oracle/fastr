@@ -25,7 +25,8 @@ package com.oracle.truffle.r.nodes.builtin;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -255,6 +256,11 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         // arguments; there is no CallArgumentsNode, so we create one to reuse the deparse code
         CallArgumentsNode.createUnnamed(false, false, getArguments()).deparse(state);
         state.append(')');
+    }
+
+    @Override
+    public String toString() {
+        return (getRBuiltin() == null ? getClass().getSimpleName() : getRBuiltin().name());
     }
 
     /**

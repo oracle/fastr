@@ -34,19 +34,19 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    protected final int internalGetLength() {
+    public final int getLength() {
         return length;
     }
 
-    public boolean isComplete() {
+    public final boolean isComplete() {
         return true;
     }
 
-    public boolean hasDimensions() {
+    public final boolean hasDimensions() {
         return false;
     }
 
-    public int[] getDimensions() {
+    public final int[] getDimensions() {
         return null;
     }
 
@@ -57,78 +57,78 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     protected abstract RVector internalCreateVector();
 
     @Override
-    public RAbstractVector copy() {
+    public final RAbstractVector copy() {
         return createVector();
     }
 
     @Override
-    public RAbstractVector copyDropAttributes() {
+    public final RAbstractVector copyDropAttributes() {
         return createVector();
     }
 
     @Override
-    public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
+    public final RAbstractVector copyWithNewDimensions(int[] newDimensions) {
         return createVector().copyWithNewDimensions(newDimensions);
     }
 
     @Override
-    public RStringVector getNames() {
+    public final RStringVector getNames() {
         return null;
     }
 
     @Override
-    public RList getDimNames() {
+    public final RList getDimNames() {
         return null;
     }
 
     @Override
-    public Object getRowNames() {
+    public final Object getRowNames() {
         return RNull.instance;
     }
 
     @Override
-    public RAttributes initAttributes() {
+    public final RAttributes initAttributes() {
         // TODO implement
         assert false;
         return null;
     }
 
     @Override
-    public RAttributes getAttributes() {
+    public final RAttributes getAttributes() {
         return null;
     }
 
-    public boolean isMatrix() {
+    public final boolean isMatrix() {
         return false;
     }
 
-    public boolean isArray() {
+    public final boolean isArray() {
         return false;
     }
 
-    public boolean isObject() {
+    public final boolean isObject() {
         return false;
     }
 
     @Override
-    public RVector materializeNonSharedVector() {
+    public final RVector materializeNonSharedVector() {
         RVector resultVector = this.materialize();
         assert !resultVector.isShared();
         return resultVector;
     }
 
     @Override
-    public RShareable materializeToShareable() {
+    public final RShareable materializeToShareable() {
         return this.materialize();
     }
 
     @Override
-    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
+    public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
-    public RVector copyResizedWithDimensions(int[] newDimensions) {
+    public final RVector copyResizedWithDimensions(int[] newDimensions) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
         RVector result = copyResized(newDimensions[0] * newDimensions[1], false);

@@ -44,7 +44,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         loadLibrary();
     }
 
-    private static boolean ForceRTLDGlobal = false;
+    private static final boolean ForceRTLDGlobal = false;
 
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols

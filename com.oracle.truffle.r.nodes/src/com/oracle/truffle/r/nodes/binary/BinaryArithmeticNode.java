@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 import com.oracle.truffle.api.*;
@@ -548,14 +550,14 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization(guards = "isTemporary(arguments[0])")
-    protected RDoubleVector doDoubleVectorScalar(RDoubleVector left, double right) {
+    protected RDoubleVector doDoubleVectorScalarTempLeft(RDoubleVector left, double right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         return performOpVectorScalar(left, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(array[i], right));
     }
 
     @Specialization(guards = "isTemporary(arguments[1])")
-    protected RDoubleVector doDoubleVectorScalar(double left, RDoubleVector right) {
+    protected RDoubleVector doDoubleVectorScalarTempRight(double left, RDoubleVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         return performOpVectorScalar(right, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(left, array[i]));
@@ -580,6 +582,18 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @Specialization(guards = "!areSameLength")
     protected RDoubleVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(left, right);
+    }
+
+    @Specialization(guards = {"areSameLength", "isTemporary(arguments[0])"})
+    protected RDoubleVector doDoubleVectorTempLeft(RDoubleVector left, RDoubleVector right) {
+        double[] rightArray = right.getDataWithoutCopying();
+        return performOpVectorScalar(left, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(array[i], rightArray[i]));
+    }
+
+    @Specialization(guards = {"areSameLength", "isTemporary(arguments[1])"})
+    protected RDoubleVector doDoubleVectorTempRight(RDoubleVector left, RDoubleVector right) {
+        double[] leftArray = left.getDataWithoutCopying();
+        return performOpVectorScalar(right, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(leftArray[i], array[i]));
     }
 
     @Specialization(guards = "areSameLength")
@@ -943,6 +957,12 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return performArithmeticDouble(left, right);
     }
 
+    static int cnt = 0;
+
+    static long nextTime = 0;
+
+    static final HashMap<String, AtomicLong> counters = new HashMap<>();
+
     private double performArithmeticDouble(double left, double right) {
         if (leftNACheck.check(left)) {
             if (this.arithmetic instanceof BinaryArithmetic.Pow && right == 0) {
@@ -1009,6 +1029,34 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     private int performArithmetic(int left, int right) {
+// if (cnt++ == 13337) {
+// // VirtualFrame frame = Utils.getActualCurrentFrame();
+// // String x;
+// // if (frame == null || RArguments.getFunction(frame) == null) {
+// // x = "none";
+// // } else {
+// // x = RArguments.getFunction(frame).getRootNode().toString();
+// // }
+// RuntimeException e = new RuntimeException();
+// int i = 2;
+// while (e.getStackTrace()[i + 1].getClassName().endsWith("BinaryArithmeticNode")) {
+// i++;
+// }
+// String x = e.getStackTrace()[i].toString();
+// AtomicLong counter = counters.get(x);
+// if (counter == null) {
+// counters.put(x, counter = new AtomicLong());
+// }
+// counter.incrementAndGet();
+// cnt = 0;
+// if (nextTime < System.currentTimeMillis()) {
+// System.out.println("counters:");
+// for (Map.Entry<String, AtomicLong> entry : counters.entrySet()) {
+// System.out.println(entry);
+// }
+// nextTime = System.currentTimeMillis() + 3000;
+// }
+// }
         if (leftNACheck.check(left)) {
             return RRuntime.INT_NA;
         }

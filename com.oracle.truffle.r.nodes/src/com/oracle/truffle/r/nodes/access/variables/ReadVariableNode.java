@@ -113,7 +113,6 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         this.identifier = identifier;
         this.mode = mode;
         this.kind = kind;
-        assert kind != ReadKind.Local;
     }
 
     protected ReadVariableNode() {
@@ -493,7 +492,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
             current = next;
             currentDescriptor = nextDescriptor;
-        } while (current != null && !match);
+        } while (kind != ReadKind.Local && current != null && !match);
 
         FrameLevel lastLevel = null;
 

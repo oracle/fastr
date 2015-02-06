@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,7 +22,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     private int level = 0;
     private final PrintStream out;
     private final StringBuilder buff = new StringBuilder();
-    private static PrettyPrinter pp = getStringPrettyPrinter();
+    private static final PrettyPrinter pp = getStringPrettyPrinter();
 
     public PrettyPrinter(PrintStream stream) {
         out = stream;
@@ -221,7 +221,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     @Override
     public Void visit(For n) {
         print("for(");
-        print(n.getVariable().pretty());
+        print(n.getVariable());
         print(" in ");
         n.getRange().accept(this);
         print(") ");
@@ -231,7 +231,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(SimpleAssignVariable n) {
-        print(n.getVariable().pretty());
+        print(n.getVariable());
         print(" <- ");
         n.getExpr().accept(this);
         return null;
@@ -256,7 +256,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(FunctionCall n) {
-        print(n.getName().pretty() + "(");
+        print(n.getName() + "(");
         print(n.getArguments(), true);
         print(")");
         return null;
@@ -273,7 +273,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(SimpleAccessVariable n) {
-        print(n.getVariable().pretty());
+        print(n.getVariable());
         return null;
     }
 
@@ -281,7 +281,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     public Void visit(FieldAccess n) {
         print(n.getLhs());
         print("$");
-        print(n.getFieldName().pretty());
+        print(n.getFieldName());
         return null;
     }
 
@@ -306,10 +306,10 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     }
 
     private void print(ArgNode arg, boolean isCall) {
-        Symbol n = arg.getName();
+        String n = arg.getName();
         ASTNode v = arg.getValue();
         if (n != null) {
-            print(n.pretty());
+            print(n);
             if (isCall || v != null) {
                 print("=");
             }

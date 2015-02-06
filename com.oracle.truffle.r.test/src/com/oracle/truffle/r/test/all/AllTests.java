@@ -6820,11 +6820,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCor_eb299d07a9ea2621996c82b52b16f5e4() {
-        assertEval("{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testCor_564c5ee2d2eea4a4b168dca5e6fa9e4f() {
         assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
     }
@@ -6832,6 +6827,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCor_13b78c66b0e72ebed23e724262a27546() {
         assertEval("{ round( cor(cbind(c(10,5,4,1), c(2,5,10,5))), digits=5 ) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCor_eb299d07a9ea2621996c82b52b16f5e4() {
+        assertEvalWarning("{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
     }
 
     @Test

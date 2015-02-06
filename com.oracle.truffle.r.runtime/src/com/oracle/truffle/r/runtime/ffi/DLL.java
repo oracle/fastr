@@ -175,11 +175,7 @@ public class DLL {
         }
     }
 
-    public static class Create {
-
-    }
-
-    public static DLLInfo getDLLInfoForId(int id) {
+    public static synchronized DLLInfo getDLLInfoForId(int id) {
         for (DLLInfo dllInfo : list) {
             if (dllInfo.id == id) {
                 return dllInfo;
@@ -206,7 +202,7 @@ public class DLL {
         }
     }
 
-    public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
+    public static synchronized DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         File file = new File(Utils.tildeExpand(path));
         String absPath = file.getAbsolutePath();
         Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
@@ -224,7 +220,7 @@ public class DLL {
         return result;
     }
 
-    public static void unload(String path) throws DLLException {
+    public static synchronized void unload(String path) throws DLLException {
         String absPath = new File(Utils.tildeExpand(path)).getAbsolutePath();
         for (DLLInfo info : list) {
             if (info.path.equals(absPath)) {
@@ -250,7 +246,7 @@ public class DLL {
      * @param libName if not {@code null} or "", restrict search to this library.
      * @return a {@code SymbolInfo} instance or {@code null} if not found.
      */
-    public static SymbolInfo findSymbolInfo(String symbol, String libName) {
+    public static synchronized SymbolInfo findSymbolInfo(String symbol, String libName) {
         SymbolInfo symbolInfo = null;
         for (DLLInfo dllInfo : list) {
             if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
@@ -267,7 +263,7 @@ public class DLL {
      * Attempts to locate a symbol in the given library. This does no filtering on registered
      * symbols, it uses the OS level search of the library.
      */
-    public static SymbolInfo findSymbolInDLL(String symbol, DLLInfo dllInfo) {
+    public static synchronized SymbolInfo findSymbolInDLL(String symbol, DLLInfo dllInfo) {
         boolean found = false;
         long val = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, symbol);
         if (val != 0) {
@@ -285,7 +281,7 @@ public class DLL {
         }
     }
 
-    public static DLLInfo findLibraryContainingSymbol(String symbol) {
+    public static synchronized DLLInfo findLibraryContainingSymbol(String symbol) {
         SymbolInfo symbolInfo = findSymbolInfo(symbol, null);
         if (symbolInfo == null) {
             return null;
@@ -299,7 +295,7 @@ public class DLL {
      * symbols that have been registered from packages, i.e. that can be used in {@code .Call} etc.
      * functions.
      */
-    public static SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName) {
+    public static synchronized SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName) {
         for (DLLInfo dllInfo : list) {
             if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
                 if (dllInfo.forceSymbols) {

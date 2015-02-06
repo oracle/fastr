@@ -143,127 +143,140 @@ public abstract class Unlist extends RBuiltinNode {
     @Specialization(guards = "!isEmpty")
     protected RAbstractVector unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
         controlVisibility();
-        boolean rec = recursive == RRuntime.LOGICAL_TRUE;
-        boolean withNames = useNames == RRuntime.LOGICAL_TRUE;
+        boolean isRecursive = RRuntime.fromLogical(recursive);
+        boolean isUseNames = RRuntime.fromLogical(useNames);
 
         int precedence = -1;
         int totalSize = 0;
         for (int i = 0; i < list.getLength(); ++i) {
             Object data = list.getDataAt(i);
             precedence = Math.max(precedence, precedenceNode.executeInteger(frame, data, recursive));
-            if (rec) {
+            if (isRecursive) {
                 totalSize += getRecursiveLength(frame, data);
             } else {
                 totalSize += getLength(frame, data);
             }
         }
-        String[] namesData = withNames ? new String[totalSize] : null;
-        NamesInfo namesInfo = withNames ? new NamesInfo() : null;
-        if (precedence == PrecedenceNode.RAW_PRECEDENCE) {
-            byte[] result = new byte[totalSize];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperRaw(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+        return unlistHelper(list, isRecursive, isUseNames, precedence, totalSize);
+    }
+
+    @TruffleBoundary
+    private static RAbstractVector unlistHelper(RList list, boolean recursive, boolean useNames, int precedence, int totalSize) {
+        String[] namesData = useNames ? new String[totalSize] : null;
+        NamesInfo namesInfo = useNames ? new NamesInfo() : null;
+        switch (precedence) {
+            case PrecedenceNode.RAW_PRECEDENCE: {
+                byte[] result = new byte[totalSize];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperRaw(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperRaw(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperRaw(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createRawVector(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createRawVector(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else if (precedence == PrecedenceNode.LOGICAL_PRECEDENCE) {
-            byte[] result = new byte[totalSize];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperLogical(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+            case PrecedenceNode.LOGICAL_PRECEDENCE: {
+                byte[] result = new byte[totalSize];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperLogical(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperLogical(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperLogical(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createLogicalVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                                namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createLogicalVector(result, RDataFactory.INCOMPLETE_VECTOR,
-                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else if (precedence == PrecedenceNode.INT_PRECEDENCE) {
-            int[] result = new int[totalSize];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperInt(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+            case PrecedenceNode.INT_PRECEDENCE: {
+                int[] result = new int[totalSize];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperInt(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperInt(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperInt(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createIntVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                                namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createIntVector(result, RDataFactory.INCOMPLETE_VECTOR,
-                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else if (precedence == PrecedenceNode.DOUBLE_PRECEDENCE) {
-            double[] result = new double[totalSize];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperDouble(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+            case PrecedenceNode.DOUBLE_PRECEDENCE: {
+                double[] result = new double[totalSize];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperDouble(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperDouble(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperDouble(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createDoubleVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                                namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createDoubleVector(result, RDataFactory.INCOMPLETE_VECTOR,
-                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else if (precedence == PrecedenceNode.COMPLEX_PRECEDENCE) {
-            double[] result = new double[totalSize << 1];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperComplex(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+            case PrecedenceNode.COMPLEX_PRECEDENCE: {
+                double[] result = new double[totalSize << 1];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperComplex(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperComplex(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperComplex(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createComplexVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                                namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createComplexVector(result, RDataFactory.INCOMPLETE_VECTOR,
-                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else if (precedence == PrecedenceNode.STRING_PRECEDENCE) {
-            String[] result = new String[totalSize];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperString(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+            case PrecedenceNode.STRING_PRECEDENCE: {
+                String[] result = new String[totalSize];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperString(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperString(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperString(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                                namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR,
-                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else if (precedence == PrecedenceNode.LIST_PRECEDENCE) {
-            Object[] result = new Object[totalSize];
-            if (!rec) {
-                RStringVector listNames = withNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
-                int position = 0;
-                for (int i = 0; i < list.getLength(); i++) {
-                    if (list.getDataAt(i) != RNull.instance) {
-                        position = unlistHelperList(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
+            case PrecedenceNode.LIST_PRECEDENCE: {
+                Object[] result = new Object[totalSize];
+                if (!recursive) {
+                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    int position = 0;
+                    for (int i = 0; i < list.getLength(); i++) {
+                        if (list.getDataAt(i) != RNull.instance) {
+                            position = unlistHelperList(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                        }
                     }
+                } else {
+                    unlistHelperList(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
                 }
-            } else {
-                unlistHelperList(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
+                return RDataFactory.createList(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
-            return RDataFactory.createList(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
-        } else {
-            throw Utils.nyi();
+            default:
+                throw Utils.nyi();
         }
     }
 

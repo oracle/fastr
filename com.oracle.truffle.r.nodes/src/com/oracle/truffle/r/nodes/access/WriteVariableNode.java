@@ -61,11 +61,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public abstract RNode getRhs();
 
-    private final BranchProfile everSeenNonEqual = BranchProfile.create();
-    private final BranchProfile everSeenVector = BranchProfile.create();
-    private final BranchProfile everSeenNonShared = BranchProfile.create();
-    private final BranchProfile everSeenShared = BranchProfile.create();
-    private final BranchProfile everSeenTemporary = BranchProfile.create();
+    private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isTemporaryProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -96,28 +95,23 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         Object newValue = value;
         if (!isArgWrite()) {
             // for the meaning of INVISIBLE mode see the comment preceding the current method
-            if (mode != Mode.INVISIBLE && isCurrentValue(frame, frameSlot, value)) {
-                everSeenNonEqual.enter();
-                if (value instanceof RShareable) {
-                    everSeenVector.enter();
+            if (mode != Mode.INVISIBLE && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
+                if (isShareableProfile.profile(value instanceof RShareable)) {
                     RShareable rShareable = (RShareable) value;
-                    if (rShareable.isTemporary()) {
-                        everSeenTemporary.enter();
+                    if (isTemporaryProfile.profile(rShareable.isTemporary())) {
                         if (mode == Mode.COPY) {
                             RShareable shareableCopy = rShareable.copy();
                             newValue = shareableCopy;
                         } else {
                             rShareable.markNonTemporary();
                         }
-                    } else if (rShareable.isShared()) {
-                        everSeenShared.enter();
+                    } else if (isSharedProfile.profile(rShareable.isShared())) {
                         RShareable shareableCopy = rShareable.copy();
                         if (mode != Mode.COPY) {
                             shareableCopy.markNonTemporary();
                         }
                         newValue = shareableCopy;
                     } else {
-                        everSeenNonShared.enter();
                         if (mode == Mode.COPY) {
                             RShareable shareableCopy = rShareable.copy();
                             newValue = shareableCopy;
@@ -163,7 +157,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
         try {
-            return !frame.isObject(frameSlot) || frame.getObject(frameSlot) != value;
+            return frame.isObject(frameSlot) && frame.getObject(frameSlot) == value;
         } catch (FrameSlotTypeException ex) {
             throw RInternalError.shouldNotReachHere();
         }

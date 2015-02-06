@@ -82,15 +82,6 @@ public final class MatchedArguments extends Arguments<RNode> {
 
     /**
      * @param arguments
-     * @return ad
-     */
-    public static MatchedArguments createUnnamed(RNode[] arguments) {
-        String[] names = new String[arguments.length];
-        return create(arguments, names);
-    }
-
-    /**
-     * @param arguments
      * @param names
      * @return A fresh {@link MatchedArguments}; arguments may contain <code>null</code> iff there
      *         is neither a supplied argument nor a default argument

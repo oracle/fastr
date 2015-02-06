@@ -38,9 +38,7 @@ public abstract class FrameSlotNode extends Node {
 
     public abstract boolean hasValue(Frame frame);
 
-    public FrameSlot executeFrameSlot(@SuppressWarnings("unused") VirtualFrame frame) {
-        throw new UnsupportedOperationException();
-    }
+    public abstract FrameSlot executeFrameSlot(VirtualFrame frame);
 
     static FrameSlot findFrameSlot(Frame frame, Object identifier) {
         return frame.getFrameDescriptor().findFrameSlot(identifier);
@@ -116,6 +114,11 @@ public abstract class FrameSlotNode extends Node {
         public AbsentFrameSlotNode(Assumption assumption, Object identifier) {
             this.assumption = assumption;
             this.identifier = identifier;
+        }
+
+        @Override
+        public FrameSlot executeFrameSlot(VirtualFrame frame) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
