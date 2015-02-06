@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -42,6 +43,7 @@ public class GetFunctions {
         private final BranchProfile unknownObjectErrorProfile = BranchProfile.create();
         protected final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
         protected final BranchProfile inheritsProfile = BranchProfile.create();
+        @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
             unknownObjectErrorProfile.enter();
@@ -49,6 +51,14 @@ public class GetFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
             } else {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
+            }
+        }
+
+        protected Object checkPromise(VirtualFrame frame, Object r) {
+            if (r instanceof RPromise) {
+                return promiseHelper.evaluate(frame, (RPromise) r);
+            } else {
+                return r;
             }
         }
 
@@ -66,15 +76,15 @@ public class GetFunctions {
         }
 
         @Specialization(guards = "!isInherits")
-        protected Object getNonInherit(RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
+        protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
-            return getAndCheck(xv, envir, mode, true);
+            return getAndCheck(frame, xv, envir, mode, true);
         }
 
         @Specialization(guards = "isInherits")
-        protected Object getInherit(RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
+        protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
-            Object r = getAndCheck(xv, envir, mode, false);
+            Object r = getAndCheck(frame, xv, envir, mode, false);
             if (r == null) {
                 inheritsProfile.enter();
                 String x = xv.getDataAt(0);
@@ -83,7 +93,7 @@ public class GetFunctions {
                 while (env != null) {
                     env = env.getParent();
                     if (env != null) {
-                        r = env.get(x);
+                        r = checkPromise(frame, env.get(x));
                         if (r != null && RRuntime.checkType(r, modeType)) {
                             break;
                         }
@@ -96,10 +106,10 @@ public class GetFunctions {
             return r;
         }
 
-        protected Object getAndCheck(RAbstractStringVector xv, REnvironment env, String mode, boolean fail) throws RError {
+        protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, String mode, boolean fail) throws RError {
             String x = xv.getDataAt(0);
             RType modeType = RType.fromString(modeProfile.profile(mode));
-            Object obj = env.get(x);
+            Object obj = checkPromise(frame, env.get(x));
             if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return obj;
             } else {
@@ -171,14 +181,14 @@ public class GetFunctions {
         }
 
         @Specialization(guards = "!isInherits")
-        protected RList mgetNonInherit(VirtualFrame frame, RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
+        protected RList mgetNonInherit(VirtualFrame frame, RStringVector xv, REnvironment env, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
                 RType modeType = RType.fromString(mode.getDataAt(state.modeLength == 1 ? 0 : i));
-                Object r = envir.get(x);
+                Object r = checkPromise(frame, env.get(x));
                 if (r != null && RRuntime.checkType(r, modeType)) {
                     state.data[i] = r;
                 } else {
@@ -203,7 +213,7 @@ public class GetFunctions {
                     while (env != null) {
                         env = env.getParent();
                         if (env != null) {
-                            r = env.get(x);
+                            r = checkPromise(frame, env.get(x));
                             if (r != null && RRuntime.checkType(r, modeType)) {
                                 break;
                             }
