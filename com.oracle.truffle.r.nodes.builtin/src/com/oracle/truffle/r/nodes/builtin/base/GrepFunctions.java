@@ -121,10 +121,18 @@ public class GrepFunctions {
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
     public abstract static class Grep extends CommonCodeAdapter {
 
+        public static boolean isNAAndPerl(RAbstractStringVector vector, byte perl) {
+            return vector.getLength() == 1 && RRuntime.isNA(vector.getDataAt(0)) && perl == RRuntime.LOGICAL_TRUE;
+        }
+
         @Specialization(guards = "!isValue")
         @TruffleBoundary
         protected RIntVector grepValueFalse(String patternArg, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
+            // HACK to finesse lack of perl==TRUE in utils::localeToCharset (on Linux)
+            if (isNAAndPerl(vector, perl)) {
+                return RDataFactory.createEmptyIntVector();
+            }
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
             String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
             int[] result = findAllIndexes(pattern, vector, fixed);
