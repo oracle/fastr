@@ -941,7 +941,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ l <- c(x=1) ; as.list(l) }");
         assertEval("{ x<-7; as.list(environment()) }");
         assertEval("{ x<-7; .y<-42; as.list(environment()) }");
-        assertEval("{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }");
+        // not sorted so can't compare list print
+        assertEval("{ x<-7; .y<-42; length(as.list(environment(), all.names=TRUE)) }");
         assertEval("{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[[\"f\"]]; f_copy(); x }");
 
         // as.matrix
@@ -2096,11 +2097,11 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testAttach() {
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
-        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
-        assertEval("{ attach(.Platform, 2); file.sep }");
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2) }");
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x; detach(\"mine\") }");
+        // tests must leave the search path unmodified
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); r <- x; detach(\"mine\"); r }");
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); r <- x; detach(2); r }");
+        assertEval("{ attach(.Platform, 2); r <- file.sep; detach(2); r }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
         assertEvalError("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
         assertEvalError("{ detach(\"missing\"); x }");
     }

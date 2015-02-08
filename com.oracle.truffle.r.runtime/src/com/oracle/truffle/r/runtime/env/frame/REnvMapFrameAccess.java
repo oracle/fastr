@@ -79,7 +79,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    public RStringVector ls(boolean allNames, Pattern pattern) {
+    public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         ArrayList<String> matchedNamesList = new ArrayList<>(map.size());
         for (Object name : map.keySet()) {
             if (name instanceof String) {
@@ -89,8 +89,12 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
                 }
             }
         }
-        String[] names = new String[matchedNamesList.size()];
-        return RDataFactory.createStringVector(matchedNamesList.toArray(names), RDataFactory.COMPLETE_VECTOR);
+        String[] data = new String[matchedNamesList.size()];
+        matchedNamesList.toArray(data);
+        if (sorted) {
+            Arrays.sort(data);
+        }
+        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Override

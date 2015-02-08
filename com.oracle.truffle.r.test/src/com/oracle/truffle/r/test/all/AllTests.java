@@ -5300,28 +5300,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testAttach_000b04e3d397888dde95e4ec96036dd7() {
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
+    public void TestSimpleBuiltins_testAttach_686e0c32d23cd6af6fdfbce1031dac2b() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); r <- x; detach(\"mine\"); r }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAttach_4141d168d111ce4878b9ccd7cc4529f9() {
-        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
+    public void TestSimpleBuiltins_testAttach_a27b0b8c3ba673cc507d70f63bf07236() {
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); r <- x; detach(2); r }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAttach_8c0f918123c720fbaca40263dcd8dd31() {
-        assertEval("{ attach(.Platform, 2); file.sep }");
+    public void TestSimpleBuiltins_testAttach_0800c5da66134ef1758e9b704677d674() {
+        assertEval("{ attach(.Platform, 2); r <- file.sep; detach(2); r }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAttach_d5f345b8b41bb68b2e11ee167faea459() {
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testAttach_8518409cc7fc8955539226dded7e9a52() {
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x; detach(\"mine\") }");
+    public void TestSimpleBuiltins_testAttach_b0892b0f651bba74ab403ae82adde515() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
     }
 
     @Test
@@ -5690,8 +5685,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCasts_20b9c84392efad524c545a53bb8dc115() {
-        assertEval("{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }");
+    public void TestSimpleBuiltins_testCasts_c31d27497f45863d27e95f3c323382df() {
+        assertEval("{ x<-7; .y<-42; length(as.list(environment(), all.names=TRUE)) }");
     }
 
     @Test

@@ -100,9 +100,7 @@ public final class REngine implements RContext.Engine {
         singleton.startTime = System.nanoTime();
         singleton.childTimes = new long[]{0, 0};
         VirtualFrame globalFrame = RRuntime.createNonFunctionFrame();
-        if (initialized) {
-            REnvironment.resetForTest(globalFrame);
-        } else {
+        if (!initialized) {
             RInstrument.initialize();
             RPerfAnalysis.initialize();
             Locale.setDefault(Locale.ROOT);
@@ -141,7 +139,6 @@ public final class REngine implements RContext.Engine {
              */
             checkAndRunStartupFunction(".First");
             checkAndRunStartupFunction(".First.sys");
-            REnvironment.defaultPackagesInitialized();
             initialized = true;
         }
         registerBaseGraphicsSystem();
@@ -208,9 +205,10 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
-        VirtualFrame frame = RRuntime.createNonFunctionFrame();
-        REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), frame.materialize(), printResult, false);
+        // We first remove all the definitions from the previous test
+        String rm = "rm(list = ls())";
+        parseAndEvalImpl(new ANTLRStringStream(rm), Source.fromText(rm, "<test_reset>"), REnvironment.globalEnv().getFrame(), printResult, false);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
     }
 
     public class ParseException extends Exception {

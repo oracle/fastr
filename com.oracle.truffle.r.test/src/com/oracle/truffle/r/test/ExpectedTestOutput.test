@@ -5,19 +5,13 @@
  [7] 0.35201276 0.16919220 0.93579263 0.26084486
 
 ##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); add_double(2, 3) }
-[1] 5
-
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); add_int(2L, 3L) }
-[1] 5
-
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }
-[1] 1 2
+#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); r1 <- add_int(2L, 3L); r2 <- add_double(2, 3); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; detach("package:testrffi"); list(r1, r2, v) }
+Error in library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user") :
+  there is no package called 'testrffi'
 
 ##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadVanilla
-#{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }
+#{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); r <- vanilla(); detach("package:vanilla"); r }
+[1] "A vanilla R package"
 [1] "A vanilla R package"
 
 ##com.oracle.truffle.r.test.ser.TestUnserializeFromGnuR.readChar
@@ -5254,7 +5248,7 @@ $names
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
-#{ attach(.Platform, 2); file.sep }
+#{ attach(.Platform, 2); r <- file.sep; detach(2); r }
 [1] "/"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
@@ -5262,22 +5256,20 @@ $names
 Error in detach("missing") : invalid 'name' argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
-#{ e <- new.env(); assign("x", "abc", e); attach(e, 2); x }
+#{ e <- new.env(); assign("x", "abc", e); attach(e, 2); r <- x; detach(2); r }
 [1] "abc"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
-#{ e <- new.env(); assign("x", 1, e); attach(e, 2); x; detach(2) }
+#{ e <- new.env(); assign("x", 1, e); attach(e, 2); r <- x; detach(2); r }
+[1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
 #{ e <- new.env(); assign("x", 1, e); attach(e, 2); x; detach(2); x }
 Error: object 'x' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
-#{ e <- new.env(); assign("x", 1, e); attach(e, name = "mine"); x }
+#{ e <- new.env(); assign("x", 1, e); attach(e, name = "mine"); r <- x; detach("mine"); r }
 [1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
-#{ e <- new.env(); assign("x", 1, e); attach(e, name = "mine"); x; detach("mine") }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttributes
 #{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }
@@ -6422,13 +6414,8 @@ $x
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
-#{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }
-$x
-[1] 7
-
-$.y
-[1] 42
-
+#{ x<-7; .y<-42; length(as.list(environment(), all.names=TRUE)) }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
 #{ x<-7; as.list(environment()) }

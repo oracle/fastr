@@ -57,7 +57,7 @@ public class AttachFunctions {
         protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
-            RStringVector names = what.ls(true, null);
+            RStringVector names = what.ls(true, null, false);
             for (int i = 0; i < names.getLength(); i++) {
                 String key = names.getDataAt(i);
                 Object value = what.get(key);

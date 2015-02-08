@@ -145,14 +145,14 @@ public class TestRPackages extends TestBase {
 
     @Test
     public void testLoadVanilla() {
-        assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- vanilla(); detach(\"package:vanilla\"); r }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
     @Test
     public void testLoadTestRFFI() {
-        assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_double(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(TestBase.template(
+                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- add_int(2L, 3L); r2 <- add_double(2, 3); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; detach(\"package:testrffi\"); list(r1, r2, v) }",
+                        new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
 }

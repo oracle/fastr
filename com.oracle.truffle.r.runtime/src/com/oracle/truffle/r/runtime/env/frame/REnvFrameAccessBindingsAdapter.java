@@ -63,7 +63,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     }
 
     @Override
-    public RStringVector ls(boolean allNames, Pattern pattern) {
+    public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         return RDataFactory.createEmptyStringVector();
     }
 

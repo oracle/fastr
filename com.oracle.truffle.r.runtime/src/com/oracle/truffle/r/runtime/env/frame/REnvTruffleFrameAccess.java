@@ -120,7 +120,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    public RStringVector ls(boolean allNames, Pattern pattern) {
+    public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         FrameDescriptor fd = frame.getFrameDescriptor();
         String[] names = getStringIdentifiers(fd);
         ArrayList<String> matchedNamesList = new ArrayList<>(names.length);
@@ -134,7 +134,11 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
             }
         }
         String[] data = new String[matchedNamesList.size()];
-        return RDataFactory.createStringVector(matchedNamesList.toArray(data), RDataFactory.COMPLETE_VECTOR);
+        matchedNamesList.toArray(data);
+        if (sorted) {
+            Arrays.sort(data);
+        }
+        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Override

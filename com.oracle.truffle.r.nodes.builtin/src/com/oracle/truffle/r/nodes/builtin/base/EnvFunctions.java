@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -380,7 +381,7 @@ public class EnvFunctions {
             // objects
             controlVisibility();
             boolean allNames = allNamesVec.getLength() == 0 || allNamesVec.getDataAt(0) == RRuntime.LOGICAL_FALSE ? false : true;
-            RStringVector keys = env.ls(allNames, null);
+            RStringVector keys = envls(env, allNames);
             Object[] data = new Object[keys.getLength()];
             for (int i = 0; i < data.length; i++) {
                 // TODO: not all types are handled (e.g. copying environments)
@@ -388,7 +389,13 @@ public class EnvFunctions {
                 Object o = env.get(key);
                 data[i] = copy(frame, o);
             }
-            return RDataFactory.createList(data, keys.getLength() == 0 ? null : (RStringVector) keys.copy());
+            return RDataFactory.createList(data, keys.getLength() == 0 ? null : keys);
+        }
+
+        @TruffleBoundary
+        private static RStringVector envls(REnvironment env, boolean allNames) {
+            // Unlike ls(), not sorted
+            return env.ls(allNames, null, false);
         }
 
     }

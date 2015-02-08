@@ -64,8 +64,9 @@ public class REnvFrameAccess {
      *
      * @param allNames if {@code false} ignore names beginning with ".".
      * @param pattern if not {@code null} only include names matching {@code pattern}.
+     * @param sorted TODO
      */
-    public RStringVector ls(boolean allNames, Pattern pattern) {
+    public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         throw notImplemented("ls");
     }
 
