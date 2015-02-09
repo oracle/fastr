@@ -4,11 +4,6 @@
  [1] 0.45336386 0.38848030 0.94576608 0.11726267 0.21542351 0.08672997
  [7] 0.35201276 0.16919220 0.93579263 0.26084486
 
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadTestRFFI
-#{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); r1 <- add_int(2L, 3L); r2 <- add_double(2, 3); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; detach("package:testrffi"); list(r1, r2, v) }
-Error in library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user") :
-  there is no package called 'testrffi'
-
 ##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadVanilla
 #{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); r <- vanilla(); detach("package:vanilla"); r }
 [1] "A vanilla R package"
