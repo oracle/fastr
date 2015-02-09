@@ -201,14 +201,46 @@ public class InfixEmulationFunctions {
 
     }
 
+    public abstract static class AccessArraySubsetBuiltinBase extends AccessArrayBuiltin {
+
+        protected final ConditionProfile multiIndexProfile = ConditionProfile.createBinaryProfile();
+
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, true);
+        }
+
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
+            byte drop;
+            if (multiIndexProfile.profile(inds.length() > 1)) {
+                drop = RRuntime.LOGICAL_TRUE;
+            } else {
+                drop = RRuntime.LOGICAL_FALSE;
+            }
+            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, true);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "noInd")
+        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, Object dropVec) {
+            return x;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object get(RAbstractContainer x, RMissing inds, Object dropVec) {
+            return x;
+        }
+
+    }
+
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
-    public abstract static class AccessArraySubsetBuiltin extends AccessArrayBuiltin {
+    public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
         @Child private DispatchedCallNode dcn;
 
         @Override
         public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
         @Specialization(guards = {"!noInd", "isObject"})
@@ -224,31 +256,90 @@ public class InfixEmulationFunctions {
             }
         }
 
+        @Override
         @Specialization(guards = {"!noInd", "!isObject"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, true);
+            return super.get(frame, x, inds, dropVec);
+        }
+
+        @Specialization(guards = {"!noInd", "isObject"})
+        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
+            byte drop;
+            if (multiIndexProfile.profile(inds.length() > 1)) {
+                drop = RRuntime.LOGICAL_TRUE;
+            } else {
+                drop = RRuntime.LOGICAL_FALSE;
+            }
+
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(DispatchedCallNode.create("[", RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+            }
+            try {
+                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
+            } catch (RError e) {
+                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, true);
+            }
+        }
+
+        @Override
+        @Specialization(guards = {"!noInd", "!isObject"})
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
+            return super.get(frame, x, inds, dropVec);
+        }
+    }
+
+    @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
+    public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        }
+
+        @Override
+        @Specialization(guards = "!noInd")
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            return super.get(frame, x, inds, dropVec);
+        }
+
+        @Override
+        @Specialization(guards = "!noInd")
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
+            return super.get(frame, x, inds, dropVec);
+        }
+    }
+
+    public abstract static class AccessArraySubscriptBuiltinBase extends AccessArrayBuiltin {
+
+        protected final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
+
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+            byte exact;
+            if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
+                exact = RRuntime.LOGICAL_FALSE;
+            } else {
+                exact = exactVec.getDataAt(0);
+            }
+            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd")
-        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVect) {
-            return x;
+        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+            throw RError.error(RError.Message.NO_INDEX);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector dropVect) {
-            return x;
+        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector exactVec) {
+            throw RError.error(RError.Message.NO_INDEX);
         }
-
     }
 
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})
-    public abstract static class AccessArraySubscriptBuiltin extends AccessArrayBuiltin {
-
+    public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
         @Child private DispatchedCallNode dcn;
-
-        private final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
 
         @Override
         public RNode[] getParameterValues() {
@@ -274,27 +365,25 @@ public class InfixEmulationFunctions {
             }
         }
 
+        @Override
         @Specialization(guards = {"!noInd", "!isObject"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
-            byte exact;
-            if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
-                exact = RRuntime.LOGICAL_FALSE;
-            } else {
-                exact = exactVec.getDataAt(0);
-            }
-            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, false);
+            return super.get(frame, x, inds, exactVec);
+        }
+    }
+
+    @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})
+    public abstract static class AccessArraySubscriptDefaultBuiltin extends AccessArraySubscriptBuiltinBase {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
-        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
-            throw RError.error(RError.Message.NO_INDEX);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector exactVec) {
-            throw RError.error(RError.Message.NO_INDEX);
+        @Override
+        @Specialization(guards = "!noInd")
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+            return super.get(frame, x, inds, exactVec);
         }
 
     }

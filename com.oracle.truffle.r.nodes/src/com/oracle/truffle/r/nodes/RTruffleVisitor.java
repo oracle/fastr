@@ -314,10 +314,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(AccessVector a) {
         RNode vector = a.getVector().accept(this);
-        RNode dropDim = ConstantNode.create(true);
         List<ArgNode> args = a.getArguments();
         boolean dropInSource = false;
         int argLength = args.size();
+        RNode dropDim = ConstantNode.create(RMissing.instance);
         if (argLength > 0) {
             for (ArgNode e : args) {
                 if (e.getName() != null && e.getName().toString().equals(RRuntime.DROP_DIM_ARG_NAME)) {

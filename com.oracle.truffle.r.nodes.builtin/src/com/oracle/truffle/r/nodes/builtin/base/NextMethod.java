@@ -43,8 +43,7 @@ public abstract class NextMethod extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
-    protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
+    protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args, String[] argNames) {
         controlVisibility();
         final RStringVector type = readType(frame);
         final String genericName = genericMethod == null ? readGenericName(frame, genericMethod) : genericMethod;
@@ -59,7 +58,7 @@ public abstract class NextMethod extends RBuiltinNode {
             if (!RArguments.hasS3Args(frame)) {
                 enclosingFunctionName = enclosingFunction.getRootNode().toString();
             }
-            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, enclosingFunctionName, RRuntime.NEXT_METHOD, args);
+            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, enclosingFunctionName, RRuntime.NEXT_METHOD, args, argNames);
             dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = genericName;
         }
@@ -67,15 +66,15 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+    protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, RArgsValuesAndNames args) {
         controlVisibility();
-        return nextMethod(frame, null, null, new Object[0]);
+        return nextMethod(frame, null, null, args.getValues(), args.getNames());
     }
 
     @Specialization
-    protected Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+    protected Object nextMethod(VirtualFrame frame, String generic, Object obj, RArgsValuesAndNames args) {
         controlVisibility();
-        return nextMethod(frame, generic, obj, new Object[0]);
+        return nextMethod(frame, generic, obj, args.getValues(), args.getNames());
     }
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {

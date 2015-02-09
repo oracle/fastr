@@ -189,7 +189,7 @@ public class ArgumentMatcher {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
                     Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-                    evaledArgs[fi] = RDataFactory.createPromise(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultClosure);
+                    evaledArgs[fi] = RDataFactory.createPromise(function.isBuiltin() ? EvalPolicy.INLINED : EvalPolicy.PROMISED, PromiseType.ARG_DEFAULT, null, defaultClosure);
                 }
             } else if (function.isBuiltin() && evaledArg instanceof RPromise) {
                 RPromise promise = (RPromise) evaledArg;
@@ -326,8 +326,17 @@ public class ArgumentMatcher {
             int pos = 0;
             UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
             while (si.hasNext()) {
-                varArgsArray[pos] = si.next();
+                T arg = si.next();
                 si.remove();
+                if (arrFactory.isMissing(arg)) {
+                    // do not fold missing arguments into ...
+                    varArgsArray = Utils.resizeArray(varArgsArray, varArgsArray.length - 1);
+                    if (namesArray != null) {
+                        namesArray = Utils.resizeArray(namesArray, namesArray.length - 1);
+                    }
+                    continue;
+                }
+                varArgsArray[pos] = arg;
                 if (namesArray != null) {
                     String suppliedName = suppliedNames[si.lastIndex()];
                     namesArray[pos] = suppliedName;
@@ -618,6 +627,14 @@ public class ArgumentMatcher {
         }
 
         /**
+         * @param arg
+         * @return Whether arg represents a missing argument
+         */
+        default boolean isMissing(T arg) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        /**
          * @param args
          * @return A {@link String} containing debug names of all given args
          */
@@ -647,6 +664,11 @@ public class ArgumentMatcher {
             return name != null && ArgumentsTrait.isVarArg(name);
         }
 
+        @Override
+        public boolean isMissing(RNode arg) {
+            return false;
+        }
+
         @TruffleBoundary
         public String debugString(RNode[] args) {
             SourceSection src = Utils.sourceBoundingBox(args);
@@ -660,6 +682,11 @@ public class ArgumentMatcher {
     private static class ObjectArrayFactory implements ArrayFactory<Object> {
         public Object[] newArray(int length) {
             return new Object[length];
+        }
+
+        @Override
+        public boolean isMissing(Object arg) {
+            return arg == RMissing.instance;
         }
 
         @TruffleBoundary
