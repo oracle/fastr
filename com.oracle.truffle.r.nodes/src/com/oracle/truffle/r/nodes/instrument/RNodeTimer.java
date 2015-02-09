@@ -113,7 +113,7 @@ public class RNodeTimer {
                 return NAME;
             }
 
-            private static long THRESHOLD = 0; // 1000000000L;
+            private static final long THRESHOLD = 0; // 1000000000L;
 
             public void report() {
                 ArrayList<StatementData> data = new ArrayList<>();

@@ -42,23 +42,19 @@ public class BaseVariables implements RPackageVariables.Handler {
     @CompilationFinal private static final String[] VARS = new String[]{
         ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform"
     };
-    // @formatter:on
 
-    // @formatter:off
     @CompilationFinal private static final String[] PLATFORM_NAMES = new String[] {
         "OS.type", "file.sep", "dynlib.ext", "GUI", "endian", "pkgType", "path.sep", "r_arch"
     };
-    // @formatter:on
 
-    // @formatter:off
     private static final String[] FORTRAN_NAMES = new String[] {
         "dchdc", "dqrcf", "dqrdc2", "dqrqty", "dqrqy", "dqrrsd", "dqrxb", "dtrco"
     };
-    // @formatter: on
+    // @formatter:on
 
     public static final RStringVector NAME = RDataFactory.createStringVectorFromScalar("name");
 
-private int initialized = -1;
+    private int initialized = -1;
 
     public BaseVariables() {
         RPackageVariables.registerHandler("base", this);

@@ -70,7 +70,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length;
     }
 

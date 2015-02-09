@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ public class RPackages {
 
     @CompilationFinal public static final String[] DEFAULT_PACKAGES = new String[]{"methods", "fastr", "stats", "utils", "graphics"};
 
-    private static ArrayList<RPackage> packages = new ArrayList<>();
+    private static final ArrayList<RPackage> packages = new ArrayList<>();
 
     /**
      * Set up the initial set of packages, checking {@code R_DEFAULT_PACKAGES}. GnuR does the latter

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 public abstract class TempFile extends RBuiltinNode {
     @CompilationFinal private int stringVectorsAmount;
 
-    private static Random rand = new Random();
+    private static final Random rand = new Random();
 
     private static final String RANDOM_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
     private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();

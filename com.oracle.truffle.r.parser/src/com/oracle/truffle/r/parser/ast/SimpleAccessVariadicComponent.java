@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,12 @@ import com.oracle.truffle.api.source.*;
 public class SimpleAccessVariadicComponent extends AccessVariable {
 
     private final int index;
-    private final Symbol name;
+    private final String name;
 
     public SimpleAccessVariadicComponent(SourceSection source, String name) {
         super(source);
         index = getVariadicComponentIndex(name);
-        this.name = Symbol.getSymbol(name);
+        this.name = name;
     }
 
     private static int getVariadicComponentIndex(String symbol) {
@@ -53,7 +53,7 @@ public class SimpleAccessVariadicComponent extends AccessVariable {
         return index;
     }
 
-    public Symbol getName() {
+    public String getName() {
         return name;
     }
 

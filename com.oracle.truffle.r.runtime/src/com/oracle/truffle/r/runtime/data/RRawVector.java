@@ -51,7 +51,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length;
     }
 

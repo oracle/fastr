@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,7 @@ public class FunctionCall extends Call {
         this.isReplacement = isReplacement;
     }
 
-    public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> arguments) {
+    public FunctionCall(SourceSection src, String funName, List<ArgNode> arguments) {
         this(src, funName, arguments, false);
     }
 
@@ -40,16 +40,16 @@ public class FunctionCall extends Call {
         return lhs;
     }
 
-    public void setSymbol(Symbol symbol) {
+    public void setSymbol(String symbol) {
         lhs = symbol;
     }
 
     public boolean isSymbol() {
-        return lhs instanceof Symbol;
+        return lhs instanceof String;
     }
 
-    public Symbol getName() {
-        return (Symbol) lhs;
+    public String getName() {
+        return (String) lhs;
     }
 
     public FunctionCall getFunctionCall() {

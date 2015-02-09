@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,7 +127,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     private RIntVector createResultVector(RAbstractVector operand, int[] idata) {
-        RIntVector ret = RDataFactory.createIntVector(idata, naCheck.neverSeenNA(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        RIntVector ret = RDataFactory.createIntVector(idata, naCheck.neverSeenNA(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
@@ -149,7 +149,7 @@ public abstract class CastIntegerNode extends CastNode {
             idata[i] = value;
             seenNA = seenNA || naProfile.isNA(value);
         }
-        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
@@ -193,7 +193,7 @@ public abstract class CastIntegerNode extends CastNode {
             warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
-        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);

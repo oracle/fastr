@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastNode {
 
-    @Child private ToStringNode toString = ToStringNodeGen.create(null, false, ToStringNode.DEFAULT_SEPARATOR, false);
+    @Child private ToStringNode toString = ToStringNodeGen.create(null, null, null);
 
     public abstract Object executeString(VirtualFrame frame, int o);
 
@@ -54,29 +54,33 @@ public abstract class CastStringNode extends CastNode {
         return value;
     }
 
+    private String toString(VirtualFrame frame, Object value) {
+        return toString.executeString(frame, value, false, ToStringNode.DEFAULT_SEPARATOR);
+    }
+
     @Specialization
     protected String doInteger(VirtualFrame frame, int value) {
-        return toString.executeString(frame, value);
+        return toString(frame, value);
     }
 
     @Specialization
     protected String doDouble(VirtualFrame frame, double value) {
-        return toString.executeString(frame, value);
+        return toString(frame, value);
     }
 
     @Specialization
     protected String doLogical(VirtualFrame frame, byte value) {
-        return toString.executeString(frame, value);
+        return toString(frame, value);
     }
 
     @Specialization
     protected String doRaw(VirtualFrame frame, RComplex value) {
-        return toString.executeString(frame, value);
+        return toString(frame, value);
     }
 
     @Specialization
     protected String doRaw(VirtualFrame frame, RRaw value) {
-        return toString.executeString(frame, value);
+        return toString(frame, value);
     }
 
     private RStringVector createResultVector(RAbstractVector operand, IntFunction<String> elementFunction) {
@@ -85,7 +89,7 @@ public abstract class CastStringNode extends CastNode {
         for (int i = 0; i < operand.getLength(); i++) {
             sdata[i] = elementFunction.apply(i);
         }
-        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), isPreserveDimensions() ? operand.getDimensions() : null, isPreserveNames() ? operand.getNames() : null);
+        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
@@ -105,32 +109,32 @@ public abstract class CastStringNode extends CastNode {
 
     @Specialization(guards = "!isZeroLength")
     protected RStringVector doIntVector(VirtualFrame frame, RAbstractIntVector operand) {
-        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
+        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
     protected RStringVector doDoubleVector(VirtualFrame frame, RAbstractDoubleVector operand) {
-        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
+        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
     protected RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector operand) {
-        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
+        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
     protected RStringVector doComplexVector(VirtualFrame frame, RComplexVector operand) {
-        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
+        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
     protected RStringVector doRawVector(VirtualFrame frame, RRawVector operand) {
-        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
+        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
     }
 
     @Specialization(guards = "!isZeroLength")
     protected RStringVector doList(VirtualFrame frame, RList operand) {
-        return createResultVector(operand, index -> toString.executeString(frame, operand.getDataAt(index)));
+        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
     }
 
     @Specialization

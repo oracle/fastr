@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -508,7 +508,7 @@ simple_expr returns [ASTNode v]
         ASTNode compNode = Constant.createStringConstant(sourceSection("simple_expr/NSG/comp", comp), comp.getText());
         args.add(ArgNode.create(pkgNode.getSource(), "pkg", pkgNode));
         args.add(ArgNode.create(compNode.getSource(), "name", compNode));
-        $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), Symbol.getSymbol(nsg.getText()), args);
+        $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), nsg.getText(), args);
     }
     | LPAR n_ ea=expr_or_assign n_ RPAR         { $v = $ea.v; $v.setSource(sourceSection("simple_expr/OMIT_PAR", $ea.start, $ea.stop)); }
     | s=sequence                                { $v = $s.v; }
@@ -572,12 +572,12 @@ power_operator returns [BinaryOperator v]
 
 args returns [List<ArgNode> v]
     @init { $v = new ArrayList<>(); }
-    : n_ (arg_expr[v] n_ (COMMA ({ $v.add(ArgNode.create(null, (Symbol) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)* )?
-    | n_ { $v.add(ArgNode.create(null, (Symbol) null, (ASTNode) null)); } (COMMA ({ $v.add(ArgNode.create(null, (Symbol) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)+
+    : n_ (arg_expr[v] n_ (COMMA ({ $v.add(ArgNode.create(null, (String) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)* )?
+    | n_ { $v.add(ArgNode.create(null, (String) null, (ASTNode) null)); } (COMMA ({ $v.add(ArgNode.create(null, (String) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)+
     ;
 
 arg_expr [List<ArgNode> l]
-    : e=expr                                   { $l.add(ArgNode.create(sourceSection("arg_expr/expr", e, e), (Symbol) null, e)); }
+    : e=expr                                   { $l.add(ArgNode.create(sourceSection("arg_expr/expr", e, e), (String) null, e)); }
     | name=(id | STRING) n_ ASSIGN n_ val=expr { $l.add(ArgNode.create(sourceSection("arg_expr/name=expr", name, val), name.getText(), val)); }
     | name=(id | STRING) n_ a=ASSIGN           { $l.add(ArgNode.create(sourceSection("arg_expr/name=", name, a), name.getText(), null)); }
     | name=NULL n_ ASSIGN n_ val=expr          { $l.add(ArgNode.create(sourceSection("arg_expr/NULL=expr", name, val), name.getText(), val)); }

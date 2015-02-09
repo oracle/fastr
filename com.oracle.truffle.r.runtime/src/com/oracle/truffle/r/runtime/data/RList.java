@@ -70,7 +70,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
-    protected int internalGetLength() {
+    public int getLength() {
         return data.length;
     }
 

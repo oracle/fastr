@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,8 @@ public class BasePackage extends RBuiltinPackage {
          * Primitive operations (these are really builtins, but not currently defined that way, so
          * we fake it). N.B. UnaryNotNode is annotated, but not loaded automatically because it is
          * not in the {nodes.builtin.base} package, (along with all the other nodes). A corollary of
-         * this is that all the node classes referenced here here must be annotated with
+         * this is that all the node classes referenced here must be annotated with
+         * 
          * @GenerateNodeFactory.
          * 
          * Arguably this is structurally incorrect and they should all be moved into
