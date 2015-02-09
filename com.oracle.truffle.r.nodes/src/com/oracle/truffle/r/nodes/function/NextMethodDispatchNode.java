@@ -116,7 +116,10 @@ public class NextMethodDispatchNode extends S3DispatchNode {
                 index++;
             }
         }
-        return reorderArgs(frame, targetFunction, funArgValues, funArgNames, false, getSourceSection(), true);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(funArgValues, funArgNames);
+        // ...to match them against the chosen function's formal arguments
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getSourceSection(), promiseHelper, true);
+        return reorderedArgs;
     }
 
     private Object executeHelper(VirtualFrame frame) {

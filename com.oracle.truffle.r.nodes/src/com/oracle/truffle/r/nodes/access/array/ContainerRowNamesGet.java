@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,19 +35,25 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeChild(value = "op")
 public abstract class ContainerRowNamesGet extends RNode {
 
+    private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile naValueMet = BranchProfile.create();
+    private final BranchProfile intVectorMet = BranchProfile.create();
+
     public abstract Object execute(VirtualFrame frame, RAbstractContainer container);
 
-    // this is copied from Attr.java - can't use it directly due to dependence circularity and it
-    // does not seem worth doing refactoring considering that data frame access code should be
-    // ultimately supported in R
-    private static Object getFullRowNames(Object a) {
-        if (a == RNull.instance) {
+    // this is copied from Attr.java - can't use it directly due to dependence circularity
+    private Object getFullRowNames(Object a) {
+        if (nameConditionProfile.profile(a == RNull.instance)) {
             return RNull.instance;
         } else {
             RAbstractVector rowNames = (RAbstractVector) a;
-            Object res = rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
-                            Math.abs(((RAbstractIntVector) rowNames).getDataAt(1))) : a;
-            return res;
+            RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
+            intVectorMet.enter();
+            if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {
+                naValueMet.enter();
+                return RDataFactory.createIntSequence(1, 1, Math.abs(((RAbstractIntVector) rowNames).getDataAt(1)));
+            }
+            return a;
         }
     }
 
@@ -55,8 +62,8 @@ public abstract class ContainerRowNamesGet extends RNode {
         return container.getRowNames();
     }
 
-    @Specialization(guards = "isDataFrame")
-    Object getRowNamesDataFrame(RAbstractContainer container) {
+    @Specialization
+    Object getRowNamesDataFrame(RDataFrame container) {
         return getFullRowNames(container.getRowNames());
     }
 

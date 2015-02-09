@@ -20,6 +20,14 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testCopyDDFattr() {
+        assertEval("{ x<-7; attr(x, \"foo\")<-\"foo\"; y<-42; z<-.Internal(copyDFattr(x, y)); attributes(z) }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; attr(y, \"foo\")<-\"foo\"; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
+        assertEval("{ x<-data.frame(c(1,2), c(11,12)); attr(x, \"dim\")<-c(1,2); attr(x, \"dimnames\")<-list(\"a\", c(\"b\", \"c\")); y<-c(7, 42); z<-.Internal(copyDFattr(x, y)); attributes(z) }");
+    }
+
+    @Test
     public void testUnique() {
         assertEval("{x<-factor(c(\"a\", \"b\", \"a\")); unique(x) }");
     }
@@ -4326,6 +4334,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
+        assertEval("{  f<-function(x, ..., y=TRUE) { nargs() }; f(1, 2, 3) }");
     }
 
     @Test

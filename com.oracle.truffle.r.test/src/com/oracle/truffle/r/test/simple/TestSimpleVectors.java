@@ -17,6 +17,17 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleVectors extends TestBase {
 
     @Test
+    public void testObject() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[3] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[3, drop=FALSE] }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[3, drop=TRUE] }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[3]] }");
+        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=FALSE]] }");
+        assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=TRUE]] }");
+    }
+
+    @Test
     public void testObjectDirectAccess() {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1) }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=TRUE) }");
@@ -35,6 +46,12 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    public void testObjectDefaultAccess() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); .subset(x, 1) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); .subset2(x, 1) }");
+    }
+
+    @Test
     public void testFunctionAccess() {
         assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x); y }");
         assertEval("{ x<-matrix(1:4, ncol=2); y<-`[`(x, drop=TRUE); y }");
@@ -50,6 +67,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, \"a\", \"d\", exact=FALSE) }");
         assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"dd\"))); `[[`(x, exact=FALSE, \"a\", \"d\") }");
         assertEval("{ x<-list(7, list(1, 42)); y<-`[[`(x, c(2,2)); y }");
+
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-.subset(x); y }");
+        assertEvalError("{ x<-matrix(1:4, ncol=2); y<-.subset2(x); y }");
     }
 
     @Test
