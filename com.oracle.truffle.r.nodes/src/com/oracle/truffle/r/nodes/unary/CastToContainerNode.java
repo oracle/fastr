@@ -76,6 +76,11 @@ public abstract class CastToContainerNode extends CastNode {
         return pairlist;
     }
 
+    @Specialization
+    protected REnvironment cast(REnvironment env) {
+        return env;
+    }
+
     @Override
     public RNode substitute(REnvironment env) {
         return CastToContainerNodeGen.create(getOperand(), false, false, false);
