@@ -34,38 +34,21 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
- * Support for the default set of packages in an R session. Setup is a two-phase process. The
- * meta-data for the possible set of default packages (which is a known set) is established
- * statically (to support an AOT-based VM without runtime reflection), and then the dynamic state is
- * established for a given subset of the packages at runtime, through the {@link #load} method.
+ * Support for loading the "base" package. This will eventually change to a proper "package" load
+ * and this class likely will go away.
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
-    private static final LinkedHashMap<String, RBuiltinPackage> packages = new LinkedHashMap<>(6);
-
     private static final RBuiltinPackages instance = new RBuiltinPackages();
-
-    static {
-        RBuiltinPackages.add(new BasePackage());
-    }
-
-    protected static void add(RBuiltinPackage builtins) {
-        packages.put(builtins.getName(), builtins);
-    }
+    private static final RBuiltinPackage basePackage = new BasePackage();
 
     public static RBuiltinPackages getInstance() {
         return instance;
     }
 
-    public static Map<String, RBuiltinPackage> getPackages() {
-        return packages;
-    }
-
     public static void load(String name, MaterializedFrame frame, REnvironment envForFrame) {
-        RBuiltinPackage pkg = packages.get(name);
-        if (pkg == null) {
-            Utils.fail("unknown default package: " + name);
-        }
+        assert name.equals("base");
+        RBuiltinPackage pkg = basePackage;
         pkg.setEnv(envForFrame);
         if (FastROptions.BindBuiltinNames.getValue()) {
             /*
@@ -117,13 +100,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     public static RBuiltinFactory lookupBuiltin(String name) {
-        for (RBuiltinPackage pkg : packages.values()) {
-            RBuiltinFactory factory = pkg.lookupByName(name);
-            if (factory != null) {
-                return factory;
-            }
-        }
-        return null;
+        RBuiltinFactory factory = basePackage.lookupByName(name);
+        return factory;
     }
 
     /**
@@ -132,11 +110,10 @@ public final class RBuiltinPackages implements RBuiltinLookup {
      * only by virtue of the {@link RBuiltin#nonEvalArgs} attribute.
      */
     public boolean isPrimitiveBuiltin(String name) {
-        for (RBuiltinPackage pkg : packages.values()) {
-            RBuiltinFactory rbf = pkg.lookupByName(name);
-            if (rbf != null && rbf.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
-                return true;
-            }
+        RBuiltinPackage pkg = basePackage;
+        RBuiltinFactory rbf = pkg.lookupByName(name);
+        if (rbf != null && rbf.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
+            return true;
         }
         return false;
     }
