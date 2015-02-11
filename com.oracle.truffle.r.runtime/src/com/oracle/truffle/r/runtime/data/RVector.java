@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -55,6 +56,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
+
+    private final ConditionProfile sharedProfile = ConditionProfile.createBinaryProfile();
 
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
@@ -692,15 +695,32 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return this;
     }
 
-    public final void resizeWithNames(int size) {
+    public final RShareable resize(int size, boolean resetAll) {
         this.complete &= getLength() >= size;
-        resizeInternal(size);
-        // reset all atributes other than names;
-        setDimNames(null);
-        setDimensions(null);
-        if (names != null) {
-            names.resizeWithEmpty(size);
+        RVector res = this;
+        if (sharedProfile.profile(this.isShared())) {
+            res = copyResized(size, true);
+            res.markNonTemporary();
+        } else {
+            resizeInternal(size);
         }
+        if (resetAll) {
+            RStringVector oldNames = res.names;
+            resetAllAttributes(oldNames == null);
+            if (oldNames != null) {
+                oldNames.resizeWithEmpty(size);
+                res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
+                res.names = oldNames;
+            }
+        } else {
+            res.setDimensionsNoCheck(null);
+            res.matrixDimension = 0;
+            res.setDimNamesNoCheck(null);
+            if (res.names != null) {
+                res.names.resizeWithEmpty(size);
+            }
+        }
+        return res;
     }
 
     @TruffleBoundary
@@ -771,7 +791,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     @Override
     public final RVector materializeNonSharedVector() {
-        if (this.isShared()) {
+        if (sharedProfile.profile(this.isShared())) {
             RVector res = this.copy();
             res.markNonTemporary();
             return res;

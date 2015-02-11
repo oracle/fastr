@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.function.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -83,20 +81,6 @@ public abstract class CastStringNode extends CastNode {
         return toString(frame, value);
     }
 
-    private RStringVector createResultVector(RAbstractVector operand, IntFunction<String> elementFunction) {
-        String[] sdata = new String[operand.getLength()];
-        // conversions to character will not introduce new NAs
-        for (int i = 0; i < operand.getLength(); i++) {
-            sdata[i] = elementFunction.apply(i);
-        }
-        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
     @Specialization(guards = "isZeroLength")
     protected Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
         return isEmptyVectorConvertedToNull() ? RNull.instance : RDataFactory.createStringVector(0);
@@ -108,33 +92,18 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = "!isZeroLength")
-    protected RStringVector doIntVector(VirtualFrame frame, RAbstractIntVector operand) {
-        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RStringVector doDoubleVector(VirtualFrame frame, RAbstractDoubleVector operand) {
-        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector operand) {
-        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RStringVector doComplexVector(VirtualFrame frame, RComplexVector operand) {
-        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RStringVector doRawVector(VirtualFrame frame, RRawVector operand) {
-        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isZeroLength")
-    protected RStringVector doList(VirtualFrame frame, RList operand) {
-        return createResultVector(operand, index -> toString(frame, operand.getDataAt(index)));
+    protected RAbstractContainer doIntVector(VirtualFrame frame, RAbstractContainer operand) {
+        String[] sdata = new String[operand.getLength()];
+        // conversions to character will not introduce new NAs
+        for (int i = 0; i < operand.getLength(); i++) {
+            sdata[i] = toString(frame, operand.getDataAtAsObject(i));
+        }
+        RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
+        preserveDimensionNames(operand, ret);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -142,7 +111,7 @@ public abstract class CastStringNode extends CastNode {
         return s.getName();
     }
 
-    protected boolean isZeroLength(RAbstractVector vector) {
+    protected boolean isZeroLength(RAbstractContainer vector) {
         return vector.getLength() == 0;
     }
 }
