@@ -54,11 +54,13 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
         return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
     }
 
+    @TruffleBoundary
     @Override
     public Object get(String key) {
         return map.get(key);
     }
 
+    @TruffleBoundary
     @Override
     public void rm(String key) {
         super.rm(key);
@@ -78,6 +80,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
         }
     }
 
+    @TruffleBoundary
     @Override
     public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         ArrayList<String> matchedNamesList = new ArrayList<>(map.size());
@@ -97,6 +100,7 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @TruffleBoundary
     @Override
     protected Set<Object> getBindingsForLock() {
         return map.keySet();
