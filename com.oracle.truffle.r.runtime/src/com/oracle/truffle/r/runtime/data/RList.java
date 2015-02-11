@@ -204,7 +204,7 @@ public final class RList extends RVector implements RAbstractVector {
         if (newData.length > oldDataLength) {
             if (fillNA) {
                 for (int i = oldDataLength; i < newData.length; ++i) {
-                    newData[i] = RRuntime.LOGICAL_NA;
+                    newData[i] = RNull.instance;
                 }
             } else {
                 for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {

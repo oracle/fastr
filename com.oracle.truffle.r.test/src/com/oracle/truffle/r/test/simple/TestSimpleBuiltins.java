@@ -680,6 +680,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testIsNAAssign() {
+        assertEval("{ x <- c(0:4); is.na(x) <- c(2, 4); x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.na(x)<-1; x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.na(x)<-2; x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.na(x)<-c(1, 3); x }");
+    }
+
+    @Test
     public void testIsNA() {
         assertEval("{ is.na(NA) }");
         assertEval("{ is.na(NaN) }");
@@ -1772,6 +1780,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\\\.a.*\")}");
         assertEval("{ abc <- 1; ls(pattern=\"[[:alpha:]]*\")}");
         assertEval("{ f <- function(abc) { ls(pattern=\"[a-z]*\") }; f(1) }");
+    }
+
+    @Test
+    public void testLengthUpdate() {
+        assertEval("{ x<-c(a=1, b=2); length(x)<-1; x }");
+        assertEval("{ x<-c(a=1, b=2); length(x)<-4; x }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); length(x)<-1; x }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); length(x)<-4; x }");
+        assertEval("{ x<-data.frame(a=1,b=2); length(x)<-1; attributes(x) }");
+        assertEval("{ x<-data.frame(a=1,b=2); length(x)<-4; attributes(x) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); length(x)<-1; x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); length(x)<-4; x }");
     }
 
     @Test

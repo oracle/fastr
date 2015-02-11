@@ -46,13 +46,14 @@ public abstract class NextMethod extends RBuiltinNode {
     protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args, String[] argNames) {
         controlVisibility();
         final RStringVector type = readType(frame);
-        final String genericName = genericMethod == null ? readGenericName(frame, genericMethod) : genericMethod;
+        String genericName = genericMethod == null ? readGenericName(frame, genericMethod) : genericMethod;
         if (genericName == null) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            genericName = genericName.intern();
             RFunction enclosingFunction = RArguments.getFunction(frame);
             String enclosingFunctionName = null;
             if (!RArguments.hasS3Args(frame)) {

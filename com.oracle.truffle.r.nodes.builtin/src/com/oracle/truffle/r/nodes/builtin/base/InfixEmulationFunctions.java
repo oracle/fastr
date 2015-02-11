@@ -40,6 +40,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Work-around builtins for infix operators that FastR (currently) does not define as functions.
  * These definitions create the illusion that the definitions exist, even if they are not actually
@@ -193,12 +195,6 @@ public class InfixEmulationFunctions {
             return inds.length() == 0;
         }
 
-        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            // do not dispatch on this object if we ended up here as part of S3 dispatch already
-            // (otherwise me may end up with infinite recursion)
-            return x.isObject() && !RArguments.hasS3Args(frame);
-        }
-
     }
 
     public abstract static class AccessArraySubsetBuiltinBase extends AccessArrayBuiltin {
@@ -236,6 +232,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
+        private static final String NAME = "[";
+
         @Child private DispatchedCallNode dcn;
 
         @Override
@@ -247,7 +245,7 @@ public class InfixEmulationFunctions {
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create("[", RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
@@ -273,7 +271,7 @@ public class InfixEmulationFunctions {
 
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create("[", RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
@@ -287,6 +285,12 @@ public class InfixEmulationFunctions {
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
+
+        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
+            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        }
+
     }
 
     @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
@@ -339,6 +343,9 @@ public class InfixEmulationFunctions {
 
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
+
+        private static final String NAME = "[[";
+
         @Child private DispatchedCallNode dcn;
 
         @Override
@@ -356,7 +363,7 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create("[[", RRuntime.USE_METHOD, new String[]{"", "", "exact"}));
+                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", "", "exact"}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
@@ -370,6 +377,12 @@ public class InfixEmulationFunctions {
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             return super.get(frame, x, inds, exactVec);
         }
+
+        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
+            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        }
+
     }
 
     @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})

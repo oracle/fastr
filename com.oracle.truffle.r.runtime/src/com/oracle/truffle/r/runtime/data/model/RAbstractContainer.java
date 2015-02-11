@@ -26,6 +26,8 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractContainer extends RAttributable, RClassHierarchy {
 
+    boolean isComplete();
+
     int getLength();
 
     boolean hasDimensions();

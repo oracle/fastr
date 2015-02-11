@@ -65,6 +65,11 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return attributes;
     }
 
+    public boolean isComplete() {
+        assert false;
+        return false;
+    }
+
     public int getLength() {
         if (length < 0) {
             length = RContext.getRASTHelper().getLength(this);

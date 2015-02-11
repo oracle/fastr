@@ -320,23 +320,23 @@ Ops.ordered <- function (e1, e2)
 #    ind <- do.call(.Generic, c(codes, na.rm = na.rm))
 #    ordered(levset[ind], levels = levset)
 #}
-#
-#`is.na<-.factor` <- function(x, value)
-#{
-#    lx <- levels(x)
-#    cx <- oldClass(x)
-#    class(x) <- NULL
-#    x[value] <- NA
-#    structure(x, levels = lx, class = cx)
-#}
-#
-#`length<-.factor` <- function(x, value)
-#{
-#    cl <- class(x)
-#    levs <- levels(x)
-#    x <- NextMethod()
-#    structure(x, levels=levs, class=cl)
-#}
+
+`is.na<-.factor` <- function(x, value)
+{
+    lx <- levels(x)
+    cx <- oldClass(x)
+    class(x) <- NULL
+    x[value] <- NA
+    structure(x, levels = lx, class = cx)
+}
+
+`length<-.factor` <- function(x, value)
+{
+    cl <- class(x)
+    levs <- levels(x)
+    x <- NextMethod()
+    structure(x, levels=levs, class=cl)
+}
 
 addNA <- function(x, ifany=FALSE)
 {

@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RExpression implements RShareable, RAbstractContainer {
 
-    private final RList data;
+    private RList data;
 
     public RExpression(RList data) {
         this.data = data;
@@ -46,6 +46,10 @@ public class RExpression implements RShareable, RAbstractContainer {
 
     public RAttributes getAttributes() {
         return data.getAttributes();
+    }
+
+    public boolean isComplete() {
+        return data.isComplete();
     }
 
     public int getLength() {

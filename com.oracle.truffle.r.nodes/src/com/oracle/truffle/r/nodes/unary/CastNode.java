@@ -56,19 +56,19 @@ public abstract class CastNode extends UnaryNode {
         throw RError.error(getSourceSection(), RError.Message.LIST_COERCION, type);
     }
 
-    protected int[] getPreservedDimensions(RAbstractVector operand) {
+    protected int[] getPreservedDimensions(RAbstractContainer operand) {
         int[] dimensions = isPreserveDimensions() ? operand.getDimensions() : null;
         int[] preservedDimensions = hasDimensionsProfile.profile(dimensions != null) ? dimensions : null;
         return preservedDimensions;
     }
 
-    protected RStringVector getPreservedNames(RAbstractVector operand) {
+    protected RStringVector getPreservedNames(RAbstractContainer operand) {
         RStringVector names = isPreserveNames() ? operand.getNames() : null;
         RStringVector preservedNames = hasNamesProfile.profile(names != null) ? names : null;
         return preservedNames;
     }
 
-    protected void preserveDimensionNames(RAbstractVector operand, RVector ret) {
+    protected void preserveDimensionNames(RAbstractContainer operand, RVector ret) {
         RList dimNames = isPreserveDimensions() ? operand.getDimNames() : null;
         if (hasDimNamesProfile.profile(dimNames != null)) {
             ret.setDimNames((RList) dimNames.copy());

@@ -38,6 +38,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public boolean isComplete() {
+        return vector.isComplete();
+    }
+
+    @Override
     public int getLength() {
         if (vector instanceof RList || vector.getLength() == 0) {
             return vector.getLength();
