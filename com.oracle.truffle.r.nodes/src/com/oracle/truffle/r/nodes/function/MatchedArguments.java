@@ -87,8 +87,7 @@ public final class MatchedArguments extends Arguments<RNode> {
      *         is neither a supplied argument nor a default argument
      */
     public static MatchedArguments create(RNode[] arguments, String[] names) {
-        MatchedArguments matchedArgs = new MatchedArguments(arguments, names);
-        return matchedArgs;
+        return new MatchedArguments(arguments, names);
     }
 
     /**
