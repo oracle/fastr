@@ -22,24 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
-
-    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
-    @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
-    private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private boolean checkSingletonFrame = true;
 
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(builtin.getSourceSection(), formalArguments, frameDescriptor);
@@ -50,42 +40,6 @@ public final class RBuiltinRootNode extends RRootNode {
     public Object execute(VirtualFrame frame) {
         verifyEnclosingAssumptions(frame);
         return builtin.execute(frame);
-    }
-
-    private void verifyEnclosingAssumptions(VirtualFrame vf) {
-        if (checkSingletonFrame) {
-            checkSingletonFrame = FrameSlotChangeMonitor.checkSingletonFrame(vf);
-        }
-        if (enclosingFrameAssumption != null) {
-            try {
-                enclosingFrameAssumption.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(getFrameDescriptor());
-            }
-            if (enclosingFrameAssumption != null) {
-                MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
-                if (enclosingFrameAssumption.getValue() != enclosingFrame) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
-                }
-            }
-        }
-        if (enclosingFrameDescriptorAssumption != null) {
-            try {
-                enclosingFrameDescriptorAssumption.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(getFrameDescriptor());
-            }
-            if (enclosingFrameDescriptorAssumption != null) {
-                MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
-                FrameDescriptor enclosingFrameDescriptor = enclosingFrame == null ? null : enclosingFrameProfile.profile(enclosingFrame).getFrameDescriptor();
-                if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(getFrameDescriptor(), enclosingFrameDescriptorAssumption,
-                                    enclosingFrameDescriptor);
-                }
-            }
-        }
     }
 
     public RCallNode inline(InlinedArguments args) {

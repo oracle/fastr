@@ -25,11 +25,9 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -51,11 +49,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
-
-    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
-    @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
-    private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private boolean checkSingletonFrame = true;
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -89,8 +82,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.instrumentationApplied = substituteFrame;
         this.uuid = substituteFrame ? null : FunctionUIDFactory.get().createUID();
 
-        this.enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(frameDesc);
-        this.enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(frameDesc);
+        this.checkSingletonFrame = !substituteFrame;
     }
 
     public FunctionUID getUID() {
@@ -134,44 +126,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     onExitExpressionCache.execute(vf, node);
                 }
                 RContext.setVisible(isVisible);
-            }
-        }
-    }
-
-    private void verifyEnclosingAssumptions(VirtualFrame vf) {
-        if (!substituteFrame && checkSingletonFrame) {
-            checkSingletonFrame = FrameSlotChangeMonitor.checkSingletonFrame(vf);
-        }
-        if (enclosingFrameAssumption != null) {
-            try {
-                enclosingFrameAssumption.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(getFrameDescriptor());
-            }
-            if (enclosingFrameAssumption != null) {
-                MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
-                if (enclosingFrameAssumption != null) {
-                    if (enclosingFrameAssumption.getValue() != enclosingFrame) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
-                    }
-                }
-            }
-        }
-        if (enclosingFrameDescriptorAssumption != null) {
-            try {
-                enclosingFrameDescriptorAssumption.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(getFrameDescriptor());
-            }
-            if (enclosingFrameDescriptorAssumption != null) {
-                MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(vf);
-                FrameDescriptor enclosingFrameDescriptor = enclosingFrame == null ? null : enclosingFrameProfile.profile(enclosingFrame).getFrameDescriptor();
-                if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(getFrameDescriptor(), enclosingFrameDescriptorAssumption,
-                                    enclosingFrameDescriptor);
-                }
             }
         }
     }
