@@ -2396,19 +2396,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return valLength > posLength || (posLength % valLength != 0);
     }
 
-    protected boolean isPosNA(Object v, RAbstractContainer value, int recLevel, int position) {
+    protected boolean isPosNA(Object v, Object value, int recLevel, int position) {
         return RRuntime.isNA(position);
     }
 
-    protected boolean isPosNA(Object v, RNull value, int recLevel, int position) {
-        return RRuntime.isNA(position);
-    }
-
-    protected boolean isPosZero(Object v, RAbstractContainer value, int recLevel, int position) {
-        return position == 0;
-    }
-
-    protected boolean isPosZero(Object v, RNull value, int recLevel, int position) {
+    protected boolean isPosZero(Object v, Object value, int recLevel, int position) {
         return position == 0;
     }
 
@@ -2416,55 +2408,29 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return value.getLength() == 1;
     }
 
-    protected boolean twoPositions(Object v, RAbstractContainer value, int recLevel, RAbstractVector position) {
+    protected boolean twoPositions(Object v, Object value, int recLevel, RAbstractVector position) {
         return position.getLength() == 2;
     }
 
-    protected boolean twoPositions(Object v, RNull value, int recLevel, RAbstractVector position) {
-        return position.getLength() == 2;
-    }
-
-    protected boolean onePosition(Object v, RAbstractContainer value, int recLevel, RAbstractVector position) {
+    protected boolean onePosition(Object v, Object value, int recLevel, RAbstractVector position) {
         return position.getLength() == 1;
     }
-
-    protected boolean onePosition(Object v, RNull value, int recLevel, RAbstractVector position) {
-        return position.getLength() == 1;
-    }
-
-    protected boolean noPosition(Object v, RAbstractContainer value, int recLevel, RAbstractVector position) {
+    protected boolean noPosition(Object v, Object value, int recLevel, RAbstractVector position) {
         return position.getLength() == 0;
     }
-
-    protected boolean noPosition(Object v, RNull value, int recLevel, RAbstractVector position) {
-        return position.getLength() == 0;
-    }
-
     protected boolean isSubset() {
         return isSubset;
     }
 
-    protected boolean inRecursion(Object v, RAbstractContainer value, int recLevel) {
+    protected boolean inRecursion(Object v, Object value, int recLevel) {
         return recLevel > 0;
     }
 
-    protected boolean inRecursion(Object v, RNull value, int recLevel) {
-        return recLevel > 0;
-    }
-
-    protected boolean multiPos(Object v, RNull value, int recLevel, RIntVector positions) {
+    protected boolean multiPos(Object v, Object value, int recLevel, RIntVector positions) {
         return positions.getLength() > 1;
     }
 
-    protected boolean multiPos(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
-        return positions.getLength() > 1;
-    }
-
-    protected boolean moreThanTwoPos(Object v, RAbstractContainer value, int recLevel, RList positions) {
-        return positions.getLength() > 2;
-    }
-
-    protected boolean moreThanTwoPos(Object v, RNull value, int recLevel, RList positions) {
+    protected boolean moreThanTwoPos(Object v, Object value, int recLevel, RList positions) {
         return positions.getLength() > 2;
     }
 
