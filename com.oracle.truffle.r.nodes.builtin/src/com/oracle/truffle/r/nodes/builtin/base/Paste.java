@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @GenerateNodeFactory
 public abstract class Paste extends RBuiltinNode {
 
+    private static final String[] ONE_EMPTY_STRING = new String[]{""};
+
     public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
     @Child private CastStringNode castCharacterNode;
@@ -47,6 +49,7 @@ public abstract class Paste extends RBuiltinNode {
     private final ConditionProfile emptyOrNull = ConditionProfile.createBinaryProfile();
     private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noCollapse = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -86,19 +89,18 @@ public abstract class Paste extends RBuiltinNode {
             return RDataFactory.createEmptyStringVector();
         }
         int length = values.getLength();
-        Object[] converted = new Object[length];
+        String[][] converted = new String[length][];
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
+            String[] array;
             if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
-                converted[i] = castCharacterVector(frame, element);
-                int len = ((RStringVector) converted[i]).getLength();
-                if (len > maxLength) {
-                    maxLength = len;
-                }
+                array = castCharacterVector(frame, element).getDataWithoutCopying();
             } else {
-                converted[i] = castCharacter(frame, element);
+                array = new String[]{castCharacter(frame, element)};
             }
+            maxLength = Math.max(maxLength, array.length);
+            converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
         }
 
         String[] result = prepareResult(sep, length, converted, maxLength);
@@ -110,20 +112,47 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    @TruffleBoundary
-    private static String[] prepareResult(String sep, int length, Object[] converted, int maxLength) {
+    private String[] prepareResult(String sep, int length, String[][] converted, int maxLength) {
         String[] result = new String[maxLength];
+        String lastResult = null;
         for (int i = 0; i < maxLength; i++) {
-            StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < length; j++) {
-                if (j != 0) {
-                    builder.append(sep);
+            if (i > 0) {
+                // check if the next string is composed of the same elements
+                int j;
+                for (j = 0; j < length; j++) {
+                    String element = converted[j][i % converted[j].length];
+                    String lastElement = converted[j][(i - 1) % converted[j].length];
+                    if (element != lastElement) {
+                        break;
+                    }
                 }
-                builder.append(getConvertedElement(converted[j], i));
+                if (reusedResultProfile.profile(j == length)) {
+                    result[i] = lastResult;
+                    continue;
+                }
             }
-            result[i] = RRuntime.toString(builder);
+            result[i] = lastResult = concatStrings(converted, i, length, sep);
         }
         return result;
+    }
+
+    @TruffleBoundary
+    private static String concatStrings(String[][] converted, int index, int length, String sep) {
+        // pre compute the string length for the StringBuilder
+        int stringLength = -sep.length();
+        for (int j = 0; j < length; j++) {
+            String element = converted[j][index % converted[j].length];
+            stringLength += element.length() + sep.length();
+        }
+        StringBuilder builder = new StringBuilder(stringLength);
+        for (int j = 0; j < length; j++) {
+            if (j != 0) {
+                builder.append(sep);
+            }
+            builder.append(converted[j][index % converted[j].length]);
+        }
+        assert builder.length() == stringLength;
+        return RRuntime.toString(builder);
     }
 
     public boolean isEmptyOrNull(RList values) {
@@ -141,19 +170,4 @@ public abstract class Paste extends RBuiltinNode {
         }
         return RDataFactory.createStringVector(new String[]{RRuntime.toString(sb)}, RDataFactory.COMPLETE_VECTOR);
     }
-
-    private static String getConvertedElement(final Object converted, int index) {
-        if (converted instanceof RStringVector) {
-            RStringVector sv = (RStringVector) converted;
-            if (sv.getLength() == 0) {
-                return "";
-            }
-            return sv.getDataAt(index % sv.getLength());
-        } else if (converted instanceof String) {
-            return (String) converted;
-        }
-        assert false;
-        return "";
-    }
-
 }
