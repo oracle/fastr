@@ -2010,6 +2010,47 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void testNullUpdate() {
+        assertEval("{ x <- NULL; x[[0]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[0]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[0]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
+    }
+
+    @Test
     public void testSuperUpdate() {
         assertEval("{ x <- 1:3 ; f <- function() { x[2] <<- 100 } ; f() ; x }");
         assertEval("{ x <- 1:3 ; f <- function() { x[2] <- 10 ; x[2] <<- 100 ; x[2] <- 1000 } ; f() ; x }");
