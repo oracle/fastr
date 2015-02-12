@@ -636,12 +636,12 @@ public class RSerialize {
         }
     }
 
-    private static class XdrFormat extends PStream {
+    private static final class XdrFormat extends PStream {
         /**
          * XDR buffer handling. Copied and modified from code in <a
          * href="https://java.net/projects/yanfs">YANFS</a>, developed at Sun Microsystems.
          */
-        public static class Xdr {
+        public static final class Xdr {
             private byte[] buf;
             @SuppressWarnings("unused") private int size;
             private int offset;
