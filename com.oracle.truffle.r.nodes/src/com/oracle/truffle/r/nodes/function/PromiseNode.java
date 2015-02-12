@@ -79,7 +79,7 @@ public abstract class PromiseNode extends RNode {
             case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
                     // TODO Correct??
-                    pn = factory.getExpr() instanceof ConstantNode ? (RNode) factory.getExpr() : new InlinedSuppliedPromiseNode(factory);
+                    pn = factory.getExpr() instanceof ConstantNode ? (RNode) factory.getExpr() : new InlinedSuppliedPromiseNode((RNode) factory.getExpr(), (RNode) factory.getDefaultExpr());
                 } else {
                     // TODO Correct??
                     pn = factory.getDefaultExpr() instanceof ConstantNode ? (RNode) factory.getDefaultExpr() : new InlinedPromiseNode(factory);
@@ -218,18 +218,19 @@ public abstract class PromiseNode extends RNode {
      * evaluate it here, and as it's {@link EvalPolicy#INLINED}, return its value and not the
      * {@link RPromise} itself! {@link EvalPolicy#INLINED} {@link PromiseType#ARG_SUPPLIED}
      */
-    private static final class InlinedSuppliedPromiseNode extends PromiseNode {
-        @Child private RNode expr;
+    private static final class InlinedSuppliedPromiseNode extends RNode {
+        @Child private RNode expression;
+        @Child private RNode defaultExpressionCache;
+        private final RNode defaultExpression;
+
         @Child private PromiseHelperNode promiseHelper;
-        @Child private PromiseCheckHelperNode promiseCheckHelper;
 
-        private final BranchProfile isMissingProfile = BranchProfile.create();
         private final BranchProfile isVarArgProfile = BranchProfile.create();
-        private final BranchProfile checkPromiseProfile = BranchProfile.create();
+        private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
-        public InlinedSuppliedPromiseNode(RPromiseFactory factory) {
-            super(factory);
-            this.expr = (RNode) factory.getExpr();
+        public InlinedSuppliedPromiseNode(RNode expression, RNode defaultExpression) {
+            this.expression = expression;
+            this.defaultExpression = defaultExpression;
         }
 
         @Override
@@ -237,38 +238,53 @@ public abstract class PromiseNode extends RNode {
             // builtin.inline: We do re-evaluation every execute inside the caller frame, as we
             // know that the evaluation of default values has no side effects (has to be assured by
             // builtin implementations)
-            Object obj = expr.execute(frame);
+            Object obj = expression.execute(frame);
             if (obj == RMissing.instance) {
-                isMissingProfile.enter();
-                if (factory.getDefaultExpr() == null) {
-                    return RMissing.instance;
+                if (defaultExpressionCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    if (defaultExpression == null) {
+                        defaultExpressionCache = insert(ConstantNode.create(RMissing.instance));
+                    } else {
+                        defaultExpressionCache = insert(NodeUtil.cloneNode(defaultExpression));
+                    }
                 }
+                return defaultExpressionCache.execute(frame);
+            } else if (obj instanceof RArgsValuesAndNames) {
+                isVarArgProfile.enter();
                 if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
                 }
-                RPromise promise = factory.createPromiseDefault();
-                return promiseHelper.evaluate(frame, promise);
-            } else if (obj instanceof RArgsValuesAndNames) {
-                isVarArgProfile.enter();
-                if (promiseCheckHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseCheckHelper = insert(new PromiseCheckHelperNode());
-                }
-                return promiseCheckHelper.checkEvaluateArgs(frame, (RArgsValuesAndNames) obj);
+                return checkEvaluateArgs(frame, (RArgsValuesAndNames) obj);
             } else {
-                checkPromiseProfile.enter();
-                if (promiseCheckHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseCheckHelper = insert(new PromiseCheckHelperNode());
+                if (isPromiseProfile.profile(obj instanceof RPromise)) {
+                    if (promiseHelper == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        promiseHelper = insert(new PromiseHelperNode());
+                    }
+                    return promiseHelper.evaluate(frame, (RPromise) obj);
+                } else {
+                    return obj;
                 }
-                return promiseCheckHelper.checkEvaluate(frame, obj);
             }
+        }
+
+        public RArgsValuesAndNames checkEvaluateArgs(VirtualFrame frame, RArgsValuesAndNames args) {
+            Object[] values = args.getValues();
+            Object[] newValues = new Object[values.length];
+            for (int i = 0; i < values.length; i++) {
+                Object value = values[i];
+                if (isPromiseProfile.profile(value instanceof RPromise)) {
+                    value = promiseHelper.evaluate(frame, (RPromise) value);
+                }
+                newValues[i] = value;
+            }
+            return new RArgsValuesAndNames(newValues, args.getNames());
         }
 
         @Override
         public void deparse(State state) {
-            expr.deparse(state);
+            expression.deparse(state);
         }
     }
 

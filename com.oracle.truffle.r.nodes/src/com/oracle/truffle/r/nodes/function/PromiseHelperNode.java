@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,15 +57,6 @@ public class PromiseHelperNode extends Node {
                 return promiseHelper.evaluate(frame, (RPromise) obj);
             }
             return obj;
-        }
-
-        public RArgsValuesAndNames checkEvaluateArgs(VirtualFrame frame, RArgsValuesAndNames args) {
-            Object[] values = args.getValues();
-            Object[] newValues = new Object[values.length];
-            for (int i = 0; i < values.length; i++) {
-                newValues[i] = checkEvaluate(frame, values[i]);
-            }
-            return new RArgsValuesAndNames(newValues, args.getNames());
         }
     }
 
