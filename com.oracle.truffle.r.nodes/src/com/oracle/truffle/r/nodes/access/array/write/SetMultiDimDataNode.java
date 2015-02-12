@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.write;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,6 +42,7 @@ abstract class SetMultiDimDataNode extends RNode {
 
     private final NACheck posNACheck;
     private final NACheck elementNACheck;
+    private final ConditionProfile dimLevelOneProfile = ConditionProfile.createBinaryProfile();
     private final boolean isSubset;
 
     @Child private SetMultiDimDataNode setMultiDimDataRecursive;
@@ -66,251 +68,6 @@ abstract class SetMultiDimDataNode extends RNode {
         this.isSubset = other.isSubset;
     }
 
-    @Specialization
-    protected RList setData(VirtualFrame frame, RAbstractVector value, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, true, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAtAsObject(dstIndex % value.getLength()), null);
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, true, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
-    @Specialization
-    protected RIntVector setData(VirtualFrame frame, RAbstractIntVector value, RIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
-    @Specialization
-    protected RDoubleVector setData(VirtualFrame frame, RAbstractDoubleVector value, RDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
-    @Specialization
-    protected RLogicalVector setData(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
-    @Specialization
-    protected RStringVector setData(VirtualFrame frame, RAbstractStringVector value, RStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
-    @Specialization
-    protected RComplexVector setData(VirtualFrame frame, RAbstractComplexVector value, RComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
-    @Specialization
-    protected RRawVector setData(VirtualFrame frame, RAbstractRawVector value, RRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
-        int[] srcDimensions = vector.getDimensions();
-        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
-        int srcDimSize = srcDimensions[currentDimLevel - 1];
-        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
-        int newAccDstDimensions = accDstDimensions / p.getLength();
-        posNACheck.enable(p);
-        if (currentDimLevel == 1) {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
-                vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()));
-            }
-        } else {
-            for (int i = 0; i < p.getLength(); i++) {
-                int pos = p.getDataAt(i);
-                if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
-                    continue;
-                }
-                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
-            }
-        }
-        return vector;
-    }
-
     private int getNewArrayBase(int srcArrayBase, int pos, int newAccSrcDimensions) {
         int newSrcArrayBase;
         if (posNACheck.check(pos)) {
@@ -329,4 +86,99 @@ abstract class SetMultiDimDataNode extends RNode {
         }
     }
 
+    @FunctionalInterface
+    private interface UpdateFunction<ValueT extends RAbstractVector, VectorT extends RVector> {
+        void apply(VectorT vector, ValueT value, int srcIndex, int destIndex, NACheck elementNACheck);
+    }
+
+    private <ValueT extends RAbstractVector, VectorT extends RVector> VectorT setDataInternal(VirtualFrame frame, ValueT value, VectorT vector, Object[] positions, int currentDimLevel,
+                    int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions, UpdateFunction<ValueT, VectorT> update) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        posNACheck.enable(p);
+        elementNACheck.enable(value);
+        if (dimLevelOneProfile.profile(currentDimLevel == 1)) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int pos = p.getDataAt(i);
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
+                    continue;
+                }
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
+                update.apply(vector, value, srcIndex, dstIndex, elementNACheck);
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int pos = p.getDataAt(i);
+                if (posNACheck.check(pos)) {
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
+                    continue;
+                }
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
+                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+            }
+        }
+        return vector;
+    }
+
+    @Specialization
+    protected RList setData(VirtualFrame frame, RAbstractVector value, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAtAsObject(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RIntVector setData(VirtualFrame frame, RAbstractIntVector value, RIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RDoubleVector setData(VirtualFrame frame, RAbstractDoubleVector value, RDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RLogicalVector setData(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RStringVector setData(VirtualFrame frame, RAbstractStringVector value, RStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RComplexVector setData(VirtualFrame frame, RAbstractComplexVector value, RComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RRawVector setData(VirtualFrame frame, RAbstractRawVector value, RRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
+        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()));
+        });
+    }
 }
