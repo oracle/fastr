@@ -165,10 +165,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, RRuntime.toString(name), mode);
+            return UnresolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, name, mode);
         } else {
             assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(name), mode);
+            return new UnresolvedWriteSuperVariableNode(rhs, name, mode);
         }
     }
 
@@ -400,7 +400,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 execute(frame, value, enclosingFrame);
             } else {
                 // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalVariableNodeGen.create(getRhs(), this.isArgWrite(), RRuntime.toString(symbol), mode)).execute(frame, value);
+                replace(UnresolvedWriteLocalVariableNodeGen.create(getRhs(), this.isArgWrite(), symbol, mode)).execute(frame, value);
             }
         }
 
