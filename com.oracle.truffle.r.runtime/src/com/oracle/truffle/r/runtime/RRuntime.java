@@ -134,7 +134,7 @@ public class RRuntime {
 
     public static final String NULL = "NULL";
 
-    @CompilationFinal private static final String[] numberStringCache = new String[1024];
+    @CompilationFinal private static final String[] numberStringCache = new String[4096];
     private static final int MIN_CACHED_NUMBER = -numberStringCache.length / 2;
     private static final int MAX_CACHED_NUMBER = numberStringCache.length / 2 - 1;
 
