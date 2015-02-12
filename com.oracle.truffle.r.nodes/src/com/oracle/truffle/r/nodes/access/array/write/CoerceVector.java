@@ -360,10 +360,10 @@ public abstract class CoerceVector extends RNode {
     }
 
     protected boolean isVectorList(RAbstractContainer value, RAbstractVector vector) {
-        return vector.getElementClass() == Object.class;
+        return vector instanceof RList;
     }
 
     protected boolean isVectorListOrDataFrame(RAbstractContainer value, RAbstractContainer vector) {
-        return vector.getElementClass() == Object.class || vector.getElementClass() == RDataFrame.class;
+        return vector instanceof RList || vector.getElementClass() == RDataFrame.class;
     }
 }

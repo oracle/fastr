@@ -1778,7 +1778,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     protected boolean isVectorList(RAbstractContainer container) {
-        return container.getElementClass() == Object.class;
+        return container instanceof RList;
     }
 
     protected boolean wrongDimensions(RAbstractVector container, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions) {

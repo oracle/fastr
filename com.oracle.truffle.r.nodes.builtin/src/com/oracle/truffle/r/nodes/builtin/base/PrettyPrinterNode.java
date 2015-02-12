@@ -1294,7 +1294,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         protected static boolean isVectorList(RAbstractVector v) {
-            return v.getElementClass() == Object.class;
+            return v instanceof RList;
         }
 
         protected static boolean isLengthOne(RList v) {

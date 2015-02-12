@@ -125,7 +125,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     protected boolean isVectorList(RAbstractVector vector, RAbstractVector v) {
-        return v.getElementClass() == Object.class;
+        return v instanceof RList;
     }
 
     protected boolean isZeroLength(VirtualFrame frame, RAbstractVector vector, RList list) {

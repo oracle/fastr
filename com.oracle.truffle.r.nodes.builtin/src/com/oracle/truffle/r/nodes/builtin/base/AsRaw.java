@@ -141,7 +141,7 @@ public abstract class AsRaw extends RBuiltinNode {
     }
 
     protected boolean isListVector(RAbstractVector vector) {
-        return vector.getElementClass() == Object.class;
+        return vector instanceof RList;
     }
 
     protected boolean isRawVector(RAbstractVector vector) {

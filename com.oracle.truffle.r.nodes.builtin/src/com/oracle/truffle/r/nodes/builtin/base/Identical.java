@@ -163,7 +163,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
-        return x.getElementClass() == Object.class && y.getElementClass() == Object.class;
+        return x instanceof RList && y instanceof RList;
     }
 
 }
