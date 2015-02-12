@@ -179,8 +179,8 @@ public class InfixEmulationFunctions {
                 OperatorConverterNode[] operatorConverters = new OperatorConverterNode[len];
                 MultiDimPosConverterNode[] multiDimOperatorConverters = inds.length() == 1 ? null : new MultiDimPosConverterNode[len];
                 for (int i = 0; i < len; i++) {
-                    castPositions[i] = ArrayPositionCastNodeGen.create(i, inds.length(), false, isSubset, ConstantNode.create(RNull.instance) /* dummy */, null);
-                    operatorConverters[i] = OperatorConverterNodeGen.create(i, inds.length(), false, isSubset, null, ConstantNode.create(RNull.instance) /* dummy */, null);
+                    castPositions[i] = ArrayPositionCastNodeGen.create(i, inds.length(), false, isSubset, null, null);
+                    operatorConverters[i] = OperatorConverterNodeGen.create(i, inds.length(), false, isSubset, null, null, null);
                     if (multiDimOperatorConverters != null) {
                         multiDimOperatorConverters[i] = MultiDimPosConverterNodeGen.create(isSubset, null, null);
                     }
