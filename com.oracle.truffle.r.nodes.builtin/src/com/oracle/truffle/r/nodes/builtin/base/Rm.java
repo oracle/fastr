@@ -84,7 +84,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);
         }
     }
 

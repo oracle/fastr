@@ -119,7 +119,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             }
 
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
             return result;
         }
 
@@ -134,7 +134,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             }
 
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
             return result;
         }
 
@@ -149,7 +149,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             }
 
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
             return result;
         }
 
@@ -164,7 +164,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             }
 
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
             return result;
         }
     }

@@ -71,7 +71,7 @@ public abstract class PromiseNode extends RNode {
      *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
      */
     @TruffleBoundary
-    public static RNode create(SourceSection src, RPromiseFactory factory) {
+    public static RNode create(SourceSection src, RPromiseFactory factory, boolean noOpt) {
         assert factory.getType() != PromiseType.NO_ARG;
 
         RNode pn = null;
@@ -97,7 +97,7 @@ public abstract class PromiseNode extends RNode {
                 }
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    if (isOptimizableVariable(expr)) {
+                    if (!noOpt && isOptimizableVariable(expr)) {
                         pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
                         break;
                     }

@@ -283,7 +283,6 @@ public abstract class RCallNode extends RNode {
         return null;
     }
 
-    @TruffleBoundary
     protected RCallNode getParentCallNode() {
         RNode parent = (RNode) unwrapParent();
         if (!(parent instanceof RCallNode)) {
@@ -367,12 +366,7 @@ public abstract class RCallNode extends RNode {
      *
      * @see RootCallNode
      */
-    public static class LeafCallNode extends RCallNode {
-
-        @Override
-        public Object execute(VirtualFrame frame, RFunction function) {
-            throw RInternalError.shouldNotReachHere();
-        }
+    public abstract static class LeafCallNode extends RCallNode {
 
         @Override
         public RNode getFunctionNode() {
@@ -380,7 +374,7 @@ public abstract class RCallNode extends RNode {
         }
 
         @Override
-        public CallArgumentsNode getArgumentsNode() {
+        public final CallArgumentsNode getArgumentsNode() {
             return getParentCallNode().getArgumentsNode();
         }
     }
@@ -524,7 +518,7 @@ public abstract class RCallNode extends RNode {
                     callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature, true);
                 } else {
                     // Nope! (peeewh)
-                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, callSrc, argsSrc);
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, callSrc, argsSrc, false);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
@@ -630,7 +624,7 @@ public abstract class RCallNode extends RNode {
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
 
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, args, getSourceSection(), args.getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, args, getSourceSection(), args.getEncapsulatingSourceSection(), true);
             this.lastMatchedArgs = matchedArgs;
             this.lastCallTarget = currentFunction.getTarget();
 
@@ -730,7 +724,7 @@ public abstract class RCallNode extends RNode {
         protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
                         VarArgsSignature varArgsSignature, boolean isVarArgsRoot) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection(), false);
             return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs, isVarArgsRoot);
         }
 
@@ -783,7 +777,7 @@ public abstract class RCallNode extends RNode {
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
@@ -809,7 +803,7 @@ public abstract class RCallNode extends RNode {
 
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);

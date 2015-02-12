@@ -77,7 +77,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
                 slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, FrameSlotKind.Object);
             }
             // Overwrites former FrameSlotKind
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, null);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
             return;
         }
 
@@ -96,16 +96,16 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         }
         switch (valueSlotKind) {
             case Byte:
-                FrameSlotChangeMonitor.setByteAndInvalidate(frame, slot, (byte) value, null);
+                FrameSlotChangeMonitor.setByteAndInvalidate(frame, slot, (byte) value, false, null);
                 break;
             case Int:
-                FrameSlotChangeMonitor.setIntAndInvalidate(frame, slot, (int) value, null);
+                FrameSlotChangeMonitor.setIntAndInvalidate(frame, slot, (int) value, false, null);
                 break;
             case Double:
-                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, slot, (double) value, null);
+                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, slot, (double) value, false, null);
                 break;
             case Object:
-                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, null);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
                 break;
             case Illegal:
                 break;

@@ -170,7 +170,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         if (fs == null) {
             fs = FrameSlotChangeMonitor.addFrameSlot(frame.getFrameDescriptor(), x, FrameSlotKind.Illegal);
         }
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, value, invalidateProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, value, true, invalidateProfile);
     }
 
     private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {

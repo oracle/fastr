@@ -222,7 +222,7 @@ public class PromiseHelperNode extends Node {
             // plain'n'simple RPromise
             return generateValueDefault(frame, promise, callSrc);
         } else if (promise.isValid()) {
-            promise.notifySuccess();
+// promise.notifySuccess();
 
             return getEagerValue(promise, callSrc);
         } else {
