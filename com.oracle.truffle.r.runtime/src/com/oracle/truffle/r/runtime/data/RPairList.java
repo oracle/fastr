@@ -101,7 +101,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public boolean isComplete() {
-        assert false;
+        RInternalError.shouldNotReachHere();
         return false;
     }
 
@@ -130,12 +130,12 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public RVector materializeNonSharedVector() {
-        assert false;
+        RInternalError.shouldNotReachHere();
         return null;
     }
 
     public RShareable materializeToShareable() {
-        assert false;
+        RInternalError.shouldNotReachHere();
         return null;
     }
 
