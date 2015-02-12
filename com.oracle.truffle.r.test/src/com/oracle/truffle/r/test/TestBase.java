@@ -107,7 +107,7 @@ public class TestBase {
                 expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
             } catch (Throwable ex) {
-                Assert.fail("R initialization failure: " + ex);
+                throw new AssertionError("R initialization failure", ex);
             }
 
         }
