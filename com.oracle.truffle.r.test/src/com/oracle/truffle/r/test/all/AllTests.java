@@ -3675,6 +3675,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAssignment_testEmptyName_62d9a2dc756bfcb13e23c0f730b1916a() {
+        assertEval("{ \"\" <- 123 }");
+    }
+
+    @Test
+    public void TestSimpleAssignment_testEmptyName_90764536db440aaf32dbc714fa19cb23() {
+        assertEval("{ '' <- 123 }");
+    }
+
+    @Test
+    public void TestSimpleAssignment_testEmptyName_5d80360f9e5b0c5343eae28229abe36e() {
+        assertEval("{ `` <- 123 }");
+    }
+
+    @Test
+    public void TestSimpleAssignment_testEmptyName_c54f3d042bf11b9e0e16e0718df526f0() {
+        assertEval("{ `` + 123 }");
+    }
+
+    @Test
+    public void TestSimpleAssignment_testEmptyName_a39d2dbc5c3ed7c27fbb5d53480c5e54() {
+        assertEval("{ 123 + `` }");
+    }
+
+    @Test
     public void TestSimpleAssignment_testMisc_100afd1332c60dd5c86703f287e3911a() {
         assertEval("{ f <- function(i) { if (i==1) { c <- 1 } ; c } ; f(1) ; typeof(f(2)) }");
     }
@@ -19587,6 +19612,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDotsIgnore_408a647f1319d8f5216323761b223a47() {
         assertEvalError("{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testEmptyParamName_3fc0a5bc1a70c83d82dd41d6d545f003() {
+        assertEval("{ f <- function(a, ...) a; f(''=123) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testEmptyParamNameIgnore_4322ce67ff05a08129fa1498efde1fd9() {
+        assertEvalError("{ function(''=123) 4 }");
     }
 
     @Test

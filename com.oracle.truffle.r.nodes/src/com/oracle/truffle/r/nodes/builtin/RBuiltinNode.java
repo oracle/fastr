@@ -165,16 +165,15 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         // Create formal arguments
         // TODO We only call getParameterNames to support overrides
         // until all builtins use the parameterNames method of specifying the names.
-        Object[] paramNames = node.getParameterNames();
+        String[] paramNames = node.getParameterNames();
         if (paramNames == null) {
             paramNames = builtin.getRBuiltin().parameterNames();
             assert paramNames != null;
         }
         String[] names = new String[paramNames.length];
         for (int i = 0; i < names.length; i++) {
-            Object nameObj = paramNames[i];
-            // TODO nameObj should never be null
-            names[i] = nameObj == null ? "" : RRuntime.toString(nameObj);
+            String nameObj = paramNames[i];
+            names[i] = nameObj.isEmpty() ? null : nameObj;
         }
         FormalArguments formals = FormalArguments.create(names, node.getParameterValues());
 

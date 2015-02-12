@@ -85,6 +85,17 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
+    public void testEmptyParamName() {
+        assertEval("{ f <- function(a, ...) a; f(''=123) }");
+    }
+
+    @Test
+    @Ignore("parser error messages")
+    public void testEmptyParamNameIgnore() {
+        assertEvalError("{ function(''=123) 4 }");
+    }
+
+    @Test
     public void testErrors() {
         assertEvalError("{ x<-function(){1} ; x(y=sum(1:10)) }");
         assertEvalError("{ x<-function(){1} ; x(1) }");

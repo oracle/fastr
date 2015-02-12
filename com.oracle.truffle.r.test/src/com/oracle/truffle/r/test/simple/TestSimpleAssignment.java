@@ -85,6 +85,15 @@ public class TestSimpleAssignment extends TestBase {
     }
 
     @Test
+    public void testEmptyName() {
+        assertEval("{ \"\" <- 123 }");
+        assertEval("{ '' <- 123 }");
+        assertEval("{ `` <- 123 }");
+        assertEval("{ `` + 123 }");
+        assertEval("{ 123 + `` }");
+    }
+
+    @Test
     public void testAssignBuiltin() {
         assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function() { assign(\"z\", 5) ; g <- function() { x <<- 10 ; x } ; g() } ; h() } ; f() ; x }");
     }

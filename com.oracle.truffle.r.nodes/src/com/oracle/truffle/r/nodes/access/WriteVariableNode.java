@@ -216,6 +216,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (getName().isEmpty()) {
+                throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+            }
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), getName(), frameSlot, getMode())).execute(frame, value);
         }
@@ -378,6 +381,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (getName().isEmpty()) {
+                throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+            }
             final AbstractWriteSuperVariableNode writeNode;
             if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
                 // we've reached the global scope, do unconditional write

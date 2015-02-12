@@ -1450,6 +1450,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testEmptyParamNameIgnore_4322ce67ff05a08129fa1498efde1fd9() {
+        assertEvalError("{ function(''=123) 4 }");
+        check("TestSimpleFunctions_testEmptyParamNameIgnore_4322ce67ff05a08129fa1498efde1fd9");
+    }
+
+    @Test
     public void TestSimpleFunctions_testErrorsIgnore_bf29c1dae99e04f8cd11a340f54e1287() {
         assertEvalError("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
         check("TestSimpleFunctions_testErrorsIgnore_bf29c1dae99e04f8cd11a340f54e1287");

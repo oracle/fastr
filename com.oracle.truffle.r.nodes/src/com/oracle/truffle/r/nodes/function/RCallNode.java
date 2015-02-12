@@ -498,6 +498,11 @@ public abstract class RCallNode extends RNode {
         private static RCallNode createCacheNode(VirtualFrame frame, RFunction function, CallArgumentsNode args, SourceSection callSrc) {
             CompilerDirectives.transferToInterpreter();
             SourceSection argsSrc = args.getEncapsulatingSourceSection();
+            for (String name : args.names) {
+                if (name != null && name.isEmpty()) {
+                    throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+                }
+            }
 
             RCallNode callNode = null;
             // Check implementation: If written in Java, handle differently!

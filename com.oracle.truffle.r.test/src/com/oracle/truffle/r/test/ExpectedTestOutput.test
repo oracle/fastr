@@ -3309,6 +3309,26 @@ Error in x[1:2, c(1, 2, 0), 1] <- y :
 #{ l <- quote(x <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }
 [1] 10
 
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testEmptyName
+#{ "" <- 123 }
+Error: attempt to use zero-length variable name
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testEmptyName
+#{ '' <- 123 }
+Error: attempt to use zero-length variable name
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testEmptyName
+#{ 123 + `` }
+Error: attempt to use zero-length variable name
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testEmptyName
+#{ `` + 123 }
+Error: attempt to use zero-length variable name
+
+##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testEmptyName
+#{ `` <- 123 }
+Error: attempt to use zero-length variable name
+
 ##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testMisc
 #{ f <- function() { if (FALSE) { c <- 1 } ; g <- function() { c } ; g() } ; typeof(f()) }
 [1] "builtin"
@@ -19660,6 +19680,10 @@ y
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ x<-7; y<-42; f<-function(...) { substitute(g(...)) }; typeof(f(x,y)) }
 [1] "language"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testEmptyParamName
+#{ f <- function(a, ...) a; f(''=123) }
+Error: attempt to use zero-length variable name
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testErrors
 #{ f <- function(x) { x } ; f() }

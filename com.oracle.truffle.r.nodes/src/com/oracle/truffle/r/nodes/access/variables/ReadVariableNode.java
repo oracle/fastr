@@ -441,6 +441,9 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     }
 
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
+        if (identifier.isEmpty()) {
+            throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+        }
 
         class ReadVariableLevel {
             public final FrameDescriptor descriptor;
