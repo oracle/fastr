@@ -164,7 +164,6 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testclass29() {
         assertEval("argv <- list(structure(1:10, .Tsp = c(1959.25, 1961.5, 4), class = \'ts\'));class(argv[[1]]);");
     }

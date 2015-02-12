@@ -123,7 +123,6 @@ public class TestrGenBuiltinisarray extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisarray22() {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4, .Dimnames = list(c(\'A\', \'B\', \'C\'), c(\'D\', \'E\', \'F\', \'G\'))));is.array(argv[[1]]);");
     }

@@ -96,7 +96,6 @@ public class TestrGenBuiltinclassassign extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testclassassign15() {
         assertEval("argv <- list(structure(1:6, class = \'A\'), value = \'A\');`class<-`(argv[[1]],argv[[2]]);");
     }

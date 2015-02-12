@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltincopyDFattr extends TestBase {
 
     @Test
-    @Ignore
     public void testcopyDFattr1() {
         assertEval("argv <- list(structure(list(size = 1056, isdir = FALSE, mode = structure(420L, class = \'octmode\'), mtime = structure(1395082115.08988, class = c(\'POSIXct\', \'POSIXt\')), ctime = structure(1395082122.18188, class = c(\'POSIXct\', \'POSIXt\')), atime = structure(1395082175.70988, class = c(\'POSIXct\', \'POSIXt\')), uid = 1001L, gid = 1001L, uname = \'roman\', grname = \'roman\'), .Names = c(\'size\', \'isdir\', \'mode\', \'mtime\', \'ctime\', \'atime\', \'uid\', \'gid\', \'uname\', \'grname\'), class = \'data.frame\', row.names = \'/home/roman/r-instrumented/tests/myLib/pkgA/R/pkgA\'), structure(list(    size = NULL, isdir = NULL, mode = NULL, mtime = NULL, ctime = NULL, atime = NULL, uid = NULL, gid = NULL, uname = NULL, grname = NULL), .Names = c(\'size\', \'isdir\', \'mode\', \'mtime\', \'ctime\', \'atime\', \'uid\', \'gid\', \'uname\', \'grname\'), class = \'data.frame\', row.names = \'/home/roman/r-instrumented/tests/myLib/pkgA/R/pkgA\')); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
@@ -36,7 +35,6 @@ public class TestrGenBuiltincopyDFattr extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcopyDFattr4() {
         assertEval("argv <- list(structure(list(surname = structure(integer(0), .Label = c(\'McNeil\', \'Ripley\', \'Tierney\', \'Tukey\', \'Venables\'), class = \'factor\'), nationality = structure(integer(0), .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(integer(0), .Label = c(\'no\', \'yes\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\'), row.names = integer(0), class = \'data.frame\'), structure(list(surname = NULL, nationality = NULL, deceased = NULL), .Names = c(\'surname\', \'nationality\', \'deceased\'), row.names = integer(0), class = \'data.frame\')); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
@@ -54,13 +52,11 @@ public class TestrGenBuiltincopyDFattr extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcopyDFattr7() {
         assertEval("argv <- list(structure(list(size = 284, isdir = FALSE, mode = structure(436L, class = \'octmode\'), mtime = structure(1386397148.36693, class = c(\'POSIXct\', \'POSIXt\')), ctime = structure(1386397148.36693, class = c(\'POSIXct\', \'POSIXt\')), atime = structure(1386397148.36793, class = c(\'POSIXct\', \'POSIXt\')), uid = 501L, gid = 501L, uname = \'lzhao\', grname = \'lzhao\'), .Names = c(\'size\', \'isdir\', \'mode\', \'mtime\', \'ctime\', \'atime\', \'uid\', \'gid\', \'uname\', \'grname\'), class = \'data.frame\', row.names = \'/home/lzhao/tmp/RtmpvWhahC/Rex4eb8743f75cc\'), structure(list(    size = NULL, isdir = NULL, mode = NULL, mtime = NULL, ctime = NULL, atime = NULL, uid = NULL, gid = NULL, uname = NULL, grname = NULL), .Names = c(\'size\', \'isdir\', \'mode\', \'mtime\', \'ctime\', \'atime\', \'uid\', \'gid\', \'uname\', \'grname\'), class = \'data.frame\', row.names = \'/home/lzhao/tmp/RtmpvWhahC/Rex4eb8743f75cc\')); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testcopyDFattr8() {
         assertEval("argv <- list(structure(list(File = character(0), Title = character(0), PDF = character(0), Depends = list(), Keywords = list()), .Names = c(\'File\', \'Title\', \'PDF\', \'Depends\', \'Keywords\'), row.names = integer(0), class = \'data.frame\'), structure(list(File = NULL, Title = NULL, PDF = NULL, Depends = NULL, Keywords = NULL), .Names = c(\'File\', \'Title\', \'PDF\', \'Depends\', \'Keywords\'), row.names = integer(0), class = \'data.frame\')); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
@@ -137,4 +133,3 @@ public class TestrGenBuiltincopyDFattr extends TestBase {
         assertEval("argv <- list(structure(list(`cbind(X, M)` = structure(c(68, 42, 37, 24, 66, 33, 47, 23, 63, 29, 57, 19, 42, 30, 52, 43, 50, 23, 55, 47, 53, 27, 49, 29), .Dim = c(12L, 2L), .Dimnames = list(NULL, c(\'X\', \'M\'))), M.user = structure(c(1L, 1L, 2L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L, 2L), .Label = c(\'N\', \'Y\'), class = \'factor\'), Temp = structure(c(2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L), .Label = c(\'High\', \'Low\'), class = \'factor\'), Soft = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L), .Label = c(\'Hard\', \'Medium\', \'Soft\'), class = \'factor\')), .Names = c(\'cbind(X, M)\', \'M.user\', \'Temp\', \'Soft\'), class = \'data.frame\', row.names = c(\'1\', \'3\', \'5\', \'7\', \'9\', \'11\', \'13\', \'15\', \'17\', \'19\', \'21\', \'23\'), terms = quote(cbind(X, M) ~ M.user + Temp + Soft)), structure(list(`cbind(X, M)` = NULL, M.user = NULL, Temp = NULL, Soft = NULL), .Names = c(\'cbind(X, M)\', \'M.user\', \'Temp\', \'Soft\'), class = \'data.frame\', row.names = c(\'1\', \'3\', \'5\', \'7\', \'9\', \'11\', \'13\', \'15\', \'17\', \'19\', \'21\', \'23\'), terms = quote(cbind(X,     M) ~ M.user + Temp + Soft))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 }
-

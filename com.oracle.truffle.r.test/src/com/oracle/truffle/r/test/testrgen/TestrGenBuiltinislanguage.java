@@ -118,7 +118,6 @@ public class TestrGenBuiltinislanguage extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testislanguage22() {
         assertEval("argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = \'ts\'));is.language(argv[[1]]);");
     }

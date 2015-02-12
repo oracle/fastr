@@ -23,13 +23,11 @@ public class TestrGenBuiltinoptions extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoptions2() {
         assertEval("argv <- list(\'contrasts\'); .Internal(options(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testoptions3() {
         assertEval("argv <- list(\'str\'); .Internal(options(argv[[1]]))");
     }

@@ -99,13 +99,11 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc16() {
         assertEval("argv <- list(NULL, structure(list(other = structure(1:3, .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = \'other\'));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testc17() {
         assertEval("argv <- list(logical(0), structure(1:10, .Tsp = c(1920.5, 1921.25, 12), class = \'ts\'), logical(0));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -308,7 +306,6 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testc54() {
         assertEval("argv <- list(structure(list(x = structure(1:8, .Dim = structure(8L, .Names = \'voice.part\'))), .Names = \'x\'), list(4));c(argv[[1]],argv[[2]]);");
     }

@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinsplit extends TestBase {
 
     @Test
-    @Ignore
     public void testsplit1() {
         assertEval("argv <- list(1:6, structure(1:2, .Label = c(\'1\', \'2\'), class = \'factor\')); .Internal(split(argv[[1]], argv[[2]]))");
     }

@@ -23,7 +23,6 @@ public class TestrGenBuiltindim extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdim2() {
         assertEval("argv <- list(structure(list(surname = structure(1:5, .Label = c(\'McNeil\', \'Ripley\', \'Tierney\', \'Tukey\', \'Venables\'), class = \'factor\'), nationality = structure(c(1L, 2L, 3L, 3L, 1L), .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(c(1L, 1L, 1L, 2L, 1L), .Label = c(\'no\', \'yes\'), class = \'factor\'), title = structure(c(NA_integer_, NA_integer_, NA_integer_, NA_integer_, NA_integer_), .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(c(NA_integer_, NA_integer_, NA_integer_, NA_integer_, NA_integer_), .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\', \'title\', \'other.author\'), row.names = c(5L, 4L, 3L, 1L, 2L), class = \'data.frame\'));dim(argv[[1]]);");
     }
@@ -54,7 +53,6 @@ public class TestrGenBuiltindim extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdim8() {
         assertEval("argv <- list(structure(list(day = structure(1:6, .Label = c(\'2012-06-01\', \'2012-06-02\', \'2012-06-03\', \'2012-06-04\', \'2012-06-05\', \'2012-06-06\', \'2012-06-07\'), class = \'factor\')), .Names = \'day\', row.names = c(1L, 5L, 9L, 13L, 17L, 21L), class = \'data.frame\'));dim(argv[[1]]);");
     }
@@ -125,7 +123,6 @@ public class TestrGenBuiltindim extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testdim22() {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1960.08333333333, 1961.66666666667, 12), class = \'ts\'));dim(argv[[1]]);");
     }

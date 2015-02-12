@@ -290,7 +290,6 @@ public class TestrGenBuiltinformat extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testformat53() {
         assertEval("argv <- list(structure(4:9, .Dim = c(3L, 2L), .Dimnames = list(NULL, c(\'a\', \'b\'))), FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }

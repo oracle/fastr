@@ -1201,7 +1201,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators224() {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4), 3);`%%`(argv[[1]],argv[[2]]);");
     }
@@ -1399,7 +1398,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators262() {
         assertEval("argv <- list(structure(1:20, .Dim = c(2L, 2L, 5L)), structure(1:20, .Dim = c(2L, 2L, 5L)));`==`(argv[[1]],argv[[2]]);");
     }
@@ -1488,7 +1486,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators279() {
         assertEval("argv <- list(structure(1:12, .Dim = 12L), 3);`%%`(argv[[1]],argv[[2]]);");
     }
@@ -1608,7 +1605,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators301() {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4, .Dimnames = list(c(\'Case_1\', \'Case_2\', \'Case_3\'), NULL)), 5);`%%`(argv[[1]],argv[[2]]);");
     }

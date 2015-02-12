@@ -676,13 +676,15 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-integer() }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-7 }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }");
+
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test
     @Ignore
-    public void testComplexIndexIgnored() {
+    public void testComplexIndexIgnore() {
+        // weird fluctuating error messages in GNUR
         assertEvalError("{ x<-c(1,2,3,4); x[[1+1i]]<-NULL }");
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test

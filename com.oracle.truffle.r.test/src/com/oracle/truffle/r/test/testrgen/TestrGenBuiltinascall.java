@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,7 +36,6 @@ public class TestrGenBuiltinascall extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascall4() {
         assertEval("argv <- list(structure(expression(data.frame, check.names = TRUE, stringsAsFactors = TRUE), .Names = c(\'\', \'check.names\', \'stringsAsFactors\')));as.call(argv[[1]]);");
     }
@@ -53,4 +52,3 @@ public class TestrGenBuiltinascall extends TestBase {
         assertEval("argv <- list(list(quote(quote), NA));as.call(argv[[1]]);");
     }
 }
-
