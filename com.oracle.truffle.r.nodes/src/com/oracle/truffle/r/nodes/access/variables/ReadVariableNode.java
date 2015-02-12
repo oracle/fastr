@@ -25,14 +25,13 @@ package com.oracle.truffle.r.nodes.access.variables;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -237,28 +236,6 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    private final class DescriptorStableMismatch extends DescriptorLevel {
-
-        private final DescriptorLevel next;
-        private final StableValue<Object> valueAssumption;
-
-        public DescriptorStableMismatch(DescriptorLevel next, StableValue<Object> valueAssumption) {
-            this.next = next;
-            this.valueAssumption = valueAssumption;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            valueAssumption.getAssumption().check();
-            return next.execute(frame);
-        }
-
-        @Override
-        public String toString() {
-            return "m" + next;
-        }
-    }
-
     private final class DescriptorStableMatch extends DescriptorLevel {
 
         private final StableValue<Object> valueAssumption;
@@ -312,28 +289,6 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         @Override
         public String toString() {
             return "U";
-        }
-    }
-
-    public final class NextDescriptorLevel extends DescriptorLevel {
-
-        private final DescriptorLevel next;
-        private final StableValue<FrameDescriptor> enclosingDescriptorAssumption;
-
-        public NextDescriptorLevel(DescriptorLevel next, StableValue<FrameDescriptor> enclosingDescriptorAssumption) {
-            this.next = next;
-            this.enclosingDescriptorAssumption = enclosingDescriptorAssumption;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            enclosingDescriptorAssumption.getAssumption().check();
-            return next.execute(frame);
-        }
-
-        @Override
-        public String toString() {
-            return "->" + next;
         }
     }
 
@@ -418,25 +373,28 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    private final class DescriptorSlotMissing extends DescriptorLevel {
+    public final class MultiAssumptionLevel extends FrameLevel {
 
-        private final DescriptorLevel next;
-        private final Assumption slotMissingAssumption;
+        private final FrameLevel next;
+        @CompilationFinal private final Assumption[] assumptions;
 
-        public DescriptorSlotMissing(DescriptorLevel next, Assumption slotMissingAssumption) {
+        public MultiAssumptionLevel(FrameLevel next, Assumption[] assumptions) {
             this.next = next;
-            this.slotMissingAssumption = slotMissingAssumption;
+            this.assumptions = assumptions;
         }
 
         @Override
-        public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            slotMissingAssumption.check();
-            return next.execute(frame);
+        @ExplodeLoop
+        public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
+            for (Assumption assumption : assumptions) {
+                assumption.check();
+            }
+            return next.execute(frame, variableFrame);
         }
 
         @Override
         public String toString() {
-            return "x" + next;
+            return "-" + assumptions.length + ">" + next;
         }
     }
 
@@ -499,8 +457,6 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         FrameLevel lastLevel = null;
 
-        boolean complex = false;
-
         ListIterator<ReadVariableLevel> iter = levels.listIterator(levels.size());
         if (match) {
             ReadVariableLevel level = levels.get(levels.size() - 1);
@@ -508,23 +464,20 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 lastLevel = new DescriptorStableMatch(level.valueAssumption);
             } else {
                 lastLevel = new Match(level.slot);
-                if (levels.size() > 1) {
-                    complex = true;
-                }
             }
             iter.previous();
         } else {
             lastLevel = new Unknown();
         }
 
+        ArrayList<Assumption> assumptions = new ArrayList<>();
         while (iter.hasPrevious()) {
             ReadVariableLevel level = iter.previous();
             if (lastLevel instanceof DescriptorLevel) {
                 if (level.enclosingDescriptorAssumption != null) {
-                    lastLevel = new NextDescriptorLevel((DescriptorLevel) lastLevel, level.enclosingDescriptorAssumption);
+                    assumptions.add(level.enclosingDescriptorAssumption.getAssumption());
                 } else {
                     lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
-                    complex = true;
                 }
             } else {
                 if (level.enclosingFrameAssumption != null) {
@@ -532,27 +485,24 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 } else {
                     lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
                 }
-                complex = true;
             }
 
             if (level.slot == null) {
                 if (lastLevel instanceof DescriptorLevel) {
-                    lastLevel = new DescriptorSlotMissing((DescriptorLevel) lastLevel, level.descriptor.getNotInFrameAssumption(identifier));
+                    assumptions.add(level.descriptor.getNotInFrameAssumption(identifier));
                 } else {
-                    complex = true;
                     lastLevel = new SlotMissing(lastLevel, level.descriptor.getNotInFrameAssumption(identifier));
                 }
             } else {
                 if (level.valueAssumption != null && lastLevel instanceof DescriptorLevel) {
-                    lastLevel = new DescriptorStableMismatch((DescriptorLevel) lastLevel, level.valueAssumption);
+                    assumptions.add(level.valueAssumption.getAssumption());
                 } else {
-                    complex = true;
                     lastLevel = new Mismatch(lastLevel, level.slot);
                 }
             }
         }
-        if (complex && FastROptions.PrintComplexReads.getValue()) {
-            System.out.println("Building read '" + identifier + "': " + lastLevel + " " + kind);
+        if (!assumptions.isEmpty()) {
+            lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
         }
 
         return lastLevel;
