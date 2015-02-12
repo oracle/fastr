@@ -154,7 +154,7 @@ public class WriteTable {
     private static String encodePrimitiveElement(Object o, String cna, boolean quote, boolean qmethod) {
         if (o instanceof Integer) {
             int v = (int) o;
-            return RRuntime.isNA(v) ? cna : RRuntime.intToStringNoCheck(v, false);
+            return RRuntime.isNA(v) ? cna : RRuntime.intToStringNoCheck(v);
         } else if (o instanceof Double) {
             double v = (double) o;
             return RRuntime.isNA(v) ? cna : RRuntime.doubleToStringNoCheck(v);
@@ -200,7 +200,7 @@ public class WriteTable {
         }
         if (x instanceof RAbstractIntVector) {
             RAbstractIntVector v = (RAbstractIntVector) x;
-            return RRuntime.intToString(v.getDataAt(indx), false);
+            return RRuntime.intToString(v.getDataAt(indx));
         }
         if (x instanceof RAbstractLogicalVector) {
             RAbstractLogicalVector v = (RAbstractLogicalVector) x;

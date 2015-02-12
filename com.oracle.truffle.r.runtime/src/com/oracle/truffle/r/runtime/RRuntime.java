@@ -281,7 +281,7 @@ public class RRuntime {
 
     @TruffleBoundary
     public static String rawToString(RRaw operand) {
-        return intToString(raw2int(operand), false);
+        return intToString(raw2int(operand));
     }
 
     // conversions from string
@@ -452,18 +452,16 @@ public class RRuntime {
     }
 
     @TruffleBoundary
-    public static String intToStringNoCheck(int operand, boolean appendL) {
-        String result;
+    public static String intToStringNoCheck(int operand) {
         if (operand >= MIN_CACHED_NUMBER && operand <= MAX_CACHED_NUMBER) {
-            result = numberStringCache[operand - MIN_CACHED_NUMBER];
+            return numberStringCache[operand - MIN_CACHED_NUMBER];
         } else {
-            result = String.valueOf(operand);
+            return String.valueOf(operand);
         }
-        return appendL ? result + "L" : result;
     }
 
-    public static String intToString(int operand, boolean appendL) {
-        return isNA(operand) ? STRING_NA : intToStringNoCheck(operand, appendL);
+    public static String intToString(int operand) {
+        return isNA(operand) ? STRING_NA : intToStringNoCheck(operand);
     }
 
     public static int int2rawIntValue(int i) {
@@ -508,7 +506,7 @@ public class RRuntime {
     @TruffleBoundary
     public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
         if (doubleIsInt(operand)) {
-            return intToStringNoCheck((int) operand, false);
+            return intToStringNoCheck((int) operand);
         }
         if (operand == Double.POSITIVE_INFINITY) {
             return "Inf";
@@ -624,7 +622,7 @@ public class RRuntime {
     @TruffleBoundary
     public static String toString(Object object) {
         if (object instanceof Integer) {
-            return intToString((int) object, false);
+            return intToString((int) object);
         } else if (object instanceof Double) {
             return doubleToString((double) object);
         } else if (object instanceof Byte) {

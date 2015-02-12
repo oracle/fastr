@@ -159,7 +159,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     public static String prettyPrint(int operand) {
-        return RRuntime.intToString(operand, false);
+        return RRuntime.intToString(operand);
     }
 
     @TruffleBoundary

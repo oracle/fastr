@@ -74,7 +74,7 @@ public abstract class Sample extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected RIntVector doSampleInvalidSize(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size, false));
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size));
 
     }
 
@@ -118,7 +118,7 @@ public abstract class Sample extends RBuiltinNode {
     @Specialization(guards = "invalidSizeArgument")
     protected RIntVector doSampleInvalidSizeArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size, false));
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size));
     }
 
     @SuppressWarnings("unused")

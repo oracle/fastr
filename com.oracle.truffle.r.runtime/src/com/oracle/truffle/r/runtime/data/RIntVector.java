@@ -81,7 +81,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.intToString(v, false)).toArray(String[]::new));
+        return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.intToString(v)).toArray(String[]::new));
     }
 
     @Override
@@ -145,7 +145,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     @Override
     protected String getDataAtAsString(int index) {
-        return RRuntime.intToString(this.getDataAt(index), false);
+        return RRuntime.intToString(this.getDataAt(index));
     }
 
     public RIntVector updateDataAt(int i, int right, NACheck valueNACheck) {
