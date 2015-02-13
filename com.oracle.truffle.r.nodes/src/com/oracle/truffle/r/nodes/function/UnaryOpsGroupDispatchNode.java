@@ -20,12 +20,12 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class UnaryOpsGroupDispatchNode extends GroupDispatchNode {
 
-    public UnaryOpsGroupDispatchNode(final String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
-        super(aGenericName, RGroupGenerics.GROUP_OPS, hasVararg, callSrc, argSrc);
+    public UnaryOpsGroupDispatchNode(String genericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
+        super(genericName, RGroupGenerics.GROUP_OPS, hasVararg, callSrc, argSrc);
     }
 
     @Override
-    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, final String[] argNames) {
+    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
         initBuiltin(frame);
         Object[] argObject = RArguments.create(builtinFunc, this.callSrc, RArguments.getDepth(frame) + 1, new Object[]{evaluatedArgs[0], RMissing.instance});
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
@@ -34,8 +34,8 @@ public class UnaryOpsGroupDispatchNode extends GroupDispatchNode {
 
 class GenericUnaryOpsGroupDispatchNode extends UnaryOpsGroupDispatchNode {
 
-    public GenericUnaryOpsGroupDispatchNode(String aGenericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
-        super(aGenericName, hasVararg, callSrc, argSrc);
+    public GenericUnaryOpsGroupDispatchNode(String genericName, boolean hasVararg, SourceSection callSrc, SourceSection argSrc) {
+        super(genericName, hasVararg, callSrc, argSrc);
     }
 
     @Override

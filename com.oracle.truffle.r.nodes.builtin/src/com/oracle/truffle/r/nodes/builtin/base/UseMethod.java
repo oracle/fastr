@@ -35,11 +35,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
-    @Child private UseMethodNode useMethodNode;
-
-    public UseMethod() {
-        this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
-    }
+    @Child private UseMethodNode useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
 
     @Override
     public RNode[] getParameterValues() {
@@ -52,7 +48,7 @@ public abstract class UseMethod extends RBuiltinNode {
         throw new ReturnException(useMethodNode.execute(frame, generic, arg));
     }
 
-    private abstract static class UseMethodNode extends RNode {
+    private abstract static class UseMethodNode extends Node {
 
         @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(null);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
@@ -60,11 +56,6 @@ public abstract class UseMethod extends RBuiltinNode {
 
         public UseMethodNode(String[] suppliedArgsNames) {
             this.suppliedArgsNames = suppliedArgsNames;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            throw new AssertionError();
         }
 
         public abstract Object execute(VirtualFrame frame, String generic, Object o);
@@ -118,7 +109,6 @@ public abstract class UseMethod extends RBuiltinNode {
             }
             return replace(new UseMethodFallbackNode(suppliedArgsNames));
         }
-
     }
 
     private abstract static class UseMethodCachedNode extends UseMethodNode {
@@ -145,7 +135,6 @@ public abstract class UseMethod extends RBuiltinNode {
                 return nextNode.execute(frame, gen, o);
             }
         }
-
     }
 
     /*
@@ -207,7 +196,5 @@ public abstract class UseMethod extends RBuiltinNode {
                 return dcn.execute(frame, classHierarchyNode.execute(frame, o));
             }
         }
-
     }
-
 }
