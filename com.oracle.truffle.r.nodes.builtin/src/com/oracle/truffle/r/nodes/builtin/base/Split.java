@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,12 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+/**
+ * The {@code split} internal.
+ *
+ * TODO Can we find a way to efficiently write the specializations as generics? The code is
+ * identical except for the argument type.
+ */
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"})
 public abstract class Split extends RBuiltinNode {
 
@@ -105,6 +111,38 @@ public abstract class Split extends RBuiltinNode {
         Object[] results = new Object[nLevels];
         for (int i = 0; i < nLevels; ++i) {
             results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
+        }
+
+        return RDataFactory.createList(results, makeNames(frame, f));
+    }
+
+    @Specialization
+    protected RList split(VirtualFrame frame, RAbstractStringVector x, RFactor f) {
+        int[] factor = f.getVector().getDataWithoutCopying();
+        final int nLevels = f.getNLevels();
+
+        // initialise result arrays
+        String[][] collectResults = new String[nLevels][];
+        int[] collectResultSize = new int[nLevels];
+        for (int i = 0; i < collectResults.length; ++i) {
+            collectResults[i] = new String[INITIAL_SIZE];
+        }
+
+        // perform split
+        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+            int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
+            String[] collect = collectResults[resultIndex];
+            if (collect.length == collectResultSize[resultIndex]) {
+                collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                collect = collectResults[resultIndex];
+            }
+            collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
+        }
+
+        // assemble result vectors and level names
+        Object[] results = new Object[nLevels];
+        for (int i = 0; i < nLevels; ++i) {
+            results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
         return RDataFactory.createList(results, makeNames(frame, f));
