@@ -277,8 +277,8 @@ class GroupDispatchNode extends S3DispatchNode {
         throw new AssertionError();
     }
 
-    protected GroupDispatchNode(final String aGenericName, final String groupName, final boolean hasVarArg, SourceSection callSrc, SourceSection argSrc) {
-        this.genericName = aGenericName;
+    protected GroupDispatchNode(String genericName, String groupName, boolean hasVarArg, SourceSection callSrc, SourceSection argSrc) {
+        super(genericName);
         this.groupName = groupName;
         this.hasVararg = hasVarArg;
         this.callSrc = callSrc;

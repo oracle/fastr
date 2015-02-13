@@ -11,7 +11,6 @@
 
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -20,7 +19,11 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class DispatchNode extends RNode {
 
     protected RStringVector type;
-    @CompilationFinal protected String genericName;
+    protected final String genericName;
+
+    public DispatchNode(String genericName) {
+        this.genericName = genericName;
+    }
 
     static final class FunctionCall {
         RFunction function;

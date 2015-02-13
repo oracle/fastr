@@ -41,7 +41,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     @CompilationFinal private final String[] argNames;
 
     NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, String[] argNames, String storedFunctionName) {
-        this.genericName = genericName;
+        super(genericName);
         this.type = type;
         this.args = args;
         this.argNames = argNames;

@@ -46,6 +46,10 @@ public abstract class S3DispatchNode extends DispatchNode {
     // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
     // having one method with a rather convoluted control flow structure?
 
+    public S3DispatchNode(String genericName) {
+        super(genericName);
+    }
+
     protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, String[] argNames, boolean hasVarArgs, SourceSection callSrc) {
         String[] evaluatedArgNames = null;
         Object[] evaluatedArgsValues = evaluatedArgs;

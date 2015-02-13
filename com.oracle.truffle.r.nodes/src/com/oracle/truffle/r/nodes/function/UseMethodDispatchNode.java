@@ -40,8 +40,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @CompilationFinal private final String[] suppliedArgNames;
 
-    UseMethodDispatchNode(final String generic, final RStringVector type, final String[] evaledArgNames) {
-        this.genericName = generic;
+    UseMethodDispatchNode(String genericName, RStringVector type, String[] evaledArgNames) {
+        super(genericName);
         this.type = type;
         this.suppliedArgNames = evaledArgNames;
     }
