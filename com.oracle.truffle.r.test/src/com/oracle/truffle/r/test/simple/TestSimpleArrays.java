@@ -62,6 +62,10 @@ public class TestSimpleArrays extends TestBase {
 
         assertEval("{ v<-c(\"a\", \"b\"); dim(v)<-c(1,2); dimnames(v)<-list(\"x\", c(\"y\", \"z\")); v[1, c(1,2), drop=FALSE] }");
 
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); e[[\"a\"]] }");
+        assertEvalError("{ e <- new.env(); assign(\"a\", 1, e); e[\"a\"] }");
+        assertEvalError("{ e <- new.env(); assign(\"a\", 1, e); e[[1]] }");
+
     }
 
     @Test

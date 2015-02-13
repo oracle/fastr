@@ -2236,6 +2236,18 @@ Error in x + y : non-conformable arrays
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
+#{ e <- new.env(); assign("a", 1, e); e["a"] }
+Error in e["a"] : object of type 'environment' is not subsettable
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
+#{ e <- new.env(); assign("a", 1, e); e[["a"]] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
+#{ e <- new.env(); assign("a", 1, e); e[[1]] }
+Error in e[[1]] : wrong arguments for subsetting an environment
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ v<-c("a", "b"); dim(v)<-c(1,2); dimnames(v)<-list("x", c("y", "z")); v[1, c(1,2), drop=FALSE] }
   y   z
 x "a" "b"
@@ -15604,6 +15616,12 @@ a b
 
 [[2]]
 [1] "h" "i"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStrSplit
+#{ strsplit("a,h,o,j", split=",") }
+[[1]]
+[1] "a" "h" "o" "j"
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStrSplit

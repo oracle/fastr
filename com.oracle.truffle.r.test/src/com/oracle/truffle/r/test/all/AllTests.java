@@ -2845,6 +2845,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testAccess_3c271c3052a0ccb2caca02d3e686b420() {
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); e[[\"a\"]] }");
+    }
+
+    @Test
     public void TestSimpleArrays_testAccess_ea7a54f82e5a448af49459e63e2f3a5c() {
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1, 1] }");
     }
@@ -2857,6 +2862,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArrays_testAccess_19411bf3b70f9001e93b99dcfc55bcad() {
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testAccess_a6d2cdadc166e12ebfcaacf8c3762544() {
+        assertEvalError("{ e <- new.env(); assign(\"a\", 1, e); e[\"a\"] }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testAccess_7037618388ea2b778ecae19117816a0b() {
+        assertEvalError("{ e <- new.env(); assign(\"a\", 1, e); e[[1]] }");
     }
 
     @Test
@@ -15122,6 +15137,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testStrSplit_46d4b4f12ca8e8fb947be03344b9b554() {
         assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStrSplit_00342369ccabdd70b2b3c2b32c14e022() {
+        assertEval("{ strsplit(\"a,h,o,j\", split=\",\") }");
     }
 
     @Test
