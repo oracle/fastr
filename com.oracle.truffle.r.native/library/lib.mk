@@ -53,7 +53,7 @@ FFI_INCLUDES = -I$(TOPDIR)/include/jni
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 PKGDIR := $(FASTR_LIBDIR)/$(PKG)
-PKGTAR := $(SRC)/$(PKG).tar.gz
+PKGTAR := $(SRC)/$(OS_DIR)/$(PKG).tar.gz
 
 ifneq ($(C_SOURCES),)
 all: libcommon $(LIB_PKG)
@@ -63,13 +63,14 @@ endif
 
 libcommon: $(PKGDIR)
 
-$(PKGDIR):
+$(PKGDIR): $(PKGTAR)
 	tar xf $(PKGTAR) -C $(FASTR_LIBDIR)
 
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(LIB_PKG): $(OBJ) $(C_OBJECTS)
+$(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGTAR)
+
 	mkdir -p $(LIBDIR)
 	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
