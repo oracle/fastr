@@ -72,6 +72,8 @@ public abstract class Vector extends RBuiltinNode {
                 Object[] data = new Object[length];
                 Arrays.fill(data, RNull.instance);
                 return RDataFactory.createList(data);
+            case "raw":
+                return RDataFactory.createRawVector(length);
             default:
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
