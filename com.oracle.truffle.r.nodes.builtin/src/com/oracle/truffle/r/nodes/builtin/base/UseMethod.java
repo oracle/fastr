@@ -35,7 +35,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * and a warning is generated.
      */
 
-    @Child private DispatchedCallNode dispatchedCall;
+    @Child private DispatchedCallNode dispatchedCallNode;
     @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(null);
     @Child private PromiseCheckHelperNode promiseCheckHelper;
 
@@ -52,18 +52,20 @@ public abstract class UseMethod extends RBuiltinNode {
     @Specialization
     protected Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();
-        if (dispatchedCall == null || (cachedGeneric != generic && !cachedGeneric.equals(generic))) {
+        if (dispatchedCallNode == null || (cachedGeneric != generic && !cachedGeneric.equals(generic))) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (dispatchedCall != null) {
+            cachedGeneric = generic;
+            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, getSuppliedArgsNames());
+            if (dispatchedCallNode == null) {
+                dispatchedCallNode = insert(newDispatched);
+            } else {
                 /*
                  * The generic name may have changed. This is very unlikely, and therefore
                  * implemented very inefficiently. Output a warning in case this really happens.
                  */
                 RError.warning(getEncapsulatingSourceSection(), RError.Message.PERFORMANCE, "non-constant generic parameter in UseMethod");
+                dispatchedCallNode.replace(newDispatched);
             }
-            cachedGeneric = generic;
-            DispatchedCallNode newDispatched = DispatchedCallNode.create(cachedGeneric.intern(), DispatchType.UseMethod, getSuppliedArgsNames());
-            dispatchedCall = dispatchedCall == null ? insert(newDispatched) : dispatchedCall.replace(newDispatched);
         }
 
         Object dispatchedObject;
@@ -73,7 +75,7 @@ public abstract class UseMethod extends RBuiltinNode {
         } else {
             dispatchedObject = arg;
         }
-        throw new ReturnException(dispatchedCall.execute(frame, classHierarchyNode.execute(frame, dispatchedObject)));
+        throw new ReturnException(dispatchedCallNode.execute(frame, classHierarchyNode.execute(frame, dispatchedObject)));
     }
 
     /**

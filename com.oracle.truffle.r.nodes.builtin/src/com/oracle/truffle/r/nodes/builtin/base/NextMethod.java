@@ -35,7 +35,7 @@ public abstract class NextMethod extends RBuiltinNode {
     @Child private ReadVariableNode rvnClass;
     @Child private ReadVariableNode rvnGeneric;
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
-    @CompilationFinal private String lastGenericName;
+    @CompilationFinal private String cachedGeneric;
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -44,33 +44,42 @@ public abstract class NextMethod extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args, String[] argNames) {
+    protected Object nextMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") Object obj, Object[] args, String[] argNames) {
         controlVisibility();
-        final RStringVector type = readType(frame);
-        String genericName = genericMethod == null ? readGenericName(frame, genericMethod) : genericMethod;
-        if (genericName == null) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
-        }
-        if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
+        RStringVector type = readType(frame);
+
+        if (dispatchedCallNode == null || (cachedGeneric != generic && !cachedGeneric.equals(generic))) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            genericName = genericName.intern();
+            cachedGeneric = generic;
             RFunction enclosingFunction = RArguments.getFunction(frame);
             String enclosingFunctionName = null;
             if (!RArguments.hasS3Args(frame)) {
                 enclosingFunctionName = enclosingFunction.getRootNode().toString();
             }
-            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, enclosingFunctionName, DispatchType.NextMethod, args, argNames);
-            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-            lastGenericName = genericName;
+            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), enclosingFunctionName, DispatchType.NextMethod, args, argNames);
+            if (dispatchedCallNode == null) {
+                dispatchedCallNode = insert(newDispatched);
+            } else {
+                /*
+                 * The generic name may have changed. This is very unlikely, and therefore
+                 * implemented very inefficiently. Output a warning in case this really happens.
+                 */
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.PERFORMANCE, "non-constant generic parameter in NextMethod");
+                dispatchedCallNode.replace(newDispatched);
+            }
         }
         return dispatchedCallNode.execute(frame, type);
     }
 
     @Specialization
-    protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, RArgsValuesAndNames args) {
+    protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, Object obj, RArgsValuesAndNames args) {
         controlVisibility();
-        return nextMethod(frame, null, null, args.getValues(), args.getNames());
+        String genericName = RArguments.getS3Generic(frame);
+        if (genericName == null || genericName.isEmpty()) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
+        }
+        return nextMethod(frame, genericName, obj, args.getValues(), args.getNames());
     }
 
     @Specialization
@@ -97,20 +106,12 @@ public abstract class NextMethod extends RBuiltinNode {
         return enclosingArg.getClassHierarchy();
     }
 
-    private static String readGenericName(VirtualFrame frame, final String genericMethod) {
-        final String storedGeneric = RArguments.getS3Generic(frame);
-        if (storedGeneric == null || storedGeneric.isEmpty()) {
-            return genericMethod;
-        }
-        return storedGeneric;
-    }
-
     private RStringVector readType(VirtualFrame frame) {
         final RStringVector storedClass = RArguments.getS3Class(frame);
         if (storedClass == null) {
+            System.out.println("no stored class");
             return getAlternateClassHr(frame);
         }
         return storedClass;
     }
-
 }
