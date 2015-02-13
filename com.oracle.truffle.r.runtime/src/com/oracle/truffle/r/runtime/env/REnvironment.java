@@ -109,11 +109,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
-    private static final String PATH_ATTR_KEY = "path";
 
     private static final Empty emptyEnv = new Empty();
     private static Global globalEnv;
-    private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
     private static REnvironment namespaceRegistry;
 
@@ -221,11 +219,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         RContext.getEngine().loadDefaultPackage("base", baseFrame.materialize(), baseEnv);
     }
 
-    public static void defaultPackagesInitialized() {
-        initialGlobalEnvParent = globalEnv.parent;
-        baseEnv.getNamespace().setParent(globalEnv);
-    }
-
     private static void initSearchList() {
         searchPath = new ArrayList<>();
         REnvironment env = globalEnv;
@@ -233,26 +226,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             searchPath.add(env);
             env = env.parent;
         } while (env != emptyEnv);
-    }
-
-    /**
-     * Intended for use by unit test environment to reset the environment to a clean state. We want
-     * to reset the {@link #globalEnv}, and by extension {@link #searchPath} but not everything
-     * else. This evidently depends on there not being destructive tests, and in particular any that
-     * mess with the set of default packages.
-     *
-     */
-    public static void resetForTest(VirtualFrame globalFrame) {
-        globalEnv = new Global(initialGlobalEnvParent, globalFrame);
-        // update .GlobalEnv
-        try {
-            baseEnv.put(".GlobalEnv", globalEnv);
-        } catch (PutException ex) {
-            Utils.fail("could not update .GlobalEnv");
-        }
-        initSearchList();
-        // one more thing, namespace:base always has globalEnv as it's parent, so update that
-        baseEnv.getNamespace().setParent(globalEnv);
     }
 
     /**
@@ -479,17 +452,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Another artefact of not loading builtin packages using the R machinery is the need to add any
-     * defined functions to the "exports" environment of the namespace env. This matters for
-     * qualified invocation, e.g. "package::func".
-     */
-    public void export() {
-        if (this != baseEnv) {
-            ((Package) this).populateExports();
-        }
-    }
-
-    /**
      * Return the "spec" attribute of the "info" env in a namespace or {@code null} if not found.
      */
     private RStringVector getNamespaceSpec() {
@@ -694,8 +656,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         return null;
     }
 
-    public RStringVector ls(boolean allNames, Pattern pattern) {
-        return frameAccess.ls(allNames, pattern);
+    public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
+        return frameAccess.ls(allNames, pattern, sorted);
     }
 
     public void lockBinding(String key) {
@@ -734,71 +696,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Denotes the "imports:xxx" environment of an R package.
-     */
-    private static final class Imports extends REnvironment {
-
-        private Imports(String name, REnvFrameAccess frameAccess) {
-            super(baseEnv.getNamespace(), UNNAMED, frameAccess);
-            setAttr(NAME_ATTR_KEY, "imports:" + name);
-        }
-    }
-
-    /**
      * Denotes an environment associated with an R package. This represents the "package:xxx"; the
      * "namespace:xxx" and "imports:xxx" environments are stored as fields of this instance.
      */
     public static class Package extends REnvironment implements IsPackage {
-        private final Imports importsEnv;
         private final Namespace namespaceEnv;
-
-        private Package(REnvironment parent, String name, VirtualFrame frame, String path) {
-            // This sets up the EnvFrameAccess instance, which is shared by the
-            // Namespace (and Imports?) environments.
-            super(parent, name, frame);
-            this.importsEnv = new Imports(name, this.frameAccess);
-            this.namespaceEnv = new Namespace(this.importsEnv, name, this.frameAccess);
-            this.namespaceEnv.safePut(NAMESPACE_KEY, createNAMESPACE(name));
-            setName(name);
-            setPath(path);
-        }
-
-        private void setName(String name) {
-            setAttr(NAME_ATTR_KEY, "package:" + name);
-        }
-
-        private void setPath(String path) {
-            setAttr(PATH_ATTR_KEY, path);
-        }
-
-        private static REnvironment createNAMESPACE(String name) {
-            REnvironment ns = new NewEnv(baseEnv, 0);
-            String[] data = new String[]{name, RVersionNumber.FULL};
-            String[] names = new String[]{"name", "version"};
-            RStringVector spec = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            ns.safePut("spec", spec);
-            REnvironment exports = new NewEnv(baseEnv, 0);
-            // exports needs to be populated for "name::function" to work
-            ns.safePut("exports", exports);
-            ns.safePut("lazydata", new NewEnv(baseEnv, 0));
-            return ns;
-        }
-
-        void populateExports() {
-            REnvironment ns = (REnvironment) namespaceEnv.frameAccess.get(NAMESPACE_KEY);
-            REnvironment exports = (REnvironment) ns.frameAccess.get("exports");
-            RStringVector names = this.frameAccess.ls(true, null);
-            for (int i = 0; i < names.getLength(); i++) {
-                try {
-                    String name = names.getDataAt(i);
-                    if (!name.equals("NAMESPACE_KEY")) {
-                        exports.frameAccess.put(name, RDataFactory.createStringVector(name));
-                    }
-                } catch (PutException ex) {
-                    RInternalError.shouldNotReachHere();
-                }
-            }
-        }
 
         /**
          * Constructor for {@link Base}. During initialization the parent is emptyEnv. Ultimately it
@@ -806,7 +708,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
          */
         protected Package(VirtualFrame frame) {
             super(emptyEnv, "base", frame);
-            this.importsEnv = null;
             this.namespaceEnv = new Namespace(emptyEnv, "base", this.frameAccess);
             RArguments.setEnvironment(frame, this.namespaceEnv);
         }

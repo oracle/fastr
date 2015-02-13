@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,12 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 @RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class DimNames extends RBuiltinNode {
+
+    private static final String NAME = "dimnames";
 
     @Child private DispatchedCallNode dcn;
 
@@ -61,7 +65,7 @@ public abstract class DimNames extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("dimnames", RRuntime.USE_METHOD, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, getSuppliedArgsNames()));
         }
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
@@ -74,8 +78,9 @@ public abstract class DimNames extends RBuiltinNode {
         return container.getDimNames() == null;
     }
 
-    protected boolean isObject(RAbstractContainer container) {
-        return container.isObject();
+    @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+    protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
+        return container.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
     }
 
 }

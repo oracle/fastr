@@ -44,6 +44,11 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public boolean isComplete() {
+        return vector.isComplete();
+    }
+
+    @Override
     public int getLength() {
         return vector.getLength();
     }

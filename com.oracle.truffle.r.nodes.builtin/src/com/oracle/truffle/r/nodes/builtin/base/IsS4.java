@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,40 +24,23 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-// TODO Figure out how to distinguish f(,,a) from f(a) - RMissing is used in both contexts
-@RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {})
-public abstract class NArgs extends RBuiltinNode {
-
-    private final BranchProfile isPromiseProfile = BranchProfile.create();
+@SuppressWarnings("unused")
+@RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"})
+public abstract class IsS4 extends RBuiltinNode {
 
     @Specialization
-    protected int doNArgs(VirtualFrame frame) {
-        int result = 0;
-        if (RArguments.getFunction(frame) == null) {
-            return RRuntime.INT_NA;
-        }
-        int l = RArguments.getArgumentsLength(frame);
-        for (int i = 0; i < l; i++) {
-            Object arg = RArguments.getArgument(frame, i);
-            if (arg instanceof RPromise) {
-                isPromiseProfile.enter();
-                RPromise promise = (RPromise) arg;
-                if (!promise.isDefault()) {
-                    result++;
-                }
-            } else if (arg instanceof RArgsValuesAndNames) {
-                result += ((RArgsValuesAndNames) arg).length();
-            } else if (!(arg instanceof RMissing)) {
-                result++;
-            }
-        }
-        return result;
+    protected byte isS4(Object object) {
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
     }
 }

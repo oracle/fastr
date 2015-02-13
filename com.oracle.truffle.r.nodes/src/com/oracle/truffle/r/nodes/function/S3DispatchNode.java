@@ -46,8 +46,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
     // having one method with a rather convoluted control flow structure?
 
-    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, final String[] argNames, final boolean hasVarArgs, final SourceSection callSrc,
-                    boolean forNextMethod) {
+    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, final String[] argNames, final boolean hasVarArgs, final SourceSection callSrc) {
         String[] evaluatedArgNames = null;
         Object[] evaluatedArgsValues = evaluatedArgs;
         int argCount = evaluatedArgs.length;
@@ -86,7 +85,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(evaluatedArgsValues, evaluatedArgNames);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, callSrc, promiseHelper, forNextMethod);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, callSrc, promiseHelper, false);
         return reorderedArgs;
     }
 

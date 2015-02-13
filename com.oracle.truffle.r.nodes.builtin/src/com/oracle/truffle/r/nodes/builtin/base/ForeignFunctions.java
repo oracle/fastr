@@ -533,6 +533,16 @@ public class ForeignFunctions {
             return matchName(f, "cairoProps");
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isMakeQuartzDefault")
+        protected byte makeQuartzDefault(RList f, Object[] args, RMissing packageName) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        public static boolean isMakeQuartzDefault(RList f) {
+            return matchName(f, "makeQuartzDefault");
+        }
+
         @Specialization(guards = "isCor")
         protected Object doCor(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return doCovCor(frame, false, args);

@@ -26,8 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,21 +39,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 @RBuiltin(name = "remove", kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
 @GenerateNodeFactory
 public abstract class Rm extends RInvisibleBuiltinNode {
-
-    public static Rm create(String name) {
-        RNode[] args = getParameterValues0();
-        args[0] = ConstantNode.create(name);
-        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("remove"), null);
-    }
-
-    private static RNode[] getParameterValues0() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return getParameterValues0();
-    }
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
 

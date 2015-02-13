@@ -38,11 +38,13 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private boolean hasGroup;
     private boolean lastHasGroup;
     @CompilationFinal private final Object[] args;
+    @CompilationFinal private final String[] argNames;
 
-    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, String storedFunctionName) {
+    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, String[] argNames, String storedFunctionName) {
         this.genericName = genericName;
         this.type = type;
         this.args = args;
+        this.argNames = argNames;
         this.storedFunctionName = storedFunctionName;
     }
 
@@ -70,8 +72,8 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         int funArgsLength = RArguments.getArgumentsLength(frame);
         assert RArguments.getNamesLength(frame) == 0 || RArguments.getNamesLength(frame) == funArgsLength;
         boolean hasNames = RArguments.getNamesLength(frame) > 0;
-        Object[] argValues = new Object[funArgsLength + argsLength];
-        String[] argNames = hasNames ? new String[funArgsLength + argsLength] : null;
+        Object[] funArgValues = new Object[funArgsLength + argsLength];
+        String[] funArgNames = hasNames ? new String[funArgsLength + argsLength] : null;
         int index = 0;
         for (int fi = 0; fi < funArgsLength; fi++) {
             Object argVal = RArguments.getArgument(frame, fi);
@@ -79,33 +81,45 @@ public class NextMethodDispatchNode extends S3DispatchNode {
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) argVal;
                 int varArgsLength = varArgs.length();
                 if (varArgsLength > 1) {
-                    argValues = Utils.resizeArray(argValues, argValues.length + varArgsLength - 1);
+                    funArgValues = Utils.resizeArray(funArgValues, funArgValues.length + varArgsLength - 1);
                 }
-                System.arraycopy(varArgs.getValues(), 0, argValues, index, varArgsLength);
+                System.arraycopy(varArgs.getValues(), 0, funArgValues, index, varArgsLength);
                 if (hasNames) {
                     if (varArgsLength > 1) {
-                        argNames = Utils.resizeArray(argNames, argNames.length + varArgsLength - 1);
+                        funArgNames = Utils.resizeArray(funArgNames, funArgNames.length + varArgsLength - 1);
                     }
                     if (varArgs.getNames() != null) {
-                        System.arraycopy(varArgs.getNames(), 0, argNames, index, varArgsLength);
+                        System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
                     }
                 } else if (varArgs.getNames() != null) {
-                    argNames = new String[funArgsLength + argsLength];
-                    System.arraycopy(varArgs.getNames(), 0, argNames, index, varArgsLength);
+                    funArgNames = new String[funArgsLength + argsLength];
+                    System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
                 }
                 index += varArgsLength;
             } else {
-                argValues[index] = argVal;
+                funArgValues[index] = argVal;
                 if (hasNames) {
-                    argNames[index] = RArguments.getName(frame, fi);
+                    funArgNames[index] = RArguments.getName(frame, fi);
                 }
                 index++;
             }
         }
         if (argsLength > 0) {
-            System.arraycopy(args, 0, argValues, RArguments.getArgumentsLength(frame), args.length);
+            if (funArgNames == null && argNames != null) {
+                funArgNames = new String[funArgsLength + argsLength];
+            }
+            for (int i = 0; i < argsLength; i++) {
+                funArgValues[index] = args[i];
+                if (argNames != null) {
+                    funArgNames[index] = argNames[i];
+                }
+                index++;
+            }
         }
-        return reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection(), true);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(funArgValues, funArgNames);
+        // ...to match them against the chosen function's formal arguments
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getSourceSection(), promiseHelper, true);
+        return reorderedArgs;
     }
 
     private Object executeHelper(VirtualFrame frame) {

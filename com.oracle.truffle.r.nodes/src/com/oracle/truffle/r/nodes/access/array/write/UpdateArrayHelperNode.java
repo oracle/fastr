@@ -651,15 +651,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RList getResultVector(RList vector, int highestPos, boolean resetDims) {
         RList resultVector = vector;
-        if (resultVector.isShared()) {
-            vectorShared.enter();
-            resultVector = (RList) vector.copy();
-            resultVector.markNonTemporary();
-        }
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
             int orgLength = resultVector.getLength();
-            resultVector.resizeWithNames(highestPos);
+            resultVector.resize(highestPos, false);
             for (int i = orgLength; i < highestPos; i++) {
                 resultVector.updateDataAt(i, RNull.instance, null);
             }
@@ -667,6 +662,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorNoDims.enter();
             resultVector.setDimensions(null);
             resultVector.setDimNames(null);
+        }
+        if (resultVector.isShared()) {
+            vectorShared.enter();
+            resultVector = (RList) vector.copy();
+            resultVector.markNonTemporary();
         }
         return resultVector;
     }
@@ -1112,14 +1112,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RIntVector getResultVector(RAbstractIntVector vector, int highestPos) {
         RIntVector resultVector = vector.materialize();
+        if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
+            resultVector.resize(highestPos, false);
+        }
         if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
             resultVector.markNonTemporary();
-        }
-        if (resultVector.getLength() < highestPos) {
-            vectorTooShort.enter();
-            resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
     }
@@ -1310,14 +1310,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RDoubleVector getResultVector(RAbstractDoubleVector vector, int highestPos) {
         RDoubleVector resultVector = vector.materialize();
+        if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
+            resultVector.resize(highestPos, false);
+        }
         if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
             resultVector.markNonTemporary();
-        }
-        if (resultVector.getLength() < highestPos) {
-            vectorTooShort.enter();
-            resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
     }
@@ -1500,14 +1500,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RLogicalVector getResultVector(RLogicalVector vector, int highestPos) {
         RLogicalVector resultVector = vector;
+        if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
+            resultVector.resize(highestPos, false);
+        }
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
             resultVector.markNonTemporary();
-        }
-        if (resultVector.getLength() < highestPos) {
-            vectorTooShort.enter();
-            resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
     }
@@ -1615,14 +1615,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RStringVector getResultVector(RStringVector vector, int highestPos) {
         RStringVector resultVector = vector;
+        if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
+            resultVector.resize(highestPos, false);
+        }
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
             resultVector.markNonTemporary();
-        }
-        if (resultVector.getLength() < highestPos) {
-            vectorTooShort.enter();
-            resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
     }
@@ -1766,14 +1766,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RComplexVector getResultVector(RComplexVector vector, int highestPos) {
         RComplexVector resultVector = vector;
+        if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
+            resultVector.resize(highestPos, false);
+        }
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
             resultVector.markNonTemporary();
-        }
-        if (resultVector.getLength() < highestPos) {
-            vectorTooShort.enter();
-            resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
     }
@@ -1989,14 +1989,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RRawVector getResultVector(RRawVector vector, int highestPos) {
         RRawVector resultVector = vector;
+        if (resultVector.getLength() < highestPos) {
+            vectorTooShort.enter();
+            resultVector.resize(highestPos, false);
+        }
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
             resultVector.markNonTemporary();
-        }
-        if (resultVector.getLength() < highestPos) {
-            vectorTooShort.enter();
-            resultVector.resizeWithNames(highestPos);
         }
         return resultVector;
     }

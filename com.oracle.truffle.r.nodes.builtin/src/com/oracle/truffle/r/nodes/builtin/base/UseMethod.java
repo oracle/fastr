@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -111,9 +111,9 @@ public abstract class UseMethod extends RBuiltinNode {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
                 if (o == RMissing.instance) {
-                    return replace(new UseMethodGenericOnlyNode(generic, depth, suppliedArgsNames));
+                    return replace(new UseMethodGenericOnlyNode(generic.intern(), depth, suppliedArgsNames));
                 } else {
-                    return replace(new UseMethodGenericAndObjectNode(generic, depth, suppliedArgsNames));
+                    return replace(new UseMethodGenericAndObjectNode(generic.intern(), depth, suppliedArgsNames));
                 }
             }
             return replace(new UseMethodFallbackNode(suppliedArgsNames));
@@ -200,10 +200,10 @@ public abstract class UseMethod extends RBuiltinNode {
 
                 // For S3Dispatch, we have to evaluate the the first argument
                 Object enclosingArg = getEnclosingArg(frame);
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
             } else {
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, o));
             }
         }

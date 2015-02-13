@@ -20,6 +20,14 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testCopyDDFattr() {
+        assertEval("{ x<-7; attr(x, \"foo\")<-\"foo\"; y<-42; z<-.Internal(copyDFattr(x, y)); attributes(z) }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; attr(y, \"foo\")<-\"foo\"; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
+        assertEval("{ x<-data.frame(c(1,2), c(11,12)); attr(x, \"dim\")<-c(1,2); attr(x, \"dimnames\")<-list(\"a\", c(\"b\", \"c\")); y<-c(7, 42); z<-.Internal(copyDFattr(x, y)); attributes(z) }");
+    }
+
+    @Test
     public void testUnique() {
         assertEval("{x<-factor(c(\"a\", \"b\", \"a\")); unique(x) }");
     }
@@ -672,6 +680,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testIsNAAssign() {
+        assertEval("{ x <- c(0:4); is.na(x) <- c(2, 4); x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.na(x)<-1; x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.na(x)<-2; x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); is.na(x)<-c(1, 3); x }");
+    }
+
+    @Test
     public void testIsNA() {
         assertEval("{ is.na(NA) }");
         assertEval("{ is.na(NaN) }");
@@ -941,7 +957,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ l <- c(x=1) ; as.list(l) }");
         assertEval("{ x<-7; as.list(environment()) }");
         assertEval("{ x<-7; .y<-42; as.list(environment()) }");
-        assertEval("{ x<-7; .y<-42; as.list(environment(), all.names=TRUE) }");
+        // not sorted so can't compare list print
+        assertEval("{ x<-7; .y<-42; length(as.list(environment(), all.names=TRUE)) }");
         assertEval("{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[[\"f\"]]; f_copy(); x }");
 
         // as.matrix
@@ -1767,6 +1784,18 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testLengthUpdate() {
+        assertEval("{ x<-c(a=1, b=2); length(x)<-1; x }");
+        assertEval("{ x<-c(a=1, b=2); length(x)<-4; x }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); length(x)<-1; x }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); length(x)<-4; x }");
+        assertEval("{ x<-data.frame(a=1,b=2); length(x)<-1; attributes(x) }");
+        assertEval("{ x<-data.frame(a=1,b=2); length(x)<-4; attributes(x) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); length(x)<-1; x }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); length(x)<-4; x }");
+    }
+
+    @Test
     public void testLength() {
         assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
         assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
@@ -2097,11 +2126,11 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testAttach() {
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
-        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
-        assertEval("{ attach(.Platform, 2); file.sep }");
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2) }");
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x; detach(\"mine\") }");
+        // tests must leave the search path unmodified
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); r <- x; detach(\"mine\"); r }");
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); r <- x; detach(2); r }");
+        assertEval("{ attach(.Platform, 2); r <- file.sep; detach(2); r }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
         assertEvalError("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
         assertEvalError("{ detach(\"missing\"); x }");
     }
@@ -3608,7 +3637,10 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testNextMethod() {
-        assertEval("{g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x)}; f.b<-function(x){cat(\"b\")}; f(x); }; g();}");
+        assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x)}; f.b<-function(x){cat(\"b\")}; f(x); }; g() }");
+        assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x, 42)}; f.b<-function(x, y=7){cat(\"b\", y)}; f(x); }; g(); }");
+        assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x,\"m\",\"n\")}; f.b<-function(x, y=\"h\", z=\"i\"){cat(\"b\", y, z)}; f(x); }; g() }");
+        assertEval("{ g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x,z=\"m\",y=\"n\")}; f.b<-function(x, y=\"h\", z=\"i\"){cat(\"b\", y, z)}; f(x); }; g() }");
     }
 
     @Test
@@ -4339,6 +4371,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{  f <- function (a, b, c) { nargs() }; f(1, 2) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1) }");
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
+        assertEval("{  f<-function(x, ..., y=TRUE) { nargs() }; f(1, 2, 3) }");
     }
 
     @Test

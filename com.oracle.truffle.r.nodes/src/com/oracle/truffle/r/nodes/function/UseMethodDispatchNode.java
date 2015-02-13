@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -38,9 +38,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
 
-    UseMethodDispatchNode(final String generic, final RStringVector type) {
+    @CompilationFinal private final String[] suppliedArgNames;
+
+    UseMethodDispatchNode(final String generic, final RStringVector type, final String[] evaledArgNames) {
         this.genericName = generic;
         this.type = type;
+        this.suppliedArgNames = evaledArgNames;
     }
 
     @Override
@@ -99,7 +102,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argNames[fi] = RArguments.getName(frame, fi);
             }
         }
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection(), false);
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
@@ -110,23 +113,39 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         Object[] argValues = new Object[argListSize];
         int fi = 0;
         int index = 0;
+        String[] argNames = suppliedArgNames;
         for (; fi < argCount; ++fi) {
             Object arg = args[fi];
-            if (arg instanceof Object[]) {
-                Object[] varArgs = (Object[]) arg;
-                argListSize += varArgs.length - 1;
+            if (arg instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
+                Object[] varArgValues = varArgs.getValues();
+                String[] varArgNames = varArgs.getNames();
+                argListSize += varArgs.length() - 1;
+                if (varArgNames != null) {
+                    if (argNames == null) {
+                        argNames = new String[argListSize];
+                    } else {
+                        argNames = Utils.resizeArray(argNames, argListSize);
+                        System.arraycopy(suppliedArgNames, fi, argNames, fi + varArgs.length() - 1, argCount - fi);
+                    }
+                }
                 argValues = Utils.resizeArray(argValues, argListSize);
 
-                for (Object varArg : varArgs) {
-                    addArg(argValues, varArg, index++);
+                for (int i = 0; i < varArgs.length(); i++) {
+                    addArg(argValues, varArgValues[i], index);
+                    if (varArgNames != null) {
+                        argNames[index] = varArgNames[i];
+                    }
+                    index++;
                 }
+
             } else {
                 addArg(argValues, arg, index++);
             }
         }
 
         // ...and use them as 'supplied' arguments...
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,22 +25,22 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
-    private final BranchProfile sharedVectorSeen = BranchProfile.create();
+
+    @Child private DispatchedCallNode dcn;
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -49,24 +49,33 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "isLengthOne")
-    @TruffleBoundary
-    protected RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
+    @Specialization(guards = {"isLengthOne", "isObject"})
+    protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(DispatchedCallNode.create("length<-", RRuntime.USE_METHOD, getSuppliedArgsNames()));
+        }
+        try {
+            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});
+        } catch (RError e) {
+            return updateLength(container, lengthVector);
+        }
+
+    }
+
+    @Specialization(guards = {"isLengthOne", "!isObject"})
+    protected RAbstractContainer updateLength(RAbstractContainer container, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
-        RVector resultVector = vector.materialize();
-        if (resultVector.isShared()) {
-            sharedVectorSeen.enter();
-            resultVector = resultVector.copy();
-            resultVector.markNonTemporary();
-        }
-        resultVector.resizeWithNames(length);
-        return resultVector;
+        // TODO: we can potentially avoid making a copy during materialization and then during
+        // resizing but is it worth it for that case?
+        RVector vector = container.materializeNonSharedVector();
+        return (RAbstractContainer) vector.resize(length, true);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isLengthOne")
-    protected RAbstractVector updateLengthError(RAbstractVector vector, RAbstractIntVector lengthVector) {
+    protected RAbstractContainer updateLengthError(RAbstractContainer container, RAbstractIntVector lengthVector) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
@@ -80,8 +89,13 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
-    protected static boolean isLengthOne(@SuppressWarnings("unused") RAbstractVector vector, RAbstractIntVector length) {
+    protected static boolean isLengthOne(@SuppressWarnings("unused") RAbstractContainer vector, RAbstractIntVector length) {
         return length.getLength() == 1;
+    }
+
+    protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
+        // if execution got here via S3 dispatch, treat objects as non-objects
+        return container.isObject() && !RArguments.hasS3Args(frame);
     }
 
 }

@@ -195,7 +195,7 @@ public class RInstrument {
         REnvironment env = REnvironment.globalEnv();
         while (env != REnvironment.emptyEnv()) {
             // This is rather inefficient, but doesn't matter
-            RStringVector names = env.ls(true, null);
+            RStringVector names = env.ls(true, null, false);
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
                 Object val = env.get(name);
