@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,4 +54,20 @@ public class SerializeFunctions {
             return doUnserializeFromConn(frame, conn, RNull.instance);
         }
     }
+
+    @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    public abstract static class SerializeToConn extends RInvisibleBuiltinNode {
+        @Specialization
+        protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+            controlVisibility();
+            try {
+                boolean ascii = RRuntime.fromLogical(asciiLogical);
+                RSerialize.serialize(conn, object, ascii, 2, null, RArguments.getDepth(frame));
+                return RNull.instance;
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+    }
+
 }
