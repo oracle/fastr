@@ -1761,7 +1761,7 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object access(REnvironment env, Object exact, int recLevel, Object position, RAbstractLogicalVector dropDim) {
+    protected Object access(REnvironment env, Object exact, int recLevel, Object position, Object dropDim) {
         if (isSubset) {
             error.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SUBSETTABLE, "environment");
