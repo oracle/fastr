@@ -55,7 +55,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         // start the lookup in the enclosing frame
         Super,
         // lookup only within the current frame
-        Local,
+        SilentLocal,
         // whether a promise should be forced to check its type or not
         Forced;
     }
@@ -190,7 +190,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
             result = ((RAbstractVector) result).copy();
         }
-        if (kind != ReadKind.Local && isPromiseProfile.profile(result instanceof RPromise)) {
+        if (kind != ReadKind.SilentLocal && isPromiseProfile.profile(result instanceof RPromise)) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
@@ -292,7 +292,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            if (kind == ReadKind.Silent) {
+            if (kind == ReadKind.Silent || kind == ReadKind.SilentLocal) {
                 return null;
             } else {
                 throw RError.error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
@@ -444,7 +444,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
             current = next;
             currentDescriptor = nextDescriptor;
-        } while (kind != ReadKind.Local && current != null && !match);
+        } while (kind != ReadKind.SilentLocal && current != null && !match);
 
         FrameLevel lastLevel = null;
 

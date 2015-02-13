@@ -47,7 +47,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         assert rvn.getKind() != ReadKind.Forced;  // Should be caught by optimization check
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
-        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.Local);
+        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.SilentLocal);
     }
 
     @Override
@@ -68,14 +68,11 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         }
 
         // Execute eagerly
-        Object result = null;
-        try {
-            // This reads only locally, and frameSlotNode.hasValue that there is the proper
-            // frameSlot there.
-            result = readNode.execute(frame);
-        } catch (Throwable t) {
-            // If any error occurred, we cannot be sure what to do. Instead of trying to be
-            // clever, we conservatively rewrite to default PromisedNode.
+        // This reads only locally, and frameSlotNode.hasValue that there is the proper
+        // frameSlot there.
+        Object result = readNode.execute(frame);
+        if (result == null) {
+            // Cannot apply optimizations, as the value was removed
             return rewriteToAndExecuteFallback(frame);
         }
 
