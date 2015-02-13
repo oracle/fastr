@@ -565,7 +565,8 @@ public final class RError extends RuntimeException {
         NULL_DLLINFO("NULL value passed for DllInfo"),
         REQUIRES_NAME_DLLINFO("must pass package name or DllInfo reference"),
         APPLY_NON_FUNCTION("attempt to apply non-function"),
-        NO_INDEX("no index specified");
+        NO_INDEX("no index specified"),
+        PERFORMANCE("performance problem: %s");
 
         public final String message;
         private final boolean hasArgs;
