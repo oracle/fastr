@@ -386,9 +386,6 @@ public class TestBase {
     }
 
     protected static void assertTemplateEval(WhiteList whiteList, String... expressions) {
-        if (!generatingExpected()) {
-            System.out.print("Testing " + expressions.length + " expressions ");
-        }
         int index = 1;
         for (String expression : expressions) {
             String expected = expectedEval(expression, null, "assertTemplateEval");
@@ -409,10 +406,8 @@ public class TestBase {
                     if (!expected.equals(result)) {
                         if (whiteList != null && whiteList.get(expression) != null) {
                             WhiteList.Results results = whiteList.get(expression);
-                            System.out.printf("\nChecking whitelist for \"%s\"... ", expression);
                             assertTrue(results.expected.equals(cutLineEnding(expected)));
                             if (results.fastR.equals(cutLineEnding(result))) {
-                                System.out.print("OK");
                                 whiteList.markUsed(expression);
                             } else {
                                 ok = assertFalse();
@@ -438,9 +433,6 @@ public class TestBase {
             index++;
         }
         if (!generatingExpected()) {
-            if (!microTestFailed) {
-                System.out.println("OK");
-            }
             if (whiteList != null) {
                 whiteList.report();
             }
@@ -500,7 +492,7 @@ public class TestBase {
                 }
             }
             // @formatter:off
-             System.err.printf("Micro-test failure: %s(%s:%d)%n",
+             System.err.printf("%nMicro-test failure: %s(%s:%d)%n",
                             culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
              System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
              System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
