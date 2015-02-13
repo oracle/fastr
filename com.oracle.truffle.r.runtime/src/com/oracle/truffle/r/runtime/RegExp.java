@@ -32,18 +32,18 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 public class RegExp {
 
     private static enum Predefined {
-        alnum("0-9A-Za-z"),
-        alpha("a-zA-Z"),
-        blank(null),
-        cntrl(null),
-        digit("0-9"),
-        graph(null),
-        lower("a-z"),
-        print(null),
-        punct(null),
+        alnum("\\p{Alnum}"),
+        alpha("\\p{Alpha}"),
+        blank("\\p{Blank}"),
+        cntrl("\\p{Cntrl}"),
+        digit("\\p{Digit}"),
+        graph("\\p{Graph}"),
+        lower("\\p{Lower}"),
+        print("\\p{Print}"),
+        punct("\\p{Punct}"),
         space("\\p{Space}"),
-        upper("A-Z"),
-        xdigit("0-9A-Fa-f");
+        upper("\\p{Upper}"),
+        xdigit("\\p{XDigit}");
 
         private final String replacement;
         private final String syntax;
@@ -75,9 +75,6 @@ public class RegExp {
                 int ix = result.indexOf(preDefined.syntax);
                 if (ix >= 0) {
                     String replacement = preDefined.replacement;
-                    if (replacement == null) {
-                        throw RInternalError.unimplemented();
-                    }
                     result = result.substring(0, ix) + replacement + result.substring(ix + preDefined.syntaxLength);
                     predefined = true;
                 }

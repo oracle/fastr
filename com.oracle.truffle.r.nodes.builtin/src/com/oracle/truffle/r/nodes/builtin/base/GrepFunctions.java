@@ -562,7 +562,9 @@ public class GrepFunctions {
                 }
             }
             RList ret = RDataFactory.createList(result);
-            ret.copyAttributesFrom(x);
+            if (x.getNames() != null) {
+                ret.copyNamesFrom(x);
+            }
             return ret;
         }
 
