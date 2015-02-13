@@ -150,7 +150,7 @@ public abstract class DispatchedCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RStringVector aType) {
-            if (S3DispatchNode.isEqualType(this.type, aType)) {
+            if (S3DispatchNode.isEqualType(type, aType)) {
                 return currentNode.execute(frame);
             }
             return nextNode.execute(frame, aType);
@@ -158,7 +158,7 @@ public abstract class DispatchedCallNode extends RNode {
 
         @Override
         public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
-            if (S3DispatchNode.isEqualType(this.type, aType)) {
+            if (S3DispatchNode.isEqualType(type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }
             return nextNode.executeInternal(frame, aType, args);

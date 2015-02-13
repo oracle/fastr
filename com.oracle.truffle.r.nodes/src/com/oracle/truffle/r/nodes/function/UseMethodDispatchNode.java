@@ -182,17 +182,17 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @TruffleBoundary
     private void findTargetFunctionLookup(Frame callerFrame) {
-        for (int i = 0; i < this.type.getLength(); ++i) {
-            findFunction(this.genericName, this.type.getDataAt(i), callerFrame);
+        for (int i = 0; i < type.getLength(); ++i) {
+            findFunction(genericName, type.getDataAt(i), callerFrame);
             if (targetFunction != null) {
                 RStringVector classVec = null;
                 if (i > 0) {
                     isFirst = false;
-                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataWithoutCopying(), i, this.type.getLength()), true);
-                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
+                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
+                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
                 } else {
                     isFirst = true;
-                    classVec = this.type.copyResized(this.type.getLength(), false);
+                    classVec = type.copyResized(type.getLength(), false);
                 }
                 klass = classVec;
                 break;
@@ -201,6 +201,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (targetFunction != null) {
             return;
         }
-        findFunction(this.genericName, RRuntime.DEFAULT, callerFrame);
+        findFunction(genericName, RRuntime.DEFAULT, callerFrame);
     }
 }

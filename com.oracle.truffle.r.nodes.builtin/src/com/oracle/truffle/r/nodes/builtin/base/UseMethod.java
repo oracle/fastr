@@ -67,7 +67,7 @@ public abstract class UseMethod extends RBuiltinNode {
             throw new AssertionError();
         }
 
-        public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
+        public abstract Object execute(VirtualFrame frame, String generic, Object o);
 
         /**
          * @param frame
@@ -159,7 +159,7 @@ public abstract class UseMethod extends RBuiltinNode {
         }
 
         @Override
-        public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
+        public Object executeDispatch(VirtualFrame frame, String gen, Object obj) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
             }
@@ -177,7 +177,7 @@ public abstract class UseMethod extends RBuiltinNode {
         }
 
         @Override
-        public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
+        public Object executeDispatch(VirtualFrame frame, String gen, Object obj) {
             return currentNode.execute(frame, classHierarchyNode.execute(frame, obj));
         }
     }
