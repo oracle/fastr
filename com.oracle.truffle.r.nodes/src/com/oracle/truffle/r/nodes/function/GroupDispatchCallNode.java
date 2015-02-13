@@ -293,7 +293,7 @@ class GroupDispatchNode extends S3DispatchNode {
         // assuming builtin functions don't get redefined.
         if (builtInNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            builtInNode = insert(ReadVariableNode.createFunctionLookup(genericName));
+            builtInNode = insert(ReadVariableNode.createFunctionLookup(genericName, true));
             try {
                 builtinFunc = builtInNode.executeFunction(frame);
             } catch (UnexpectedResultException e) {

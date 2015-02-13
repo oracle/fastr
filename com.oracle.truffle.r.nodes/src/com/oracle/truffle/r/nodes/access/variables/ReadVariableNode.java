@@ -48,11 +48,15 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
     public static enum ReadKind {
         Normal,
-        // Copy semantics
+        // return null (instead of throwing an error) if not found
+        Silent,
+        // copy semantics
         Copying,
+        // start the lookup in the enclosing frame
         Super,
+        // lookup only within the current frame
         Local,
-        // Whether a promise should be forced to check its type or not
+        // whether a promise should be forced to check its type or not
         Forced;
     }
 
@@ -70,8 +74,13 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         return rvn;
     }
 
-    public static ReadVariableNode createFunctionLookup(String name) {
-        return new ReadVariableNode(name, RType.Function, ReadKind.Normal);
+    /**
+     * Creates a function lookup for the given identifier. If throwError is true, then an error will
+     * be thrown if the specified function is not found, if throwError is false, a {@code null}
+     * value will silently be returned.
+     */
+    public static ReadVariableNode createFunctionLookup(String identifier, boolean throwError) {
+        return new ReadVariableNode(identifier, RType.Function, throwError ? ReadKind.Normal : ReadKind.Silent);
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
@@ -195,12 +204,12 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         private static final long serialVersionUID = 3380913774357492013L;
     }
 
-    private abstract class FrameLevel {
+    private abstract static class FrameLevel {
 
         public abstract Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException;
     }
 
-    private abstract class DescriptorLevel extends FrameLevel {
+    private abstract static class DescriptorLevel extends FrameLevel {
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
@@ -236,7 +245,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    private final class DescriptorStableMatch extends DescriptorLevel {
+    private static final class DescriptorStableMatch extends DescriptorLevel {
 
         private final StableValue<Object> valueAssumption;
 
@@ -283,7 +292,11 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            throw RError.error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            if (kind == ReadKind.Silent) {
+                return null;
+            } else {
+                throw RError.error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            }
         }
 
         @Override
@@ -292,7 +305,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public final class NextFrameFromDescriptorLevel extends DescriptorLevel {
+    public static final class NextFrameFromDescriptorLevel extends DescriptorLevel {
 
         private final FrameLevel next;
         private final StableValue<MaterializedFrame> enclosingFrameAssumption;
@@ -314,7 +327,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public final class NextFrameLevel extends FrameLevel {
+    public static final class NextFrameLevel extends FrameLevel {
 
         private final FrameLevel next;
         private final FrameDescriptor nextDescriptor;
@@ -351,29 +364,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    private final class SlotMissing extends FrameLevel {
-
-        private final FrameLevel next;
-        private final Assumption slotMissingAssumption;
-
-        public SlotMissing(FrameLevel next, Assumption slotMissingAssumption) {
-            this.next = next;
-            this.slotMissingAssumption = slotMissingAssumption;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            slotMissingAssumption.check();
-            return next.execute(frame, variableFrame);
-        }
-
-        @Override
-        public String toString() {
-            return "X" + next;
-        }
-    }
-
-    public final class MultiAssumptionLevel extends FrameLevel {
+    public static final class MultiAssumptionLevel extends FrameLevel {
 
         private final FrameLevel next;
         @CompilationFinal private final Assumption[] assumptions;
@@ -491,7 +482,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (lastLevel instanceof DescriptorLevel) {
                     assumptions.add(level.descriptor.getNotInFrameAssumption(identifier));
                 } else {
-                    lastLevel = new SlotMissing(lastLevel, level.descriptor.getNotInFrameAssumption(identifier));
+                    assumptions.add(level.descriptor.getNotInFrameAssumption(identifier));
                 }
             } else {
                 if (level.valueAssumption != null && lastLevel instanceof DescriptorLevel) {
