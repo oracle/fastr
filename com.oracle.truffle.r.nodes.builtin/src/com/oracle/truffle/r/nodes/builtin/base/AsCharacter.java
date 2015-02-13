@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,10 +35,13 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."})
+@GenerateNodeFactory
 public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
     @Child private DispatchedCallNode dcn;
+
+    public abstract Object execute(VirtualFrame frame, Object obj);
 
     private void initCast() {
         if (castStringNode == null) {
@@ -86,6 +89,13 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization
+    protected String doRaw(VirtualFrame frame, RRaw value) {
+        controlVisibility();
+        initCast();
+        return (String) castStringNode.executeString(frame, value);
+    }
+
+    @Specialization
     protected String doString(String value) {
         controlVisibility();
         return value;
@@ -109,7 +119,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
-    @Specialization
+    @Specialization(guards = "!isObject")
     protected RStringVector doList(@SuppressWarnings("unused") RList list) {
         controlVisibility();
         throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
