@@ -595,6 +595,23 @@ public class ForeignFunctions {
             return matchName(f, "SplineEval");
         }
 
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object dotCallFallback(Object fobj, Object args, Object packageName) {
+            String name = null;
+            if (fobj instanceof RList) {
+                RList f = (RList) fobj;
+                RStringVector names = f.getNames();
+                for (int i = 0; i < names.getLength(); i++) {
+                    if (names.getDataAt(i).equals("name")) {
+                        name = (String) f.getDataAt(i);
+                        break;
+                    }
+                }
+            }
+            throw new RInternalError(".Call specialization failure: %s ", name == null ? "<unknown>" : name);
+        }
+
     }
 
     /**
