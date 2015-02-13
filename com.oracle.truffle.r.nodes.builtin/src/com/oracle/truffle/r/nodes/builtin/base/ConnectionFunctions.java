@@ -820,6 +820,10 @@ public abstract class ConnectionFunctions {
                         delegate = new FileReadTextRConnection(this);
                     }
                     break;
+                case Write:
+                case WriteBinary:
+                    delegate = new GZIPOutputRConnection(this);
+                    break;
                 default:
                     throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
             }
@@ -829,6 +833,7 @@ public abstract class ConnectionFunctions {
 
     private static class GZIPInputRConnection extends DelegateReadRConnection {
         private GZIPInputStream stream;
+        private BufferedReader bufferedReader; // only set for readLinesInternal
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
             super(base);
@@ -837,7 +842,11 @@ public abstract class ConnectionFunctions {
 
         @Override
         public String[] readLinesInternal(int n) throws IOException {
-            throw new IOException("TODO");
+            // To do this we have to create a reader on the stream
+            if (bufferedReader == null) {
+                bufferedReader = new BufferedReader(new InputStreamReader(stream));
+            }
+            return readLinesHelper(bufferedReader, n);
         }
 
         @Override
@@ -849,6 +858,37 @@ public abstract class ConnectionFunctions {
         public void close() throws IOException {
             stream.close();
             base.closed = true;
+        }
+
+    }
+
+    private static class GZIPOutputRConnection extends DelegateWriteRConnection {
+        private GZIPOutputStream stream;
+
+        GZIPOutputRConnection(GZIPRConnection base) throws IOException {
+            super(base);
+            stream = new GZIPOutputStream(new FileOutputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return stream;
+        }
+
+        @Override
+        public void close() throws IOException {
+            stream.close();
+            base.closed = true;
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public void flush() throws IOException {
+            stream.flush();
         }
 
     }
