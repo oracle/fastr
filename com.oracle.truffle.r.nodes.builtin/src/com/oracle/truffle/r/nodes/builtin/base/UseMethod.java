@@ -17,11 +17,13 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -122,7 +124,7 @@ public abstract class UseMethod extends RBuiltinNode {
             super(suppliedArgsNames);
             this.generic = generic;
             this.nextNode = new UninitializedUseMethodNode(depth + 1, suppliedArgsNames);
-            this.currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
+            this.currentNode = DispatchedCallNode.create(generic, DispatchType.UseMethod, suppliedArgsNames);
         }
 
         protected abstract Object executeDispatch(VirtualFrame frame, String gen, Object o);
@@ -143,6 +145,8 @@ public abstract class UseMethod extends RBuiltinNode {
      */
     private static final class UseMethodGenericOnlyNode extends UseMethodCachedNode {
 
+        private final BranchProfile errorProfile = BranchProfile.create();
+
         protected UseMethodGenericOnlyNode(String generic, int depth, String[] suppliedArgsNames) {
             super(generic, depth, suppliedArgsNames);
         }
@@ -150,6 +154,7 @@ public abstract class UseMethod extends RBuiltinNode {
         @Override
         public Object executeDispatch(VirtualFrame frame, String gen, Object obj) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
             }
 
@@ -173,6 +178,8 @@ public abstract class UseMethod extends RBuiltinNode {
 
     private static final class UseMethodFallbackNode extends UseMethodNode {
 
+        private final BranchProfile errorProfile = BranchProfile.create();
+
         public UseMethodFallbackNode(String[] suppliedArgsNames) {
             super(suppliedArgsNames);
         }
@@ -184,15 +191,16 @@ public abstract class UseMethod extends RBuiltinNode {
             CompilerAsserts.neverPartOfCompilation();
             if (o == RMissing.instance) {
                 if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+                    errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
 
                 // For S3Dispatch, we have to evaluate the the first argument
                 Object enclosingArg = getEnclosingArg(frame);
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), RRuntime.USE_METHOD, suppliedArgsNames);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
             } else {
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), RRuntime.USE_METHOD, suppliedArgsNames);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, o));
             }
         }

@@ -12,7 +12,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -21,13 +21,18 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchedCallNode extends RNode {
 
+    public static enum DispatchType {
+        UseMethod,
+        NextMethod
+    }
+
     private static final int INLINE_CACHE_SIZE = 4;
 
-    public static DispatchedCallNode create(String genericName, String dispatchType, String[] useMethodArgNames) {
+    public static DispatchedCallNode create(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, useMethodArgNames);
     }
 
-    public static DispatchedCallNode create(String genericName, String enclosingName, String dispatchType, Object[] args, String[] argNames) {
+    public static DispatchedCallNode create(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
         return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, argNames);
     }
 
@@ -50,12 +55,12 @@ public abstract class DispatchedCallNode extends RNode {
         private final int depth;
         private final String genericName;
         private final String enclosingName;
-        private final String dispatchType;
+        private final DispatchType dispatchType;
         @CompilationFinal private final Object[] args;
         @CompilationFinal private final String[] argNames;
         @CompilationFinal private final String[] useMethodArgNames;
 
-        private UninitializedDispatchedCallNode(String genericName, String enclosingName, String dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
+        private UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
             this.genericName = genericName;
             this.enclosingName = enclosingName;
             this.depth = 0;
@@ -65,11 +70,11 @@ public abstract class DispatchedCallNode extends RNode {
             this.useMethodArgNames = useMethodArgNames;
         }
 
-        public UninitializedDispatchedCallNode(String genericName, String enclosingName, String dispatchType, Object[] args, String[] argNames) {
+        public UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
             this(genericName, enclosingName, dispatchType, args, argNames, null);
         }
 
-        public UninitializedDispatchedCallNode(String genericName, String dispatchType, String[] useMethodArgNames) {
+        public UninitializedDispatchedCallNode(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
             this(genericName, null, dispatchType, null, null, useMethodArgNames);
         }
 
@@ -107,13 +112,14 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         protected DispatchNode createCurrentNode(RStringVector type) {
-            if (this.dispatchType == RRuntime.USE_METHOD) {
-                return new UseMethodDispatchNode(this.genericName, type, this.useMethodArgNames);
+            switch (dispatchType) {
+                case NextMethod:
+                    return new NextMethodDispatchNode(genericName, type, args, argNames, enclosingName);
+                case UseMethod:
+                    return new UseMethodDispatchNode(genericName, type, useMethodArgNames);
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
-            if (this.dispatchType == RRuntime.NEXT_METHOD) {
-                return new NextMethodDispatchNode(this.genericName, type, this.args, this.argNames, enclosingName);
-            }
-            throw RInternalError.shouldNotReachHere();
         }
     }
 

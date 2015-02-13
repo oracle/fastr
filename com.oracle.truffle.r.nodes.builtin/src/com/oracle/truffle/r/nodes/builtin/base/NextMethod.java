@@ -22,6 +22,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -59,7 +60,7 @@ public abstract class NextMethod extends RBuiltinNode {
             if (!RArguments.hasS3Args(frame)) {
                 enclosingFunctionName = enclosingFunction.getRootNode().toString();
             }
-            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, enclosingFunctionName, RRuntime.NEXT_METHOD, args, argNames);
+            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, enclosingFunctionName, DispatchType.NextMethod, args, argNames);
             dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = genericName;
         }

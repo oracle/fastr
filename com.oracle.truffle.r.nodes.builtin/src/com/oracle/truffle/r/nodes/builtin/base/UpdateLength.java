@@ -22,19 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.CreateCast;
-import com.oracle.truffle.api.dsl.Specialization;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
@@ -53,7 +53,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("length<-", RRuntime.USE_METHOD, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create("length<-", DispatchType.UseMethod, getSuppliedArgsNames()));
         }
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});

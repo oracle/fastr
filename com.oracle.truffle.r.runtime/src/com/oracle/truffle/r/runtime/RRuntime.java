@@ -124,10 +124,6 @@ public class RRuntime {
 
     public static final String RDOT = ".";
 
-    public static final String USE_METHOD = "UseMethod";
-
-    public static final String NEXT_METHOD = "NextMethod";
-
     public static final String SYSTEM_DATE_FORMAT = "EEE MMM dd HH:mm:ss yyyy";
 
     public static final String DROP_DIM_ARG_NAME = "drop";

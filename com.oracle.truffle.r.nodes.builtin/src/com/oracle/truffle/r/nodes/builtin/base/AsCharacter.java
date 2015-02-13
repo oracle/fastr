@@ -27,8 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -130,7 +131,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, getSuppliedArgsNames()));
         }
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
