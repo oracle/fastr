@@ -97,7 +97,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         }
     }
 
-    public static boolean isEqualType(final RStringVector one, final RStringVector two) {
+    public static boolean isEqualType(RStringVector one, RStringVector two) {
         if (one == null && two == null) {
             return true;
         }

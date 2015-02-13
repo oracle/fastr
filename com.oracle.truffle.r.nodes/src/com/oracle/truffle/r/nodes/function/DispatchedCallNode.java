@@ -23,11 +23,11 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
 
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, String[] useMethodArgNames) {
+    public static DispatchedCallNode create(String genericName, String dispatchType, String[] useMethodArgNames) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, useMethodArgNames);
     }
 
-    public static DispatchedCallNode create(final String genericName, final String enclosingName, final String dispatchType, final Object[] args, final String[] argNames) {
+    public static DispatchedCallNode create(String genericName, String enclosingName, String dispatchType, Object[] args, String[] argNames) {
         return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, argNames);
     }
 
@@ -55,7 +55,7 @@ public abstract class DispatchedCallNode extends RNode {
         @CompilationFinal private final String[] argNames;
         @CompilationFinal private final String[] useMethodArgNames;
 
-        private UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
+        private UninitializedDispatchedCallNode(String genericName, String enclosingName, String dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
             this.genericName = genericName;
             this.enclosingName = enclosingName;
             this.depth = 0;
@@ -65,15 +65,15 @@ public abstract class DispatchedCallNode extends RNode {
             this.useMethodArgNames = useMethodArgNames;
         }
 
-        public UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args, String[] argNames) {
+        public UninitializedDispatchedCallNode(String genericName, String enclosingName, String dispatchType, Object[] args, String[] argNames) {
             this(genericName, enclosingName, dispatchType, args, argNames, null);
         }
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, String[] useMethodArgNames) {
+        public UninitializedDispatchedCallNode(String genericName, String dispatchType, String[] useMethodArgNames) {
             this(genericName, null, dispatchType, null, null, useMethodArgNames);
         }
 
-        private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
+        private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
             this.depth = depth;
             this.genericName = copy.genericName;
             this.enclosingName = copy.enclosingName;
@@ -142,14 +142,14 @@ public abstract class DispatchedCallNode extends RNode {
         @Child private DispatchNode currentNode;
         private final RStringVector type;
 
-        CachedNode(final DispatchNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
+        CachedNode(DispatchNode currentNode, DispatchedCallNode nextNode, RStringVector type) {
             this.nextNode = nextNode;
             this.currentNode = currentNode;
             this.type = type;
         }
 
         @Override
-        public Object execute(VirtualFrame frame, final RStringVector aType) {
+        public Object execute(VirtualFrame frame, RStringVector aType) {
             if (S3DispatchNode.isEqualType(this.type, aType)) {
                 return currentNode.execute(frame);
             }
