@@ -87,7 +87,15 @@ public enum RVersionInfo {
             if (data.value == null) {
                 switch (data) {
                     case Platform:
-                        data.value = Arch.value + "-" + vendor + "-" + OS.value;
+                        /*
+                         * FIXME In order to match the info in the default packages copied from
+                         * GnuR, this value on Linux has to be x86_64-unknown-linux-gnu
+                         */
+                        if (osName.equals("linux")) {
+                            data.value = "x86_64-unknown-linux-gnu";
+                        } else {
+                            data.value = Arch.value + "-" + vendor + "-" + OS.value;
+                        }
                         break;
                     case System:
                         data.value = Arch.value + ", " + OS.value;
