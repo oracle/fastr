@@ -663,47 +663,57 @@ public class RSerialize {
 
     private static class XdrInputFormat extends PInputStream {
 
-        private final XdrInput xdr;
+        private final byte[] buf;
+        @SuppressWarnings("unused") private int size;
+        private int offset;
 
         XdrInputFormat(InputStream is) throws IOException {
             super(is);
             if (is instanceof PByteArrayInputStream) {
                 // we already have the data and we have read the beginning
                 PByteArrayInputStream pbis = (PByteArrayInputStream) is;
-                xdr = new XdrInput(pbis.getData(), pbis.getData().length, pbis.pos());
+                buf = pbis.getData();
+                size = pbis.getData().length;
+                offset = pbis.pos();
             } else {
-                byte[] buf = new byte[1024];
-                int size = 0;
+                byte[] tempBuf = new byte[1024];
+                int cumSize = 0;
                 // read entire stream
                 while (true) {
-                    int nr = is.read(buf, size, buf.length - size);
+                    int nr = is.read(tempBuf, cumSize, tempBuf.length - cumSize);
                     if (nr == -1) {
                         break;
                     }
-                    size += nr;
-                    if (size == buf.length) {
-                        buf = Arrays.copyOf(buf, buf.length * 2);
+                    cumSize += nr;
+                    if (cumSize == tempBuf.length) {
+                        tempBuf = Arrays.copyOf(tempBuf, tempBuf.length * 2);
                     }
                 }
-                xdr = new XdrInput(buf, size, 0);
+                buf = tempBuf;
+                size = cumSize;
+                offset = 0;
             }
         }
 
         @Override
         int readInt() {
-            return xdr.getInt();
-        }
-
-        @Override
-        String readString(int len) {
-            String result = xdr.string(len);
-            return result;
+            return ((buf[offset++] & 0xff) << 24 | (buf[offset++] & 0xff) << 16 | (buf[offset++] & 0xff) << 8 | (buf[offset++] & 0xff));
         }
 
         @Override
         double readDouble() {
-            return xdr.getDouble();
+            long val = ((long) (buf[offset++] & 0xff) << 56 | (long) (buf[offset++] & 0xff) << 48 | (long) (buf[offset++] & 0xff) << 40 | (long) (buf[offset++] & 0xff) << 32 |
+                            (long) (buf[offset++] & 0xff) << 24 | (long) (buf[offset++] & 0xff) << 16 | (long) (buf[offset++] & 0xff) << 8 | buf[offset++] & 0xff);
+            return Double.longBitsToDouble(val);
         }
+
+        @Override
+        String readString(int len) {
+            String s = new String(buf, offset, len);
+            offset += len;
+            return s;
+        }
+
     }
 
     /**
@@ -736,6 +746,9 @@ public class RSerialize {
         }
 
     }
+
+    // Serialize support is currently very limited, essentially to saving the CRAN package format
+// info,
 
     private abstract static class POutputStream {
         protected OutputStream os;
@@ -956,60 +969,6 @@ public class RSerialize {
     public static void serialize(RConnection conn, Object obj, boolean ascii, int version, Object refhook, int depth) throws IOException {
         Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
         output.serialize(obj);
-    }
-
-    private static class XdrInput {
-        private byte[] buf;
-        @SuppressWarnings("unused") private int size;
-        private int offset;
-
-        XdrInput(byte[] data, int size, int offset) {
-            this.buf = data;
-            this.size = size;
-            this.offset = offset;
-
-        }
-
-        /**
-         * Get an integer from the buffer.
-         *
-         * @return integer
-         */
-        int getInt() {
-            return ((buf[offset++] & 0xff) << 24 | (buf[offset++] & 0xff) << 16 | (buf[offset++] & 0xff) << 8 | (buf[offset++] & 0xff));
-        }
-
-        /**
-         * Put an integer into the buffer.
-         *
-         * @param i Integer to store in XDR buffer.
-         */
-
-        /**
-         * Get a long from the buffer.
-         *
-         * @return long
-         */
-        long getHyper() {
-            return ((long) (buf[offset++] & 0xff) << 56 | (long) (buf[offset++] & 0xff) << 48 | (long) (buf[offset++] & 0xff) << 40 | (long) (buf[offset++] & 0xff) << 32 |
-                            (long) (buf[offset++] & 0xff) << 24 | (long) (buf[offset++] & 0xff) << 16 | (long) (buf[offset++] & 0xff) << 8 | buf[offset++] & 0xff);
-        }
-
-        /**
-         * Get a floating point number from the buffer.
-         *
-         * @return float
-         */
-        double getDouble() {
-            return (Double.longBitsToDouble(getHyper()));
-        }
-
-        String string(int len) {
-            String s = new String(buf, offset, len);
-            offset += len;
-            return s;
-        }
-
     }
 
 }
