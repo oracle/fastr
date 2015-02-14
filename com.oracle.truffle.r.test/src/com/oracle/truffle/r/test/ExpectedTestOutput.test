@@ -76435,12 +76435,6 @@ B FALSE TRUE
 [1] "exNSS4"
 
 
-##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit12
-#argv <- list('Keywords:  utilities ', '\n[ \t\n]*\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
-[[1]]
-[1] "Keywords:  utilities "
-
-
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit13
 #argv <- list('x', '', FALSE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
 [[1]]
@@ -76452,12 +76446,6 @@ B FALSE TRUE
 [[1]]
  [1] "x" "," " " "r" "o" "w" "." "n" "a" "m" "e" "s" " " "=" " " "N" "U" "L" "L"
 [20] "," " "
-
-
-##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit4
-#argv <- list('Keywords:  device ', '[ \t\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
-[[1]]
-[1] "Keywords:" ""          "device"
 
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit7

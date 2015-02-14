@@ -11902,6 +11902,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestrGenBuiltinstrsplit_teststrsplit12_5de2449138882559ccc5a074c2e9851f() {
+        assertEval("argv <- list('Keywords:  utilities ', '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        check("TestrGenBuiltinstrsplit_teststrsplit12_5de2449138882559ccc5a074c2e9851f");
+    }
+
+    @Test
     public void TestrGenBuiltinstrsplit_teststrsplit14_415059cf37554e7268040a36e0a17582() {
         assertEval("argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\'Writing R Extensions\\' for more information.'), '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
         check("TestrGenBuiltinstrsplit_teststrsplit14_415059cf37554e7268040a36e0a17582");
@@ -11923,6 +11929,12 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinstrsplit_teststrsplit3_0d816b41818b324d788a52f13a14ca03() {
         assertEval("argv <- list('  \\036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \\t\\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
         check("TestrGenBuiltinstrsplit_teststrsplit3_0d816b41818b324d788a52f13a14ca03");
+    }
+
+    @Test
+    public void TestrGenBuiltinstrsplit_teststrsplit4_654c2292a6f7bb31c116d50e55ac8864() {
+        assertEval("argv <- list('Keywords:  device ', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        check("TestrGenBuiltinstrsplit_teststrsplit4_654c2292a6f7bb31c116d50e55ac8864");
     }
 
     @Test
