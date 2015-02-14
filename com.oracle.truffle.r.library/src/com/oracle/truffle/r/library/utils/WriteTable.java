@@ -1,0 +1,228 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ *
+ * All rights reserved.
+ */
+package com.oracle.truffle.r.library.utils;
+
+import java.io.*;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+
+//Transcribed from GnuR, library/utils/src/io.c
+
+//Checkstyle: stop
+public class WriteTable {
+    // @formatter:off
+    @TruffleBoundary
+    public static Object execute(RConnection con, Object xx, int nr, int nc, Object rnames, String csep, String ceol, String cna,
+                  char cdec, boolean qmethod, boolean[] quoteCol, boolean quoteRn) throws IOException, IllegalArgumentException {
+        // @formatter:on
+        OutputStream os = con.getOutputStream();
+        String tmp = null;
+        if (xx instanceof RDataFrame) { /* A data frame */
+            RVector x = ((RDataFrame) xx).getVector();
+
+            /* handle factors internally, check integrity */
+            RStringVector[] levels = new RStringVector[nc];
+            for (int j = 0; j < nc; j++) {
+                Object xjObj = x.getDataAtAsObject(j);
+                if (xjObj instanceof RAbstractContainer) {
+                    RAbstractContainer xj = (RAbstractContainer) xjObj;
+                    if (xj.getLength() != nr) {
+                        throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
+                    }
+                    if (isFactor(xj)) {
+                        levels[j] = (RStringVector) xj.getAttributes().get("levels");
+                    }
+                } else {
+                    if (nr != 1) {
+                        throw new IllegalArgumentException("corrupt data frame -- length of column " + (j + 1) + " does not not match nrows");
+                    }
+                }
+            }
+
+            for (int i = 0; i < nr; i++) {
+                // if (i % 1000 == 999)
+                // R_CheckUserInterrupt();
+                if (!(rnames instanceof RNull)) {
+                    os.write(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec).getBytes());
+                    os.write(csep.getBytes());
+                }
+                for (int j = 0; j < nc; j++) {
+                    Object xjObj = x.getDataAtAsObject(j);
+                    if (j > 0) {
+                        os.write(csep.getBytes());
+                    }
+                    if (xjObj instanceof RAbstractContainer) {
+                        RAbstractContainer xj = (RAbstractContainer) xjObj;
+                        if (isna(xj, i)) {
+                            tmp = cna;
+                        } else {
+                            if (levels[j] != null) {
+                                tmp = encodeElement2(levels[j], (int) xj.getDataAtAsObject(i) - 1, quoteCol[j], qmethod, cdec);
+                            } else {
+                                tmp = encodeElement2((RAbstractVector) xj, i, quoteCol[j], qmethod, cdec);
+                            }
+                            /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
+                        }
+                    } else {
+                        tmp = encodePrimitiveElement(xjObj, cna, quoteRn, qmethod);
+                        /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
+                    }
+                    os.write(tmp.getBytes());
+                }
+                os.write(ceol.getBytes());
+            }
+
+        } else { /* A matrix */
+
+            // if (!isVectorAtomic(x))
+            // UNIMPLEMENTED_TYPE("write.table, matrix method", x);
+            RVector x = (RVector) xx;
+            /* quick integrity check */
+            if (x.getLength() != nr * nc) {
+                throw new IllegalArgumentException("corrupt matrix -- dims not not match length");
+            }
+
+            for (int i = 0; i < nr; i++) {
+                if (i % 1000 == 999) {
+                    // R_CheckUserInterrupt();
+                }
+                if (!(rnames instanceof RNull)) {
+                    os.write(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec).getBytes());
+                    os.write(csep.getBytes());
+                }
+                for (int j = 0; j < nc; j++) {
+                    if (j > 0) {
+                        os.write(csep.getBytes());
+                    }
+                    if (isna(x, i + j * nr)) {
+                        tmp = cna;
+                    } else {
+                        tmp = encodeElement2(x, i + j * nr, quoteCol[j], qmethod, cdec);
+                        /* if(cdec) change_dec(tmp, cdec, TYPEOF(x)); */
+                    }
+                    os.write(tmp.getBytes());
+                }
+                os.write(ceol.getBytes());
+            }
+
+        }
+        return RNull.instance;
+    }
+
+    private static String encodeStringElement(String p0, boolean quote, boolean qmethod) {
+        if (!quote) {
+            return p0;
+        }
+        StringBuffer sb = new StringBuffer();
+        sb.append('"');
+        for (int i = 0; i < p0.length(); i++) {
+            char p = p0.charAt(i);
+            if (p == '"') {
+                sb.append(qmethod ? '\\' : '"');
+            }
+            sb.append(p);
+        }
+        sb.append('"');
+        return sb.toString();
+    }
+
+    /* a version of EncodeElement with different escaping of char strings */
+    private static String encodeElement2(RAbstractVector x, int indx, boolean quote, boolean qmethod, char cdec) {
+        if (indx < 0 || indx >= x.getLength()) {
+            throw new IllegalArgumentException("index out of range");
+        }
+        if (x instanceof RStringVector) {
+            RStringVector sx = (RStringVector) x;
+            String p0 = /* translateChar */sx.getDataAt(indx);
+            return encodeStringElement(p0, quote, qmethod);
+        }
+        return encodeElement(x, indx, quote ? '"' : 0, cdec);
+    }
+
+    private static String encodePrimitiveElement(Object o, String cna, boolean quote, boolean qmethod) {
+        if (o instanceof Integer) {
+            int v = (int) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.intToStringNoCheck(v, false);
+        } else if (o instanceof Double) {
+            double v = (double) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.doubleToStringNoCheck(v);
+        } else if (o instanceof Byte) {
+            byte v = (byte) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.logicalToStringNoCheck(v);
+        } else if (o instanceof String) {
+            String v = (String) o;
+            return RRuntime.isNA(v) ? cna : encodeStringElement(v, quote, qmethod);
+        } else if (o instanceof Double) {
+            RComplex v = (RComplex) o;
+            return RRuntime.isNA(v) ? cna : RRuntime.complexToStringNoCheck(v);
+        } else if (o instanceof RRaw) {
+            RRaw v = (RRaw) o;
+            return RRuntime.rawToString(v);
+        }
+        throw RInternalError.unimplemented();
+    }
+
+    private static boolean isna(RAbstractContainer x, int indx) {
+        if (x instanceof RLogicalVector) {
+            return RRuntime.isNA(((RLogicalVector) x).getDataAt(indx));
+        } else if (x instanceof RDoubleVector) {
+            return RRuntime.isNA(((RDoubleVector) x).getDataAt(indx));
+        } else if (x instanceof RIntVector) {
+            return RRuntime.isNA(((RIntVector) x).getDataAt(indx));
+        } else if (x instanceof RStringVector) {
+            return RRuntime.isNA(((RStringVector) x).getDataAt(indx));
+        } else if (x instanceof RComplexVector) {
+            RComplexVector cvec = (RComplexVector) x;
+            RComplex c = cvec.getDataAt(indx);
+            return c.isNA();
+        } else {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static String encodeElement(Object x, int indx, char quote, char dec) {
+        if (x instanceof RAbstractDoubleVector) {
+            RAbstractDoubleVector v = (RAbstractDoubleVector) x;
+            return RRuntime.doubleToString(v.getDataAt(indx));
+        }
+        if (x instanceof RAbstractIntVector) {
+            RAbstractIntVector v = (RAbstractIntVector) x;
+            return RRuntime.intToString(v.getDataAt(indx), false);
+        }
+        if (x instanceof RAbstractLogicalVector) {
+            RAbstractLogicalVector v = (RAbstractLogicalVector) x;
+            return RRuntime.logicalToString(v.getDataAt(indx));
+        }
+        if (x instanceof RAbstractComplexVector) {
+            RAbstractComplexVector v = (RAbstractComplexVector) x;
+            return RRuntime.complexToString(v.getDataAt(indx));
+        }
+        if (x instanceof RAbstractRawVector) {
+            RAbstractRawVector v = (RAbstractRawVector) x;
+            return RRuntime.rawToString(v.getDataAt(indx));
+        }
+        throw RInternalError.unimplemented();
+    }
+
+    private static boolean isFactor(RAbstractContainer v) {
+        for (int i = 0; i < v.getClassHierarchy().getLength(); i++) {
+            if (v.getClassHierarchy().getDataAt(i).equals("factor")) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

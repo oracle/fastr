@@ -227,6 +227,7 @@ suite = {
       "dependencies" : [
         "com.oracle.graal.debug",
         "com.oracle.truffle.r.nodes",
+        "com.oracle.truffle.r.library",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -338,6 +339,17 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.graal.options",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR",
+
+    },
+
+    "com.oracle.truffle.r.library" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "com.oracle.truffle.r.runtime",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",

@@ -246,7 +246,7 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    return junit(['--tests', _simple_unit_tests()] + args)
+    return junit(['--tests', _library_unit_tests()] + args)
 
 def junit_default(args):
     return junit(['--tests', _all_unit_tests()] + args)
@@ -260,8 +260,8 @@ def _test_package():
 def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
-def _simple_unit_tests():
-    return _test_subpackage('simple')
+def _library_unit_tests():
+    return ','.join((_test_subpackage('library.base'), _test_subpackage('library.stats'), _test_subpackage('library.utils')))
 
 def _testrgen_unit_tests():
     return _test_subpackage('testrgen')
@@ -279,7 +279,7 @@ def _app_unit_tests():
     return _test_subpackage('apps')
 
 def _gate_unit_tests():
-    return ','.join((_simple_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests(), _app_unit_tests()))
+    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests(), _app_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()
