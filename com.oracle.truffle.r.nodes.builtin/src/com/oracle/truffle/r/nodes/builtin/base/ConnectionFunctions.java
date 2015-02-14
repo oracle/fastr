@@ -148,6 +148,11 @@ public abstract class ConnectionFunctions {
      * {@link DelegateRConnection} can get to its {@link BaseRConnection} through the
      * {@link #getBaseConnection} method.
      *
+     * N.B. There is subtle but important distinction between an explicit {@code close} on a
+     * connection and the implicit open/close that occurs when a function such as {@code readChar}
+     * is invoked on an unopened connection. The former destroys the connection and attempts to use
+     * it subsequently will throw an error. The latter will open/close the connection (internally)
+     * and this can be repeated indefinitely.
      */
     private abstract static class BaseRConnection extends RConnection {
 
@@ -158,7 +163,7 @@ public abstract class ConnectionFunctions {
         protected boolean opened;
 
         /**
-         * Returns {@code true} once the {@link #close()} method has been called.
+         * Returns {@code true} once the {code R close} method has been called.
          */
         protected boolean closed;
 
@@ -263,8 +268,8 @@ public abstract class ConnectionFunctions {
                 // closed or lazy
                 if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
                     openMode = lazyOpenMode;
-                    createDelegateConnection();
                 }
+                createDelegateConnection();
             }
         }
 
@@ -315,6 +320,15 @@ public abstract class ConnectionFunctions {
             }
             assert allConnections[this.descriptor] != null;
             allConnections[this.descriptor] = null;
+        }
+
+        protected void internalClose() throws IOException {
+            opened = false;
+            if (theConnection != null) {
+                DelegateRConnection tc = theConnection;
+                theConnection = null;
+                tc.internalClose();
+            }
         }
 
         @Override
@@ -384,6 +398,17 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    /**
+     * Used by the {@code readXXX/writeXXX} builtins to force a connection open and return the
+     * initial state, so that it can be closed if required.
+     */
+    private static boolean wasOpen(RConnection conn) throws IOException {
+        BaseRConnection baseConn = getBaseConnection(conn);
+        boolean ret = baseConn.opened;
+        baseConn.checkOpen();
+        return ret;
+    }
+
     private static String[] readLinesHelper(BufferedReader bufferedReader, int n) throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         String line;
@@ -421,6 +446,8 @@ public abstract class ConnectionFunctions {
         public int getDescriptor() {
             return base.getDescriptor();
         }
+
+        protected abstract void internalClose() throws IOException;
 
     }
 
@@ -706,10 +733,15 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            bufferedReader.close();
             base.closed = true;
-
+            internalClose();
         }
+
+        @Override
+        public void internalClose() throws IOException {
+            bufferedReader.close();
+        }
+
     }
 
     private static class FileWriteTextRConnection extends DelegateWriteRConnection {
@@ -735,8 +767,13 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            bufferedWriter.close();
             base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            bufferedWriter.close();
         }
 
         @Override
@@ -768,8 +805,13 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            inputReader.close();
             base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            inputReader.close();
         }
     }
 
@@ -856,8 +898,16 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            stream.close();
             base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            stream.close();
+            if (bufferedReader != null) {
+                bufferedReader.close();
+            }
         }
 
     }
@@ -877,8 +927,13 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            stream.close();
             base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            stream.close();
         }
 
         @Override
@@ -1012,6 +1067,10 @@ public abstract class ConnectionFunctions {
         @Override
         public void close() throws IOException {
             base.closed = true;
+        }
+
+        @Override
+        protected void internalClose() {
         }
     }
 
@@ -1198,8 +1257,13 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void close() throws IOException {
-            bufferedReader.close();
             base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            bufferedReader.close();
         }
 
     }
@@ -1329,7 +1393,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object close(RConnection con) {
-            controlVisibility();
+            forceVisibility(false);
             try {
                 con.close();
             } catch (IOException ex) {
@@ -1346,14 +1410,32 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    /**
+     * This is inherited by the {@code readXX/writeXXX} builtins that are required to "close" a
+     * connection that they opened. It does not destroy the connection.
+     */
+    private abstract static class InternalCloseHelper extends RBuiltinNode {
+        protected void internalClose(RConnection con) throws RError {
+            try {
+                BaseRConnection baseConn = getBaseConnection(con);
+                baseConn.internalClose();
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
+    }
+
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"})
-    public abstract static class ReadLines extends RBuiltinNode {
+    public abstract static class ReadLines extends InternalCloseHelper {
         @Specialization
         @TruffleBoundary
         protected Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding, @SuppressWarnings("unused") byte skipNul) {
             // TODO implement all the arguments
             controlVisibility();
+            boolean wasOpen = true;
             try {
+                wasOpen = wasOpen(con);
                 String[] lines = con.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
@@ -1361,6 +1443,10 @@ public abstract class ConnectionFunctions {
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+            } finally {
+                if (!wasOpen) {
+                    internalClose(con);
+                }
             }
         }
 
@@ -1379,15 +1465,21 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "writeLines", kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"})
-    public abstract static class WriteLines extends RBuiltinNode {
+    public abstract static class WriteLines extends InternalCloseHelper {
         @Specialization
         @TruffleBoundary
         protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
             controlVisibility();
+            boolean wasOpen = true;
             try {
+                wasOpen = wasOpen(con);
                 con.writeLines(text, sep.getDataAt(0));
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+            } finally {
+                if (!wasOpen) {
+                    internalClose(con);
+                }
             }
             return RNull.instance;
         }
@@ -1499,7 +1591,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"})
-    public abstract static class ReadChar extends RBuiltinNode {
+    public abstract static class ReadChar extends InternalCloseHelper {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "ncharsEmpty")
@@ -1512,16 +1604,22 @@ public abstract class ConnectionFunctions {
         @Specialization(guards = "useBytesEmpty")
         protected RStringVector readCharUseBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
-            return RDataFactory.createEmptyStringVector();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "useBytes");
         }
 
         @Specialization(guards = {"!ncharsEmpty", "!useBytesEmpty"})
         protected RStringVector readChar(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
+            boolean wasOpen = true;
             try {
+                wasOpen = wasOpen(con);
                 return con.readChar(nchars, useBytes.getDataAt(0) == RRuntime.LOGICAL_TRUE);
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+            } finally {
+                if (!wasOpen) {
+                    internalClose(con);
+                }
             }
         }
 
