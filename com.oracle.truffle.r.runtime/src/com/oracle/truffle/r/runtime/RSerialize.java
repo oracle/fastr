@@ -208,7 +208,7 @@ public class RSerialize {
             }
         }
 
-        private int inRefIndex(int flags) {
+        private int inRefIndex(int flags) throws IOException {
             int i = unpackRefIndex(flags);
             if (i == 0) {
                 return stream.readInt();
@@ -633,17 +633,17 @@ public class RSerialize {
     }
 
     private abstract static class PInputStream {
-        @SuppressWarnings("unused") protected InputStream is;
+        protected InputStream is;
 
         PInputStream(InputStream is) {
             this.is = is;
         }
 
-        abstract int readInt();
+        abstract int readInt() throws IOException;
 
-        abstract String readString(int len);
+        abstract String readString(int len) throws IOException;
 
-        abstract double readDouble();
+        abstract double readDouble() throws IOException;
 
     }
 
@@ -664,10 +664,10 @@ public class RSerialize {
     private static class XdrInputFormat extends PInputStream {
 
         private final byte[] buf;
-        @SuppressWarnings("unused") private int size;
+        private int size;
         private int offset;
 
-        XdrInputFormat(InputStream is) throws IOException {
+        XdrInputFormat(InputStream is) {
             super(is);
             if (is instanceof PByteArrayInputStream) {
                 // we already have the data and we have read the beginning
@@ -676,42 +676,51 @@ public class RSerialize {
                 size = pbis.getData().length;
                 offset = pbis.pos();
             } else {
-                byte[] tempBuf = new byte[1024];
-                int cumSize = 0;
-                // read entire stream
-                while (true) {
-                    int nr = is.read(tempBuf, cumSize, tempBuf.length - cumSize);
-                    if (nr == -1) {
-                        break;
-                    }
-                    cumSize += nr;
-                    if (cumSize == tempBuf.length) {
-                        tempBuf = Arrays.copyOf(tempBuf, tempBuf.length * 2);
-                    }
-                }
-                buf = tempBuf;
-                size = cumSize;
+                buf = new byte[8192];
+                size = 0;
                 offset = 0;
             }
         }
 
         @Override
-        int readInt() {
+        int readInt() throws IOException {
+            ensureData(4);
             return ((buf[offset++] & 0xff) << 24 | (buf[offset++] & 0xff) << 16 | (buf[offset++] & 0xff) << 8 | (buf[offset++] & 0xff));
         }
 
         @Override
-        double readDouble() {
+        double readDouble() throws IOException {
+            ensureData(8);
             long val = ((long) (buf[offset++] & 0xff) << 56 | (long) (buf[offset++] & 0xff) << 48 | (long) (buf[offset++] & 0xff) << 40 | (long) (buf[offset++] & 0xff) << 32 |
                             (long) (buf[offset++] & 0xff) << 24 | (long) (buf[offset++] & 0xff) << 16 | (long) (buf[offset++] & 0xff) << 8 | buf[offset++] & 0xff);
             return Double.longBitsToDouble(val);
         }
 
         @Override
-        String readString(int len) {
+        String readString(int len) throws IOException {
+            ensureData(len);
             String s = new String(buf, offset, len);
             offset += len;
             return s;
+        }
+
+        private void ensureData(int n) throws IOException {
+            if (offset + n > size) {
+                int readOffset = 0;
+                if (offset != size) {
+                    // copy end piece to beginning
+                    int i = 0;
+                    while (offset != size) {
+                        buf[i++] = buf[offset++];
+                    }
+                    readOffset = i;
+                }
+                offset = 0;
+                // read some more data
+                int nread = is.read(buf, readOffset, buf.length - readOffset);
+                assert nread > 0;
+                size = nread + readOffset;
+            }
         }
 
     }
@@ -773,7 +782,7 @@ public class RSerialize {
 
         XdrOutputFormat(OutputStream os) {
             super(os);
-            buf = new byte[16384];
+            buf = new byte[8192];
             buf[offset++] = 'X';
             buf[offset++] = '\n';
         }
