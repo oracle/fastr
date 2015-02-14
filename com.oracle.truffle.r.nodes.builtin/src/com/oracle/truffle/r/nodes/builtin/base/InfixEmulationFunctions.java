@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -33,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
+import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
@@ -99,6 +102,48 @@ public class InfixEmulationFunctions {
 
         public static AccessPositions create(ArrayPositionCast[] castPositions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
             return new AccessPositions(castPositions, operatorConverters, multiDimOperatorConverters);
+        }
+
+    }
+
+    private static class UpdatePositions extends PositionsArrayConversionNodeAdapter {
+        @Children protected final MultiDimPosConverterValueNode[] multiDimOperatorConverters;
+        private final int length;
+
+        public UpdatePositions(ArrayPositionCast[] elements, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
+            super(elements, operatorConverters);
+            this.multiDimOperatorConverters = multiDimOperatorConverters;
+            assert elements.length == operatorConverters.length && (multiDimOperatorConverters == null || elements.length == multiDimOperatorConverters.length);
+            this.length = elements.length;
+        }
+
+        public int getLength() {
+            return length;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            RInternalError.shouldNotReachHere();
+            return null;
+        }
+
+        @ExplodeLoop
+        public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
+            for (int i = 0; i < length; i++) {
+                newPositions[i] = elements[i].executeArg(frame, vector, operatorConverters[i].executeConvert(frame, vector, pos[i], true));
+                if (multiDimOperatorConverters != null) {
+                    newPositions[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, value, newPositions[i]);
+                }
+            }
+            if (elements.length == 1) {
+                return newPositions[0];
+            } else {
+                return newPositions;
+            }
+        }
+
+        public static UpdatePositions create(ArrayPositionCast[] castPositions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
+            return new UpdatePositions(castPositions, operatorConverters, multiDimOperatorConverters);
         }
 
     }
@@ -199,6 +244,8 @@ public class InfixEmulationFunctions {
 
     public abstract static class AccessArraySubsetBuiltinBase extends AccessArrayBuiltin {
 
+        protected static final boolean IS_SUBSET = true;
+
         protected final ConditionProfile multiIndexProfile = ConditionProfile.createBinaryProfile();
 
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
@@ -212,7 +259,7 @@ public class InfixEmulationFunctions {
             } else {
                 drop = RRuntime.LOGICAL_FALSE;
             }
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, true);
+            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
         }
 
         @SuppressWarnings("unused")
@@ -250,7 +297,7 @@ public class InfixEmulationFunctions {
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
             } catch (RError e) {
-                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, true);
+                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
         }
 
@@ -276,7 +323,7 @@ public class InfixEmulationFunctions {
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
             } catch (RError e) {
-                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, true);
+                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
             }
         }
 
@@ -293,7 +340,7 @@ public class InfixEmulationFunctions {
 
     }
 
-    @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
+    @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
     public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
 
         @Override
@@ -316,6 +363,8 @@ public class InfixEmulationFunctions {
 
     public abstract static class AccessArraySubscriptBuiltinBase extends AccessArrayBuiltin {
 
+        protected static final boolean IS_SUBSET = false;
+
         protected final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
 
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
@@ -325,7 +374,7 @@ public class InfixEmulationFunctions {
             } else {
                 exact = exactVec.getDataAt(0);
             }
-            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, false);
+            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
         }
 
         @SuppressWarnings("unused")
@@ -341,7 +390,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})
+    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
         private static final String NAME = "[[";
@@ -368,7 +417,7 @@ public class InfixEmulationFunctions {
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
             } catch (RError e) {
-                return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, false);
+                return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
             }
         }
 
@@ -401,22 +450,140 @@ public class InfixEmulationFunctions {
 
     }
 
-    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class UpdateArrayBuiltin extends ErrorAdapter {
+    public abstract static class UpdateArrayBuiltin extends RBuiltinNode {
+        @Child private UpdateArrayHelperNode updateNode;
+        @Child private UpdatePositions positions;
+        @Child private CoerceVector coerceVector;
+
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            for (int i = 0; i < arguments.length; i++) {
+                arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
+            }
+            return arguments;
+        }
+
+        @ExplodeLoop
+        protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
+            int len = args.length() == 1 ? 1 : args.length() - 1;
+
+            if (updateNode == null || positions.getLength() != len) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                if (updateNode == null) {
+                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, null, null, null, null, null));
+                }
+                ArrayPositionCast[] castPositions = new ArrayPositionCast[len];
+                OperatorConverterNode[] operatorConverters = new OperatorConverterNode[len];
+                MultiDimPosConverterValueNode[] multiDimOperatorConverters = len == 1 ? null : new MultiDimPosConverterValueNode[len];
+                for (int i = 0; i < len; i++) {
+                    castPositions[i] = ArrayPositionCastNodeGen.create(i, len, true, isSubset, ConstantNode.create(RNull.instance) /* dummy */, null);
+                    operatorConverters[i] = OperatorConverterNodeGen.create(i, len, true, isSubset, null, ConstantNode.create(RNull.instance) /* dummy */, null);
+                    if (multiDimOperatorConverters != null) {
+                        multiDimOperatorConverters[i] = MultiDimPosConverterValueNodeGen.create(isSubset, null, null, null);
+                    }
+                }
+                positions = insert(UpdatePositions.create(castPositions, operatorConverters, multiDimOperatorConverters));
+                coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
+            }
+            Object[] pos;
+            if (args.length() > 1) {
+                pos = Arrays.copyOf(args.getValues(), args.length() - 1);
+            } else {
+                pos = new Object[]{RMissing.instance};
+            }
+            Object newPositions = positions.execute(frame, vector, pos, pos, value);
+            return updateNode.executeUpdate(frame, vector, value, 0, newPositions, coerceVector.executeEvaluated(frame, value, vector, newPositions));
+        }
+
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object x, Object i) {
-            throw nyi();
+        @Specialization(guards = "noInd")
+        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames args) {
+            throw RError.error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
+        }
+
+        protected boolean noInd(@SuppressWarnings("unused") RAbstractContainer x, RArgsValuesAndNames args) {
+            return args.length() == 0;
+        }
+
+    }
+
+    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
+    public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
+
+        private static final String NAME = "[<-";
+        private static final boolean IS_SUBSET = true;
+
+        @Child private DispatchedCallNode dcn;
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        }
+
+        @Specialization(guards = {"!noInd", "isObject"})
+        protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", ""}));
+            }
+            try {
+                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
+            } catch (RError e) {
+                Object value = args.getValues()[args.length() - 1];
+                return update(frame, x, args, value, IS_SUBSET);
+            }
+        }
+
+        @Specialization(guards = {"!noInd", "!isObject"})
+        protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
+            Object value = args.getValues()[args.length() - 1];
+            return update(frame, x, args, value, IS_SUBSET);
+        }
+
+        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
+            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
         }
     }
 
-    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class UpdateArrayNodeSubsetBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object x, Object i) {
-            throw nyi();
+    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
+    public abstract static class UpdateArrayNodeSubscriptBuiltin extends UpdateArrayBuiltin {
+
+        private static final String NAME = "[[<-";
+        private static final boolean IS_SUBSET = false;
+
+        @Child private DispatchedCallNode dcn;
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
+
+        @Specialization(guards = {"!noInd", "isObject"})
+        protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, null));
+            }
+            try {
+                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
+            } catch (RError e) {
+                Object value = args.getValues()[args.length() - 1];
+                return update(frame, x, args, value, IS_SUBSET);
+            }
+        }
+
+        @Specialization(guards = {"!noInd", "!isObject"})
+        protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
+            Object value = args.getValues()[args.length() - 1];
+            return update(frame, x, args, value, IS_SUBSET);
+        }
+
+        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
+            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        }
+
     }
 
     @RBuiltin(name = "<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})

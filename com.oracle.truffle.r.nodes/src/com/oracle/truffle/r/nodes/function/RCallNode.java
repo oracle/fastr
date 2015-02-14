@@ -507,7 +507,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, callSrc, argsSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, callSrc, argsSrc);
                     callNode = root.inline(inlinedArgs);
                 }
             } else {
@@ -519,7 +519,7 @@ public abstract class RCallNode extends RNode {
                     callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature, true);
                 } else {
                     // Nope! (peeewh)
-                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, callSrc, argsSrc);
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, callSrc, argsSrc);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
@@ -625,7 +625,7 @@ public abstract class RCallNode extends RNode {
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
 
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, args, getSourceSection(), args.getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, args, getSourceSection(), args.getEncapsulatingSourceSection());
             this.lastMatchedArgs = matchedArgs;
             this.lastCallTarget = currentFunction.getTarget();
 
@@ -725,7 +725,7 @@ public abstract class RCallNode extends RNode {
         protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
                         VarArgsSignature varArgsSignature, boolean isVarArgsRoot) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection());
             return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs, isVarArgsRoot);
         }
 
@@ -778,7 +778,7 @@ public abstract class RCallNode extends RNode {
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
@@ -804,7 +804,7 @@ public abstract class RCallNode extends RNode {
 
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);

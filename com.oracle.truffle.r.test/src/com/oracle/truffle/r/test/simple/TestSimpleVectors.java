@@ -17,6 +17,28 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleVectors extends TestBase {
 
     @Test
+    public void testDirectAccess() {
+        assertEval("{ x<-c(7,42); `[`(x, 2); }");
+        assertEval("{ x<-c(7,42); `[[`(x, 2); }");
+        assertEval("{ x<-c(7,42); `[`(x); }");
+        assertEvalError("{ x<-c(7,42); `[[`(x); }");
+        assertEval("{ x<-matrix(c(7,42), ncol=2); `[`(x, 1, 2) }");
+        assertEval("{ x<-matrix(c(7,42), ncol=2); `[`(x, 1, 2, drop=FALSE) }");
+        assertEval("{ x<-matrix(c(7,42), ncol=2); `[`(x, 1, 2, drop=TRUE) }");
+        assertEvalError("{ x<-c(7,aa=42); `[[`(x, \"a\") }");
+        assertEval("{ x<-c(7,aa=42); `[[`(x, \"a\", exact=FALSE) }");
+        assertEvalError("{ x<-c(7,aa=42); `[[`(x, \"a\", exact=TRUE) }");
+    }
+
+    @Test
+    public void testDirectUpdate() {
+        assertEval("{ x<-c(7,42); `[<-`(x, 1, 7); }");
+        assertEval("{ x<-c(7,42); `[[<-`(x, 1, 7); }");
+        assertEval("{ x<-c(7,42); `[<-`(x, 1); }");
+        assertEvalError("{ x<-c(7,42); `[[<-`(x, 1); }");
+    }
+
+    @Test
     public void testObject() {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[3] }");
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[3, drop=FALSE] }");
