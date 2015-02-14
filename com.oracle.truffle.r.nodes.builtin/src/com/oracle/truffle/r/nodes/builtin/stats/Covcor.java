@@ -643,7 +643,7 @@ public class Covcor {
         }
     }
 
-    private void error(String string) {
+    private static void error(String string) {
         // TODO should be an R error
         throw new UnsupportedOperationException("error: " + string);
     }
