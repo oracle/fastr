@@ -32,6 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.graphics.*;
 import com.oracle.truffle.r.nodes.builtin.methods.*;
 import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.nodes.builtin.utils.*;
@@ -956,5 +957,33 @@ public class ForeignFunctions {
         public boolean isTypeConvert(RList f) {
             return matchName(f, "typeconvert");
         }
+
+        @TruffleBoundary
+        @Specialization(guards = "isPar")
+        protected Object doPar(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            return GraphicsCCalls.par(args);
+        }
+
+        public boolean isPar(RList f) {
+            return matchName(f, "C_par");
+        }
     }
+
+    @RBuiltin(name = ".External.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
+    public abstract static class DotExternalGraphics extends CastAdapter {
+        @TruffleBoundary
+        @Specialization(guards = "isPlotXY")
+        protected RNull doPlotXY(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            GraphicsCCalls.plotXy((RDoubleVector) args.getValues()[0]);
+            return RNull.instance;
+        }
+
+        public boolean isPlotXY(RList f) {
+            return matchName(f, "C_plotXY");
+        }
+
+    }
+
 }
