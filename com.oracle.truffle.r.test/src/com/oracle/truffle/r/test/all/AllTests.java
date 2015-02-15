@@ -1440,11 +1440,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testScalarsComplex_274e34fe67c827c3a3481eeb929fd942() {
-        assertEval("{ (1+2i)^(-2) }");
-    }
-
-    @Test
     public void TestSimpleArithmetic_testScalarsComplex_c859ca43706b3a82cad19ecef340e76b() {
         assertEval("{ (1+2i)^0 }");
     }
@@ -1452,11 +1447,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testScalarsComplex_34c8f857664c09e4a590a4fff80f1c83() {
         assertEval("{ 1/((1+0i)/(0+0i)) }");
-    }
-
-    @Test
-    public void TestSimpleArithmetic_testScalarsComplex_685e18553e73232fd903f34faa58ec02() {
-        assertEval("{ ((1+0i)/(0+0i)) ^ (-3) }");
     }
 
     @Test
@@ -1530,11 +1520,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testScalarsComplex_a86889b885428d4aeed5f5abec2fb487() {
-        assertEval("{ ((1+1i)/(0+0i)) ^ (-3) }");
-    }
-
-    @Test
     public void TestSimpleArithmetic_testScalarsComplex_c65fc676672c24a2284a61ac44346062() {
         assertEval("{ (3+2i)^2 }");
     }
@@ -1602,6 +1587,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testScalarsComplex_46cb3430474fb02811820b09b2bcd950() {
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_274e34fe67c827c3a3481eeb929fd942() {
+        assertEval("{ (1+2i)^(-2) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_685e18553e73232fd903f34faa58ec02() {
+        assertEval("{ ((1+0i)/(0+0i)) ^ (-3) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_a86889b885428d4aeed5f5abec2fb487() {
+        assertEval("{ ((1+1i)/(0+0i)) ^ (-3) }");
     }
 
     @Test

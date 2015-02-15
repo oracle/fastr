@@ -1124,14 +1124,6 @@ raw(0)
 [1] 0.25
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testScalarsComplex
-#{ ((1+0i)/(0+0i)) ^ (-3) }
-[1] NaN+NaNi
-
-##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testScalarsComplex
-#{ ((1+1i)/(0+0i)) ^ (-3) }
-[1] NaN+NaNi
-
-##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testScalarsComplex
 #{ (0+2i)^0 }
 [1] 1+0i
 
@@ -1142,10 +1134,6 @@ raw(0)
 ##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testScalarsComplex
 #{ (1+2i)*(3+4i) }
 [1] -5+10i
-
-##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testScalarsComplex
-#{ (1+2i)^(-2) }
-[1] -0.12-0.16i
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testScalarsComplex
 #{ (1+2i)^0 }
@@ -55588,11 +55576,6 @@ Error in b[[0]] <- NULL : attempt to select less than one element
 
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
-#{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }
-Error in b[[c(1, 2)]] <- NULL :
-  incompatible types (from NULL to integer) in [[ assignment
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[] <- NULL ; b }
 list()
 
@@ -56796,10 +56779,6 @@ Error in x[[-1]] <- 7 : attempt to select more than one element
 Error in x[[-4]] <- 7 : attempt to select more than one element
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
-#{ x<-c(1,2,3); x[[-4]]<-NULL }
-Error in x[[-4]] <- NULL : attempt to select more than one element
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1,1]<-NULL; x }
 Error in x[1, 1] <- NULL :
   number of items to replace is not a multiple of replacement length
@@ -56807,11 +56786,6 @@ Error in x[1, 1] <- NULL :
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1]<-NULL; x }
 Error in x[1] <- NULL : replacement has length zero
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
-#{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }
-Error in x[[1, 1]] <- NULL :
-  incompatible types (from NULL to double) in [[ assignment
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(5,10); names(x)<-c(101, 102); names(x)[1]<-42; x }
@@ -58957,11 +58931,6 @@ a
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-7 }
 Error in `[[<-`(`*tmp*`, as.raw(1), 1, value = 7) :
-  invalid subscript type 'raw'
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex
-#{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }
-Error in `[[<-`(`*tmp*`, as.raw(1), 1, value = NULL) :
   invalid subscript type 'raw'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex

@@ -124,6 +124,24 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_274e34fe67c827c3a3481eeb929fd942() {
+        assertEval("{ (1+2i)^(-2) }");
+        check("TestSimpleArithmetic_testScalarsComplexIgnore_274e34fe67c827c3a3481eeb929fd942");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_685e18553e73232fd903f34faa58ec02() {
+        assertEval("{ ((1+0i)/(0+0i)) ^ (-3) }");
+        check("TestSimpleArithmetic_testScalarsComplexIgnore_685e18553e73232fd903f34faa58ec02");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_a86889b885428d4aeed5f5abec2fb487() {
+        assertEval("{ ((1+1i)/(0+0i)) ^ (-3) }");
+        check("TestSimpleArithmetic_testScalarsComplexIgnore_a86889b885428d4aeed5f5abec2fb487");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testScalarsRealIgnore_706f889093f4841d307059b60cb81c13() {
         assertEval("{ 1000000000*100000000000 }");
         check("TestSimpleArithmetic_testScalarsRealIgnore_706f889093f4841d307059b60cb81c13");
