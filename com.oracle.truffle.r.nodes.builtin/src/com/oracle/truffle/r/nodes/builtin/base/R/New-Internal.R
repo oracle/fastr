@@ -180,9 +180,9 @@ search <- function() .Internal(search())
 #  if(length(m)) paths[-m] <- as.list(s[-m])
 #  unlist(paths)
 #}
-#
-#sprintf <- function(fmt, ...) .Internal(sprintf(fmt, ...))
-#
+
+sprintf <- function(fmt, ...) .Internal(sprintf(fmt, ...))
+
 ###-- DANGER ! ---   substitute(list(...))  inside functions !!!
 ###substitute <- function(expr, env=baseenv()) .Internal(substitute(expr, env))
 #

@@ -31,21 +31,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "sprintf", kind = SUBSTITUTE, parameterNames = {"fmt", "..."})
+@RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
 @GenerateNodeFactory
-// TODO INTERNAL
 public abstract class Sprintf extends RBuiltinNode {
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-    }
 
     public abstract Object executeObject(VirtualFrame frame, String fmt, Object args);
 
