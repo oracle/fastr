@@ -443,7 +443,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1]<-NULL; x }");
         assertEval("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1,1]<-NULL; x }");
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1]<-NULL; x }");
         assertEvalError("{ x<-1:4; x[1]<-NULL; x }");
         assertEval("{ x<-1:4; x[0]<-NULL; x }");
@@ -516,7 +515,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,6,8,9)] <- NULL ; m }");
         assertEval("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[] <- NULL ; b }");
         assertEval("{ b <- as.list(3:5) ; dim(b) <- c(1,3) ; b[NULL] <- NULL ; b }");
-        assertEvalError("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
         assertEval("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[c(1,2)] <- NULL ; b }");
         assertEval("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[c(1)] <- NULL ; b }");
         assertEval("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
@@ -547,7 +545,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-c(1,2,3); x[[-1]]<-7 }");
         assertEvalError("{ x<-list(1,2,3); x[[-1]]<-7 }");
         assertEvalError("{ x<-list(1); x[[-4]]<-NULL }");
-        assertEvalError("{ x<-c(1,2,3); x[[-4]]<-NULL }");
         assertEvalError("{ x<-list(1,2,3); x[[-4]]<-NULL }");
         assertEvalError("{ x<-list(1,2,3); x[[-1]]<-NULL }");
 
@@ -585,6 +582,21 @@ public class TestSimpleVectors extends TestBase {
 // assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(m=\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]]$m<-\"z\"; x }");
         // this works but matrix printing is off
 // assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
+    }
+
+    @Test
+    @Ignore
+    /**
+     * These tests, which should generate errors, appear to be non-deterministic in GnuR in the error message produced.
+     * It is either "more elements supplied than there are to replace" or some type-error, e.g. "incompatible types (from NULL to double) in [[ assignment".
+     * We could address this with a whitelist.
+     */
+    public void testMoreVectorsNonDet() {
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
+        assertEvalError("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
+        assertEvalError("{ x<-c(1,2,3); x[[-4]]<-NULL }");
+        // this came from testRawIndex
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
     }
 
     @Test
@@ -720,7 +732,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-c(1,2,3,4); x[as.raw(1)]<-c(1,2) }");
         assertEvalError("{ x<-c(1,2,3,4); x[as.raw(1)]<-c(1,2,3) }");
 
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-integer() }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-7 }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-c(7,42) }");

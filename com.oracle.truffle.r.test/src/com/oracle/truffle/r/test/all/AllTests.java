@@ -22850,6 +22850,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsNonDet_27d35661168c4e6b3bed381c312a2bc7() {
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsNonDet_f0678151c819bc4f3eb4dae6db644bec() {
+        assertEvalError("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsNonDet_5aef7d4499818ad9eb2d54802279c67c() {
+        assertEvalError("{ x<-c(1,2,3); x[[-4]]<-NULL }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsNonDet_bca1724c712508f88f83bf6d4187daee() {
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_93ba9dd747c7379e9e2c84ec7231640e() {
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[1L] }");
     }
@@ -24255,11 +24275,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleVectors_testMoreVectorsOther_27d35661168c4e6b3bed381c312a2bc7() {
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
-    }
-
-    @Test
     public void TestSimpleVectors_testMoreVectorsOther_870dedec5f6380a0125faeb675762994() {
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1]<-NULL; x }");
     }
@@ -24385,11 +24400,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleVectors_testMoreVectorsOther_f0678151c819bc4f3eb4dae6db644bec() {
-        assertEvalError("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
-    }
-
-    @Test
     public void TestSimpleVectors_testMoreVectorsOther_dda366aaec278dbc5223a2f7cc60646d() {
         assertEvalError("{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
     }
@@ -24437,11 +24447,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testMoreVectorsOther_99fdfa6b74f507f1bee2ca5fb4390b23() {
         assertEvalError("{ x<-list(1); x[[-4]]<-NULL }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testMoreVectorsOther_5aef7d4499818ad9eb2d54802279c67c() {
-        assertEvalError("{ x<-c(1,2,3); x[[-4]]<-NULL }");
     }
 
     @Test
@@ -25292,11 +25297,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testRawIndex_edc0145fd6f48d5360c39f7ca6a9ab75() {
         assertEvalError("{ x<-c(1,2,3,4); x[as.raw(1)]<-c(1,2,3) }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testRawIndex_bca1724c712508f88f83bf6d4187daee() {
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
     }
 
     @Test
