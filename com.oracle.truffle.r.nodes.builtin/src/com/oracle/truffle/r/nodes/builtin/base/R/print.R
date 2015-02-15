@@ -90,5 +90,5 @@ print.noquote <- function(x, ...) {
 #
 #`[.simple.list` <- `[.listof`
 #
-#print.function <- function(x, useSource = TRUE, ...)
-#	.Internal(print.function(x, useSource, ...))
+print.function <- function(x, useSource = TRUE, ...)
+	.Internal(print.function(x, useSource, ...))
