@@ -36,8 +36,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ContainerRowNamesGet extends RNode {
 
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile naValueMet = BranchProfile.create();
-    private final BranchProfile intVectorMet = BranchProfile.create();
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer container);
 
