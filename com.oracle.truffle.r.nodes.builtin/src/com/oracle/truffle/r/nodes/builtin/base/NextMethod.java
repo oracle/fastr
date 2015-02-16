@@ -109,7 +109,6 @@ public abstract class NextMethod extends RBuiltinNode {
     private RStringVector readType(VirtualFrame frame) {
         final RStringVector storedClass = RArguments.getS3Class(frame);
         if (storedClass == null) {
-            System.out.println("no stored class");
             return getAlternateClassHr(frame);
         }
         return storedClass;
