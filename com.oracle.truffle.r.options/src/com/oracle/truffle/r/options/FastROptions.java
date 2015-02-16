@@ -51,8 +51,6 @@ public class FastROptions {
     public static final OptionValue<String> Debug = new OptionValue<>(null);
     @Option(help = "Enable Instrumentation")
     public static final OptionValue<Boolean> Instrument = new OptionValue<>(false);
-    @Option(help = "Enable binding of builtins into package environment")
-    public static final OptionValue<Boolean> BindBuiltinNames = new OptionValue<>(true);
     @Option(help = "Trace all R function calls (requires +Instrumentation)")
     public static final OptionValue<Boolean> TraceCalls = new OptionValue<>(false);
     @Option(help = "Collect Performance Data")

@@ -21,24 +21,4 @@
 # questions.
 #
 
-.PHONY: all clean libdir make_subdirs clean_subdirs
-
-SUBDIRS = base datasets utils grDevices graphics stats methods tools fastr
-export FASTR_LIBDIR = $(TOPDIR)/../library
-
-all: libdir make_subdirs
-
-make_subdirs:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir; \
-	done
-
-clean: clean_subdirs
-
-clean_subdirs:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) PACKAGE=$$dir -C $$dir clean; \
-	done
-	
-libdir:
-	mkdir -p $(FASTR_LIBDIR)
+include ../lib.mk

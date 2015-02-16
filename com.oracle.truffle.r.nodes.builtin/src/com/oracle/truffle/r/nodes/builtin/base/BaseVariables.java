@@ -1,24 +1,13 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2015, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
@@ -30,71 +19,25 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * The (global) variables defined in the {@code base} package, e.g. {@code .Platform}. The
- * definition and initialization is two-step process handled through the {@link RPackageVariables}
- * class.
+ * Built-in initialization of some crucial {@code base} package variables.
  *
- * N.B. Some variables are assigned explicitly in the R source files associated with the base
- * package.
+ * From GnuR platform.c
  */
-public class BaseVariables implements RPackageVariables.Handler {
+public class BaseVariables {
     // @formatter:off
-    @CompilationFinal private static final String[] VARS = new String[]{
-        ".BaseNamespaceEnv", ".GlobalEnv", ".Machine", ".Platform"
-    };
-
     @CompilationFinal private static final String[] PLATFORM_NAMES = new String[] {
         "OS.type", "file.sep", "dynlib.ext", "GUI", "endian", "pkgType", "path.sep", "r_arch"
     };
-
-    private static final String[] FORTRAN_NAMES = new String[] {
-        "dchdc", "dqrcf", "dqrdc2", "dqrqty", "dqrqy", "dqrrsd", "dqrxb", "dtrco"
-    };
     // @formatter:on
 
-    public static final RStringVector NAME = RDataFactory.createStringVectorFromScalar("name");
-
-    private int initialized = -1;
-
-    public BaseVariables() {
-        RPackageVariables.registerHandler("base", this);
-    }
-
-    @Override
-    public void preInitialize(REnvironment baseEnv) {
+    public static void initialize(REnvironment baseEnv) {
         // .Platform TODO be more accurate
         String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
         Object value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
         baseEnv.safePut(".Platform", value);
         REnvironment baseNamespaceEnv = REnvironment.baseNamespaceEnv();
         baseEnv.safePut(".BaseNamespaceEnv", baseNamespaceEnv);
-        for (String f : FORTRAN_NAMES) {
-            baseNamespaceEnv.safePut(".F_" + f, RDataFactory.createList(new String[]{f}, NAME));
-        }
-    }
-
-    public void initialize(REnvironment env) {
-        if (initialized > 0) {
-            return;
-        } else if (initialized < 0) {
-            for (String var : VARS) {
-                Object value = null;
-                switch (var) {
-                    case ".GlobalEnv":
-                        value = REnvironment.globalEnv();
-                        break;
-                    case ".Machine":
-                        value = createMachine();
-                        break;
-                    default:
-                        continue;
-                }
-                env.safePut(var, value);
-            }
-        } else {
-            // nothing in this phase
-        }
-        initialized++;
+        baseEnv.safePut(".Machine", createMachine());
     }
 
     // @formatter:off

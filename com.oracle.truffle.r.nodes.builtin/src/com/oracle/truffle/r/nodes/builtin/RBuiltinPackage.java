@@ -32,32 +32,39 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * Denotes an R package that is built-in to the implementation. It consists of two parts:
+ * Denotes an R package that is (partially) built-in to the implementation. Historically, several of
+ * the default packages, e.g. {@code stats}, were partially built-in, but now only the {@code base}
+ * package is built-in. However, this class is retained as it provides a mechanism, should it ever
+ * be deemed beneficial, to "override" the default implementations provided by GnuR. Such overrides
+ * can take the form of alternative R code or replacing a function with a built-in implementation.
+ *
+ * A built-in package consists of two parts:
  * <ul>
- * <li>Classes annotated with {@link RBuiltin} that implement the package functions directly in Java
- * either as "primitives" or as ".Internal".</li>
- * <li>R code that defines functions in the package (which typically call the @link RBuiltin}s</li>
+ * <li>Classes annotated with {@link RBuiltin} that implement the built-in functions directly in
+ * Java, either "primitives" or ".Internal".</li>
+ * <li>R code that overrides functions in the package. This may, and usually will, be empty</li>
  * </ul>
- * Note that, although several packages are built-in to the implementation, R allows the exact set
- * of packages to be controlled at runtime by the {@code R_DEFAULT_PACKAGES} environment variable.
- * Only the {@code base} package is always loaded.
  * <p>
- * The R code is expected to be found (as resources) in the 'R' sub-package (directory) associated
+ * Any R code is expected to be found (as resources) in the 'R' sub-package (directory) associated
  * with the subclass package, e.g., {@code com.oracle.truffle.r.nodes.builtin.base.R}. For debugging
  * parsing errors we retain the R source code, although this is not functionally necessary.
- * <p>
  * <p>
  * To cope with a possible lack of reflection capability in an AOT compiled VM, initialization is
  * two phase, with all reflective code executed in code reachable only from static initializers.
  */
 public abstract class RBuiltinPackage {
 
+    /**
+     * Any "override" sources associated with the package.
+     */
     private final HashMap<String, ArrayList<Source>> rSources = new HashMap<>();
+    /**
+     * The factories for the {@link RBuiltin}s defined by the package.
+     */
     private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
     private synchronized void putBuiltin(String name, RBuiltinFactory factory) {
@@ -67,6 +74,7 @@ public abstract class RBuiltinPackage {
     protected REnvironment env;
 
     protected RBuiltinPackage() {
+        // Check for overriding R code
         try {
             InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "R");
             if (is == null) {
@@ -86,21 +94,8 @@ public abstract class RBuiltinPackage {
             if (componentList.size() > 0) {
                 rSources.put(getName(), componentList);
             }
-            loadAuxClass("Options");
-            loadAuxClass("Variables");
         } catch (IOException ex) {
-            Utils.fail("error loading R snippets classes from " + getClass().getSimpleName() + " : " + ex);
-        }
-    }
-
-    private void loadAuxClass(String auxName) {
-        String auxClassName = getClass().getName().replace("Package", auxName);
-        try {
-            Class.forName(auxClassName).newInstance();
-        } catch (ClassNotFoundException ex) {
-            // ok, no aux class
-        } catch (IllegalAccessException | InstantiationException ex) {
-            Utils.fail("error instantiating " + auxClassName + ": " + ex);
+            Utils.fail("error loading R code from " + getClass().getSimpleName() + " : " + ex);
         }
     }
 
@@ -119,14 +114,7 @@ public abstract class RBuiltinPackage {
     /**
      * Runtime component of the package initialization process.
      */
-    public void loadSources(MaterializedFrame frame, REnvironment envForFrame) {
-        if (!FastROptions.BindBuiltinNames.getValue()) {
-            for (RBuiltinFactory factory : builtins.values()) {
-                if (factory.getPackage() == this) {
-                    factory.setEnv(env);
-                }
-            }
-        }
+    public void loadOverrides(MaterializedFrame frame, REnvironment envForFrame) {
         ArrayList<Source> sources = rSources.get(getName());
         if (sources != null) {
             for (Source source : sources) {

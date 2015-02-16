@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,10 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/**
- * This "package" contains R sources that override some of the R functions
- * in the "base" package. They are loaded using the {@link java.lang.Class#getResource}
- * mechanism on system startup, after the "base" package has been loaded.
- */
-package com.oracle.truffle.r.nodes.builtin.base.R;
+package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+
+public class ConditionFunctions {
+
+    @RBuiltin(name = ".addCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
+    public abstract static class AddCondHands extends RInvisibleBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object addCondHands(Object classes, Object handlers, REnvironment parentEnv, Object target, byte calling) {
+            controlVisibility();
+            return RNull.instance;
+        }
+    }
+}

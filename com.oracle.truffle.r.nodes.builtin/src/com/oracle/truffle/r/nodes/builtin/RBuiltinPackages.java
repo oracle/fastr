@@ -22,20 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
- * Support for loading the "base" package. This will eventually change to a proper "package" load
- * and this class likely will go away.
+ * Support for loading built-in packages, currently limited to {@code base}.
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
@@ -46,36 +47,40 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
-    public static void load(String name, MaterializedFrame frame, REnvironment envForFrame) {
-        assert name.equals("base");
+    public static void loadBase(MaterializedFrame frame) {
         RBuiltinPackage pkg = basePackage;
-        pkg.setEnv(envForFrame);
-        if (FastROptions.BindBuiltinNames.getValue()) {
-            /*
-             * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
-             * environment so that lookups through the environment work as expected.
-             */
-            Map<String, RBuiltinFactory> builtins = pkg.getBuiltins();
-            for (Map.Entry<String, RBuiltinFactory> entrySet : builtins.entrySet()) {
-                String methodName = entrySet.getKey();
-                RBuiltinFactory builtinFactory = entrySet.getValue();
-                builtinFactory.setEnv(envForFrame);
-                RBuiltin builtin = builtinFactory.getRBuiltin();
-                if (builtin.kind() != RBuiltinKind.INTERNAL) {
-                    RFunction function = createFunction(builtinFactory, methodName);
-                    try {
-                        envForFrame.put(methodName, function);
-                    } catch (PutException ex) {
-                        Utils.fail("failed to install builtin function: " + methodName);
-                    }
+        REnvironment baseEnv = REnvironment.baseEnv();
+        pkg.setEnv(baseEnv);
+        BaseVariables.initialize(baseEnv);
+        /*
+         * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
+         * environment so that lookups through the environment work as expected.
+         */
+        Map<String, RBuiltinFactory> builtins = pkg.getBuiltins();
+        for (Map.Entry<String, RBuiltinFactory> entrySet : builtins.entrySet()) {
+            String methodName = entrySet.getKey();
+            RBuiltinFactory builtinFactory = entrySet.getValue();
+            builtinFactory.setEnv(baseEnv);
+            RBuiltin builtin = builtinFactory.getRBuiltin();
+            if (builtin.kind() != RBuiltinKind.INTERNAL) {
+                RFunction function = createFunction(builtinFactory, methodName);
+                try {
+                    baseEnv.put(methodName, function);
+                } catch (PutException ex) {
+                    Utils.fail("failed to install builtin function: " + methodName);
                 }
             }
         }
-        RPackageVariables.Handler varHandler = RPackageVariables.getHandler(name);
-        if (varHandler != null) {
-            varHandler.preInitialize(envForFrame);
+        // Now "load" the package
+        Path basePath = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "base");
+        Source baseSource = null;
+        try {
+            baseSource = Source.fromFileName(basePath.toString());
+        } catch (IOException ex) {
+            Utils.fail("unable to open the base package");
         }
-        pkg.loadSources(frame, envForFrame);
+        RContext.getEngine().parseAndEval(baseSource, frame, baseEnv, false, false);
+        pkg.loadOverrides(frame, baseEnv);
     }
 
     @Override

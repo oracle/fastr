@@ -253,6 +253,9 @@ public class RSerialize {
                 case MISSINGARG_SXP:
                     return RMissing.instance;
 
+                case BASENAMESPACE_SXP:
+                    return REnvironment.baseNamespaceEnv();
+
                 case REFSXP: {
                     return getReadRef(inRefIndex(flags));
                 }

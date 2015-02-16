@@ -110,7 +110,7 @@ public final class REngine implements RContext.Engine {
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
             VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
             REnvironment.baseInitialize(globalFrame, baseFrame);
-            RPackageVariables.initializeBase();
+            RBuiltinPackages.loadBase(baseFrame.materialize());
             RVersionInfo.initialize();
             RRNG.initialize();
             TempDirPath.initialize();
@@ -164,10 +164,6 @@ public final class REngine implements RContext.Engine {
 
     public static REngine getInstance() {
         return singleton;
-    }
-
-    public void loadDefaultPackage(String name, MaterializedFrame frame, REnvironment envForFrame) {
-        RBuiltinPackages.load(name, frame, envForFrame);
     }
 
     public boolean isPrimitiveBuiltin(String name) {

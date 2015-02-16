@@ -78,23 +78,12 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * In particular in FastR, there is at exactly one environment created for any package frame and at
  * most one for a function frame, allowing equality to be tested using {@code ==}.
  *
- * TODO retire the {@code Package}, {@code Namespace} and {@code Imports} classes as they are only
- * used by the builtin packages, and will be completely redundant when they are loaded from
- * serialized package meta-data as will happen in due course.
- *
  */
 public abstract class REnvironment extends RAttributeStorage implements RAttributable {
     public enum PackageKind {
         PACKAGE,
         IMPORTS,
         NAMESPACE
-    }
-
-    /**
-     * Tagging interface that indicates this is a "package" environment.
-     */
-    private interface IsPackage {
-
     }
 
     public static class PutException extends RErrorException {
@@ -181,7 +170,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
-    public static Package baseEnv() {
+    public static REnvironment baseEnv() {
         assert baseEnv != null;
         return baseEnv;
     }
@@ -189,21 +178,17 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * Value set in {@code .baseNameSpaceEnv} variable. This is the "namespace:base" environment.
      */
-    public static Namespace baseNamespaceEnv() {
+    public static REnvironment baseNamespaceEnv() {
         assert baseEnv != null;
         return baseEnv.getNamespace();
     }
 
     /**
-     * Invoked on startup to setup the global values and package search path. Owing to the
-     * restrictions on storing {@link VirtualFrame} instances, this method creates the
-     * {@link VirtualFrame} instance(s) for the packages and evaluates any associated R code using
-     * that frame and then installs it in the search path correctly so that Truffle code can locate
-     * objects defined by the R code.
+     * Invoked on startup to setup the {@link #baseEnv} and {@link #globalEnv} values, {@linbk
+     * #namespaceRegistry} and package search path.
      *
-     * @param globalFrame this is the anchor frame to which the package search path is attached
-     * @param baseFrame this is for the base frame (we can't create it because our caller also needs
-     *            to eval in it)
+     * The base "package" is special, it has no "imports" an its "namespace" parent is
+     * {@link #globalEnv}.
      */
     public static void baseInitialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
         // The base "package" is special, it has no "imports" and
@@ -213,10 +198,10 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         baseEnv = new Base(baseFrame);
 
         globalEnv = new Global(baseEnv, globalFrame);
-        initSearchList();
+        baseEnv.namespaceEnv.parent = globalEnv;
+        // TODO verify enclosing frames are correct
 
-        // load base package first
-        RContext.getEngine().loadDefaultPackage("base", baseFrame.materialize(), baseEnv);
+        initSearchList();
     }
 
     private static void initSearchList() {
@@ -282,17 +267,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * namespace.
      */
     public static REnvironment getRegisteredNamespace(String name) {
-        REnvironment pkgEnv = lookupOnSearchPath("package:" + name);
-        if (pkgEnv == null) {
-            return (REnvironment) namespaceRegistry.get(name);
-        } else {
-            if (pkgEnv instanceof Package) {
-                return ((Package) pkgEnv).getNamespace();
-            } else {
-                // dynamically attached to search path
-                return (REnvironment) namespaceRegistry.get(name);
-            }
-        }
+        return (REnvironment) namespaceRegistry.get(name);
     }
 
     /**
@@ -695,31 +670,14 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         }
     }
 
-    /**
-     * Denotes an environment associated with an R package. This represents the "package:xxx"; the
-     * "namespace:xxx" and "imports:xxx" environments are stored as fields of this instance.
-     */
-    public static class Package extends REnvironment implements IsPackage {
+    private static final class Base extends REnvironment {
         private final Namespace namespaceEnv;
 
-        /**
-         * Constructor for {@link Base}. During initialization the parent is emptyEnv. Ultimately it
-         * will be set to globalEnv.
-         */
-        protected Package(VirtualFrame frame) {
+        private Base(VirtualFrame frame) {
             super(emptyEnv, "base", frame);
+            // the namespace parent will change to globalEnv
             this.namespaceEnv = new Namespace(emptyEnv, "base", this.frameAccess);
             RArguments.setEnvironment(frame, this.namespaceEnv);
-        }
-
-        public Namespace getNamespace() {
-            return namespaceEnv;
-        }
-    }
-
-    private static final class Base extends Package {
-        private Base(VirtualFrame frame) {
-            super(frame);
         }
 
         @Override
@@ -730,6 +688,10 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         @Override
         protected String getSearchName() {
             return "package:base";
+        }
+
+        public Namespace getNamespace() {
+            return namespaceEnv;
         }
     }
 

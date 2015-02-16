@@ -147,15 +147,6 @@ public final class RContext extends ExecutionContext {
         }
 
         /**
-         * Load a package from the default set of packages identified at startup.
-         *
-         * @param name name of the package, e.g. {@code base}, {@code stats}.
-         * @param frame for evaluating any associated R code
-         * @param envForFrame the namespace environment associated with the package.
-         */
-        void loadDefaultPackage(String name, MaterializedFrame frame, REnvironment envForFrame);
-
-        /**
          * Is {@code name} a builtin function (but not a {@link RBuiltinKind#INTERNAL}?
          */
         boolean isPrimitiveBuiltin(String name);
