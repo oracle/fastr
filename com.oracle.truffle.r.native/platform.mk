@@ -33,11 +33,12 @@ ifeq ($(OSNAME), Linux)
   LIBS        := -lgfortran
 else ifeq ($(OSNAME), SunOS)
   OS_DIR      := solaris
-  CC          := cc
-  FC          := f90
-  CFLAGS      := -m64 -O -xcode=pic13
-  LDFLAGS     := -G -m64
+  CC          := gcc
+  FC          := gfortran
+  CFLAGS      := -m64 -fPIC -O2
+  LDFLAGS     := -m64 -fPIC -shared
   SHARED_EXT  := so
+  LIBS        := -lgfortran
 else ifeq ($(OSNAME), Darwin)
   OS_DIR      := darwin
   CC          := gcc
