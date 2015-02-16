@@ -32,13 +32,14 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.*;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.*;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -224,8 +225,8 @@ public class InfixEmulationFunctions {
                 OperatorConverterNode[] operatorConverters = new OperatorConverterNode[len];
                 MultiDimPosConverterNode[] multiDimOperatorConverters = inds.length() == 1 ? null : new MultiDimPosConverterNode[len];
                 for (int i = 0; i < len; i++) {
-                    castPositions[i] = ArrayPositionCastNodeGen.create(i, inds.length(), false, isSubset, ConstantNode.create(RNull.instance) /* dummy */, null);
-                    operatorConverters[i] = OperatorConverterNodeGen.create(i, inds.length(), false, isSubset, null, ConstantNode.create(RNull.instance) /* dummy */, null);
+                    castPositions[i] = ArrayPositionCastNodeGen.create(i, inds.length(), false, isSubset, null, null);
+                    operatorConverters[i] = OperatorConverterNodeGen.create(i, inds.length(), false, isSubset, null, null, null);
                     if (multiDimOperatorConverters != null) {
                         multiDimOperatorConverters[i] = MultiDimPosConverterNodeGen.create(isSubset, null, null);
                     }
@@ -292,7 +293,7 @@ public class InfixEmulationFunctions {
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "drop"}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
@@ -318,7 +319,7 @@ public class InfixEmulationFunctions {
 
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "drop"}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
@@ -412,7 +413,7 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", "", "exact"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "exact"}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
@@ -524,7 +525,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", ""}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", ""}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
@@ -563,7 +564,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, null));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, null));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
 
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
     protected final ReadVariableNode originalRvn;
@@ -46,7 +47,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         assert rvn.getKind() != ReadKind.Forced;  // Should be caught by optimization check
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
-        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.Local);
+        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.SilentLocal);
     }
 
     @Override
@@ -60,21 +61,18 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
 
         // Check if we may apply eager evaluation on this frame slot
-        Assumption notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
-        if (!notChangedNonLocally.isValid()) {
+        FrameSlotInfo notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
+        if (notChangedNonLocally.isNonLocalModified()) {
             // Cannot apply optimizations, as the value to it got invalidated
             return rewriteToAndExecuteFallback(frame);
         }
 
         // Execute eagerly
-        Object result = null;
-        try {
-            // This reads only locally, and frameSlotNode.hasValue that there is the proper
-            // frameSlot there.
-            result = readNode.execute(frame);
-        } catch (Throwable t) {
-            // If any error occurred, we cannot be sure what to do. Instead of trying to be
-            // clever, we conservatively rewrite to default PromisedNode.
+        // This reads only locally, and frameSlotNode.hasValue that there is the proper
+        // frameSlot there.
+        Object result = readNode.execute(frame);
+        if (result == null) {
+            // Cannot apply optimizations, as the value was removed
             return rewriteToAndExecuteFallback(frame);
         }
 

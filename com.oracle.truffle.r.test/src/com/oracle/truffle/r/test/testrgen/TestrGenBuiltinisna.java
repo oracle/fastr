@@ -34,7 +34,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna4() {
         assertEval("argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = \'ts\'));is.na(argv[[1]]);");
     }

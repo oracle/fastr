@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * "<<-" but invalidates the assumption as soon as "eval" and the like comes into play.<br/>
  *
  *
- * @see #checkAndInvalidate(Frame, FrameSlot, BranchProfile)
+ * @see #checkAndInvalidate(Frame, FrameSlot, boolean, BranchProfile)
  * @see #getMonitor(FrameSlot)
  */
 public final class FrameSlotChangeMonitor {
@@ -51,12 +51,23 @@ public final class FrameSlotChangeMonitor {
 // System.out.println(String.format(format, args));
     }
 
-    private static final class FrameSlotInfo {
+    public abstract static class FrameSlotInfo {
+        private boolean nonLocalModified = false;
+
+        public final boolean isNonLocalModified() {
+            return nonLocalModified;
+        }
+
+        public final void setNonLocalModified() {
+            nonLocalModified = true;
+        }
+    }
+
+    private static final class FrameSlotInfoImpl extends FrameSlotInfo {
         @CompilationFinal private StableValue<Object> stableValue;
-        public final Assumption localAssumption = Truffle.getRuntime().createAssumption(ASSUMPTION_NAME);
         private final Object identifier;
 
-        public FrameSlotInfo(boolean isSingletonFrame, Object identifier) {
+        public FrameSlotInfoImpl(boolean isSingletonFrame, Object identifier) {
             this.identifier = identifier;
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
@@ -95,8 +106,6 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    private static final String ASSUMPTION_NAME = "slot change monitor";
-
     /**
      * Retrieves the not-changed-locally {@link Assumption} in the {@link FrameSlot#getInfo()}
      * field.
@@ -106,24 +115,24 @@ public final class FrameSlotChangeMonitor {
      *
      * @see FrameSlotChangeMonitor
      */
-    public static Assumption getMonitor(FrameSlot slot) {
-        return getFrameSlotInfo(slot).localAssumption;
+    public static FrameSlotInfo getMonitor(FrameSlot slot) {
+        return getFrameSlotInfo(slot);
     }
 
-    public static FrameSlotInfo getFrameSlotInfo(FrameSlot slot) {
+    public static FrameSlotInfoImpl getFrameSlotInfo(FrameSlot slot) {
         Object info = slot.getInfo();
-        if (!(info instanceof FrameSlotInfo)) {
+        if (!(info instanceof FrameSlotInfoImpl)) {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in it's info field!");
         }
-        return (FrameSlotInfo) info;
+        return (FrameSlotInfoImpl) info;
     }
 
     // method for creating new frame slots
 
     public static FrameSlot addFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
         boolean isSingletonFrame = descriptorSingletonAssumptions.containsKey(fd);
-        return fd.addFrameSlot(identifier, new FrameSlotInfo(isSingletonFrame, identifier), kind);
+        return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(isSingletonFrame, identifier), kind);
     }
 
     public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
@@ -146,54 +155,54 @@ public final class FrameSlotChangeMonitor {
      *            {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */
-    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, BranchProfile invalidateProfile) {
+    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, BranchProfile invalidateProfile) {
         assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
 
         // Check whether current frame is used outside a regular stack
-        if (RArguments.getIsIrregular(curFrame)) {
+        if (isNonLocal || RArguments.getIsIrregular(curFrame)) {
             // False positive: Also invalidates a slot in the current active frame if that one is
             // used inside eval or the like, but this cost is definitely negligible.
             if (invalidateProfile != null) {
                 invalidateProfile.enter();
             }
-            getMonitor(slot).invalidate();
+            getMonitor(slot).setNonLocalModified();
         }
     }
 
-    public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, BranchProfile invalidateProfile) {
+    public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setByte(frameSlot, newValue);
-        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
         if (info.needsInvalidation()) {
             info.setValue(newValue);
         }
-        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
-    public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, BranchProfile invalidateProfile) {
+    public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setInt(frameSlot, newValue);
-        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
         if (info.needsInvalidation()) {
             info.setValue(newValue);
         }
-        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
-    public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, BranchProfile invalidateProfile) {
+    public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setDouble(frameSlot, newValue);
-        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
         if (info.needsInvalidation()) {
             info.setValue(newValue);
         }
-        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
-    public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, BranchProfile invalidateProfile) {
+    public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setObject(frameSlot, newValue);
-        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
         if (info.needsInvalidation()) {
             info.setValue(newValue);
         }
-        checkAndInvalidate(frame, frameSlot, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
     // update enclosing frames
@@ -311,7 +320,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void updateValue(FrameSlot slot, Object value) {
-        FrameSlotInfo info = getFrameSlotInfo(slot);
+        FrameSlotInfoImpl info = getFrameSlotInfo(slot);
         if (info.needsInvalidation()) {
             info.setValue(value);
         }

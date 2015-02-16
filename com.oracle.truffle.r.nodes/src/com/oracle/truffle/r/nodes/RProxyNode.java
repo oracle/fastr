@@ -30,10 +30,6 @@ import com.oracle.truffle.r.runtime.env.*;
 @NodeChild("operand")
 public abstract class RProxyNode extends RNode {
 
-    protected Object proxyScalar(Object scalar) {
-        return scalar;
-    }
-
     protected RVector proxyVector(RVector vector) {
         return vector;
     }
@@ -56,7 +52,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RNull proxy(RNull x) {
-        return (RNull) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -65,7 +61,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected byte proxy(byte x) {
-        return (byte) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -74,7 +70,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected int proxy(int x) {
-        return (int) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -83,7 +79,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected double proxy(double x) {
-        return (double) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -92,7 +88,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RRaw proxy(RRaw x) {
-        return (RRaw) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -101,7 +97,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RComplex proxy(RComplex x) {
-        return (RComplex) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -110,7 +106,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected String proxy(String x) {
-        return (String) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -119,7 +115,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RFunction proxy(RFunction x) {
-        return (RFunction) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -227,7 +223,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RMissing proxy(RMissing x) {
-        return (RMissing) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -236,7 +232,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected REnvironment proxy(REnvironment x) {
-        return (REnvironment) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -245,7 +241,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RConnection proxy(RConnection x) {
-        return (RConnection) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -254,7 +250,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RExpression proxy(RExpression x) {
-        return (RExpression) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -263,7 +259,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RSymbol proxy(RSymbol x) {
-        return (RSymbol) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -272,7 +268,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RExternalPtr proxy(RExternalPtr x) {
-        return (RExternalPtr) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -281,7 +277,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RLanguage proxy(RLanguage x) {
-        return (RLanguage) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -290,7 +286,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RPromise proxy(RPromise x) {
-        return (RPromise) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -299,7 +295,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RPairList proxy(RPairList x) {
-        return (RPairList) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -308,7 +304,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected Object[] proxy(Object[] x) {
-        return (Object[]) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -317,7 +313,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RFormula proxy(RFormula x) {
-        return (RFormula) proxyScalar(x);
+        return x;
     }
 
     @Specialization
@@ -326,7 +322,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     protected RArgsValuesAndNames proxy(RArgsValuesAndNames x) {
-        return (RArgsValuesAndNames) proxyScalar(x);
+        return x;
     }
 
 }

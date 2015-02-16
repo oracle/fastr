@@ -710,13 +710,15 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-integer() }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-7 }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }");
+
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test
     @Ignore
-    public void testComplexIndexIgnored() {
+    public void testComplexIndexIgnore() {
+        // weird fluctuating error messages in GNUR
         assertEvalError("{ x<-c(1,2,3,4); x[[1+1i]]<-NULL }");
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test
@@ -2040,6 +2042,47 @@ public class TestSimpleVectors extends TestBase {
     @Test
     public void testGenericUpdate() {
         assertEval("{ a <- TRUE; a[[2]] <- FALSE; a; }");
+    }
+
+    @Test
+    @Ignore
+    public void testNullUpdate() {
+        assertEval("{ x <- NULL; x[[0]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[0]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[[0]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -360,10 +360,10 @@ public abstract class CoerceVector extends RNode {
     }
 
     protected boolean isVectorList(RAbstractContainer value, RAbstractVector vector) {
-        return vector.getElementClass() == Object.class;
+        return vector instanceof RList;
     }
 
     protected boolean isVectorListOrDataFrame(RAbstractContainer value, RAbstractContainer vector) {
-        return vector.getElementClass() == Object.class || vector.getElementClass() == RDataFrame.class;
+        return vector instanceof RList || vector.getElementClass() == RDataFrame.class;
     }
 }

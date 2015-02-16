@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltincolMeans extends TestBase {
 
     @Test
-    @Ignore
     public void testcolMeans1() {
         assertEval("argv <- list(structure(1:5, .Dim = c(5L, 1L), .Dimnames = list(c(\'1\', \'2\', \'3\', \'4\', \'5\'), \'a\')), 5, 1, FALSE); .Internal(colMeans(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }

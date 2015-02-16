@@ -46,13 +46,11 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter6() {
         assertEval("argv <- list(structure(2:3, .Label = c(\'C\', \'A\', \'B\'), class = \'factor\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter7() {
         assertEval("argv <- list(structure(1:255, class = \'octmode\'));as.character(argv[[1]]);");
     }
@@ -78,7 +76,6 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter12() {
         assertEval("argv <- list(structure(1:4, .Dim = c(1L, 4L)));as.character(argv[[1]]);");
     }
@@ -240,7 +237,6 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter41() {
         assertEval("argv <- list(structure(list(c0 = structure(character(0), class = \'AsIs\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));as.character(argv[[1]]);");
     }

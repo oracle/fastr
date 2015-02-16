@@ -182,7 +182,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector31() {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4, .Dimnames = list(c(\'A\', \'B\', \'C\'), c(\'D\', \'E\', \'F\', \'G\'))), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -261,7 +260,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector45() {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1, 20, 1), class = \'ts\'), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }

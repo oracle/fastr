@@ -44,9 +44,9 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(RFunction, UnmatchedArguments, SourceSection, SourceSection)} . The other
- * match functions are used for special cases, where builtins make it necessary to re-match
- * parameters, e.g.:
+ * {@link #matchArguments(RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)} .
+ * The other match functions are used for special cases, where builtins make it necessary to
+ * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseHelperNode, boolean)}
  * for 'UseMethod' and
  * {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, SourceSection, SourceSection)} for
@@ -118,11 +118,11 @@ public class ArgumentMatcher {
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
      * @see #matchNodes(RFunction, RNode[], String[], SourceSection, SourceSection, boolean,
-     *      ClosureCache)
+     *      ClosureCache, boolean)
      */
-    public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
+    public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, false, suppliedArgs);
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, false, suppliedArgs, noOpt);
         return MatchedArguments.create(wrappedArgs, formals.getNames());
     }
 
@@ -139,10 +139,10 @@ public class ArgumentMatcher {
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
      * @see #matchNodes(RFunction, RNode[], String[], SourceSection, SourceSection, boolean,
-     *      ClosureCache)
+     *      ClosureCache, boolean)
      */
     public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, true, suppliedArgs);
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, true, suppliedArgs, false);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
@@ -223,7 +223,7 @@ public class ArgumentMatcher {
      *      ArrayFactory, SourceSection, SourceSection, boolean)
      */
     private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
-                    ClosureCache closureCache) {
+                    ClosureCache closureCache, boolean noOpt) {
         assert suppliedArgs.length == suppliedNames.length;
 
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
@@ -231,7 +231,7 @@ public class ArgumentMatcher {
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), callSrc, argsSrc, false);
 
-        PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
+        PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper(noOpt) : new DefaultPromiseWrapper(noOpt);
         return wrapInPromises(function, resultArgs, formals, wrapper, closureCache, callSrc);
     }
 
@@ -734,6 +734,13 @@ public class ArgumentMatcher {
      * {@link PromiseWrapper} implementation for 'normal' function calls.
      */
     private static class DefaultPromiseWrapper implements PromiseWrapper {
+
+        private final boolean noOpt;
+
+        public DefaultPromiseWrapper(boolean noOpt) {
+            this.noOpt = noOpt;
+        }
+
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int formalIndex) {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
@@ -763,7 +770,7 @@ public class ArgumentMatcher {
             EvalPolicy evalPolicy = getEvalPolicy(function, builtinRootNode, formalIndex);
             Closure closure = closureCache.getOrCreateClosure(expr);
             Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
+            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), noOpt);
         }
     }
 
@@ -774,6 +781,13 @@ public class ArgumentMatcher {
      * @see RBuiltinRootNode#inline(InlinedArguments)
      */
     private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
+
+        private final boolean noOpt;
+
+        public BuiltinInitPromiseWrapper(boolean noOpt) {
+            this.noOpt = noOpt;
+        }
+
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int formalIndex) {
             // This is used for arguments that are going inlined for builtins
             return !builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.PROMISED : EvalPolicy.INLINED;
@@ -820,7 +834,7 @@ public class ArgumentMatcher {
             EvalPolicy evalPolicy = getEvalPolicy(function, builtinRootNode, formalIndex);
             Closure closure = closureCache.getOrCreateClosure(expr);
             Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure));
+            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), noOpt);
         }
     }
 

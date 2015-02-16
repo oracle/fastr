@@ -118,7 +118,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public RStringVector getClassHierarchy() {
-        return null;
+        return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
 
     public boolean isObject() {

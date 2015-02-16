@@ -159,7 +159,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     public static String prettyPrint(int operand) {
-        return RRuntime.intToString(operand, false);
+        return RRuntime.intToString(operand);
     }
 
     @TruffleBoundary
@@ -1294,7 +1294,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         protected static boolean isVectorList(RAbstractVector v) {
-            return v.getElementClass() == Object.class;
+            return v instanceof RList;
         }
 
         protected static boolean isLengthOne(RList v) {

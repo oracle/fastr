@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -54,37 +55,6 @@ public final class RError extends RuntimeException {
         return getMessage();
     }
 
-    // use a ThreadLocal if multi-threaded evaluation
-    /**
-     * Are we (temporarily) ignore errors? Assumes single threaded.
-     */
-    private static boolean ignoreError;
-
-    /**
-     * Support for the temporary suppression of the normal error catch machinery. After a call to
-     * {code ignoreError(true)}, the error will simply be thrown on the assumption that if will be
-     * caught by the caller and some alternative course of action chosen. This should always be used
-     * in a {@code try finally} block, e.g:
-     *
-     * <pre>
-     * boolean prev = RError.ignoreError(true);
-     * try {
-     *     // do something that might throw an RError
-     *     ...
-     * } finally {
-     *     RError.ignoreError(prev);
-     * }
-     * </pre>
-     *
-     * @param ignore
-     * @return the previous setting
-     */
-    public static boolean ignoreError(boolean ignore) {
-        boolean prev = ignoreError;
-        ignoreError = ignore;
-        return prev;
-    }
-
     /**
      * Handles an R error with the most general argument signature. All other variants delegate to
      * this method. R allows an error to be caught and an arbitrary expression evaluated, often a
@@ -111,13 +81,7 @@ public final class RError extends RuntimeException {
         throw error0(src, msg, (Object[]) null);
     }
 
-    private static final RError MARKER_EXCEPTION = new RError("<marker exception>");
-
     private static RError error0(final SourceSection srcCandidate, Message msg, Object... args) {
-        if (ignoreError) {
-            throw MARKER_EXCEPTION;
-        }
-
         VirtualFrame frame = null;
         SourceSection src = srcCandidate;
         if (src == null) {
@@ -229,6 +193,13 @@ public final class RError extends RuntimeException {
     @TruffleBoundary
     public static void warning(SourceSection src, Message msg, Object... args) {
         RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
+    }
+
+    @TruffleBoundary
+    public static void performanceWarning(String string) {
+        if (FastROptions.PerformanceWarnings.getValue()) {
+            warning(Message.PERFORMANCE, string);
+        }
     }
 
     @TruffleBoundary
@@ -605,7 +576,8 @@ public final class RError extends RuntimeException {
         REQUIRES_NAME_DLLINFO("must pass package name or DllInfo reference"),
         APPLY_NON_FUNCTION("attempt to apply non-function"),
         NO_INDEX("no index specified"),
-        INVALID_ARG_NUMBER("%s: invalid number of arguments");
+        INVALID_ARG_NUMBER("%s: invalid number of arguments"),
+        PERFORMANCE("performance problem: %s");
 
         public final String message;
         private final boolean hasArgs;

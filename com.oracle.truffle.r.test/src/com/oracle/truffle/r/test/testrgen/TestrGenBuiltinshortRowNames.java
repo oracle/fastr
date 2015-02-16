@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,6 @@ public class TestrGenBuiltinshortRowNames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testshortRowNames4() {
         assertEval("argv <- list(structure(list(x = 1:3, y = structure(1:3, .Label = c(\'A\', \'D\', \'E\'), class = \'factor\'), z = c(6, 9, 10)), .Names = c(\'x\', \'y\', \'z\'), row.names = c(NA, -3L), class = \'data.frame\'), 0L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
     }
@@ -129,4 +128,3 @@ public class TestrGenBuiltinshortRowNames extends TestBase {
         assertEval("argv <- list(structure(list(Df = c(NA, 1, 2), Deviance = c(12.2441566485997, 8.44399377410362, 11.9670615295804), AIC = c(73.9421143635373, 72.1419514890412, 77.665019244518)), .Names = c(\'Df\', \'Deviance\', \'AIC\'), row.names = c(\'<none>\', \'Temp\', \'Soft\'), class = c(\'anova\', \'data.frame\'), heading = c(\'Single term additions\', \'\\nModel:\', \'cbind(X, M) ~ M.user\')), 2L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
     }
 }
-

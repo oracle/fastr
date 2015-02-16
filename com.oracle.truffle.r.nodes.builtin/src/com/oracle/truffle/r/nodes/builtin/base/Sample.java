@@ -7,7 +7,7 @@
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -74,7 +74,7 @@ public abstract class Sample extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected RIntVector doSampleInvalidSize(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(size));
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size));
 
     }
 
@@ -118,7 +118,7 @@ public abstract class Sample extends RBuiltinNode {
     @Specialization(guards = "invalidSizeArgument")
     protected RIntVector doSampleInvalidSizeArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(size));
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size));
     }
 
     @SuppressWarnings("unused")
@@ -157,9 +157,9 @@ public abstract class Sample extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "invalidIsRepeatable")
-    protected RIntVector doSampleInvalidIsRepeatable(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    protected RIntVector doSampleInvalidIsRepeatable(int x, int size, byte isRepeatable, RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(isRepeatable));
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.logicalToString(isRepeatable));
     }
 
     @TruffleBoundary

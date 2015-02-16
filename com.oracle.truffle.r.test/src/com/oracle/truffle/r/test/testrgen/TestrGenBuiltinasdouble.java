@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -160,7 +160,6 @@ public class TestrGenBuiltinasdouble extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasdouble27() {
         assertEval("argv <- list(structure(3:5, .Tsp = c(1, 3, 1), class = \'ts\'));as.double(argv[[1]]);");
     }
@@ -180,11 +179,9 @@ public class TestrGenBuiltinasdouble extends TestBase {
         assertEval("argv <- list(structure(c(NA, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23L, 24L, 25L, 26L, 27L, 28L, 29L, 30L, 31L, 32L, 33L, 34L, 35L, 36L, 37L, 38L, 39L, 40L, 41L, 42L, 43L, 44L, 45L, 46L, 47L, 48L, 49L, 50L, 51L, 52L, 53L, 54L, 55L, 56L, 57L, 58L, 59L, 60L, 61L, 62L, 63L, 64L, 65L, 66L, 67L, 68L, 69L, 70L, 71L, 72L, 73L, 74L, 75L, 76L, 77L, 78L, 79L, 80L, 81L, 82L, 83L, 84L, 85L, 86L, 87L, 88L, 89L, 90L, 91L, 92L, 93L, 94L, 95L, 96L, 97L, 98L, 99L, 100L), .Tsp = c(1, 101, 1), class = \'ts\'));as.double(argv[[1]]);");
     }
 
-	@Test
-	public void testasdouble32() {
-		assertEval("argv <- list(NA);"+
-			"do.call(\'as.double\', argv)");
-	}
+    @Test
+    public void testasdouble32() {
+        assertEval("argv <- list(NA);" + "do.call(\'as.double\', argv)");
+    }
 
 }
-

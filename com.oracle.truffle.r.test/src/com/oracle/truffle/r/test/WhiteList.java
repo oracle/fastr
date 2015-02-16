@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,10 +116,8 @@ public abstract class WhiteList {
                 unusedCount--;
             }
         }
-        if (unusedCount == 0) {
-            System.out.printf("All entries in %s used%n", whiteListResource);
-        } else {
-            System.out.printf("%d entries in %s were not used%n", unusedCount, whiteListResource);
+        if (unusedCount > 0) {
+            System.out.printf("%n%d unused entries in %s%n", unusedCount, whiteListResource);
         }
     }
 

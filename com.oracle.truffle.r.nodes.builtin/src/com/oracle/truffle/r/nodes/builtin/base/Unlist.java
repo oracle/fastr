@@ -87,7 +87,7 @@ public abstract class Unlist extends RBuiltinNode {
         }
 
         protected boolean isVectorList(RAbstractVector vector) {
-            return vector.getElementClass() == Object.class;
+            return vector instanceof RList;
         }
     }
 
@@ -281,7 +281,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     protected boolean isVectorList(RAbstractVector vector) {
-        return vector.getElementClass() == Object.class;
+        return vector instanceof RList;
     }
 
     private static class NamesInfo {
