@@ -525,7 +525,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, new String[]{"", ""}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", ""}));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
@@ -564,7 +564,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, RRuntime.USE_METHOD, null));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, null));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});

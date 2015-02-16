@@ -20955,13 +20955,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-<<<<<<< local
-=======
-    public void TestSimpleVectors_testComplexIndexIgnored_593fc8e31f28867ca49ec0bbe21bbc5f() {
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
-    }
-
-    @Test
     public void TestSimpleVectors_testDirectAccess_45ce6cc8a88e8a05c073c460bcddb113() {
         assertEval("{ x<-c(7,42); `[`(x, 2); }");
     }
@@ -21032,7 +21025,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
->>>>>>> other
     public void TestSimpleVectors_testEmptyUpdate_92f308555b0238f4ae92a11deaa25a29() {
         assertEval("{ a <- list(); a$a = 6; a; }");
     }
