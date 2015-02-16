@@ -80,22 +80,30 @@ public class NextMethodDispatchNode extends S3DispatchNode {
             if (argVal instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) argVal;
                 int varArgsLength = varArgs.length();
-                if (varArgsLength > 1) {
-                    funArgValues = Utils.resizeArray(funArgValues, funArgValues.length + varArgsLength - 1);
-                }
-                System.arraycopy(varArgs.getValues(), 0, funArgValues, index, varArgsLength);
-                if (hasNames) {
+                if (varArgsLength > 0) {
                     if (varArgsLength > 1) {
-                        funArgNames = Utils.resizeArray(funArgNames, funArgNames.length + varArgsLength - 1);
+                        funArgValues = Utils.resizeArray(funArgValues, funArgValues.length + varArgsLength - 1);
                     }
-                    if (varArgs.getNames() != null) {
+                    System.arraycopy(varArgs.getValues(), 0, funArgValues, index, varArgsLength);
+                    if (hasNames) {
+                        if (varArgsLength > 1) {
+                            funArgNames = Utils.resizeArray(funArgNames, funArgNames.length + varArgsLength - 1);
+                        }
+                        if (varArgs.getNames() != null) {
+                            System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
+                        }
+                    } else if (varArgs.getNames() != null) {
+                        funArgNames = new String[funArgsLength + argsLength];
                         System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
                     }
-                } else if (varArgs.getNames() != null) {
-                    funArgNames = new String[funArgsLength + argsLength];
-                    System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
+                    index += varArgsLength;
+                } else {
+                    funArgValues[index] = RMissing.instance;
+                    if (hasNames) {
+                        funArgNames[index] = RArguments.getName(frame, fi);
+                    }
+                    index++;
                 }
-                index += varArgsLength;
             } else {
                 funArgValues[index] = argVal;
                 if (hasNames) {

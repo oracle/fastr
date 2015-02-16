@@ -47,6 +47,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[3]] }");
         assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=FALSE]] }");
         assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=TRUE]] }");
+
+        assertEval("{ `[.foo` <- function(x, i, ...) structure(NextMethod(\"[\"), class = class(x)); x<-c(1,2); class(x)<-\"foo\"; x[1] }");
     }
 
     @Test

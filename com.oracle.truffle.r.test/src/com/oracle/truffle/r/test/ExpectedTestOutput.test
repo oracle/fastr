@@ -57700,6 +57700,12 @@ Error in x[[NA]] <- c(7, 42) : attempt to select more than one element
 Error in x[[NA]] <- c(7, 42, 1) : attempt to select more than one element
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObject
+#{ `[.foo` <- function(x, i, ...) structure(NextMethod("["), class = class(x)); x<-c(1,2); class(x)<-"foo"; x[1] }
+[1] 1
+attr(,"class")
+[1] "foo"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObject
 #{ x<-factor(c("a", "b", "a")); x[3, drop=FALSE] }
 [1] a
 Levels: a b
