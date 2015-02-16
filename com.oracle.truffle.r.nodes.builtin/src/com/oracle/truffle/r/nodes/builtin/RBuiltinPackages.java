@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 
 /**
  * Support for loading built-in packages, currently limited to {@code base}.
@@ -66,20 +68,34 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                 RFunction function = createFunction(builtinFactory, methodName);
                 try {
                     baseEnv.put(methodName, function);
+                    baseEnv.lockBinding(methodName);
                 } catch (PutException ex) {
                     Utils.fail("failed to install builtin function: " + methodName);
                 }
             }
         }
         // Now "load" the package
-        Path basePath = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "base");
+        Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base");
+        Path basePathbase = baseDirPath.resolve("R").resolve("base");
         Source baseSource = null;
         try {
-            baseSource = Source.fromFileName(basePath.toString());
+            baseSource = Source.fromFileName(basePathbase.toString());
         } catch (IOException ex) {
             Utils.fail("unable to open the base package");
         }
-        RContext.getEngine().parseAndEval(baseSource, frame, baseEnv, false, false);
+        // Load the (stub) DLL for base
+        try {
+            DLL.loadPackageDLL(baseDirPath.resolve("libs").resolve("base.so").toString(), true, true);
+        } catch (DLLException ex) {
+            Utils.fail(ex.getMessage());
+        }
+        // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
+        try {
+            HiddenInternalFunctions.MakeLazy.loadingBase = true;
+            RContext.getEngine().parseAndEval(baseSource, frame, baseEnv, false, false);
+        } finally {
+            HiddenInternalFunctions.MakeLazy.loadingBase = false;
+        }
         pkg.loadOverrides(frame, baseEnv);
     }
 

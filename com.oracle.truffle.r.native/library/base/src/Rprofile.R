@@ -18,9 +18,9 @@
 ### personal startup files, since things will be executed twice and in
 ### the wrong environment (user profiles are run in .GlobalEnv).
 
-### Mostly commented out as FastR currently does a lot of this in Java, which may change.
+### Slightly modified for FastR
 
-#.GlobalEnv <- globalenv()
+.GlobalEnv <- globalenv()
 attach(NULL, name = "Autoloads")
 .AutoloadEnv <- as.environment(2)
 assign(".Autoloaded", NULL, envir = .AutoloadEnv)

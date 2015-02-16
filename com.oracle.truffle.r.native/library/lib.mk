@@ -56,7 +56,7 @@ PKGDIR := $(FASTR_LIBDIR)/$(PKG)
 PKGTAR := $(SRC)/$(OS_DIR)/$(PKG).tar.gz
 
 ifneq ($(C_SOURCES),)
-all: libcommon $(LIB_PKG)
+all: libcommon $(LIB_PKG) $(PKG_EXTRAS)
 else
 all: libcommon
 endif
@@ -70,9 +70,9 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 $(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGTAR)
-
 	mkdir -p $(LIBDIR)
 	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
+	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 
 $(OBJ)/%.o: $(SRC)/%.c  $(H_SOURCES)

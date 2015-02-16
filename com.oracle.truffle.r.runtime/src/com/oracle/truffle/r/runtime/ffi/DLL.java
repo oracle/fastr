@@ -220,6 +220,22 @@ public class DLL {
         return result;
     }
 
+    private static final String R_INIT_PREFIX = "R_init_";
+
+    public static synchronized DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
+        DLLInfo dllInfo = load(path, local, now);
+        // Search for init method
+        DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(R_INIT_PREFIX + dllInfo.name, dllInfo);
+        if (symbolInfo != null) {
+            try {
+                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo, new Object[]{dllInfo});
+            } catch (Throwable ex) {
+                throw new DLLException(RError.Message.DLL_RINIT_ERROR);
+            }
+        }
+        return dllInfo;
+    }
+
     public static synchronized void unload(String path) throws DLLException {
         String absPath = new File(Utils.tildeExpand(path)).getAbsolutePath();
         for (DLLInfo info : list) {

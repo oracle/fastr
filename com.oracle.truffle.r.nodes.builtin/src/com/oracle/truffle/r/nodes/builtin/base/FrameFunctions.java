@@ -269,8 +269,6 @@ public class FrameFunctions {
             controlVisibility();
             REnvironment result;
             if (zeroProfile.profile(which == 0)) {
-                // TODO Strictly this should be the value of .GlobalEnv
-                // (which may differ from globalenv() during startup)
                 result = REnvironment.globalEnv();
             } else {
                 Frame callerFrame = getFrame(frame, which);

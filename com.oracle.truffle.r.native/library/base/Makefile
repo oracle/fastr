@@ -21,4 +21,11 @@
 # questions.
 #
 
+PKG_EXTRAS = $(FASTR_LIBDIR)/$(PKG)/R/Rprofile
+
 include ../lib.mk
+
+# override the Rprofile
+
+$(PKG_EXTRAS): $(SRC)/Rprofile.R
+	cp Rprofile.R $(PKG_EXTRAS)

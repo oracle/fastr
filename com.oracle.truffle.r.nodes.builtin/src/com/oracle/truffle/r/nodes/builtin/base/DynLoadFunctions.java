@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 public class DynLoadFunctions {
 
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
-    private static final String R_INIT_PREFIX = "R_init_";
 
     @RBuiltin(name = "dyn.load", kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
@@ -55,16 +54,7 @@ public class DynLoadFunctions {
             // Length not checked by GnuR
             byte local = localVec.getDataAt(0);
             try {
-                DLLInfo dllInfo = DLL.load(lib, asBoolean(local), asBoolean(now));
-                // Search for init method
-                DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(R_INIT_PREFIX + dllInfo.name, dllInfo);
-                if (symbolInfo != null) {
-                    try {
-                        RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo, new Object[]{dllInfo});
-                    } catch (Throwable ex) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                    }
-                }
+                DLLInfo dllInfo = DLL.loadPackageDLL(lib, asBoolean(local), asBoolean(now));
                 return dllInfo.toRList();
             } catch (DLLException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), ex);

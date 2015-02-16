@@ -536,6 +536,7 @@ public final class RError extends RuntimeException {
         ENV_SUBSCRIPT("subscript out of range"),
         DLL_LOAD_ERROR("unable to load shared object '%s'\n  %s"),
         DLL_NOT_LOADED("shared object '%s' was not loaded"),
+        DLL_RINIT_ERROR("package 'init' method failed"),
         RNG_BAD_KIND("RNG kind %s is not available"),
         RNG_NOT_IMPL_KIND("unimplemented RNG kind %d"),
         RNG_READ_SEEDS("cannot read seeds unless 'user_unif_nseed' is supplied"),
