@@ -59,6 +59,8 @@ public class FastROptions {
     public static final OptionValue<String> PerfStats = new OptionValue<>(null);
     @Option(help = "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)")
     public static final OptionValue<String> Rdebug = new OptionValue<>(null);
+    @Option(help = "Print FastR performance warning")
+    public static final OptionValue<Boolean> PerformanceWarnings = new OptionValue<>(false);
 
     // Promises optimizations
     @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")

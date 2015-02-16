@@ -64,7 +64,7 @@ public abstract class NextMethod extends RBuiltinNode {
                  * The generic name may have changed. This is very unlikely, and therefore
                  * implemented very inefficiently. Output a warning in case this really happens.
                  */
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.PERFORMANCE, "non-constant generic parameter in NextMethod");
+                RError.performanceWarning("non-constant generic parameter in NextMethod");
                 dispatchedCallNode.replace(newDispatched);
             }
         }

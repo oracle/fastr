@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -192,6 +193,13 @@ public final class RError extends RuntimeException {
     @TruffleBoundary
     public static void warning(SourceSection src, Message msg, Object... args) {
         RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
+    }
+
+    @TruffleBoundary
+    public static void performanceWarning(String string) {
+        if (FastROptions.PerformanceWarnings.getValue()) {
+            warning(Message.PERFORMANCE, string);
+        }
     }
 
     @TruffleBoundary
