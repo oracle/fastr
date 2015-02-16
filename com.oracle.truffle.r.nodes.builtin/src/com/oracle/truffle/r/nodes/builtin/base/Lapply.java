@@ -354,13 +354,18 @@ public abstract class Lapply extends RBuiltinNode {
 
                         names = new String[varArgs.length() + 1];
                         names[0] = readVectorElementName;
-                        System.arraycopy(varArgs.getNames(), 0, names, 1, varArgs.length());
+                        for (int i = 0; i < varArgs.length(); i++) {
+                            String name = varArgs.getNames()[i];
+                            if (name != null && !name.isEmpty()) {
+                                // change "" to null
+                                names[i + 1] = name;
+                            }
+                        }
                     }
                     CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, names);
                     return RCallNode.createCall(null, owner.functionNode, argsNode, null);
                 }
             }
-
         }
     }
 

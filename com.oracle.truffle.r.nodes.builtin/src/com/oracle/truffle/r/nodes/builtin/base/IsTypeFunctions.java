@@ -114,7 +114,7 @@ public class IsTypeFunctions {
         }
 
         protected boolean isListVector(RAbstractVector arg) {
-            return arg.getElementClass() == Object.class;
+            return arg instanceof RList;
         }
 
         @Fallback
@@ -146,7 +146,7 @@ public class IsTypeFunctions {
         }
 
         protected boolean isListVector(RAbstractVector arg) {
-            return arg.getElementClass() == Object.class;
+            return arg instanceof RList;
         }
 
         @Specialization
@@ -308,7 +308,7 @@ public class IsTypeFunctions {
         }
 
         protected boolean isList(RAbstractVector vector) {
-            return vector.getElementClass() == Object.class;
+            return vector instanceof RList;
         }
 
         protected boolean isList(RDataFrame frame) {
@@ -515,7 +515,7 @@ public class IsTypeFunctions {
         }
 
         protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-            return RType.Any.getName().equals(mode) || (x.getElementClass() == Object.class && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
+            return RType.Any.getName().equals(mode) || (x instanceof RList && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
                             RRuntime.classToString(x.getElementClass()).equals(mode);
         }
     }

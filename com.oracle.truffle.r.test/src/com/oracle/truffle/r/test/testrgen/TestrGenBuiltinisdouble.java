@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,6 @@ public class TestrGenBuiltinisdouble extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisdouble2() {
         assertEval("argv <- list(structure(1:7, .Names = c(\'a1\', \'a2\', \'a3\', \'a4\', \'a5\', \'a6\', \'a7\')));is.double(argv[[1]]);");
     }
@@ -39,16 +38,13 @@ public class TestrGenBuiltinisdouble extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisdouble5() {
         assertEval("argv <- list(structure(1:24, .Dim = 2:4));is.double(argv[[1]]);");
     }
 
-	@Test
-	public void testisdouble7() {
-		assertEval("argv <- list(structure(c(1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18,     22, 3, 7, 11, 15, 19, 23, 4, 8, 12, 16, 20, 24), .Dim = c(6L,     4L)));"+
-			"do.call(\'is.double\', argv)");
-	}
+    @Test
+    public void testisdouble7() {
+        assertEval("argv <- list(structure(c(1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18,     22, 3, 7, 11, 15, 19, 23, 4, 8, 12, 16, 20, 24), .Dim = c(6L,     4L)));" + "do.call(\'is.double\', argv)");
+    }
 
 }
-

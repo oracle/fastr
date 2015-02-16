@@ -83,7 +83,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
             }
         } else {
             // initialize the list of exit handlers
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, current = new ArrayList<>(), invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, current = new ArrayList<>(), false, invalidateProfile);
         }
         if (!empty) {
             current.add(expr.getRep());

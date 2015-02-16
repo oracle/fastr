@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.access.array.read;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -34,10 +34,11 @@ import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.RError.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -241,7 +242,7 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessFactorSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[", RRuntime.USE_METHOD, new String[]{"", "", "drop"}));
+            dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, new String[]{"", "", "drop"}));
         }
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, null) : position;
@@ -255,7 +256,7 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessFactor(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[", RRuntime.USE_METHOD, new String[]{"", "", "exact"}));
+            dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, new String[]{"", "", "exact"}));
         }
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, null) : position;
@@ -1793,7 +1794,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     protected boolean isVectorList(RAbstractContainer container) {
-        return container.getElementClass() == Object.class;
+        return container instanceof RList;
     }
 
     protected boolean wrongDimensions(RAbstractVector container, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions) {

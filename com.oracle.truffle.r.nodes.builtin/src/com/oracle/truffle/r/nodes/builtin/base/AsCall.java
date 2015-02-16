@@ -56,11 +56,20 @@ public abstract class AsCall extends RBuiltinNode {
     private static RArgsValuesAndNames makeNamesAndValues(RList x) {
         int length = x.getLength() - 1;
         Object[] values = new Object[length];
-        String[] names = new String[length];
+        String[] names = null;
         System.arraycopy(x.getDataWithoutCopying(), 1, values, 0, length);
         if (x.getNames() != null) {
+            // extract names, converting "" to null
             RStringVector ns = x.getNames();
-            System.arraycopy(ns.getDataWithoutCopying(), 1, names, 0, length);
+            for (int i = 0; i < length; i++) {
+                String name = ns.getDataAt(i + 1);
+                if (name != null && !name.isEmpty()) {
+                    if (names == null) {
+                        names = new String[length];
+                    }
+                    names[i] = name;
+                }
+            }
         }
         return new RArgsValuesAndNames(values, names);
     }

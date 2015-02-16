@@ -662,7 +662,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 // with vector read, we need names to even try finding container components
                 int result = findPosition(container, container.getNames(), operand, exact);
 
-                if (container.getElementClass() == Object.class) {
+                if (container instanceof RList) {
                     // container is a list
                     if (!isSubset && RRuntime.isNA(result)) {
                         return RNull.instance;
@@ -674,7 +674,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (isSubset) {
                     return RRuntime.INT_NA;
                 } else {
-                    if (container.getElementClass() == Object.class) {
+                    if (container instanceof RList) {
                         // container is a list
                         return RNull.instance;
                     } else {
@@ -695,7 +695,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 }
             } else {
                 error.enter();
-                if (isSubset || container.getElementClass() == Object.class) {
+                if (isSubset || container instanceof RList) {
                     throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
                 } else {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
@@ -732,7 +732,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 }
             } else {
                 if (emptyOperandProfile.profile(operand.getLength() == 0)) {
-                    if (listProfile.profile(container.getElementClass() == Object.class)) {
+                    if (listProfile.profile(container instanceof RList)) {
                         // container is a list
                         error.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -834,7 +834,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             } else {
                 error.enter();
                 if (operand.getLength() == 0 && !isSubset) {
-                    if (container.getElementClass() == Object.class) {
+                    if (container instanceof RList) {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
                     } else {
                         return 0;
@@ -1132,7 +1132,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         protected boolean isVectorList(RAbstractContainer container) {
-            return container.getElementClass() == Object.class;
+            return container instanceof RList;
         }
 
         protected static boolean indNA(RAbstractContainer container, int operand) {

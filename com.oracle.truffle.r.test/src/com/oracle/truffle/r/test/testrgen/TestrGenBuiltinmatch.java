@@ -63,7 +63,6 @@ public class TestrGenBuiltinmatch extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatch10() {
         assertEval("argv <- list(structure(1:27, .Label = c(\'M16\', \'M05\', \'M02\', \'M11\', \'M07\', \'M08\', \'M03\', \'M12\', \'M13\', \'M14\', \'M09\', \'M15\', \'M06\', \'M04\', \'M01\', \'M10\', \'F10\', \'F09\', \'F06\', \'F01\', \'F05\', \'F07\', \'F02\', \'F08\', \'F03\', \'F04\', \'F11\'), class = c(\'ordered\', \'factor\')), structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 5L, 5L, 5L, 5L, 6L, 6L, 6L, 6L, 7L, 7L, 7L, 7L, 8L, 8L, 8L, 8L, 9L, 9L, 9L, 9L, 10L, 10L, 10L, 10L, 11L, 11L, 11L, 11L, 12L, 12L, 12L, 12L, 13L, 13L, 13L, 13L, 14L, 14L, 14L, 14L, 15L, 15L, 15L, 15L, 16L, 16L, 16L, 16L, 17L, 17L, 17L, 17L, 18L, 18L, 18L, 18L, 19L, 19L, 19L, 19L, 20L, 20L, 20L, 20L, 21L, 21L, 21L, 21L, 22L, 22L, 22L, 22L, 23L, 23L, 23L, 23L, 24L, 24L, 24L, 24L, 25L, 25L, 25L, 25L, 26L, 26L, 26L, 26L, 27L, 27L, 27L, 27L), .Label = c(\'M16\', \'M05\', \'M02\', \'M11\', \'M07\', \'M08\', \'M03\', \'M12\', \'M13\', \'M14\', \'M09\', \'M15\', \'M06\', \'M04\', \'M01\', \'M10\', \'F10\', \'F09\', \'F06\', \'F01\', \'F05\', \'F07\', \'F02\', \'F08\', \'F03\', \'F04\', \'F11\'), class = c(\'ordered\', \'factor\')), NA_integer_, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }

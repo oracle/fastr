@@ -33,6 +33,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -73,7 +74,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     protected Object allDataFrame(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevel, RArgsValuesAndNames args) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(getBindType(), RRuntime.USE_METHOD, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create(getBindType(), DispatchType.UseMethod, getSuppliedArgsNames()));
         }
         // we don't pass deparseLevel (if we do, this fails) but data frame versions of rbind/cbind
         // do not use it anyway

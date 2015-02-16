@@ -16,12 +16,13 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -29,17 +30,19 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "UseMethod", kind = PRIMITIVE, parameterNames = {"generic", "object"})
 public abstract class UseMethod extends RBuiltinNode {
 
-    private static final int INLINE_CACHE_SIZE = 4;
-
     /*
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
-    @Child private UseMethodNode useMethodNode;
 
-    public UseMethod() {
-        this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
-    }
+    @Child private DispatchedCallNode dispatchedCallNode;
+    @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(null);
+    @Child private PromiseCheckHelperNode promiseCheckHelper;
+
+    @CompilationFinal private String cachedGeneric;
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final ConditionProfile argMissingProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -49,165 +52,52 @@ public abstract class UseMethod extends RBuiltinNode {
     @Specialization
     protected Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();
-        throw new ReturnException(useMethodNode.execute(frame, generic, arg));
-    }
-
-    private abstract static class UseMethodNode extends RNode {
-
-        @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(null);
-        @Child private PromiseCheckHelperNode promiseCheckHelper;
-        @CompilationFinal protected final String[] suppliedArgsNames;
-
-        public UseMethodNode(String[] suppliedArgsNames) {
-            this.suppliedArgsNames = suppliedArgsNames;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            throw new AssertionError();
-        }
-
-        public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
-
-        /**
-         * @param frame
-         * @return The 1. (logical) argument in the frame, handles {@link RPromise}s and
-         *         {@link RArgsValuesAndNames}
-         */
-        protected Object getEnclosingArg(VirtualFrame frame) {
-            // For S3Dispatch, we have to evaluate the the first argument
-            Object enclosingArg = RArguments.getArgument(frame, 0);
-            if (enclosingArg instanceof RArgsValuesAndNames) {
-                // The GnuR "1. argument" might be hidden inside a "..."! Unwrap for proper dispatch
-                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
-                enclosingArg = varArgs.getValues()[0];
-            }
-            if (promiseCheckHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseCheckHelper = insert(new PromiseCheckHelperNode());
-            }
-            enclosingArg = promiseCheckHelper.checkEvaluate(frame, enclosingArg);
-            return enclosingArg;
-        }
-    }
-
-    @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    private static final class UninitializedUseMethodNode extends UseMethodNode {
-
-        protected final int depth;
-
-        protected UninitializedUseMethodNode(int depth, String[] suppliedArgsNames) {
-            super(suppliedArgsNames);
-            this.depth = depth;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, String generic, Object o) {
+        if (dispatchedCallNode == null || (cachedGeneric != generic && !cachedGeneric.equals(generic))) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return specialize(generic, o).execute(frame, generic, o);
-        }
-
-        private UseMethodNode specialize(String generic, Object o) {
-            CompilerAsserts.neverPartOfCompilation();
-            if (depth < INLINE_CACHE_SIZE) {
-                if (o == RMissing.instance) {
-                    return replace(new UseMethodGenericOnlyNode(generic.intern(), depth, suppliedArgsNames));
-                } else {
-                    return replace(new UseMethodGenericAndObjectNode(generic.intern(), depth, suppliedArgsNames));
-                }
-            }
-            return replace(new UseMethodFallbackNode(suppliedArgsNames));
-        }
-
-    }
-
-    private abstract static class UseMethodCachedNode extends UseMethodNode {
-
-        @Child private UseMethodNode nextNode;
-        @Child protected DispatchedCallNode currentNode;
-
-        private final String generic;
-
-        protected UseMethodCachedNode(String generic, int depth, String[] suppliedArgsNames) {
-            super(suppliedArgsNames);
-            this.generic = generic;
-            this.nextNode = new UninitializedUseMethodNode(depth + 1, suppliedArgsNames);
-            this.currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
-        }
-
-        protected abstract Object executeDispatch(VirtualFrame frame, String gen, Object o);
-
-        @Override
-        public final Object execute(VirtualFrame frame, String gen, Object o) {
-            if (generic.equals(gen)) {
-                return executeDispatch(frame, gen, o);
+            cachedGeneric = generic;
+            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, getSuppliedArgsNames());
+            if (dispatchedCallNode == null) {
+                dispatchedCallNode = insert(newDispatched);
             } else {
-                return nextNode.execute(frame, gen, o);
+                /*
+                 * The generic name may have changed. This is very unlikely, and therefore
+                 * implemented very inefficiently. Output a warning in case this really happens.
+                 */
+                RError.performanceWarning("non-constant generic parameter in UseMethod");
+                dispatchedCallNode.replace(newDispatched);
             }
         }
 
-    }
-
-    /*
-     * If only one argument is passed to UseMethod, the first argument of enclosing function is used
-     * to resolve the generic.
-     */
-    private static final class UseMethodGenericOnlyNode extends UseMethodCachedNode {
-
-        protected UseMethodGenericOnlyNode(String generic, int depth, String[] suppliedArgsNames) {
-            super(generic, depth, suppliedArgsNames);
-        }
-
-        @Override
-        public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
-            if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
-            }
-
+        Object dispatchedObject;
+        if (argMissingProfile.profile(arg == RMissing.instance)) {
             // For S3Dispatch, we have to evaluate the the first argument
-            Object enclosingArg = getEnclosingArg(frame);
-            return currentNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
+            dispatchedObject = getEnclosingArg(frame);
+        } else {
+            dispatchedObject = arg;
         }
+        throw new ReturnException(dispatchedCallNode.execute(frame, classHierarchyNode.execute(frame, dispatchedObject)));
     }
 
-    private static final class UseMethodGenericAndObjectNode extends UseMethodCachedNode {
-
-        protected UseMethodGenericAndObjectNode(String generic, int depth, String[] suppliedArgsNames) {
-            super(generic, depth, suppliedArgsNames);
+    /**
+     * Get the first (logical) argument in the frame, and handle {@link RPromise}s and
+     * {@link RArgsValuesAndNames}.
+     */
+    private Object getEnclosingArg(VirtualFrame frame) {
+        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, cachedGeneric, RRuntime.toString(RNull.instance));
         }
-
-        @Override
-        public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
-            return currentNode.execute(frame, classHierarchyNode.execute(frame, obj));
+        Object enclosingArg = RArguments.getArgument(frame, 0);
+        if (argsValueAndNamesProfile.profile(enclosingArg instanceof RArgsValuesAndNames)) {
+            // The GnuR "1. argument" might be hidden inside a "..."! Unwrap for proper dispatch
+            RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
+            enclosingArg = varArgs.getValues()[0];
         }
+        if (promiseCheckHelper == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            promiseCheckHelper = insert(new PromiseCheckHelperNode());
+        }
+        enclosingArg = promiseCheckHelper.checkEvaluate(frame, enclosingArg);
+        return enclosingArg;
     }
-
-    private static final class UseMethodFallbackNode extends UseMethodNode {
-
-        public UseMethodFallbackNode(String[] suppliedArgsNames) {
-            super(suppliedArgsNames);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, String generic, Object o) {
-            // TODO restructure UseMethodDispatchNode to expose generic case
-            // (This will prevent this fallback from being uncompilable.)
-            CompilerAsserts.neverPartOfCompilation();
-            if (o == RMissing.instance) {
-                if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
-                }
-
-                // For S3Dispatch, we have to evaluate the the first argument
-                Object enclosingArg = getEnclosingArg(frame);
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), RRuntime.USE_METHOD, suppliedArgsNames);
-                return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
-            } else {
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic.intern(), RRuntime.USE_METHOD, suppliedArgsNames);
-                return dcn.execute(frame, classHierarchyNode.execute(frame, o));
-            }
-        }
-
-    }
-
 }

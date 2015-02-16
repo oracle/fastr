@@ -88,7 +88,7 @@ public abstract class ToStringNode extends UnaryNode {
     @SuppressWarnings("unused")
     @Specialization
     protected String toString(int operand, boolean quotes, String separator) {
-        return RRuntime.intToString(operand, false);
+        return RRuntime.intToString(operand);
     }
 
     @SuppressWarnings("unused")

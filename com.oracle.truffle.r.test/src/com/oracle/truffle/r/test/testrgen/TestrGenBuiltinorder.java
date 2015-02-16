@@ -113,13 +113,11 @@ public class TestrGenBuiltinorder extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testorder21() {
         assertEval("argv <- structure(list(1, 1, 1, na.last = NA), .Names = c(\'\',     \'\', \'\', \'na.last\'));" + "do.call(\'order\', argv)");
     }
 
     @Test
-    @Ignore
     public void testorder22() {
         assertEval("argv <- structure(list(1, na.last = NA), .Names = c(\'\', \'na.last\'));" + "do.call(\'order\', argv)");
     }

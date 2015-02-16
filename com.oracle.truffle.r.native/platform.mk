@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,13 @@ ifeq ($(OSNAME), Linux)
   SHARED_EXT  := so
   LIBS        := -lgfortran
 else ifeq ($(OSNAME), SunOS)
-  OS_DIR      := sunos
-  CC          := cc
-  FC          := f90
-  CFLAGS      := -m64 -O -xcode=pic13
-  LDFLAGS     := -G -m64
+  OS_DIR      := solaris
+  CC          := gcc
+  FC          := gfortran
+  CFLAGS      := -m64 -fPIC -O2
+  LDFLAGS     := -m64 -fPIC -shared
   SHARED_EXT  := so
+  LIBS        := -lgfortran
 else ifeq ($(OSNAME), Darwin)
   OS_DIR      := darwin
   CC          := gcc

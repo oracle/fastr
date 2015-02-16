@@ -46,7 +46,11 @@ public abstract class S3DispatchNode extends DispatchNode {
     // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
     // having one method with a rather convoluted control flow structure?
 
-    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, final String[] argNames, final boolean hasVarArgs, final SourceSection callSrc) {
+    public S3DispatchNode(String genericName) {
+        super(genericName);
+    }
+
+    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, String[] argNames, boolean hasVarArgs, SourceSection callSrc) {
         String[] evaluatedArgNames = null;
         Object[] evaluatedArgsValues = evaluatedArgs;
         int argCount = evaluatedArgs.length;
@@ -97,7 +101,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         }
     }
 
-    public static boolean isEqualType(final RStringVector one, final RStringVector two) {
+    public static boolean isEqualType(RStringVector one, RStringVector two) {
         if (one == null && two == null) {
             return true;
         }
@@ -116,34 +120,29 @@ public abstract class S3DispatchNode extends DispatchNode {
         return true;
     }
 
-    protected void findFunction(final String functionName, Frame frame) {
+    protected void findFunction(String functionName, Frame frame) {
         if (lookup == null || !functionName.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = functionName;
-            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName);
+            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName, false);
             lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
-        Object func = targetFunction = null;
+        targetFunction = null;
         targetFunctionName = null;
-        boolean prevIgnoreError = RError.ignoreError(true);
-        try {
-            if (frame instanceof VirtualFrame) {
-                func = lookup.execute((VirtualFrame) frame);
-            } else {
-                func = lookup.execute(null, (MaterializedFrame) frame);
-            }
-        } catch (RError r) {
-            // in this context, this is not a reportable error
-        } finally {
-            RError.ignoreError(prevIgnoreError);
+        Object func;
+        if (frame instanceof VirtualFrame) {
+            func = lookup.execute((VirtualFrame) frame);
+        } else {
+            func = lookup.execute(null, (MaterializedFrame) frame);
         }
-        if (func instanceof RFunction) {
+        if (func != null) {
+            assert func instanceof RFunction;
             targetFunctionName = functionName;
             targetFunction = (RFunction) func;
         }
     }
 
-    protected void findFunction(final String generic, final String className, Frame frame) {
+    protected void findFunction(String generic, String className, Frame frame) {
         checkLength(className, generic);
         findFunction(functionName(generic, className), frame);
     }
@@ -153,7 +152,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
     }
 
-    protected WriteVariableNode initWvn(WriteVariableNode wvn, final String name) {
+    protected WriteVariableNode initWvn(WriteVariableNode wvn, String name) {
         WriteVariableNode node = wvn;
         if (node == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -163,7 +162,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         return node;
     }
 
-    protected WriteVariableNode defineVarInFrame(VirtualFrame frame, WriteVariableNode wvn, final String varName, final Object value) {
+    protected WriteVariableNode defineVarInFrame(VirtualFrame frame, WriteVariableNode wvn, String varName, Object value) {
         addVar(frame, varName);
         WriteVariableNode wvnCopy = initWvn(wvn, varName);
         wvnCopy.execute(frame, value);

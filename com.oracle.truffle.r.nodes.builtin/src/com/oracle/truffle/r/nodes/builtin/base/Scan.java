@@ -240,7 +240,7 @@ public abstract class Scan extends RBuiltinNode {
             if (nskip > 0) {
                 data.con.readLines(nskip);
             }
-            if (what.getElementClass() == Object.class) {
+            if (what instanceof RList) {
                 return scanFrame(frame, (RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
                                 multiLine == RRuntime.LOGICAL_TRUE, data);
             } else {

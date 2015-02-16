@@ -44,55 +44,52 @@ public class SortFunctions {
         @TruffleBoundary
         private static double[] sort(double[] data, byte decreasing) {
             // no reverse comparator for primitives
-            Arrays.sort(data);
+            Arrays.parallelSort(data);
             if (RRuntime.fromLogical(decreasing)) {
                 int len = data.length;
-                double[] revData = new double[len];
-                for (int i = 0; i < len; i++) {
-                    revData[i] = data[len - i - 1];
+                for (int i = len / 2 - 1; i >= 0; i--) {
+                    double temp = data[i];
+                    data[i] = data[len - i - 1];
+                    data[len - i - 1] = temp;
                 }
-                return revData;
-            } else {
-                return data;
             }
+            return data;
         }
 
         @TruffleBoundary
         private static int[] sort(int[] data, byte decreasing) {
-            Arrays.sort(data);
+            Arrays.parallelSort(data);
             if (RRuntime.fromLogical(decreasing)) {
                 int len = data.length;
-                int[] revData = new int[len];
-                for (int i = 0; i < len; i++) {
-                    revData[i] = data[len - i - 1];
+                for (int i = len / 2 - 1; i >= 0; i--) {
+                    int temp = data[i];
+                    data[i] = data[len - i - 1];
+                    data[len - i - 1] = temp;
                 }
-                return revData;
-            } else {
-                return data;
             }
+            return data;
         }
 
         @TruffleBoundary
         private static byte[] sort(byte[] data, byte decreasing) {
-            Arrays.sort(data);
+            Arrays.parallelSort(data);
             if (RRuntime.fromLogical(decreasing)) {
                 int len = data.length;
-                byte[] revData = new byte[len];
-                for (int i = 0; i < len; i++) {
-                    revData[i] = data[len - i - 1];
+                for (int i = len / 2 - 1; i >= 0; i--) {
+                    byte temp = data[i];
+                    data[i] = data[len - i - 1];
+                    data[len - i - 1] = temp;
                 }
-                return revData;
-            } else {
-                return data;
             }
+            return data;
         }
 
         @TruffleBoundary
         private static String[] sort(String[] data, byte decreasing) {
             if (RRuntime.fromLogical(decreasing)) {
-                Arrays.sort(data, Collections.reverseOrder());
+                Arrays.parallelSort(data, Collections.reverseOrder());
             } else {
-                Arrays.sort(data);
+                Arrays.parallelSort(data);
             }
             return data;
         }

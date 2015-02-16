@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
 
 /**
  * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise} and
@@ -352,7 +353,7 @@ public class RPromise extends RLanguageRep {
     public static class EagerPromise extends RPromise {
         protected final Object eagerValue;
 
-        private final Assumption assumption;
+        private final FrameSlotInfo notChangedNonLocally;
         private final int frameId;
         private final EagerFeedback feedback;
 
@@ -362,11 +363,11 @@ public class RPromise extends RLanguageRep {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
+        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
             super(EvalPolicy.PROMISED, type, optType, (MaterializedFrame) null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
-            this.assumption = assumption;
+            this.notChangedNonLocally = notChangedNonLocally;
             this.frameId = nFrameId;
             this.feedback = feedback;
         }
@@ -404,7 +405,7 @@ public class RPromise extends RLanguageRep {
         }
 
         public boolean isValid() {
-            return assumption.isValid();
+            return !notChangedNonLocally.isNonLocalModified();
         }
 
         public void notifySuccess() {
@@ -517,28 +518,28 @@ public class RPromise extends RLanguageRep {
 
         /**
          * @param eagerValue The eagerly evaluated value
-         * @param assumption The {@link Assumption} that eagerValue is still valid
+         * @param notChangedNonLocally The {@link Assumption} that eagerValue is still valid
          * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, assumption, nFrameId, feedback);
+        public RPromise createEagerSuppliedPromise(Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback);
         }
 
-        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, assumption, nFrameId, feedback);
+        public RPromise createPromisedPromise(RPromise promisedPromise, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback);
         }
 
         /**
          * @param eagerValue The eagerly evaluated value
-         * @param assumption The {@link Assumption} that eagerValue is still valid
+         * @param notChangedNonLocally The {@link Assumption} that eagerValue is still valid
          * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerDefaultPromise(Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.EAGER, defaultClosure, eagerValue, assumption, nFrameId, feedback);
+        public RPromise createEagerDefaultPromise(Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+            return RDataFactory.createEagerPromise(type, OptType.EAGER, defaultClosure, eagerValue, notChangedNonLocally, nFrameId, feedback);
         }
 
         public RPromise createVarargPromise(RPromise promisedVararg) {

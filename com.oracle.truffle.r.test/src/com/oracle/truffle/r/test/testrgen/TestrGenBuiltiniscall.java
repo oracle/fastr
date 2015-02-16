@@ -23,7 +23,6 @@ public class TestrGenBuiltiniscall extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testiscall2() {
         assertEval("argv <- list(structure(1:10, .Tsp = c(1920.5, 1921.25, 12), class = \'ts\'));is.call(argv[[1]]);");
     }

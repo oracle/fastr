@@ -153,12 +153,12 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Specialization
     protected byte doInt(int left, String right) {
-        return logic.op(RRuntime.intToString(left, false), right);
+        return logic.op(RRuntime.intToString(left), right);
     }
 
     @Specialization
     protected byte doInt(String left, int right) {
-        return logic.op(left, RRuntime.intToString(right, false));
+        return logic.op(left, RRuntime.intToString(right));
     }
 
     @Specialization
@@ -552,12 +552,12 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Specialization
     protected RLogicalVector doStringVectorOp(RAbstractStringVector left, int right) {
-        return performStringVectorOp(left, RRuntime.intToString(right, false), false);
+        return performStringVectorOp(left, RRuntime.intToString(right), false);
     }
 
     @Specialization
     protected RLogicalVector doStringVectorOp(int left, RAbstractStringVector right) {
-        return performStringVectorOp(right, RRuntime.intToString(left, false), true);
+        return performStringVectorOp(right, RRuntime.intToString(left), true);
     }
 
     @Specialization
@@ -1394,7 +1394,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         rightNACheck.enable(rightValue);
         boolean naResult = false;
         for (int i = 0; i < length; ++i) {
-            String leftValue = RRuntime.intToString(left.getDataAt(i), false);
+            String leftValue = RRuntime.intToString(left.getDataAt(i));
             byte resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;

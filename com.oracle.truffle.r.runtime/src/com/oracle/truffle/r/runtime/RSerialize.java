@@ -664,7 +664,7 @@ public class RSerialize {
         }
     }
 
-    private static class XdrInputFormat extends PInputStream {
+    private static final class XdrInputFormat extends PInputStream {
 
         private final byte[] buf;
         private int size;

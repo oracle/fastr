@@ -390,7 +390,7 @@ public class FrameFunctions {
             controlVisibility();
             if (n == 0) {
                 errorProfile.enter();
-                throw RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
+                throw RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
             }
             int p = RArguments.getDepth(frame) - n - 1;
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, p);

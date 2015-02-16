@@ -40,7 +40,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique5() {
         assertEval("argv <- list(structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L), .Label = c(\'Brown\', \'Blue\', \'Hazel\', \'Green\'), class = \'factor\'), FALSE, FALSE, 5L); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -96,7 +95,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique15() {
         assertEval("argv <- list(structure(c(1L, 1L, 1L, 1L, 3L, 3L, 3L, 3L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L, 3L, 3L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L), contrasts = structure(c(-0.666666666666667, 0.333333333333333, 0.333333333333333, -0.333333333333333, -0.333333333333333, 0.666666666666667), .Dim = c(3L, 2L), .Dimnames = list(c(\'placebo\', \'drug\', \'drug+\'), c(\'drug\', \'encourage\'))), .Label = c(\'placebo\', \'drug\', \'drug+\'), class = \'factor\'), FALSE, FALSE, 4L); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }

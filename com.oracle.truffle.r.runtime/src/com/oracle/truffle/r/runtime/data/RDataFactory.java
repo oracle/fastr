@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class RDataFactory {
@@ -381,8 +382,8 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise(evalPolicy, type, opt, expr, argumentValue));
     }
 
-    public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, Assumption assumption, int nFrameId, EagerFeedback feedback) {
-        return traceDataCreated(new RPromise.EagerPromise(type, eager, exprClosure, eagerValue, assumption, nFrameId, feedback));
+    public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+        return traceDataCreated(new RPromise.EagerPromise(type, eager, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback));
     }
 
     public static RPromise createVarargPromise(PromiseType type, RPromise promisedVararg, Closure exprClosure) {

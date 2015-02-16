@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,31 +62,31 @@ public final class NACheck {
 
     public void enable(int value) {
         if (state == NO_CHECK) {
-        enable(RRuntime.isNA(value));
+            enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(double value) {
         if (state == NO_CHECK) {
-        enable(RRuntime.isNA(value));
+            enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(RComplex value) {
         if (state == NO_CHECK) {
-        enable(value.isNA());
+            enable(value.isNA());
         }
     }
 
     public void enable(RAbstractVector value) {
         if (state == NO_CHECK) {
-        enable(!value.isComplete());
+            enable(!value.isComplete());
         }
     }
 
     public void enable(String operand) {
         if (state == NO_CHECK) {
-        enable(RRuntime.isNA(operand));
+            enable(RRuntime.isNA(operand));
         }
     }
 
@@ -209,7 +209,7 @@ public final class NACheck {
         if (check(right)) {
             return RRuntime.STRING_NA;
         }
-        return RRuntime.intToStringNoCheck(right, false);
+        return RRuntime.intToStringNoCheck(right);
     }
 
     @TruffleBoundary

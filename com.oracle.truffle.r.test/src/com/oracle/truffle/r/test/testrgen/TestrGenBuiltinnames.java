@@ -43,7 +43,6 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testnames7() {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1, 20, 1), class = \'ts\'));names(argv[[1]]);");
     }

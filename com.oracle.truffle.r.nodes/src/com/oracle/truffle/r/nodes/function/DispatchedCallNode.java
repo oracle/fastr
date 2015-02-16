@@ -12,7 +12,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -21,13 +21,18 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchedCallNode extends RNode {
 
+    public static enum DispatchType {
+        UseMethod,
+        NextMethod
+    }
+
     private static final int INLINE_CACHE_SIZE = 4;
 
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, String[] useMethodArgNames) {
+    public static DispatchedCallNode create(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, useMethodArgNames);
     }
 
-    public static DispatchedCallNode create(final String genericName, final String enclosingName, final String dispatchType, final Object[] args, final String[] argNames) {
+    public static DispatchedCallNode create(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
         return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, argNames);
     }
 
@@ -50,12 +55,12 @@ public abstract class DispatchedCallNode extends RNode {
         private final int depth;
         private final String genericName;
         private final String enclosingName;
-        private final String dispatchType;
+        private final DispatchType dispatchType;
         @CompilationFinal private final Object[] args;
         @CompilationFinal private final String[] argNames;
         @CompilationFinal private final String[] useMethodArgNames;
 
-        private UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
+        private UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
             this.genericName = genericName;
             this.enclosingName = enclosingName;
             this.depth = 0;
@@ -65,15 +70,15 @@ public abstract class DispatchedCallNode extends RNode {
             this.useMethodArgNames = useMethodArgNames;
         }
 
-        public UninitializedDispatchedCallNode(final String genericName, final String enclosingName, final String dispatchType, Object[] args, String[] argNames) {
+        public UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
             this(genericName, enclosingName, dispatchType, args, argNames, null);
         }
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, String[] useMethodArgNames) {
+        public UninitializedDispatchedCallNode(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
             this(genericName, null, dispatchType, null, null, useMethodArgNames);
         }
 
-        private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
+        private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
             this.depth = depth;
             this.genericName = copy.genericName;
             this.enclosingName = copy.enclosingName;
@@ -107,13 +112,14 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         protected DispatchNode createCurrentNode(RStringVector type) {
-            if (this.dispatchType == RRuntime.USE_METHOD) {
-                return new UseMethodDispatchNode(this.genericName, type, this.useMethodArgNames);
+            switch (dispatchType) {
+                case NextMethod:
+                    return new NextMethodDispatchNode(genericName, type, args, argNames, enclosingName);
+                case UseMethod:
+                    return new UseMethodDispatchNode(genericName, type, useMethodArgNames);
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
-            if (this.dispatchType == RRuntime.NEXT_METHOD) {
-                return new NextMethodDispatchNode(this.genericName, type, this.args, this.argNames, enclosingName);
-            }
-            throw RInternalError.shouldNotReachHere();
         }
     }
 
@@ -142,15 +148,15 @@ public abstract class DispatchedCallNode extends RNode {
         @Child private DispatchNode currentNode;
         private final RStringVector type;
 
-        CachedNode(final DispatchNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
+        CachedNode(DispatchNode currentNode, DispatchedCallNode nextNode, RStringVector type) {
             this.nextNode = nextNode;
             this.currentNode = currentNode;
             this.type = type;
         }
 
         @Override
-        public Object execute(VirtualFrame frame, final RStringVector aType) {
-            if (S3DispatchNode.isEqualType(this.type, aType)) {
+        public Object execute(VirtualFrame frame, RStringVector aType) {
+            if (S3DispatchNode.isEqualType(type, aType)) {
                 return currentNode.execute(frame);
             }
             return nextNode.execute(frame, aType);
@@ -158,7 +164,7 @@ public abstract class DispatchedCallNode extends RNode {
 
         @Override
         public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
-            if (S3DispatchNode.isEqualType(this.type, aType)) {
+            if (S3DispatchNode.isEqualType(type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }
             return nextNode.executeInternal(frame, aType, args);
