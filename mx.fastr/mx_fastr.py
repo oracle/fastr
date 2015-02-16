@@ -53,7 +53,7 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
 
 def setREnvironment():
     osname = platform.system()
-    translatedOsname = "solaris" if osname.lower()=="sunos" else osname.lower()
+    translatedOsname = "solaris" if osname.lower() == "sunos" else osname.lower()
     lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib', translatedOsname)
     lib_value = lib_base
     if osname == 'Darwin':
