@@ -25135,6 +25135,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testObject_3c8c62f8e1feeacaa1cc77072c3348f9() {
+        assertEval("{ `[.foo` <- function(x, i, ...) structure(NextMethod(\"[\"), class = class(x)); x<-c(1,2); class(x)<-\"foo\"; x[1] }");
+    }
+
+    @Test
     public void TestSimpleVectors_testObject_fcbc71a62a9b52c3bb5b21702b32bcbd() {
         assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=TRUE]] }");
     }
