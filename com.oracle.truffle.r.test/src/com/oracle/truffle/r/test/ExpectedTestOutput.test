@@ -6100,12 +6100,28 @@ attr(,"c")
 [1] FALSE
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
+#{ call("f") }
+f()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
+#{ call("f", 2, 3) }
+f(2, 3)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
+#{ call("f", quote(A)) }
+f(A)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
 #{ cl <- call("f") ; class(cl) }
 [1] "call"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
 #{ cl <- call("f") ; typeof(cl) }
 [1] "language"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
+#{ f <- "f" ; call(f, quote(A)) }
+f(A)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testCall
 #{ f <- function() 23 ; cl <- call("f") ; eval(cl) }
@@ -9645,6 +9661,10 @@ $b
 
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testInvocation
+#{ f <- function(...) { substitute(...) } ; f(x + z) } 
+x + z
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testInvocation
 #{ f <- function(a, ...) { list(...) } ; f(1) }
 list()
 
@@ -11291,6 +11311,54 @@ character(0)
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatch
 #{ match(factor(c("a", "b")), factor(c("c", "b", "a", "b", "c", "a"))) }
 [1] 3 2
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function() match.call() ; f() }
+f()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(2) }
+f(2)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(x=2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(x=2, 3) }
+f(x = 2, 3)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call() ; f(x=2, y=3) }
+f(x = 2, y = 3)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(2) }
+f(... = list(2))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(2, 3) }
+f(... = list(2, 3))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2) }
+f(... = list(x = 2))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, 3) }
+f(... = list(x = 2, 3))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, y=3) }
+f(... = list(x = 2, y = 3))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(x) match.call() ; f(2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchCall
+#{ f <- function(x) match.call() ; f(x=2) }
+f(x = 2)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testMatchFun
 #{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f("+"),f("*")) }
@@ -13151,6 +13219,64 @@ a b
 #{ x <- qr(cbind(1:3,2:4), LAPACK=FALSE) ; round( qr.coef(x, 1:3), digits=5 ) }
 [1] 1 0
 
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ class(quote(x + y)) }
+[1] "call"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ is.call(quote(x + y)) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ l <- quote(a[3] <- 4) ; eval(l) ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get("x") } ; x <- 20 ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }
+[1] 10
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ mode(quote(x + y)) }
+[1] "call"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ quote(1:3) }
+1:3
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ quote(list(1, 2)) }
+list(1, 2)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ quote(x <- x + 1) }
+x <- x + 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ typeof(quote(1)) }
+[1] "double"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ typeof(quote(x + y)) }
+[1] "language"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testQuote
+#{ typeof(quote(x)) }
+[1] "symbol"
+
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testRbind
 #{ info <- c("print", "AES", "print.AES") ; ns <- integer(0) ; rbind(info, ns) }
      [,1]    [,2]  [,3]
@@ -14961,6 +15087,142 @@ a b
 #{ sub("a","aa", "prague alley") }
 [1] "praague alley"
 
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ delayedAssign("expr", a * b) ; substitute(expr) }
+expr
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ env <- new.env() ; z <- 0 ; delayedAssign("var", z+2, assign.env=env) ; substitute(var, env=env) }
+z + 2
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ env <- new.env() ; z <- 0 ; delayedAssign("var", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }
+z + 2
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { delayedAssign("expr", a * b) ; substitute(dummy) } ; f() }
+dummy
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { delayedAssign("expr", a * b) ; substitute(expr) } ; f() }
+a * b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }
+list(a = 1, b = 2, ..., 3, ...)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }
+sum(1:10)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }
+list(x + z, a * b)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }
+list(a = 1, b = 2, 3)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f(x + z, a * b) }
+list(a = 1, b = 2, x + z, a * b, 3, x + z, a * b)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }
+c
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(expr) { expr ; substitute(expr) } ; a <- 10; b <- 2; f(a * b) }
+a * b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(expr) { substitute(expr) } ; f(a * b) }
+a * b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }
+a * b + (a + b)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(x = y, y = x) { substitute(x) } ; f() }
+y
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(x) { g <- function() { substitute(x) } ; g() } ;  f(a * b) }
+x
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(x) { substitute(x, list(a=1,b=2)) } ; f(a + b) }
+x
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(y) { as.character(substitute(y)) } ; f("a") }
+[1] "a"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(y) { substitute(y) } ; typeof(f()) }
+[1] "symbol"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }
+z
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }
+list(c(1, 2))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2)) }
+list(c(x = 1, 2))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; is.language(f(c(1,2))) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; is.language(f(c(x=1,2))[[2]]) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[1]]) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; is.symbol(f(c(x=1,2))[[2]][[1]]) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; length(f(c(1,2))) }
+[1] 2
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; typeof(f(c(1,2))) }
+[1] "language"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ g<-function() { f<-function() { 42 }; substitute(f()) } ; typeof(g()[[1]]) }
+[1] "closure"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ substitute(a, list(a = quote(x + y), x = 1)) }
+x + y
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }
+if (x + y) {
+    1
+} else {
+    1 * (x + y)
+}
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ substitute(x + y, list(x=1)) }
+1 + y
+
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstring
 #{ substr("123456", -1, 3) }
 [1] "123"
@@ -15456,6 +15718,50 @@ Error: duplicate 'switch' defaults: 'v77' and 'v55'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSwitch
 #{switch(4,1,2,z)}
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; f() }
+f()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; g <- function() f() ; h <- function() g() ; h() }
+f()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call() ; typeof(f()[[1]]) }
+[1] "symbol"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(-1) ; g <- function() f() ; h <- function() g() ; h() }
+g()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(-2) ; g <- function() f() ; h <- function() g() ; h() }
+h()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(1) ; g <- function() f() ; g() }
+g()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(1) ; g <- function() f() ; h <- function() g() ; h() }
+h()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function() sys.call(2) ; g <- function() f() ; h <- function() g() ; h() }
+g()
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; f(x = 2) }
+f(x = 2)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }
+[1] "symbol"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysCall
+#{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }
+[1] "double"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSysNFrame
 #{ f <- function() sys.nframe() ; f() }

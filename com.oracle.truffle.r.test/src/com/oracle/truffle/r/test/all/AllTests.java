@@ -5485,6 +5485,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCall_ff3dd65b96f1f8f99e851750a722434c() {
+        assertEval("{ call(\"f\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCall_bf4b2930dd05154e155f0d37a803d3f7() {
+        assertEval("{ call(\"f\", 2, 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCall_8dcceb78ba7a03e5f78e1611c042fd27() {
+        assertEval("{ call(\"f\", quote(A)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCall_d17454fed609d8ff7d627ca705e4ada2() {
+        assertEval("{ f <- \"f\" ; call(f, quote(A)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCall_e828c5a432d0321b06f3eb4ca2b6c4e2() {
         assertEval("{ f <- round ; call(f, quote(A)) }");
     }
@@ -5512,26 +5532,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCall_49e4276b5b967e1b9c64646af3e596b9() {
         assertEval("{ cl <- call(\"f\") ; class(cl) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCallNPEIgnore_ff3dd65b96f1f8f99e851750a722434c() {
-        assertEval("{ call(\"f\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCallNPEIgnore_bf4b2930dd05154e155f0d37a803d3f7() {
-        assertEval("{ call(\"f\", 2, 3) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCallNPEIgnore_8dcceb78ba7a03e5f78e1611c042fd27() {
-        assertEval("{ call(\"f\", quote(A)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCallNPEIgnore_d17454fed609d8ff7d627ca705e4ada2() {
-        assertEval("{ f <- \"f\" ; call(f, quote(A)) }");
     }
 
     @Test
@@ -9155,6 +9155,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInvocation_a8ec33ddd003e2f4f13be2ec0d07b6d3() {
+        assertEval("{ f <- function(...) { substitute(...) } ; f(x + z) } ");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInvocation_6c569ee5c59b68db9452d75369b05478() {
         assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
     }
@@ -9182,11 +9187,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInvocation_83cadcf7287a3b26f2cdad74757af875() {
         assertEvalError("{ matrix(1:4, n = 2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_a8ec33ddd003e2f4f13be2ec0d07b6d3() {
-        assertEval("{ f <- function(...) { substitute(...) } ; f(x + z) } ");
     }
 
     @Test
