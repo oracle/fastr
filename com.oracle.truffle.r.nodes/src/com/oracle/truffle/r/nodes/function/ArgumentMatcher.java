@@ -44,13 +44,13 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)}
- * . The other match functions are used for special cases, where builtins make it necessary to
+ * {@link #matchArguments(RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)} .
+ * The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseHelperNode, boolean)}
  * for 'UseMethod' and
- * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
- * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
+ * {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, SourceSection, SourceSection)} for
+ * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
  * </p>
  *
  * <p>
@@ -110,7 +110,6 @@ public class ArgumentMatcher {
      * Match arguments supplied for a specific function call to the formal arguments and wraps them
      * in {@link PromiseNode}s. Used for calls to all functions parsed from R code
      *
-     * @param frame carrier for missing check
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param callSrc The source of the function call currently executed
@@ -118,12 +117,12 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
-     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, SourceSection,
-     *      boolean, ClosureCache, boolean)
+     * @see #matchNodes(RFunction, RNode[], String[], SourceSection, SourceSection, boolean,
+     *      ClosureCache, boolean)
      */
-    public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
+    public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, false, suppliedArgs, noOpt);
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, false, suppliedArgs, noOpt);
         return MatchedArguments.create(wrappedArgs, formals.getNames());
     }
 
@@ -139,11 +138,11 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
-     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, SourceSection,
-     *      boolean, ClosureCache, boolean)
+     * @see #matchNodes(RFunction, RNode[], String[], SourceSection, SourceSection, boolean,
+     *      ClosureCache, boolean)
      */
-    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, true, suppliedArgs, false);
+    public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, true, suppliedArgs, false);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
@@ -209,7 +208,6 @@ public class ArgumentMatcher {
      * {@code RNode[]}. Handles named args and varargs.<br/>
      * <strong>Does not</strong> alter the given {@link CallArgumentsNode}
      *
-     * @param frame carrier for missing check
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param suppliedNames The names for the arguments supplied to the call
@@ -224,7 +222,7 @@ public class ArgumentMatcher {
      * @see #permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory,
      *      ArrayFactory, SourceSection, SourceSection, boolean)
      */
-    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
+    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
                     ClosureCache closureCache, boolean noOpt) {
         assert suppliedArgs.length == suppliedNames.length;
 

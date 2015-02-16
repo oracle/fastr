@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,14 @@ import java.util.*;
 public class DCF {
 
     public static class Fields {
-        private Map<String, String> fieldMap = new HashMap<>();
+        // A map because field may repeat and last one wins
+        private LinkedHashMap<String, String> fieldMap = new LinkedHashMap<>();
 
         private void add(String name, String content) {
             fieldMap.put(name, content);
         }
 
-        public Map<String, String> getFields() {
+        public LinkedHashMap<String, String> getFields() {
             return fieldMap;
         }
     }
@@ -73,10 +74,13 @@ public class DCF {
                 int ix = line.indexOf(':');
                 assert (ix > 0);
                 fieldName = line.substring(0, ix);
-                if (line.charAt(ix + 1) == ' ') {
-                    ix++;
+                // There may be no content on this line, all on a continuation line
+                if (ix < line.length() - 1) {
+                    if (line.charAt(ix + 1) == ' ') {
+                        ix++;
+                    }
+                    fieldContent.append(line.substring(ix + 1));
                 }
-                fieldContent.append(line.substring(ix + 1));
             }
         }
         // end of the field for sure
@@ -92,6 +96,9 @@ public class DCF {
     }
 
     private static boolean isContinuation(String line) {
+        if (line.length() == 0) {
+            return false;
+        }
         char ch = line.charAt(0);
         return ch == ' ' || ch == '\t';
     }

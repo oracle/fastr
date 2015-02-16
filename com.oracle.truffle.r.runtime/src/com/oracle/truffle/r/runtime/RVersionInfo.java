@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,8 @@ public enum RVersionInfo {
     Language("R"),
     VersionString("version.string", RVersionNumber.VERSION_STRING);
     // @formatter:on
+
+    public static final int SERIALIZE_VERSION = (2 << 16) + (3 << 8) + 0;
 
     @CompilationFinal private static final RVersionInfo[] VALUES = RVersionInfo.values();
     @CompilationFinal private static final String[] LIST_VALUES = new String[VALUES.length];
@@ -85,7 +87,15 @@ public enum RVersionInfo {
             if (data.value == null) {
                 switch (data) {
                     case Platform:
-                        data.value = Arch.value + "-" + vendor + "-" + OS.value;
+                        /*
+                         * FIXME In order to match the info in the default packages copied from
+                         * GnuR, this value on Linux has to be x86_64-unknown-linux-gnu
+                         */
+                        if (osName.equals("linux")) {
+                            data.value = "x86_64-unknown-linux-gnu";
+                        } else {
+                            data.value = Arch.value + "-" + vendor + "-" + OS.value;
+                        }
                         break;
                     case System:
                         data.value = Arch.value + ", " + OS.value;

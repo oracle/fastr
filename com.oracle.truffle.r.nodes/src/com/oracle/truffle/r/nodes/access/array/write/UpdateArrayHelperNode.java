@@ -61,7 +61,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected abstract RNode getNewValue();
 
-    protected abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, Object vector);
+    public abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, Object vector);
 
     @CompilationFinal private boolean recursiveIsSubset;
 

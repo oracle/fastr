@@ -34,6 +34,7 @@ public class TestrGenBuiltinstrsplit extends TestBase {
     }
 
     @Test
+    @Ignore
     public void teststrsplit4() {
         assertEval("argv <- list(\'Keywords:  device \', \'[ \\t\\n]\', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
@@ -79,6 +80,7 @@ public class TestrGenBuiltinstrsplit extends TestBase {
     }
 
     @Test
+    @Ignore
     public void teststrsplit12() {
         assertEval("argv <- list(\'Keywords:  utilities \', \'\\n[ \\t\\n]*\\n\', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }

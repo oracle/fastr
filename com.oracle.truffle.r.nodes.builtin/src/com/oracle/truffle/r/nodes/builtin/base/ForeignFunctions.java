@@ -29,12 +29,13 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.library.graphics.*;
+import com.oracle.truffle.r.library.methods.*;
+import com.oracle.truffle.r.library.stats.*;
+import com.oracle.truffle.r.library.utils.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.methods.*;
-import com.oracle.truffle.r.nodes.builtin.stats.*;
-import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
@@ -605,6 +606,23 @@ public class ForeignFunctions {
             return matchName(f, "SplineEval");
         }
 
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object dotCallFallback(Object fobj, Object args, Object packageName) {
+            String name = null;
+            if (fobj instanceof RList) {
+                RList f = (RList) fobj;
+                RStringVector names = f.getNames();
+                for (int i = 0; i < names.getLength(); i++) {
+                    if (names.getDataAt(i).equals("name")) {
+                        name = (String) f.getDataAt(i);
+                        break;
+                    }
+                }
+            }
+            throw new RInternalError(".Call specialization failure: %s ", name == null ? "<unknown>" : name);
+        }
+
     }
 
     /**
@@ -939,5 +957,33 @@ public class ForeignFunctions {
         public boolean isTypeConvert(RList f) {
             return matchName(f, "typeconvert");
         }
+
+        @TruffleBoundary
+        @Specialization(guards = "isPar")
+        protected Object doPar(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            return GraphicsCCalls.par(args);
+        }
+
+        public boolean isPar(RList f) {
+            return matchName(f, "C_par");
+        }
     }
+
+    @RBuiltin(name = ".External.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
+    public abstract static class DotExternalGraphics extends CastAdapter {
+        @TruffleBoundary
+        @Specialization(guards = "isPlotXY")
+        protected RNull doPlotXY(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            controlVisibility();
+            GraphicsCCalls.plotXy((RDoubleVector) args.getValues()[0]);
+            return RNull.instance;
+        }
+
+        public boolean isPlotXY(RList f) {
+            return matchName(f, "C_plotXY");
+        }
+
+    }
+
 }

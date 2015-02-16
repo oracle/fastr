@@ -8,3 +8,7 @@ referenced in the R package code to become defined.
 
 Note that 'datasets' and 'fastr' don't actually have any native code, but it is convenient to store them here. Note also that
 'fastr', obviously, does not originate from GnuR, so its build process is completely different.
+
+Given that we only support MacOS/Linux, it is expedient to just store the tar'ed content of the GnuR library directories
+for those targets as 'source' files in the distribution. In time, when FastR can create packages directly, the build will
+change to work that way.

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
  * {@code grep} in all its variants. Nothing in here merits being Truffle optimized.
@@ -108,12 +109,12 @@ public class GrepFunctions {
         }
 
         @SuppressWarnings("unused")
-        protected boolean isFixed(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected boolean isFixed(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             return RRuntime.fromLogical(fixed);
         }
 
         @SuppressWarnings("unused")
-        protected boolean isValue(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected boolean isValue(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             return RRuntime.fromLogical(value);
         }
     }
@@ -127,12 +128,14 @@ public class GrepFunctions {
 
         @Specialization(guards = "!isValue")
         @TruffleBoundary
-        protected RIntVector grepValueFalse(String patternArg, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected RIntVector grepValueFalse(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed,
+                        byte useBytes, byte invert) {
             controlVisibility();
             // HACK to finesse lack of perl==TRUE in utils::localeToCharset (on Linux)
             if (isNAAndPerl(vector, perl)) {
                 return RDataFactory.createEmptyIntVector();
             }
+            String patternArg = patternArgVec.getDataAt(0);
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
             String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
             int[] result = findAllIndexes(pattern, vector, fixed);
@@ -168,10 +171,11 @@ public class GrepFunctions {
 
         @Specialization(guards = "isValue")
         @TruffleBoundary
-        protected RStringVector grepValueTrue(String patternArg, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed, byte useBytes,
-                        byte invert) {
+        protected RStringVector grepValueTrue(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed,
+                        byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, invert);
+            String patternArg = patternArgVec.getDataAt(0);
             String pattern = fixed == RRuntime.LOGICAL_TRUE ? patternArg : RegExp.checkPreDefinedClasses(patternArg);
             String[] result = findAllMatches(pattern, vector, fixed);
             if (result == null) {
@@ -219,10 +223,10 @@ public class GrepFunctions {
         @Specialization(guards = "!isFixed")
         @TruffleBoundary
         @SuppressWarnings("unused")
-        protected Object grepl(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected Object grepl(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArgVec.getDataAt(0));
             byte[] data = new byte[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 data[i] = RRuntime.asLogical(Grep.findIndex(pattern, vector.getDataAt(i)));
@@ -233,102 +237,116 @@ public class GrepFunctions {
         @Specialization(guards = "isFixed")
         @TruffleBoundary
         @SuppressWarnings("unused")
-        protected Object greplFixed(String pattern, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected Object greplFixed(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             byte[] data = new byte[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                data[i] = RRuntime.asLogical(vector.getDataAt(i).contains(pattern));
+                data[i] = RRuntime.asLogical(vector.getDataAt(i).contains(patternArgVec.getDataAt(0)));
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
     }
 
-    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
-    public abstract static class Sub extends CommonCodeAdapter {
+    protected abstract static class SubAdapter extends CommonCodeAdapter {
+        private final ConditionProfile fixedProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile gsubProfile = ConditionProfile.createBinaryProfile();
 
-        @Specialization
-        @TruffleBoundary
-        protected String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
-            controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
-            return replaceMatch(pattern, replacement, x);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
-            controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
-            return doSub(pattern, replacement, vector);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected RStringVector sub(RStringVector patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
-            controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+        protected RStringVector doSub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector vector, boolean fixed, boolean gsub) {
             // FIXME print a warning that only pattern[1] is used
-            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
-            return doSub(pattern, replacement, vector);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected RStringVector sub(String patternArg, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
-            controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            // FIXME print a warning that only replacement[1] is used
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
-            return doSub(pattern, replacement.getDataAt(0), vector);
-        }
-
-        protected RStringVector doSub(String pattern, String replacement, RStringVector vector) {
+            String pattern;
+            if (fixedProfile.profile((fixed))) {
+                pattern = patternArgVec.getDataAt(0);
+            } else {
+                pattern = RegExp.checkPreDefinedClasses(patternArgVec.getDataAt(0));
+            }
+            String replacement = replacementVec.getDataAt(0);
             int len = vector.getLength();
             String[] result = new String[len];
             for (int i = 0; i < len; i++) {
                 String input = vector.getDataAt(i);
-                result[i] = replaceMatch(pattern, replacement, input);
+                String value;
+                if (fixedProfile.profile((fixed))) {
+                    if (gsubProfile.profile(gsub)) {
+                        value = input.replace(pattern, replacement);
+                    } else {
+                        int ix = input.indexOf(pattern);
+                        value = ix < 0 ? pattern : input.substring(0, ix) + replacement + input.substring(ix + 1);
+                    }
+                } else {
+                    replacement = convertGroups(replacement);
+                    if (gsubProfile.profile(gsub)) {
+                        value = input.replaceAll(pattern, replacement);
+                    } else {
+                        value = input.replaceFirst(pattern, replacement);
+                    }
+                }
+                result[i] = value;
             }
-            return RDataFactory.createStringVector(result, vector.isComplete());
+            RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
+            ret.copyAttributesFrom(vector);
+            return ret;
         }
 
-        protected String replaceMatch(String pattern, String replacement, String input) {
-            return input.replaceFirst(pattern, replacement);
+        @TruffleBoundary
+        private static String convertGroups(String value) {
+            int x = 0;
+            int groupStart = groupIndex(value, x);
+            if (groupStart < 0) {
+                return value;
+            }
+            StringBuffer result = new StringBuffer();
+            while (groupStart >= 0) {
+                result.append(value.substring(x, groupStart));
+                result.append('$');
+                result.append(value.charAt(groupStart + 1));
+                x = groupStart + 2;
+                groupStart = groupIndex(value, x);
+            }
+            result.append(value.substring(x));
+            return result.toString();
+        }
+
+        private static int groupIndex(String value, int x) {
+            int ix = value.indexOf('\\', x);
+            if (ix < 0 || ix >= value.length() - 2) {
+                return ix;
+            } else {
+                char ch = value.charAt(ix + 1);
+                if (Character.isDigit(ch)) {
+                    return ix;
+                } else {
+                    return -1;
+                }
+            }
+        }
+
+    }
+
+    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
+    public abstract static class Sub extends SubAdapter {
+
+        @Specialization
+        @TruffleBoundary
+        protected RStringVector subRegexp(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+            controlVisibility();
+            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            return doSub(patternArgVec, replacementVec, x, RRuntime.fromLogical(fixed), false);
         }
     }
 
     @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
-    public abstract static class GSub extends Sub {
+    public abstract static class GSub extends SubAdapter {
 
         @Specialization
         @TruffleBoundary
-        @Override
-        protected String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected RStringVector gsub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
-            return replaceMatch(pattern, replacement, x);
+            return doSub(patternArgVec, replacementVec, x, RRuntime.fromLogical(fixed), true);
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
-            controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
-            // TODO print warnings that only the first element of each is used
-            return replaceMatch(pattern, replacement.getDataAt(0), x.getDataAt(0));
-        }
-
-        @Override
-        @TruffleBoundary
-        protected String replaceMatch(String pattern, String replacement, String input) {
-            return input.replaceAll(pattern, replacement);
-        }
     }
 
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
@@ -401,7 +419,7 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
-            // TODO implement properly, this only supports strict equality!
+            // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
             controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             valueCheck(value);
@@ -409,8 +427,10 @@ public class GrepFunctions {
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
             String pattern = patternArg.getDataAt(0);
+            long maxDistance = Math.round(pattern.length() * bounds.getDataAt(0));
             for (int i = 0; i < vector.getLength(); i++) {
-                if (pattern.equals(vector.getDataAt(i))) {
+                int ld = ld(pattern, vector.getDataAt(i));
+                if (ld <= maxDistance) {
                     tmp[i] = i + 1;
                     numMatches++;
                 }
@@ -421,6 +441,79 @@ public class GrepFunctions {
             } else {
                 return RDataFactory.createIntVector(tmp, RDataFactory.COMPLETE_VECTOR);
             }
+        }
+
+        // Taken from:
+        // http://people.cs.pitt.edu/~kirk/cs1501/Pruhs/Spring2006/assignments/editdistance/Levenshtein%20Distance.htm
+
+        private static int ld(String s, String t) {
+            int[][] d; // matrix
+            int n; // length of s
+            int m; // length of t
+            int i; // iterates through s
+            int j; // iterates through t
+            char si; // ith character of s
+            char tj; // jth character of t
+            int cost; // cost
+
+            // Step 1
+
+            n = s.length();
+            m = t.length();
+            if (n == 0) {
+                return m;
+            }
+            if (m == 0) {
+                return n;
+            }
+            d = new int[n + 1][m + 1];
+
+            // Step 2
+
+            for (i = 0; i <= n; i++) {
+                d[i][0] = i;
+            }
+
+            for (j = 0; j <= m; j++) {
+                d[0][j] = j;
+            }
+
+            // Step 3
+
+            for (i = 1; i <= n; i++) {
+                si = s.charAt(i - 1);
+                // Step 4
+                for (j = 1; j <= m; j++) {
+                    tj = t.charAt(j - 1);
+                    // Step 5
+                    if (si == tj) {
+                        cost = 0;
+                    } else {
+                        cost = 1;
+                    }
+                    // Step 6
+                    d[i][j] = min3(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+
+                }
+
+            }
+
+            // Step 7
+
+            return d[n][m];
+
+        }
+
+        private static int min3(int a, int b, int c) {
+            int mi;
+            mi = a;
+            if (b < mi) {
+                mi = b;
+            }
+            if (c < mi) {
+                mi = c;
+            }
+            return mi;
         }
     }
 
@@ -440,6 +533,54 @@ public class GrepFunctions {
                 data[i] = RRuntime.asLogical(pattern.equals(vector.getDataAt(i)));
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"})
+    public abstract static class Strsplit extends CommonCodeAdapter {
+
+        private final NACheck na = NACheck.create();
+        private final ConditionProfile emptySplitProfile = ConditionProfile.createBinaryProfile();
+
+        @Specialization
+        protected RList split(RAbstractStringVector x, RAbstractStringVector split, byte fixed, byte perl, byte useBytes) {
+            controlVisibility();
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, perl, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
+            RStringVector[] result = new RStringVector[x.getLength()];
+            na.enable(x);
+            String[] splits = new String[split.getLength()];
+            for (int i = 0; i < splits.length; i++) {
+                splits[i] = fixed == RRuntime.LOGICAL_TRUE ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
+            }
+            for (int i = 0; i < x.getLength(); ++i) {
+                String data = x.getDataAt(i);
+                String currentSplit = splits[i % splits.length];
+                if (emptySplitProfile.profile(currentSplit.isEmpty())) {
+                    result[i] = na.check(data) ? RDataFactory.createNAStringVector() : emptySplitIntl(data);
+                } else {
+                    result[i] = na.check(data) ? RDataFactory.createNAStringVector() : splitIntl(data, currentSplit);
+                }
+            }
+            RList ret = RDataFactory.createList(result);
+            if (x.getNames() != null) {
+                ret.copyNamesFrom(x);
+            }
+            return ret;
+        }
+
+        @TruffleBoundary
+        private static RStringVector splitIntl(String input, String separator) {
+            assert !RRuntime.isNA(input);
+            return RDataFactory.createStringVector(input.split(separator), true);
+        }
+
+        private static RStringVector emptySplitIntl(String input) {
+            assert !RRuntime.isNA(input);
+            String[] result = new String[input.length()];
+            for (int i = 0; i < input.length(); i++) {
+                result[i] = new String(new char[]{input.charAt(i)});
+            }
+            return RDataFactory.createStringVector(result, true);
         }
     }
 

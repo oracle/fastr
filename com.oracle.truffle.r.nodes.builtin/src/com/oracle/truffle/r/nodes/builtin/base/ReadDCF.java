@@ -38,38 +38,75 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization
+    protected RStringVector doReadDCF(RConnection conn, @SuppressWarnings("unused") RNull fields, RNull keepWhite) {
+        return doReadDCF(conn, (RAbstractStringVector) null, keepWhite);
+    }
+
+    @Specialization
     @TruffleBoundary
     protected RStringVector doReadDCF(RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
+        DCF dcf = null;
         try {
-            DCF dcf = DCF.read(conn.readLines(0));
-            if (dcf == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
-            }
-            String[] data = new String[fields.getLength()];
-            String[] names = new String[data.length];
-            boolean complete = RDataFactory.COMPLETE_VECTOR;
-            for (int i = 0; i < data.length; i++) {
-                List<DCF.Fields> records = dcf.getRecords();
-                // not looking at multi-record files
-                Map<String, String> fieldMap = records.get(0).getFields();
-                String fieldName = fields.getDataAt(i);
-                String value = fieldMap.get(fieldName);
-                if (value == null) {
-                    data[i] = RRuntime.STRING_NA;
-                    complete = RDataFactory.INCOMPLETE_VECTOR;
-                } else {
-                    data[i] = value;
-                }
-                names[i] = fieldName;
-            }
-            int[] dims = new int[]{1, data.length};
-            RList dimnames = RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)});
-            RStringVector result = RDataFactory.createStringVector(data, complete, dims);
-            result.setDimNames(dimnames);
-            return result;
+            dcf = DCF.read(conn.readLines(0));
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
+        if (dcf == null) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
+        }
+        List<DCF.Fields> records = dcf.getRecords();
+        int nRecords = records.size();
+        // Maximum number of columns is the number of distinct fields (tags)
+        // possibly modulated by "fields" argument
+        LinkedHashMap<String, String> allFields = new LinkedHashMap<>();
+        for (DCF.Fields record : records) {
+            LinkedHashMap<String, String> fieldMap = record.getFields();
+            for (String key : fieldMap.keySet()) {
+                if (needField(key, fields)) {
+                    allFields.put(key, key);
+                }
+            }
+        }
+        int nColumns = allFields.size();
+        String[] data = new String[nRecords * nColumns];
+        String[] columnNames = new String[nColumns];
+        allFields.keySet().toArray(columnNames);
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
 
+        // now scan the records and fill in the matrix
+        for (int r = 0; r < nRecords; r++) {
+            DCF.Fields record = records.get(r);
+            Map<String, String> fieldMap = record.getFields();
+            for (int c = 0; c < columnNames.length; c++) {
+                int index = c * nRecords + r;
+                String columnName = columnNames[c];
+                String value = fieldMap.get(columnName);
+                if (value == null) {
+                    // this record did not have this field
+                    data[index] = RRuntime.STRING_NA;
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                } else {
+                    data[index] = value;
+                }
+            }
+        }
+        int[] dims = new int[]{nRecords, nColumns};
+        RList dimnames = RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(columnNames, RDataFactory.COMPLETE_VECTOR)});
+        RStringVector result = RDataFactory.createStringVector(data, complete, dims);
+        result.setDimNames(dimnames);
+        return result;
+
+    }
+
+    private static boolean needField(String fieldName, RAbstractStringVector fields) {
+        if (fields == null) {
+            return true;
+        }
+        for (int i = 0; i < fields.getLength(); i++) {
+            if (fieldName.equals(fields.getDataAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

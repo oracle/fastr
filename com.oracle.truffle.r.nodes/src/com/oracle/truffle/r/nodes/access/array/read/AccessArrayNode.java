@@ -1760,6 +1760,21 @@ public abstract class AccessArrayNode extends RNode {
         return pairlist.getDataAtAsObject(position - 1);
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object access(REnvironment env, Object exact, int recLevel, Object position, Object dropDim) {
+        if (isSubset) {
+            error.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SUBSETTABLE, "environment");
+        }
+        if (!(position instanceof String || ((position instanceof RStringVector) && ((RStringVector) position).getLength() == 1))) {
+            error.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_ARGS_SUBSET_ENV);
+        }
+        Object obj = env.get(RRuntime.asString(position));
+        return obj == null ? RNull.instance : obj;
+    }
+
     protected boolean outOfBounds(RList vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, int position) {
         return position > vector.getLength();
     }

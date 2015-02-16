@@ -47,13 +47,8 @@ public abstract class ContainerRowNamesGet extends RNode {
             return RNull.instance;
         } else {
             RAbstractVector rowNames = (RAbstractVector) a;
-            RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
-            intVectorMet.enter();
-            if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {
-                naValueMet.enter();
-                return RDataFactory.createIntSequence(1, 1, Math.abs(((RAbstractIntVector) rowNames).getDataAt(1)));
-            }
-            return a;
+            return rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
+                            Math.abs(((RAbstractIntVector) rowNames).getDataAt(1))) : a;
         }
     }
 

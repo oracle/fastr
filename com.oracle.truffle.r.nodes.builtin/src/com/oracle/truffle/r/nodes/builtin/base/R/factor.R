@@ -211,21 +211,21 @@ Ops.factor <- function(e1, e2)
         factor(y, exclude = if(anyNA(levels(x))) NULL else NA ) else y
 }
 
-#`[<-.factor` <- function(x, ..., value)
-#{
-#    lx <- levels(x)
-#    cx <- oldClass(x)
-#    if (is.factor(value)) value <- levels(value)[value]
-#    m <- match(value, lx)
-#    if (any(is.na(m) & !is.na(value)))
-#	warning("invalid factor level, NA generated")
-#    class(x) <- NULL
-#    x[...] <- m
-#    attr(x,"levels") <- lx
-#    class(x) <- cx
-#    x
-#}
-#
+`[<-.factor` <- function(x, ..., value)
+{
+    lx <- levels(x)
+    cx <- oldClass(x)
+    if (is.factor(value)) value <- levels(value)[value]
+    m <- match(value, lx)
+    if (any(is.na(m) & !is.na(value)))
+	warning("invalid factor level, NA generated")
+    class(x) <- NULL
+    x[...] <- m
+    attr(x,"levels") <- lx
+    class(x) <- cx
+    x
+}
+
 `[[.factor` <- function(x, ...)
 {
     y <- NextMethod("[[")
@@ -236,20 +236,20 @@ Ops.factor <- function(e1, e2)
 }
 
 ### added for 2.12.0
-#`[[<-.factor` <- function(x, ..., value)
-#{
-#    lx <- levels(x)
-#    cx <- oldClass(x)
-#    if (is.factor(value)) value <- levels(value)[value]
-#    m <- match(value, lx)
-#    if (any(is.na(m) & !is.na(value)))
-#	warning("invalid factor level, NA generated")
-#    class(x) <- NULL
-#    x[[...]] <- m
-#    attr(x,"levels") <- lx
-#    class(x) <- cx
-#    x
-#}
+`[[<-.factor` <- function(x, ..., value)
+{
+    lx <- levels(x)
+    cx <- oldClass(x)
+    if (is.factor(value)) value <- levels(value)[value]
+    m <- match(value, lx)
+    if (any(is.na(m) & !is.na(value)))
+	warning("invalid factor level, NA generated")
+    class(x) <- NULL
+    x[[...]] <- m
+    attr(x,"levels") <- lx
+    class(x) <- cx
+    x
+}
 
 
 ## ordered factors ...

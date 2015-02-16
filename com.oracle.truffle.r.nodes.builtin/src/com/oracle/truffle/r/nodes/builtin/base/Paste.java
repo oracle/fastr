@@ -44,6 +44,10 @@ public abstract class Paste extends RBuiltinNode {
 
     public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
+    /**
+     * {@code paste} is specified to convert its arguments using {@code as.character}.
+     */
+    @Child private AsCharacter asCharacterNode;
     @Child private CastStringNode castCharacterNode;
 
     private final ConditionProfile emptyOrNull = ConditionProfile.createBinaryProfile();
@@ -56,14 +60,24 @@ public abstract class Paste extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    private String castCharacter(VirtualFrame frame, Object o) {
-        if (castCharacterNode == null) {
+    private RStringVector castCharacter(VirtualFrame frame, Object o) {
+        if (asCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castCharacterNode = insert(CastStringNodeGen.create(null, false, true, false, false));
+            asCharacterNode = insert(AsCharacterFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
-        return (String) castCharacterNode.executeString(frame, o);
+        Object ret = asCharacterNode.execute(frame, o);
+        if (ret instanceof String) {
+            return RDataFactory.createStringVector((String) ret);
+        } else {
+            return (RStringVector) ret;
+        }
     }
 
+    /**
+     * FIXME The exact semantics needs checking regarding the use of {@code as.character}. Currently
+     * there are problem using it here, so we retain the previous implementation that just uses
+     * {@link CastStringNode}.
+     */
     private RStringVector castCharacterVector(VirtualFrame frame, Object o) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -97,7 +111,7 @@ public abstract class Paste extends RBuiltinNode {
             if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
                 array = castCharacterVector(frame, element).getDataWithoutCopying();
             } else {
-                array = new String[]{castCharacter(frame, element)};
+                array = castCharacter(frame, element).getDataWithoutCopying();
             }
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;

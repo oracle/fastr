@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.regex.*;
+
 import com.oracle.truffle.api.CompilerDirectives.*;
 
 /**
@@ -29,8 +31,32 @@ import com.oracle.truffle.api.CompilerDirectives.*;
  */
 public class RegExp {
 
-    @CompilationFinal private static final String[] preDefinedClassesFrom = new String[]{"[:alpha:]", "[:alnum:]", "[:digit:]"};
-    @CompilationFinal private static final String[] preDefinedClassesTo = new String[]{"a-zA-Z", "0-9A-Za-z", "0-9"};
+    private static enum Predefined {
+        alnum("\\p{Alnum}"),
+        alpha("\\p{Alpha}"),
+        blank("\\p{Blank}"),
+        cntrl("\\p{Cntrl}"),
+        digit("\\p{Digit}"),
+        graph("\\p{Graph}"),
+        lower("\\p{Lower}"),
+        print("\\p{Print}"),
+        punct("\\p{Punct}"),
+        space("\\p{Space}"),
+        upper("\\p{Upper}"),
+        xdigit("\\p{XDigit}");
+
+        private final String replacement;
+        private final String syntax;
+        private final int syntaxLength;
+
+        private Predefined(String replacement) {
+            this.replacement = replacement;
+            syntax = "[:" + name() + ":]";
+            syntaxLength = syntax.length();
+        }
+    }
+
+    private static final Predefined[] preDefinedClasses = Predefined.values();
 
     /**
      * R defines some short forms of character classes. E.g. {@code [[:alnum:]]} means
@@ -38,21 +64,36 @@ public class RegExp {
      * these for use with Java regexp. TODO handle the complete set and do locale and character
      * encoding
      */
+    @TruffleBoundary
     public static String checkPreDefinedClasses(String pattern) {
         String result = pattern;
-        boolean none = false;
-        while (!none && result.indexOf("[[") >= 0) {
-            none = true;
-            for (int i = 0; i < preDefinedClassesFrom.length; i++) {
-                int ix = result.indexOf(preDefinedClassesFrom[i]);
+        int xxIndex;
+        while ((xxIndex = result.indexOf("[[")) >= 0) {
+            boolean predefined = false;
+            for (int i = 0; i < preDefinedClasses.length; i++) {
+                Predefined preDefined = preDefinedClasses[i];
+                int ix = result.indexOf(preDefined.syntax);
                 if (ix >= 0) {
-                    result = result.substring(0, ix) + preDefinedClassesTo[i] + result.substring(ix + preDefinedClassesFrom[i].length());
-                    none = false;
+                    String replacement = preDefined.replacement;
+                    result = result.substring(0, ix) + replacement + result.substring(ix + preDefined.syntaxLength);
+                    predefined = true;
                 }
             }
-            // if none is still true, we didn't find any so we are done.
+            if (!predefined) {
+                // it's a freestanding [[, which is legal in R but not in Java.
+                result = result.substring(0, xxIndex) + "[\\[" + result.substring(xxIndex + 2);
+            }
         }
         return result;
+    }
+
+    public static void main(String[] args) {
+        String result = checkPreDefinedClasses(args[0]);
+        try {
+            Pattern.compile(result);
+        } catch (PatternSyntaxException ex) {
+            System.console();
+        }
     }
 
 }

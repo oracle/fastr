@@ -155,7 +155,7 @@ public abstract class RConnection implements RClassHierarchy {
     public abstract OutputStream getOutputStream() throws IOException;
 
     /**
-     * Close the connection.
+     * Close the connection. The corresponds to the {@code R close} function.
      */
     public abstract void close() throws IOException;
 
@@ -205,8 +205,7 @@ public abstract class RConnection implements RClassHierarchy {
 
     public abstract void flush() throws IOException;
 
-    @SuppressWarnings("unused")
-    public RStringVector readChar(RAbstractIntVector nchars, boolean useBytes) throws IOException {
+    public RStringVector readChar(RAbstractIntVector nchars, @SuppressWarnings("unused") boolean useBytes) throws IOException {
         InputStream inputStream = getInputStream();
         String[] data = new String[nchars.getLength()];
         for (int i = 0; i < data.length; i++) {

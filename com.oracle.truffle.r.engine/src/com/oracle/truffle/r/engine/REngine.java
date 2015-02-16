@@ -36,11 +36,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.graphics.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.graphics.core.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
@@ -116,6 +115,7 @@ public final class REngine implements RContext.Engine {
             RRNG.initialize();
             TempDirPath.initialize();
             RProfile.initialize();
+            RGraphics.initialize();
             /*
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.
@@ -141,7 +141,6 @@ public final class REngine implements RContext.Engine {
             checkAndRunStartupFunction(".First.sys");
             initialized = true;
         }
-        registerBaseGraphicsSystem();
         return globalFrame;
     }
 
@@ -161,19 +160,6 @@ public final class REngine implements RContext.Engine {
 
     public void checkAndRunLast(String name) {
         checkAndRunStartupFunction(name);
-    }
-
-    private static void registerBaseGraphicsSystem() {
-        try {
-            getGraphicsEngine().registerGraphicsSystem(new BaseGraphicsSystem());
-        } catch (Exception e) {
-            ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
-            consoleHandler.println("Unable to register base graphics system");
-        }
-    }
-
-    private static GraphicsEngine getGraphicsEngine() {
-        return GraphicsEngineImpl.getInstance();
     }
 
     public static REngine getInstance() {

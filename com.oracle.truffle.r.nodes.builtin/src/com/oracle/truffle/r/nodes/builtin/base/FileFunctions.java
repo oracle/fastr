@@ -772,6 +772,40 @@ public class FileFunctions {
         }
     }
 
+    @RBuiltin(name = "unlink", kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
+    public abstract static class Unlink extends RInvisibleBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        @TruffleBoundary
+        protected int doUnlink(RAbstractStringVector vec, byte recursive, byte force) {
+            // TODO casts
+            int result = 1;
+            FileSystem fileSystem = FileSystems.getDefault();
+            for (int i = -0; i < vec.getLength(); i++) {
+                Path path = fileSystem.getPath(Utils.tildeExpand(vec.getDataAt(i)));
+                if (Files.isDirectory(path)) {
+                    continue;
+                }
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException ex) {
+                    result = 0;
+                }
+            }
+            return result;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected int doUnlink(Object vec, Object recursive, Object force) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " unlink");
+        }
+
+        public static boolean simpleArgs(@SuppressWarnings("unused") RAbstractStringVector vec, byte recursive, byte force) {
+            return recursive == RRuntime.LOGICAL_FALSE && force == RRuntime.LOGICAL_FALSE;
+        }
+    }
+
     @RBuiltin(name = "dir.create", kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"})
     public abstract static class DirCreate extends RInvisibleBuiltinNode {
         @TruffleBoundary
