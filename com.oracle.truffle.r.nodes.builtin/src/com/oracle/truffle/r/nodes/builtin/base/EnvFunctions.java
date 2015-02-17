@@ -205,7 +205,7 @@ public class EnvFunctions {
          * cannot both have a specialization for {@link RFunction} and one for {@link Object}, but
          * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
          */
-        @Specialization
+        @Fallback
         protected Object environment(Object funcArg) {
             controlVisibility();
             if (isFunctionProfile.profile(funcArg instanceof RFunction)) {
@@ -234,7 +234,7 @@ public class EnvFunctions {
             return env.getName();
         }
 
-        @Specialization
+        @Fallback
         protected String environmentName(@SuppressWarnings("unused") Object env) {
             controlVisibility();
             // Not an error according to GnuR
