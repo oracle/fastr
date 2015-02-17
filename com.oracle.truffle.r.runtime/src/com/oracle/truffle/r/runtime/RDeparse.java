@@ -323,7 +323,7 @@ public class RDeparse {
      */
     @TruffleBoundary
     public static String deparse(RPairList pl) {
-        State state = new State(80, false, -1, 0, false);
+        State state = new State(80, true, -1, 0, false);
         return deparse2buff(state, pl).sb.toString();
     }
 
@@ -1006,13 +1006,39 @@ public class RDeparse {
     }
 
     public static String quotify(String name, String qc) {
-        if (name.length() > 0) {
-            char ch = name.charAt(0);
-            if (!(Character.isLetter(ch) || ch == '.')) {
-                return qc + name + qc;
-            }
+        if (isValidName(name) || name.length() == 0) {
+            return name;
+        } else {
+            return qc + name + qc;
         }
-        return name;
+    }
+
+    private static boolean isValidName(String name) {
+        char ch = safeCharAt(name, 0);
+        if (ch != '.' && !Character.isLetter(ch)) {
+            return false;
+        }
+        if (ch == '.' && Character.isDigit(safeCharAt(name, 1))) {
+            return false;
+        }
+        int i = 1;
+        ch = safeCharAt(name, i);
+        while (Character.isAlphabetic(ch) || ch == '.' | ch == '_') {
+            i++;
+            ch = safeCharAt(name, i);
+        }
+        if (ch != 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private static char safeCharAt(String s, int i) {
+        if (i < s.length()) {
+            return s.charAt(i);
+        } else {
+            return 0;
+        }
     }
 
     private static boolean hasAttributes(Object obj) {
