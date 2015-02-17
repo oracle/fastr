@@ -65,11 +65,12 @@ libcommon: $(PKGDIR)
 
 $(PKGDIR): $(PKGTAR)
 	tar xf $(PKGTAR) -C $(FASTR_LIBDIR)
+	touch $(FASTR_LIBDIR)/$(PKG)
 
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGTAR)
+$(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
 	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
 	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
@@ -88,4 +89,4 @@ cleanlib:
 
 cleanobj:
 	rm -f $(LIBDIR)/*.o
-	
+
