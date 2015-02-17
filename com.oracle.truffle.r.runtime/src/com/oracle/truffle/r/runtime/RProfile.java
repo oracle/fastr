@@ -77,7 +77,11 @@ public class RProfile {
 
     public static Source systemProfile() {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
-        return getProfile(path.toString());
+        Source source = getProfile(path.toString());
+        if (source == null) {
+            Utils.fail("can't find system profile");
+        }
+        return source;
     }
 
     public static Source siteProfile() {

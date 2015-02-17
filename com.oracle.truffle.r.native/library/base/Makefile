@@ -28,4 +28,4 @@ include ../lib.mk
 # override the Rprofile
 
 $(PKG_EXTRAS): $(SRC)/Rprofile.R
-	cp Rprofile.R $(PKG_EXTRAS)
+	cp $(SRC)/Rprofile.R $(PKG_EXTRAS)
