@@ -923,7 +923,12 @@ public class RDeparse {
             }
             for (int i = 0; i < len; i++) {
                 Object element = vec.getDataAtAsObject(i);
-                vecElement2buff(state, type, element);
+                if (type == SEXPTYPE.REALSXP && RRuntime.isNA((double) element)) {
+                    state.append("NA_real_");
+                } else {
+                    vecElement2buff(state, type, element);
+                }
+
                 if (i < len - 1) {
                     state.append(", ");
                 }
