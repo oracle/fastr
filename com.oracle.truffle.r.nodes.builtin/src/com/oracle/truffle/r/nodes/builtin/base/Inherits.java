@@ -66,6 +66,11 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
+    public boolean whichFalse(RSymbol x, RAbstractStringVector what, byte which) {
+        return which != RRuntime.LOGICAL_TRUE;
+    }
+
+    @SuppressWarnings("unused")
     @Specialization
     protected Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
         return RRuntime.LOGICAL_FALSE;
@@ -88,6 +93,16 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization(guards = "!whichFalse")
     protected Object doesInheritWT(RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return doDoesInherit(x.getClassAttr(), what);
+    }
+
+    @Specialization(guards = "whichFalse")
+    protected Object doesInherit(VirtualFrame frame, RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+        return initInheritsNode().execute(frame, x, what);
+    }
+
+    @Specialization(guards = "!whichFalse")
+    protected Object doesInheritWT(RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassAttr(), what);
     }
 

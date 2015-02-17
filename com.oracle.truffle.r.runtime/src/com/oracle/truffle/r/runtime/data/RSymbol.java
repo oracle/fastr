@@ -45,4 +45,16 @@ public class RSymbol extends RAttributeStorage implements RAttributable {
     public String toString() {
         return name;
     }
+
+    private static final RStringVector SYMBOL = RDataFactory.createStringVectorFromScalar("name");
+
+    @Override
+    public RStringVector getClassAttr() {
+        RStringVector v = RAttributable.super.getClassAttr();
+        if (v == null) {
+            return SYMBOL;
+        } else {
+            return v;
+        }
+    }
 }

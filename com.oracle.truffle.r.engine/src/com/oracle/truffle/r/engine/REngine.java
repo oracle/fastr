@@ -109,8 +109,10 @@ public final class REngine implements RContext.Engine {
             singleton.builtinLookup = RBuiltinPackages.getInstance();
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
             VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
+            MaterializedFrame baseFrameMaterialized = baseFrame.materialize();
+            MaterializedFrame globalFrameMaterialized = globalFrame.materialize();
             REnvironment.baseInitialize(globalFrame, baseFrame);
-            RBuiltinPackages.loadBase(baseFrame.materialize());
+            RBuiltinPackages.loadBase(baseFrameMaterialized);
             RVersionInfo.initialize();
             RRNG.initialize();
             TempDirPath.initialize();
@@ -120,8 +122,6 @@ public final class REngine implements RContext.Engine {
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.
              */
-            MaterializedFrame baseFrameMaterialized = baseFrame.materialize();
-            MaterializedFrame globalFrameMaterialized = globalFrame.materialize();
             singleton.parseAndEval(RProfile.systemProfile(), baseFrameMaterialized, REnvironment.baseEnv(), false, false);
             checkAndRunStartupFunction(".OptRequireMethods");
 
@@ -145,8 +145,8 @@ public final class REngine implements RContext.Engine {
     }
 
     public static void checkAndRunStartupFunction(String name) {
-        Object func = REnvironment.globalEnv().findVar(name);
-        if (func != null && func instanceof RFunction) {
+        Object func = REnvironment.globalEnv().findFunction(name);
+        if (func != null) {
             /*
              * We could just invoke runCall, but that way causes problems for debugging, so we parse
              * and eval a "fake" call.
@@ -442,9 +442,9 @@ public final class REngine implements RContext.Engine {
     @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
-            // TODO cache this
             Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
-            RFunction function = (RFunction) REnvironment.baseEnv().get("print");
+            Object printMethod = REnvironment.globalEnv().findFunction("print");
+            RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
             function.getTarget().call(RArguments.create(function, null, 1, new Object[]{resultValue, RMissing.instance}));
         }
     }

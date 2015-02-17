@@ -992,17 +992,35 @@ public class RDeparse {
                 break;
             case REALSXP:
                 double d = (double) element;
-                String dRep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
-                state.append(dRep);
+                state.append(encodeReal(d));
                 break;
             case INTSXP:
                 int i = (int) element;
                 state.append(Integer.toString(i));
                 break;
+            case CPLXSXP:
+                RComplex c = (RComplex) element;
+                String reRep = encodeReal(c.getRealPart());
+                String imRep = encodeReal(c.getImaginaryPart());
+                state.append(reRep);
+                state.append('+');
+                state.append(imRep);
+                state.append('i');
+                break;
             default:
                 assert false;
         }
         return state;
+    }
+
+    private static String encodeReal(double d) {
+        if (Double.isInfinite(d)) {
+            return "Inf";
+        } else if (Double.isNaN(d)) {
+            return "NaN";
+        } else {
+            return decimalFormat.format(d);
+        }
     }
 
     public static String quotify(String name, String qc) {
@@ -1011,6 +1029,18 @@ public class RDeparse {
         } else {
             return qc + name + qc;
         }
+    }
+
+    private static final String[] keywords = {"NULL", "NA", "TRUE", "FALSE", "Inf", "NaN", "NA_integer_", "NA_real_", "NA_character_", "NA_complex_", "function", "while", "repeat", "for", "if", "in",
+                    "else", "next", "break", "..."};
+
+    public static boolean isKeyword(String name) {
+        for (int i = 0; i < keywords.length; i++) {
+            if (name.equals(keywords[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isValidName(String name) {
@@ -1023,11 +1053,17 @@ public class RDeparse {
         }
         int i = 1;
         ch = safeCharAt(name, i);
-        while (Character.isAlphabetic(ch) || ch == '.' | ch == '_') {
+        while (Character.isAlphabetic(ch) || Character.isDigit(ch) || ch == '.' | ch == '_') {
             i++;
             ch = safeCharAt(name, i);
         }
         if (ch != 0) {
+            return false;
+        }
+        if (name.equals("...")) {
+            return true;
+        }
+        if (isKeyword(name)) {
             return false;
         }
         return true;

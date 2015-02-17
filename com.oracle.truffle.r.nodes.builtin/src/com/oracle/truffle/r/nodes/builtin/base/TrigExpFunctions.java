@@ -425,13 +425,8 @@ public class TrigExpFunctions {
      * {@code atan2} takes two args. To avoid combinatorial explosion in specializations we coerce
      * the {@code int} forms to {@code double}.
      */
-    @RBuiltin(name = "atan2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"y", "x"})
+    @RBuiltin(name = "atan2", kind = RBuiltinKind.INTERNAL, parameterNames = {"y", "x"})
     public abstract static class Atan2 extends AdapterCall2 {
-
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
-        }
 
         private static RNode castArgument(RNode node) {
             if (!(node instanceof ConstantMissingNode)) {

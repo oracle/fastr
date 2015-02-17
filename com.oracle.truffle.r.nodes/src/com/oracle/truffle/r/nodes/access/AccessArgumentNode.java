@@ -60,11 +60,13 @@ public abstract class AccessArgumentNode extends RNode {
     /**
      * Used to cache {@link RPromise} evaluations.
      */
-    @Child private RNode optDefaultArgNode = null;
-    @CompilationFinal private FormalArguments formals = null;
-    @CompilationFinal private RPromiseFactory factory = null;
-    @CompilationFinal private boolean deoptimized = false;
-    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();  // true;
+    @Child private RNode optDefaultArgNode;
+    @CompilationFinal private FormalArguments formals;
+    @CompilationFinal private boolean hasDefaultArg;
+    @CompilationFinal private boolean isVarArgIndex;
+    @CompilationFinal private RPromiseFactory factory;
+    @CompilationFinal private boolean deoptimized;
+    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();
 
     public AccessArgumentNode(int index) {
         this.index = index;
@@ -73,9 +75,19 @@ public abstract class AccessArgumentNode extends RNode {
     public AccessArgumentNode(AccessArgumentNode prev) {
         this.index = prev.index;
         formals = prev.formals;
+        hasDefaultArg = prev.hasDefaultArg;
+        isVarArgIndex = prev.isVarArgIndex;
         factory = prev.factory;
         deoptimized = prev.deoptimized;
         defaultArgCanBeOptimized = prev.defaultArgCanBeOptimized;
+    }
+
+    @Override
+    protected void onAdopt() {
+        formals = ((RRootNode) getRootNode()).getFormalArguments();
+        hasDefaultArg = formals.getDefaultArg(getIndex()) != null;
+        isVarArgIndex = formals.getVarArgIndex() == getIndex();
+        super.onAdopt();
     }
 
     /**
@@ -127,7 +139,6 @@ public abstract class AccessArgumentNode extends RNode {
     @Specialization(guards = {"hasDefaultArg", "canBeOptimized"})
     public Object doArgumentEagerDefaultArg(VirtualFrame frame, RMissing argMissing) {
         // Insert default value
-        checkFormals();
         checkPromiseFactory();
         if (!checkInsertOptDefaultArg()) {
             // Default arg cannot be optimized: Rewrite to default and assure that we don't take
@@ -144,34 +155,22 @@ public abstract class AccessArgumentNode extends RNode {
     @Specialization(guards = {"hasDefaultArg", "!canBeOptimized"})
     public Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
         // Insert default value
-        checkFormals();
         checkPromiseFactory();
         RPromise result = factory.createPromise(frame.materialize());
         RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
         return result;
     }
 
-    @SuppressWarnings("unused")
-    protected boolean hasDefaultArg(RMissing argMissing) {
-        checkFormals();
-        return formals.getDefaultArg(getIndex()) != null;
+    protected boolean hasDefaultArg() {
+        return hasDefaultArg;
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isVarArgIndex(RMissing argMissing) {
-        checkFormals();
-        return formals.getVarArgIndex() == getIndex();
+    protected boolean isVarArgIndex() {
+        return isVarArgIndex;
     }
 
     protected boolean canBeOptimized() {
         return !deoptimized && defaultArgCanBeOptimized;
-    }
-
-    private void checkFormals() {
-        if (formals == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            formals = ((RRootNode) getRootNode()).getFormalArguments();
-        }
     }
 
     private void checkPromiseFactory() {
@@ -185,7 +184,6 @@ public abstract class AccessArgumentNode extends RNode {
 
     private boolean checkInsertOptDefaultArg() {
         if (optDefaultArgNode == null) {
-            checkFormals();
             RNode defaultArg = formals.getDefaultArg(getIndex());
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 

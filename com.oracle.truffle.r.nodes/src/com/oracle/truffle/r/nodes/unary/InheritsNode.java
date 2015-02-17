@@ -44,6 +44,11 @@ public abstract class InheritsNode extends BinaryNode {
     }
 
     @Specialization
+    protected Object doesInherit(RSymbol x, RAbstractStringVector what) {
+        return checkDoesInherit(x.getClassAttr(), what);
+    }
+
+    @Specialization
     protected Object doesInherit(RFunction x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassAttr(), what);
     }

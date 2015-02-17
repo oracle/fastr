@@ -393,7 +393,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     // END of static methods
 
-    private static final RStringVector ENVIRONMENT = RDataFactory.createStringVectorFromScalar("environment");
+    private static final RStringVector ENVIRONMENT = RDataFactory.createStringVectorFromScalar(RType.Environment.getName());
 
     @Override
     public RStringVector getClassAttr() {
@@ -615,15 +615,15 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Explicit search for a variable {@code name}; used in startup sequence.
+     * Explicit search for a function {@code name}; used in startup sequence.
      *
-     * @return the value of the variable or {@code null} if not found.
+     * @return the value of the function or {@code null} if not found.
      */
-    public Object findVar(String varName) {
+    public Object findFunction(String varName) {
         REnvironment env = this;
         while (env != emptyEnv) {
             Object value = env.get(varName);
-            if (value != null) {
+            if (value != null && (value instanceof RFunction || value instanceof RPromise)) {
                 return value;
             }
             env = env.parent;

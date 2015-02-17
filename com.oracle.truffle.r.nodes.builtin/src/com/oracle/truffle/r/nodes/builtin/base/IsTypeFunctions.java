@@ -198,17 +198,6 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.data.frame", kind = SUBSTITUTE, parameterNames = {"x"})
-    // TODO revert to R
-    public abstract static class IsDataFrame extends IsFalseAdapter {
-
-        @Specialization
-        protected byte isType(RDataFrame operand) {
-            return RRuntime.LOGICAL_TRUE;
-        }
-
-    }
-
     @RBuiltin(name = "is.double", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsDouble extends IsFalseAdapter {
 

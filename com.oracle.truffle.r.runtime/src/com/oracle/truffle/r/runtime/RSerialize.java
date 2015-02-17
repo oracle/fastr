@@ -396,7 +396,7 @@ public class RSerialize {
                 case INTSXP: {
                     int len = stream.readInt();
                     int[] data = new int[len];
-                    boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
+                    boolean complete = RDataFactory.COMPLETE_VECTOR;
                     for (int i = 0; i < len; i++) {
                         int intVal = stream.readInt();
                         if (intVal == RRuntime.INT_NA) {
@@ -411,7 +411,7 @@ public class RSerialize {
                 case LGLSXP: {
                     int len = stream.readInt();
                     byte[] data = new byte[len];
-                    boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
+                    boolean complete = RDataFactory.COMPLETE_VECTOR;
                     for (int i = 0; i < len; i++) {
                         int intVal = stream.readInt();
                         if (intVal == RRuntime.INT_NA) {
@@ -428,7 +428,7 @@ public class RSerialize {
                 case REALSXP: {
                     int len = stream.readInt();
                     double[] data = new double[len];
-                    boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
+                    boolean complete = RDataFactory.COMPLETE_VECTOR;
                     for (int i = 0; i < len; i++) {
                         double doubleVal = stream.readDouble();
                         if (doubleVal == RRuntime.DOUBLE_NA) {
@@ -437,6 +437,27 @@ public class RSerialize {
                         data[i] = doubleVal;
                     }
                     result = RDataFactory.createDoubleVector(data, complete);
+                    break;
+                }
+
+                case CPLXSXP: {
+                    int len = stream.readInt();
+                    double[] data = new double[2 * len];
+                    boolean complete = RDataFactory.COMPLETE_VECTOR;
+                    for (int i = 0; i < len; i++) {
+                        int ix = 2 * i;
+                        double reVal = stream.readDouble();
+                        if (reVal == RRuntime.DOUBLE_NA) {
+                            complete = false;
+                        }
+                        double imVal = stream.readDouble();
+                        if (imVal == RRuntime.DOUBLE_NA) {
+                            complete = false;
+                        }
+                        data[ix] = reVal;
+                        data[ix + 1] = imVal;
+                    }
+                    result = RDataFactory.createComplexVector(data, complete);
                     break;
                 }
 
