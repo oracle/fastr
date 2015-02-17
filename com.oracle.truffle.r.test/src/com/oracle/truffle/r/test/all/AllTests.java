@@ -24500,6 +24500,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_12267dcae5c48cbb3d611b54fb9f1e9e() {
+        assertEvalError("{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x[\"a\", exact=FALSE]<-7; x }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_f40e760b22c190582d7b76bb4cfc1734() {
         assertEvalWarning("{ x<-1:4; x[1]<-c(1,1); x }");
     }

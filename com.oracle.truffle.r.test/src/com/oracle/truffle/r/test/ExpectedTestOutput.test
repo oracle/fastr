@@ -56867,6 +56867,11 @@ Error in x[[c("z", "x")]] : attempt to select more than one element
   NA   NA
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x["a", exact=FALSE]<-7; x }
+Error in `[<-`(`*tmp*`, "a", exact = FALSE, value = 7) :
+  no 'dimnames' attribute for array
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(1); x["y"] }
 [[1]]
 NULL

@@ -584,6 +584,8 @@ public class TestSimpleVectors extends TestBase {
 // assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(m=\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]]$m<-\"z\"; x }");
         // this works but matrix printing is off
 // assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
+
+        assertEvalError("{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x[\"a\", exact=FALSE]<-7; x }");
     }
 
     @Test
