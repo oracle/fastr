@@ -128,6 +128,7 @@ public class TestrGenBuiltinmax extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testmax21() {
         assertEval("argv <- list(structure(c(13823, NA), class = \'Date\'), na.rm = TRUE);max(argv[[1]],argv[[2]]);");
     }

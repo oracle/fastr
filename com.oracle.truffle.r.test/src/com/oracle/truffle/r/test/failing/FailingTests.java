@@ -8470,6 +8470,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestrGenBuiltinmax_testmax21_d39d45770d39e8317748f016d8b9ab72() {
+        assertEval("argv <- list(structure(c(13823, NA), class = 'Date'), na.rm = TRUE);max(argv[[1]],argv[[2]]);");
+        check("TestrGenBuiltinmax_testmax21_d39d45770d39e8317748f016d8b9ab72");
+    }
+
+    @Test
     public void TestrGenBuiltinmax_testmax5_5ebe9da0be4eef7e8bde44e34019b2e2() {
         assertEval("max( );");
         check("TestrGenBuiltinmax_testmax5_5ebe9da0be4eef7e8bde44e34019b2e2");
@@ -8593,6 +8599,12 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinmin_testmin13_341893ea4787c250bc3e31fa673bb2f5() {
         assertEval("min( );");
         check("TestrGenBuiltinmin_testmin13_341893ea4787c250bc3e31fa673bb2f5");
+    }
+
+    @Test
+    public void TestrGenBuiltinmin_testmin14_268ff60da1e88efcacbc32726f1ff677() {
+        assertEval("argv <- list(structure(c(13823, NA), class = 'Date'), na.rm = TRUE);min(argv[[1]],argv[[2]]);");
+        check("TestrGenBuiltinmin_testmin14_268ff60da1e88efcacbc32726f1ff677");
     }
 
     @Test

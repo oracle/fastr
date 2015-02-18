@@ -90,6 +90,7 @@ public class TestrGenBuiltinmin extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testmin14() {
         assertEval("argv <- list(structure(c(13823, NA), class = \'Date\'), na.rm = TRUE);min(argv[[1]],argv[[2]]);");
     }
@@ -127,11 +128,9 @@ public class TestrGenBuiltinmin extends TestBase {
         assertEval("argv <- list(numeric(0));min(argv[[1]]);");
     }
 
-	@Test
-	public void testmin22() {
-		assertEval("argv <- list(2, 3, NA);"+
-			"do.call(\'min\', argv)");
-	}
+    @Test
+    public void testmin22() {
+        assertEval("argv <- list(2, 3, NA);" + "do.call(\'min\', argv)");
+    }
 
 }
-
