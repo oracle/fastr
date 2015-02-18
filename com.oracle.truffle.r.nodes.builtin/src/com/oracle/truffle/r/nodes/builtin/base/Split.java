@@ -148,6 +148,38 @@ public abstract class Split extends RBuiltinNode {
         return RDataFactory.createList(results, makeNames(frame, f));
     }
 
+    @Specialization
+    protected RList split(VirtualFrame frame, RAbstractLogicalVector x, RFactor f) {
+        int[] factor = f.getVector().getDataWithoutCopying();
+        final int nLevels = f.getNLevels();
+
+        // initialise result arrays
+        byte[][] collectResults = new byte[nLevels][];
+        int[] collectResultSize = new int[nLevels];
+        for (int i = 0; i < collectResults.length; ++i) {
+            collectResults[i] = new byte[INITIAL_SIZE];
+        }
+
+        // perform split
+        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+            int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
+            byte[] collect = collectResults[resultIndex];
+            if (collect.length == collectResultSize[resultIndex]) {
+                collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                collect = collectResults[resultIndex];
+            }
+            collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
+        }
+
+        // assemble result vectors and level names
+        Object[] results = new Object[nLevels];
+        for (int i = 0; i < nLevels; ++i) {
+            results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
+        }
+
+        return RDataFactory.createList(results, makeNames(frame, f));
+    }
+
     private RStringVector makeNames(VirtualFrame frame, RFactor f) {
         RVector levels = f.getLevels();
         if (noStringLevels.profile(!(levels instanceof RStringVector))) {
