@@ -431,7 +431,7 @@ public class RSerialize {
                     boolean complete = RDataFactory.COMPLETE_VECTOR;
                     for (int i = 0; i < len; i++) {
                         double doubleVal = stream.readDouble();
-                        if (doubleVal == RRuntime.DOUBLE_NA) {
+                        if (RRuntime.isNA(doubleVal)) {
                             complete = false;
                         }
                         data[i] = doubleVal;
@@ -447,11 +447,11 @@ public class RSerialize {
                     for (int i = 0; i < len; i++) {
                         int ix = 2 * i;
                         double reVal = stream.readDouble();
-                        if (reVal == RRuntime.DOUBLE_NA) {
+                        if (RRuntime.isNA(reVal)) {
                             complete = false;
                         }
                         double imVal = stream.readDouble();
-                        if (imVal == RRuntime.DOUBLE_NA) {
+                        if (RRuntime.isNA(imVal)) {
                             complete = false;
                         }
                         data[ix] = reVal;
