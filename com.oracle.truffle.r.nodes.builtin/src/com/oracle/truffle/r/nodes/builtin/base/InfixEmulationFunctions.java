@@ -668,6 +668,15 @@ public class InfixEmulationFunctions {
         }
     }
 
+    @RBuiltin(name = "repeat", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class RepeatBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
     @RBuiltin(name = "for", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class ForBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")
