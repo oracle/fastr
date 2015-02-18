@@ -1,14 +1,18 @@
 com.oracle.truffle.r.native/builtinlibs/src/fft.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/builtinlibs/src/rdummy.c,no.copyright
 com.oracle.truffle.r.native/fficall/jni/src/rfficall.c,gnu_r.copyright
+com.oracle.truffle.r.native/include/jni/R_ext/Applic.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Arith.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Boolean.h,no.copyright
+com.oracle.truffle.r.native/include/jni/R_ext/BLAS.h,no.copyright
+com.oracle.truffle.r.native/include/jni/R_ext/Callbacks.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Complex.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Constants.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Error.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/GraphicsDevice.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/GraphicsEngine.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/libextern.h,no.copyright
+com.oracle.truffle.r.native/include/jni/R_ext/Linpack.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Memory.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Print.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Random.h,no.copyright
@@ -21,6 +25,7 @@ com.oracle.truffle.r.native/include/jni/R.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rconfig.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rdefines.h,no.copyright
 com.oracle.truffle.r.native/include/jni/Rinternals.h,gnu_r.copyright
+com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/library/graphics/src/graphics.h,no.copyright
 com.oracle.truffle.r.native/library/graphics/src/init.c,no.copyright
 com.oracle.truffle.r.native/library/grDevices/src/grDevices.h,no.copyright
