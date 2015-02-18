@@ -95,10 +95,10 @@ public final class REngine implements RContext.Engine {
      * @return a {@link VirtualFrame} that can be passed to
      *         {@link #parseAndEval(Source, MaterializedFrame, REnvironment, boolean, boolean)}
      */
-    public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+    public static MaterializedFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         singleton.startTime = System.nanoTime();
         singleton.childTimes = new long[]{0, 0};
-        VirtualFrame globalFrame = RRuntime.createNonFunctionFrame();
+        MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
         if (!initialized) {
             RInstrument.initialize();
             RPerfAnalysis.initialize();
@@ -108,11 +108,9 @@ public final class REngine implements RContext.Engine {
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
-            VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
-            MaterializedFrame baseFrameMaterialized = baseFrame.materialize();
-            MaterializedFrame globalFrameMaterialized = globalFrame.materialize();
+            MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
             REnvironment.baseInitialize(globalFrame, baseFrame);
-            RBuiltinPackages.loadBase(baseFrameMaterialized);
+            RBuiltinPackages.loadBase(baseFrame);
             RVersionInfo.initialize();
             RRNG.initialize();
             TempDirPath.initialize();
@@ -122,17 +120,17 @@ public final class REngine implements RContext.Engine {
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.
              */
-            singleton.parseAndEval(RProfile.systemProfile(), baseFrameMaterialized, REnvironment.baseEnv(), false, false);
+            singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
             checkAndRunStartupFunction(".OptRequireMethods");
 
             reportWarnings = true;
             Source siteProfile = RProfile.siteProfile();
             if (siteProfile != null) {
-                singleton.parseAndEval(siteProfile, baseFrameMaterialized, REnvironment.baseEnv(), false, false);
+                singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
             }
             Source userProfile = RProfile.userProfile();
             if (userProfile != null) {
-                singleton.parseAndEval(userProfile, globalFrameMaterialized, REnvironment.globalEnv(), false, false);
+                singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
             }
             /*
              * TODO This is where we would load any saved user data

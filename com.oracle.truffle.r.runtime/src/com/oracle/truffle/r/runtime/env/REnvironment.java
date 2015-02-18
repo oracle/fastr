@@ -184,22 +184,26 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Invoked on startup to setup the {@link #baseEnv} and {@link #globalEnv} values, {@linbk
-     * #namespaceRegistry} and package search path.
+     * Invoked on startup to setup the {@link #baseEnv} and {@link #globalEnv} values,
+     * {@link #namespaceRegistry} and package search path.
      *
-     * The base "package" is special, it has no "imports" an its "namespace" parent is
-     * {@link #globalEnv}.
+     * The base "package" is special, it has no "imports" and the parent of its associated namespace
+     * is {@link #globalEnv}. Unlike other packages, there is no difference between the bindings in
+     * "package:base" and its associated namespace. The way this is implemented in FastR is that the
+     * {@link #frameAccess} value is identical for both environments. I.e. they share the same
+     * underlying frame. N.B. Although the {@link #parent} field of "namespace:base" is
+     * {@link #globalEnv} the {@code enclosingFrame} does NOT reference {@code globalFrame} as this
+     * would produce a circularity in the Truffle search logic.
+     *
+     * TODO neither of these frames really need to be a Truffle frames.
      */
-    public static void baseInitialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
-        // The base "package" is special, it has no "imports" and
-        // its "namespace" parent is globalenv
+    public static void baseInitialize(MaterializedFrame globalFrame, MaterializedFrame baseFrame) {
 
         namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
         baseEnv = new Base(baseFrame);
 
         globalEnv = new Global(baseEnv, globalFrame);
         baseEnv.namespaceEnv.parent = globalEnv;
-        // TODO verify enclosing frames are correct
 
         initSearchList();
     }
@@ -352,7 +356,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     public static REnvironment frameToEnvironment(MaterializedFrame frame) {
         REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
-            assert RArguments.getFunction(frame) != null;
+            if (RArguments.getFunction(frame) == null) {
+                throw RInternalError.shouldNotReachHere();
+            }
             env = createEnclosingEnvironments(frame);
         }
         return env;
@@ -414,11 +420,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * a {@code .__NAMESPACE__.} entry.
      *
      * Currently, although this is scheduled to change, the "built-in" packages are created as
-     * instances of {@link Namespace}. We fabricate a fake {@code .__NAMESPACE__.} entry to keep
+     * instances of {@link BaseNamespace}. We fabricate a fake {@code .__NAMESPACE__.} entry to keep
      * {@code asNameSpace} in {@code namespace.R} happy.
      */
     public boolean isNamespaceEnv() {
-        if (this instanceof Namespace) {
+        if (this instanceof BaseNamespace) {
             return true;
         } else {
             RStringVector spec = getNamespaceSpec();
@@ -465,29 +471,12 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * An environment associated with a {@link VirtualFrame} where is it is important to establish
-     * the parent environment's frame as the enclosing frame in {@code frame} <i>before</i> it is
-     * materialised.
-     */
-    protected REnvironment(REnvironment parent, String name, VirtualFrame frame) {
-        this(parent, name, setEnclosingHelper(parent, frame));
-        RArguments.setEnvironment(frame, this);
-    }
-
-    /**
-     * Helper method to comply with constructor ordering rules.
-     */
-    private static REnvFrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
-        RArguments.setEnclosingFrame(frame, parent.getFrame());
-        // This call invokes frame.materialize();
-        return new REnvTruffleFrameAccess(frame);
-    }
-
-    /**
      * An environment associated with an already materialized frame.
      */
     protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
         this(parent, name, new REnvTruffleFrameAccess(frame));
+        // Associate frame with the environment
+        RArguments.setEnvironment(frame, this);
     }
 
     public REnvironment getParent() {
@@ -654,12 +643,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         return getPrintName();
     }
 
-    /**
-     * Denotes the "namespace:xxx" environment of an R package. The "parent" is the associated
-     * "imports" environment, except for "base" where it is globalEnv
-     */
-    private static final class Namespace extends REnvironment {
-        private Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
+    private static final class BaseNamespace extends REnvironment {
+        private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
             namespaceRegistry.safePut(name, this);
         }
@@ -671,13 +656,19 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     private static final class Base extends REnvironment {
-        private final Namespace namespaceEnv;
+        private final BaseNamespace namespaceEnv;
 
-        private Base(VirtualFrame frame) {
+        private Base(MaterializedFrame frame) {
             super(emptyEnv, "base", frame);
-            // the namespace parent will change to globalEnv
-            this.namespaceEnv = new Namespace(emptyEnv, "base", this.frameAccess);
+            // The namespace parent will change to globalEnv once that is created
+            // (circular dependency)
+            this.namespaceEnv = new BaseNamespace(emptyEnv, "base", this.frameAccess);
+            RArguments.setEnclosingFrame(frame, parent.getFrame());
+            // This is important so that "environment(func)" gives the correct
+            // answer for functions defined in base. The sharing of the
+            // frame would otherwise report "package:base"
             RArguments.setEnvironment(frame, this.namespaceEnv);
+
         }
 
         @Override
@@ -690,7 +681,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             return "package:base";
         }
 
-        public Namespace getNamespace() {
+        public BaseNamespace getNamespace() {
             return namespaceEnv;
         }
     }
@@ -701,8 +692,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     public static final class Global extends REnvironment {
 
-        private Global(REnvironment parent, VirtualFrame frame) {
+        private Global(REnvironment parent, MaterializedFrame frame) {
             super(parent, "R_GlobalEnv", frame);
+            RArguments.setEnclosingFrame(frame, parent.getFrame());
         }
 
         @Override
@@ -722,8 +714,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private Function(REnvironment parent, MaterializedFrame frame) {
             // function environments are not named
             super(parent, UNNAMED, frame);
-            // Associate frame with the environment
-            RArguments.setEnvironment(frame, this);
         }
 
         private static Function create(REnvironment parent, MaterializedFrame frame) {

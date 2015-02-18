@@ -166,8 +166,8 @@ public class RCommand {
         }
         try {
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
-            VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(fileSource, frame.materialize(), REnvironment.globalEnv(), false, false);
+            MaterializedFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
+            REngine.getInstance().parseAndEval(fileSource, frame, REnvironment.globalEnv(), false, false);
         } catch (IOException ex) {
             Utils.fail("unexpected error creating console");
         }
@@ -179,7 +179,7 @@ public class RCommand {
         }
         try {
             // long start = System.currentTimeMillis();
-            VirtualFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
+            MaterializedFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
                 console.setPrompt(SLAVE.getValue() ? "" : "> ");
@@ -193,7 +193,7 @@ public class RCommand {
                 }
 
                 try {
-                    while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame.materialize(), REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
                         console.setPrompt(SLAVE.getValue() ? "" : "+ ");
                         String additionalInput = console.readLine();
                         if (additionalInput == null) {
