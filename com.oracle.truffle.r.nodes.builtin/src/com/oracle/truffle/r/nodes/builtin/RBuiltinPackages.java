@@ -99,6 +99,24 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         pkg.loadOverrides(frame, baseEnv);
     }
 
+    public static void loadDefaultPackageOverrides() {
+        RStringVector defPkgs = (RStringVector) ROptions.getValue("defaultPackages");
+        for (int i = 0; i < defPkgs.getLength(); i++) {
+            String pkgName = defPkgs.getDataAt(i);
+            ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
+            if (componentList == null) {
+                continue;
+            }
+            /*
+             * Only the overriding code can know which environment to update, package or namespace.
+             */
+            REnvironment env = REnvironment.baseEnv();
+            for (Source source : componentList) {
+                RContext.getEngine().parseAndEval(source, env.getFrame(), env, false, false);
+            }
+        }
+    }
+
     @Override
     public RFunction lookup(String methodName) {
         RFunction function = RContext.getInstance().getCachedFunction(methodName);

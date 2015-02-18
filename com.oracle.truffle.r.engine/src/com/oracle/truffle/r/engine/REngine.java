@@ -137,6 +137,7 @@ public final class REngine implements RContext.Engine {
              */
             checkAndRunStartupFunction(".First");
             checkAndRunStartupFunction(".First.sys");
+            RBuiltinPackages.loadDefaultPackageOverrides();
             initialized = true;
         }
         return globalFrame;

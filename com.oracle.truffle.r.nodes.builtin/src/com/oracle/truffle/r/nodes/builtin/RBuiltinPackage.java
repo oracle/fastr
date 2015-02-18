@@ -75,28 +75,35 @@ public abstract class RBuiltinPackage {
 
     protected RBuiltinPackage() {
         // Check for overriding R code
+        ArrayList<Source> componentList = getRFiles(getName());
+        if (componentList.size() > 0) {
+            rSources.put(getName(), componentList);
+        }
+    }
+
+    public static ArrayList<Source> getRFiles(String pkgName) {
         try {
-            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "R");
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(RBuiltinPackage.class, pkgName + "/R");
             if (is == null) {
-                return;
+                return null;
             }
             ArrayList<Source> componentList = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = r.readLine()) != null) {
                     if (line.endsWith(".r") || line.endsWith(".R")) {
-                        final String rResource = "R/" + line.trim();
-                        Source content = Utils.getResourceAsSource(getClass(), rResource);
+                        final String rResource = pkgName + "/R/" + line.trim();
+                        Source content = Utils.getResourceAsSource(RBuiltinPackage.class, rResource);
                         componentList.add(content);
                     }
                 }
             }
-            if (componentList.size() > 0) {
-                rSources.put(getName(), componentList);
-            }
+            return componentList;
         } catch (IOException ex) {
-            Utils.fail("error loading R code from " + getClass().getSimpleName() + " : " + ex);
+            Utils.fail("error loading R code from " + pkgName + " : " + ex);
+            return null;
         }
+
     }
 
     public RBuiltinFactory lookupByName(String methodName) {
