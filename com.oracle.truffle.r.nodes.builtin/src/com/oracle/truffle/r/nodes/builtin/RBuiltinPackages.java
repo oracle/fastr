@@ -49,7 +49,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
-    public static void loadBase(MaterializedFrame frame) {
+    public static void loadBase(MaterializedFrame frame, boolean loadPackage) {
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();
         pkg.setEnv(baseEnv);
@@ -73,6 +73,9 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                     Utils.fail("failed to install builtin function: " + methodName);
                 }
             }
+        }
+        if (!loadPackage) {
+            return;
         }
         // Now "load" the package
         Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base");

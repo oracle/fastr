@@ -59,6 +59,8 @@ public class FastROptions {
     public static final OptionValue<String> Rdebug = new OptionValue<>(null);
     @Option(help = "Print FastR performance warning")
     public static final OptionValue<Boolean> PerformanceWarnings = new OptionValue<>(false);
+    @Option(help = "Load base package")
+    public static final OptionValue<Boolean> LoadBase = new OptionValue<>(true);
 
     // Promises optimizations
     @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")

@@ -77,6 +77,11 @@ public final class REngine implements RContext.Engine {
     private static boolean initialized;
 
     /**
+     * {@code true} iff the base package is loaded.
+     */
+    private static boolean loadBase;
+
+    /**
      * A temporary mechanism for suppressing warnings while evaluating the system profile, until the
      * proper mechanism is understood.
      */
@@ -110,34 +115,37 @@ public final class REngine implements RContext.Engine {
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
             MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
             REnvironment.baseInitialize(globalFrame, baseFrame);
-            RBuiltinPackages.loadBase(baseFrame);
+            loadBase = FastROptions.LoadBase.getValue();
+            RBuiltinPackages.loadBase(baseFrame, loadBase);
             RVersionInfo.initialize();
             RRNG.initialize();
             TempDirPath.initialize();
             RProfile.initialize();
             RGraphics.initialize();
-            /*
-             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
-             * during system profile evaluation, but does for the site/user profiles.
-             */
-            singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
-            checkAndRunStartupFunction(".OptRequireMethods");
+            if (loadBase) {
+                /*
+                 * eval the system/site/user profiles. Experimentally GnuR does not report warnings
+                 * during system profile evaluation, but does for the site/user profiles.
+                 */
+                singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
+                checkAndRunStartupFunction(".OptRequireMethods");
 
-            reportWarnings = true;
-            Source siteProfile = RProfile.siteProfile();
-            if (siteProfile != null) {
-                singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
+                reportWarnings = true;
+                Source siteProfile = RProfile.siteProfile();
+                if (siteProfile != null) {
+                    singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
+                }
+                Source userProfile = RProfile.userProfile();
+                if (userProfile != null) {
+                    singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
+                }
+                /*
+                 * TODO This is where we would load any saved user data
+                 */
+                checkAndRunStartupFunction(".First");
+                checkAndRunStartupFunction(".First.sys");
+                RBuiltinPackages.loadDefaultPackageOverrides();
             }
-            Source userProfile = RProfile.userProfile();
-            if (userProfile != null) {
-                singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
-            }
-            /*
-             * TODO This is where we would load any saved user data
-             */
-            checkAndRunStartupFunction(".First");
-            checkAndRunStartupFunction(".First.sys");
-            RBuiltinPackages.loadDefaultPackageOverrides();
             initialized = true;
         }
         return globalFrame;
@@ -442,10 +450,32 @@ public final class REngine implements RContext.Engine {
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
-            Object printMethod = REnvironment.globalEnv().findFunction("print");
-            RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-            function.getTarget().call(RArguments.create(function, null, 1, new Object[]{resultValue, RMissing.instance}));
+            if (loadBase) {
+                Object printMethod = REnvironment.globalEnv().findFunction("print");
+                RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
+                function.getTarget().call(RArguments.create(function, null, 1, new Object[]{resultValue, RMissing.instance}));
+            } else {
+                // we only have the .Internal print.default method available
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, 1, new Object[]{resultValue}));
+            }
         }
+    }
+
+    // Only relevant when running without base package loaded
+    private static final String INTERNAL_PRINT = ".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))" + "}";
+    @CompilationFinal private static RFunction printInternal;
+
+    private static RFunction getPrintInternal() {
+        if (printInternal == null) {
+            try {
+                RExpression funDef = singleton.parse(INTERNAL_PRINT);
+                printInternal = (RFunction) singleton.eval(funDef, REnvironment.baseEnv().getFrame());
+            } catch (RContext.Engine.ParseException ex) {
+                Utils.fail("failed to parse print.internal");
+            }
+        }
+        return printInternal;
+
     }
 
     @TruffleBoundary
