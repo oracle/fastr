@@ -137,12 +137,12 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector repInt(byte value, int times) {
+    protected RLogicalVector repInt(byte value, int times) {
         controlVisibility();
-        int[] array = new int[times];
+        byte[] array = new byte[times];
         Arrays.fill(array, value);
         naCheck.enable(value);
-        return RDataFactory.createIntVector(array, !naCheck.check(value));
+        return RDataFactory.createLogicalVector(array, !naCheck.check(value));
     }
 
     @Specialization
