@@ -43,10 +43,15 @@ public class FileFunctions {
         private static final int WRITE = 2;
         private static final int READ = 4;
 
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
+            return arguments;
+        }
+
         @Specialization
         @TruffleBoundary
-        public Object fileAccess(RAbstractStringVector names, double modeD) {
-            int mode = (int) modeD;
+        public Object fileAccess(RAbstractStringVector names, int mode) {
             if (mode == RRuntime.INT_NA || mode < 0 || mode > 7) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
             }
