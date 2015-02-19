@@ -36,6 +36,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(7,42); `[[<-`(x, 1, 7); }");
         assertEval("{ x<-c(7,42); `[<-`(x, 1); }");
         assertEvalError("{ x<-c(7,42); `[[<-`(x, 1); }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[<-`(x, 3, value=\"b\") }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[<-`(x, 3, value=\"b\") }");
+
+        assertEval("{ x<-data.frame(1,2); `[<-.data.frame`(x, 2, value=7) }");
+        assertEval("{ x<-data.frame(1,2); `[[<-.data.frame`(x, 2, value=7) }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[<-.data.frame`(x, 2, 1, 7) }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[[<-.data.frame`(x, 2, 1, 7) }");
     }
 
     @Test

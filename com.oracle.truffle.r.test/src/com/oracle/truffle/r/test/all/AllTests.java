@@ -21020,6 +21020,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testDirectUpdate_cf439578647d03b38b62344851fcfbcb() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[<-`(x, 3, value=\"b\") }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testDirectUpdate_0beb833ce43fbf06c5ba81aa9557e8f5() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[<-`(x, 3, value=\"b\") }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testDirectUpdate_4a40fba3eb7bcc5d5518bf74328c0fd4() {
+        assertEval("{ x<-data.frame(1,2); `[<-.data.frame`(x, 2, value=7) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testDirectUpdate_33f6f793717a31664945ca667a141580() {
+        assertEval("{ x<-data.frame(1,2); `[[<-.data.frame`(x, 2, value=7) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testDirectUpdate_2c23d5946b4ee7bf487d467a266202a0() {
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[<-.data.frame`(x, 2, 1, 7) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testDirectUpdate_3fb4a4ccd21d895f889eb3141551c6b7() {
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[[<-.data.frame`(x, 2, 1, 7) }");
+    }
+
+    @Test
     public void TestSimpleVectors_testDirectUpdate_43a718eecc9d2b6c6ab7bc0d2768df18() {
         assertEvalError("{ x<-c(7,42); `[[<-`(x, 1); }");
     }

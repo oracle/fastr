@@ -53003,6 +53003,38 @@ Error: [[ ]] with missing subscript
 #{ x<-c(7,42); `[[<-`(x, 1, 7); }
 [1]  7 42
 
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testDirectUpdate
+#{ x<-data.frame(1,2); `[<-.data.frame`(x, 2, value=7) }
+  X1 X2
+1  1  7
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testDirectUpdate
+#{ x<-data.frame(1,2); `[[<-.data.frame`(x, 2, value=7) }
+  X1 X2
+1  1  7
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testDirectUpdate
+#{ x<-data.frame(c(1,2), c(3,4)); `[<-.data.frame`(x, 2, 1, 7) }
+  c.1..2. c.3..4.
+1       1       3
+2       7       4
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testDirectUpdate
+#{ x<-data.frame(c(1,2), c(3,4)); `[[<-.data.frame`(x, 2, 1, 7) }
+  c.1..2. c.3..4.
+1       1       3
+2       7       4
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testDirectUpdate
+#{ x<-factor(c("a", "b", "a")); `[<-`(x, 3, value="b") }
+[1] a b b
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testDirectUpdate
+#{ x<-factor(c("a", "b", "a")); `[[<-`(x, 3, value="b") }
+[1] a b b
+Levels: a b
+
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testEmptyUpdate
 #{ a <- list(); a$a = 6; a; }
 $a
