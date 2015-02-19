@@ -925,6 +925,10 @@ public class RDeparse {
                 Object element = vec.getDataAtAsObject(i);
                 if (type == SEXPTYPE.REALSXP && RRuntime.isNA((double) element)) {
                     state.append("NA_real_");
+                } else if (type == SEXPTYPE.STRSXP && RRuntime.isNA((String) element)) {
+                    state.append("NA_character_");
+                } else if (type == SEXPTYPE.CPLXSXP && RRuntime.isNA((RComplex) element)) {
+                    state.append("NA_complex_");
                 } else {
                     vecElement2buff(state, type, element);
                 }
