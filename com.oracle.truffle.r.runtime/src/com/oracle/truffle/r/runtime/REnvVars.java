@@ -92,6 +92,30 @@ public class REnvVars {
                 safeReadEnvironFile(userFile);
             }
         }
+        // Check for http proxies
+        String httpProxy = getEitherCase("http_proxy");
+        if (httpProxy != null) {
+            String port = null;
+            int portIndex = httpProxy.lastIndexOf(':');
+            if (portIndex > 0) {
+                port = httpProxy.substring(portIndex + 1);
+                httpProxy = httpProxy.substring(0, portIndex);
+            }
+            httpProxy = httpProxy.replace("http://", "");
+            System.setProperty("http.proxyHost", httpProxy);
+            if (port != null) {
+                System.setProperty("http.proxyPort", port);
+            }
+        }
+    }
+
+    private static String getEitherCase(String var) {
+        String val = envVars.get(var);
+        if (val != null) {
+            return val;
+        } else {
+            return envVars.get(var.toUpperCase());
+        }
     }
 
     private static String rHomePath;
