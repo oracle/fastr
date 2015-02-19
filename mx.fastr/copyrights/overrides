@@ -74,6 +74,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/D
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Deparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/EncodeString.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FileFunctions.java,gnu_r.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/ForeignFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Inherits.java,purdue.copyright
@@ -112,6 +113,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rnorm.java,g
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SplineFunctions.java,gnu_r_splines.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsUtil.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/WriteTable.java,gnu_r.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseException.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseUtil.java,purdue.copyright

@@ -1,24 +1,13 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2015, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
@@ -38,7 +27,6 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -47,11 +35,13 @@ import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
- * {@code .C} and {.Fortran} functions.
+ * {@code .C}, {@code .Call} {@code .Fortran}, {@code .External}, {@code .External2},
+ * {@code External.graphics} functions.
  *
  * TODO Completeness (more types, more error checks), Performance (copying). Especially all the
- * subtleties around copying. See <a
- * href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Foreign.html">here</a>.
+ * subtleties around copying.
+ *
+ * See <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Foreign.html">here</a>.
  */
 public class ForeignFunctions {
     public abstract static class FortranCAdapter extends RBuiltinNode {
@@ -482,7 +472,18 @@ public class ForeignFunctions {
             return matchName(f, "flushconsole");
         }
 
-        // Translated from GnuR: library/utils/io.c
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isCrc64")
+        protected String crc64(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            Object[] argValues = args.getValues();
+            String input = RRuntime.asString(argValues[0]);
+            return Crc64.crc64(input);
+        }
+
+        public static boolean isCrc64(RList f) {
+            return matchName(f, "crc64");
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = "isMenu")
         @TruffleBoundary
@@ -496,28 +497,7 @@ public class ForeignFunctions {
             } else {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "choices");
             }
-            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-            int first = choices.length + 1;
-            ch.print("Selection: ");
-            String response = ch.readLine().trim();
-            if (response.length() > 0) {
-                if (Character.isDigit(response.charAt(0))) {
-                    try {
-                        first = Integer.parseInt(response);
-                    } catch (NumberFormatException ex) {
-                        //
-                    }
-                } else {
-                    for (int i = 0; i < choices.length; i++) {
-                        String entry = choices[i];
-                        if (entry.equals(response)) {
-                            first = i + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-            return first;
+            return Menu.menu(choices);
         }
 
         public static boolean isMenu(RList f) {
