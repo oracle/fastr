@@ -25,12 +25,32 @@ package com.oracle.truffle.r.nodes.access.array;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.*;
 import com.oracle.truffle.r.runtime.*;
 
 public abstract class PositionsArrayConversionNodeAdapter extends RNode {
 
-    @Children protected final ArrayPositionCast[] elements;
+    @Children protected final ArrayPositionCast[] positionCasts;
     @Children protected final OperatorConverterNode[] operatorConverters;
+
+    protected final boolean isSubset;
+    protected final int length;
+
+    public Object executeArg(VirtualFrame frame, Object container, Object operand, int i) {
+        return positionCasts[i].executeArg(frame, container, operand);
+    }
+
+    public Object executeConvert(VirtualFrame frame, Object vector, Object operand, Object exact, int i) {
+        return operatorConverters[i].executeConvert(frame, vector, operand, exact);
+    }
+
+    public boolean isSubset() {
+        return isSubset;
+    }
+
+    public int getLength() {
+        return length;
+    }
 
     @Override
     public Object execute(VirtualFrame frame) {
@@ -40,8 +60,16 @@ public abstract class PositionsArrayConversionNodeAdapter extends RNode {
         return null;
     }
 
-    public PositionsArrayConversionNodeAdapter(ArrayPositionCast[] elements, OperatorConverterNode[] operatorConverters) {
-        this.elements = elements;
-        this.operatorConverters = operatorConverters;
+    public PositionsArrayConversionNodeAdapter(boolean isSubset, boolean isAssignment, int length) {
+        this.isSubset = isSubset;
+        this.length = length;
+        ArrayPositionCast[] casts = new ArrayPositionCast[length];
+        OperatorConverterNode[] converters = new OperatorConverterNode[length];
+        for (int i = 0; i < length; i++) {
+            casts[i] = ArrayPositionCastNodeGen.create(i, length, isAssignment, isSubset, null, null);
+            converters[i] = OperatorConverterNodeGen.create(i, length, isAssignment, isSubset, null, null, null);
+        }
+        this.positionCasts = insert(casts);
+        this.operatorConverters = insert(converters);
     }
 }

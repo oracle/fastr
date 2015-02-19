@@ -23660,6 +23660,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_53106386f8e586c6f89c4f728d750d6d() {
+        assertEval("{ f<-function(v, ...) v[...]; x<-matrix(1:4, ncol=2); f(x, 1, 2) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_cc03c970b2c5973b931ea50e7fcf7287() {
+        assertEval("{ f<-function(v, i, ...) v[i, ...]; x<-matrix(1:4, ncol=2); f(x, 1, 2) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_2e4934f0aadb7767af5767152d971f48() {
+        assertEval("{ f<-function(v, val, ...) { v[...]<-val; v; } ; x<-matrix(1:4, ncol=2); f(x, 7, 1, 2) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_903dc8ceace2f8b9ff5e38972c08217d() {
+        assertEval("{ f<-function(v, val, i, ...) { v[i, ...]<-val; v; } ; x<-matrix(1:4, ncol=2); f(x, 7, 1, 2) }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_23e220f9c43711417c97b6024e96b424() {
         assertEvalError("{ x<-c(1,2); x[[c(\"a\")]] }");
     }

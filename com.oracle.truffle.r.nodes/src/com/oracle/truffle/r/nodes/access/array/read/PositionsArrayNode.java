@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,46 +22,120 @@
  */
 package com.oracle.truffle.r.nodes.access.array.read;
 
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "exact", type = RNode.class)})
-public class PositionsArrayNode extends PositionsArrayNodeAdapter {
-    @Children protected final MultiDimPosConverterNode[] multiDimOperatorConverters;
+public class PositionsArrayNode extends RNode {
 
-    public PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
-        super(elements, positions, operatorConverters);
-        this.multiDimOperatorConverters = multiDimOperatorConverters;
+    @Child PositionsArrayConversionNodeMultiDimAdapter conversionAdapter;
+    @Child PositionsArrayNodeAdapter positionsAdapter;
+    @Child private PromiseHelperNode promiseHelper;
+
+    private final boolean hasVarArg;
+
+    public PositionsArrayNode(boolean isSubset, RNode[] positions, boolean hasVarArg) {
+        this.conversionAdapter = new PositionsArrayConversionNodeMultiDimAdapter(isSubset, positions.length);
+        this.positionsAdapter = new PositionsArrayNodeAdapter(positions);
+        this.hasVarArg = hasVarArg;
+        if (hasVarArg) {
+            this.promiseHelper = new PromiseHelperNode();
+        }
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return conversionAdapter.execute(frame);
     }
 
     @ExplodeLoop
+    public static Object[] expandVarArg(VirtualFrame frame, RArgsValuesAndNames varArg, int oldInd, Object[] oldEvaluatedElements, PromiseHelperNode promiseHelper) {
+        int ind = oldInd;
+        Object[] evaluatedElements = oldEvaluatedElements;
+        Object[] varArgValues = varArg.getValues();
+        int varArgLength = varArg.length();
+        if (varArgLength > 1) {
+            evaluatedElements = Utils.resizeArray(evaluatedElements, evaluatedElements.length + varArgLength - 1);
+        }
+        for (int j = 0; j < varArgLength; j++) {
+            evaluatedElements[ind] = varArgValues[j];
+            if (evaluatedElements[ind] instanceof RPromise) {
+                evaluatedElements[ind] = promiseHelper.evaluate(frame, (RPromise) evaluatedElements[ind]);
+            }
+            ind++;
+        }
+        return evaluatedElements;
+    }
+
     public Object executeEval(VirtualFrame frame, Object vector, Object exact) {
-        Object[] evaluatedElements = new Object[elements.length];
-        for (int i = 0; i < elements.length; i++) {
-            Object p = positions[i].execute(frame);
-            Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p, exact);
-            evaluatedElements[i] = elements[i].executeArg(frame, vector, convertedOperator);
-            if (multiDimOperatorConverters != null && multiDimOperatorConverters.length > 1) {
-                evaluatedElements[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, evaluatedElements[i]);
+        if (hasVarArg) {
+            return executeEvalVarArg(frame, vector, exact);
+        } else {
+            return executeEvalNoVarArg(frame, vector, exact);
+        }
+    }
+
+    @ExplodeLoop
+    public Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object exact) {
+        int length = conversionAdapter.getLength();
+        Object[] evaluatedElements = new Object[length];
+        for (int i = 0; i < length; i++) {
+            evaluatedElements[i] = positionsAdapter.executePos(frame, i);
+        }
+        executeEvalInternal(frame, vector, exact, evaluatedElements);
+        return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
+    }
+
+    @ExplodeLoop
+    public Object executeEvalVarArg(VirtualFrame frame, Object vector, Object exact) {
+        int length = conversionAdapter.getLength();
+        Object[] evaluatedElements = new Object[length];
+        int ind = 0;
+        for (int i = 0; i < length; i++) {
+            Object p = positionsAdapter.executePos(frame, i);
+            if (p instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames varArg = (RArgsValuesAndNames) p;
+                evaluatedElements = expandVarArg(frame, varArg, ind, evaluatedElements, promiseHelper);
+                ind += varArg.length();
+            } else {
+                evaluatedElements[ind++] = p;
             }
         }
-        return elements.length == 1 ? evaluatedElements[0] : evaluatedElements;
+        if (evaluatedElements.length != conversionAdapter.getLength()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            this.conversionAdapter = new PositionsArrayConversionNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length);
+        }
+        executeEvalInternal(frame, vector, exact, evaluatedElements);
+        return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
+    }
+
+    @ExplodeLoop
+    public void executeEvalInternal(VirtualFrame frame, Object vector, Object exact, Object[] evaluatedElements) {
+        for (int i = 0; i < evaluatedElements.length; i++) {
+            Object convertedOperator = conversionAdapter.executeConvert(frame, vector, evaluatedElements[i], exact, i);
+            evaluatedElements[i] = conversionAdapter.executeArg(frame, vector, convertedOperator, i);
+            if (conversionAdapter.multiDimOperatorConverters != null) {
+                evaluatedElements[i] = conversionAdapter.executeMultiConvert(frame, vector, evaluatedElements[i], i);
+            }
+        }
+
     }
 
     @Override
     public RNode substitute(REnvironment env) {
-        SubstitutedNodes subNodes = super.substituteComponents(env);
-        MultiDimPosConverterNode[] subMultiDimOperatorConverters = new MultiDimPosConverterNode[multiDimOperatorConverters.length];
-        for (int i = 0; i < elements.length; i++) {
-            subMultiDimOperatorConverters[i] = NodeUtil.cloneNode(multiDimOperatorConverters[i]);
-        }
+        return new PositionsArrayNode(conversionAdapter.isSubset(), positionsAdapter.substitutePositions(env), hasVarArg);
+    }
 
-        return new PositionsArrayNode(subNodes.elements, subNodes.positions, subNodes.operatorConverters, subMultiDimOperatorConverters);
+    @Override
+    public void deparse(State state) {
+        positionsAdapter.deparse(state);
     }
 
 }

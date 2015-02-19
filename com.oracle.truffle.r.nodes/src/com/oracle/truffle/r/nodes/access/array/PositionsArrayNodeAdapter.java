@@ -22,14 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.access.array;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public abstract class PositionsArrayNodeAdapter extends PositionsArrayConversionNodeAdapter {
+public class PositionsArrayNodeAdapter extends RNode {
 
-    @Children protected final RNode[] positions;
+    @Children public final RNode[] positions;
+
+    public RNode[] getPositions() {
+        return positions;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        RInternalError.shouldNotReachHere();
+        return null;
+    }
+
+    public Object executePos(VirtualFrame frame, int i) {
+        return positions[i].execute(frame);
+    }
 
     @Override
     public void deparse(State state) {
@@ -41,30 +56,15 @@ public abstract class PositionsArrayNodeAdapter extends PositionsArrayConversion
         }
     }
 
-    protected static class SubstitutedNodes {
-        public final ArrayPositionCast[] elements;
-        public final RNode[] positions;
-        public final OperatorConverterNode[] operatorConverters;
-
-        SubstitutedNodes(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
-            this.elements = elements;
-            this.positions = positions;
-            this.operatorConverters = operatorConverters;
-        }
-    }
-
-    protected SubstitutedNodes substituteComponents(REnvironment env) {
+    public RNode[] substitutePositions(REnvironment env) {
         RNode[] subPositions = new RNode[positions.length];
         for (int i = 0; i < positions.length; i++) {
             subPositions[i] = positions[i].substitute(env);
         }
-        // TODO elements and operatorConverters may require change based on what happened to
-        // positions
-        return new SubstitutedNodes(elements, subPositions, operatorConverters);
+        return subPositions;
     }
 
-    public PositionsArrayNodeAdapter(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
-        super(elements, operatorConverters);
-        this.positions = positions;
+    public PositionsArrayNodeAdapter(RNode[] positions) {
+        this.positions = insert(positions);
     }
 }
