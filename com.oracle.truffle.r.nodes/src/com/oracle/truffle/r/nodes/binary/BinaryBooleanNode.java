@@ -980,7 +980,37 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Specialization(guards = {"areSameLength", "notEmpty"})
     protected RLogicalVector doLogicalVectorSameLength(RLogicalVector left, RLogicalVector right) {
-        return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
+// return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck),
+// RClosures.createLogicalToIntVector(right, rightNACheck));
+        int length = left.getLength();
+        byte[] result = new byte[length];
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        boolean naResult = false;
+        for (int i = 0; i < length; ++i) {
+            byte leftValue = left.getDataAt(i);
+            byte rightValue = right.getDataAt(i);
+            byte resultValue;
+            boolean leftNA = leftNACheck.check(leftValue);
+            boolean rightNA = rightNACheck.check(rightValue);
+            if (leftNA && rightNA) {
+                resultValue = RRuntime.LOGICAL_NA;
+            } else if (leftNA) {
+                resultValue = RRuntime.asLogical(rightValue == RRuntime.LOGICAL_TRUE);
+            } else if (rightNA) {
+                resultValue = RRuntime.asLogical(leftValue == RRuntime.LOGICAL_TRUE);
+            } else {
+                resultValue = RRuntime.asLogical(RRuntime.fromLogical(leftValue) || RRuntime.fromLogical(rightValue));
+            }
+            if (resultNAProfile.isNA(resultValue)) {
+                naResult = true;
+            }
+            result[i] = resultValue;
+        }
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult, left.hasDimensions() ? left.getDimensions() : right.getDimensions());
+        ret.copyNamesFrom(left.getNames() != null ? left : right);
+        return ret;
+
     }
 
     @Specialization(guards = {"!areSameLength", "notEmpty"})
