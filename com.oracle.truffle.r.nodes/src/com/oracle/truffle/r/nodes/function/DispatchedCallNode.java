@@ -103,15 +103,13 @@ public abstract class DispatchedCallNode extends RNode {
         private DispatchedCallNode specialize(RStringVector type) {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
-                final DispatchNode current = createCurrentNode(type);
-                final DispatchedCallNode cachedNode = new CachedNode(current, new UninitializedDispatchedCallNode(this, this.depth + 1), type);
-                this.replace(cachedNode);
-                return cachedNode;
+                DispatchNode current = createCurrentNode(type);
+                return replace(new CachedNode(current, new UninitializedDispatchedCallNode(this, depth + 1), type));
             }
             return this.replace(new GenericDispatchNode(createCurrentNode(type)));
         }
 
-        protected DispatchNode createCurrentNode(RStringVector type) {
+        private DispatchNode createCurrentNode(RStringVector type) {
             switch (dispatchType) {
                 case NextMethod:
                     return new NextMethodDispatchNode(genericName, type, args, argNames, enclosingName);
