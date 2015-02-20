@@ -239,7 +239,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @Specialization(guards = {"isObject", "isSubset"})
-    protected Object accessFactorSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
+    protected Object accessObjectSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, new String[]{"", "", "drop"}));
@@ -253,7 +253,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @Specialization(guards = {"isObject", "!isSubset"})
-    protected Object accessFactor(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
+    protected Object accessObject(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, new String[]{"", "", "exact"}));

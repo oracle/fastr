@@ -31,9 +31,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.array.*;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -65,86 +62,56 @@ public class InfixEmulationFunctions {
         }
     }
 
-    private static class AccessPositions extends PositionsArrayConversionNodeAdapter {
-        @Children protected final MultiDimPosConverterNode[] multiDimOperatorConverters;
-        private final int length;
+    private static class AccessPositions extends PositionsArrayConversionNodeMultiDimAdapter {
 
-        public AccessPositions(ArrayPositionCast[] elements, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
-            super(elements, operatorConverters);
-            this.multiDimOperatorConverters = multiDimOperatorConverters;
-            assert elements.length == operatorConverters.length && (multiDimOperatorConverters == null || elements.length == multiDimOperatorConverters.length);
-            this.length = elements.length;
-        }
-
-        public int getLength() {
-            return length;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            RInternalError.shouldNotReachHere();
-            return null;
+        public AccessPositions(boolean isSubset, int length) {
+            super(isSubset, length);
         }
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPositions) {
             for (int i = 0; i < length; i++) {
-                newPositions[i] = elements[i].executeArg(frame, vector, operatorConverters[i].executeConvert(frame, vector, pos[i], exact));
+                newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
                 if (multiDimOperatorConverters != null) {
-                    newPositions[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, newPositions[i]);
+                    newPositions[i] = executeMultiConvert(frame, vector, newPositions[i], i);
                 }
             }
-            if (elements.length == 1) {
+            if (positionCasts.length == 1) {
                 return newPositions[0];
             } else {
                 return newPositions;
             }
         }
 
-        public static AccessPositions create(ArrayPositionCast[] castPositions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
-            return new AccessPositions(castPositions, operatorConverters, multiDimOperatorConverters);
+        public static AccessPositions create(boolean isSubset, int length) {
+            return new AccessPositions(isSubset, length);
         }
 
     }
 
-    private static class UpdatePositions extends PositionsArrayConversionNodeAdapter {
-        @Children protected final MultiDimPosConverterValueNode[] multiDimOperatorConverters;
-        private final int length;
+    private static class UpdatePositions extends PositionsArrayConversionValueNodeMultiDimAdapter {
 
-        public UpdatePositions(ArrayPositionCast[] elements, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
-            super(elements, operatorConverters);
-            this.multiDimOperatorConverters = multiDimOperatorConverters;
-            assert elements.length == operatorConverters.length && (multiDimOperatorConverters == null || elements.length == multiDimOperatorConverters.length);
-            this.length = elements.length;
-        }
-
-        public int getLength() {
-            return length;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            RInternalError.shouldNotReachHere();
-            return null;
+        public UpdatePositions(boolean isSubset, int length) {
+            super(isSubset, length);
         }
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
             for (int i = 0; i < length; i++) {
-                newPositions[i] = elements[i].executeArg(frame, vector, operatorConverters[i].executeConvert(frame, vector, pos[i], true));
+                newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], true, i), i);
                 if (multiDimOperatorConverters != null) {
-                    newPositions[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, value, newPositions[i]);
+                    newPositions[i] = executeMultiConvert(frame, vector, value, newPositions[i], i);
                 }
             }
-            if (elements.length == 1) {
+            if (positionCasts.length == 1) {
                 return newPositions[0];
             } else {
                 return newPositions;
             }
         }
 
-        public static UpdatePositions create(ArrayPositionCast[] castPositions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
-            return new UpdatePositions(castPositions, operatorConverters, multiDimOperatorConverters);
+        public static UpdatePositions create(boolean isSubset, int length) {
+            return new UpdatePositions(isSubset, length);
         }
 
     }
@@ -221,17 +188,7 @@ public class InfixEmulationFunctions {
                     accessNode = insert(AccessArrayNodeGen.create(isSubset, false, false, false, null, null, null, null, null));
                 }
                 int len = inds.length();
-                ArrayPositionCast[] castPositions = new ArrayPositionCast[len];
-                OperatorConverterNode[] operatorConverters = new OperatorConverterNode[len];
-                MultiDimPosConverterNode[] multiDimOperatorConverters = inds.length() == 1 ? null : new MultiDimPosConverterNode[len];
-                for (int i = 0; i < len; i++) {
-                    castPositions[i] = ArrayPositionCastNodeGen.create(i, inds.length(), false, isSubset, null, null);
-                    operatorConverters[i] = OperatorConverterNodeGen.create(i, inds.length(), false, isSubset, null, null, null);
-                    if (multiDimOperatorConverters != null) {
-                        multiDimOperatorConverters[i] = MultiDimPosConverterNodeGen.create(isSubset, null, null);
-                    }
-                }
-                positions = insert(AccessPositions.create(castPositions, operatorConverters, multiDimOperatorConverters));
+                positions = insert(AccessPositions.create(isSubset, len));
             }
             Object[] pos = inds.getValues();
             return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(frame, vector, pos, exact, pos), dropDim);
@@ -471,19 +428,9 @@ public class InfixEmulationFunctions {
             if (updateNode == null || positions.getLength() != len) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (updateNode == null) {
-                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, null, null, null, null, null));
+                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, false, null, null, null, null, null));
                 }
-                ArrayPositionCast[] castPositions = new ArrayPositionCast[len];
-                OperatorConverterNode[] operatorConverters = new OperatorConverterNode[len];
-                MultiDimPosConverterValueNode[] multiDimOperatorConverters = len == 1 ? null : new MultiDimPosConverterValueNode[len];
-                for (int i = 0; i < len; i++) {
-                    castPositions[i] = ArrayPositionCastNodeGen.create(i, len, true, isSubset, ConstantNode.create(RNull.instance) /* dummy */, null);
-                    operatorConverters[i] = OperatorConverterNodeGen.create(i, len, true, isSubset, null, ConstantNode.create(RNull.instance) /* dummy */, null);
-                    if (multiDimOperatorConverters != null) {
-                        multiDimOperatorConverters[i] = MultiDimPosConverterValueNodeGen.create(isSubset, null, null, null);
-                    }
-                }
-                positions = insert(UpdatePositions.create(castPositions, operatorConverters, multiDimOperatorConverters));
+                positions = insert(UpdatePositions.create(isSubset, len));
                 coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
             }
             Object[] pos;

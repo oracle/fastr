@@ -163,9 +163,11 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
 
     public static boolean isNumericVersion(RList list) {
         RStringVector klass = list.getClassAttr();
-        for (int i = 0; i < klass.getLength(); i++) {
-            if (klass.getDataAt(i).equals("numeric_version")) {
-                return true;
+        if (klass != null) {
+            for (int i = 0; i < klass.getLength(); i++) {
+                if (klass.getDataAt(i).equals("numeric_version")) {
+                    return true;
+                }
             }
         }
         return false;

@@ -36,6 +36,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(7,42); `[[<-`(x, 1, 7); }");
         assertEval("{ x<-c(7,42); `[<-`(x, 1); }");
         assertEvalError("{ x<-c(7,42); `[[<-`(x, 1); }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[<-`(x, 3, value=\"b\") }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[<-`(x, 3, value=\"b\") }");
+
+        assertEval("{ x<-data.frame(1,2); `[<-.data.frame`(x, 2, value=7) }");
+        assertEval("{ x<-data.frame(1,2); `[[<-.data.frame`(x, 2, value=7) }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[<-.data.frame`(x, 2, 1, 7) }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[[<-.data.frame`(x, 2, 1, 7) }");
     }
 
     @Test
@@ -47,6 +54,11 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x[[3]] }");
         assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=FALSE]] }");
         assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); x[[\"z\", exact=TRUE]] }");
+
+        assertEval("{ x<-data.frame(1,2); x[2]<-7; x }");
+        assertEval("{ x<-data.frame(1,2); x[[2]]<-7; x }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[2,1]<-7; x }");
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[[2,1]]<-7; x }");
 
         assertEval("{ `[.foo` <- function(x, i, ...) structure(NextMethod(\"[\"), class = class(x)); x<-c(1,2); class(x)<-\"foo\"; x[1] }");
     }
@@ -586,6 +598,11 @@ public class TestSimpleVectors extends TestBase {
 // assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
 
         assertEvalError("{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x[\"a\", exact=FALSE]<-7; x }");
+
+        assertEval("{ f<-function(v, ...) v[...]; x<-matrix(1:4, ncol=2); f(x, 1, 2) }");
+        assertEval("{ f<-function(v, i, ...) v[i, ...]; x<-matrix(1:4, ncol=2); f(x, 1, 2) }");
+        assertEval("{ f<-function(v, val, ...) { v[...]<-val; v; } ; x<-matrix(1:4, ncol=2); f(x, 7, 1, 2) }");
+        assertEval("{ f<-function(v, val, i, ...) { v[i, ...]<-val; v; } ; x<-matrix(1:4, ncol=2); f(x, 7, 1, 2) }");
     }
 
     @Test
