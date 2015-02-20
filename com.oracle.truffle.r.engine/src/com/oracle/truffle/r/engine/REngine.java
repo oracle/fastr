@@ -453,10 +453,10 @@ public final class REngine implements RContext.Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                function.getTarget().call(RArguments.create(function, null, null, 1, new Object[]{resultValue, RMissing.instance}));
+                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}));
             } else {
                 // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, null, 1, new Object[]{resultValue}));
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}));
             }
         }
     }
