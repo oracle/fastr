@@ -23,9 +23,9 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
+import java.util.function.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -98,8 +98,8 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  *
  * f <- function(...) g(...); g <- function(a,b) { a - b }; f(b=1,2)
  *
- * Consequently, "non-executed" ... arguments are represented as {@link VarArgsNode}-s (inheriting
- * from {@link RNode}) and "executed" .. arguments are represented as a language level value of type
+ * Consequently, "non-executed" ... arguments are represented as VarArgsNodes (inheriting from
+ * {@link RNode}) and "executed" .. arguments are represented as a language level value of type
  * {@link RArgsValuesAndNames}, which can be passes directly in the {@link RArguments} object and
  * whose type is understood by the language's builtins (both representations are name-preserving).
  * </p>
@@ -121,8 +121,8 @@ public class ArgumentMatcher {
      *      ClosureCache, boolean)
      */
     public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
-        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, false, suppliedArgs, noOpt);
+        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         return MatchedArguments.create(wrappedArgs, formals.getNames());
     }
 
@@ -164,8 +164,35 @@ public class ArgumentMatcher {
                     boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(), callSrc,
-                        null, forNextMethod);
+        MatchPermutation match = permuteArguments(function, evaluatedArgs.getNames(), formals, callSrc, null, forNextMethod, index -> {
+            throw Utils.nyi("S3Dispatch should not have arg length mismatch");
+        }, index -> evaluatedArgs.getNames()[index]);
+
+        Object[] evaledArgs = new Object[match.resultPermutation.length];
+
+        for (int formalIndex = 0; formalIndex < match.resultPermutation.length; formalIndex++) {
+            int suppliedIndex = match.resultPermutation[formalIndex];
+
+            // Has varargs? Unfold!
+            if (suppliedIndex == VARARGS) {
+                int varArgsLen = match.varargsPermutation.length;
+                Object[] newVarArgs = new Object[varArgsLen];
+                boolean nonNull = false;
+                for (int i = 0; i < varArgsLen; i++) {
+                    newVarArgs[i] = evaluatedArgs.arguments[match.varargsPermutation[i]];
+                    nonNull |= newVarArgs[i] != null;
+                }
+                if (nonNull) {
+                    evaledArgs[formalIndex] = new RArgsValuesAndNames(newVarArgs, match.varargsNames);
+                } else {
+                    evaledArgs[formalIndex] = RArgsValuesAndNames.EMPTY;
+                }
+            } else if (suppliedIndex == UNMATCHED) {
+                // nothing to do... (resArgs[formalIndex] == null)
+            } else {
+                evaledArgs[formalIndex] = evaluatedArgs.arguments[suppliedIndex];
+            }
+        }
 
         // Replace RMissing with default value!
         RNode[] defaultArgs = formals.getDefaultArgs();
@@ -219,8 +246,6 @@ public class ArgumentMatcher {
      *
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
-     * @see #permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory,
-     *      ArrayFactory, SourceSection, SourceSection, boolean)
      */
     private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
                     ClosureCache closureCache, boolean noOpt) {
@@ -229,334 +254,42 @@ public class ArgumentMatcher {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), callSrc, argsSrc, false);
+        MatchPermutation match = permuteArguments(function, suppliedNames, formals, callSrc, argsSrc, false, index -> ArgumentsTrait.isVarArg(RMissingHelper.unwrapName(suppliedArgs[index])),
+                        index -> suppliedArgs[index].getSourceSection().getCode());
 
-        PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper(noOpt) : new DefaultPromiseWrapper(noOpt);
-        return wrapInPromises(function, resultArgs, formals, wrapper, closureCache, callSrc);
-    }
-
-    /**
-     * /** This method does the heavy lifting of re-arranging arguments by their names and position,
-     * also handling varargs.
-     *
-     * @param function The function which should be called
-     * @param suppliedArgs The arguments given to this function call
-     * @param suppliedNames The names the arguments might have
-     * @param formals The {@link FormalArguments} this function has
-     * @param listFactory An abstraction for the creation of list of different types
-     * @param arrFactory An abstraction for the generic creation of type safe arrays
-     * @param callSrc The source of the function call currently executed
-     * @param argsSrc The source code encapsulating the arguments, for debugging purposes
-     * @param forNextMethod matching when evaluating NextMethod
-     *
-     * @param <T> The type of the given arguments
-     * @return An array of type <T> with the supplied arguments in the correct order
-     */
-    @TruffleBoundary
-    private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
-                    SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod) {
-        String[] formalNames = formals.getNames();
-
-        // Preparations
-        int varArgIndex = formals.getVarArgIndex();
-        boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
-
-        // MATCH by exact name
-        T[] resultArgs = arrFactory.newArray(formalNames.length);
-        BitSet matchedSuppliedArgs = new BitSet(suppliedNames.length);
-        BitSet matchedFormalArgs = new BitSet(formalNames.length);
-        int unmatchedNameCount = 0; // The nr of named supplied args that do not match
-        // si = suppliedIndex, fi = formalIndex
-        for (int si = 0; si < suppliedNames.length; si++) {
-            if (suppliedNames[si] == null || suppliedNames[si].isEmpty()) {
-                continue;
-            }
-
-            // Search for argument name inside formal arguments
-            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], callSrc, argsSrc, varArgIndex, forNextMethod);
-            if (fi >= 0) {
-                resultArgs[fi] = suppliedArgs[si];
-                matchedSuppliedArgs.set(si);
-            } else {
-                // Named supplied arg that has no match: Vararg candidate!
-                unmatchedNameCount++;
-            }
-        }
-
-        // TODO MATCH by partial name
-
-        // MATCH by position
-        UnmatchedSuppliedIterator<T> siCursor = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
-        for (int fi = 0; fi < resultArgs.length; fi++) {
-            // Unmatched?
-            if (!matchedFormalArgs.get(fi)) {
-                while (siCursor.hasNext() && siCursor.nextIndex() < suppliedNames.length && suppliedNames[siCursor.nextIndex()] != null && !suppliedNames[siCursor.nextIndex()].isEmpty() &&
-                                !forNextMethod) {
-                    // Slide over named parameters and find subsequent location of unnamed parameter
-                    // (if processing args for NextMethod, try to match yet unmatched named
-                    // parameters - do not slide over them)
-                    siCursor.next();
-                }
-                boolean followsDots = hasVarArgs && fi >= varArgIndex;
-                if (siCursor.hasNext() && !followsDots) {
-                    resultArgs[fi] = siCursor.next();
-
-                    // set formal status AND "remove" supplied arg from list
-                    matchedFormalArgs.set(fi);
-                    siCursor.remove();
-                }
-            }
-        }
-
-        // MATCH rest to vararg "..."
-        if (hasVarArgs) {
-            assert listFactory != null;
-            int varArgCount = suppliedArgs.length - matchedSuppliedArgs.cardinality();
-
-            // Create vararg array (+ names if necessary)
-            T[] varArgsArray = arrFactory.newArray(varArgCount);
-            String[] namesArray = null;
-            if (unmatchedNameCount != 0) {
-                namesArray = new String[varArgCount];
-            }
-
-            // Add every supplied argument that has not been matched
-            int pos = 0;
-            UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
-            while (si.hasNext()) {
-                T arg = si.next();
-                si.remove();
-                if (arrFactory.isMissing(arg)) {
-                    // do not fold missing arguments into ...
-                    varArgsArray = Utils.resizeArray(varArgsArray, varArgsArray.length - 1);
-                    if (namesArray != null) {
-                        namesArray = Utils.resizeArray(namesArray, namesArray.length - 1);
-                    }
-                    continue;
-                }
-                varArgsArray[pos] = arg;
-                if (namesArray != null) {
-                    String suppliedName = suppliedNames[si.lastIndex()];
-                    namesArray[pos] = suppliedName;
-                }
-                pos++;
-            }
-            resultArgs[varArgIndex] = listFactory.makeList(varArgsArray, namesArray);
-        }
-
-        // Error check: Unused argument?
-        int leftoverCount = suppliedArgs.length - matchedSuppliedArgs.cardinality();
-        if (leftoverCount > 0) {
-            // Check if this is really an error. Might be an inlined "..."!
-            UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
-            if (leftoverCount == 1) {
-                T arg = si.next();
-                if (arrFactory.isVararg(arg)) {
-                    return resultArgs;
-                }
-            }
-
-            // Definitely an error: Prepare error message
-            si.reset();
-            throwUnusedArgumentError(leftoverCount, si, arrFactory, callSrc);
-        }
-
-        return resultArgs;
-    }
-
-    @TruffleBoundary
-    private static <T> void throwUnusedArgumentError(int leftoverCount, UnmatchedSuppliedIterator<T> si, ArrayFactory<T> arrFactory, SourceSection callSrc) {
-        // UNUSED_ARGUMENT(S)?
-        if (leftoverCount == 1) {
-            CompilerDirectives.transferToInterpreter();
-            String argStr = arrFactory.debugString(si.next());
-            throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, argStr);
-        }
-
-        // Create error message
-        T[] debugArgs = arrFactory.newArray(leftoverCount);
-        int pos = 0;
-        while (si.hasNext()) {
-            debugArgs[pos++] = si.next();
-        }
-
-        CompilerDirectives.transferToInterpreter();
-        String argStr = arrFactory.debugString(debugArgs);
-        throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENTS, argStr);
-    }
-
-    /**
-     * Used in
-     * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection, SourceSection, boolean)}
-     * for iteration over suppliedArgs.
-     *
-     * @param <T>
-     */
-    private static class UnmatchedSuppliedIterator<T> implements Iterator<T> {
-        private static final int NO_MORE_ARGS = -1;
-        private int si;
-        private int lastSi;
-        @CompilationFinal private final T[] suppliedArgs;
-        private final BitSet matchedSuppliedArgs;
-
-        public UnmatchedSuppliedIterator(T[] suppliedArgs, BitSet matchedSuppliedArgs) {
-            this.suppliedArgs = suppliedArgs;
-            this.matchedSuppliedArgs = matchedSuppliedArgs;
-            reset();
-        }
-
-        public void reset() {
-            si = 0;
-            lastSi = 0;
-        }
-
-        /**
-         * @return Index of the argument returned by the last {@link #next()} call.
-         */
-        public int lastIndex() {
-            return lastSi;
-        }
-
-        /**
-         * @return The argument which is going to be returned from the next {@link #next()} call.
-         * @throws NoSuchElementException If {@link #hasNext()} == true!
-         */
-        public int nextIndex() {
-            int next = getNextIndex(si);
-            if (next == NO_MORE_ARGS) {
-                throw new NoSuchElementException();
-            }
-            return next;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return getNextIndex(si) != NO_MORE_ARGS;
-        }
-
-        private int getNextIndex(int from) {
-            if (from == NO_MORE_ARGS) {
-                return NO_MORE_ARGS;
-            }
-            int next = matchedSuppliedArgs.nextClearBit(from);
-            if (next == NO_MORE_ARGS || next >= suppliedArgs.length) {
-                return NO_MORE_ARGS;
-            }
-            return next;
-        }
-
-        @Override
-        public T next() {
-            int next = getNextIndex(si);
-            if (next == NO_MORE_ARGS) {
-                throw new NoSuchElementException();
-            }
-            lastSi = next;
-            si = getNextIndex(next + 1);
-            return suppliedArgs[lastSi];
-        }
-
-        @Override
-        public void remove() {
-            matchedSuppliedArgs.set(lastSi);
-        }
-    }
-
-    /**
-     * Searches for suppliedName inside formalNames and returns its (formal) index.
-     *
-     * @param formalNames
-     * @param suppliedName
-     * @param matchedSuppliedArgs
-     * @param suppliedIndex
-     * @param hasVarArgs
-     * @param debugArgNode
-     * @param callSrc
-     * @param argsSrc
-     * @param varArgIndex
-     * @param forNextMethod
-     *
-     * @return The position of the given suppliedName inside the formalNames. Throws errors if the
-     *         argument has been matched before
-     */
-    private static <T> int findParameterPosition(String[] formalNames, String suppliedName, BitSet matchedSuppliedArgs, int suppliedIndex, boolean hasVarArgs, T debugArgNode, SourceSection callSrc,
-                    SourceSection argsSrc, int varArgIndex, boolean forNextMethod) {
-        int found = -1;
-        for (int i = 0; i < formalNames.length; i++) {
-            if (formalNames[i] == null) {
-                continue;
-            }
-
-            final String formalName = formalNames[i];
-            if (formalName.equals(suppliedName)) {
-                found = i;
-                if (matchedSuppliedArgs.get(found)) {
-                    // Has already been matched: Error!
-                    throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
-                }
-                matchedSuppliedArgs.set(found);
-                break;
-            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) && ((varArgIndex != FormalArguments.NO_VARARG && i < varArgIndex) || varArgIndex == FormalArguments.NO_VARARG)) {
-                // partial-match only if the formal argument is positioned before ...
-                if (found >= 0) {
-                    throw RError.error(argsSrc, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
-                }
-                found = i;
-                if (matchedSuppliedArgs.get(found)) {
-                    throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
-                }
-                matchedSuppliedArgs.set(found);
-            }
-        }
-        if (found >= 0 || hasVarArgs || forNextMethod) {
-            return found;
-        }
-        // Error!
-        String debugSrc = suppliedName;
-        if (debugArgNode instanceof RNode) {
-            SourceSection ss = ((RNode) debugArgNode).getSourceSection();
-            if (ss != null && ss.getCode() != null) {
-                debugSrc = ((RNode) debugArgNode).getSourceSection().getCode();
-            }
-        }
-        throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, debugSrc);
-    }
-
-    /**
-     * Walks a list of given arguments ({@link RNode}s) and wraps them in {@link PromiseNode}s
-     * individually by using promiseWrapper (unfolds varargs, too!) if necessary.
-     *
-     * @param function The function which is to be called
-     * @param arguments The arguments passed to the function call, already in correct order
-     * @param formals The {@link FormalArguments} for the given function
-     * @param promiseWrapper The {@link PromiseWrapper} implementation which handles the wrapping of
-     *            individual arguments
-     * @param closureCache The {@link ClosureCache} for the supplied arguments
-     * @return A list of {@link RNode} wrapped in {@link PromiseNode}s
-     */
-    @TruffleBoundary
-    private static RNode[] wrapInPromises(RFunction function, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper, ClosureCache closureCache, SourceSection callSrc) {
         RNode[] defaultArgs = formals.getDefaultArgs();
-        RNode[] resArgs = arguments;
+        RNode[] resArgs = new RNode[match.resultPermutation.length];
+
+        /**
+         * Walks a list of given arguments ({@link RNode}s) and wraps them in {@link PromiseNode}s
+         * individually by using promiseWrapper (unfolds varargs, too!) if necessary.
+         *
+         * @param function The function which is to be called
+         * @param arguments The arguments passed to the function call, already in correct order
+         * @param formals The {@link FormalArguments} for the given function
+         * @param promiseWrapper The {@link PromiseWrapper} implementation which handles the
+         *            wrapping of individual arguments
+         * @param closureCache The {@link ClosureCache} for the supplied arguments
+         * @return A list of {@link RNode} wrapped in {@link PromiseNode}s
+         */
 
         // Check whether this is a builtin
         RootNode rootNode = function.getTarget().getRootNode();
-        final RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
+        RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
 
         // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
         // take "..." as one), we don't need a logicalIndex
-        for (int fi = 0; fi < arguments.length; fi++) {
-            RNode arg = arguments[fi];  // arg may be null, which denotes 'no arg supplied'
+        for (int formalIndex = 0; formalIndex < match.resultPermutation.length; formalIndex++) {
+            int suppliedIndex = match.resultPermutation[formalIndex];
 
             // Has varargs? Unfold!
-            if (arg instanceof VarArgsAsObjectArrayNode) {
-                VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
-                int varArgsLen = varArgs.getArgumentNodes().length;
-                String[] newNames = varArgs.getNames() == null ? new String[varArgsLen] : Arrays.copyOf(varArgs.getNames(), varArgsLen);
-                RNode[] newVarArgs = Utils.resizeArray(varArgs.getArgumentNodes(), varArgsLen);
+            if (suppliedIndex == VARARGS) {
+                int varArgsLen = match.varargsPermutation.length;
+                String[] newNames = match.varargsNames;
+                RNode[] newVarArgs = new RNode[varArgsLen];
                 int index = 0;
-                for (int i = 0; i < varArgs.getArgumentNodes().length; i++) {
-                    RNode varArg = varArgs.getArgumentNodes()[i];
+                for (int i = 0; i < varArgsLen; i++) {
+                    RNode varArg = suppliedArgs[match.varargsPermutation[i]];
                     if (varArg == null) {
                         if (newNames[i] == null) {
                             // Skip all missing values (important for detection of emtpy "...",
@@ -567,7 +300,7 @@ public class ArgumentMatcher {
                             varArg = ConstantNode.create(RMissing.instance);
                         }
                     }
-                    newNames[index] = varArgs.getNames() == null ? null : varArgs.getNames()[i];
+                    newNames[index] = newNames[i];
                     newVarArgs[index] = varArg;
                     index++;
                 }
@@ -577,7 +310,7 @@ public class ArgumentMatcher {
                 if (newLength == 0) {
                     // Corner case: "f <- function(...) g(...); g <- function(...)"
                     // Insert correct "missing"!
-                    resArgs[fi] = promiseWrapper.wrap(function, formals, builtinRootNode, closureCache, null, null, fi);
+                    resArgs[formalIndex] = wrap(formals, builtinRootNode, closureCache, null, null, formalIndex, isForInlinedBuiltin, noOpt);
                     continue;
                 }
                 if (newNames.length > newLength) {
@@ -585,177 +318,253 @@ public class ArgumentMatcher {
                     newVarArgs = Arrays.copyOf(newVarArgs, newLength);
                 }
 
-                EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, fi);
-                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, newVarArgs, newNames, closureCache, callSrc);
+                EvalPolicy evalPolicy = getEvalPolicy(builtinRootNode, formalIndex);
+                resArgs[formalIndex] = PromiseNode.createVarArgs(null, evalPolicy, newVarArgs, newNames, closureCache, callSrc);
             } else {
-                // Normal argument: just wrap in promise
-                RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-                resArgs[fi] = promiseWrapper.wrap(function, formals, builtinRootNode, closureCache, arg, defaultArg, fi);
+                RNode defaultArg = formalIndex < defaultArgs.length ? defaultArgs[formalIndex] : null;
+                RNode suppliedArg = suppliedIndex == UNMATCHED ? null : suppliedArgs[suppliedIndex];
+                resArgs[formalIndex] = wrap(formals, builtinRootNode, closureCache, suppliedArg, defaultArg, formalIndex, isForInlinedBuiltin, noOpt);
             }
         }
         return resArgs;
     }
 
-    /**
-     * Interface for trading the cost of using reflection.
-     *
-     * <pre>
-     * Class<?> argClass = suppliedArgs.getClass().getComponentClass();
-     * @SuppressWarning("unchecked")
-     * T[] resultArgs = (T[]) Array.newInstance(argClass, size)
-     * </pre>
-     *
-     * against a type safe virtual function call.
-     *
-     * @param <T> The component type of the arrays to be created
-     */
-    private interface ArrayFactory<T> {
-        /**
-         * @param length
-         * @return A fresh (type safe) array of type T
-         */
-        T[] newArray(int length);
+    private static final class MatchPermutation {
+        private final int[] resultPermutation;
+        private final int[] varargsPermutation;
+        private final String[] varargsNames;
 
-        /**
-         * @param arg
-         * @return Whether arg represents a <i>formal</i> "..." which carries no content
-         */
-        default boolean isVararg(T arg) {
-            throw Utils.nyi("S3Dispatch should not have arg length mismatch!?");
-        }
-
-        /**
-         * @param arg
-         * @return Whether arg represents a missing argument
-         */
-        default boolean isMissing(T arg) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        /**
-         * @param args
-         * @return A {@link String} containing debug names of all given args
-         */
-        String debugString(T[] args);
-
-        @TruffleBoundary
-        default String debugString(T arg) {
-            T[] args = newArray(1);
-            args[0] = arg;
-            return debugString(args);
+        public MatchPermutation(int[] resultPermutation, int[] varargsPermutation, String[] varargsNames) {
+            this.resultPermutation = resultPermutation;
+            this.varargsPermutation = varargsPermutation;
+            this.varargsNames = varargsNames;
         }
     }
 
-    /**
-     * {@link ArrayFactory} implementation for {@link RNode}.
-     */
-    private static class RNodeArrayFactory implements ArrayFactory<RNode> {
-        public RNode[] newArray(int length) {
-            return new RNode[length];
-        }
-
-        @Override
-        public boolean isVararg(RNode arg) {
-            // Empty varargs get passed in as "...", and not unrolled. Thus we only have to check
-            // the RVNs name
-            String name = RMissingHelper.unwrapName(arg);
-            return name != null && ArgumentsTrait.isVarArg(name);
-        }
-
-        @Override
-        public boolean isMissing(RNode arg) {
-            return false;
-        }
-
-        @TruffleBoundary
-        public String debugString(RNode[] args) {
-            SourceSection src = Utils.sourceBoundingBox(args);
-            return String.valueOf(src);
-        }
-    }
+    private static final int UNMATCHED = -1;
+    private static final int VARARGS = -2;
 
     /**
-     * {@link ArrayFactory} implementation for {@link Object}.
+     * /** This method does the heavy lifting of re-arranging arguments by their names and position,
+     * also handling varargs.
+     *
+     * @param function The function which should be called
+     * @param suppliedNames The names the arguments might have
+     * @param formals The {@link FormalArguments} this function has
+     * @param callSrc The source of the function call currently executed
+     * @param argsSrc The source code encapsulating the arguments, for debugging purposes
+     * @param forNextMethod matching when evaluating NextMethod
+     *
+     * @return An array of type <T> with the supplied arguments in the correct order
      */
-    private static class ObjectArrayFactory implements ArrayFactory<Object> {
-        public Object[] newArray(int length) {
-            return new Object[length];
+    @TruffleBoundary
+    private static MatchPermutation permuteArguments(RFunction function, String[] suppliedNames, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
+                    IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString) {
+        // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
+
+        // Preparations
+        int varArgIndex = formals.getVarArgIndex();
+        boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
+
+        // MATCH by exact name
+        int[] resultPermutation = new int[formals.getNames().length];
+        Arrays.fill(resultPermutation, UNMATCHED);
+
+        boolean[] matchedSuppliedArgs = new boolean[suppliedNames.length];
+        for (int suppliedIndex = 0; suppliedIndex < suppliedNames.length; suppliedIndex++) {
+            if (suppliedNames[suppliedIndex] == null || suppliedNames[suppliedIndex].isEmpty()) {
+                continue;
+            }
+
+            // Search for argument name inside formal arguments
+            int formalIndex = findParameterPosition(formals.getNames(), suppliedNames[suppliedIndex], resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex, forNextMethod,
+                            errorString);
+            if (formalIndex != UNMATCHED) {
+                resultPermutation[formalIndex] = suppliedIndex;
+                matchedSuppliedArgs[suppliedIndex] = true;
+            }
         }
 
-        @Override
-        public boolean isMissing(Object arg) {
-            return arg == RMissing.instance;
+        // TODO MATCH by partial name (up to the vararg, which consumes all non-exact matches)
+
+        // MATCH by position
+        int suppliedIndex = -1;
+        int regularArgumentCount = hasVarArgs ? varArgIndex : formals.getNames().length;
+        outer: for (int formalIndex = 0; formalIndex < regularArgumentCount; formalIndex++) {
+            // Unmatched?
+            if (resultPermutation[formalIndex] == UNMATCHED) {
+                while (true) {
+                    suppliedIndex++;
+                    if (suppliedIndex == suppliedNames.length) {
+                        // no more unmatched supplied arguments
+                        break outer;
+                    }
+                    if (!matchedSuppliedArgs[suppliedIndex]) {
+                        if (forNextMethod) {
+                            // for NextMethod, unused parameters are matched even when named
+                            break;
+                        }
+                        if (suppliedNames[suppliedIndex] == null || suppliedNames[suppliedIndex].isEmpty()) {
+                            // unnamed parameter, match by position
+                            break;
+                        }
+                    }
+                }
+                resultPermutation[formalIndex] = suppliedIndex;
+
+                // set formal status AND "remove" supplied arg from list
+                matchedSuppliedArgs[suppliedIndex] = true;
+            }
         }
 
-        @TruffleBoundary
-        public String debugString(Object[] args) {
-            StringBuilder b = new StringBuilder();
-            for (int i = 0; i < args.length; i++) {
-                b.append(String.valueOf(args[i]));
-                if (i != args.length - 1) {
-                    b.append(", ");
+        // MATCH rest to vararg "..."
+        if (hasVarArgs) {
+            int varArgCount = suppliedNames.length - cardinality(matchedSuppliedArgs);
+
+            // Create vararg array
+            int[] varArgsPermutation = new int[varArgCount];
+            String[] namesArray = new String[varArgCount];
+
+            // Add every supplied argument that has not been matched
+            int pos = 0;
+            for (suppliedIndex = 0; suppliedIndex < suppliedNames.length; suppliedIndex++) {
+                if (!matchedSuppliedArgs[suppliedIndex]) {
+                    matchedSuppliedArgs[suppliedIndex] = true;
+                    varArgsPermutation[pos] = suppliedIndex;
+                    namesArray[pos] = suppliedNames[suppliedIndex];
+                    pos++;
                 }
             }
-            return b.toString();
+
+            resultPermutation[varArgIndex] = VARARGS;
+            return new MatchPermutation(resultPermutation, varArgsPermutation, namesArray);
+        } else {
+            // Error check: Unused argument? (can only happen when there are no varargs)
+
+            suppliedIndex = 0;
+            while (suppliedIndex < suppliedNames.length && matchedSuppliedArgs[suppliedIndex]) {
+                suppliedIndex++;
+            }
+
+            if (suppliedIndex < suppliedNames.length) {
+                int leftoverCount = suppliedNames.length - cardinality(matchedSuppliedArgs);
+                if (leftoverCount == 1) {
+                    if (isVarSuppliedVarargs.test(suppliedIndex)) {
+                        return new MatchPermutation(resultPermutation, null, null);
+                    }
+
+                    // one unused argument
+                    CompilerDirectives.transferToInterpreter();
+                    throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
+                }
+
+                CompilerDirectives.transferToInterpreter();
+                // multiple unused arguments
+                StringBuilder str = new StringBuilder();
+                int cnt = 0;
+                for (; suppliedIndex < suppliedNames.length; suppliedIndex++) {
+                    if (!matchedSuppliedArgs[suppliedIndex]) {
+                        if (cnt++ > 0) {
+                            str.append(", ");
+                        }
+                        str.append(errorString.apply(suppliedIndex));
+                    }
+                }
+                throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENTS, str);
+            }
+            return new MatchPermutation(resultPermutation, null, null);
         }
     }
 
-    /**
-     * This interface was introduced to reuse
-     * {@link ArgumentMatcher#wrapInPromises(RFunction, RNode[], FormalArguments, PromiseWrapper, ClosureCache, SourceSection)}
-     * and encapsulates the wrapping of a single argument into a {@link PromiseNode}.
-     */
-    private interface PromiseWrapper {
-        /**
-         * @param function the {@link RFunction} being called
-         * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-         * @param formalIndex The formalIndex of this argument
-         * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
-         *         {@link PromiseNode}
-         */
-        EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int formalIndex);
-
-        /**
-         * @param function The function this argument is wrapped for
-         * @param formals {@link FormalArguments} as {@link ClosureCache}
-         * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-         * @param closureCache {@link ClosureCache}
-         * @param suppliedArg The argument supplied for this parameter
-         * @param defaultValue The default value for this argument
-         * @param formalIndex The logicalIndex of this argument, also counting individual arguments
-         *            in varargs
-         * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
-         *         {@link RMissing} in case neither is present!
-         */
-        RNode wrap(RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex);
+    private static int cardinality(boolean[] array) {
+        int sum = 0;
+        for (boolean b : array) {
+            if (b) {
+                sum++;
+            }
+        }
+        return sum;
     }
 
     /**
-     * {@link PromiseWrapper} implementation for 'normal' function calls.
+     * Searches for suppliedName inside formalNames and returns its (formal) index.
+     *
+     * @return The position of the given suppliedName inside the formalNames. Throws errors if the
+     *         argument has been matched before
      */
-    private static class DefaultPromiseWrapper implements PromiseWrapper {
+    private static <T> int findParameterPosition(String[] formalNames, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, SourceSection callSrc,
+                    SourceSection argsSrc, int varArgIndex, boolean forNextMethod, IntFunction<String> errorString) {
+        int found = UNMATCHED;
+        for (int i = 0; i < formalNames.length; i++) {
+            if (formalNames[i] == null) {
+                continue;
+            }
 
-        private final boolean noOpt;
-
-        public DefaultPromiseWrapper(boolean noOpt) {
-            this.noOpt = noOpt;
+            String formalName = formalNames[i];
+            if (formalName.equals(suppliedName)) {
+                found = i;
+                if (resultPermutation[found] != UNMATCHED) {
+                    // Has already been matched: Error!
+                    throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                }
+                break;
+            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) && ((varArgIndex != FormalArguments.NO_VARARG && i < varArgIndex) || varArgIndex == FormalArguments.NO_VARARG)) {
+                // partial-match only if the formal argument is positioned before ...
+                if (found >= 0) {
+                    throw RError.error(argsSrc, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
+                }
+                found = i;
+                if (resultPermutation[found] != UNMATCHED) {
+                    throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                }
+            }
         }
-
-        public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int formalIndex) {
-            // This is for actual function calls. However, if the arguments are meant for a builtin,
-            // we have to consider whether they should be forced or not!
-            return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
+        if (found >= 0 || hasVarArgs || forNextMethod) {
+            return found;
         }
+        throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
+    }
 
-        @TruffleBoundary
-        public RNode wrap(RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex) {
-            // Determine whether to choose supplied argument or default value
-            RNode expr = null;
-            PromiseType promiseType = null;
-            if (suppliedArg != null) {
-                // Supplied arg
-                expr = suppliedArg;
-                promiseType = PromiseType.ARG_SUPPLIED;
+    /**
+     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+     * @param formalIndex The formalIndex of this argument
+     * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
+     *         {@link PromiseNode}
+     */
+    public static EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int formalIndex) {
+        // This is for actual function calls. However, if the arguments are meant for a
+        // builtin, we have to consider whether they should be forced or not!
+        return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
+    }
+
+    /**
+     * @param formals {@link FormalArguments} as {@link ClosureCache}
+     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+     * @param closureCache {@link ClosureCache}
+     * @param suppliedArg The argument supplied for this parameter
+     * @param defaultValue The default value for this argument
+     * @param formalIndex The logicalIndex of this argument, also counting individual arguments in
+     *            varargs
+     * @param isBuiltin
+     * @param noOpt
+     * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
+     *         {@link RMissing} in case neither is present!
+     */
+    @TruffleBoundary
+    public static RNode wrap(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex, boolean isBuiltin,
+                    boolean noOpt) {
+        // Determine whether to choose supplied argument or default value
+        RNode expr = null;
+        PromiseType promiseType = null;
+        if (suppliedArg != null) {
+            // Supplied arg
+            expr = suppliedArg;
+            promiseType = PromiseType.ARG_SUPPLIED;
+        } else {
+            // Default value
+            if (isBuiltin && defaultValue != null) {
+                expr = defaultValue;
+                promiseType = PromiseType.ARG_DEFAULT;
             } else {
                 if (formals.getVarArgIndex() == formalIndex) {
                     // "...", but empty
@@ -765,170 +574,12 @@ public class ArgumentMatcher {
                     return ConstantNode.create(RMissing.instance);
                 }
             }
-
-            // Create promise
-            EvalPolicy evalPolicy = getEvalPolicy(function, builtinRootNode, formalIndex);
-            Closure closure = closureCache.getOrCreateClosure(expr);
-            Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), noOpt);
-        }
-    }
-
-    /**
-     * {@link PromiseWrapper} implementation for arguments that are going to be used for 'inlined'
-     * builtins.
-     *
-     * @see RBuiltinRootNode#inline(InlinedArguments)
-     */
-    private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
-
-        private final boolean noOpt;
-
-        public BuiltinInitPromiseWrapper(boolean noOpt) {
-            this.noOpt = noOpt;
         }
 
-        public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int formalIndex) {
-            // This is used for arguments that are going inlined for builtins
-            return !builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.PROMISED : EvalPolicy.INLINED;
-        }
-
-        /**
-         * @param function The function this argument is wrapped for
-         * @param formals {@link FormalArguments} as {@link ClosureCache}
-         * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-         * @param closureCache {@link ClosureCache}
-         * @param suppliedArg The argument supplied for this parameter
-         * @param defaultValue The default value for this argument
-         * @param formalIndex The logicalIndex of this argument, also counting individual arguments
-         *            in varargs
-         * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
-         *         {@link RMissing} in case neither is present!
-         */
-        @TruffleBoundary
-        public RNode wrap(RFunction function, FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex) {
-            // Determine whether to choose supplied argument or default value
-            RNode expr = null;
-            PromiseType promiseType = null;
-            if (suppliedArg != null) {
-                // Supplied arg
-                expr = suppliedArg;
-                promiseType = PromiseType.ARG_SUPPLIED;
-            } else {
-                // Default value
-                if (defaultValue != null) {
-                    expr = defaultValue;
-                    promiseType = PromiseType.ARG_DEFAULT;
-                } else {
-                    if (formals.getVarArgIndex() == formalIndex) {
-                        // "...", but empty
-                        return ConstantNode.create(RArgsValuesAndNames.EMPTY);
-                    } else {
-                        // In this case, we simply return RMissing (like R)
-                        return ConstantNode.create(RMissing.instance);
-                    }
-                }
-            }
-
-            // Create promise
-            EvalPolicy evalPolicy = getEvalPolicy(function, builtinRootNode, formalIndex);
-            Closure closure = closureCache.getOrCreateClosure(expr);
-            Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-            return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), noOpt);
-        }
-    }
-
-    /**
-     * Abstraction for the generation of varargs.
-     *
-     * @param <T> The type of the resulting vararg
-     */
-    public interface VarArgsFactory<T> {
-        T makeList(T[] elements, String[] names);
-    }
-
-    /**
-     * {@link VarArgsFactory} implementation that returns varargs as <code>Object[]</code>.
-     *
-     */
-    public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
-        /**
-         * The call of {@link #nonNull} and the assertion in the "else" clause prevents the creation
-         * of an {@link RArgsValuesAndNames} containing any {@code null} values. Experimentally,
-         * only length 1 arrays ever contain {@code null} (from the conversion of {@link RMissing}
-         * into {@code null} in {@link S3DispatchNode#addArg}). Should this ever change perhaps
-         * these should be turned back into {@link RMissing}. Ideally, this invariant should be
-         * enforced by the caller(s).
-         */
-        public Object makeList(Object[] elements, String[] names) {
-            if (elements.length > 0 && nonNull(elements)) {
-                return new RArgsValuesAndNames(elements, names);
-            } else {
-                assert elements.length == 0 || elements.length == 1;
-                return RArgsValuesAndNames.EMPTY;   // RMissing.instance;
-            }
-        }
-
-        private static boolean nonNull(Object[] elements) {
-            for (int i = 0; i < elements.length; i++) {
-                if (elements[i] == null) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-
-    /**
-     * A {@link RNode} that encapsulates a list of varargs (as {@link RNode}).
-     */
-    public abstract static class VarArgsNode extends RNode {
-        @Children protected final RNode[] elementNodes;
-
-        protected VarArgsNode(RNode[] elements) {
-            elementNodes = elements;
-        }
-
-        public final RNode[] getArgumentNodes() {
-            return elementNodes;
-        }
-    }
-
-    /**
-     * {@link VarArgsFactory} implementation that returns varargs as
-     * {@link VarArgsAsObjectArrayNode}.
-     */
-    public static final class VarArgsAsObjectArrayNodeFactory implements VarArgsFactory<RNode> {
-        public RNode makeList(RNode[] elements, String[] names) {
-            if (elements.length > 0) {
-                return new VarArgsAsObjectArrayNode(elements, names);
-            } else {
-                // STRICT: This has to be revised!
-                return null;    // ConstantNode.create(RMissing.instance);
-            }
-        }
-    }
-
-    /**
-     * {@link VarArgsNode} that executes all its elements and returns the resulting value array.
-     */
-    public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
-        private String[] names;
-
-        public VarArgsAsObjectArrayNode(RNode[] elements, String[] names) {
-            super(elements);
-            this.names = names;
-        }
-
-        public String[] getNames() {
-            return names;
-        }
-
-        @Override
-        @Deprecated
-        public Object execute(VirtualFrame frame) {
-            // Simple container
-            throw new UnsupportedOperationException();
-        }
+        // Create promise
+        EvalPolicy evalPolicy = getEvalPolicy(builtinRootNode, formalIndex);
+        Closure closure = closureCache.getOrCreateClosure(expr);
+        Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
+        return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), noOpt);
     }
 }
