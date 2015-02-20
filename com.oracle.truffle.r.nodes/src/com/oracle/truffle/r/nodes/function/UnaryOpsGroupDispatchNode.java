@@ -27,7 +27,7 @@ public class UnaryOpsGroupDispatchNode extends GroupDispatchNode {
     @Override
     protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
         initBuiltin(frame);
-        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, RArguments.getDepth(frame) + 1, new Object[]{evaluatedArgs[0], RMissing.instance});
+        Object[] argObject = RArguments.create(builtinFunc, callSrc, null, RArguments.getDepth(frame) + 1, new Object[]{evaluatedArgs[0], RMissing.instance});
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
     }
 }

@@ -24,7 +24,10 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.nodes.instrument.*;
@@ -40,10 +43,20 @@ public final class FunctionExpressionNode extends RNode {
 
     private final RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
+    private final boolean containsDispatch;
 
     public FunctionExpressionNode(RootCallTarget callTarget) {
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() ? new PromiseDeoptimizeFrameNode() : null;
+
+        NodeCountFilter dispatchingMethodsFilter = node -> {
+            if (node instanceof ReadVariableNode) {
+                String identifier = ((ReadVariableNode) node).getIdentifier();
+                return "UseMethod".equals(identifier) || "NextMethod".equals(identifier);
+            }
+            return false;
+        };
+        this.containsDispatch = NodeUtil.countNodes(callTarget.getRootNode(), dispatchingMethodsFilter) > 0;
     }
 
     @Override
@@ -58,7 +71,7 @@ public final class FunctionExpressionNode extends RNode {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(matFrame);
         }
-        RFunction func = RDataFactory.createFunction("", callTarget, matFrame);
+        RFunction func = RDataFactory.createFunction("", callTarget, matFrame, containsDispatch);
         if (RInstrument.instrumentingEnabled()) {
             RInstrument.checkDebugRequested(callTarget.toString(), func);
         }

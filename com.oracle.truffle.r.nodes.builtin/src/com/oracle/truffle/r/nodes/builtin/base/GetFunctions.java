@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -126,6 +128,8 @@ public class GetFunctions {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+
+        @CompilationFinal private boolean needsCallerFrame;
 
         @SuppressWarnings("unused")
         public static boolean isInherits(RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, byte inherits) {
@@ -238,7 +242,12 @@ public class GetFunctions {
         }
 
         private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
-            Object[] callArgs = RArguments.create(ifnFunc, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, new Object[]{x}, new String[0]);
+            if (!needsCallerFrame && ifnFunc.containsDispatch()) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                needsCallerFrame = true;
+            }
+            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+            Object[] callArgs = RArguments.create(ifnFunc, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, new String[0]);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
 

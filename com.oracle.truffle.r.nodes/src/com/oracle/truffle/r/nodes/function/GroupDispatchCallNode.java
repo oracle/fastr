@@ -351,18 +351,18 @@ class GroupDispatchNode extends S3DispatchNode {
     protected Object callBuiltin(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
         initBuiltin(frame);
         EvaluatedArguments reorderedArgs = reorderArgs(frame, builtinFunc, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, null, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         indirectCallNode.assignSourceSection(this.callSrc);
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
     }
 
     protected Object executeHelper(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         // todo: cannot create frame descriptors in compiled code
         FrameDescriptor s3VarDefFrameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(s3VarDefFrameDescriptor, true);
-        VirtualFrame s3VarDefFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(null, null, RArguments.getDepth(frame) + 1), s3VarDefFrameDescriptor);
+        VirtualFrame s3VarDefFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(null, null, null, RArguments.getDepth(frame) + 1), s3VarDefFrameDescriptor);
         // todo: cannot create frame descriptors in compiled code
         FrameDescriptor argFrameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(argFrameDescriptor, true);

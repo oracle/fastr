@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -44,6 +45,7 @@ public abstract class DoCall extends RBuiltinNode {
     @Child private GetFunctions.Get getNode;
 
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+    @CompilationFinal private boolean needsCallerFrame;
 
     @Specialization(guards = "lengthOne")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
@@ -71,7 +73,12 @@ public abstract class DoCall extends RBuiltinNode {
         String[] argNames = n == null ? null : n.getDataNonShared();
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
-        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        if (!needsCallerFrame && func.containsDispatch()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            needsCallerFrame = true;
+        }
+        MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }

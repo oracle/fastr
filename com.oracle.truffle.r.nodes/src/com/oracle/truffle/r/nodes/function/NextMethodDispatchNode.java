@@ -132,7 +132,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
 
     private Object executeHelper(VirtualFrame frame) {
         EvaluatedArguments evaledArgs = processArgs(frame);
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getNames());
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getNames());
         // todo: cannot create frame descriptors in compiled code
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);

@@ -202,7 +202,7 @@ public class HiddenInternalFunctions {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
 
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), RArguments.getDepth(frame) + 1, new Object[]{arg}, new String[0]);
+                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, new String[0]);
                             // TODO this cast is problematic
                             return callCache.execute((VirtualFrame) frame, envhook.getTarget(), callArgs);
                         }

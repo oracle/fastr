@@ -161,7 +161,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @TruffleBoundary
     private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         // todo: cannot create frame descriptors in compiled code
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
