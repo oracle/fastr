@@ -232,8 +232,7 @@ public final class RArguments {
         return (String) args[s3StartIndex + S3_INDEX_GENERIC];
     }
 
-    public static void setS3Generic(Frame frame, String generic) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+    public static void setS3Generic(Object[] args, String generic) {
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_GENERIC] = generic;
@@ -254,8 +253,7 @@ public final class RArguments {
         }
     }
 
-    public static void setS3Class(Frame frame, RStringVector klass) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+    public static void setS3Class(Object[] args, RStringVector klass) {
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_CLASS] = klass;
@@ -271,8 +269,7 @@ public final class RArguments {
         }
     }
 
-    public static void setS3Method(Frame frame, Object method) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+    public static void setS3Method(Object[] args, Object method) {
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_METHOD] = method;
@@ -288,8 +285,7 @@ public final class RArguments {
         }
     }
 
-    public static void setS3DefEnv(Frame frame, MaterializedFrame defEnv) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+    public static void setS3DefEnv(Object[] args, MaterializedFrame defEnv) {
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_DEF_ENV] = defEnv;
@@ -305,8 +301,7 @@ public final class RArguments {
         }
     }
 
-    public static void setS3CallEnv(Frame frame, MaterializedFrame callEnv) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+    public static void setS3CallEnv(Object[] args, MaterializedFrame callEnv) {
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_CALL_ENV] = callEnv;
@@ -322,8 +317,7 @@ public final class RArguments {
         }
     }
 
-    public static void setS3Group(Frame frame, String group) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+    public static void setS3Group(Object[] args, String group) {
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_GROUP] = group;

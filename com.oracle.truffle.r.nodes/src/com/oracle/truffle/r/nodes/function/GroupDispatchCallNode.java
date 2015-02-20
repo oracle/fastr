@@ -26,7 +26,6 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 import edu.umd.cs.findbugs.annotations.*;
 
@@ -359,22 +358,11 @@ class GroupDispatchNode extends S3DispatchNode {
     protected Object executeHelper(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
         Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
-        // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor s3VarDefFrameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(s3VarDefFrameDescriptor, true);
-        VirtualFrame s3VarDefFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(null, null, null, RArguments.getDepth(frame) + 1), s3VarDefFrameDescriptor);
-        // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor argFrameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(argFrameDescriptor, true);
-        VirtualFrame argFrame = Truffle.getRuntime().createVirtualFrame(argObject, argFrameDescriptor);
         genCallEnv = frame.materialize();
-        defineVarsAsArguments(argFrame);
-        defineVarsInFrame(s3VarDefFrame);
-        wvnMethod = defineVarInFrame(s3VarDefFrame, wvnMethod, RRuntime.RDotMethod, dotMethod);
-        RArguments.setS3Method(argFrame, dotMethod);
+        defineVarsAsArguments(argObject);
+        RArguments.setS3Method(argObject, dotMethod);
         if (writeGroup) {
-            wvnGroup = defineVarInFrame(s3VarDefFrame, wvnGroup, RRuntime.RDotGroup, groupName);
-            RArguments.setS3Group(argFrame, groupName);
+            RArguments.setS3Group(argObject, groupName);
         }
         indirectCallNode.assignSourceSection(this.callSrc);
         /*
@@ -385,15 +373,7 @@ class GroupDispatchNode extends S3DispatchNode {
          * s3VarDefFrame. After the function returns reset the enclosing frame of the target
          * function.
          */
-        MaterializedFrame enclosingFrame = targetFunction.getEnclosingFrame();
-        MaterializedFrame mFrame = s3VarDefFrame.materialize();
-        RArguments.setEnclosingFrame(mFrame, enclosingFrame);
-        targetFunction.setEnclosingFrame(mFrame);
         Object result = indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
-        targetFunction.setEnclosingFrame(enclosingFrame);
-        RArguments.setEnclosingFrame(mFrame, null);
-        removeVars(mFrame);
-        removeVar(mFrame.getFrameDescriptor(), RRuntime.RDotGroup);
         return result;
     }
 

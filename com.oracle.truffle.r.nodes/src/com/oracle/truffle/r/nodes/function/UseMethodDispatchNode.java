@@ -13,14 +13,13 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * {@code UseMethod} is typically called like this:
@@ -105,7 +104,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             }
         }
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection());
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
@@ -150,7 +149,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private static void addArg(Object[] values, Object value, int index) {
@@ -161,17 +160,13 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
     }
 
-    @TruffleBoundary
-    private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
+    private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, String[] argNames) {
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
-        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
-        genCallEnv = callerFrame.materialize();
-        defineVarsAsArguments(newFrame);
-        RArguments.setS3Method(newFrame, targetFunctionName);
-        return indirectCallNode.call(newFrame, targetFunction.getTarget(), argObject);
+        genCallEnv = callerFrame;
+        defineVarsAsArguments(argObject);
+        RArguments.setS3Method(argObject, targetFunctionName);
+        return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
     private void findTargetFunction(Frame callerFrame) {

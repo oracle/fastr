@@ -14,13 +14,11 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 public class NextMethodDispatchNode extends S3DispatchNode {
 
@@ -133,18 +131,14 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private Object executeHelper(VirtualFrame frame) {
         EvaluatedArguments evaledArgs = processArgs(frame);
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getNames());
-        // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
-        defineVarsAsArguments(newFrame);
+        defineVarsAsArguments(argObject);
         if (storedFunctionName != null) {
-            RArguments.setS3Method(newFrame, storedFunctionName);
+            RArguments.setS3Method(argObject, storedFunctionName);
         } else {
-            RArguments.setS3Method(newFrame, targetFunctionName);
+            RArguments.setS3Method(argObject, targetFunctionName);
         }
         if (hasGroup) {
-            RArguments.setS3Group(newFrame, this.group);
+            RArguments.setS3Group(argObject, this.group);
         }
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
