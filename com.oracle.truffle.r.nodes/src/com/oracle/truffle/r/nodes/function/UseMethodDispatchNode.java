@@ -37,6 +37,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 
     @CompilationFinal private final String[] suppliedArgNames;
 
@@ -46,13 +47,19 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         this.suppliedArgNames = evaledArgNames;
     }
 
+    private Frame getCallerFrame(VirtualFrame frame) {
+        Frame funFrame = RArguments.getCallerFrame(frame);
+        if (callerFrameSlotPath.profile(funFrame == null)) {
+            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
+            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+        }
+        // S3 method can be dispatched from top-level where there is no caller frame
+        return topLevelFrameProfile.profile(funFrame == null) ? frame : funFrame;
+    }
+
     @Override
     public Object execute(VirtualFrame frame) {
-        Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-        // S3 method can be dispatched from top-level where there is no caller frame
-        if (topLevelFrameProfile.profile(funFrame == null)) {
-            funFrame = frame;
-        }
+        Frame funFrame = getCallerFrame(frame);
         if (targetFunction == null) {
             findTargetFunction(RArguments.getEnclosingFrame(frame));
         }
@@ -62,11 +69,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
-        Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-        // S3 method can be dispatched from top-level where there is no caller frame
-        if (funFrame == null) {
-            funFrame = frame;
-        }
+        Frame funFrame = getCallerFrame(frame);
         findTargetFunction(RArguments.getEnclosingFrame(frame));
         return executeHelper(frame, funFrame);
     }
