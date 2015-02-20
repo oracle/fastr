@@ -125,61 +125,43 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "castToInt")
-    protected RAbstractVector asVectorInt(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorInt(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castInteger(frame, x);
     }
 
     @Specialization(guards = "castToDouble")
-    protected RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castDouble(frame, x);
     }
 
     @Specialization(guards = "castToComplex")
-    protected RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castComplex(frame, x);
     }
 
     @Specialization(guards = "castToLogical")
-    protected RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castLogical(frame, x);
     }
 
     @Specialization(guards = "castToString")
-    protected RAbstractVector asVectorString(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorString(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castString(frame, x);
     }
 
     @Specialization(guards = "castToRaw")
-    protected RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castRaw(frame, x);
     }
 
     @Specialization(guards = "castToList")
-    protected RAbstractVector asVectorList(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
-        controlVisibility();
-        return castList(frame, x);
-    }
-
-    @Specialization(guards = "castToList")
-    protected RAbstractVector asVectorList(VirtualFrame frame, RLanguage x, @SuppressWarnings("unused") String mode) {
-        controlVisibility();
-        return castList(frame, x);
-    }
-
-    @Specialization(guards = "castToList")
-    protected RAbstractVector asVectorList(VirtualFrame frame, RExpression x, @SuppressWarnings("unused") String mode) {
-        controlVisibility();
-        return castList(frame, x);
-    }
-
-    @Specialization(guards = "castToList")
-    protected RAbstractVector asVectorList(VirtualFrame frame, RPairList x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorList(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castList(frame, x);
     }
@@ -191,7 +173,7 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "castToSymbol")
-    protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castSymbol(frame, x);
     }
@@ -254,51 +236,39 @@ public abstract class AsVector extends RBuiltinNode {
         return x.copyWithNewDimensions(null);
     }
 
-    protected boolean castToInt(RAbstractVector x, String mode) {
+    protected boolean castToInt(RAbstractContainer x, String mode) {
         return x.getElementClass() != RInt.class && RType.Integer.getName().equals(mode);
     }
 
-    protected boolean castToDouble(RAbstractVector x, String mode) {
+    protected boolean castToDouble(RAbstractContainer x, String mode) {
         return x.getElementClass() != RDouble.class && (RType.Numeric.getName().equals(mode) || RType.Double.getName().equals(mode));
     }
 
-    protected boolean castToComplex(RAbstractVector x, String mode) {
+    protected boolean castToComplex(RAbstractContainer x, String mode) {
         return x.getElementClass() != RComplex.class && RType.Complex.getName().equals(mode);
     }
 
-    protected boolean castToLogical(RAbstractVector x, String mode) {
+    protected boolean castToLogical(RAbstractContainer x, String mode) {
         return x.getElementClass() != RLogical.class && RType.Logical.getName().equals(mode);
     }
 
-    protected boolean castToString(RAbstractVector x, String mode) {
+    protected boolean castToString(RAbstractContainer x, String mode) {
         return x.getElementClass() != RString.class && RType.Character.getName().equals(mode);
     }
 
-    protected boolean castToRaw(RAbstractVector x, String mode) {
+    protected boolean castToRaw(RAbstractContainer x, String mode) {
         return x.getElementClass() != RRaw.class && RType.Raw.getName().equals(mode);
     }
 
-    protected boolean castToList(RAbstractVector x, String mode) {
+    protected boolean castToList(RAbstractContainer x, String mode) {
         return x.getElementClass() != Object.class && RType.List.getName().equals(mode);
     }
 
-    protected boolean castToList(@SuppressWarnings("unused") RLanguage x, String mode) {
+    protected boolean castToList(@SuppressWarnings("unused") Object x, String mode) {
         return RType.List.getName().equals(mode);
     }
 
-    protected boolean castToList(@SuppressWarnings("unused") RExpression x, String mode) {
-        return RType.List.getName().equals(mode);
-    }
-
-    protected boolean castToList(@SuppressWarnings("unused") RPairList x, String mode) {
-        return RType.List.getName().equals(mode);
-    }
-
-    protected boolean castToList(@SuppressWarnings("unused") RNull x, String mode) {
-        return RType.List.getName().equals(mode);
-    }
-
-    protected boolean castToSymbol(RAbstractVector x, String mode) {
+    protected boolean castToSymbol(RAbstractContainer x, String mode) {
         return x.getElementClass() != Object.class && RType.Symbol.getName().equals(mode);
     }
 
