@@ -371,7 +371,7 @@ class GroupDispatchNode extends S3DispatchNode {
         defineVarsAsArguments(argFrame);
         defineVarsInFrame(s3VarDefFrame);
         wvnMethod = defineVarInFrame(s3VarDefFrame, wvnMethod, RRuntime.RDotMethod, dotMethod);
-        RArguments.setS3Method(argFrame, targetFunctionName);
+        RArguments.setS3Method(argFrame, dotMethod);
         if (writeGroup) {
             wvnGroup = defineVarInFrame(s3VarDefFrame, wvnGroup, RRuntime.RDotGroup, groupName);
             RArguments.setS3Group(argFrame, groupName);
