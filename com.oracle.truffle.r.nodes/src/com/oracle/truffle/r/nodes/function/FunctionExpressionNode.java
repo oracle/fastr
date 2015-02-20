@@ -32,85 +32,56 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public abstract class FunctionExpressionNode extends RNode {
+public final class FunctionExpressionNode extends RNode {
+
+    public static FunctionExpressionNode create(RootCallTarget callTarget) {
+        return new FunctionExpressionNode(callTarget);
+    }
+
+    private final RootCallTarget callTarget;
+    private final PromiseDeoptimizeFrameNode deoptFrameNode;
+
+    public FunctionExpressionNode(RootCallTarget callTarget) {
+        this.callTarget = callTarget;
+        this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() ? new PromiseDeoptimizeFrameNode() : null;
+    }
 
     @Override
-    public final RFunction execute(VirtualFrame frame) {
+    public RFunction execute(VirtualFrame frame) {
         return executeFunction(frame);
     }
 
     @Override
-    public abstract RFunction executeFunction(VirtualFrame frame);
-
-    public static FunctionExpressionNode create(RFunction function) {
-        return new StaticFunctionExpressionNode(function);
+    public RFunction executeFunction(VirtualFrame frame) {
+        MaterializedFrame matFrame = frame.materialize();
+        if (deoptFrameNode != null) {
+            // Deoptimize every promise which is now in this frame, as it might leave it's stack
+            deoptFrameNode.deoptimizeFrame(matFrame);
+        }
+        RFunction func = RDataFactory.createFunction("", callTarget, matFrame);
+        if (RInstrument.instrumentingEnabled()) {
+            RInstrument.checkDebugRequested(callTarget.toString(), func);
+        }
+        return func;
     }
 
-    public static FunctionExpressionNode create(RootCallTarget callTarget) {
-        return new DynamicFunctionExpressionNode(callTarget);
+    public RootCallTarget getCallTarget() {
+        return callTarget;
     }
 
-    public static final class StaticFunctionExpressionNode extends FunctionExpressionNode {
-
-        private final RFunction function;
-
-        public StaticFunctionExpressionNode(RFunction function) {
-            // TODO DEOPT needed here?
-            this.function = function;
-        }
-
-        @Override
-        public RFunction executeFunction(VirtualFrame frame) {
-            return function;
-        }
-
-        public RFunction getFunction() {
-            return function;
-        }
+    @Override
+    public boolean isSyntax() {
+        return true;
     }
 
-    public static final class DynamicFunctionExpressionNode extends FunctionExpressionNode {
+    @Override
+    public void deparse(State state) {
+        ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
+    }
 
-        private final RootCallTarget callTarget;
-        private final PromiseDeoptimizeFrameNode deoptFrameNode;
-
-        public DynamicFunctionExpressionNode(RootCallTarget callTarget) {
-            this.callTarget = callTarget;
-            this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() ? new PromiseDeoptimizeFrameNode() : null;
-        }
-
-        @Override
-        public RFunction executeFunction(VirtualFrame frame) {
-            MaterializedFrame matFrame = frame.materialize();
-            if (deoptFrameNode != null) {
-                // Deoptimize every promise which is now in this frame, as it might leave it's stack
-                deoptFrameNode.deoptimizeFrame(matFrame);
-            }
-            RFunction func = RDataFactory.createFunction("", callTarget, matFrame);
-            if (RInstrument.instrumentingEnabled()) {
-                RInstrument.checkDebugRequested(callTarget.toString(), func);
-            }
-            return func;
-        }
-
-        public RootCallTarget getCallTarget() {
-            return callTarget;
-        }
-
-        @Override
-        public boolean isSyntax() {
-            return true;
-        }
-
-        @Override
-        public void deparse(State state) {
-            ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
-        }
-
-        @Override
-        public RNode substitute(REnvironment env) {
-            FunctionDefinitionNode fdn = ((FunctionDefinitionNode) callTarget.getRootNode()).substituteFDN(env);
-            return new DynamicFunctionExpressionNode(Truffle.getRuntime().createCallTarget(fdn));
-        }
+    @Override
+    public RNode substitute(REnvironment env) {
+        FunctionDefinitionNode fdn = ((FunctionDefinitionNode) callTarget.getRootNode()).substituteFDN(env);
+        return new FunctionExpressionNode(Truffle.getRuntime().createCallTarget(fdn));
     }
 }
