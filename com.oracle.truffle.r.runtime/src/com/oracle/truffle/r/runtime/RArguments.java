@@ -92,8 +92,6 @@ public final class RArguments {
     private static final int INDEX_IS_IRREGULAR = 6;
     private static final int INDEX_N_NAMES = 7;
     private static final int INDEX_ARGUMENTS = 8;
-
-    private static final int S3_VAR_COUNT = 9;
     /*
      * These indices are relative to INDEX_ARGUMENTS + nArgs+ nNames
      */
@@ -103,6 +101,7 @@ public final class RArguments {
     private static final int S3_INDEX_CALL_ENV = 3;
     private static final int S3_INDEX_DEF_ENV = 4;
     private static final int S3_INDEX_GROUP = 5;
+    private static final int S3_VAR_COUNT = 6;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
