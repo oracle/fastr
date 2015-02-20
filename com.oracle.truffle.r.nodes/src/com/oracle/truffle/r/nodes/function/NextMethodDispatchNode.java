@@ -59,7 +59,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame, final RStringVector aType) {
+    public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
         readGenericVars(frame);
         findTargetFunction(frame);
         storeValues();

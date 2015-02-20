@@ -131,12 +131,12 @@ public abstract class DispatchedCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RStringVector type) {
-            return dcn.execute(frame, type);
+            return dcn.executeGeneric(frame, type);
         }
 
         @Override
         public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
-            return dcn.executeInternal(frame, type, args);
+            return dcn.executeInternalGeneric(frame, type, args);
         }
     }
 

@@ -273,7 +273,7 @@ class GroupDispatchNode extends S3DispatchNode {
     protected final SourceSection argSrc;
 
     @Override
-    public Object execute(VirtualFrame frame, RStringVector aType) {
+    public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
         throw new AssertionError();
     }
 

@@ -67,7 +67,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame, RStringVector aType) {
+    public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
         Frame funFrame = getCallerFrame(frame);
         findTargetFunction(RArguments.getEnclosingFrame(frame));
@@ -84,7 +84,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) {
         this.type = aType;
         // TBD getEnclosing?
         findTargetFunction(frame);

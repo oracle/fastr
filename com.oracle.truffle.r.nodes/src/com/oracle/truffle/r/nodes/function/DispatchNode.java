@@ -35,10 +35,10 @@ public abstract class DispatchNode extends RNode {
         }
     }
 
-    public abstract Object execute(VirtualFrame frame, RStringVector aType);
+    public abstract Object executeGeneric(VirtualFrame frame, RStringVector aType);
 
     @SuppressWarnings("unused")
-    public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) {
         throw RInternalError.shouldNotReachHere();
     }
 
