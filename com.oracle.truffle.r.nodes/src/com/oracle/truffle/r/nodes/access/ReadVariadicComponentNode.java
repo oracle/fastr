@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class ReadVariadicComponentNode extends RNode {
 
-    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", false);
+    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RType.Any, ReadKind.Silent);
     @Child private PromiseHelperNode promiseHelper;
 
     private final int index;
@@ -50,10 +51,8 @@ public class ReadVariadicComponentNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        Object args = null;
-        try {
-            args = lookup.execute(frame);
-        } catch (RError e) {
+        Object args = lookup.execute(frame);
+        if (args == null) {
             errorBranch.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_DOT_DOT, index + 1);
         }
