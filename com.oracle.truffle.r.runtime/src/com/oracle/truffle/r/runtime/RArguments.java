@@ -278,34 +278,34 @@ public final class RArguments {
         args[s3StartIndex + S3_INDEX_METHOD] = method;
     }
 
-    public static Frame getS3DefEnv(Frame frame) {
+    public static MaterializedFrame getS3DefEnv(Frame frame) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         if (args.length <= s3StartIndex) {
             return null;
         } else {
-            return (Frame) args[s3StartIndex + S3_INDEX_DEF_ENV];
+            return (MaterializedFrame) args[s3StartIndex + S3_INDEX_DEF_ENV];
         }
     }
 
-    public static void setS3DefEnv(Frame frame, Frame defEnv) {
+    public static void setS3DefEnv(Frame frame, MaterializedFrame defEnv) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_DEF_ENV] = defEnv;
     }
 
-    public static Frame getS3CallEnv(Frame frame) {
+    public static MaterializedFrame getS3CallEnv(Frame frame) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         if (args.length <= s3StartIndex) {
             return null;
         } else {
-            return (Frame) args[s3StartIndex + S3_INDEX_CALL_ENV];
+            return (MaterializedFrame) args[s3StartIndex + S3_INDEX_CALL_ENV];
         }
     }
 
-    public static void setS3CallEnv(Frame frame, Frame callEnv) {
+    public static void setS3CallEnv(Frame frame, MaterializedFrame callEnv) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);

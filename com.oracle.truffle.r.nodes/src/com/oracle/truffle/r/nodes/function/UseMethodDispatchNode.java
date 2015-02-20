@@ -169,7 +169,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
-        genCallEnv = callerFrame;
+        genCallEnv = callerFrame.materialize();
         defineVarsAsArguments(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);
         return indirectCallNode.call(newFrame, targetFunction.getTarget(), argObject);

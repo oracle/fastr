@@ -39,8 +39,8 @@ public abstract class S3DispatchNode extends DispatchNode {
     protected RFunction targetFunction;
     protected RStringVector klass;
     protected FunctionCall funCall;
-    protected Frame genCallEnv;
-    protected Frame genDefEnv;
+    protected MaterializedFrame genCallEnv;
+    protected MaterializedFrame genDefEnv;
     protected boolean isFirst;
 
     // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
