@@ -28,12 +28,14 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.CombineFactory.UnwrapExpressionNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -51,6 +53,8 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Child private Combine combineRecursive;
 
     @Child private UnwrapExpression unwrapExpression;
+
+    @Child private DispatchedCallNode dcn;
 
     private final ConditionProfile noAttributesAndNamesProfile = ConditionProfile.createBinaryProfile();
 
@@ -139,9 +143,32 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return (RLogicalVector) passVector(vector);
     }
 
-    @Specialization
+    @Specialization(guards = "!isNumericVersion")
     protected RList pass(RList list) {
         return (RList) passVector(list);
+    }
+
+    @Specialization(guards = "isNumericVersion")
+    /**
+     * A temporary specific hack for internal generic dispatch on "numeric_version" objects
+     * which are {@link Rlist}s.
+     */
+    protected RList passNumericVersion(VirtualFrame frame, RList list) {
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(DispatchedCallNode.create("c", DispatchType.UseMethod, getSuppliedArgsNames()));
+        }
+        return (RList) dcn.executeInternal(frame, list.getClassHierarchy(), new Object[]{list});
+    }
+
+    public static boolean isNumericVersion(RList list) {
+        RStringVector klass = list.getClassAttr();
+        for (int i = 0; i < klass.getLength(); i++) {
+            if (klass.getDataAt(i).equals("numeric_version")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Specialization
