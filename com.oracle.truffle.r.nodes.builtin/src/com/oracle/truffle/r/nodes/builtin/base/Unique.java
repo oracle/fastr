@@ -263,6 +263,16 @@ public abstract class Unique extends RBuiltinNode {
         }
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "lengthOne")
+    protected RList doUnique(RList list, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
+        return (RList) list.copyDropAttributes();
+    }
+
+    public static boolean lengthOne(RList list) {
+        return list.getLength() == 1;
+    }
+
     private static final class NonRecursiveHashSetInt {
 
         private int[] keys;
