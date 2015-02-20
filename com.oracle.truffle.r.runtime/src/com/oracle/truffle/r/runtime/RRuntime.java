@@ -312,7 +312,7 @@ public class RRuntime {
         // FIXME use R rules
         if ("Inf".equals(v)) {
             return Double.POSITIVE_INFINITY;
-        } else if ("NaN".equals(v)) {
+        } else if ("NaN".equals(v) || "NA_real_".equals(v)) {
             return Double.NaN;
         }
         try {
