@@ -15136,6 +15136,10 @@ list(a = 1, b = 2, 3)
 list(a = 1, b = 2, x + z, a * b, 3, x + z, a * b)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f <- function(...) { substitute(list(a=1,b=2,...,3,...,c=8)) } ; f() }
+list(a = 1, b = 2, 3, c = 8)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
 #{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }
 c
 
@@ -15182,6 +15186,10 @@ list(c(1, 2))
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
 #{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2)) }
 list(c(x = 1, 2))
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
+#{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2, z=3)) }
+list(c(x = 1, 2, z = 3))
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute
 #{ f<-function(...) { substitute(list(...)) }; is.double(f(c(x=1,2))[[2]][[2]]) }
