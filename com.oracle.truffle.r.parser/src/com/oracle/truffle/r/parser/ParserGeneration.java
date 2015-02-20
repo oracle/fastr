@@ -60,7 +60,8 @@ public class ParserGeneration {
         "clean up ... handling in parser",
         "dedicated AST nodes for ..N",
         "support strings in field accesses",
-        "allow NULL= in switch"
+        "allow NULL= in switch",
+        "support NA_complex_",
     };
 
 }

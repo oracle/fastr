@@ -314,6 +314,8 @@ public class RRuntime {
             return Double.POSITIVE_INFINITY;
         } else if ("NaN".equals(v)) {
             return Double.NaN;
+        } else if ("NA_real_".equals(v)) {
+            return DOUBLE_NA;
         }
         try {
             return Double.parseDouble(v);

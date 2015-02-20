@@ -80,7 +80,11 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             case STRING:
                 return ConstantNode.create(src, c.getValues()[0]);
             case COMPLEX:
-                return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(c.getValues()[0])));
+                if (c.getValues()[0].equals("NA_complex_")) {
+                    return ConstantNode.create(src, RDataFactory.createComplex(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART));
+                } else {
+                    return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(c.getValues()[0])));
+                }
             default:
                 throw new UnsupportedOperationException();
         }

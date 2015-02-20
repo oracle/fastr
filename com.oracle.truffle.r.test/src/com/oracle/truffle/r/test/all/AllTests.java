@@ -2005,6 +2005,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testVectorizedLogicalAnd_9e4710494e3f95a4f5f136a5a782d816() {
+        assertEval("{ c(FALSE, NA) & c(NA, NA) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testVectorizedLogicalAndAsFunction_c6c81ab71937235d9de882c22f3a3450() {
         assertEval("{ f <- function(a,b) { a & b } ; f(TRUE, 1L) ; f(FALSE, FALSE) }");
     }
@@ -2152,6 +2157,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testVectorizedLogicalOr_b0e626937a889ce9724ab2f04295d8ea() {
         assertEval("{ a <- as.raw(200) ; b <- as.raw(1) ; a | b }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testVectorizedLogicalOr_a83298eab0b73beda9c1a6fe24bd3db9() {
+        assertEval("c(TRUE, FALSE) | c(NA, NA)");
     }
 
     @Test

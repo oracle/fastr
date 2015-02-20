@@ -1606,6 +1606,10 @@ logical(0)
 [1] 01
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testVectorizedLogicalAnd
+#{ c(FALSE, NA) & c(NA, NA) }
+[1] FALSE    NA
+
+##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testVectorizedLogicalAnd
 #{ x <- 1 ; f <- function(r) { x <<- 2; r } ; FALSE & f(FALSE) ; x }
 [1] 2
 
@@ -1700,6 +1704,10 @@ $names
 ##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testVectorizedLogicalComplex
 #{ 1+2i | 0 }
 [1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testVectorizedLogicalOr
+#c(TRUE, FALSE) | c(NA, NA)
+[1] TRUE   NA
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleArithmetic.testVectorizedLogicalOr
 #{ 0 | 0 }

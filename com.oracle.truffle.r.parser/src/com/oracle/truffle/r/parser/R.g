@@ -167,7 +167,7 @@ script returns [ASTNode v]
         SourceSection src = sourceSection("script", $start, $stop);
         if ($stop == null) {
             String code = src.getCode();
-            RError.error(RError.Message.UNEXPECTED, code, code); 
+            RError.error(RError.Message.UNEXPECTED, code, code);
         }
         $v = Sequence.create(src, stmts);
     }
@@ -500,6 +500,7 @@ simple_expr returns [ASTNode v]
     | t=NAINT                                   { $v = Constant.createIntConstant(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
     | t=NAREAL                                  { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAREAL", t), "NA_real_"); }
     | t=NACHAR                                  { $v = Constant.createStringNA(sourceSection("simple_expr/NACHAR", t)); }
+    | t=NACOMPL                                 { $v = Constant.createComplexConstant(sourceSection("simple_expr/NACOMPL", t), "NA_complex_"); }
     | num=number                                { $v = num; }
     | cstr=conststring                          { $v = cstr; }
     | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
@@ -642,7 +643,7 @@ NA       : 'NA' ;
 NAINT    : 'NA_integer_' ;
 NAREAL   : 'NA_real_' ;
 NACHAR   : 'NA_character_' ;
-///NACOMPL  : 'NA_complex_' ;
+NACOMPL  : 'NA_complex_' ;
 TRUE     : 'TRUE' ;
 FALSE    : 'FALSE' ;
 INF      : 'Inf' ;
