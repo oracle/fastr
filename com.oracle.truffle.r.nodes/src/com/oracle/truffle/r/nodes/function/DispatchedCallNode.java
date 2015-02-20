@@ -106,6 +106,7 @@ public abstract class DispatchedCallNode extends RNode {
                 DispatchNode current = createCurrentNode(type);
                 return replace(new CachedNode(current, new UninitializedDispatchedCallNode(this, depth + 1), type));
             }
+            RError.performanceWarning("S3 method dispatch fallback to generic");
             return this.replace(new GenericDispatchNode(createCurrentNode(type)));
         }
 
