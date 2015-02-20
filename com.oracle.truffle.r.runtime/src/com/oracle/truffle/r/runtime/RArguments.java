@@ -232,7 +232,7 @@ public final class RArguments {
         return (String) args[s3StartIndex + S3_INDEX_GENERIC];
     }
 
-    public static void setS3Generic(Frame frame, final String generic) {
+    public static void setS3Generic(Frame frame, String generic) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
@@ -254,24 +254,24 @@ public final class RArguments {
         }
     }
 
-    public static void setS3Class(Frame frame, final RStringVector klass) {
+    public static void setS3Class(Frame frame, RStringVector klass) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_CLASS] = klass;
     }
 
-    public static String getS3Method(Frame frame) {
+    public static Object getS3Method(Frame frame) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         if (args.length <= s3StartIndex) {
             return null;
         } else {
-            return (String) args[s3StartIndex + S3_INDEX_METHOD];
+            return args[s3StartIndex + S3_INDEX_METHOD];
         }
     }
 
-    public static void setS3Method(Frame frame, final String method) {
+    public static void setS3Method(Frame frame, Object method) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
@@ -322,7 +322,7 @@ public final class RArguments {
         }
     }
 
-    public static void setS3Group(Frame frame, final String group) {
+    public static void setS3Group(Frame frame, String group) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);

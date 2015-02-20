@@ -221,7 +221,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         } else {
             handlePresentGroup();
         }
-        String functionName = RArguments.getS3Method(frame);
+        String functionName = (String) RArguments.getS3Method(frame);
         if (functionName != null) {
             storedFunctionName = functionName;
         }
