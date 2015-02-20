@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -67,7 +68,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     public Object execute(VirtualFrame frame) {
         Frame funFrame = getCallerFrame(frame);
         if (targetFunction == null) {
-            findTargetFunction(RArguments.getEnclosingFrame(frame));
+            findTargetFunction(RArguments.getEnclosingFrame(frame), true);
         }
         return executeHelper(frame, funFrame);
     }
@@ -81,7 +82,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     public Object executeInternal(VirtualFrame frame, Object[] args) {
         if (targetFunction == null) {
             // TBD getEnclosing?
-            findTargetFunction(frame);
+            findTargetFunction(frame, false);
         }
         return executeHelper(frame, args);
     }
@@ -172,11 +173,15 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
-    private void findTargetFunction(Frame callerFrame) {
+    private void findTargetFunction(Frame callerFrame, boolean throwsRError) {
         findTargetFunctionLookup(callerFrame);
         if (targetFunction == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+            if (throwsRError) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+            } else {
+                throw new NoGenericMethodException();
+            }
         }
     }
 
@@ -234,7 +239,7 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
     @Override
     public Object executeGeneric(VirtualFrame frame, RStringVector type) {
         Frame funFrame = getCallerFrame(frame);
-        findTargetFunction(RArguments.getEnclosingFrame(frame), type);
+        findTargetFunction(RArguments.getEnclosingFrame(frame), type, true);
         return executeHelper(frame, funFrame);
     }
 
@@ -246,7 +251,7 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
     @Override
     public Object executeInternalGeneric(VirtualFrame frame, RStringVector type, Object[] args) {
         // TBD getEnclosing?
-        findTargetFunction(frame, type);
+        findTargetFunction(frame, type, false);
         return executeHelper(frame, args);
     }
 
@@ -331,11 +336,15 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
-    private void findTargetFunction(Frame callerFrame, RStringVector type) {
+    private void findTargetFunction(Frame callerFrame, RStringVector type, boolean throwsRError) {
         findTargetFunctionLookup(callerFrame, type);
         if (targetFunction == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
+            if (throwsRError) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
+            } else {
+                throw new NoGenericMethodException();
+            }
         }
     }
 

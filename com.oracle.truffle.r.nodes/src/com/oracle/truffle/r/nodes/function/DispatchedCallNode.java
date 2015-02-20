@@ -21,6 +21,10 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchedCallNode extends RNode {
 
+    public static final class NoGenericMethodException extends ControlFlowException {
+        private static final long serialVersionUID = 344198853147758435L;
+    }
+
     public static enum DispatchType {
         UseMethod,
         NextMethod
@@ -43,7 +47,7 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, RStringVector type);
 
-    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
+    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) throws NoGenericMethodException;
 
     @Override
     public boolean isSyntax() {
@@ -88,7 +92,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) throws NoGenericMethodException {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return specialize(type).executeInternal(frame, type, args);
         }
@@ -129,7 +133,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) throws NoGenericMethodException {
             return dcn.executeInternalGeneric(frame, type, args);
         }
     }
@@ -155,7 +159,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) throws NoGenericMethodException {
             if (S3DispatchNode.isEqualType(type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }

@@ -255,7 +255,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }
@@ -269,7 +269,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }

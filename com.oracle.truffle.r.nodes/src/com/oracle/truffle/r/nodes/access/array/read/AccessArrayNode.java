@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConvert
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
@@ -251,7 +252,7 @@ public abstract class AccessArrayNode extends RNode {
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }
     }
@@ -265,7 +266,7 @@ public abstract class AccessArrayNode extends RNode {
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, exact});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }
     }

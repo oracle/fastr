@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -256,7 +256,7 @@ public class InfixEmulationFunctions {
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
         }
@@ -282,7 +282,7 @@ public class InfixEmulationFunctions {
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
             }
         }
@@ -378,7 +378,7 @@ public class InfixEmulationFunctions {
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
             }
         }
@@ -482,7 +482,7 @@ public class InfixEmulationFunctions {
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 Object value = args.getValues()[args.length() - 1];
                 return update(frame, x, args, value, IS_SUBSET);
             }
@@ -521,7 +521,7 @@ public class InfixEmulationFunctions {
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 Object value = args.getValues()[args.length() - 1];
                 return update(frame, x, args, value, IS_SUBSET);
             }

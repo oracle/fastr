@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -82,9 +83,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(DispatchedCallNode.create(getBindType(), DispatchType.UseMethod, SIGNATURE));
         }
-        // we don't pass deparseLevel (if we do, this fails) but data frame versions of rbind/cbind
-        // do not use it anyway
-        return dcn.executeInternal(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), new Object[]{deparseLevel, args});
+        try {
+            return dcn.executeInternal(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), new Object[]{deparseLevel, args});
+        } catch (NoGenericMethodException e) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, BiFunction<VirtualFrame, Object, RAbstractVector> castFunction) {

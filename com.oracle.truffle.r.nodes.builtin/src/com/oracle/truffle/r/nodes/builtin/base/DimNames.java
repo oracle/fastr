@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -70,7 +70,7 @@ public abstract class DimNames extends RBuiltinNode {
         }
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return isNull(container) ? RNull.instance : container.getDimNames();
         }
     }
