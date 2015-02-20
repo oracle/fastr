@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,35 +24,23 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * Simple container class for holding arguments ({@link #getInlinedArgs()}) which are going to be
  * inlined into FastR built-ins (using {@link RBuiltinNode#inline(InlinedArguments)}.
- *
- * @see #getInlinedArgs()
- * @see #getNames()
  */
 public class InlinedArguments extends Arguments<RNode> {
 
-    InlinedArguments(RNode[] evaluatedArgs, String[] names) {
-        super(evaluatedArgs, names);
+    InlinedArguments(RNode[] evaluatedArgs, ArgumentsSignature signature) {
+        super(evaluatedArgs, signature);
     }
 
     /**
      * @return The argument array that contains the evaluated arguments, in formal order. Arguments
      *         may NOT be <code>null</code>.
-     * @see InlinedArguments
      */
     public RNode[] getInlinedArgs() {
         return arguments;
-    }
-
-    /**
-     * @return The names of the arguments that where supplied for the function, in the order the
-     *         function call specifies (NOT formal order). Names may NOT be <code>null</code>.
-     * @see InlinedArguments
-     */
-    public String[] getNames() {
-        return names;
     }
 }

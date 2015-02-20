@@ -63,7 +63,7 @@ public abstract class GroupDispatchCallNode extends RNode {
             }
         }
         // Delay assignment to allow recursion
-        RArgsValuesAndNames argAndNames = new RArgsValuesAndNames(evaledArgs, unrolledArgs.getNames());
+        RArgsValuesAndNames argAndNames = new RArgsValuesAndNames(evaledArgs, unrolledArgs.getSignature());
         return argAndNames;
     }
 
@@ -329,12 +329,12 @@ class GroupDispatchNode extends S3DispatchNode {
 
     public Object execute(VirtualFrame frame, RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
-        String[] argNames = argAndNames.getNames();
+        ArgumentsSignature signature = argAndNames.getSignature();
         if (!isExecuted) {
             isExecuted = true;
             this.type = evaluatedArgs.length > 0 ? getArgClass(evaluatedArgs[0]) : null;
             if (this.type == null) {
-                return callBuiltin(frame, evaluatedArgs, argNames);
+                return callBuiltin(frame, evaluatedArgs, signature);
             }
             findTargetFunction(frame);
             if (targetFunction != null) {
@@ -342,22 +342,22 @@ class GroupDispatchNode extends S3DispatchNode {
             }
         }
         if (targetFunction == null) {
-            return callBuiltin(frame, evaluatedArgs, argNames);
+            return callBuiltin(frame, evaluatedArgs, signature);
         }
-        return executeHelper(frame, evaluatedArgs, argNames);
+        return executeHelper(frame, evaluatedArgs, signature);
     }
 
-    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
+    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, ArgumentsSignature argumentsSignature) {
         initBuiltin(frame);
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, builtinFunc, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, null, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, builtinFunc, evaluatedArgs, argumentsSignature, this.hasVararg, this.callSrc);
+        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, null, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         indirectCallNode.assignSourceSection(this.callSrc);
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
     }
 
-    protected Object executeHelper(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+    protected Object executeHelper(VirtualFrame frame, Object[] evaluatedArgs, ArgumentsSignature argumentsSignature) {
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argumentsSignature, this.hasVararg, this.callSrc);
+        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         genCallEnv = frame.materialize();
         defineVarsAsArguments(argObject);
         RArguments.setS3Method(argObject, dotMethod);
@@ -399,18 +399,18 @@ class GenericGroupDispatchNode extends GroupDispatchNode {
     @Override
     public Object execute(VirtualFrame frame, RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
-        String[] argNames = argAndNames.getNames();
+        ArgumentsSignature signature = argAndNames.getSignature();
         this.type = getArgClass(evaluatedArgs[0]);
         if (this.type == null) {
-            return callBuiltin(frame, evaluatedArgs, argNames);
+            return callBuiltin(frame, evaluatedArgs, signature);
         }
         findTargetFunction(frame);
         if (targetFunction != null) {
             dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName, ""}, true);
         }
         if (targetFunction == null) {
-            callBuiltin(frame, evaluatedArgs, argNames);
+            callBuiltin(frame, evaluatedArgs, signature);
         }
-        return executeHelper(frame, evaluatedArgs, argNames);
+        return executeHelper(frame, evaluatedArgs, signature);
     }
 }

@@ -237,6 +237,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+
         private static final String NAME = "[";
 
         @Child private DispatchedCallNode dcn;
@@ -250,7 +252,7 @@ public class InfixEmulationFunctions {
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
@@ -276,7 +278,7 @@ public class InfixEmulationFunctions {
 
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
@@ -351,6 +353,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+
         private static final String NAME = "[[";
 
         @Child private DispatchedCallNode dcn;
@@ -370,7 +374,7 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "exact"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
@@ -458,6 +462,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
+
         private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;
 
@@ -472,7 +478,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", ""}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
@@ -511,7 +517,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, null));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, ArgumentsSignature.empty(2)));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});

@@ -117,13 +117,11 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
-     * @see #matchNodes(RFunction, RNode[], String[], SourceSection, SourceSection, boolean,
-     *      ClosureCache, boolean)
      */
     public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, false, suppliedArgs, noOpt);
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, false, suppliedArgs, noOpt);
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        return MatchedArguments.create(wrappedArgs, formals.getNames());
+        return MatchedArguments.create(wrappedArgs, formals.getSignature());
     }
 
     /**
@@ -138,12 +136,10 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
-     * @see #matchNodes(RFunction, RNode[], String[], SourceSection, SourceSection, boolean,
-     *      ClosureCache, boolean)
      */
     public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, argsSrc, true, suppliedArgs, false);
-        return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, true, suppliedArgs, false);
+        return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
     }
 
     /**
@@ -164,9 +160,9 @@ public class ArgumentMatcher {
                     boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        MatchPermutation match = permuteArguments(function, evaluatedArgs.getNames(), formals, callSrc, null, forNextMethod, index -> {
+        MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals, callSrc, null, forNextMethod, index -> {
             throw Utils.nyi("S3Dispatch should not have arg length mismatch");
-        }, index -> evaluatedArgs.getNames()[index]);
+        }, index -> evaluatedArgs.getSignature().getName(index));
 
         Object[] evaledArgs = new Object[match.resultPermutation.length];
 
@@ -183,7 +179,8 @@ public class ArgumentMatcher {
                     nonNull |= newVarArgs[i] != null;
                 }
                 if (nonNull) {
-                    evaledArgs[formalIndex] = new RArgsValuesAndNames(newVarArgs, match.varargsNames);
+                    ArgumentsSignature varArgSignature = ArgumentsSignature.get(match.varargsNames);
+                    evaledArgs[formalIndex] = new RArgsValuesAndNames(newVarArgs, varArgSignature);
                 } else {
                     evaledArgs[formalIndex] = RArgsValuesAndNames.EMPTY;
                 }
@@ -205,7 +202,7 @@ public class ArgumentMatcher {
                 if (defaultArg == null) {
                     // If neither supplied nor default argument
 
-                    if (formals.getVarArgIndex() == fi) {
+                    if (formals.getSignature().getVarArgIndex() == fi) {
                         // "...", but empty
                         evaledArgs[fi] = RArgsValuesAndNames.EMPTY;
                     } else {
@@ -227,7 +224,7 @@ public class ArgumentMatcher {
                 evaledArgs[i] = RMissing.instance;
             }
         }
-        return new EvaluatedArguments(evaledArgs, formals.getNames());
+        return new EvaluatedArguments(evaledArgs, formals.getSignature());
     }
 
     /**
@@ -237,7 +234,7 @@ public class ArgumentMatcher {
      *
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
-     * @param suppliedNames The names for the arguments supplied to the call
+     * @param suppliedSignature The names for the arguments supplied to the call
      * @param callSrc The source of the function call currently executed
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      * @param isForInlinedBuiltin Whether the arguments are passed into an inlined builtin and need
@@ -247,14 +244,14 @@ public class ArgumentMatcher {
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
      */
-    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
+    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
                     ClosureCache closureCache, boolean noOpt) {
-        assert suppliedArgs.length == suppliedNames.length;
+        assert suppliedArgs.length == suppliedSignature.getLength();
 
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        MatchPermutation match = permuteArguments(function, suppliedNames, formals, callSrc, argsSrc, false, index -> ArgumentsTrait.isVarArg(RMissingHelper.unwrapName(suppliedArgs[index])),
+        MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, argsSrc, false, index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])),
                         index -> suppliedArgs[index].getSourceSection().getCode());
 
         RNode[] defaultArgs = formals.getDefaultArgs();
@@ -319,7 +316,8 @@ public class ArgumentMatcher {
                 }
 
                 EvalPolicy evalPolicy = getEvalPolicy(builtinRootNode, formalIndex);
-                resArgs[formalIndex] = PromiseNode.createVarArgs(null, evalPolicy, newVarArgs, newNames, closureCache, callSrc);
+                ArgumentsSignature signature = ArgumentsSignature.get(newNames);
+                resArgs[formalIndex] = PromiseNode.createVarArgs(null, evalPolicy, newVarArgs, signature, closureCache, callSrc);
             } else {
                 RNode defaultArg = formalIndex < defaultArgs.length ? defaultArgs[formalIndex] : null;
                 RNode suppliedArg = suppliedIndex == UNMATCHED ? null : suppliedArgs[suppliedIndex];
@@ -348,8 +346,7 @@ public class ArgumentMatcher {
      * /** This method does the heavy lifting of re-arranging arguments by their names and position,
      * also handling varargs.
      *
-     * @param function The function which should be called
-     * @param suppliedNames The names the arguments might have
+     * @param signature The signature (==names) of the supplied arguments
      * @param formals The {@link FormalArguments} this function has
      * @param callSrc The source of the function call currently executed
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
@@ -358,27 +355,27 @@ public class ArgumentMatcher {
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
-    private static MatchPermutation permuteArguments(RFunction function, String[] suppliedNames, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
+    private static MatchPermutation permuteArguments(ArgumentsSignature signature, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
                     IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString) {
         // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
 
         // Preparations
-        int varArgIndex = formals.getVarArgIndex();
-        boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
+        int varArgIndex = formals.getSignature().getVarArgIndex();
+        boolean hasVarArgs = varArgIndex != ArgumentsSignature.NO_VARARG;
 
         // MATCH by exact name
-        int[] resultPermutation = new int[formals.getNames().length];
+        int[] resultPermutation = new int[formals.getSignature().getLength()];
         Arrays.fill(resultPermutation, UNMATCHED);
 
-        boolean[] matchedSuppliedArgs = new boolean[suppliedNames.length];
-        for (int suppliedIndex = 0; suppliedIndex < suppliedNames.length; suppliedIndex++) {
-            if (suppliedNames[suppliedIndex] == null || suppliedNames[suppliedIndex].isEmpty()) {
+        boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
+        for (int suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
+            if (signature.getName(suppliedIndex) == null || signature.getName(suppliedIndex).isEmpty()) {
                 continue;
             }
 
             // Search for argument name inside formal arguments
-            int formalIndex = findParameterPosition(formals.getNames(), suppliedNames[suppliedIndex], resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex, forNextMethod,
-                            errorString);
+            int formalIndex = findParameterPosition(formals.getSignature(), signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex,
+                            forNextMethod, errorString);
             if (formalIndex != UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
                 matchedSuppliedArgs[suppliedIndex] = true;
@@ -389,13 +386,13 @@ public class ArgumentMatcher {
 
         // MATCH by position
         int suppliedIndex = -1;
-        int regularArgumentCount = hasVarArgs ? varArgIndex : formals.getNames().length;
+        int regularArgumentCount = hasVarArgs ? varArgIndex : formals.getSignature().getLength();
         outer: for (int formalIndex = 0; formalIndex < regularArgumentCount; formalIndex++) {
             // Unmatched?
             if (resultPermutation[formalIndex] == UNMATCHED) {
                 while (true) {
                     suppliedIndex++;
-                    if (suppliedIndex == suppliedNames.length) {
+                    if (suppliedIndex == signature.getLength()) {
                         // no more unmatched supplied arguments
                         break outer;
                     }
@@ -404,7 +401,7 @@ public class ArgumentMatcher {
                             // for NextMethod, unused parameters are matched even when named
                             break;
                         }
-                        if (suppliedNames[suppliedIndex] == null || suppliedNames[suppliedIndex].isEmpty()) {
+                        if (signature.getName(suppliedIndex) == null || signature.getName(suppliedIndex).isEmpty()) {
                             // unnamed parameter, match by position
                             break;
                         }
@@ -419,7 +416,7 @@ public class ArgumentMatcher {
 
         // MATCH rest to vararg "..."
         if (hasVarArgs) {
-            int varArgCount = suppliedNames.length - cardinality(matchedSuppliedArgs);
+            int varArgCount = signature.getLength() - cardinality(matchedSuppliedArgs);
 
             // Create vararg array
             int[] varArgsPermutation = new int[varArgCount];
@@ -427,11 +424,11 @@ public class ArgumentMatcher {
 
             // Add every supplied argument that has not been matched
             int pos = 0;
-            for (suppliedIndex = 0; suppliedIndex < suppliedNames.length; suppliedIndex++) {
+            for (suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
                 if (!matchedSuppliedArgs[suppliedIndex]) {
                     matchedSuppliedArgs[suppliedIndex] = true;
                     varArgsPermutation[pos] = suppliedIndex;
-                    namesArray[pos] = suppliedNames[suppliedIndex];
+                    namesArray[pos] = signature.getName(suppliedIndex);
                     pos++;
                 }
             }
@@ -442,12 +439,12 @@ public class ArgumentMatcher {
             // Error check: Unused argument? (can only happen when there are no varargs)
 
             suppliedIndex = 0;
-            while (suppliedIndex < suppliedNames.length && matchedSuppliedArgs[suppliedIndex]) {
+            while (suppliedIndex < signature.getLength() && matchedSuppliedArgs[suppliedIndex]) {
                 suppliedIndex++;
             }
 
-            if (suppliedIndex < suppliedNames.length) {
-                int leftoverCount = suppliedNames.length - cardinality(matchedSuppliedArgs);
+            if (suppliedIndex < signature.getLength()) {
+                int leftoverCount = signature.getLength() - cardinality(matchedSuppliedArgs);
                 if (leftoverCount == 1) {
                     if (isVarSuppliedVarargs.test(suppliedIndex)) {
                         return new MatchPermutation(resultPermutation, null, null);
@@ -462,7 +459,7 @@ public class ArgumentMatcher {
                 // multiple unused arguments
                 StringBuilder str = new StringBuilder();
                 int cnt = 0;
-                for (; suppliedIndex < suppliedNames.length; suppliedIndex++) {
+                for (; suppliedIndex < signature.getLength(); suppliedIndex++) {
                     if (!matchedSuppliedArgs[suppliedIndex]) {
                         if (cnt++ > 0) {
                             str.append(", ");
@@ -492,15 +489,15 @@ public class ArgumentMatcher {
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
      */
-    private static <T> int findParameterPosition(String[] formalNames, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, SourceSection callSrc,
+    private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, SourceSection callSrc,
                     SourceSection argsSrc, int varArgIndex, boolean forNextMethod, IntFunction<String> errorString) {
         int found = UNMATCHED;
-        for (int i = 0; i < formalNames.length; i++) {
-            if (formalNames[i] == null) {
+        for (int i = 0; i < formalsSignature.getLength(); i++) {
+            String formalName = formalsSignature.getName(i);
+            if (formalName == null) {
                 continue;
             }
 
-            String formalName = formalNames[i];
             if (formalName.equals(suppliedName)) {
                 found = i;
                 if (resultPermutation[found] != UNMATCHED) {
@@ -508,7 +505,8 @@ public class ArgumentMatcher {
                     throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                 }
                 break;
-            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) && ((varArgIndex != FormalArguments.NO_VARARG && i < varArgIndex) || varArgIndex == FormalArguments.NO_VARARG)) {
+            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) &&
+                            ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
                 // partial-match only if the formal argument is positioned before ...
                 if (found >= 0) {
                     throw RError.error(argsSrc, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
@@ -566,7 +564,7 @@ public class ArgumentMatcher {
                 expr = defaultValue;
                 promiseType = PromiseType.ARG_DEFAULT;
             } else {
-                if (formals.getVarArgIndex() == formalIndex) {
+                if (formals.getSignature().getVarArgIndex() == formalIndex) {
                     // "...", but empty
                     return ConstantNode.create(RArgsValuesAndNames.EMPTY);
                 } else {

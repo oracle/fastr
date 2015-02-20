@@ -45,15 +45,15 @@ public abstract class S3DispatchNode extends DispatchNode {
         super(genericName);
     }
 
-    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, String[] argNames, boolean hasVarArgs, SourceSection callSrc) {
-        String[] evaluatedArgNames = null;
+    protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, ArgumentsSignature signature, boolean hasVarArgs, SourceSection callSrc) {
         Object[] evaluatedArgsValues = evaluatedArgs;
+        ArgumentsSignature evaluatedSignature;
         int argCount = evaluatedArgs.length;
         if (hasVarArgs) {
-            evaluatedArgNames = argNames;
+            evaluatedSignature = signature;
         } else {
-            boolean hasNames = argNames != null;
-            evaluatedArgNames = hasNames ? new String[argNames.length] : null;
+            String[] evaluatedArgNames = null;
+            evaluatedArgNames = new String[signature.getLength()];
             int fi = 0;
             int index = 0;
             int argListSize = evaluatedArgsValues.length;
@@ -66,23 +66,21 @@ public abstract class S3DispatchNode extends DispatchNode {
                     // argNames can be null if no names for arguments have been specified
                     evaluatedArgNames = evaluatedArgNames == null ? new String[argListSize] : Utils.resizeArray(evaluatedArgNames, argListSize);
                     Object[] varArgsValues = varArgsContainer.getValues();
-                    String[] varArgsNames = varArgsContainer.getNames();
                     for (int i = 0; i < varArgsContainer.length(); i++) {
                         addArg(evaluatedArgsValues, varArgsValues[i], index);
-                        String name = varArgsNames == null ? null : varArgsNames[i];
+                        String name = varArgsContainer.getSignature().getName(i);
                         evaluatedArgNames[index] = name;
                         index++;
                     }
                 } else {
                     addArg(evaluatedArgsValues, arg, index);
-                    if (hasNames) {
-                        evaluatedArgNames[index] = argNames[fi];
-                    }
+                    evaluatedArgNames[index] = signature.getName(fi);
                     index++;
                 }
             }
+            evaluatedSignature = ArgumentsSignature.get(evaluatedArgNames);
         }
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(evaluatedArgsValues, evaluatedArgNames);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(evaluatedArgsValues, evaluatedSignature);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, callSrc, promiseHelper, false);
         return reorderedArgs;

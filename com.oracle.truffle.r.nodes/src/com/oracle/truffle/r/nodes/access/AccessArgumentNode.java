@@ -87,7 +87,7 @@ public abstract class AccessArgumentNode extends RNode {
         assert this.formals == null;
         this.formals = formals;
         hasDefaultArg = formals.getDefaultArg(getIndex()) != null;
-        isVarArgIndex = formals.getVarArgIndex() == getIndex();
+        isVarArgIndex = formals.getSignature().getVarArgIndex() == getIndex();
     }
 
     /**

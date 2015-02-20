@@ -107,11 +107,11 @@ public class RASTUtils {
              */
             VarArgsPromiseNode vapn = ((VarArgsPromiseNode) argNode);
             RNode[] nodes = vapn.getNodes();
-            String[] names = vapn.getNames();
+            ArgumentsSignature signature = vapn.getSignature();
             RPairList prev = null;
             RPairList result = null;
             for (int i = 0; i < nodes.length; i++) {
-                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(nodes[i])), null, names[i]);
+                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(nodes[i])), null, signature.getName(i));
                 if (prev != null) {
                     prev.setCdr(pl);
                 } else {

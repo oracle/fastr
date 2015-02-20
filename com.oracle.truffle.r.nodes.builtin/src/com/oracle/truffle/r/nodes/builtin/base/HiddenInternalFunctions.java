@@ -57,7 +57,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], this.getBuiltin(), this.getSuppliedArgsNames()));
+                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], getBuiltin(), getSuppliedSignature()));
             }
         }
 
@@ -202,7 +202,7 @@ public class HiddenInternalFunctions {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
 
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, new String[0]);
+                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, ArgumentsSignature.empty(1));
                             // TODO this cast is problematic
                             return callCache.execute((VirtualFrame) frame, envhook.getTarget(), callArgs);
                         }

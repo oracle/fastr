@@ -24,6 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+import java.util.function.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -45,6 +48,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     @Child private CastToVectorNode castVector;
     @Child private DispatchedCallNode dcn;
 
+    private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullNames = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
@@ -70,179 +74,81 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return RNull.instance;
     }
 
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"deparse.level", "..."});
+
     @Specialization(guards = {"!oneElement", "isDataFrame"})
-    protected Object allDataFrame(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevel, RArgsValuesAndNames args) {
+    protected Object allDataFrame(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(getBindType(), DispatchType.UseMethod, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create(getBindType(), DispatchType.UseMethod, SIGNATURE));
         }
         // we don't pass deparseLevel (if we do, this fails) but data frame versions of rbind/cbind
         // do not use it anyway
-        return dcn.executeInternal(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), args.getValues());
+        return dcn.executeInternal(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), new Object[]{deparseLevel, args});
+    }
+
+    private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, BiFunction<VirtualFrame, Object, RAbstractVector> castFunction) {
+        controlVisibility();
+        Object[] array = args.getValues();
+        ArgumentsSignature signature = args.getSignature();
+        String[] vecNames = nullNamesProfile.profile(signature.getNonNullCount() == 0) ? null : new String[signature.getLength()];
+        RAbstractVector[] vectors = new RAbstractVector[args.length()];
+        boolean complete = true;
+        int ind = 0;
+        naCheck.enable(true);
+        for (int i = 0; i < array.length; i++) {
+            if (vecNames != null) {
+                nonNullNames.enter();
+                vecNames[ind] = signature.getName(i);
+                naCheck.check(vecNames[ind]);
+            }
+            RAbstractVector vector = castFunction.apply(frame, array[i]);
+            if (emptyVectorProfile.profile(vector.getLength() == 0)) {
+                // nothing to do
+            } else {
+                vectors[ind] = vector;
+                complete &= vector.isComplete();
+                ind++;
+            }
+        }
+        if (emptyVectorProfile.profile(ind < array.length)) {
+            if (vecNames != null) {
+                nonNullNames.enter();
+                vecNames = Arrays.copyOf(vecNames, ind);
+            }
+            vectors = Arrays.copyOf(vectors, ind);
+        }
+        return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
     }
 
     @Specialization(guards = {"isIntegerPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allInt(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        controlVisibility();
-        Object[] array = args.getValues();
-        String[] oldVecNames = args.getNamesNull();
-        String[] vecNames = oldVecNames;
-        RAbstractVector[] vectors = new RAbstractVector[args.length()];
-        boolean complete = true;
-        int ind = 0;
-        for (int i = 0; i < array.length; i++) {
-            if (vecNames != null) {
-                nonNullNames.enter();
-                vecNames[ind] = oldVecNames[i];
-                naCheck.check(vecNames[ind]);
-            }
-            vectors[ind] = castVector(frame, castInteger(frame, array[i], true));
-            if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
-                if (vecNames != null) {
-                    nonNullNames.enter();
-                    vecNames = Utils.resizeArray(vecNames, vecNames.length - 1);
-                }
-                vectors = Utils.resizeArray(vectors, vectors.length - 1);
-            } else {
-                complete &= vectors[ind].isComplete();
-                ind++;
-            }
-        }
-
-        return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
+        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castInteger(f, e, true)));
     }
 
     @Specialization(guards = {"isDoublePrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allDouble(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        controlVisibility();
-        Object[] array = args.getValues();
-        String[] oldVecNames = args.getNamesNull();
-        String[] vecNames = oldVecNames;
-        RAbstractVector[] vectors = new RAbstractVector[args.length()];
-        boolean complete = true;
-        int ind = 0;
-        naCheck.enable(true);
-        for (int i = 0; i < array.length; i++) {
-            if (vecNames != null) {
-                nonNullNames.enter();
-                vecNames[ind] = oldVecNames[i];
-                naCheck.check(vecNames[ind]);
-            }
-            vectors[ind] = castVector(frame, castDouble(frame, array[i], true));
-            if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
-                if (vecNames != null) {
-                    nonNullNames.enter();
-                    vecNames = Utils.resizeArray(vecNames, vecNames.length - 1);
-                }
-                vectors = Utils.resizeArray(vectors, vectors.length - 1);
-            } else {
-                complete &= vectors[ind].isComplete();
-                ind++;
-            }
-        }
-
-        return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
+        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castDouble(f, e, true)));
     }
 
     @Specialization(guards = {"isStringPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allString(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        controlVisibility();
-        Object[] array = args.getValues();
-        String[] oldVecNames = args.getNamesNull();
-        String[] vecNames = oldVecNames;
-        RAbstractVector[] vectors = new RAbstractVector[args.length()];
-        boolean complete = true;
-        int ind = 0;
-        naCheck.enable(true);
-        for (int i = 0; i < array.length; i++) {
-            if (vecNames != null) {
-                nonNullNames.enter();
-                vecNames[ind] = oldVecNames[i];
-                naCheck.check(vecNames[ind]);
-            }
-            vectors[ind] = castVector(frame, castString(frame, array[i], true));
-            if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
-                if (vecNames != null) {
-                    nonNullNames.enter();
-                    vecNames = Utils.resizeArray(vecNames, vecNames.length - 1);
-                }
-                vectors = Utils.resizeArray(vectors, vectors.length - 1);
-            } else {
-                complete &= vectors[ind].isComplete();
-                ind++;
-            }
-        }
-
-        return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
+        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castString(f, e, true)));
     }
 
     @Specialization(guards = {"isComplexPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allComplex(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        controlVisibility();
-        Object[] array = args.getValues();
-        String[] oldVecNames = args.getNamesNull();
-        String[] vecNames = oldVecNames;
-        RAbstractVector[] vectors = new RAbstractVector[args.length()];
-        boolean complete = true;
-        int ind = 0;
-        naCheck.enable(true);
-        for (int i = 0; i < array.length; i++) {
-            if (vecNames != null) {
-                nonNullNames.enter();
-                vecNames[ind] = oldVecNames[i];
-                naCheck.check(vecNames[ind]);
-            }
-            vectors[ind] = castVector(frame, castComplex(frame, array[i], true));
-            if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
-                if (vecNames != null) {
-                    nonNullNames.enter();
-                    vecNames = Utils.resizeArray(vecNames, vecNames.length - 1);
-                }
-                vectors = Utils.resizeArray(vectors, vectors.length - 1);
-            } else {
-                complete &= vectors[ind].isComplete();
-                ind++;
-            }
-        }
-
-        return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
+        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castComplex(f, e, true)));
     }
 
     @Specialization(guards = {"isListPrecedence", "!oneElement", "!isDataFrame"})
     @ExplodeLoop
     protected Object allList(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        controlVisibility();
-        Object[] array = args.getValues();
-        String[] oldVecNames = args.getNamesNull();
-        String[] vecNames = oldVecNames;
-        RAbstractVector[] vectors = new RAbstractVector[args.length()];
-        boolean complete = true;
-        int ind = 0;
-        naCheck.enable(true);
-        for (int i = 0; i < array.length; i++) {
-            if (vecNames != null) {
-                nonNullNames.enter();
-                vecNames[ind] = oldVecNames[i];
-                naCheck.check(vecNames[ind]);
-            }
-            vectors[ind] = castList(frame, array[i], true);
-            if (emptyVectorProfile.profile(vectors[ind].getLength() == 0)) {
-                if (vecNames != null) {
-                    nonNullNames.enter();
-                    vecNames = Utils.resizeArray(vecNames, vecNames.length - 1);
-                }
-                vectors = Utils.resizeArray(vectors, vectors.length - 1);
-            } else {
-                complete &= vectors[ind].isComplete();
-                ind++;
-            }
-        }
-
-        return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
+        return bindInternal(frame, deparseLevel, args, (f, e) -> castList(f, e, true));
     }
 
     protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args, boolean cbind) {
@@ -254,9 +160,10 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         // for cbind dimNamesA is names for the 1st dim and dimNamesB is names for 2nd dim; for
         // rbind the other way around
         Object dimNamesA = vec.getNames() == null ? RNull.instance : vec.getNames();
-        Object dimNamesB = args.getNamesNull();
+        Object dimNamesB;
 
-        if (dimNamesB == null) {
+        ArgumentsSignature signature = args.getSignature();
+        if (signature.getNonNullCount() == 0) {
             int deparseLevel = deparseLevel(frame, deparseLevelObj);
             if (deparseLevel == 0) {
                 dimNamesB = RNull.instance;
@@ -267,7 +174,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 dimNamesB = deparsedName == RRuntime.NAMES_ATTR_EMPTY_VALUE ? RNull.instance : RDataFactory.createStringVector(deparsedName);
             }
         } else {
-            dimNamesB = RDataFactory.createStringVector((String[]) dimNamesB, RDataFactory.COMPLETE_VECTOR);
+            String[] names = new String[signature.getLength()];
+            for (int i = 0; i < names.length; i++) {
+                names[i] = signature.getName(i);
+            }
+            dimNamesB = RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
         }
 
         RVector res = (RVector) vec.copyWithNewDimensions(dims);

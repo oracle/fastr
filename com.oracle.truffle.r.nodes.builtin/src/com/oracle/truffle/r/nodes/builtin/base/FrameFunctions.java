@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -101,58 +99,55 @@ public class FrameFunctions {
 
             if (argsLength > 0) {
                 Object[] values;
-                String[] names;
+                ArgumentsSignature signature;
                 Object arg1 = RArguments.getArgument(cframe, 0);
                 if (arg1 instanceof RArgsValuesAndNames) {
                     // ...
                     RArgsValuesAndNames temp = ((RArgsValuesAndNames) arg1);
                     if (expandDots || temp.length() == 0) {
                         values = temp.getValues();
-                        names = temp.getNames();
+                        signature = temp.getSignature();
                     } else {
-                        names = new String[]{"..."};
+                        signature = ArgumentsSignature.VARARG_SIGNATURE;
                         RNode[] listArgs = new RNode[temp.getValues().length];
-                        String[] listNames = new String[listArgs.length];
                         for (int i = 0; i < listArgs.length; i++) {
                             listArgs[i] = RASTUtils.createNodeForValue(temp.getValues()[i]);
-                            String listName;
-                            if ((listName = temp.getNames()[i]) != null) {
-                                listNames[i] = listName;
-                            }
                         }
-                        RNode varArgs = PromiseNode.createVarArgs(null, EvalPolicy.PROMISED, listArgs, listNames, null, null);
-                        CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, names);
+                        RNode varArgs = PromiseNode.createVarArgs(null, EvalPolicy.PROMISED, listArgs, temp.getSignature(), null, null);
+                        CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, signature);
                         values = new Object[]{RASTUtils.createCall("list", callArgsNode)};
                         call = RDataFactory.createLanguage(RASTUtils.createCall(functionName, callArgsNode));
                     }
                 } else {
-                    values = new Object[argsLength];
                     /*
                      * There is a bug in that RArguments names are filled (from the formals)
                      * regardless of whether they were used in the call. I.e. can't distinguish g(x)
                      * and g(a=x)
                      */
-                    names = new String[argsLength];
-                    int argc = 0;
+
+                    int count = 0;
                     for (int i = 0; i < argsLength; i++) {
                         Object arg = RArguments.getArgument(cframe, i);
                         if (!(arg instanceof RMissing)) {
-                            values[argc] = arg;
-                            names[argc] = RArguments.getName(cframe, i);
-                            argc++;
+                            count++;
                         }
                     }
-                    if (argc != argsLength) {
-                        if (argc == 0) {
-                            values = new Object[0];
-                            names = new String[0];
-                        } else {
-                            values = Arrays.copyOfRange(values, 0, argc);
-                            names = Arrays.copyOfRange(names, 0, argc);
+                    ArgumentsSignature argSignature = RArguments.getSignature(cframe);
+                    String[] names = new String[count];
+                    values = new Object[count];
+                    int index = 0;
+                    for (int i = 0; i < argsLength; i++) {
+                        Object arg = RArguments.getArgument(cframe, i);
+                        if (!(arg instanceof RMissing)) {
+                            values[index] = arg;
+                            names[index] = argSignature.getName(i);
+                            index++;
                         }
                     }
+                    signature = ArgumentsSignature.get(names);
                 }
-                argsValuesAndNames = new RArgsValuesAndNames(values, names);
+
+                argsValuesAndNames = new RArgsValuesAndNames(values, signature);
             } else {
                 // Call.makeCall treats argsValuesAndNames == null as zero
             }
@@ -165,11 +160,12 @@ public class FrameFunctions {
              * names are attributing the AST (as a list) and the function name counts and has a null
              * "name"!
              */
-            if (argsValuesAndNames != null && !argsValuesAndNames.isAllNamesEmpty()) {
-                String[] argNames = argsValuesAndNames.getNames();
-                String[] attrNames = new String[1 + argNames.length];
+            if (argsValuesAndNames != null && argsValuesAndNames.getSignature().getNonNullCount() > 0) {
+                String[] attrNames = new String[1 + argsValuesAndNames.getSignature().getLength()];
                 attrNames[0] = "";
-                System.arraycopy(argNames, 0, attrNames, 1, argNames.length);
+                for (int i = 1; i < attrNames.length; i++) {
+                    attrNames[i] = argsValuesAndNames.getSignature().getName(i - 1);
+                }
                 call.setAttr(RRuntime.NAMES_ATTR_KEY, RDataFactory.createStringVector(attrNames, RDataFactory.COMPLETE_VECTOR));
             }
             return call;

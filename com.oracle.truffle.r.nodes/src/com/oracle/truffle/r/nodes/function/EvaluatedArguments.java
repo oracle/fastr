@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,34 +28,15 @@ import com.oracle.truffle.r.runtime.*;
  * Simple container class for holding arguments ({@link #getEvaluatedArgs()}) which are ready to be
  * pushed into {@link RArguments} (or are taken from there!). This is used by
  * {@link UseMethodDispatchNode}, e.g.
- *
- * @see #getNames()
- * @see #getEvaluatedArgs()
  */
 public class EvaluatedArguments extends Arguments<Object> {
 
-    /**
-     * @param evaluatedArgs {@link #getEvaluatedArgs()}
-     * @param names {@link #getNames()}
-     */
-    EvaluatedArguments(Object[] evaluatedArgs, String[] names) {
-        super(evaluatedArgs, names);
+    EvaluatedArguments(Object[] evaluatedArgs, ArgumentsSignature signature) {
+        super(evaluatedArgs, signature);
     }
 
-    public static EvaluatedArguments create(Object[] args, String[] names) {
-        String[] argNames = names;
-        if (argNames == null) {
-            argNames = new String[args.length];
-        }
-        return new EvaluatedArguments(args, argNames);
-    }
-
-    /**
-     * @return The names of the arguments, in formal order. 'no name available' is denoted by
-     *         <code>null</code>
-     */
-    public String[] getNames() {
-        return names;
+    public static EvaluatedArguments create(Object[] args, ArgumentsSignature signature) {
+        return new EvaluatedArguments(args, signature);
     }
 
     /**

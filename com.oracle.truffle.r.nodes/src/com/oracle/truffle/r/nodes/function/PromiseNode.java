@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -36,8 +35,8 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -279,7 +278,7 @@ public abstract class PromiseNode extends RNode {
                 }
                 newValues[i] = value;
             }
-            return new RArgsValuesAndNames(newValues, args.getNames());
+            return new RArgsValuesAndNames(newValues, args.getSignature());
         }
 
         @Override
@@ -366,21 +365,21 @@ public abstract class PromiseNode extends RNode {
      * @param src
      * @param evalPolicy {@link EvalPolicy}
      * @param nodes The argument {@link RNode}s that got wrapped into this "..."
-     * @param names The argument's names
+     * @param signature The argument's names
      * @param callSrc The {@link SourceSection} of the call this "..." belongs to
      * @return Creates either a {@link InlineVarArgsPromiseNode} or a {@link VarArgsPromiseNode},
      *         depending on the {@link EvalPolicy}
      */
     @TruffleBoundary
-    public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, RNode[] nodes, String[] names, ClosureCache closureCache, SourceSection callSrc) {
+    public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, SourceSection callSrc) {
         RNode node;
         switch (evalPolicy) {
             case INLINED:
-                node = new InlineVarArgsPromiseNode(nodes, names);
+                node = new InlineVarArgsPromiseNode(nodes, signature);
                 break;
 
             case PROMISED:
-                node = new VarArgsPromiseNode(nodes, names, closureCache);
+                node = new VarArgsPromiseNode(nodes, signature, closureCache);
                 break;
 
             default:
@@ -396,12 +395,12 @@ public abstract class PromiseNode extends RNode {
      */
     public static final class VarArgsPromiseNode extends RNode {
         @Children protected final RNode[] nodes;
-        @CompilationFinal protected final String[] names;
+        private final ArgumentsSignature signature;
         protected final ClosureCache closureCache;
 
-        public VarArgsPromiseNode(RNode[] nodes, String[] names, ClosureCache closureCache) {
+        public VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
             this.nodes = nodes;
-            this.names = names;
+            this.signature = signature;
             this.closureCache = closureCache;
         }
 
@@ -413,7 +412,7 @@ public abstract class PromiseNode extends RNode {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
             }
-            return new RArgsValuesAndNames(promises, names);
+            return new RArgsValuesAndNames(promises, signature);
         }
 
         @Override
@@ -422,7 +421,7 @@ public abstract class PromiseNode extends RNode {
             // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
             state.append("list(");
             for (int i = 0; i < nodes.length; i++) {
-                String name = names[i];
+                String name = signature.getName(i);
                 if (name != null) {
                     state.append(name);
                     state.append(" = ");
@@ -439,26 +438,27 @@ public abstract class PromiseNode extends RNode {
             return nodes;
         }
 
-        public String[] getNames() {
-            return names;
+        public ArgumentsSignature getSignature() {
+            return signature;
         }
     }
 
     /**
      * The {@link EvalPolicy#INLINED} counterpart of {@link VarArgsPromiseNode}: This gets a bit
-     * more complicated, as "..." might also values from an outer "...", which might resolve to an
-     * empty argument list.
+     * more complicated, as "..." might include values from an outer "...", which might resolve to
+     * an empty argument list.
      */
     public static final class InlineVarArgsPromiseNode extends RNode {
         @Children private final RNode[] varargs;
-        @CompilationFinal protected final String[] names;
+        protected final ArgumentsSignature signature;
 
         @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
-        public InlineVarArgsPromiseNode(RNode[] nodes, String[] names) {
+        public InlineVarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature) {
             this.varargs = nodes;
-            this.names = names;
+            this.signature = signature;
+            assert varargs.length == signature.getLength();
         }
 
         public RNode[] getVarArgs() {
@@ -468,12 +468,22 @@ public abstract class PromiseNode extends RNode {
         @Override
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
+            if (varargs.length == 0) {
+                // No need to create an extra object, already have one
+                return RArgsValuesAndNames.EMPTY;
+            }
             Object[] evaluatedArgs = new Object[varargs.length];
-            String[] evaluatedNames = names;
+            String[] evaluatedNames = null;
             int index = 0;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
+                    if (evaluatedNames == null) {
+                        evaluatedNames = new String[i];
+                        for (int j = 0; j < i; j++) {
+                            evaluatedNames[j] = signature.getName(j);
+                        }
+                    }
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
                     RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
@@ -489,18 +499,18 @@ public abstract class PromiseNode extends RNode {
                     Object[] varargValues = argsValuesAndNames.getValues();
                     for (int j = 0; j < argsValuesAndNames.length(); j++) {
                         evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
-                        evaluatedNames[index] = argsValuesAndNames.getNames()[j];
+                        evaluatedNames[index] = argsValuesAndNames.getSignature().getName(j);
                         index++;
                     }
                 } else {
+                    if (evaluatedNames != null) {
+                        evaluatedNames[index] = signature.getName(i);
+                    }
                     evaluatedArgs[index++] = promiseCheckHelper.checkEvaluate(frame, argValue);
                 }
             }
-            if (evaluatedArgs.length == 0) {
-                // No need to create an extra object, already have one
-                return RArgsValuesAndNames.EMPTY;
-            }
-            return new RArgsValuesAndNames(evaluatedArgs, evaluatedNames);
+            ArgumentsSignature actualSignature = argsValueAndNamesProfile.profile(evaluatedNames != null) ? ArgumentsSignature.get(evaluatedNames) : signature;
+            return new RArgsValuesAndNames(evaluatedArgs, actualSignature);
         }
     }
 }

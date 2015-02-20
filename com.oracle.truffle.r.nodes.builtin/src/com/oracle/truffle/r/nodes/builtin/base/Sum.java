@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public final class Sum extends RWrapperBuiltinNode {
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, true, false);
         RNode[] args = getArguments();
-        Combine combine = CombineFactory.create(new RNode[]{args[0]}, getBuiltin(), null);
+        Combine combine = CombineFactory.create(new RNode[]{args[0]}, getBuiltin(), ArgumentsSignature.empty(1));
         return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
     }
 }

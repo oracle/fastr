@@ -28,12 +28,12 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
 
-    public static DispatchedCallNode create(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
-        return new UninitializedDispatchedCallNode(genericName, dispatchType, useMethodArgNames);
+    public static DispatchedCallNode create(String genericName, DispatchType dispatchType, ArgumentsSignature signature) {
+        return new UninitializedDispatchedCallNode(genericName, dispatchType, signature);
     }
 
-    public static DispatchedCallNode create(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
-        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, argNames);
+    public static DispatchedCallNode create(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, ArgumentsSignature signature) {
+        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, signature);
     }
 
     @Override
@@ -57,25 +57,19 @@ public abstract class DispatchedCallNode extends RNode {
         private final String enclosingName;
         private final DispatchType dispatchType;
         @CompilationFinal private final Object[] args;
-        @CompilationFinal private final String[] argNames;
-        @CompilationFinal private final String[] useMethodArgNames;
+        private final ArgumentsSignature signature;
 
-        private UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
+        private UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, ArgumentsSignature signature) {
             this.genericName = genericName;
             this.enclosingName = enclosingName;
+            this.signature = signature;
             this.depth = 0;
             this.dispatchType = dispatchType;
             this.args = args;
-            this.argNames = argNames;
-            this.useMethodArgNames = useMethodArgNames;
         }
 
-        public UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
-            this(genericName, enclosingName, dispatchType, args, argNames, null);
-        }
-
-        public UninitializedDispatchedCallNode(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
-            this(genericName, null, dispatchType, null, null, useMethodArgNames);
+        public UninitializedDispatchedCallNode(String genericName, DispatchType dispatchType, ArgumentsSignature signature) {
+            this(genericName, null, dispatchType, null, signature);
         }
 
         private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
@@ -83,9 +77,8 @@ public abstract class DispatchedCallNode extends RNode {
             this.genericName = copy.genericName;
             this.enclosingName = copy.enclosingName;
             this.dispatchType = copy.dispatchType;
+            this.signature = copy.signature;
             this.args = null;
-            this.argNames = null;
-            this.useMethodArgNames = null; // TODO: is it OK to nullify these three?
         }
 
         @Override
@@ -113,9 +106,9 @@ public abstract class DispatchedCallNode extends RNode {
         private DispatchNode createCurrentNode(RStringVector type) {
             switch (dispatchType) {
                 case NextMethod:
-                    return new NextMethodDispatchNode(genericName, type, args, argNames, enclosingName);
+                    return new NextMethodDispatchNode(genericName, type, args, signature, enclosingName);
                 case UseMethod:
-                    return new UseMethodDispatchNode(genericName, type, useMethodArgNames);
+                    return new UseMethodDispatchNode(genericName, type, signature);
                 default:
                     throw RInternalError.shouldNotReachHere();
             }

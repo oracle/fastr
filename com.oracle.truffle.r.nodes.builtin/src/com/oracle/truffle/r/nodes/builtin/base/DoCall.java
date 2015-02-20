@@ -51,7 +51,7 @@ public abstract class DoCall extends RBuiltinNode {
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetFactory.create(new RNode[4], this.getBuiltin(), getSuppliedArgsNames()));
+            getNode = insert(GetFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
         }
         RFunction func = (RFunction) getNode.execute(frame, fname, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         return doDoCall(frame, func, argsAsList, env);
@@ -61,15 +61,16 @@ public abstract class DoCall extends RBuiltinNode {
     protected Object doDoCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         Object[] argValues = argsAsList.getDataNonShared();
         RStringVector n = argsAsList.getNames();
-        String[] argNames = n == null ? null : n.getDataNonShared();
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
+        String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();
+        ArgumentsSignature signature = ArgumentsSignature.get(argNames);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         if (!needsCallerFrame && func.containsDispatch()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             needsCallerFrame = true;
         }
         MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }

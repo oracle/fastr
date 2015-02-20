@@ -55,7 +55,7 @@ public abstract class UseMethod extends RBuiltinNode {
         if (dispatchedCallNode == null || (cachedGeneric != generic && !cachedGeneric.equals(generic))) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             cachedGeneric = generic;
-            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, getSuppliedArgsNames());
+            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, getSuppliedSignature());
             if (dispatchedCallNode == null) {
                 dispatchedCallNode = insert(newDispatched);
             } else {

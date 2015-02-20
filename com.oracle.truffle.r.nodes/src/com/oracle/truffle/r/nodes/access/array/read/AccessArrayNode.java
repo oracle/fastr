@@ -238,14 +238,18 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
     }
 
+    private static final ArgumentsSignature DROP_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+
+    private static final ArgumentsSignature EXACT_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+
     @Specialization(guards = {"isObject", "isSubset"})
     protected Object accessObjectSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, new String[]{"", "", "drop"}));
+            dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, DROP_SIGNATURE));
         }
         try {
-            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, null) : position;
+            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
         } catch (RError e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
@@ -256,10 +260,10 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessObject(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, new String[]{"", "", "exact"}));
+            dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, EXACT_SIGNATURE));
         }
         try {
-            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, null) : position;
+            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, exact});
         } catch (RError e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);

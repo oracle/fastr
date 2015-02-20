@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,10 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
- * Simple generic base class for pairs of {@link #arguments} and {@link #names} (that are not
+ * Simple generic base class for pairs of {@link #arguments} and {@link #signature} (that are not
  * {@link RNode}s).
  *
  * @param <T> The type of {@link #arguments}
@@ -41,25 +42,14 @@ public abstract class Arguments<T> implements ArgumentsTrait {
     /**
      * Array of arguments; semantics have to be specified by child classes.
      */
-    @CompilationFinal protected final String[] names;
+    protected final ArgumentsSignature signature;
 
-    /**
-     * Cache use for {@link #getNameCount()}.
-     */
-    private Integer nameCountCache = null;
-
-    Arguments(T[] arguments, String[] names) {
+    Arguments(T[] arguments, ArgumentsSignature signature) {
         this.arguments = arguments;
-        this.names = names;
+        this.signature = signature;
     }
 
-    /**
-     * @return See {@link ArgumentsTrait#getNameCount()}
-     */
-    public int getNameCount() {
-        if (nameCountCache == null) {
-            nameCountCache = ArgumentsTrait.super.getNameCount();
-        }
-        return nameCountCache;
+    public final ArgumentsSignature getSignature() {
+        return signature;
     }
 }

@@ -98,13 +98,6 @@ public abstract class RRootNode extends RootNode {
     }
 
     /**
-     * @return The names of the {@link FormalArguments} this function expects
-     */
-    public Object[] getParameterNames() {
-        return formalArguments.getNames();
-    }
-
-    /**
      * @return The number of parameters this functions expects
      */
     public int getParameterCount() {

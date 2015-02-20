@@ -194,16 +194,16 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         // TODO linebreaks
         state.append("function (");
         FormalArguments formals = getFormalArguments();
-        String[] formalNames = formals.getNames();
         RNode[] defaultArgs = formals.getDefaultArgs();
-        for (int i = 0; i < formalNames.length; i++) {
+        int formalsLength = formals.getSignature().getLength();
+        for (int i = 0; i < formalsLength; i++) {
             RNode defaultArg = defaultArgs[i];
-            state.append(formalNames[i]);
+            state.append(formals.getSignature().getName(i));
             if (defaultArg != null) {
                 state.append(" = ");
                 defaultArg.deparse(state);
             }
-            if (i != formalNames.length - 1) {
+            if (i != formalsLength - 1) {
                 state.append(", ");
             }
         }

@@ -54,7 +54,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     private Object recursiveOp(VirtualFrame frame, Object left, Object right) {
         if (recursiveOp == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveOp = insert(BinaryBooleanNodeFactory.create(factory, new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+            recursiveOp = insert(BinaryBooleanNodeFactory.create(factory, new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
         return recursiveOp.execute(frame, left, right);
     }

@@ -46,14 +46,8 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
  */
 public class ForeignFunctions {
     public abstract static class FortranCAdapter extends RBuiltinNode {
-        @CompilationFinal protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
         protected final BranchProfile errorProfile = BranchProfile.create();
-
-        @Override
-        public String[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -247,7 +241,7 @@ public class ForeignFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
-            RStringVector listNames = validateArgNames(argValues.length, getSuppliedArgsNames());
+            RStringVector listNames = validateArgNames(argValues.length, getSuppliedSignature());
             Object[] results = new Object[argValues.length];
             for (int i = 0; i < argValues.length; i++) {
                 switch (argTypes[i]) {
@@ -278,10 +272,10 @@ public class ForeignFunctions {
             return RDataFactory.createList(results, listNames);
         }
 
-        private static RStringVector validateArgNames(int argsLength, String[] argNames) {
+        private static RStringVector validateArgNames(int argsLength, ArgumentsSignature signature) {
             String[] listArgNames = new String[argsLength];
             for (int i = 0; i < argsLength; i++) {
-                String name = argNames == null ? null : argNames[i + 1];
+                String name = signature.getName(i + 1);
                 if (name == null) {
                     name = RRuntime.NAMES_ATTR_EMPTY_VALUE;
                 }

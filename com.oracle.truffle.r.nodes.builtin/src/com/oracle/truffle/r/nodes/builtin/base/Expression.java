@@ -44,24 +44,21 @@ public abstract class Expression extends RBuiltinNode {
     @ExplodeLoop
     protected Object doExpression(RArgsValuesAndNames args) {
         Object[] argValues = args.getValues();
-        String[] argNames = null;
         Object[] data = new Object[argValues.length];
-        String[] names = null;
-        if (!args.isAllNamesEmpty()) {
-            argNames = args.getNames();
-            names = new String[argValues.length];
-        }
+        ArgumentsSignature signature = args.getSignature();
+        boolean hasNonNull = signature.getNonNullCount() > 0;
         for (int i = 0; i < argValues.length; i++) {
             data[i] = convert((RPromise) argValues[i]);
-            if (names != null && argNames[i] != null) {
-                names[i] = argNames[i];
-            }
         }
         RList list;
-        if (names == null) {
-            list = RDataFactory.createList(data);
-        } else {
+        if (hasNonNull) {
+            String[] names = new String[signature.getLength()];
+            for (int i = 0; i < names.length; i++) {
+                names[i] = signature.getName(i);
+            }
             list = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+        } else {
+            list = RDataFactory.createList(data);
         }
         return RDataFactory.createExpression(list);
     }

@@ -44,7 +44,7 @@ public abstract class NextMethod extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    protected Object nextMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") Object obj, Object[] args, String[] argNames) {
+    protected Object nextMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") Object obj, Object[] args, ArgumentsSignature signature) {
         controlVisibility();
         RStringVector type = readType(frame);
 
@@ -56,7 +56,7 @@ public abstract class NextMethod extends RBuiltinNode {
             if (!RArguments.hasS3Args(frame)) {
                 enclosingFunctionName = enclosingFunction.getRootNode().toString();
             }
-            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), enclosingFunctionName, DispatchType.NextMethod, args, argNames);
+            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), enclosingFunctionName, DispatchType.NextMethod, args, signature);
             if (dispatchedCallNode == null) {
                 dispatchedCallNode = insert(newDispatched);
             } else {
@@ -79,13 +79,13 @@ public abstract class NextMethod extends RBuiltinNode {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
-        return nextMethod(frame, genericName, obj, args.getValues(), args.getNames());
+        return nextMethod(frame, genericName, obj, args.getValues(), args.getSignature());
     }
 
     @Specialization
     protected Object nextMethod(VirtualFrame frame, String generic, Object obj, RArgsValuesAndNames args) {
         controlVisibility();
-        return nextMethod(frame, generic, obj, args.getValues(), args.getNames());
+        return nextMethod(frame, generic, obj, args.getValues(), args.getSignature());
     }
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {

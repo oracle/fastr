@@ -112,7 +112,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
             index++;
         }
-        final CallArgumentsNode aCallArgNode = CallArgumentsNode.create(!call.isReplacement(), false, nodes, argumentNames);
+        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(!call.isReplacement(), false, nodes, ArgumentsSignature.get(argumentNames));
 
         if (callName != null) {
             String functionName = callName;
@@ -180,7 +180,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (astBody != null && statements.getSourceSection() == null) {
                 statements.assignSourceSection(astBody.getSource());
             }
-            FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
+            FormalArguments formals = FormalArguments.create(defaultValues, ArgumentsSignature.get(argumentNames));
             for (AccessArgumentNode access : argAccessNodes) {
                 access.setFormals(formals);
             }
@@ -291,7 +291,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             for (int i = 0; i < argLength; i++) {
                 ArgNode argNode = argList.get(i);
                 ASTNode node = argNode.getValue();
-                if (node instanceof SimpleAccessVariable && ((SimpleAccessVariable) node).getVariable().equals(ArgumentsTrait.VARARG_NAME)) {
+                if (node instanceof SimpleAccessVariable && ((SimpleAccessVariable) node).getVariable().equals(ArgumentsSignature.VARARG_NAME)) {
                     varArgFound = true;
                 }
                 if (!isAssignment) {

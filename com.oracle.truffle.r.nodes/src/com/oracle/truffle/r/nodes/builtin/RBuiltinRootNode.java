@@ -43,6 +43,7 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     public RCallNode inline(InlinedArguments args) {
+        assert builtin.getSuppliedSignature() != null : this;
         return builtin.inline(args);
     }
 

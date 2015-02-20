@@ -66,7 +66,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.names = names;
         if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
-            assert names.getLength() == length;
+            assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
             if (dimensions == null || dimensions.length != 1) {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, names);
                 if (dimensions != null) {
