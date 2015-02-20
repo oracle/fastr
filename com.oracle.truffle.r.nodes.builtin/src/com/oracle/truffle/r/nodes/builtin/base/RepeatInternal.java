@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
+import java.util.function.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
@@ -34,14 +34,12 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"})
 public abstract class RepeatInternal extends RBuiltinNode {
 
-    private final ConditionProfile timesOne = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final NACheck naCheck = NACheck.create();
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -50,144 +48,80 @@ public abstract class RepeatInternal extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization
-    protected RDoubleVector repInt(double value, int times) {
-        controlVisibility();
-        double[] array = new double[times];
-        Arrays.fill(array, value);
-        naCheck.enable(value);
-        return RDataFactory.createDoubleVector(array, !naCheck.check(value));
+    @FunctionalInterface
+    private interface ArrayUpdateFunction<ValueT, ArrayT> {
+        void update(ArrayT array, int pos, ValueT value, int index);
     }
 
-    @Specialization
-    protected RRawVector repInt(RRaw value, int times) {
-        controlVisibility();
-        byte[] array = new byte[times];
-        Arrays.fill(array, value.getValue());
-        return RDataFactory.createRawVector(array);
+    @FunctionalInterface
+    private interface CreateResultFunction<ResultT, ArrayT> {
+        ResultT create(ArrayT array, boolean complete);
     }
 
-    @Specialization
-    protected RIntVector repInt(RIntSequence value, int times) {
+    private <ValueT extends RAbstractVector, ResultT extends ValueT, ArrayT> ResultT repInt(ValueT value, RAbstractIntVector times, IntFunction<ArrayT> arrayConstructor,
+                    ArrayUpdateFunction<ValueT, ArrayT> arrayUpdate, CreateResultFunction<ResultT, ArrayT> createResult) {
         controlVisibility();
-        int oldLength = value.getLength();
-        int length = oldLength * times;
-        int[] array = new int[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        return RDataFactory.createIntVector(array, value.isComplete());
-    }
-
-    @Specialization
-    protected RDoubleVector repInt(RDoubleVector value, int times) {
-        controlVisibility();
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        double[] array = new double[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        return RDataFactory.createDoubleVector(array, value.isComplete());
-    }
-
-    @Specialization(guards = "isTimesValid")
-    protected RDoubleVector repInt(RAbstractDoubleVector value, RIntVector times) {
-        controlVisibility();
-        List<Double> result = new ArrayList<>();
-        for (int i = 0; i < value.getLength(); i++) {
-            for (int j = 0; j < times.getDataAt(i); ++j) {
-                result.add(value.getDataAt(i));
-            }
-        }
-        double[] ans = new double[result.size()];
-        for (int i = 0; i < ans.length; ++i) {
-            ans[i] = result.get(i);
-        }
-        return RDataFactory.createDoubleVector(ans, value.isComplete());
-    }
-
-    @Specialization(guards = "isTimesValid")
-    protected RIntVector repInt(RAbstractIntVector value, RIntVector times) {
-        controlVisibility();
-        List<Integer> result = new ArrayList<>();
-        for (int i = 0; i < value.getLength(); i++) {
-            for (int j = 0; j < times.getDataAt(i); ++j) {
-                result.add(value.getDataAt(i));
-            }
-        }
-        int[] ans = new int[result.size()];
-        for (int i = 0; i < ans.length; ++i) {
-            ans[i] = result.get(i);
-        }
-        return RDataFactory.createIntVector(ans, value.isComplete());
-    }
-
-    @Specialization
-    protected RIntVector repInt(int value, int times) {
-        controlVisibility();
-        int[] array = new int[times];
-        Arrays.fill(array, value);
-        naCheck.enable(value);
-        return RDataFactory.createIntVector(array, !naCheck.check(value));
-    }
-
-    @Specialization
-    protected RLogicalVector repInt(byte value, int times) {
-        controlVisibility();
-        byte[] array = new byte[times];
-        Arrays.fill(array, value);
-        naCheck.enable(value);
-        return RDataFactory.createLogicalVector(array, !naCheck.check(value));
-    }
-
-    @Specialization
-    protected RStringVector repInt(String value, int times) {
-        controlVisibility();
-        String[] array = new String[times];
-        Arrays.fill(array, value);
-        naCheck.enable(value);
-        return RDataFactory.createStringVector(array, !naCheck.check(value));
-    }
-
-    @Specialization
-    protected RStringVector repInt(RStringVector value, RIntVector timesVec) {
-        controlVisibility();
+        ArrayT result;
+        int timesLength = times.getLength();
         int valueLength = value.getLength();
-        int times = timesVec.getLength();
-        if (!(times == 1 || times == valueLength)) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
-        }
-        String[] array;
-        if (timesOne.profile(times == 1)) {
-            int length = value.getLength() * times;
-            array = new String[length];
-            for (int i = 0; i < times; i++) {
-                for (int j = 0; j < valueLength; ++j) {
-                    array[i * valueLength + j] = value.getDataAt(j);
+        if (timesOneProfile.profile(timesLength == 1)) {
+            int timesValue = times.getDataAt(0);
+            int count = timesValue * valueLength;
+            result = arrayConstructor.apply(count);
+            int pos = 0;
+            for (int i = 0; i < timesValue; i++) {
+                for (int j = 0; j < valueLength; j++) {
+                    arrayUpdate.update(result, pos++, value, j);
+                }
+            }
+        } else if (timesLength == valueLength) {
+            int count = 0;
+            for (int i = 0; i < timesLength; i++) {
+                int data = times.getDataAt(i);
+                if (data < 0) {
+                    errorProfile.enter();
+                    RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "times");
+                }
+                count += data;
+            }
+            result = arrayConstructor.apply(count);
+            int pos = 0;
+            for (int i = 0; i < valueLength; i++) {
+                int num = times.getDataAt(i);
+                for (int j = 0; j < num; j++) {
+                    arrayUpdate.update(result, pos++, value, i);
                 }
             }
         } else {
-            int length = 0;
-            for (int k = 0; k < times; k++) {
-                length = length + timesVec.getDataAt(k);
-            }
-            array = new String[length];
-            int arrayIndex = 0;
-            for (int i = 0; i < valueLength; i++) {
-                String s = value.getDataAt(i);
-                int timesLen = timesVec.getDataAt(i);
-                for (int k = 0; k < timesLen; k++) {
-                    array[arrayIndex++] = s;
-                }
-            }
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "times");
         }
-        return RDataFactory.createStringVector(array, value.isComplete());
+        return createResult.create(result, value.isComplete());
+    }
+
+    @Specialization
+    protected RDoubleVector repInt(RAbstractDoubleVector value, RAbstractIntVector times) {
+        return repInt(value, times, double[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createDoubleVector);
+    }
+
+    @Specialization
+    protected RIntVector repInt(RAbstractIntVector value, RAbstractIntVector times) {
+        return repInt(value, times, int[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createIntVector);
+    }
+
+    @Specialization
+    protected RLogicalVector repInt(RAbstractLogicalVector value, RAbstractIntVector times) {
+        return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createLogicalVector);
+    }
+
+    @Specialization
+    protected RStringVector repInt(RAbstractStringVector value, RAbstractIntVector times) {
+        return repInt(value, times, String[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createStringVector);
+    }
+
+    @Specialization
+    protected RRawVector repInt(RAbstractRawVector value, RAbstractIntVector times) {
+        return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index).getValue(), (array, complete) -> RDataFactory.createRawVector(array));
     }
 
     @Specialization
@@ -202,13 +136,5 @@ public abstract class RepeatInternal extends RBuiltinNode {
             }
         }
         return RDataFactory.createList(array);
-    }
-
-    protected boolean isTimesValid(RAbstractVector value, RIntVector times) {
-        if (value.getLength() != times.getLength()) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "times");
-        }
-        return true;
     }
 }
