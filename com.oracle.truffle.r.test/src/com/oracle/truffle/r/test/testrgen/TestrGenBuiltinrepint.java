@@ -33,13 +33,11 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint4() {
         assertEval("argv <- list(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), 1); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testrepint5() {
         assertEval("argv <- list(FALSE, 0L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
@@ -50,7 +48,6 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint7() {
         assertEval("argv <- list(TRUE, 1L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
@@ -66,7 +63,6 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint10() {
         assertEval("argv <- list(c(1L, 1L, 2L, 2L), 6); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
@@ -88,7 +84,7 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
+    @Ignore("formatting")
     public void testrepint14() {
         assertEval("argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
@@ -104,13 +100,12 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint17() {
         assertEval("argv <- list(FALSE, FALSE); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
+    @Ignore("formatting")
     public void testrepint18() {
         assertEval("argv <- list(c(-1.74520963996789, -1.58308930128988, NA), 100L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
@@ -121,7 +116,6 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint20() {
         assertEval("argv <- list(NA, 10L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
@@ -148,13 +142,11 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint25() {
         assertEval("argv <- list(NA, 5L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testrepint26() {
         assertEval("argv <- list(TRUE, 6L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }

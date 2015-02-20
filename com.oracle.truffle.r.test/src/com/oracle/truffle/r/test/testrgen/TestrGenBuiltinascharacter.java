@@ -143,7 +143,6 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter24() {
         assertEval("argv <- list(structure(list(4L), class = c(\'package_version\', \'numeric_version\')));as.character(argv[[1]]);");
     }
@@ -231,7 +230,6 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter40() {
         assertEval("argv <- list(structure(list(), class = \'numeric_version\'));as.character(argv[[1]]);");
     }

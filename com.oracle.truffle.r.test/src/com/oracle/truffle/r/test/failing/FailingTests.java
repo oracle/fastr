@@ -3250,12 +3250,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascharacter_testascharacter24_fa6e2ffc98f3b422be091992652cc063() {
-        assertEval("argv <- list(structure(list(4L), class = c('package_version', 'numeric_version')));as.character(argv[[1]]);");
-        check("TestrGenBuiltinascharacter_testascharacter24_fa6e2ffc98f3b422be091992652cc063");
-    }
-
-    @Test
     public void TestrGenBuiltinascharacter_testascharacter28_be987cc5e86462dab4ec1574a5c96efd() {
         assertEval("argv <- list(structure(c(11323, 11330, 11337, 11344, 11351, 11358, 11365, 11372, 11379, 11386), class = 'Date'));as.character(argv[[1]]);");
         check("TestrGenBuiltinascharacter_testascharacter28_be987cc5e86462dab4ec1574a5c96efd");
@@ -3301,12 +3295,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinascharacter_testascharacter4_b0efabdea893c5e3c24e0d077282fc6b() {
         assertEval("argv <- list(c('### Encoding: UTF-8', '', '### Name: text', '### Title: Add Text to a Plot', '### Aliases: text text.default', '### Keywords: aplot', '', '### ** Examples', '', 'plot(-1:1, -1:1, type = \\'n\\', xlab = \\'Re\\', ylab = \\'Im\\')', 'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)', '', '## The following two examples use latin1 characters: these may not', '## appear correctly (or be omitted entirely).', 'plot(1:10, 1:10, main = \\'text(...) examples\\\\n~~~~~~~~~~~~~~\\',', '     sub = \\'R is GNU ©, but not ® ...\\')', 'mtext(\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\', side = 3)', 'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \\'red\\')', 'text(6, 2, \\'the text is CENTERED around (x,y) = (6,2) by default\\',', '     cex = .8)', 'text(2, 1, \\'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\\',', '     adj = c(0,0))', 'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))', 'text(4, 8.4, \\'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\\',', '     cex = .75)', 'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))', '', '## Two more latin1 examples', 'text(5, 10.2,', '     \\'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\\')', 'text(5, 9.8,', '     \\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\')', '', '', ''));as.character(argv[[1]]);");
         check("TestrGenBuiltinascharacter_testascharacter4_b0efabdea893c5e3c24e0d077282fc6b");
-    }
-
-    @Test
-    public void TestrGenBuiltinascharacter_testascharacter40_2b19c43c5220d4933e35afa1bcc7236c() {
-        assertEval("argv <- list(structure(list(), class = 'numeric_version'));as.character(argv[[1]]);");
-        check("TestrGenBuiltinascharacter_testascharacter40_2b19c43c5220d4933e35afa1bcc7236c");
     }
 
     @Test
@@ -10786,12 +10774,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinrepint_testrepint10_dde17f705e40806f5b55beae204599b7() {
-        assertEval("argv <- list(c(1L, 1L, 2L, 2L), 6); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint10_dde17f705e40806f5b55beae204599b7");
-    }
-
-    @Test
     public void TestrGenBuiltinrepint_testrepint13_d31b70d4e01d550889ad6d9cb34b03cf() {
         assertEval("argv <- list(structure(1:4, .Label = c('A', 'B', 'C', 'D'), class = 'factor', .Names = c('a', 'b', 'c', 'd')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinrepint_testrepint13_d31b70d4e01d550889ad6d9cb34b03cf");
@@ -10804,57 +10786,15 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinrepint_testrepint17_7a1213eafa82541b8a351bd5838a5af6() {
-        assertEval("argv <- list(FALSE, FALSE); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint17_7a1213eafa82541b8a351bd5838a5af6");
-    }
-
-    @Test
     public void TestrGenBuiltinrepint_testrepint18_89d713aa24d3bbc416b09d5b3a7c0fcb() {
         assertEval("argv <- list(c(-1.74520963996789, -1.58308930128988, NA), 100L); .Internal(rep.int(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinrepint_testrepint18_89d713aa24d3bbc416b09d5b3a7c0fcb");
     }
 
     @Test
-    public void TestrGenBuiltinrepint_testrepint20_491b0390b66db6a67cedcc2a42873e5a() {
-        assertEval("argv <- list(NA, 10L); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint20_491b0390b66db6a67cedcc2a42873e5a");
-    }
-
-    @Test
     public void TestrGenBuiltinrepint_testrepint24_8280666f60f8465e6eefa702e913cf63() {
         assertEval("argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinrepint_testrepint24_8280666f60f8465e6eefa702e913cf63");
-    }
-
-    @Test
-    public void TestrGenBuiltinrepint_testrepint25_c8eaf452f45b00ae42d98c734a5cfffd() {
-        assertEval("argv <- list(NA, 5L); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint25_c8eaf452f45b00ae42d98c734a5cfffd");
-    }
-
-    @Test
-    public void TestrGenBuiltinrepint_testrepint26_ab3b24b0c9725d38798a7ad9e4076d5e() {
-        assertEval("argv <- list(TRUE, 6L); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint26_ab3b24b0c9725d38798a7ad9e4076d5e");
-    }
-
-    @Test
-    public void TestrGenBuiltinrepint_testrepint4_20bb6f9af6b07b4403c6affda51252a6() {
-        assertEval("argv <- list(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), 1); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint4_20bb6f9af6b07b4403c6affda51252a6");
-    }
-
-    @Test
-    public void TestrGenBuiltinrepint_testrepint5_cb990b8179a6fb9eaae1bb541f1d9486() {
-        assertEval("argv <- list(FALSE, 0L); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint5_cb990b8179a6fb9eaae1bb541f1d9486");
-    }
-
-    @Test
-    public void TestrGenBuiltinrepint_testrepint7_6887e9ead03307d35952a52816eb9b4c() {
-        assertEval("argv <- list(TRUE, 1L); .Internal(rep.int(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinrepint_testrepint7_6887e9ead03307d35952a52816eb9b4c");
     }
 
     @Test
