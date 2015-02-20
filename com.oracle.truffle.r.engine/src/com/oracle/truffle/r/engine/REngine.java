@@ -332,7 +332,7 @@ public final class REngine implements RContext.Engine {
         } catch (UnsupportedSpecializationException use) {
             ConsoleHandler ch = singleton.context.getConsoleHandler();
             ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
-                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()));
             throw use;
         } catch (DebugExitException | BrowserQuitException e) {
             throw e;
