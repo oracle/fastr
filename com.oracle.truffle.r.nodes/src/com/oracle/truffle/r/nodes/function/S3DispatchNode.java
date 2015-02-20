@@ -24,25 +24,23 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class S3DispatchNode extends DispatchNode {
 
+    @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
+
     protected final BranchProfile errorProfile = BranchProfile.create();
 
-    @Child private ReadVariableNode lookup;
     @CompilationFinal private String lastFun;
-    @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
-    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
+    @Child private ReadVariableNode lookup;
     protected String targetFunctionName;
     protected RFunction targetFunction;
-    protected RStringVector klass;
-    protected FunctionCall funCall;
-    protected MaterializedFrame genCallEnv;
-    protected MaterializedFrame genDefEnv;
-    protected boolean isFirst;
+
+    protected final ArgumentsSignature suppliedSignature;
 
     // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
     // having one method with a rather convoluted control flow structure?
 
-    public S3DispatchNode(String genericName) {
+    public S3DispatchNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName);
+        this.suppliedSignature = suppliedSignature;
     }
 
     protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, ArgumentsSignature signature, boolean hasVarArgs, SourceSection callSrc) {
@@ -145,17 +143,61 @@ public abstract class S3DispatchNode extends DispatchNode {
         return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
     }
 
-    protected void defineVarsAsArguments(Object[] args) {
+    protected static void defineVarsAsArguments(Object[] args, String genericName, RStringVector klass, MaterializedFrame genCallEnv, MaterializedFrame genDefEnv) {
         RArguments.setS3Generic(args, genericName);
         RArguments.setS3Class(args, klass);
         RArguments.setS3CallEnv(args, genCallEnv);
         RArguments.setS3DefEnv(args, genDefEnv);
     }
 
-    private void checkLength(final String className, final String generic) {
+    private void checkLength(String className, String generic) {
         // The magic number two taken from src/main/objects.c
         if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
         }
+    }
+}
+
+abstract class S3DispatchLegacyNode extends S3DispatchNode {
+
+    protected RStringVector type;
+
+    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
+    protected RStringVector klass;
+    protected FunctionCall funCall;
+    protected MaterializedFrame genCallEnv;
+    protected MaterializedFrame genDefEnv;
+    protected boolean isFirst;
+
+    public S3DispatchLegacyNode(String genericName, ArgumentsSignature suppliedSignature) {
+        super(genericName, suppliedSignature);
+    }
+}
+
+abstract class S3DispatchCachedNode extends S3DispatchNode {
+    protected final RStringVector type;
+
+    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
+    protected RStringVector klass;
+    protected MaterializedFrame genCallEnv;
+    protected MaterializedFrame genDefEnv;
+    protected boolean isFirst;
+
+    public S3DispatchCachedNode(String genericName, RStringVector type, ArgumentsSignature suppliedSignature) {
+        super(genericName, suppliedSignature);
+        this.type = type;
+    }
+}
+
+abstract class S3DispatchGenericNode extends S3DispatchNode {
+
+    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
+    protected RStringVector klass;
+    protected MaterializedFrame genCallEnv;
+    protected MaterializedFrame genDefEnv;
+    protected boolean isFirst;
+
+    public S3DispatchGenericNode(String genericName, ArgumentsSignature suppliedSignature) {
+        super(genericName, suppliedSignature);
     }
 }

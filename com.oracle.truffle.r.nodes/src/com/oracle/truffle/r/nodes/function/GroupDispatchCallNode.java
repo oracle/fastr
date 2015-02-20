@@ -258,7 +258,7 @@ public abstract class GroupDispatchCallNode extends RNode {
     }
 }
 
-class GroupDispatchNode extends S3DispatchNode {
+class GroupDispatchNode extends S3DispatchLegacyNode {
 
     @CompilationFinal protected boolean isExecuted = false;
     @CompilationFinal protected final String groupName;
@@ -277,7 +277,7 @@ class GroupDispatchNode extends S3DispatchNode {
     }
 
     protected GroupDispatchNode(String genericName, String groupName, boolean hasVarArg, SourceSection callSrc, SourceSection argSrc) {
-        super(genericName);
+        super(genericName, null);
         this.groupName = groupName;
         this.hasVararg = hasVarArg;
         this.callSrc = callSrc;
@@ -359,7 +359,7 @@ class GroupDispatchNode extends S3DispatchNode {
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argumentsSignature, this.hasVararg, this.callSrc);
         Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         genCallEnv = frame.materialize();
-        defineVarsAsArguments(argObject);
+        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
         RArguments.setS3Method(argObject, dotMethod);
         if (writeGroup) {
             RArguments.setS3Group(argObject, groupName);

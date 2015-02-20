@@ -31,20 +31,26 @@ import com.oracle.truffle.r.runtime.data.*;
  * enclosing (parent) environment of {@code f}, which, for packages, which is where most of these
  * definitions occur, will be the package {@code namepace} enviromnent.
  */
-public class UseMethodDispatchNode extends S3DispatchNode {
+public abstract class UseMethodDispatchNode {
+
+    public static DispatchNode createCached(String genericName, RStringVector type, ArgumentsSignature suppliedSignature) {
+        return new UseMethodDispatchCachedNode(genericName, type, suppliedSignature);
+    }
+
+    public static DispatchNode createGeneric(String genericName, ArgumentsSignature suppliedSignature) {
+        return new UseMethodDispatchGenericNode(genericName, suppliedSignature);
+    }
+}
+
+final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
 
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 
     private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
 
-    private final ArgumentsSignature suppliedSignature;
-
-    UseMethodDispatchNode(String genericName, RStringVector type, ArgumentsSignature suppliedSignature) {
-        super(genericName);
-        this.type = type;
-        assert suppliedSignature != null : genericName + " " + type;
-        this.suppliedSignature = suppliedSignature;
+    public UseMethodDispatchCachedNode(String genericName, RStringVector type, ArgumentsSignature suppliedSignature) {
+        super(genericName, type, suppliedSignature);
     }
 
     private Frame getCallerFrame(VirtualFrame frame) {
@@ -68,10 +74,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
-        this.type = aType;
-        Frame funFrame = getCallerFrame(frame);
-        findTargetFunction(RArguments.getEnclosingFrame(frame));
-        return executeHelper(frame, funFrame);
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
@@ -85,9 +88,165 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @Override
     public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) {
-        this.type = aType;
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
+        // Extract arguments from current frame...
+        int argCount = RArguments.getArgumentsLength(frame);
+        assert RArguments.getSignature(frame).getLength() == argCount;
+        Object[] argValues = new Object[argCount];
+        int fi = 0;
+        for (; fi < argCount; ++fi) {
+            argValues[fi] = RArguments.getArgument(frame, fi);
+        }
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, RArguments.getSignature(frame), false, getSourceSection());
+        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+    }
+
+    private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
+        // Extract arguments from current frame...
+        int argCount = args.length;
+        int argListSize = argCount;
+
+        boolean hasVarArgs = false;
+        for (int fi = 0; fi < argCount; ++fi) {
+            Object arg = args[fi];
+            if (arg instanceof RArgsValuesAndNames) {
+                hasVarArgs = true;
+                argListSize += ((RArgsValuesAndNames) arg).length() - 1;
+            }
+        }
+        Object[] argValues;
+        ArgumentsSignature signature;
+        if (hasVarArgsProfile.profile(hasVarArgs)) {
+            argValues = new Object[argListSize];
+            String[] argNames = new String[argListSize];
+            int index = 0;
+            for (int fi = 0; fi < argCount; ++fi) {
+                Object arg = args[fi];
+                if (arg instanceof RArgsValuesAndNames) {
+                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
+                    Object[] varArgValues = varArgs.getValues();
+                    ArgumentsSignature varArgSignature = varArgs.getSignature();
+                    for (int i = 0; i < varArgs.length(); i++) {
+                        argNames[index] = varArgSignature.getName(i);
+                        addArg(argValues, varArgValues[i], index++);
+                    }
+                } else {
+                    argNames[index] = suppliedSignature.getName(fi);
+                    addArg(argValues, arg, index++);
+                }
+            }
+            signature = ArgumentsSignature.get(argNames);
+        } else {
+            argValues = new Object[argCount];
+            for (int i = 0; i < argCount; i++) {
+                addArg(argValues, args[i], i);
+            }
+            signature = suppliedSignature;
+        }
+
+        // ...and use them as 'supplied' arguments...
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
+
+        // ...to match them against the chosen function's formal arguments
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
+        return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+    }
+
+    private static void addArg(Object[] values, Object value, int index) {
+        if (RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value))) {
+            values[index] = null;
+        } else {
+            values[index] = value;
+        }
+    }
+
+    private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, signature);
+        // todo: cannot create frame descriptors in compiled code
+        genCallEnv = callerFrame;
+        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
+        RArguments.setS3Method(argObject, targetFunctionName);
+        return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
+    }
+
+    private void findTargetFunction(Frame callerFrame) {
+        findTargetFunctionLookup(callerFrame);
+        if (targetFunction == null) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+        }
+    }
+
+    @TruffleBoundary
+    private void findTargetFunctionLookup(Frame callerFrame) {
+        for (int i = 0; i < type.getLength(); ++i) {
+            findFunction(genericName, type.getDataAt(i), callerFrame);
+            if (targetFunction != null) {
+                RStringVector classVec = null;
+                if (i > 0) {
+                    isFirst = false;
+                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
+                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
+                } else {
+                    isFirst = true;
+                    classVec = type.copyResized(type.getLength(), false);
+                }
+                klass = classVec;
+                break;
+            }
+        }
+        if (targetFunction != null) {
+            return;
+        }
+        findFunction(genericName, RRuntime.DEFAULT, callerFrame);
+    }
+}
+
+final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
+
+    private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
+
+    private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
+
+    public UseMethodDispatchGenericNode(String genericName, ArgumentsSignature suppliedSignature) {
+        super(genericName, suppliedSignature);
+    }
+
+    private Frame getCallerFrame(VirtualFrame frame) {
+        Frame funFrame = RArguments.getCallerFrame(frame);
+        if (callerFrameSlotPath.profile(funFrame == null)) {
+            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
+            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+        }
+        // S3 method can be dispatched from top-level where there is no caller frame
+        return topLevelFrameProfile.profile(funFrame == null) ? frame : funFrame;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public Object executeGeneric(VirtualFrame frame, RStringVector type) {
+        Frame funFrame = getCallerFrame(frame);
+        findTargetFunction(RArguments.getEnclosingFrame(frame), type);
+        return executeHelper(frame, funFrame);
+    }
+
+    @Override
+    public Object executeInternal(VirtualFrame frame, Object[] args) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector type, Object[] args) {
         // TBD getEnclosing?
-        findTargetFunction(frame);
+        findTargetFunction(frame, type);
         return executeHelper(frame, args);
     }
 
@@ -167,21 +326,21 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, signature);
         // todo: cannot create frame descriptors in compiled code
         genCallEnv = callerFrame;
-        defineVarsAsArguments(argObject);
+        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
         RArguments.setS3Method(argObject, targetFunctionName);
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
-    private void findTargetFunction(Frame callerFrame) {
-        findTargetFunctionLookup(callerFrame);
+    private void findTargetFunction(Frame callerFrame, RStringVector type) {
+        findTargetFunctionLookup(callerFrame, type);
         if (targetFunction == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
         }
     }
 
     @TruffleBoundary
-    private void findTargetFunctionLookup(Frame callerFrame) {
+    private void findTargetFunctionLookup(Frame callerFrame, RStringVector type) {
         for (int i = 0; i < type.getLength(); ++i) {
             findFunction(genericName, type.getDataAt(i), callerFrame);
             if (targetFunction != null) {

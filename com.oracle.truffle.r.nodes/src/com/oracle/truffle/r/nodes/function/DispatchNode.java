@@ -18,7 +18,6 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchNode extends RNode {
 
-    protected RStringVector type;
     protected final String genericName;
 
     public DispatchNode(String genericName) {

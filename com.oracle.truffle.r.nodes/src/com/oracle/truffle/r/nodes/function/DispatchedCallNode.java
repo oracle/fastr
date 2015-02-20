@@ -96,19 +96,19 @@ public abstract class DispatchedCallNode extends RNode {
         private DispatchedCallNode specialize(RStringVector type) {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
-                DispatchNode current = createCurrentNode(type);
+                DispatchNode current = createCurrentNode(type, true);
                 return replace(new CachedNode(current, new UninitializedDispatchedCallNode(this, depth + 1), type));
             }
             RError.performanceWarning("S3 method dispatch fallback to generic");
-            return this.replace(new GenericDispatchNode(createCurrentNode(type)));
+            return this.replace(new GenericDispatchNode(createCurrentNode(type, false)));
         }
 
-        private DispatchNode createCurrentNode(RStringVector type) {
+        private DispatchNode createCurrentNode(RStringVector type, boolean cached) {
             switch (dispatchType) {
                 case NextMethod:
                     return new NextMethodDispatchNode(genericName, type, args, signature, enclosingName);
                 case UseMethod:
-                    return new UseMethodDispatchNode(genericName, type, signature);
+                    return cached ? UseMethodDispatchNode.createCached(genericName, type, signature) : UseMethodDispatchNode.createGeneric(genericName, signature);
                 default:
                     throw RInternalError.shouldNotReachHere();
             }

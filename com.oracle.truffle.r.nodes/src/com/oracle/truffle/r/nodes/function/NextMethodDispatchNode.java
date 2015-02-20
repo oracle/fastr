@@ -20,7 +20,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class NextMethodDispatchNode extends S3DispatchNode {
+public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
 
     @Child private ReadVariableNode rvnDefEnv;
     @Child private ReadVariableNode rvnCallEnv;
@@ -36,13 +36,11 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private boolean hasGroup;
     private boolean lastHasGroup;
     @CompilationFinal private final Object[] args;
-    private final ArgumentsSignature argSignature;
 
-    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, ArgumentsSignature argSignature, String storedFunctionName) {
-        super(genericName);
+    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, ArgumentsSignature suppliedSignature, String storedFunctionName) {
+        super(genericName, suppliedSignature);
         this.type = type;
         this.args = args;
-        this.argSignature = argSignature;
         this.storedFunctionName = storedFunctionName;
     }
 
@@ -97,8 +95,8 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (argsLength > 0) {
             for (int i = 0; i < argsLength; i++) {
                 funArgValues[index] = args[i];
-                if (argSignature != null) {
-                    funArgNames[index] = argSignature.getName(i);
+                if (suppliedSignature != null) {
+                    funArgNames[index] = suppliedSignature.getName(i);
                 }
                 index++;
             }
@@ -116,7 +114,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private Object executeHelper(VirtualFrame frame) {
         EvaluatedArguments evaledArgs = processArgs(frame);
         Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getSignature());
-        defineVarsAsArguments(argObject);
+        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
         if (storedFunctionName != null) {
             RArguments.setS3Method(argObject, storedFunctionName);
         } else {
