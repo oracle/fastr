@@ -428,7 +428,7 @@ public class InfixEmulationFunctions {
             if (updateNode == null || positions.getLength() != len) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (updateNode == null) {
-                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, null, null, null, null, null));
+                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, false, null, null, null, null, null));
                 }
                 positions = insert(UpdatePositions.create(isSubset, len));
                 coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));

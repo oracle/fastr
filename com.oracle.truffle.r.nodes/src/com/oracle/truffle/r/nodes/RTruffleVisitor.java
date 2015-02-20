@@ -310,7 +310,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             assert tmpVarAccess != null;
             assert rhsAccess != null;
             assert coerceVector != null;
-            return UpdateArrayHelperNodeGen.create(isSubset, tmpVarAccess, rhsAccess, ConstantNode.create(0), posArrayNodeValue, coerceVector);
+            return UpdateArrayHelperNodeGen.create(isSubset, true, tmpVarAccess, rhsAccess, ConstantNode.create(0), posArrayNodeValue, coerceVector);
         }
     }
 

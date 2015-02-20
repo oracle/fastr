@@ -120,10 +120,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     // RComplex positions
 
     @Specialization
-    protected Object accessComplexEmptyValue(RAbstractVector vector, Object value, RAbstractComplexVector position) {
+    protected Object accessComplexEmptyValue(RAbstractContainer container, Object value, RAbstractComplexVector position) {
         if (!isSubset) {
             RError.Message message;
-            if (vector instanceof RList) {
+            if (container instanceof RList) {
                 message = RError.Message.INVALID_SUBSCRIPT_TYPE;
             } else {
                 message = value instanceof RNull ? RError.Message.MORE_SUPPLIED_REPLACE : getErrorForValueSize(value, RError.Message.INVALID_SUBSCRIPT_TYPE);
@@ -138,10 +138,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     // RRaw positions
 
     @Specialization
-    protected Object accessRaw(RAbstractVector vector, Object value, RAbstractRawVector position) {
+    protected Object accessRaw(RAbstractContainer container, Object value, RAbstractRawVector position) {
         if (!isSubset) {
             RError.Message message;
-            if (vector instanceof RList) {
+            if (container instanceof RList) {
                 message = RError.Message.INVALID_SUBSCRIPT_TYPE;
             } else {
                 message = value instanceof RNull ? RError.Message.MORE_SUPPLIED_REPLACE : getErrorForValueSize(value, RError.Message.INVALID_SUBSCRIPT_TYPE);
@@ -153,10 +153,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = {"noPosition"})
-    protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, Object value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractContainer container, Object value, RAbstractVector positions) {
         if (!isSubset) {
             RError.Message message;
-            if (positions instanceof RList && vector instanceof RList) {
+            if (positions instanceof RList && container instanceof RList) {
                 message = RError.Message.SELECT_LESS_1;
             } else {
                 message = getErrorForValueSize(value, RError.Message.SELECT_LESS_1);
@@ -192,8 +192,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return positions;
     }
 
-    @Specialization(guards = {"onePosition", "emptyValue", "!isVectorList"})
-    protected RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    @Specialization(guards = {"onePosition", "emptyValue", "!isContainerList"})
+    protected RAbstractVector accessListOnePosEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
@@ -202,7 +202,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = {"onePosition", "!emptyValue"})
-    protected RAbstractVector accessListOnePosNonEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosNonEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
                 errorProfile.enter();
@@ -212,8 +212,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return positions;
     }
 
-    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isVectorList"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isContainerList"})
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
@@ -221,8 +221,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "!isVectorList"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
+    @Specialization(guards = {"onePosition", "!isContainerList"})
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
@@ -250,8 +250,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "emptyValue", "!isVectorList", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    @Specialization(guards = {"onePosition", "emptyValue", "!isContainerList", "!isPosVectorInt"})
+    protected RAbstractVector accessListOnePosEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
@@ -264,7 +264,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosValueLengthOne(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
@@ -283,8 +283,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt", "!isVectorList"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt", "!isContainerList"})
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions instanceof RList) {
@@ -294,8 +294,8 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "!isVectorList", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
+    @Specialization(guards = {"onePosition", "!isContainerList", "!isPosVectorInt"})
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions instanceof RList) {
@@ -307,10 +307,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = "multiPos")
-    protected RAbstractVector accessListMultiPos(RAbstractVector vector, Object value, RAbstractVector positions) {
+    protected RAbstractVector accessListMultiPos(RAbstractContainer container, Object value, RAbstractVector positions) {
         if (!isSubset) {
             RError.Message message;
-            if (positions instanceof RList && vector instanceof RList) {
+            if (positions instanceof RList && container instanceof RList) {
                 message = RError.Message.SELECT_MORE_1;
             } else {
                 message = getErrorForValueSize(value, RError.Message.SELECT_MORE_1);
@@ -332,15 +332,15 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return p.getDataAt(0) == 0;
     }
 
-    protected boolean isVectorList(RAbstractVector vector) {
-        return vector instanceof RList;
+    protected boolean isContainerList(RAbstractContainer container) {
+        return container instanceof RList;
     }
 
     protected boolean isPosVectorInt(Object vector, Object value, RAbstractVector p) {
         return p instanceof RAbstractIntVector;
     }
 
-    protected boolean noPosition(RAbstractVector vector, Object value, RAbstractVector p) {
+    protected boolean noPosition(RAbstractContainer container, Object value, RAbstractVector p) {
         return p.getLength() == 0;
     }
 

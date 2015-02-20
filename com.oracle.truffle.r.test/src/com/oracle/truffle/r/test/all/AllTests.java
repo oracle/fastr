@@ -25190,6 +25190,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testObject_b2fba48b73cbc9911ea7fda6f0e246f8() {
+        assertEval("{ x<-data.frame(1,2); x[2]<-7; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObject_93bbc4d77b7f0dd83e888b8bc7752ee8() {
+        assertEval("{ x<-data.frame(1,2); x[[2]]<-7; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObject_a9b2a4b1c3819e96bb9c8c98c7bb2883() {
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[2,1]<-7; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObject_c48b4bc466c901988be4879c61157051() {
+        assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[[2,1]]<-7; x }");
+    }
+
+    @Test
     public void TestSimpleVectors_testObject_3c8c62f8e1feeacaa1cc77072c3348f9() {
         assertEval("{ `[.foo` <- function(x, i, ...) structure(NextMethod(\"[\"), class = class(x)); x<-c(1,2); class(x)<-\"foo\"; x[1] }");
     }
