@@ -281,6 +281,17 @@ public class SysFunctions {
 
     }
 
+    @RBuiltin(name = "Sys.time", kind = INTERNAL, parameterNames = {})
+    public abstract static class SysTime extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected double sysChmod() {
+            controlVisibility();
+            return ((double) System.currentTimeMillis()) / 1000000;
+        }
+
+    }
+
     @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"})
     public abstract static class SysGlob extends RBuiltinNode {
         private static final char[] GLOBCHARS = new char[]{'*', '?', '['};
