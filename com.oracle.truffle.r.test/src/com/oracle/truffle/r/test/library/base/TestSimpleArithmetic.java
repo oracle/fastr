@@ -638,6 +638,8 @@ public class TestSimpleArithmetic extends TestBase {
 
         assertEval("{ a <- as.raw(200) ; b <- as.raw(255) ; a | b }");
         assertEval("{ a <- as.raw(200) ; b <- as.raw(1) ; a | b }");
+
+        assertEval("c(TRUE, FALSE) | c(NA, NA)");
     }
 
     @Test
@@ -663,6 +665,8 @@ public class TestSimpleArithmetic extends TestBase {
 
         assertEval("{ 1:4 & c(FALSE,TRUE) }");
         assertEval("{ a <- as.raw(201) ; b <- as.raw(1) ; a & b }");
+
+        assertEval("{ c(FALSE, NA) & c(NA, NA) }");
     }
 
     @Test
