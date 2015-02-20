@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  */
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 

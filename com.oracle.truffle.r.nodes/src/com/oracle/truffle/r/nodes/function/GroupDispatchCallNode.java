@@ -303,7 +303,7 @@ class GroupDispatchNode extends S3DispatchNode {
     }
 
     protected void findTargetFunction(VirtualFrame frame) {
-        final String[] prefix = {genericName, groupName};
+        String[] prefix = {genericName, groupName};
         for (int i = 0; i < this.type.getLength(); ++i) {
             for (int j = 0; j < prefix.length; ++j) {
                 findFunction(prefix[j], this.type.getDataAt(i), frame);
