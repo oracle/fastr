@@ -60,7 +60,8 @@ public abstract class DoCall extends RBuiltinNode {
             }
             func = (RFunction) getNode.execute(frame, fname, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         }
-        return doDoCall(frame, func, argsAsList, env);
+        Object result = doDoCall(frame, func, argsAsList, env);
+        return result;
     }
 
     @Specialization()
