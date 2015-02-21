@@ -603,6 +603,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f<-function(v, i, ...) v[i, ...]; x<-matrix(1:4, ncol=2); f(x, 1, 2) }");
         assertEval("{ f<-function(v, val, ...) { v[...]<-val; v; } ; x<-matrix(1:4, ncol=2); f(x, 7, 1, 2) }");
         assertEval("{ f<-function(v, val, i, ...) { v[i, ...]<-val; v; } ; x<-matrix(1:4, ncol=2); f(x, 7, 1, 2) }");
+
+        assertEval("{ x<-matrix(1:4, ncol=2); x[] }");
     }
 
     @Test

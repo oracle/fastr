@@ -57408,6 +57408,12 @@ Error in `[[<-`(`*tmp*`, c(1, NA, 2, 1), value = 7) :
   no such index at level 2
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ x<-matrix(1:4, ncol=2); x[] }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-matrix(1:4, ncol=2, dimnames=list(c("a", "b"), c("c", "d"))); dimnames(x)[[1]][1]<-"z"; x }
   c d
 z 1 3

@@ -150,16 +150,21 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
     @Specialization
     protected Object doMissingVector(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
-        int[] dimensions = getDimensions(container);
-        verifyDimensions(dimensions);
-        int[] data = new int[numDimensions == 1 ? container.getLength() : dimensions[dimension]];
-        if (data.length > 0) {
-            for (int i = 0; i < data.length; i++) {
-                data[i] = i + 1;
-            }
-            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        if (!assignment && numDimensions == 1) {
+            // need to return original accessed vector (with attributes and such)
+            return RMissing.instance;
         } else {
-            return 0;
+            int[] dimensions = getDimensions(container);
+            verifyDimensions(dimensions);
+            int[] data = new int[numDimensions == 1 ? container.getLength() : dimensions[dimension]];
+            if (data.length > 0) {
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = i + 1;
+                }
+                return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+            } else {
+                return 0;
+            }
         }
     }
 
@@ -354,6 +359,10 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Specialization
         protected Object doMissingDimLengthOne(VirtualFrame frame, RAbstractContainer container, RMissing operand, Object exact) {
+            if (!assignment && numDimensions == 1) {
+                // need to return original accessed vector (with attributes and such)
+                return RMissing.instance;
+            }
             if (!isSubset) {
                 if (assignment) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
