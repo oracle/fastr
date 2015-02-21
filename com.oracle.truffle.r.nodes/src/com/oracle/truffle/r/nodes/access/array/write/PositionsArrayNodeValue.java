@@ -107,7 +107,7 @@ public class PositionsArrayNodeValue extends RNode {
 
     @Override
     public void deparse(State state) {
-        conversionAdapter.deparse(state);
+        positionsAdapter.deparse(state);
     }
 
 }

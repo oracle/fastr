@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public abstract class ConstantNode extends RNode implements VisibilityController {
 
@@ -43,7 +44,11 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     @TruffleBoundary
     public void deparse(State state) {
         if (!(this instanceof ConstantMissingNode)) {
-            RDeparse.deparse2buff(state, getValue());
+            Object val = getValue();
+            if (this instanceof ConstantStringScalarNode) {
+                val = new SEXPTYPE.FastRString((String) val);
+            }
+            RDeparse.deparse2buff(state, val);
         }
     }
 
