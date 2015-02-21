@@ -1381,7 +1381,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             int leftValue = left.getDataAt(i);
             byte resultValue;
             if (logicOpProfile.profile(isLogicOp())) {
-                resultValue = intLogicalResult(leftValue, (int) rightValue);
+                resultValue = intLogicalResult(leftValue, (int) rightValue, reverse);
             } else {
                 resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
             }
@@ -1420,7 +1420,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             RComplex leftValue = RRuntime.int2complex(left.getDataAt(i));
             byte resultValue;
             if (logicOpProfile.profile(isLogicOp())) {
-                resultValue = complexLogicalResult(leftValue, rightValue);
+                resultValue = complexLogicalResult(leftValue, rightValue, reverse);
             } else {
                 resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
             }
@@ -1444,7 +1444,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
-            byte resultValue = doubleLogicalResult(leftValue, rightValue);
+            byte resultValue = doubleLogicalResult(leftValue, rightValue, reverse);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1480,7 +1480,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             RComplex leftValue = RRuntime.double2complex(left.getDataAt(i));
             byte resultValue;
             if (logicOpProfile.profile(isLogicOp())) {
-                resultValue = complexLogicalResult(leftValue, rightValue);
+                resultValue = complexLogicalResult(leftValue, rightValue, reverse);
             } else {
                 resultValue = leftNACheck.check(leftValue) || rightNACheck.check(rightValue) ? RRuntime.LOGICAL_NA : (!reverse ? logic.op(leftValue, rightValue) : logic.op(rightValue, leftValue));
             }
@@ -1504,7 +1504,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             double leftValue = RRuntime.logical2double(left.getDataAt(i));
-            byte resultValue = doubleLogicalResult(leftValue, rightValue);
+            byte resultValue = doubleLogicalResult(leftValue, rightValue, reverse);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1540,7 +1540,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         boolean naResult = false;
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = RRuntime.logical2complex(left.getDataAt(i));
-            byte resultValue = complexLogicalResult(leftValue, rightValue);
+            byte resultValue = complexLogicalResult(leftValue, rightValue, reverse);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1680,7 +1680,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
             int rightValue = right.getDataAt(i);
-            byte resultValue = intLogicalResult(leftValue, rightValue);
+            byte resultValue = intLogicalResult(leftValue, rightValue, false);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1692,7 +1692,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return ret;
     }
 
-    private byte intLogicalResult(int leftValue, int rightValue) {
+    private byte intLogicalResult(int leftValueA, int rightValueA, boolean reverse) {
+        int leftValue = reverse ? rightValueA : leftValueA;
+        int rightValue = reverse ? leftValueA : rightValueA;
         // for logical ops behavior with NA is different
         boolean leftNA = leftNACheck.check(leftValue);
         boolean rightNA = rightNACheck.check(rightValue);
@@ -1736,7 +1738,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             int leftValue = left.getDataAt(l);
             int rightValue = right.getDataAt(r);
-            byte resultValue = intLogicalResult(leftValue, rightValue);
+            byte resultValue = intLogicalResult(leftValue, rightValue, false);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1764,7 +1766,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
             double rightValue = right.getDataAt(i);
-            byte resultValue = doubleLogicalResult(leftValue, rightValue);
+            byte resultValue = doubleLogicalResult(leftValue, rightValue, false);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1776,7 +1778,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return ret;
     }
 
-    private byte doubleLogicalResult(double leftValue, double rightValue) {
+    private byte doubleLogicalResult(double leftValueA, double rightValueA, boolean reverse) {
+        double leftValue = reverse ? rightValueA : leftValueA;
+        double rightValue = reverse ? leftValueA : rightValueA;
         // for logical ops behavior with NA is different
         boolean leftNA = leftNACheck.check(leftValue);
         boolean rightNA = rightNACheck.check(rightValue);
@@ -1820,7 +1824,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             double leftValue = left.getDataAt(l);
             double rightValue = right.getDataAt(r);
-            byte resultValue = doubleLogicalResult(leftValue, rightValue);
+            byte resultValue = doubleLogicalResult(leftValue, rightValue, false);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1902,7 +1906,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
             RComplex rightValue = right.getDataAt(i);
-            byte resultValue = complexLogicalResult(leftValue, rightValue);
+            byte resultValue = complexLogicalResult(leftValue, rightValue, false);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
@@ -1914,7 +1918,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return ret;
     }
 
-    private byte complexLogicalResult(RComplex leftValue, RComplex rightValue) {
+    private byte complexLogicalResult(RComplex leftValueA, RComplex rightValueA, boolean reverse) {
+        RComplex leftValue = reverse ? rightValueA : leftValueA;
+        RComplex rightValue = reverse ? leftValueA : rightValueA;
         // for logical ops behavior with NA is different
         boolean leftNA = leftNACheck.check(leftValue);
         boolean rightNA = rightNACheck.check(rightValue);
@@ -1958,7 +1964,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         for (int i = 0; i < resultLength; ++i, l = Utils.incMod(l, leftLength), r = Utils.incMod(r, rightLength)) {
             RComplex leftValue = left.getDataAt(l);
             RComplex rightValue = right.getDataAt(r);
-            byte resultValue = complexLogicalResult(leftValue, rightValue);
+            byte resultValue = complexLogicalResult(leftValue, rightValue, false);
             if (resultNAProfile.isNA(resultValue)) {
                 naResult = true;
             }
