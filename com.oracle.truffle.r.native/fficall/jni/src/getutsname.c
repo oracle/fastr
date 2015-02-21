@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNIUtsName_getutsname(JNIEnv *env, job
 	jstring release = (*env)->NewStringUTF(env, name.release);
 	jstring version = (*env)->NewStringUTF(env, name.version);
 	jstring machine = (*env)->NewStringUTF(env, name.machine);
+	jstring nodename = (*env)->NewStringUTF(env, name.nodename);
 
 	jclass klass = (*env)->GetObjectClass(env, obj);
 
@@ -51,10 +52,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNIUtsName_getutsname(JNIEnv *env, job
 	jfieldID releaseId = checkGetFieldID(env, klass, "release", "Ljava/lang/String;");
 	jfieldID versionId = checkGetFieldID(env, klass, "version", "Ljava/lang/String;");
 	jfieldID machineId = checkGetFieldID(env, klass, "machine", "Ljava/lang/String;");
+	jfieldID nodenameId = checkGetFieldID(env, klass, "nodename", "Ljava/lang/String;");
 
 	(*env)->SetObjectField(env, obj, sysnameId, sysname);
 	(*env)->SetObjectField(env, obj, releaseId, release);
 	(*env)->SetObjectField(env, obj, versionId, version);
 	(*env)->SetObjectField(env, obj, machineId, machine);
+	(*env)->SetObjectField(env, obj, nodenameId, nodename);
 
 }
