@@ -31,6 +31,8 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 @ValueType
 public class RSymbol extends RAttributeStorage implements RAttributable {
 
+    public static final RSymbol MISSING = RDataFactory.createSymbol("");
+
     private final String name;
 
     public RSymbol(String name) {
