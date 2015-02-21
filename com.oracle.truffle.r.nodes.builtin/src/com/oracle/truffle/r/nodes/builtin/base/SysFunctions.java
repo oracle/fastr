@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 
 public class SysFunctions {
 
@@ -288,6 +289,32 @@ public class SysFunctions {
         protected double sysTime() {
             controlVisibility();
             return ((double) System.currentTimeMillis()) / 1000000;
+        }
+
+    }
+
+    @RBuiltin(name = "Sys.info", kind = INTERNAL, parameterNames = {})
+    public abstract static class SysInfo extends RBuiltinNode {
+        private static final String[] NAMES = new String[]{"sysname", "release", "version", "nodename", "machine", "login", "user", "effective_user"};
+        private static final RStringVector NAMES_ATTR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
+
+        @Specialization
+        @TruffleBoundary
+        protected Object sysTime() {
+            controlVisibility();
+            UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
+            String[] data = new String[NAMES.length];
+            data[0] = utsname.sysname();
+            data[1] = utsname.release();
+            data[2] = utsname.version();
+            data[3] = utsname.nodename();
+            data[4] = utsname.machine();
+            // Need more RFFI support for these, and "unknown" is an ok value
+            data[5] = "unknown";
+            data[6] = "unknown";
+            data[7] = "unknown";
+            RStringVector result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, NAMES_ATTR);
+            return result;
         }
 
     }

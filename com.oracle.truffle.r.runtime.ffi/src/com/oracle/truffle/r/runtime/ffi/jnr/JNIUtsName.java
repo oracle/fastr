@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ public class JNIUtsName implements UtsName {
     String release;
     String version;
     String machine;
+    String nodename;
 
     private static JNIUtsName singleton;
 
@@ -54,6 +55,10 @@ public class JNIUtsName implements UtsName {
 
     public String machine() {
         return machine;
+    }
+
+    public String nodename() {
+        return nodename;
     }
 
     private native void getutsname();
