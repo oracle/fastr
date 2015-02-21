@@ -285,7 +285,7 @@ public class SysFunctions {
     public abstract static class SysTime extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected double sysChmod() {
+        protected double sysTime() {
             controlVisibility();
             return ((double) System.currentTimeMillis()) / 1000000;
         }
