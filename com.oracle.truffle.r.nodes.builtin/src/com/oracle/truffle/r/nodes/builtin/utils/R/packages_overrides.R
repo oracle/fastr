@@ -49,10 +49,6 @@ available_packages_filters_db$R_version <-
 	res <- logical(length(x))
 	for(op in names(v_t))
 		res[ops == op] <- do.call(op, list(v_c, v_t[[op]]))
-#	  switch(op,
-#		'>' = res[ops = op] <- v_c > v_t[[op]],
-#		'>=' = res[ops = op] <- v_c >= v_t[[op]],
-#		stop("unexpected op in"))
 	## And assemble test results according to the rows of db.
 	ind <- rep.int(TRUE, NROW(db))
 	ind[pos] <- sapply(split(res, rep.int(seq_along(lens), lens)), all)
