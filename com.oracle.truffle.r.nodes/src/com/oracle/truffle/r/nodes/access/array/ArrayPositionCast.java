@@ -149,18 +149,17 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
     }
 
     @Specialization
-    protected Object doMissingVector(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
-        int[] dimensions = getDimensions(container);
-        verifyDimensions(dimensions);
-        int[] data = new int[numDimensions == 1 ? container.getLength() : dimensions[dimension]];
-        if (data.length > 0) {
-            for (int i = 0; i < data.length; i++) {
-                data[i] = i + 1;
-            }
-            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+    protected Object doSymbol(VirtualFrame frame, RAbstractContainer container, RSymbol operand) {
+        if (operand.getName().length() == 0) {
+            return doMissingVector(frame, container, RMissing.instance);
         } else {
-            return 0;
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
         }
+    }
+
+    @Specialization
+    protected Object doMissingVector(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
+        return operand;
     }
 
     @Specialization
@@ -347,13 +346,40 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return operand;
         }
 
+        protected Object expandMissing(RAbstractContainer container) {
+            int[] dimensions = getDimensions(container);
+            verifyDimensions(dimensions);
+            int[] data = new int[numDimensions == 1 ? container.getLength() : dimensions[dimension]];
+            if (data.length > 0) {
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = i + 1;
+                }
+                return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+            } else {
+                return 0;
+            }
+        }
+
         @Specialization
         protected RMissing doFuncOp(RAbstractContainer container, RFunction operand, Object exact) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "closure");
         }
 
         @Specialization
+        protected Object doSymbol(VirtualFrame frame, RAbstractContainer container, RSymbol operand, Object exact) {
+            if (operand.getName().length() == 0) {
+                return doMissingDimLengthOne(frame, container, RMissing.instance, exact);
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+            }
+        }
+
+        @Specialization
         protected Object doMissingDimLengthOne(VirtualFrame frame, RAbstractContainer container, RMissing operand, Object exact) {
+            if (!assignment && numDimensions == 1) {
+                // need to return original accessed vector (with attributes and such)
+                return RMissing.instance;
+            }
             if (!isSubset) {
                 if (assignment) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
@@ -364,7 +390,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (dimSizeOneProfile.profile(getDimensionSize(frame, container) == 1)) {
                 return 1;
             } else {
-                return operand;
+                return expandMissing(container);
             }
         }
 
@@ -461,7 +487,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     return isSubset ? /* only one element to be picked */1 : /* ultimately an error */operand;
                 } else {
                     // e.g. c(7, 42)[-7] vs c(, 427)[[-7]]
-                    return isSubset ? RMissing.instance : operand;
+                    return isSubset ? expandMissing(container) : operand;
                 }
             } else if (operand < 0) {
                 negative.enter();
