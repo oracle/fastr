@@ -23715,6 +23715,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_50435459ed81ffe1df173d8031b45b7d() {
+        assertEval("{ x<-matrix(1:4, ncol=2); x[alist(a=)[[1]]] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_1010191ce5f60822dee5d5e68994f1d7() {
+        assertEval("{ x<-matrix(1:4, ncol=2); x[1,alist(a=)[[1]]] }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_23e220f9c43711417c97b6024e96b424() {
         assertEvalError("{ x<-c(1,2); x[[c(\"a\")]] }");
     }
@@ -24557,6 +24567,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testMoreVectorsOther_12267dcae5c48cbb3d611b54fb9f1e9e() {
         assertEvalError("{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x[\"a\", exact=FALSE]<-7; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_dfbab8f61a37cfcd3e4508e32fc98c57() {
+        assertEvalError("{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_464f61f257a3fce5cd5dbbcce4bf35f8() {
+        assertEvalError("{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s]<-1; }");
     }
 
     @Test

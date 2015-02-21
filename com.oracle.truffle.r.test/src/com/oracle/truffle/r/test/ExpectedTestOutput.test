@@ -57408,7 +57408,17 @@ Error in `[[<-`(`*tmp*`, c(1, NA, 2, 1), value = 7) :
   no such index at level 2
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ x<-matrix(1:4, ncol=2); x[1,alist(a=)[[1]]] }
+[1] 1 3
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-matrix(1:4, ncol=2); x[] }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ x<-matrix(1:4, ncol=2); x[alist(a=)[[1]]] }
      [,1] [,2]
 [1,]    1    3
 [2,]    2    4
@@ -57427,6 +57437,14 @@ b 2 4
 attr(,"foo")
 [1] "foo"
 
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s] }
+Error in x[s] : invalid subscript type 'symbol'
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s]<-1; }
+Error in x[s] <- 1 : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[,0,]) }
