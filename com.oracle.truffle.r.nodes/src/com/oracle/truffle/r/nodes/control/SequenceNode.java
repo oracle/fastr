@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -175,7 +176,11 @@ public class SequenceNode extends RNode {
                         for (int i = 0; i < sequence.timing.length; i++) {
                             total += sequence.timing[i];
                         }
-                        System.out.println("UNNOWN SOURCE total: " + (total / 1000000) + "ms");
+                        FunctionDefinitionNode rootNode = (FunctionDefinitionNode) sequence.getRootNode();
+                        RDeparse.State state = RDeparse.State.createPrintableState();
+                        rootNode.deparse(state);
+                        System.out.println("Source (" + rootNode + "): " + (total / 1000000) + "ms");
+                        System.out.println(state.toString());
                     } else {
                         Source source = sequence.getSourceSection().getSource();
                         long[] time = new long[source.getLineCount() + 1];
