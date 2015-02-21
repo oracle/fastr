@@ -72,7 +72,7 @@ public enum SEXPTYPE {
     FASTR_DOUBLE(300, Double.class),
     FASTR_INT(301, Integer.class),
     FASTR_BYTE(302, Byte.class),
-    FASTR_STRING(303, String.class),
+    FASTR_STRING(303, FastRString.class),
     FASTR_DATAFRAME(304, RDataFrame.class),
     FASTR_FACTOR(305, RFactor.class);
 
@@ -106,6 +106,18 @@ public enum SEXPTYPE {
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
 
+    /**
+     * A wrapper class that allows {@link RDeparse} to distinguish {@link SEXPTYPE#CHARSXP} and
+     * {@link SEXPTYPE#FASTR_STRING}.
+     */
+    public static class FastRString {
+        public final String value;
+
+        public FastRString(String value) {
+            this.value = value;
+        }
+    }
+
     public static SEXPTYPE convertFastRScalarType(SEXPTYPE type) {
         switch (type) {
             case FASTR_DOUBLE:
@@ -115,7 +127,7 @@ public enum SEXPTYPE {
             case FASTR_BYTE:
                 return SEXPTYPE.LGLSXP;
             case FASTR_STRING:
-                return SEXPTYPE.CHARSXP;
+                return type;
             default:
                 assert false;
                 return null;

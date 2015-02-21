@@ -942,10 +942,11 @@ public class RDeparse {
 
     private static State vecElement2buff(State state, SEXPTYPE type, Object element) {
         switch (type) {
+            case FASTR_STRING:
             case STRSXP:
                 // TODO encoding
                 state.append('"');
-                String s = (String) element;
+                String s = type == SEXPTYPE.STRSXP ? (String) element : ((SEXPTYPE.FastRString) element).value;
                 for (int i = 0; i < s.length(); i++) {
                     char ch = s.charAt(i);
                     int charInt = ch;
