@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -89,6 +90,10 @@ public class RASTUtils {
     @TruffleBoundary
     public static Object createLanguageElement(Node argNode) {
         if (argNode instanceof ConstantNode) {
+            if (argNode instanceof ConstantMissingNode) {
+                // special case which GnuR handles as an unnamed symbol
+                return RSymbol.MISSING;
+            }
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
