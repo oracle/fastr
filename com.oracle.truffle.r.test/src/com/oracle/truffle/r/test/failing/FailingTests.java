@@ -1792,6 +1792,72 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testObjectDirectAccess_01eabfb2c4e15bb5a7006319a4337fd2() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1) }");
+        check("TestSimpleVectors_testObjectDirectAccess_01eabfb2c4e15bb5a7006319a4337fd2");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_6f3b4849970406b2315eabe72503d201() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=TRUE) }");
+        check("TestSimpleVectors_testObjectDirectAccess_6f3b4849970406b2315eabe72503d201");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_1be9c6acb933e025c3d74895ff9d7d02() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=FALSE) }");
+        check("TestSimpleVectors_testObjectDirectAccess_1be9c6acb933e025c3d74895ff9d7d02");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_b79b4f8ad5b7cc5a833d720266dd1a1d() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[.factor`(x, 1) }");
+        check("TestSimpleVectors_testObjectDirectAccess_b79b4f8ad5b7cc5a833d720266dd1a1d");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_660880a286cd3118a6c3ffb5f976c827() {
+        assertEval("{ x<-factor(c(\"a\", z=\"b\", \"a\")); `[[.factor`(x, \"z\") }");
+        check("TestSimpleVectors_testObjectDirectAccess_660880a286cd3118a6c3ffb5f976c827");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_c1ed9317efa96b573485632db9fb0241() {
+        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=FALSE) }");
+        check("TestSimpleVectors_testObjectDirectAccess_c1ed9317efa96b573485632db9fb0241");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_4833fbe2c62756ace2e149c452458e59() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1) }");
+        check("TestSimpleVectors_testObjectDirectAccess_4833fbe2c62756ace2e149c452458e59");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_4eccdd1f73e019373d9d154b833fece5() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1, drop=FALSE) }");
+        check("TestSimpleVectors_testObjectDirectAccess_4eccdd1f73e019373d9d154b833fece5");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_945fe85394239f5303dea1a491a918d1() {
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[`(x, 1) }");
+        check("TestSimpleVectors_testObjectDirectAccess_945fe85394239f5303dea1a491a918d1");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_b51fa52db3d6fc7ed30f6cffba2dadff() {
+        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[`(x, \"z\", exact=FALSE) }");
+        check("TestSimpleVectors_testObjectDirectAccess_b51fa52db3d6fc7ed30f6cffba2dadff");
+    }
+
+    @Test
+    public void TestSimpleVectors_testObjectDirectAccess_68b89b4e74c36289fd7aef12dbd3c682() {
+        assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=TRUE) }");
+        check("TestSimpleVectors_testObjectDirectAccess_68b89b4e74c36289fd7aef12dbd3c682");
+    }
+
+    @Test
     public void TestSimpleVectors_testScalarIndexIgnored_c5bf8fe63f55705b2cb57df329d3fc2d() {
         assertEval("{ x<-1:4; x[c(-0.5)] }");
         check("TestSimpleVectors_testScalarIndexIgnored_c5bf8fe63f55705b2cb57df329d3fc2d");

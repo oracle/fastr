@@ -57853,60 +57853,6 @@ Error in `[[.default`(x, "z", exact = TRUE) : subscript out of bounds
 #{ x<-factor(c("a", "b", "a")); .subset2(x, 1) }
 [1] 1
 
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1) }
-[1] a
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1, drop=FALSE) }
-[1] a
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1, drop=TRUE) }
-[1] a
-Levels: a
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[[.factor`(x, 1) }
-[1] a
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[[`(x, 1) }
-[1] a
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[`(x, 1) }
-[1] a
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", "b", "a")); `[`(x, 1, drop=FALSE) }
-[1] a
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", z="b", "a")); `[[.factor`(x, "z") }
-[1] b
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", zz="b", "a")); `[[.factor`(x, "z", exact=FALSE) }
-[1] b
-Levels: a b
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", zz="b", "a")); `[[.factor`(x, "z", exact=TRUE) }
-Error in `[[.default`(x, "z", exact = TRUE) : subscript out of bounds
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
-#{ x<-factor(c("a", zz="b", "a")); `[[`(x, "z", exact=FALSE) }
-[1] b
-Levels: a b
-
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ mp<-getOption("max.print"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, "foo")<-"foo"; print(x); options(max.print=mp) }
 [1] 1 2 3
