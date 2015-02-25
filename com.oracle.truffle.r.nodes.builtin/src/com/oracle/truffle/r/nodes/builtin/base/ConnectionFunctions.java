@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 import java.util.zip.*;
 
@@ -307,6 +308,24 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            checkOpen();
+            theConnection.writeBin(buffer);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            checkOpen();
+            return theConnection.readBin(buffer);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            checkOpen();
+            return theConnection.readBinChars();
+        }
+
+        @Override
         public void flush() throws IOException {
             checkOpen();
             theConnection.flush();
@@ -430,6 +449,28 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    private static byte[] readBinCharsHelper(InputStream in) throws IOException {
+        int first = in.read();
+        if (first < 0) {
+            return null;
+        }
+        int totalRead = 0;
+        byte[] buffer = new byte[64];
+        while (true) {
+            if (totalRead > buffer.length - 1) {
+                byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
+                System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+                buffer = newBuffer;
+            }
+            buffer[totalRead++] = (byte) (first & 0xFF);
+            if (first == 0) {
+                break;
+            }
+            first = in.read();
+        }
+        return buffer;
+    }
+
     private abstract static class DelegateRConnection extends RConnection {
         protected BaseRConnection base;
 
@@ -462,6 +503,11 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
+        }
+
+        @Override
         public void flush() {
             // nothing to do
         }
@@ -480,6 +526,16 @@ public abstract class ConnectionFunctions {
 
         @Override
         public String[] readLinesInternal(int n) throws IOException {
+            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
 
@@ -517,6 +573,21 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createDelegateConnection() throws IOException {
             // nothing to do, as we override the RConnection methods directly.
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            throw new IOException("writeBin not implemented for this connection");
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw new IOException("readBin not implemented for this connection");
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw new IOException("readBinChars not implemented for this connection");
         }
     }
 
@@ -703,6 +774,9 @@ public abstract class ConnectionFunctions {
                 case ReadBinary:
                     delegate = new FileReadBinaryRConnection(this);
                     break;
+                case WriteBinary:
+                    delegate = new FileWriteBinaryConnection(this, false);
+                    break;
                 default:
                     throw RError.nyi((SourceSection) null, "unimplemented open mode: " + openMode);
             }
@@ -718,6 +792,16 @@ public abstract class ConnectionFunctions {
             super(base);
             inputStream = new BufferedInputStream(new FileInputStream(base.path));
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw RError.error(RError.Message.ONLY_READ_BINARY_CONNECTION);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RError.error(RError.Message.ONLY_READ_BINARY_CONNECTION);
         }
 
         @TruffleBoundary
@@ -755,6 +839,11 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            throw RError.error(RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+        }
+
+        @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             writeLinesHelper(bufferedWriter, lines, sep);
             flush();
@@ -783,19 +872,29 @@ public abstract class ConnectionFunctions {
     }
 
     private static class FileReadBinaryRConnection extends DelegateReadRConnection {
-        private BufferedInputStream inputStream;
+        private FileInputStream inputStream;
         private InputStreamReader inputReader;
 
         FileReadBinaryRConnection(FileRConnection base) throws IOException {
             super(base);
-            inputStream = new BufferedInputStream(new FileInputStream(base.path));
+            inputStream = new FileInputStream(base.path);
             inputReader = new InputStreamReader(inputStream, "US-ASCII");
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            return inputStream.getChannel().read(buffer);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            return readBinCharsHelper(inputStream);
         }
 
         @TruffleBoundary
         @Override
         public String[] readLinesInternal(int n) throws IOException {
-            throw new IOException("TODO");
+            throw new IOException("not implemented");
         }
 
         @Override
@@ -813,6 +912,52 @@ public abstract class ConnectionFunctions {
         public void internalClose() throws IOException {
             inputReader.close();
         }
+    }
+
+    private static class FileWriteBinaryConnection extends DelegateWriteRConnection {
+        private FileOutputStream outputStream;
+
+        FileWriteBinaryConnection(FileRConnection base, boolean append) throws IOException {
+            super(base);
+            outputStream = new FileOutputStream(base.path, append);
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            outputStream.getChannel().write(buffer);
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return outputStream;
+        }
+
+        @Override
+        public void close() throws IOException {
+            base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            flush();
+            outputStream.close();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                String line = lines.getDataAt(i);
+                outputStream.write(line.getBytes());
+                outputStream.write(sep.getBytes());
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            outputStream.flush();
+        }
+
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
@@ -883,6 +1028,16 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw RError.nyi(null, " readBin on gzip connection");
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RError.nyi(null, " readBinChars on gzip connection");
+        }
+
+        @Override
         public String[] readLinesInternal(int n) throws IOException {
             // To do this we have to create a reader on the stream
             if (bufferedReader == null) {
@@ -933,11 +1088,17 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void internalClose() throws IOException {
+            flush();
             stream.close();
         }
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
             throw RInternalError.unimplemented();
         }
 
@@ -1072,6 +1233,17 @@ public abstract class ConnectionFunctions {
         @Override
         protected void internalClose() {
         }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw RError.nyi(null, " readBin on text connection");
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RError.nyi(null, " readBinChars on text connection");
+        }
+
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"nm", "object", "open", "env", "type"})
@@ -1095,8 +1267,6 @@ public abstract class ConnectionFunctions {
         protected Socket socket;
         protected InputStream inputStream;
         protected OutputStream outputStream;
-        protected BufferedReader bufferedReader;
-        protected BufferedWriter bufferedWriter;
 
         protected RSocketConnection(String modeString, @SuppressWarnings("unused") int port) throws IOException {
             super(ConnectionClass.Socket, modeString);
@@ -1116,14 +1286,13 @@ public abstract class ConnectionFunctions {
         protected void openStreams() throws IOException {
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
-            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
         }
 
         @Override
         public String[] readLinesInternal(int n) throws IOException {
             checkOpen();
-            return readLinesHelper(bufferedReader, n);
+            throw RError.nyi(null, " readLines on socket");
+            // return readLinesHelper(bufferedReader, n);
         }
 
         @Override
@@ -1141,19 +1310,46 @@ public abstract class ConnectionFunctions {
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             checkOpen();
-            writeLinesHelper(bufferedWriter, lines, sep);
-            flush();
+            throw RError.nyi(null, " writeLines on socket");
+            // writeLinesHelper(bufferedWriter, lines, sep);
+            // flush();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            checkOpen();
+            int n = buffer.remaining();
+            byte[] b = new byte[n];
+            buffer.get(b);
+            outputStream.write(b);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            checkOpen();
+            int bytesToRead = buffer.remaining();
+            byte[] b = new byte[bytesToRead];
+            int totalRead = 0;
+            int thisRead = 0;
+            while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
+                totalRead += thisRead;
+            }
+            buffer.put(b, 0, totalRead);
+            return totalRead;
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            return readBinCharsHelper(inputStream);
         }
 
         @Override
         public void flush() throws IOException {
-            bufferedWriter.flush();
+            outputStream.flush();
         }
 
         @Override
         public void close() throws IOException {
-            bufferedReader.close();
-            bufferedWriter.close();
             socket.close();
             closed = true;
         }
@@ -1169,6 +1365,12 @@ public abstract class ConnectionFunctions {
             openStreams();
             opened = true;
         }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+            serverSocket.close();
+        }
     }
 
     private static class RClientSocketConnection extends RSocketConnection {
@@ -1182,15 +1384,18 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
     public abstract static class SocketConnection extends RBuiltinNode {
-        @Specialization
-        @TruffleBoundary
-        protected Object socketConnection(RAbstractStringVector host, double port, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, RAbstractIntVector timeout) {
-            return socketConnection(host, (int) port, server, blocking, open, encoding, timeout);
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
+            arguments[6] = CastDoubleNodeGen.create(arguments[6], false, false, false);
+            return arguments;
         }
 
         @SuppressWarnings("unused")
-        protected Object socketConnection(RAbstractStringVector host, int port, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, RAbstractIntVector timeout) {
-            controlVisibility();
+        @TruffleBoundary
+        @Specialization
+        protected Object socketConnection(RAbstractStringVector host, RAbstractIntVector portVec, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, double timeout) {
+            int port = portVec.getDataAt(0);
             try {
                 if (RRuntime.fromLogical(server)) {
                     return new RServerSocketConnection(open.getDataAt(0), port);
@@ -1243,6 +1448,16 @@ public abstract class ConnectionFunctions {
             URL url = new URL(base.urlString);
             inputStream = url.openStream();
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw RError.nyi(null, " readBin on URL");
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RError.nyi(null, " readBinChars on URL");
         }
 
         @Override
@@ -1469,7 +1684,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
-            controlVisibility();
             boolean wasOpen = true;
             try {
                 wasOpen = wasOpen(con);
@@ -1481,6 +1695,7 @@ public abstract class ConnectionFunctions {
                     internalClose(con);
                 }
             }
+            forceVisibility(false);
             return RNull.instance;
         }
 
@@ -1632,6 +1847,322 @@ public abstract class ConnectionFunctions {
             return useBytes.getLength() == 0;
         }
 
+    }
+
+    /**
+     * Sets the order of the given {@code ByteBuffer} from value of {@code swap}. The value of
+     * {@code swap} will be {@code true} iff the original requested order was the opposite of the
+     * native byte order. Perhaps surprisingly, the default order of a {@code ByteBuffer} is
+     * {@code ByteOrder.BIG_ENDIAN}, NOT the native byte order.
+     */
+    private static ByteBuffer checkOrder(ByteBuffer buffer, boolean swap) {
+        ByteOrder nb = ByteOrder.nativeOrder();
+        if (swap) {
+            nb = nb == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
+        }
+        return buffer.order(nb);
+    }
+
+    @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"})
+    public abstract static class ReadBin extends InternalCloseHelper {
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);
+            return arguments;
+        }
+
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization
+        protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, int size, byte signedArg, byte swapArg) {
+            boolean swap = RRuntime.fromLogical(swapArg);
+            boolean wasOpen = true;
+            RVector result = null;
+            int n = nVec.getDataAt(0);
+            try {
+                wasOpen = wasOpen(con);
+                String what = whatVec.getDataAt(0);
+                switch (what) {
+                    case "int":
+                    case "integer":
+                        result = readInteger(con, n, swap);
+                        break;
+                    case "double":
+                    case "numeric":
+                        result = readDouble(con, n, swap);
+                        break;
+                    case "complex":
+                        result = readComplex(con, n, swap);
+                        break;
+                    case "character":
+                        result = readString(con, n);
+                        break;
+                    case "logical":
+                        result = readLogical(con, n, swap);
+                        break;
+                    case "raw":
+                        result = readRaw(con, n);
+                        break;
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            } catch (IOException x) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+            } finally {
+                if (!wasOpen) {
+                    internalClose(con);
+                }
+            }
+            return result;
+        }
+
+        private static RIntVector readInteger(RConnection con, int n, boolean swap) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(n * 4);
+            int bytesRead = con.readBin(buffer);
+            if (bytesRead == 0) {
+                return RDataFactory.createEmptyIntVector();
+            }
+            buffer.flip();
+            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
+            int nInts = bytesRead / 4;
+            int[] data = new int[nInts];
+            boolean complete = RDataFactory.COMPLETE_VECTOR;
+            for (int i = 0; i < nInts; i++) {
+                int d = intBuffer.get();
+                if (RRuntime.isNA(d)) {
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                }
+                data[i] = d;
+            }
+            return RDataFactory.createIntVector(data, complete);
+        }
+
+        private static RDoubleVector readDouble(RConnection con, int n, boolean swap) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(n * 8);
+            int bytesRead = con.readBin(buffer);
+            if (bytesRead == 0) {
+                return RDataFactory.createEmptyDoubleVector();
+            }
+            buffer.flip();
+            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
+            int nDoubles = bytesRead / 8;
+            boolean complete = RDataFactory.COMPLETE_VECTOR;
+            double[] data = new double[nDoubles];
+            for (int i = 0; i < nDoubles; i++) {
+                double d = doubleBuffer.get();
+                if (RRuntime.isNA(d)) {
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                }
+                data[i] = d;
+            }
+            return RDataFactory.createDoubleVector(data, complete);
+        }
+
+        private static RComplexVector readComplex(RConnection con, int n, boolean swap) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(n * 16);
+            int bytesRead = con.readBin(buffer);
+            if (bytesRead == 0) {
+                return RDataFactory.createEmptyComplexVector();
+            }
+            buffer.flip();
+            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
+            int nComplex = bytesRead / 16;
+            boolean complete = RDataFactory.COMPLETE_VECTOR;
+            double[] data = new double[nComplex * 2];
+            for (int i = 0; i < nComplex; i++) {
+                double re = doubleBuffer.get();
+                double im = doubleBuffer.get();
+                if (RRuntime.isNA(re) || RRuntime.isNA(im)) {
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                }
+                data[2 * i] = re;
+                data[2 * i + 1] = im;
+            }
+            return RDataFactory.createComplexVector(data, complete);
+        }
+
+        private static RStringVector readString(RConnection con, int n) throws IOException {
+            ArrayList<String> strings = new ArrayList<>(n);
+            int s = 0;
+            while (s < n) {
+                byte[] chars = con.readBinChars();
+                if (chars == null) {
+                    break;
+                }
+                int npos = 0;
+                while (chars[npos] != 0) {
+                    npos++;
+                }
+                strings.add(new String(chars, 0, npos));
+                s++;
+            }
+            // There is no special encoding for NA_character_
+            String[] stringData = new String[s];
+            strings.toArray(stringData);
+            return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static RRawVector readRaw(RConnection con, int n) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(n);
+            int bytesRead = con.readBin(buffer);
+            if (bytesRead == 0) {
+                return RDataFactory.createEmptyRawVector();
+            }
+            buffer.flip();
+            byte[] data = new byte[bytesRead];
+            buffer.get(data);
+            return RDataFactory.createRawVector(data);
+        }
+
+        private static RLogicalVector readLogical(RConnection con, int n, boolean swap) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(n * 4);
+            int bytesRead = con.readBin(buffer);
+            if (bytesRead == 0) {
+                return RDataFactory.createEmptyLogicalVector();
+            }
+            buffer.flip();
+            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
+            int nInts = bytesRead / 4;
+            byte[] data = new byte[nInts];
+            boolean complete = RDataFactory.COMPLETE_VECTOR;
+            for (int i = 0; i < nInts; i++) {
+                int value = intBuffer.get();
+                data[i] = value == RRuntime.INT_NA ? RRuntime.LOGICAL_NA : value == 1 ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+                if (value == RRuntime.INT_NA) {
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                }
+            }
+            return RDataFactory.createLogicalVector(data, complete);
+        }
+    }
+
+    @RBuiltin(name = "writeBin", kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
+    public abstract static class WriteBin extends InternalCloseHelper {
+        @TruffleBoundary
+        @Specialization
+        protected Object writeBin(RAbstractVector object, RConnection con, int size, byte swapArg, @SuppressWarnings("unused") byte useBytesArg) {
+            boolean swap = RRuntime.fromLogical(swapArg);
+            boolean wasOpen = true;
+            if (object.getLength() > 0) {
+                try {
+                    wasOpen = wasOpen(con);
+                    if (object instanceof RAbstractIntVector) {
+                        writeInteger((RAbstractIntVector) object, con, size, swap);
+                    } else if (object instanceof RAbstractDoubleVector) {
+                        writeDouble((RAbstractDoubleVector) object, con, size, swap);
+                    } else if (object instanceof RAbstractComplexVector) {
+                        writeComplex((RAbstractComplexVector) object, con, size, swap);
+                    } else if (object instanceof RAbstractStringVector) {
+                        writeString((RAbstractStringVector) object, con, size, swap);
+                    } else if (object instanceof RAbstractStringVector) {
+                        writeLogical((RAbstractLogicalVector) object, con, size, swap);
+                    } else if (object instanceof RRawVector) {
+                        writeRaw((RAbstractRawVector) object, con, size, swap);
+                    } else {
+                        throw RError.nyi(getEncapsulatingSourceSection(), " vector type");
+                    }
+                } catch (IOException x) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                } finally {
+                    if (!wasOpen) {
+                        internalClose(con);
+                    }
+                }
+            }
+            forceVisibility(false);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        private static void writeInteger(RAbstractIntVector object, RConnection con, int size, boolean swap) throws IOException {
+            int length = object.getLength();
+            ByteBuffer buffer = ByteBuffer.allocate(4 * length);
+            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
+            for (int i = 0; i < length; i++) {
+                int value = object.getDataAt(i);
+                intBuffer.put(value);
+            }
+            // The underlying buffer offset/position is independent of IntBuffer, so no flip
+            con.writeBin(buffer);
+        }
+
+        @SuppressWarnings("unused")
+        private static void writeDouble(RAbstractDoubleVector object, RConnection con, int size, boolean swap) throws IOException {
+            int length = object.getLength();
+            ByteBuffer buffer = ByteBuffer.allocate(8 * length);
+            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
+            for (int i = 0; i < length; i++) {
+                double value = object.getDataAt(i);
+                doubleBuffer.put(value);
+            }
+            // The underlying buffer offset/position is independent of DoubleBuffer, so no flip
+            con.writeBin(buffer);
+        }
+
+        @SuppressWarnings("unused")
+        private static void writeComplex(RAbstractComplexVector object, RConnection con, int size, boolean swap) throws IOException {
+            int length = object.getLength();
+            ByteBuffer buffer = ByteBuffer.allocate(16 * length);
+            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
+            for (int i = 0; i < length; i++) {
+                RComplex complex = object.getDataAt(i);
+                double re = complex.getRealPart();
+                double im = complex.getImaginaryPart();
+                doubleBuffer.put(re);
+                doubleBuffer.put(im);
+            }
+            // The underlying buffer offset/position is independent of DoubleBuffer, so no flip
+            con.writeBin(buffer);
+        }
+
+        @SuppressWarnings("unused")
+        private static void writeString(RAbstractStringVector object, RConnection con, int size, boolean swap) throws IOException {
+            int length = object.getLength();
+            byte[][] data = new byte[length][];
+            int totalLength = 0;
+            for (int i = 0; i < length; i++) {
+                String s = object.getDataAt(i);
+                // There is no special encoding for NA_character_
+                data[i] = s.getBytes();
+                totalLength = totalLength + data[i].length + 1; // zero pad
+            }
+
+            ByteBuffer buffer = ByteBuffer.allocate(totalLength);
+            for (int i = 0; i < length; i++) {
+                buffer.put(data[i]);
+                buffer.put((byte) 0);
+            }
+            buffer.flip();
+            con.writeBin(buffer);
+        }
+
+        @SuppressWarnings("unused")
+        private static void writeLogical(RAbstractLogicalVector object, RConnection con, int size, boolean swap) throws IOException {
+            // encoded as ints, with FALSE=0, TRUE=1, NA=Integer_NA_
+            int length = object.getLength();
+            ByteBuffer buffer = ByteBuffer.allocate(length * 4);
+            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
+            for (int i = 0; i < length; i++) {
+                byte value = object.getDataAt(i);
+                int encoded = RRuntime.isNA(value) ? RRuntime.INT_NA : value == RRuntime.LOGICAL_FALSE ? 0 : 1;
+                intBuffer.put(encoded);
+            }
+            con.writeBin(buffer);
+
+        }
+
+        @SuppressWarnings("unused")
+        private static void writeRaw(RAbstractRawVector object, RConnection con, int size, boolean swap) throws IOException {
+            int length = object.getLength();
+            ByteBuffer buffer = ByteBuffer.allocate(length);
+            for (int i = 0; i < length; i++) {
+                RRaw value = object.getDataAt(i);
+                buffer.put(value.getValue());
+            }
+            buffer.flip();
+            con.writeBin(buffer);
+
+        }
     }
 
     @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"})

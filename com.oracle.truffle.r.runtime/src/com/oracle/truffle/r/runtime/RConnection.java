@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -226,5 +227,27 @@ public abstract class RConnection implements RClassHierarchy {
     }
 
     public abstract int getDescriptor();
+
+    /**
+     * Internal connection-specific support for the {@code writeBin} builtin. The implementation
+     * should attempt to write all the data, denoted by {@code buffer.remaining()}.
+     */
+    public abstract void writeBin(ByteBuffer buffer) throws IOException;
+
+    /**
+     * Internal connection-specific support for the {@code readBin} builtin. The buffer is allocated
+     * for the expected amount of data, denoted by {@code buffer.remaining()}. The implementation
+     * should attempt to read that much data, returning the actual number read as the result. EOS is
+     * denoted by a return value of zero.
+     */
+    public abstract int readBin(ByteBuffer buffer) throws IOException;
+
+    /**
+     * Internal connection-specific support for the {@code readBin} builtin on character data.
+     * character data is null-terminated and, therefore of length unknown to the caller. The result
+     * contains the bytes read, without the null terminator. A return value of {@code null} implies
+     * that no data was read.
+     */
+    public abstract byte[] readBinChars() throws IOException;
 
 }
