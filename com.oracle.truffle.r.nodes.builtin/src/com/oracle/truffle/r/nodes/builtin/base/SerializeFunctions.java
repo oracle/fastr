@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -35,16 +36,37 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public class SerializeFunctions {
 
+    // TODO This code needs to check for unopened connections as per GnuR,
+    // which requires more publicly visible support in RConnection
+
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
         @Specialization
         protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+            return doUnserializeFromConn(conn, null, RArguments.getDepth(frame));
+        }
+
+        @TruffleBoundary
+        protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook, int depth) {
             controlVisibility();
+            boolean wasOpen = true;
             try {
-                Object result = RSerialize.unserialize(conn, RArguments.getDepth(frame));
+                wasOpen = conn.forceOpen("rb");
+                if (!conn.canRead()) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_READ);
+                }
+                Object result = RSerialize.unserialize(conn, depth);
                 return result;
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            } finally {
+                if (!wasOpen) {
+                    try {
+                        conn.internalClose();
+                    } catch (IOException ex) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    }
+                }
             }
         }
 
@@ -58,14 +80,35 @@ public class SerializeFunctions {
     @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
     public abstract static class SerializeToConn extends RInvisibleBuiltinNode {
         @Specialization
-        protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
+            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+        }
+
+        @TruffleBoundary
+        protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook, int depth) {
             controlVisibility();
+            boolean wasOpen = true;
             try {
                 boolean ascii = RRuntime.fromLogical(asciiLogical);
-                RSerialize.serialize(conn, object, ascii, 2, null, RArguments.getDepth(frame));
+                wasOpen = conn.forceOpen("wb");
+                if (!conn.canWrite()) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_WRITE);
+                }
+                if (!ascii && conn.isTextMode()) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.BINARY_CONNECTION_REQUIRED);
+                }
+                RSerialize.serialize(conn, object, ascii, 2, null, depth);
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            } finally {
+                if (!wasOpen) {
+                    try {
+                        conn.internalClose();
+                    } catch (IOException ex) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    }
+                }
             }
         }
     }

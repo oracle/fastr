@@ -61,28 +61,34 @@ public abstract class ConnectionFunctions {
 
     /**
      * Abstracts from the fact that some modes can be specified with multiple text strings. N.B.
-     * includes the {@code Lazy} mode for laxy opening support, which is requested in R by "" as the
+     * includes the {@code Lazy} mode for lazy opening support, which is requested in R by "" as the
      * open argument.
      */
     private enum AbstractOpenMode {
-        Lazy(new String[]{""}),
-        Read(new String[]{"r", "rt"}),
-        Write(new String[]{"w", "wt"}),
-        Append(new String[]{"a", "at"}),
-        ReadBinary(new String[]{"rb"}),
-        WriteBinary(new String[]{"wb"}),
-        AppendBinary(new String[]{"ab"}),
-        ReadWrite(new String[]{"r+"}),
-        ReadWriteBinary(new String[]{"r+b"}),
-        ReadWriteTrunc(new String[]{"w+"}),
-        ReadWriteTruncBinary(new String[]{"w+b"}),
-        ReadAppend(new String[]{"a+"}),
-        ReadAppendBinary(new String[]{"a+b"});
+        Lazy(new String[]{""}, false, true, true),
+        Read(new String[]{"r", "rt"}, true, true, false),
+        Write(new String[]{"w", "wt"}, true, false, true),
+        Append(new String[]{"a", "at"}, true, false, true),
+        ReadBinary(new String[]{"rb"}, false, true, false),
+        WriteBinary(new String[]{"wb"}, false, false, true),
+        AppendBinary(new String[]{"ab"}, false, false, true),
+        ReadWrite(new String[]{"r+"}, true, true, true),
+        ReadWriteBinary(new String[]{"r+b"}, false, true, true),
+        ReadWriteTrunc(new String[]{"w+"}, true, true, true),
+        ReadWriteTruncBinary(new String[]{"w+b"}, false, true, true),
+        ReadAppend(new String[]{"a+"}, true, true, true),
+        ReadAppendBinary(new String[]{"a+b"}, false, true, true);
 
         private String[] modeStrings;
+        public final boolean isText;
+        public final boolean readable;
+        public final boolean writeable;
 
-        AbstractOpenMode(String[] modeStrings) {
+        AbstractOpenMode(String[] modeStrings, boolean isText, boolean readable, boolean writeable) {
             this.modeStrings = modeStrings;
+            this.isText = isText;
+            this.readable = readable;
+            this.writeable = writeable;
         }
 
         @TruffleBoundary
@@ -99,7 +105,9 @@ public abstract class ConnectionFunctions {
     }
 
     /**
-     * Records the actual mode string that was used, which is needed by {@code summary}.
+     * The class used to designate an actual open mode in {@link BaseRConnection}. Records the
+     * actual mode string that was used, which is needed by {@code summary}. E.g., for
+     * {@link AbstractOpenMode#Read}, {@link #modeString} could be "r" or "rt".
      *
      */
     private static class OpenMode {
@@ -113,6 +121,18 @@ public abstract class ConnectionFunctions {
         OpenMode(String modeString, AbstractOpenMode mode) {
             this.modeString = modeString;
             this.abstractOpenMode = mode;
+        }
+
+        boolean isText() {
+            return abstractOpenMode.isText;
+        }
+
+        boolean canRead() {
+            return abstractOpenMode.readable;
+        }
+
+        boolean canWrite() {
+            return abstractOpenMode.writeable;
         }
     }
 
@@ -229,9 +249,10 @@ public abstract class ConnectionFunctions {
         /**
          * Return value for "can read" for {@code summary.connection}.
          */
-        protected boolean canRead() {
+        @Override
+        public boolean canRead() {
             if (isActive()) {
-                return theConnection instanceof DelegateReadRConnection;
+                return openMode.canRead();
             } else {
                 // Might think to check the lazy open mode, but GnuR doesn't
                 return true;
@@ -241,13 +262,22 @@ public abstract class ConnectionFunctions {
         /**
          * Return value for "can read" for {@code summary.connection}.
          */
-        protected boolean canWrite() {
+        @Override
+        public boolean canWrite() {
             if (isActive()) {
-                return theConnection instanceof DelegateWriteRConnection;
+                return openMode.canWrite();
             } else {
                 // Might think to check the lazy open mode, but GnuR doesn't
                 return true;
             }
+        }
+
+        /**
+         * Is this a text mode connection. N.B. The connection may not be opened yet!
+         */
+        @Override
+        public boolean isTextMode() {
+            return getRealOpenMode().isText();
         }
 
         private void registerConnection() {
@@ -261,12 +291,19 @@ public abstract class ConnectionFunctions {
             throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
+        @Override
+        public boolean forceOpen(String modeString) throws IOException {
+            boolean ret = opened;
+            checkOpen();
+            return ret;
+        }
+
         protected void checkOpen() throws IOException {
             if (closed) {
                 throw new IOException(RError.Message.INVALID_CONNECTION.message);
             }
             if (!opened) {
-                // closed or lazy
+                // internal closed or lazy
                 if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
                     openMode = lazyOpenMode;
                 }
@@ -274,8 +311,12 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        String getRealOpenMode() {
+        String getRealOpenModeAsString() {
             return opened ? openMode.modeString : lazyOpenMode.modeString;
+        }
+
+        OpenMode getRealOpenMode() {
+            return opened ? openMode : lazyOpenMode;
         }
 
         protected void setDelegate(DelegateRConnection conn) {
@@ -341,7 +382,8 @@ public abstract class ConnectionFunctions {
             allConnections[this.descriptor] = null;
         }
 
-        protected void internalClose() throws IOException {
+        @Override
+        public void internalClose() throws IOException {
             opened = false;
             if (theConnection != null) {
                 DelegateRConnection tc = theConnection;
@@ -420,14 +462,9 @@ public abstract class ConnectionFunctions {
     /**
      * Used by the {@code readXXX/writeXXX} builtins to force a connection open and return the
      * initial state, so that it can be closed if required.
+     *
+     * TODO May need an extra argument to force text/binary depending on the caller.
      */
-    private static boolean wasOpen(RConnection conn) throws IOException {
-        BaseRConnection baseConn = getBaseConnection(conn);
-        boolean ret = baseConn.opened;
-        baseConn.checkOpen();
-        return ret;
-    }
-
     private static String[] readLinesHelper(BufferedReader bufferedReader, int n) throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         String line;
@@ -449,26 +486,112 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    /**
+     * {@code readLines} from an {@link InputStream}. It would be convenient to use a
+     * {@link BufferedReader} but mixing binary and text operations, which is a requirement, would
+     * then be difficult.
+     */
+    private static String[] readLinesHelper(InputStream in, int n) throws IOException {
+        ArrayList<String> lines = new ArrayList<>();
+        int totalRead = 0;
+        byte[] buffer = new byte[64];
+        int pushBack = 0;
+        while (true) {
+            int ch;
+            if (pushBack != 0) {
+                ch = pushBack;
+                pushBack = 0;
+            } else {
+                ch = in.read();
+            }
+            boolean lineEnd = false;
+            if (ch < 0) {
+                // N.B. This means data may be discarded if no line-end
+                break;
+            }
+            if (ch == '\n') {
+                lineEnd = true;
+            } else if (ch == '\r') {
+                lineEnd = true;
+                ch = in.read();
+                if (ch == '\n') {
+                    // swallow the trailing lf
+                } else {
+                    pushBack = ch;
+                }
+            }
+            if (lineEnd) {
+                lines.add(new String(buffer, 0, totalRead));
+                if (n > 0 && lines.size() == n) {
+                    break;
+                }
+                totalRead = 0;
+            } else {
+                buffer = checkBuffer(buffer, totalRead);
+                buffer[totalRead++] = (byte) (ch & 0xFF);
+            }
+        }
+        String[] result = new String[lines.size()];
+        lines.toArray(result);
+        return result;
+    }
+
+    private static void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep) throws IOException {
+        for (int i = 0; i < lines.getLength(); i++) {
+            out.write(lines.getDataAt(i).getBytes());
+            out.write(sep.getBytes());
+        }
+    }
+
+    private static void writeBinHelper(ByteBuffer buffer, OutputStream outputStream) throws IOException {
+        int n = buffer.remaining();
+        byte[] b = new byte[n];
+        buffer.get(b);
+        outputStream.write(b);
+    }
+
+    /**
+     * Reads null-terminated character strings from an {@link InputStream}.
+     */
     private static byte[] readBinCharsHelper(InputStream in) throws IOException {
-        int first = in.read();
-        if (first < 0) {
+        int ch = in.read();
+        if (ch < 0) {
             return null;
         }
         int totalRead = 0;
         byte[] buffer = new byte[64];
         while (true) {
-            if (totalRead > buffer.length - 1) {
-                byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
-                System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-                buffer = newBuffer;
-            }
-            buffer[totalRead++] = (byte) (first & 0xFF);
-            if (first == 0) {
+            buffer = checkBuffer(buffer, totalRead);
+            buffer[totalRead++] = (byte) (ch & 0xFF);
+            if (ch == 0) {
                 break;
             }
-            first = in.read();
+            ch = in.read();
         }
         return buffer;
+    }
+
+    private static int readBinHelper(ByteBuffer buffer, InputStream inputStream) throws IOException {
+        int bytesToRead = buffer.remaining();
+        byte[] b = new byte[bytesToRead];
+        int totalRead = 0;
+        int thisRead = 0;
+        while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
+            totalRead += thisRead;
+        }
+        buffer.put(b, 0, totalRead);
+        return totalRead;
+    }
+
+    private static byte[] checkBuffer(byte[] buffer, int n) {
+        if (n > buffer.length - 1) {
+            byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
+            System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+            return newBuffer;
+        } else {
+            return buffer;
+        }
+
     }
 
     private abstract static class DelegateRConnection extends RConnection {
@@ -488,7 +611,15 @@ public abstract class ConnectionFunctions {
             return base.getDescriptor();
         }
 
-        protected abstract void internalClose() throws IOException;
+        @Override
+        public boolean isTextMode() {
+            return base.isTextMode();
+        }
+
+        @Override
+        public boolean forceOpen(String modeString) throws IOException {
+            return base.forceOpen(modeString);
+        }
 
     }
 
@@ -517,6 +648,15 @@ public abstract class ConnectionFunctions {
             throw RInternalError.shouldNotReachHere();
         }
 
+        @Override
+        public boolean canRead() {
+            return true;
+        }
+
+        @Override
+        public boolean canWrite() {
+            return false;
+        }
     }
 
     private abstract static class DelegateWriteRConnection extends DelegateRConnection {
@@ -544,6 +684,15 @@ public abstract class ConnectionFunctions {
             throw RInternalError.shouldNotReachHere();
         }
 
+        @Override
+        public boolean canRead() {
+            return false;
+        }
+
+        @Override
+        public boolean canWrite() {
+            return true;
+        }
     }
 
     /**
@@ -589,6 +738,11 @@ public abstract class ConnectionFunctions {
         public byte[] readBinChars() throws IOException {
             throw new IOException("readBinChars not implemented for this connection");
         }
+
+        @Override
+        public boolean forceOpen(String modeString) {
+            return true;
+        }
     }
 
     private static class StdinConnection extends StdConnection {
@@ -609,12 +763,12 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        protected boolean canRead() {
+        public boolean canRead() {
             return true;
         }
 
         @Override
-        protected boolean canWrite() {
+        public boolean canWrite() {
             return false;
         }
 
@@ -666,12 +820,12 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        protected boolean canRead() {
+        public boolean canRead() {
             return false;
         }
 
         @Override
-        protected boolean canWrite() {
+        public boolean canWrite() {
             return true;
         }
 
@@ -873,12 +1027,10 @@ public abstract class ConnectionFunctions {
 
     private static class FileReadBinaryRConnection extends DelegateReadRConnection {
         private FileInputStream inputStream;
-        private InputStreamReader inputReader;
 
         FileReadBinaryRConnection(FileRConnection base) throws IOException {
             super(base);
             inputStream = new FileInputStream(base.path);
-            inputReader = new InputStreamReader(inputStream, "US-ASCII");
         }
 
         @Override
@@ -894,7 +1046,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         @Override
         public String[] readLinesInternal(int n) throws IOException {
-            throw new IOException("not implemented");
+            return readLinesHelper(inputStream, n);
         }
 
         @Override
@@ -910,7 +1062,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void internalClose() throws IOException {
-            inputReader.close();
+            inputStream.close();
         }
     }
 
@@ -1019,36 +1171,31 @@ public abstract class ConnectionFunctions {
     }
 
     private static class GZIPInputRConnection extends DelegateReadRConnection {
-        private GZIPInputStream stream;
-        private BufferedReader bufferedReader; // only set for readLinesInternal
+        private GZIPInputStream inputStream;
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
             super(base);
-            stream = new GZIPInputStream(new FileInputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
+            inputStream = new GZIPInputStream(new FileInputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
         }
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, " readBin on gzip connection");
+            return readBinHelper(buffer, inputStream);
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, " readBinChars on gzip connection");
+            return readBinCharsHelper(inputStream);
         }
 
         @Override
         public String[] readLinesInternal(int n) throws IOException {
-            // To do this we have to create a reader on the stream
-            if (bufferedReader == null) {
-                bufferedReader = new BufferedReader(new InputStreamReader(stream));
-            }
-            return readLinesHelper(bufferedReader, n);
+            return readLinesHelper(inputStream, n);
         }
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return stream;
+            return inputStream;
         }
 
         @Override
@@ -1059,25 +1206,22 @@ public abstract class ConnectionFunctions {
 
         @Override
         public void internalClose() throws IOException {
-            stream.close();
-            if (bufferedReader != null) {
-                bufferedReader.close();
-            }
+            inputStream.close();
         }
 
     }
 
     private static class GZIPOutputRConnection extends DelegateWriteRConnection {
-        private GZIPOutputStream stream;
+        private GZIPOutputStream outputStream;
 
         GZIPOutputRConnection(GZIPRConnection base) throws IOException {
             super(base);
-            stream = new GZIPOutputStream(new FileOutputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
+            outputStream = new GZIPOutputStream(new FileOutputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
         }
 
         @Override
         public OutputStream getOutputStream() throws IOException {
-            return stream;
+            return outputStream;
         }
 
         @Override
@@ -1089,22 +1233,22 @@ public abstract class ConnectionFunctions {
         @Override
         public void internalClose() throws IOException {
             flush();
-            stream.close();
+            outputStream.close();
         }
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
-            throw RInternalError.unimplemented();
+            writeLinesHelper(outputStream, lines, sep);
         }
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw RInternalError.unimplemented();
+            writeBinHelper(buffer, outputStream);
         }
 
         @Override
         public void flush() throws IOException {
-            stream.flush();
+            outputStream.flush();
         }
 
     }
@@ -1159,16 +1303,6 @@ public abstract class ConnectionFunctions {
         @Override
         public String getSummaryDescription() {
             return nm;
-        }
-
-        @Override
-        protected boolean canRead() {
-            return true;
-        }
-
-        @Override
-        protected boolean canWrite() {
-            return false;
         }
 
         @Override
@@ -1231,7 +1365,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Override
-        protected void internalClose() {
+        public void internalClose() {
         }
 
         @Override
@@ -1261,15 +1395,23 @@ public abstract class ConnectionFunctions {
     }
 
     /**
-     * Base class for socket connections, which are not opened lazily.
+     * Base class for socket connections.
+     *
+     * While binary operations, e.g. {@code writeBin} are only legal on binary connections, text
+     * operations are legal on text and binary connections.
+     *
+     * TODO Non-blocking support. Also, while not the default, and evidently rare, GnuR does support
+     * lazy opening of a socket.
      */
-    private static class RSocketConnection extends BaseRConnection {
+    private abstract static class RSocketConnection extends BaseRConnection {
+        protected String host;
         protected Socket socket;
         protected InputStream inputStream;
         protected OutputStream outputStream;
 
-        protected RSocketConnection(String modeString, @SuppressWarnings("unused") int port) throws IOException {
+        protected RSocketConnection(String modeString, String host) throws IOException {
             super(ConnectionClass.Socket, modeString);
+            this.host = host;
         }
 
         @Override
@@ -1277,10 +1419,9 @@ public abstract class ConnectionFunctions {
             throw RInternalError.shouldNotReachHere();
         }
 
-        @Override
-        public String getSummaryDescription() {
-            // TODO get this right
-            return "socket";
+        protected String getBasicSummaryData() {
+            return host + ":" + socket.getPort();
+
         }
 
         protected void openStreams() throws IOException {
@@ -1291,8 +1432,7 @@ public abstract class ConnectionFunctions {
         @Override
         public String[] readLinesInternal(int n) throws IOException {
             checkOpen();
-            throw RError.nyi(null, " readLines on socket");
-            // return readLinesHelper(bufferedReader, n);
+            return readLinesHelper(inputStream, n);
         }
 
         @Override
@@ -1310,36 +1450,24 @@ public abstract class ConnectionFunctions {
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
             checkOpen();
-            throw RError.nyi(null, " writeLines on socket");
-            // writeLinesHelper(bufferedWriter, lines, sep);
-            // flush();
+            writeLinesHelper(outputStream, lines, sep);
         }
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
             checkOpen();
-            int n = buffer.remaining();
-            byte[] b = new byte[n];
-            buffer.get(b);
-            outputStream.write(b);
+            writeBinHelper(buffer, outputStream);
         }
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
             checkOpen();
-            int bytesToRead = buffer.remaining();
-            byte[] b = new byte[bytesToRead];
-            int totalRead = 0;
-            int thisRead = 0;
-            while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
-                totalRead += thisRead;
-            }
-            buffer.put(b, 0, totalRead);
-            return totalRead;
+            return readBinHelper(buffer, inputStream);
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
+            checkOpen();
             return readBinCharsHelper(inputStream);
         }
 
@@ -1358,12 +1486,17 @@ public abstract class ConnectionFunctions {
     private static class RServerSocketConnection extends RSocketConnection {
         private ServerSocket serverSocket;
 
-        RServerSocketConnection(String modeString, int port) throws IOException {
-            super(modeString, port);
+        RServerSocketConnection(String modeString, String host, int port) throws IOException {
+            super(modeString, host);
             serverSocket = new ServerSocket(port);
             socket = serverSocket.accept();
             openStreams();
             opened = true;
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            return "<-" + getBasicSummaryData();
         }
 
         @Override
@@ -1375,11 +1508,17 @@ public abstract class ConnectionFunctions {
 
     private static class RClientSocketConnection extends RSocketConnection {
         RClientSocketConnection(String modeString, String host, int port) throws IOException {
-            super(modeString, port);
+            super(modeString, host);
             socket = new Socket(host, port);
             openStreams();
             opened = true;
         }
+
+        @Override
+        public String getSummaryDescription() {
+            return "->" + getBasicSummaryData();
+        }
+
     }
 
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
@@ -1396,11 +1535,15 @@ public abstract class ConnectionFunctions {
         @Specialization
         protected Object socketConnection(RAbstractStringVector host, RAbstractIntVector portVec, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, double timeout) {
             int port = portVec.getDataAt(0);
+            String modeString = open.getDataAt(0);
+            if (modeString.length() == 0) {
+                throw RError.nyi(getEncapsulatingSourceSection(), " lazy open for sockets");
+            }
             try {
                 if (RRuntime.fromLogical(server)) {
-                    return new RServerSocketConnection(open.getDataAt(0), port);
+                    return new RServerSocketConnection(modeString, host.getDataAt(0), port);
                 } else {
-                    return new RClientSocketConnection(open.getDataAt(0), host.getDataAt(0), port);
+                    return new RClientSocketConnection(modeString, host.getDataAt(0), port);
                 }
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
@@ -1530,7 +1673,7 @@ public abstract class ConnectionFunctions {
             Object[] data = new Object[NAMES.getLength()];
             data[0] = baseCon.getSummaryDescription();
             data[1] = baseCon.classHr.getDataAt(0);
-            data[2] = baseCon.getRealOpenMode();
+            data[2] = baseCon.getRealOpenModeAsString();
             data[3] = baseCon.getSummaryText();
             data[4] = baseCon.closed || !baseCon.opened ? "closed" : "opened";
             data[5] = baseCon.canRead() ? "yes" : "no";
@@ -1650,7 +1793,7 @@ public abstract class ConnectionFunctions {
             controlVisibility();
             boolean wasOpen = true;
             try {
-                wasOpen = wasOpen(con);
+                wasOpen = con.forceOpen("rt");
                 String[] lines = con.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
@@ -1686,7 +1829,7 @@ public abstract class ConnectionFunctions {
         protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
             boolean wasOpen = true;
             try {
-                wasOpen = wasOpen(con);
+                wasOpen = con.forceOpen("wt");
                 con.writeLines(text, sep.getDataAt(0));
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
@@ -1827,7 +1970,7 @@ public abstract class ConnectionFunctions {
             controlVisibility();
             boolean wasOpen = true;
             try {
-                wasOpen = wasOpen(con);
+                wasOpen = con.forceOpen("rt");
                 return con.readChar(nchars, useBytes.getDataAt(0) == RRuntime.LOGICAL_TRUE);
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
@@ -1880,7 +2023,10 @@ public abstract class ConnectionFunctions {
             RVector result = null;
             int n = nVec.getDataAt(0);
             try {
-                wasOpen = wasOpen(con);
+                if (getBaseConnection(con).openMode.isText()) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_READ_BINARY_CONNECTION);
+                }
+                wasOpen = con.forceOpen("rb");
                 String what = whatVec.getDataAt(0);
                 switch (what) {
                     case "int":
@@ -2045,7 +2191,10 @@ public abstract class ConnectionFunctions {
             boolean wasOpen = true;
             if (object.getLength() > 0) {
                 try {
-                    wasOpen = wasOpen(con);
+                    if (getBaseConnection(con).isTextMode()) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+                    }
+                    wasOpen = con.forceOpen("wb");
                     if (object instanceof RAbstractIntVector) {
                         writeInteger((RAbstractIntVector) object, con, size, swap);
                     } else if (object instanceof RAbstractDoubleVector) {

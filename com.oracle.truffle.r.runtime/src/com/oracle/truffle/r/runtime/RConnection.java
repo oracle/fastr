@@ -161,6 +161,42 @@ public abstract class RConnection implements RClassHierarchy {
     public abstract void close() throws IOException;
 
     /**
+     * Returns {@ode true} iff we can read on this connection.
+     */
+    public abstract boolean canRead();
+
+    /**
+     * Returns {@ode true} iff we can write on this connection.
+     */
+    public abstract boolean canWrite();
+
+    /**
+     * Forces the connection open. If the connection was already open, returns {@code true} and does
+     * nothing. Otherwise, tries to open the connection in the given mode, returning {@code false}
+     * if successful and throwing an {@link IOException} if not.
+     *
+     * For builtins that implicitly open/close a connection, the following idiom should be used:
+     *
+     * <pre>
+     * boolean wasOpen = true;
+     * try {
+     *     wasOpen = conn.forceOpen(mode);
+     * } finally {
+     *     if (!wasOpen) {
+     *         conn.internalClose();
+     *     }
+     * }
+     * </pre>
+     */
+    public abstract boolean forceOpen(String modeString) throws IOException;
+
+    /**
+     * Closes the internal state of the stream, but does not set the connection state to "closed",
+     * i.e., allowing it to be re-opened.
+     */
+    public abstract void internalClose() throws IOException;
+
+    /**
      * Implements {@link RClassHierarchy}.
      */
     public abstract RStringVector getClassHierarchy();
@@ -245,9 +281,15 @@ public abstract class RConnection implements RClassHierarchy {
     /**
      * Internal connection-specific support for the {@code readBin} builtin on character data.
      * character data is null-terminated and, therefore of length unknown to the caller. The result
-     * contains the bytes read, without the null terminator. A return value of {@code null} implies
-     * that no data was read.
+     * contains the bytes read, including the null terminator. A return value of {@code null}
+     * implies that no data was read. The caller must locate the null terminator to determine the
+     * length of the string.
      */
     public abstract byte[] readBinChars() throws IOException;
+
+    /**
+     * Returns {@code true} iff this is a text mode connection.
+     */
+    public abstract boolean isTextMode();
 
 }
