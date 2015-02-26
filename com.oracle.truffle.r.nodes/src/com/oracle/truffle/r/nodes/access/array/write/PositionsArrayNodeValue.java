@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
-import com.oracle.truffle.r.runtime.data.*;
 
 public class PositionsArrayNodeValue extends RNode {
 
@@ -62,41 +61,29 @@ public class PositionsArrayNodeValue extends RNode {
         }
     }
 
+    @ExplodeLoop
     public Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object value) {
         int length = conversionAdapter.getLength();
-        Object[] evaluatedElements = new Object[length];
-        for (int i = 0; i < length; i++) {
-            evaluatedElements[i] = positionsAdapter.executePos(frame, i);
-        }
-        executeEvalInternal(frame, vector, value, evaluatedElements);
+        Object[] evaluatedElements = PositionsArrayNode.explodeLoopNoVarArg(frame, positionsAdapter, length);
+        executeEvalInternal(frame, vector, value, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
     public Object executeEvalVarArg(VirtualFrame frame, Object vector, Object value) {
         int length = conversionAdapter.getLength();
-        Object[] evaluatedElements = new Object[length];
-        int ind = 0;
-        for (int i = 0; i < length; i++) {
-            Object p = positionsAdapter.executePos(frame, i);
-            if (p instanceof RArgsValuesAndNames) {
-                RArgsValuesAndNames varArg = (RArgsValuesAndNames) p;
-                evaluatedElements = PositionsArrayNode.expandVarArg(frame, varArg, ind, evaluatedElements, promiseHelper);
-                ind += varArg.length();
-            } else {
-                evaluatedElements[ind++] = p;
-            }
-        }
+        Object[] evaluatedElements = PositionsArrayNode.explodeLoopVarArg(frame, positionsAdapter, length, promiseHelper);
         if (evaluatedElements.length != conversionAdapter.getLength()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            this.conversionAdapter = new PositionsArrayConversionValueNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length);
+            this.conversionAdapter = insert(new PositionsArrayConversionValueNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length));
         }
-        executeEvalInternal(frame, vector, value, evaluatedElements);
+        length = conversionAdapter.getLength(); // could have changed
+        executeEvalInternal(frame, vector, value, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
     @ExplodeLoop
-    public void executeEvalInternal(VirtualFrame frame, Object vector, Object value, Object[] evaluatedElements) {
-        for (int i = 0; i < conversionAdapter.getLength(); i++) {
+    public void executeEvalInternal(VirtualFrame frame, Object vector, Object value, Object[] evaluatedElements, int length) {
+        for (int i = 0; i < length; i++) {
             Object convertedOperator = conversionAdapter.executeConvert(frame, vector, evaluatedElements[i], RRuntime.LOGICAL_TRUE, i);
             evaluatedElements[i] = conversionAdapter.executeArg(frame, vector, convertedOperator, i);
             if (conversionAdapter.multiDimOperatorConverters != null) {
