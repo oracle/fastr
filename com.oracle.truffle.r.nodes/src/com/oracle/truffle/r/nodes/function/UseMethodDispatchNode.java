@@ -106,7 +106,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             }
         }
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection());
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return executeHelper2(callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
@@ -151,7 +151,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return executeHelper2(callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private static void addArg(Object[] values, Object value, int index) {
@@ -183,7 +183,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
     }
 
-    @TruffleBoundary
     private void findTargetFunctionLookup(Frame callerFrame) {
         for (int i = 0; i < type.getLength(); ++i) {
             findFunction(genericName, type.getDataAt(i), callerFrame);
