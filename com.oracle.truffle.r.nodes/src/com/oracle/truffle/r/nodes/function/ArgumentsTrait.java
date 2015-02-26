@@ -26,6 +26,12 @@ import com.oracle.truffle.r.runtime.*;
 
 public interface ArgumentsTrait {
 
+    /**
+     * Always of same length as the actual arguments.
+     *
+     * @return The names that may have been supplied to the individual arguments. <code>null</code>
+     *         if none has been provided.
+     */
     ArgumentsSignature getSignature();
 
 }

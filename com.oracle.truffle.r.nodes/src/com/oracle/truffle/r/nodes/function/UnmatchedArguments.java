@@ -23,23 +23,14 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 
 /**
  * An interface all arguments that are going to be matched need to implement.
  */
-public interface UnmatchedArguments extends ClosureCache {
+public interface UnmatchedArguments extends ClosureCache, ArgumentsTrait {
     /**
      * @return The arguments to be matched. Individual {@link RNode}s may be <code>null</code> to
      *         denote "missingness"!
      */
     RNode[] getArguments();
-
-    /**
-     * Always of same length as {@link #getArguments()}.
-     *
-     * @return The names that may have been supplied to the individual arguments. <code>null</code>
-     *         if none has been provided.
-     */
-    ArgumentsSignature getSignature();
 }
