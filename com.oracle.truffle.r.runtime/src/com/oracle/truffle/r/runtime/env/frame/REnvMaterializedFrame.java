@@ -107,76 +107,91 @@ public class REnvMaterializedFrame implements MaterializedFrame {
         return arguments;
     }
 
+    @TruffleBoundary
     public Object getObject(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Object);
         return map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setObject(FrameSlot slot, Object value) {
         verifySet(slot, FrameSlotKind.Object);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Byte);
         return (byte) map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setByte(FrameSlot slot, byte value) {
         verifySet(slot, FrameSlotKind.Byte);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Boolean);
         return (boolean) map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setBoolean(FrameSlot slot, boolean value) {
         verifySet(slot, FrameSlotKind.Boolean);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     public int getInt(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Int);
         return (int) map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setInt(FrameSlot slot, int value) {
         verifySet(slot, FrameSlotKind.Int);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     public long getLong(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Long);
         return (long) map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setLong(FrameSlot slot, long value) {
         verifySet(slot, FrameSlotKind.Long);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Float);
         return (float) map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setFloat(FrameSlot slot, float value) {
         verifySet(slot, FrameSlotKind.Float);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
         verifyGet(slot, FrameSlotKind.Double);
         return (double) map.get(slot.getIdentifier());
     }
 
+    @TruffleBoundary
     public void setDouble(FrameSlot slot, double value) {
         verifySet(slot, FrameSlotKind.Double);
         map.put(slot.getIdentifier(), value);
     }
 
+    @TruffleBoundary
     @Override
     public Object getValue(FrameSlot slot) {
         int slotIndex = slot.getIndex();
