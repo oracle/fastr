@@ -491,7 +491,7 @@ public final class REngine implements RContext.Engine {
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
-        singleton.context.getConsoleHandler().printErrorln(RRuntime.toString(out));
+        singleton.context.getConsoleHandler().printErrorln(out.toString());
         // R suicide, unless, e.g., we are running units tests.
         // We don't call quit as the system is broken.
         if (singleton.crashOnFatalError) {
