@@ -49,21 +49,12 @@ public abstract class DoCall extends RBuiltinNode {
 
     @Specialization(guards = "lengthOne")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
-        /*
-         * TODO this is only necessary to find builtins that are (currently) not available via the
-         * standard lookup; it's very dangerous if it happens to find a .Internal, as that cannot be
-         * called directly with the same semantics!
-         */
-        RFunction func = RContext.getEngine().lookupBuiltin(fname.getDataAt(0));
-        if (func == null || func.getRBuiltin().kind() == RBuiltinKind.INTERNAL) {
-            if (getNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetFactory.create(new RNode[4], this.getBuiltin(), getSuppliedArgsNames()));
-            }
-            func = (RFunction) getNode.execute(frame, fname, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+        if (getNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getNode = insert(GetFactory.create(new RNode[4], this.getBuiltin(), getSuppliedArgsNames()));
         }
-        Object result = doDoCall(frame, func, argsAsList, env);
-        return result;
+        RFunction func = (RFunction) getNode.execute(frame, fname, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+        return doDoCall(frame, func, argsAsList, env);
     }
 
     @Specialization()
