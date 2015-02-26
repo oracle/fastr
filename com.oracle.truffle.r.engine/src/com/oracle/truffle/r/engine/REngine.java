@@ -332,7 +332,7 @@ public final class REngine implements RContext.Engine {
         } catch (UnsupportedSpecializationException use) {
             ConsoleHandler ch = singleton.context.getConsoleHandler();
             ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
-                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.toList()));
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()));
             throw use;
         } catch (DebugExitException | BrowserQuitException e) {
             throw e;
@@ -453,10 +453,10 @@ public final class REngine implements RContext.Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                function.getTarget().call(RArguments.create(function, null, 1, new Object[]{resultValue, RMissing.instance}));
+                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}));
             } else {
                 // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, 1, new Object[]{resultValue}));
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}));
             }
         }
     }
@@ -491,7 +491,7 @@ public final class REngine implements RContext.Engine {
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
-        singleton.context.getConsoleHandler().printErrorln(RRuntime.toString(out));
+        singleton.context.getConsoleHandler().printErrorln(out.toString());
         // R suicide, unless, e.g., we are running units tests.
         // We don't call quit as the system is broken.
         if (singleton.crashOnFatalError) {

@@ -26,7 +26,6 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 import edu.umd.cs.findbugs.annotations.*;
 
@@ -75,7 +74,7 @@ public abstract class GroupDispatchCallNode extends RNode {
 
     @Override
     public void deparse(State state) {
-        String name = this.getGenericName();
+        String name = getGenericName();
         RDeparse.Func func = RDeparse.getFunc(name);
         if (func != null) {
             // infix operator
@@ -98,14 +97,14 @@ public abstract class GroupDispatchCallNode extends RNode {
         @CompilationFinal private final String genericName;
         private final int depth;
 
-        public UninitializedGroupDispatchCallNode(final String aGenericName, final String groupName, final CallArgumentsNode callArgNode) {
+        public UninitializedGroupDispatchCallNode(String aGenericName, String groupName, CallArgumentsNode callArgNode) {
             this.genericName = aGenericName;
             this.groupName = groupName;
             this.callArgsNode = callArgNode;
             this.depth = 0;
         }
 
-        private UninitializedGroupDispatchCallNode(final UninitializedGroupDispatchCallNode copy, final int depth) {
+        private UninitializedGroupDispatchCallNode(UninitializedGroupDispatchCallNode copy, int depth) {
             this.genericName = copy.genericName;
             this.groupName = copy.groupName;
             this.callArgsNode = copy.callArgsNode;
@@ -137,7 +136,7 @@ public abstract class GroupDispatchCallNode extends RNode {
             return this.replace(new GenericDispatchNode(createGenericNode(argAndNames.getValues())));
         }
 
-        private GroupDispatchNode createGenericNode(final Object[] evaluatedArgs) {
+        private GroupDispatchNode createGenericNode(Object[] evaluatedArgs) {
             if (this.groupName == RGroupGenerics.GROUP_OPS) {
                 if (evaluatedArgs.length == 1) {
                     return new GenericUnaryOpsGroupDispatchNode(this.genericName, this.callArgsNode.containsVarArgsSymbol(), this.getSourceSection(), this.callArgsNode.getEncapsulatingSourceSection());
@@ -157,7 +156,7 @@ public abstract class GroupDispatchCallNode extends RNode {
         }
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "GROUP_OPS is intended to be used as an identity")
-        protected GroupDispatchNode createCurrentNode(final Object[] evaluatedArgs) {
+        protected GroupDispatchNode createCurrentNode(Object[] evaluatedArgs) {
             if (this.groupName == RGroupGenerics.GROUP_OPS) {
                 if (evaluatedArgs.length == 1) {
                     return new UnaryOpsGroupDispatchNode(this.genericName, this.callArgsNode.containsVarArgsSymbol(), this.getSourceSection(), this.callArgsNode.getEncapsulatingSourceSection());
@@ -190,7 +189,7 @@ public abstract class GroupDispatchCallNode extends RNode {
         @Child private GroupDispatchCallNode nextNode;
         @Child private GroupDispatchNode currentNode;
 
-        CachedNode(final GroupDispatchNode currentNode, final GroupDispatchCallNode nextNode, final CallArgumentsNode callArgsNode) {
+        CachedNode(final GroupDispatchNode currentNode, GroupDispatchCallNode nextNode, CallArgumentsNode callArgsNode) {
             this.nextNode = nextNode;
             this.currentNode = currentNode;
             this.callArgsNode = callArgsNode;
@@ -206,7 +205,7 @@ public abstract class GroupDispatchCallNode extends RNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
+        public Object execute(VirtualFrame frame, RArgsValuesAndNames argAndNames) {
             if (currentNode.isSameType(argAndNames.getValues())) {
                 return currentNode.execute(frame, argAndNames);
             }
@@ -238,7 +237,7 @@ public abstract class GroupDispatchCallNode extends RNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
+        public Object execute(VirtualFrame frame, RArgsValuesAndNames argAndNames) {
             return gdn.execute(frame, argAndNames);
         }
 
@@ -273,7 +272,7 @@ class GroupDispatchNode extends S3DispatchNode {
     protected final SourceSection argSrc;
 
     @Override
-    public Object execute(VirtualFrame frame, RStringVector aType) {
+    public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
         throw new AssertionError();
     }
 
@@ -303,7 +302,7 @@ class GroupDispatchNode extends S3DispatchNode {
     }
 
     protected void findTargetFunction(VirtualFrame frame) {
-        final String[] prefix = {genericName, groupName};
+        String[] prefix = {genericName, groupName};
         for (int i = 0; i < this.type.getLength(); ++i) {
             for (int j = 0; j < prefix.length; ++j) {
                 findFunction(prefix[j], this.type.getDataAt(i), frame);
@@ -328,7 +327,7 @@ class GroupDispatchNode extends S3DispatchNode {
         }
     }
 
-    public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
+    public Object execute(VirtualFrame frame, RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
         String[] argNames = argAndNames.getNames();
         if (!isExecuted) {
@@ -348,33 +347,22 @@ class GroupDispatchNode extends S3DispatchNode {
         return executeHelper(frame, evaluatedArgs, argNames);
     }
 
-    protected Object callBuiltin(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
+    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
         initBuiltin(frame);
         EvaluatedArguments reorderedArgs = reorderArgs(frame, builtinFunc, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        Object[] argObject = RArguments.create(builtinFunc, this.callSrc, null, RArguments.getDepth(frame), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
         indirectCallNode.assignSourceSection(this.callSrc);
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
     }
 
-    protected Object executeHelper(VirtualFrame frame, final Object[] evaluatedArgs, final String[] argNames) {
+    protected Object executeHelper(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argNames, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
-        // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor s3VarDefFrameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(s3VarDefFrameDescriptor, true);
-        VirtualFrame s3VarDefFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(null, null, RArguments.getDepth(frame) + 1), s3VarDefFrameDescriptor);
-        // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor argFrameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(argFrameDescriptor, true);
-        VirtualFrame argFrame = Truffle.getRuntime().createVirtualFrame(argObject, argFrameDescriptor);
-        genCallEnv = frame;
-        defineVarsAsArguments(argFrame);
-        defineVarsInFrame(s3VarDefFrame);
-        wvnMethod = defineVarInFrame(s3VarDefFrame, wvnMethod, RRuntime.RDotMethod, dotMethod);
-        RArguments.setS3Method(argFrame, targetFunctionName);
+        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        genCallEnv = frame.materialize();
+        defineVarsAsArguments(argObject);
+        RArguments.setS3Method(argObject, dotMethod);
         if (writeGroup) {
-            wvnGroup = defineVarInFrame(s3VarDefFrame, wvnGroup, RRuntime.RDotGroup, groupName);
-            RArguments.setS3Group(argFrame, groupName);
+            RArguments.setS3Group(argObject, groupName);
         }
         indirectCallNode.assignSourceSection(this.callSrc);
         /*
@@ -385,15 +373,7 @@ class GroupDispatchNode extends S3DispatchNode {
          * s3VarDefFrame. After the function returns reset the enclosing frame of the target
          * function.
          */
-        MaterializedFrame enclosingFrame = targetFunction.getEnclosingFrame();
-        MaterializedFrame mFrame = s3VarDefFrame.materialize();
-        RArguments.setEnclosingFrame(mFrame, enclosingFrame);
-        targetFunction.setEnclosingFrame(mFrame);
         Object result = indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
-        targetFunction.setEnclosingFrame(enclosingFrame);
-        RArguments.setEnclosingFrame(mFrame, null);
-        removeVars(mFrame);
-        removeVar(mFrame.getFrameDescriptor(), RRuntime.RDotGroup);
         return result;
     }
 
@@ -412,12 +392,12 @@ class GroupDispatchNode extends S3DispatchNode {
 
 class GenericGroupDispatchNode extends GroupDispatchNode {
 
-    protected GenericGroupDispatchNode(String aGenericName, String groupName, final boolean hasVarArg, SourceSection callSrc, SourceSection argSrc) {
+    protected GenericGroupDispatchNode(String aGenericName, String groupName, boolean hasVarArg, SourceSection callSrc, SourceSection argSrc) {
         super(aGenericName, groupName, hasVarArg, callSrc, argSrc);
     }
 
     @Override
-    public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
+    public Object execute(VirtualFrame frame, RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
         String[] argNames = argAndNames.getNames();
         this.type = getArgClass(evaluatedArgs[0]);

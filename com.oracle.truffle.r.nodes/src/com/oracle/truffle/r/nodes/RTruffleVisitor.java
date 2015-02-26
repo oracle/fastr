@@ -145,6 +145,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String[] argumentNames = new String[argumentsList.size()];
             RNode[] defaultValues = new RNode[argumentsList.size()];
             SaveArgumentsNode saveArguments;
+            AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[argumentsList.size()];
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size()];
                 int index = 0;
@@ -159,7 +160,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     }
 
                     // Create an initialization statement
-                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index), true, false);
+                    AccessArgumentNode accessArg = AccessArgumentNode.create(index);
+                    argAccessNodes[index] = accessArg;
+                    init[index] = WriteVariableNode.create(arg.getName(), accessArg, true, false);
 
                     // Store formal arguments
                     argumentNames[index] = arg.getName();
@@ -178,6 +181,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 statements.assignSourceSection(astBody.getSource());
             }
             FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
+            for (AccessArgumentNode access : argAccessNodes) {
+                access.setFormals(formals);
+            }
 
             FrameDescriptor descriptor = new FrameDescriptor();
             FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);

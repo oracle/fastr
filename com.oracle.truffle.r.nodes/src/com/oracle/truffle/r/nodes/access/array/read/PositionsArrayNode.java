@@ -83,19 +83,24 @@ public class PositionsArrayNode extends RNode {
     }
 
     @ExplodeLoop
-    public Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object exact) {
-        int length = conversionAdapter.getLength();
+    public static Object[] explodeLoopNoVarArg(VirtualFrame frame, PositionsArrayNodeAdapter positionsAdapter, int length) {
         Object[] evaluatedElements = new Object[length];
         for (int i = 0; i < length; i++) {
             evaluatedElements[i] = positionsAdapter.executePos(frame, i);
         }
-        executeEvalInternal(frame, vector, exact, evaluatedElements);
+        return evaluatedElements;
+    }
+
+    public Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object exact) {
+        int length = conversionAdapter.getLength();
+        Object[] evaluatedElements = explodeLoopNoVarArg(frame, positionsAdapter, length);
+        length = conversionAdapter.getLength(); // could have changed
+        executeEvalInternal(frame, vector, exact, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
     @ExplodeLoop
-    public Object executeEvalVarArg(VirtualFrame frame, Object vector, Object exact) {
-        int length = conversionAdapter.getLength();
+    public static Object[] explodeLoopVarArg(VirtualFrame frame, PositionsArrayNodeAdapter positionsAdapter, int length, PromiseHelperNode promiseHelper) {
         Object[] evaluatedElements = new Object[length];
         int ind = 0;
         for (int i = 0; i < length; i++) {
@@ -108,17 +113,24 @@ public class PositionsArrayNode extends RNode {
                 evaluatedElements[ind++] = p;
             }
         }
+        return evaluatedElements;
+    }
+
+    public Object executeEvalVarArg(VirtualFrame frame, Object vector, Object exact) {
+        int length = conversionAdapter.getLength();
+        Object[] evaluatedElements = explodeLoopVarArg(frame, positionsAdapter, length, promiseHelper);
         if (evaluatedElements.length != conversionAdapter.getLength()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            this.conversionAdapter = new PositionsArrayConversionNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length);
+            this.conversionAdapter = insert(new PositionsArrayConversionNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length));
         }
-        executeEvalInternal(frame, vector, exact, evaluatedElements);
+        length = conversionAdapter.getLength(); // could have changed
+        executeEvalInternal(frame, vector, exact, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
     @ExplodeLoop
-    public void executeEvalInternal(VirtualFrame frame, Object vector, Object exact, Object[] evaluatedElements) {
-        for (int i = 0; i < evaluatedElements.length; i++) {
+    public void executeEvalInternal(VirtualFrame frame, Object vector, Object exact, Object[] evaluatedElements, int length) {
+        for (int i = 0; i < length; i++) {
             Object convertedOperator = conversionAdapter.executeConvert(frame, vector, evaluatedElements[i], exact, i);
             evaluatedElements[i] = conversionAdapter.executeArg(frame, vector, convertedOperator, i);
             if (conversionAdapter.multiDimOperatorConverters != null) {

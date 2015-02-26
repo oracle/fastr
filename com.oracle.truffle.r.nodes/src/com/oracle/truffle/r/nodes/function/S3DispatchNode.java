@@ -11,36 +11,31 @@
 
 package com.oracle.truffle.r.nodes.function;
 
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class S3DispatchNode extends DispatchNode {
 
+    protected final BranchProfile errorProfile = BranchProfile.create();
+
     @Child private ReadVariableNode lookup;
     @CompilationFinal private String lastFun;
-    @Child private WriteVariableNode wvnCallEnv;
-    @Child private WriteVariableNode wvnGeneric;
-    @Child private WriteVariableNode wvnClass;
-    @Child protected WriteVariableNode wvnMethod;
-    @Child private WriteVariableNode wvnDefEnv;
     @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
     @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;
     protected RStringVector klass;
     protected FunctionCall funCall;
-    protected Frame genCallEnv;
-    protected Frame genDefEnv;
+    protected MaterializedFrame genCallEnv;
+    protected MaterializedFrame genDefEnv;
     protected boolean isFirst;
 
     // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
@@ -152,83 +147,11 @@ public abstract class S3DispatchNode extends DispatchNode {
         return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
     }
 
-    protected WriteVariableNode initWvn(WriteVariableNode wvn, String name) {
-        WriteVariableNode node = wvn;
-        if (node == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            node = WriteVariableNode.create(name, null, false, false);
-            insert(node);
-        }
-        return node;
-    }
-
-    protected WriteVariableNode defineVarInFrame(VirtualFrame frame, WriteVariableNode wvn, String varName, Object value) {
-        addVar(frame, varName);
-        WriteVariableNode wvnCopy = initWvn(wvn, varName);
-        wvnCopy.execute(frame, value);
-        return wvnCopy;
-    }
-
-    private static void addVar(VirtualFrame frame, final String varName) {
-        addVarHelper(frame.getFrameDescriptor(), varName);
-    }
-
-    @TruffleBoundary
-    private static void addVarHelper(FrameDescriptor frameDescriptor, final String varName) {
-        findOrAddFrameSlot(frameDescriptor, varName);
-    }
-
-    protected void defineVarsInFrame(VirtualFrame frame) {
-        addVars(frame);
-        wvnGeneric = defineVarInFrame(frame, wvnGeneric, RRuntime.RDotGeneric, genericName);
-        wvnClass = defineVarInFrame(frame, wvnClass, RRuntime.RDotClass, klass);
-        wvnCallEnv = defineVarInFrame(frame, wvnCallEnv, RRuntime.RDotGenericCallEnv, genCallEnv);
-        wvnDefEnv = defineVarInFrame(frame, wvnDefEnv, RRuntime.RDotGenericDefEnv, genDefEnv);
-    }
-
-    protected void defineVarsAsArguments(VirtualFrame frame) {
-        RArguments.setS3Generic(frame, genericName);
-        RArguments.setS3Class(frame, klass);
-        RArguments.setS3CallEnv(frame, genCallEnv);
-        RArguments.setS3DefEnv(frame, genDefEnv);
-    }
-
-    protected void addVars(VirtualFrame frame) {
-        addVars0(frame.getFrameDescriptor());
-    }
-
-    @TruffleBoundary
-    private static void addVars0(FrameDescriptor fDesc) {
-        findOrAddFrameSlot(fDesc, RRuntime.RDotGeneric);
-        findOrAddFrameSlot(fDesc, RRuntime.RDotMethod);
-        findOrAddFrameSlot(fDesc, RRuntime.RDotClass);
-        findOrAddFrameSlot(fDesc, RRuntime.RDotGenericCallEnv);
-        findOrAddFrameSlot(fDesc, RRuntime.RDotGenericDefEnv);
-    }
-
-    protected void removeVars(Frame frame) {
-        removeVar(frame.getFrameDescriptor(), RRuntime.RDotGeneric);
-        removeVar(frame.getFrameDescriptor(), RRuntime.RDotMethod);
-        removeVar(frame.getFrameDescriptor(), RRuntime.RDotClass);
-        removeVar(frame.getFrameDescriptor(), RRuntime.RDotGenericCallEnv);
-        removeVar(frame.getFrameDescriptor(), RRuntime.RDotGenericDefEnv);
-
-    }
-
-    @TruffleBoundary
-    private static void removeVars0(FrameDescriptor fDesc) {
-        fDesc.removeFrameSlot(RRuntime.RDotGeneric);
-        fDesc.removeFrameSlot(RRuntime.RDotMethod);
-        fDesc.removeFrameSlot(RRuntime.RDotClass);
-        fDesc.removeFrameSlot(RRuntime.RDotGenericCallEnv);
-        fDesc.removeFrameSlot(RRuntime.RDotGenericDefEnv);
-    }
-
-    @TruffleBoundary
-    protected static void removeVar(FrameDescriptor fDesc, final String varName) {
-        if (fDesc.findFrameSlot(varName) != null) {
-            fDesc.removeFrameSlot(varName);
-        }
+    protected void defineVarsAsArguments(Object[] args) {
+        RArguments.setS3Generic(args, genericName);
+        RArguments.setS3Class(args, klass);
+        RArguments.setS3CallEnv(args, genCallEnv);
+        RArguments.setS3DefEnv(args, genDefEnv);
     }
 
     private void checkLength(final String className, final String generic) {

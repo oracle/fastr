@@ -14,7 +14,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.io.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
@@ -464,7 +465,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isFlushconsole")
-        protected RNull flushConsole(RList f, Object[] args, RMissing packageName) {
+        protected RNull flushConsole(RList f, RArgsValuesAndNames args, RMissing packageName) {
             return RNull.instance;
         }
 
@@ -516,7 +517,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isMakeQuartzDefault")
-        protected byte makeQuartzDefault(RList f, Object[] args, RMissing packageName) {
+        protected byte makeQuartzDefault(RList f, RArgsValuesAndNames args, RMissing packageName) {
             return RRuntime.LOGICAL_FALSE;
         }
 

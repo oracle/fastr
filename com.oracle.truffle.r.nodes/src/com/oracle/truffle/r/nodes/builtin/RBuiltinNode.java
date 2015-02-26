@@ -160,7 +160,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
         // Create function initialization
         RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
-        RBuiltinNode node = createNode(builtin, argAccessNodes, null);
+        RBuiltinNode node = createNode(builtin, argAccessNodes.clone(), null);
 
         // Create formal arguments
         // TODO We only call getParameterNames to support overrides
@@ -176,6 +176,9 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
             names[i] = nameObj.isEmpty() ? null : nameObj;
         }
         FormalArguments formals = FormalArguments.create(names, node.getParameterValues());
+        for (RNode access : argAccessNodes) {
+            ((AccessArgumentNode) access).setFormals(formals);
+        }
 
         // Setup
         FrameDescriptor frameDescriptor = new FrameDescriptor();

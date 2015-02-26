@@ -13,14 +13,13 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * {@code UseMethod} is typically called like this:
@@ -35,8 +34,8 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  */
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 
     @CompilationFinal private final String[] suppliedArgNames;
 
@@ -46,13 +45,19 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         this.suppliedArgNames = evaledArgNames;
     }
 
+    private Frame getCallerFrame(VirtualFrame frame) {
+        Frame funFrame = RArguments.getCallerFrame(frame);
+        if (callerFrameSlotPath.profile(funFrame == null)) {
+            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
+            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+        }
+        // S3 method can be dispatched from top-level where there is no caller frame
+        return topLevelFrameProfile.profile(funFrame == null) ? frame : funFrame;
+    }
+
     @Override
     public Object execute(VirtualFrame frame) {
-        Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-        // S3 method can be dispatched from top-level where there is no caller frame
-        if (topLevelFrameProfile.profile(funFrame == null)) {
-            funFrame = frame;
-        }
+        Frame funFrame = getCallerFrame(frame);
         if (targetFunction == null) {
             findTargetFunction(RArguments.getEnclosingFrame(frame));
         }
@@ -60,13 +65,9 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame, RStringVector aType) {
+    public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
-        Frame funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-        // S3 method can be dispatched from top-level where there is no caller frame
-        if (funFrame == null) {
-            funFrame = frame;
-        }
+        Frame funFrame = getCallerFrame(frame);
         findTargetFunction(RArguments.getEnclosingFrame(frame));
         return executeHelper(frame, funFrame);
     }
@@ -81,7 +82,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) {
         this.type = aType;
         // TBD getEnclosing?
         findTargetFunction(frame);
@@ -103,7 +104,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             }
         }
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, argNames, false, getSourceSection());
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
@@ -148,7 +149,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+        return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private static void addArg(Object[] values, Object value, int index) {
@@ -159,17 +160,13 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
     }
 
-    @TruffleBoundary
-    private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), RArguments.getDepth(callerFrame) + 1, arguments, argNames);
+    private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, String[] argNames) {
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, argNames);
         // todo: cannot create frame descriptors in compiled code
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
-        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, frameDescriptor);
         genCallEnv = callerFrame;
-        defineVarsAsArguments(newFrame);
-        RArguments.setS3Method(newFrame, targetFunctionName);
-        return indirectCallNode.call(newFrame, targetFunction.getTarget(), argObject);
+        defineVarsAsArguments(argObject);
+        RArguments.setS3Method(argObject, targetFunctionName);
+        return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
     private void findTargetFunction(Frame callerFrame) {

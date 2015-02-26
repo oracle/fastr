@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
@@ -49,6 +49,15 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
+
+    private final ConditionProfile s3SlotsProfile = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
+    @Child private FrameSlotNode dotGenericSlot;
+    @Child private FrameSlotNode dotMethodSlot;
+    @Child private FrameSlotNode dotClassSlot;
+    @Child private FrameSlotNode dotGenericCallEnvSlot;
+    @Child private FrameSlotNode dotGenericCallDefSlot;
+    @Child private FrameSlotNode dotGroupSlot;
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -105,6 +114,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
             verifyEnclosingAssumptions(vf);
+            if (s3SlotsProfile.profile(RArguments.hasS3Args(vf))) {
+                setupS3Slots(vf);
+            }
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
@@ -128,6 +140,26 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 RContext.setVisible(isVisible);
             }
         }
+    }
+
+    private void setupS3Slots(VirtualFrame frame) {
+        if (dotGenericSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            assert invalidateFrameSlotProfile == null && dotMethodSlot == null && dotClassSlot == null && dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
+            invalidateFrameSlotProfile = BranchProfile.create();
+            dotGenericSlot = insert(FrameSlotNode.create(RRuntime.RDotGeneric, true));
+            dotMethodSlot = insert(FrameSlotNode.create(RRuntime.RDotMethod, true));
+            dotClassSlot = insert(FrameSlotNode.create(RRuntime.RDotClass, true));
+            dotGenericCallEnvSlot = insert(FrameSlotNode.create(RRuntime.RDotGenericCallEnv, true));
+            dotGenericCallDefSlot = insert(FrameSlotNode.create(RRuntime.RDotGenericDefEnv, true));
+            dotGroupSlot = insert(FrameSlotNode.create(RRuntime.RDotGroup, true));
+        }
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), RArguments.getS3Generic(frame), false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), RArguments.getS3Method(frame), false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), RArguments.getS3Class(frame), false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), RArguments.getS3CallEnv(frame), false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), RArguments.getS3DefEnv(frame), false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), RArguments.getS3Group(frame), false, invalidateFrameSlotProfile);
     }
 
     @SuppressWarnings("unchecked")

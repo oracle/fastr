@@ -25,9 +25,9 @@ fastr.createcc <- function(func) .FastR(.NAME="createcc", func)
 
 fastr.getcc <- function(func) .FastR(.NAME="getcc", func)
 
-fastr.compile <- function(func, background=TRUE) .FastR(.NAME="getcc", func, background)
+fastr.compile <- function(func, background=TRUE) .FastR(.NAME="compile", func, background)
 
-fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="getcc", func, igvDump, verbose)
+fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="dumptrees", func, igvDump, verbose)
 
 fastr.source <- function(func) .FastR(.NAME="source", func)
 

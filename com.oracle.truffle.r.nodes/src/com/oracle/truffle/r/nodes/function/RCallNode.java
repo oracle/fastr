@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -78,13 +79,13 @@ import com.oracle.truffle.r.runtime.env.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -97,11 +98,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -109,7 +110,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -121,7 +122,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -581,14 +582,25 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
 
+        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsSplitting;
+
         DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
             this.matchedArgs = matchedArgs.createNode();
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+            this.needsCallerFrame = function.containsDispatch();
+            this.needsSplitting = function.containsDispatch();
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
+            if (needsSplitting) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                needsSplitting = false;
+                call.cloneCallTarget();
+            }
+            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
 
@@ -620,7 +632,7 @@ public abstract class RCallNode extends RNode {
 
             if (lastCallTarget == currentFunction.getTarget() && lastMatchedArgs != null) {
                 // poor man's caching succeeded - same function: no re-match needed
-                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
+                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, lastMatchedArgs.doExecuteArray(frame), lastMatchedArgs.getNames());
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
 
@@ -628,7 +640,7 @@ public abstract class RCallNode extends RNode {
             this.lastMatchedArgs = matchedArgs;
             this.lastCallTarget = currentFunction.getTarget();
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -700,6 +712,8 @@ public abstract class RCallNode extends RNode {
         @Child private MatchedArgumentsNode matchedArgs;
 
         private final VarArgsSignature cachedSignature;
+        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsSplitting;
 
         /**
          * Whether this [DV] node is the root of the varargs sub-cache (cmp. {@link RCallNode})
@@ -719,6 +733,12 @@ public abstract class RCallNode extends RNode {
             this.cachedSignature = varArgsSignature;
             this.matchedArgs = matchedArgs.createNode();
             this.isVarArgsRoot = isVarArgsRoot;
+            this.needsCallerFrame = function.containsDispatch();
+            /*
+             * this is a simple heuristic - methods that need a caller frame should have call site -
+             * specific versions
+             */
+            this.needsSplitting = function.containsDispatch();
         }
 
         protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
@@ -745,7 +765,14 @@ public abstract class RCallNode extends RNode {
             }
 
             // Our cached function and matched arguments do match, simply execute!
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
+
+            if (needsSplitting) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                needsSplitting = false;
+                call.cloneCallTarget();
+            }
+            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
 
@@ -766,6 +793,8 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode suppliedArgs;
 
+        @CompilationFinal private boolean needsCallerFrame;
+
         DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.suppliedArgs = suppliedArgs;
@@ -779,7 +808,12 @@ public abstract class RCallNode extends RNode {
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            if (!needsCallerFrame && currentFunction.containsDispatch()) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                needsCallerFrame = true;
+            }
+            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -805,7 +839,7 @@ public abstract class RCallNode extends RNode {
             UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }

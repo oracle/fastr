@@ -220,6 +220,7 @@ suite = {
           "com.oracle.truffle.r.nodes.wrapper.processor"
       ],
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.nodes.builtin" : {
@@ -237,6 +238,7 @@ suite = {
         "com.oracle.truffle.r.nodes.wrapper.processor",
       ],
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.test.ignore.processor" : {
@@ -260,6 +262,7 @@ suite = {
       "javaCompliance" : "1.8",
       "annotationProcessors" : ["com.oracle.truffle.r.test.ignore.processor"],
       "workingSets" : "Truffle,FastR,Test",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.test.native" : {
@@ -277,6 +280,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.shell" : {
@@ -288,6 +292,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.runtime" : {
@@ -300,6 +305,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.runtime.ffi" : {
@@ -327,6 +333,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.native" : {
@@ -343,7 +350,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",
-
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.library" : {
@@ -354,6 +361,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",
+      "jacoco" : "include",
 
     },
 

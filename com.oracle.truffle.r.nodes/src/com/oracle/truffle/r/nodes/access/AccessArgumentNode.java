@@ -82,12 +82,12 @@ public abstract class AccessArgumentNode extends RNode {
         defaultArgCanBeOptimized = prev.defaultArgCanBeOptimized;
     }
 
-    @Override
-    protected void onAdopt() {
-        formals = ((RRootNode) getRootNode()).getFormalArguments();
+    public void setFormals(FormalArguments formals) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert this.formals == null;
+        this.formals = formals;
         hasDefaultArg = formals.getDefaultArg(getIndex()) != null;
         isVarArgIndex = formals.getVarArgIndex() == getIndex();
-        super.onAdopt();
     }
 
     /**
@@ -136,27 +136,27 @@ public abstract class AccessArgumentNode extends RNode {
         return argMissing;
     }
 
-    @Specialization(guards = {"hasDefaultArg", "canBeOptimized"})
-    public Object doArgumentEagerDefaultArg(VirtualFrame frame, RMissing argMissing) {
-        // Insert default value
-        checkPromiseFactory();
-        if (!checkInsertOptDefaultArg()) {
-            // Default arg cannot be optimized: Rewrite to default and assure that we don't take
-            // this path again
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            defaultArgCanBeOptimized = false;
-            return doArgumentDefaultArg(frame, argMissing);
-        }
-        Object result = optDefaultArgNode.execute(frame);
-        RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
-        return result;
-    }
-
-    @Specialization(guards = {"hasDefaultArg", "!canBeOptimized"})
+    @Specialization(guards = {"hasDefaultArg"})
     public Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
+        Object result;
+        if (canBeOptimized()) {
+            // Insert default value
+            checkPromiseFactory();
+            if (checkInsertOptDefaultArg()) {
+                result = optDefaultArgNode.execute(frame);
+                // Update RArguments for S3 dispatch to work
+                RArguments.setArgument(frame, index, result);
+                return result;
+            } else {
+                // Default arg cannot be optimized: Rewrite to default and assure that we don't take
+                // this path again
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                defaultArgCanBeOptimized = false;
+            }
+        }
         // Insert default value
         checkPromiseFactory();
-        RPromise result = factory.createPromise(frame.materialize());
+        result = factory.createPromise(frame.materialize());
         RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
         return result;
     }

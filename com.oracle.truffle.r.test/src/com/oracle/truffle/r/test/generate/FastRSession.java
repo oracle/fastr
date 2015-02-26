@@ -37,7 +37,7 @@ public final class FastRSession implements RSession {
      * comparison. It does not separate error output as the test analysis doesn't need it.
      */
     private static class ConsoleHandler implements RContext.ConsoleHandler {
-        private StringBuilder buffer = new StringBuilder();
+        private final StringBuilder buffer = new StringBuilder();
 
         @TruffleBoundary
         public void println(String s) {
@@ -111,7 +111,11 @@ public final class FastRSession implements RSession {
         Load_RFFIFactory.initialize();
         FastROptions.initialize();
         REnvVars.initialize();
-        REngine.initialize(new String[0], consoleHandler, false, false);
+        try {
+            REngine.initialize(new String[0], consoleHandler, false, false);
+        } finally {
+            System.out.print(consoleHandler.buffer.toString());
+        }
     }
 
     @SuppressWarnings("deprecation")
