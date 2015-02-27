@@ -59,7 +59,7 @@ public class URLConnections {
         }
     }
 
-    private static class URLReadRConnection extends DelegateReadRConnection {
+    private static class URLReadRConnection extends DelegateReadRConnection implements ReadWriteHelper {
 
         private BufferedInputStream inputStream;
 

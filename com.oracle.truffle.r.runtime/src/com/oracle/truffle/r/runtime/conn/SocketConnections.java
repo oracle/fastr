@@ -67,7 +67,7 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
         private Socket socket;
         private SocketChannel socketChannel;
         protected InputStream inputStream;

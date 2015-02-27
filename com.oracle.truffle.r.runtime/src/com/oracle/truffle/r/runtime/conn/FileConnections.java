@@ -70,7 +70,7 @@ public class FileConnections {
         }
     }
 
-    static class FileReadTextRConnection extends DelegateReadRConnection {
+    static class FileReadTextRConnection extends DelegateReadRConnection implements ReadWriteHelper {
         private BufferedInputStream inputStream;
 
         FileReadTextRConnection(BasePathRConnection base) throws IOException {
@@ -117,7 +117,7 @@ public class FileConnections {
 
     }
 
-    private static class FileWriteTextRConnection extends DelegateWriteRConnection {
+    private static class FileWriteTextRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
         private BufferedOutputStream outputStream;
 
         FileWriteTextRConnection(FileRConnection base, boolean append) throws IOException {
@@ -163,7 +163,7 @@ public class FileConnections {
         }
     }
 
-    private static class FileReadBinaryRConnection extends DelegateReadRConnection {
+    private static class FileReadBinaryRConnection extends DelegateReadRConnection implements ReadWriteHelper {
         private FileInputStream inputStream;
 
         FileReadBinaryRConnection(FileRConnection base) throws IOException {
@@ -210,7 +210,7 @@ public class FileConnections {
 
     }
 
-    private static class FileWriteBinaryConnection extends DelegateWriteRConnection {
+    private static class FileWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
         private FileOutputStream outputStream;
 
         FileWriteBinaryConnection(FileRConnection base, boolean append) throws IOException {

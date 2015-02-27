@@ -37,15 +37,13 @@ public class LoadFunctions {
         @Specialization
         protected RStringVector load(VirtualFrame frame, RConnection con, REnvironment envir, @SuppressWarnings("unused") RAbstractLogicalVector verbose) {
             controlVisibility();
+            boolean wasOpen = true;
             try {
                 /*
                  * The connection may or may not be open (see load.R).
                  */
-                int[] chars = new int[]{5};
-                RIntVector header = RDataFactory.createIntVector(chars, RDataFactory.COMPLETE_VECTOR);
-                RStringVector v = con.readChar(header, true);
-                assert v.getLength() == 1;
-                String s = v.getDataAt(0);
+                wasOpen = con.forceOpen("rb");
+                String s = con.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
                     Object o = RSerialize.unserialize(con, RArguments.getDepth(frame));
                     if (!(o instanceof RPairList)) {
@@ -80,6 +78,14 @@ public class LoadFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
                 throw RError.error(this.getEncapsulatingSourceSection(), px);
+            } finally {
+                if (!wasOpen) {
+                    try {
+                        con.internalClose();
+                    } catch (IOException ex) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    }
+                }
             }
 
         }

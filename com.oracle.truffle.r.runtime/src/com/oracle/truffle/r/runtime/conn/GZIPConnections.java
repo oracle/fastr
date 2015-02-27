@@ -65,7 +65,7 @@ public class GZIPConnections {
         }
     }
 
-    private static class GZIPInputRConnection extends DelegateReadRConnection {
+    private static class GZIPInputRConnection extends DelegateReadRConnection implements ReadWriteHelper {
         private GZIPInputStream inputStream;
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
@@ -111,7 +111,7 @@ public class GZIPConnections {
 
     }
 
-    private static class GZIPOutputRConnection extends DelegateWriteRConnection {
+    private static class GZIPOutputRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
         private GZIPOutputStream outputStream;
 
         GZIPOutputRConnection(GZIPRConnection base) throws IOException {

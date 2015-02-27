@@ -154,9 +154,6 @@ public class ConnectionSupport {
     }
 
     // TODO implement all open modes
-    // TODO implement missing .Internal functions expected by connections.R
-    // TODO revisit the use of InputStream for internal use, e.g. in RSerialize
-    // TODO Use channels to support blocking/non-blockng mode
 
     /**
      * Class that holds common state for all {@link RConnection} instances. It supports lazy
@@ -474,126 +471,129 @@ public class ConnectionSupport {
         }
     }
 
-    /**
-     * {@code readLines} from an {@link InputStream}. It would be convenient to use a
-     * {@link BufferedReader} but mixing binary and text operations, which is a requirement, would
-     * then be difficult.
-     */
-    static String[] readLinesHelper(InputStream in, int n) throws IOException {
-        ArrayList<String> lines = new ArrayList<>();
-        int totalRead = 0;
-        byte[] buffer = new byte[64];
-        int pushBack = 0;
-        while (true) {
-            int ch;
-            if (pushBack != 0) {
-                ch = pushBack;
-                pushBack = 0;
-            } else {
-                ch = in.read();
-            }
-            boolean lineEnd = false;
-            if (ch < 0) {
-                // N.B. This means data may be discarded if no line-end
-                break;
-            }
-            if (ch == '\n') {
-                lineEnd = true;
-            } else if (ch == '\r') {
-                lineEnd = true;
-                ch = in.read();
-                if (ch == '\n') {
-                    // swallow the trailing lf
+    interface ReadWriteHelper {
+
+        /**
+         * {@code readLines} from an {@link InputStream}. It would be convenient to use a
+         * {@link BufferedReader} but mixing binary and text operations, which is a requirement,
+         * would then be difficult.
+         */
+        default String[] readLinesHelper(InputStream in, int n) throws IOException {
+            ArrayList<String> lines = new ArrayList<>();
+            int totalRead = 0;
+            byte[] buffer = new byte[64];
+            int pushBack = 0;
+            while (true) {
+                int ch;
+                if (pushBack != 0) {
+                    ch = pushBack;
+                    pushBack = 0;
                 } else {
-                    pushBack = ch;
+                    ch = in.read();
                 }
-            }
-            if (lineEnd) {
-                lines.add(new String(buffer, 0, totalRead));
-                if (n > 0 && lines.size() == n) {
+                boolean lineEnd = false;
+                if (ch < 0) {
+                    // N.B. This means data may be discarded if no line-end
                     break;
                 }
-                totalRead = 0;
-            } else {
+                if (ch == '\n') {
+                    lineEnd = true;
+                } else if (ch == '\r') {
+                    lineEnd = true;
+                    ch = in.read();
+                    if (ch == '\n') {
+                        // swallow the trailing lf
+                    } else {
+                        pushBack = ch;
+                    }
+                }
+                if (lineEnd) {
+                    lines.add(new String(buffer, 0, totalRead));
+                    if (n > 0 && lines.size() == n) {
+                        break;
+                    }
+                    totalRead = 0;
+                } else {
+                    buffer = checkBuffer(buffer, totalRead);
+                    buffer[totalRead++] = (byte) (ch & 0xFF);
+                }
+            }
+            String[] result = new String[lines.size()];
+            lines.toArray(result);
+            return result;
+        }
+
+        default void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                out.write(lines.getDataAt(i).getBytes());
+                out.write(sep.getBytes());
+            }
+        }
+
+        default void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
+            out.write(s.getBytes());
+            if (pad > 0) {
+                for (int i = 0; i < pad; i++) {
+                    out.write(0);
+                }
+            }
+            if (eos != null && eos.length() > 0) {
+                out.write(eos.getBytes());
+            }
+        }
+
+        default void writeBinHelper(ByteBuffer buffer, OutputStream outputStream) throws IOException {
+            int n = buffer.remaining();
+            byte[] b = new byte[n];
+            buffer.get(b);
+            outputStream.write(b);
+        }
+
+        /**
+         * Reads null-terminated character strings from an {@link InputStream}.
+         */
+        default byte[] readBinCharsHelper(InputStream in) throws IOException {
+            int ch = in.read();
+            if (ch < 0) {
+                return null;
+            }
+            int totalRead = 0;
+            byte[] buffer = new byte[64];
+            while (true) {
                 buffer = checkBuffer(buffer, totalRead);
                 buffer[totalRead++] = (byte) (ch & 0xFF);
+                if (ch == 0) {
+                    break;
+                }
+                ch = in.read();
             }
+            return buffer;
         }
-        String[] result = new String[lines.size()];
-        lines.toArray(result);
-        return result;
-    }
 
-    static void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep) throws IOException {
-        for (int i = 0; i < lines.getLength(); i++) {
-            out.write(lines.getDataAt(i).getBytes());
-            out.write(sep.getBytes());
-        }
-    }
-
-    static void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
-        out.write(s.getBytes());
-        if (pad > 0) {
-            for (int i = 0; i < pad; i++) {
-                out.write(0);
+        default int readBinHelper(ByteBuffer buffer, InputStream inputStream) throws IOException {
+            int bytesToRead = buffer.remaining();
+            byte[] b = new byte[bytesToRead];
+            int totalRead = 0;
+            int thisRead = 0;
+            while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
+                totalRead += thisRead;
             }
+            buffer.put(b, 0, totalRead);
+            return totalRead;
         }
-        if (eos != null && eos.length() > 0) {
-            out.write(eos.getBytes());
-        }
-    }
 
-    static void writeBinHelper(ByteBuffer buffer, OutputStream outputStream) throws IOException {
-        int n = buffer.remaining();
-        byte[] b = new byte[n];
-        buffer.get(b);
-        outputStream.write(b);
-    }
-
-    /**
-     * Reads null-terminated character strings from an {@link InputStream}.
-     */
-    static byte[] readBinCharsHelper(InputStream in) throws IOException {
-        int ch = in.read();
-        if (ch < 0) {
-            return null;
-        }
-        int totalRead = 0;
-        byte[] buffer = new byte[64];
-        while (true) {
-            buffer = checkBuffer(buffer, totalRead);
-            buffer[totalRead++] = (byte) (ch & 0xFF);
-            if (ch == 0) {
-                break;
+        default String readCharHelper(int nchars, InputStream in, @SuppressWarnings("unused") boolean useBytes) throws IOException {
+            byte[] bytes = new byte[nchars];
+            in.read(bytes);
+            int j = 0;
+            for (; j < bytes.length; j++) {
+                // strings end at 0
+                if (bytes[j] == 0) {
+                    break;
+                }
             }
-            ch = in.read();
+            return new String(bytes, 0, j);
         }
-        return buffer;
-    }
-
-    static int readBinHelper(ByteBuffer buffer, InputStream inputStream) throws IOException {
-        int bytesToRead = buffer.remaining();
-        byte[] b = new byte[bytesToRead];
-        int totalRead = 0;
-        int thisRead = 0;
-        while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
-            totalRead += thisRead;
-        }
-        buffer.put(b, 0, totalRead);
-        return totalRead;
-    }
-
-    static String readCharHelper(int nchars, InputStream in, @SuppressWarnings("unused") boolean useBytes) throws IOException {
-        byte[] bytes = new byte[nchars];
-        in.read(bytes);
-        int j = 0;
-        for (; j < bytes.length; j++) {
-            // strings end at 0
-            if (bytes[j] == 0) {
-                break;
-            }
-        }
-        return new String(bytes, 0, j);
     }
 
     private static byte[] checkBuffer(byte[] buffer, int n) {
