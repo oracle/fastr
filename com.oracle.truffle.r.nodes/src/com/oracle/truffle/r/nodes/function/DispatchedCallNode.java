@@ -15,6 +15,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -140,30 +141,70 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final class CachedNode extends DispatchedCallNode {
 
+        private final ConditionProfile sameIdentityProfile = ConditionProfile.createBinaryProfile();
+        private final BranchProfile nullTypeProfile = BranchProfile.create();
+        private final BranchProfile lengthMismatch = BranchProfile.create();
+        private final BranchProfile notIdentityEqualElements = BranchProfile.create();
+
         @Child private DispatchedCallNode nextNode;
         @Child private DispatchNode currentNode;
-        private final RStringVector type;
+        private final RStringVector cachedType;
+        @CompilationFinal private final String[] cachedTypeElements;
 
         CachedNode(DispatchNode currentNode, DispatchedCallNode nextNode, RStringVector type) {
             this.nextNode = nextNode;
             this.currentNode = currentNode;
-            this.type = type;
+            this.cachedType = type;
+            this.cachedTypeElements = type.getDataCopy();
+        }
+
+        private boolean isEqualType(RStringVector type) {
+            if (sameIdentityProfile.profile(type == cachedType)) {
+                return true;
+            }
+            if (cachedType == null) {
+                return false;
+            }
+            if (type == null) {
+                nullTypeProfile.enter();
+                return false;
+            }
+            if (type.getLength() != cachedTypeElements.length) {
+                lengthMismatch.enter();
+                return false;
+            }
+            return compareLoop(type);
+        }
+
+        @ExplodeLoop
+        private boolean compareLoop(RStringVector type) {
+            for (int i = 0; i < cachedTypeElements.length; i++) {
+                String elementOne = cachedTypeElements[i];
+                String elementTwo = type.getDataAt(i);
+                if (elementOne != elementTwo) {
+                    notIdentityEqualElements.enter();
+                    if (!elementOne.equals(elementTwo)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RStringVector aType) {
-            if (S3DispatchNode.isEqualType(type, aType)) {
+        public Object execute(VirtualFrame frame, RStringVector type) {
+            if (isEqualType(type)) {
                 return currentNode.execute(frame);
             }
-            return nextNode.execute(frame, aType);
+            return nextNode.execute(frame, type);
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) throws NoGenericMethodException {
-            if (S3DispatchNode.isEqualType(type, aType)) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) throws NoGenericMethodException {
+            if (isEqualType(type)) {
                 return currentNode.executeInternal(frame, args);
             }
-            return nextNode.executeInternal(frame, aType, args);
+            return nextNode.executeInternal(frame, type, args);
         }
     }
 }
