@@ -182,6 +182,8 @@ public final class RArguments {
     public static Object[] createUnitialized() {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
         a[INDEX_DEPTH] = 0;
+        a[INDEX_N_ARGS] = 0;
+        a[INDEX_SIGNATURE] = ArgumentsSignature.empty(0);
         a[INDEX_IS_IRREGULAR] = false;
         return a;
     }
