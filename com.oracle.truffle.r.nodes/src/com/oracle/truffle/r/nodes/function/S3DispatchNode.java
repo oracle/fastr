@@ -119,9 +119,12 @@ public abstract class S3DispatchNode extends DispatchNode {
         return evaluated;
     }
 
+    private final ValueProfile callerFrameProfile = ValueProfile.createClassProfile();
+
     protected final Object[] prepareArguments(Frame callerFrame, MaterializedFrame genericDefFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz, String functionName) {
-        Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-        defineVarsAsArguments(argObject, genericName, clazz, callerFrame.materialize(), genericDefFrame);
+        Frame profiledCallerFrame = callerFrameProfile.profile(callerFrame);
+        Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(profiledCallerFrame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        defineVarsAsArguments(argObject, genericName, clazz, profiledCallerFrame.materialize(), genericDefFrame);
         RArguments.setS3Method(argObject, functionName);
         return argObject;
     }

@@ -65,7 +65,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         public final RStringVector clazz;
         public final String functionName;
         @CompilationFinal public long[] preparePermutation;
-        public MatchPermutation permutation;
+        public final MatchPermutation permutation;
 
         public CheckReadsNode(ReadVariableNode[] unsuccessfulReadsCallerFrame, ReadVariableNode[] unsuccessfulReadsDefFrame, ReadVariableNode successfulRead, RFunction function, RStringVector clazz,
                         String functionName, ArgumentsSignature signature, ArgumentsSignature[] varArgSignature, long[] preparePermutation, MatchPermutation permutation) {
