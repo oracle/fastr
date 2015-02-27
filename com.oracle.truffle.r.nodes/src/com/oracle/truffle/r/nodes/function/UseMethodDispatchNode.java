@@ -73,8 +73,6 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 
-    private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
-
     @Child private UnsuccessfulReadsNode unsuccessfulReads;
     @Child private ReadVariableNode successfulRead;
     @Child private DirectCallNode call;
@@ -178,73 +176,9 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         throw RInternalError.shouldNotReachHere();
     }
 
-    @ExplodeLoop
-    private static Object[] extractArguments(VirtualFrame frame) {
-        int argCount = RArguments.getArgumentsLength(frame);
-        Object[] argValues = new Object[argCount];
-        for (int i = 0; i < argCount; ++i) {
-            argValues[i] = RArguments.getArgument(frame, i);
-        }
-        return argValues;
-    }
-
     private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
-        assert RArguments.getSignature(frame).getLength() == args.length;
-
-        int argCount = args.length;
-        int argListSize = argCount;
-
-        boolean hasVarArgs = false;
-        for (int fi = 0; fi < argCount; ++fi) {
-            Object arg = args[fi];
-            if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
-                hasVarArgs = true;
-                argListSize += ((RArgsValuesAndNames) arg).length() - 1;
-            }
-        }
-        Object[] argValues;
-        ArgumentsSignature signature;
-        if (hasVarArgs) {
-            argValues = new Object[argListSize];
-            String[] argNames = new String[argListSize];
-            int index = 0;
-            for (int fi = 0; fi < argCount; ++fi) {
-                Object arg = args[fi];
-                if (arg instanceof RArgsValuesAndNames) {
-                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
-                    Object[] varArgValues = varArgs.getValues();
-                    ArgumentsSignature varArgSignature = varArgs.getSignature();
-                    for (int i = 0; i < varArgs.length(); i++) {
-                        argNames[index] = varArgSignature.getName(i);
-                        argValues[index++] = checkMissing(varArgValues[i]);
-                    }
-                } else {
-                    argNames[index] = paramSignature.getName(fi);
-                    argValues[index++] = checkMissing(arg);
-                }
-            }
-            signature = ArgumentsSignature.get(argNames);
-        } else {
-            argValues = new Object[argCount];
-            for (int i = 0; i < argCount; i++) {
-                argValues[i] = checkMissing(args[i]);
-            }
-            signature = paramSignature;
-        }
-
-        // ...and use them as 'supplied' arguments...
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
-
-        // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, cachedFunction, evaledArgs, errorSourceSection, promiseHelper, false);
-        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-    }
-
-    private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
-        Object[] argObject = RArguments.createS3Args(cachedFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, signature);
-        // todo: cannot create frame descriptors in compiled code
-        defineVarsAsArguments(argObject, genericName, cachedClass, callerFrame, null);
-        RArguments.setS3Method(argObject, cachedFunctionName);
+        EvaluatedArguments reorderedArgs = reorderArguments(frame, args, cachedFunction, paramSignature, errorSourceSection);
+        Object[] argObject = prepareArguments(callerFrame, reorderedArgs, cachedFunction, cachedClass, cachedFunctionName);
         return call.call(frame, argObject);
     }
 
@@ -303,8 +237,6 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 
-    private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
-
     public UseMethodDispatchGenericNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName, suppliedSignature);
     }
@@ -326,9 +258,9 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame, RStringVector type) {
-        Frame funFrame = getCallerFrame(frame);
+        Frame callerFrame = getCallerFrame(frame);
         findTargetFunction(RArguments.getEnclosingFrame(frame), type, true);
-        return executeHelper(frame, funFrame);
+        return executeHelper(frame, callerFrame, extractArguments(frame), RArguments.getSignature(frame), getSourceSection());
     }
 
     @Override
@@ -340,79 +272,12 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
     public Object executeInternalGeneric(VirtualFrame frame, RStringVector type, Object[] args) {
         // TBD getEnclosing?
         findTargetFunction(frame, type, false);
-        return executeHelper(frame, args);
+        return executeHelper(frame, frame, args, suppliedSignature, getEncapsulatingSourceSection());
     }
 
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
-        // Extract arguments from current frame...
-        int argCount = RArguments.getArgumentsLength(frame);
-        assert RArguments.getSignature(frame).getLength() == argCount;
-        Object[] argValues = new Object[argCount];
-        int fi = 0;
-        for (; fi < argCount; ++fi) {
-            argValues[fi] = RArguments.getArgument(frame, fi);
-        }
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, RArguments.getSignature(frame), false, getSourceSection());
-        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-    }
-
-    private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
-        // Extract arguments from current frame...
-        int argCount = args.length;
-        int argListSize = argCount;
-
-        boolean hasVarArgs = false;
-        for (int fi = 0; fi < argCount; ++fi) {
-            Object arg = args[fi];
-            if (arg instanceof RArgsValuesAndNames) {
-                hasVarArgs = true;
-                argListSize += ((RArgsValuesAndNames) arg).length() - 1;
-            }
-        }
-        Object[] argValues;
-        ArgumentsSignature signature;
-        if (hasVarArgsProfile.profile(hasVarArgs)) {
-            argValues = new Object[argListSize];
-            String[] argNames = new String[argListSize];
-            int index = 0;
-            for (int fi = 0; fi < argCount; ++fi) {
-                Object arg = args[fi];
-                if (arg instanceof RArgsValuesAndNames) {
-                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
-                    Object[] varArgValues = varArgs.getValues();
-                    ArgumentsSignature varArgSignature = varArgs.getSignature();
-                    for (int i = 0; i < varArgs.length(); i++) {
-                        argNames[index] = varArgSignature.getName(i);
-                        argValues[index++] = checkMissing(varArgValues[i]);
-                    }
-                } else {
-                    argNames[index] = suppliedSignature.getName(fi);
-                    argValues[index++] = checkMissing(arg);
-                }
-            }
-            signature = ArgumentsSignature.get(argNames);
-        } else {
-            argValues = new Object[argCount];
-            for (int i = 0; i < argCount; i++) {
-                argValues[i] = checkMissing(args[i]);
-            }
-            signature = suppliedSignature;
-        }
-
-        // ...and use them as 'supplied' arguments...
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
-
-        // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
-        return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-    }
-
-    private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, signature);
-        // todo: cannot create frame descriptors in compiled code
-        genCallEnv = callerFrame;
-        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
-        RArguments.setS3Method(argObject, targetFunctionName);
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
+        EvaluatedArguments reorderedArgs = reorderArguments(frame, args, targetFunction, paramSignature, errorSourceSection);
+        Object[] argObject = prepareArguments(callerFrame, reorderedArgs, targetFunction, klass, targetFunctionName);
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 

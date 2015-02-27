@@ -27,6 +27,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     protected final BranchProfile errorProfile = BranchProfile.create();
+    private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
 
     @CompilationFinal private String lastFun;
     @Child private ReadVariableNode lookup;
@@ -41,6 +42,74 @@ public abstract class S3DispatchNode extends DispatchNode {
     public S3DispatchNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName);
         this.suppliedSignature = suppliedSignature;
+    }
+
+    @ExplodeLoop
+    protected static Object[] extractArguments(VirtualFrame frame) {
+        int argCount = RArguments.getArgumentsLength(frame);
+        Object[] argValues = new Object[argCount];
+        for (int i = 0; i < argCount; ++i) {
+            argValues[i] = RArguments.getArgument(frame, i);
+        }
+        return argValues;
+    }
+
+    protected EvaluatedArguments reorderArguments(VirtualFrame frame, Object[] args, RFunction function, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
+        assert paramSignature.getLength() == args.length;
+
+        int argCount = args.length;
+        int argListSize = argCount;
+
+        boolean hasVarArgs = false;
+        for (int fi = 0; fi < argCount; ++fi) {
+            Object arg = args[fi];
+            if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
+                hasVarArgs = true;
+                argListSize += ((RArgsValuesAndNames) arg).length() - 1;
+            }
+        }
+        Object[] argValues;
+        ArgumentsSignature signature;
+        if (hasVarArgs) {
+            argValues = new Object[argListSize];
+            String[] argNames = new String[argListSize];
+            int index = 0;
+            for (int fi = 0; fi < argCount; ++fi) {
+                Object arg = args[fi];
+                if (arg instanceof RArgsValuesAndNames) {
+                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
+                    Object[] varArgValues = varArgs.getValues();
+                    ArgumentsSignature varArgSignature = varArgs.getSignature();
+                    for (int i = 0; i < varArgs.length(); i++) {
+                        argNames[index] = varArgSignature.getName(i);
+                        argValues[index++] = checkMissing(varArgValues[i]);
+                    }
+                } else {
+                    argNames[index] = paramSignature.getName(fi);
+                    argValues[index++] = checkMissing(arg);
+                }
+            }
+            signature = ArgumentsSignature.get(argNames);
+        } else {
+            argValues = new Object[argCount];
+            for (int i = 0; i < argCount; i++) {
+                argValues[i] = checkMissing(args[i]);
+            }
+            signature = paramSignature;
+        }
+
+        // ...and use them as 'supplied' arguments...
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
+
+        // ...to match them against the chosen function's formal arguments
+        return ArgumentMatcher.matchArgumentsEvaluated(frame, function, evaledArgs, errorSourceSection, promiseHelper, false);
+    }
+
+    protected Object[] prepareArguments(Frame callerFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz, String functionName) {
+        Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        defineVarsAsArguments(argObject, genericName, clazz, callerFrame.materialize(), null);
+        RArguments.setS3Method(argObject, functionName);
+        return argObject;
     }
 
     protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, ArgumentsSignature signature, boolean hasVarArgs, SourceSection callSrc) {
