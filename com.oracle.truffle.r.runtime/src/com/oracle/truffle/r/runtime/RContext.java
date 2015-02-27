@@ -363,6 +363,7 @@ public final class RContext extends ExecutionContext {
         return l;
     }
 
+    @TruffleBoundary
     public void setEvalWarning(String s) {
         if (evalWarnings == null) {
             evalWarnings = new LinkedList<>();
