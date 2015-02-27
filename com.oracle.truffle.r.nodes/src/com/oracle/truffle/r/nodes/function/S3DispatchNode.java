@@ -65,13 +65,13 @@ public abstract class S3DispatchNode extends DispatchNode {
                     evaluatedArgNames = evaluatedArgNames == null ? new String[argListSize] : Utils.resizeArray(evaluatedArgNames, argListSize);
                     Object[] varArgsValues = varArgsContainer.getValues();
                     for (int i = 0; i < varArgsContainer.length(); i++) {
-                        addArg(evaluatedArgsValues, varArgsValues[i], index);
+                        evaluatedArgsValues[index] = checkMissing(varArgsValues[i]);
                         String name = varArgsContainer.getSignature().getName(i);
                         evaluatedArgNames[index] = name;
                         index++;
                     }
                 } else {
-                    addArg(evaluatedArgsValues, arg, index);
+                    evaluatedArgsValues[index] = checkMissing(arg);
                     evaluatedArgNames[index] = signature.getName(fi);
                     index++;
                 }
@@ -84,12 +84,8 @@ public abstract class S3DispatchNode extends DispatchNode {
         return reorderedArgs;
     }
 
-    private static void addArg(Object[] values, Object value, int index) {
-        if (RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value))) {
-            values[index] = null;
-        } else {
-            values[index] = value;
-        }
+    protected static Object checkMissing(Object value) {
+        return RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value)) ? null : value;
     }
 
     public static boolean isEqualType(RStringVector one, RStringVector two) {

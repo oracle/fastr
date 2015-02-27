@@ -100,33 +100,42 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         MaterializedFrame callerFrame = getCallerFrame(frame);
         if (unsuccessfulReads == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specialize(callerFrame, true);
+            specialize(frame, callerFrame, true);
         } else {
-            executeReads(callerFrame, true);
+            executeReads(frame, callerFrame, true);
         }
         return executeHelper(frame, callerFrame);
     }
 
     @ExplodeLoop
-    private void executeReads(Frame callerFrame, boolean throwsRError) {
+    private void executeReads(Frame callerFrame, MaterializedFrame genericDefEnv, boolean throwsRError) {
         if (!unsuccessfulReads.executeReads(callerFrame)) {
-            specialize(callerFrame, throwsRError);
+            specialize(callerFrame, genericDefEnv, throwsRError);
         }
         if (successfulRead.execute(null, callerFrame) != cachedFunction) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specialize(callerFrame, throwsRError);
+            specialize(callerFrame, genericDefEnv, throwsRError);
         }
     }
 
-    private void specialize(Frame callerFrame, boolean throwsRError) {
+    private void specialize(Frame callerFrame, MaterializedFrame genericDefFrame, boolean throwsRError) {
         CompilerAsserts.neverPartOfCompilation();
         TargetLookupResult result = findTargetFunctionLookup(callerFrame, type, genericName);
-        if (result == null) {
-            if (throwsRError) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, type);
-            } else {
-                throw new NoGenericMethodException();
+        ReadVariableNode[] unsuccessfulReadNodes = result.unsuccessfulReads;
+        if (result.successfulRead == null) {
+            if (genericDefFrame != null) {
+                result = findTargetFunctionLookup(genericDefFrame, type, genericName);
             }
+            if (result.successfulRead == null) {
+                if (throwsRError) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, type);
+                } else {
+                    throw new NoGenericMethodException();
+                }
+            }
+            int newResultLength = result.unsuccessfulReads.length;
+            unsuccessfulReadNodes = Arrays.copyOf(unsuccessfulReadNodes, unsuccessfulReadNodes.length + newResultLength);
+            System.arraycopy(result.unsuccessfulReads, 0, unsuccessfulReadNodes, unsuccessfulReadNodes.length - newResultLength, newResultLength);
         }
 
         cachedFunction = result.targetFunction;
@@ -134,7 +143,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         cachedClass = result.clazz;
 
         DirectCallNode newCall = Truffle.getRuntime().createDirectCallNode(cachedFunction.getTarget());
-        UnsuccessfulReadsNode newUnsuccessfulReads = new UnsuccessfulReadsNode(result.unsuccessfulReads);
+        UnsuccessfulReadsNode newUnsuccessfulReads = new UnsuccessfulReadsNode(unsuccessfulReadNodes);
         if (call == null) {
             call = insert(newCall);
             unsuccessfulReads = insert(newUnsuccessfulReads);
@@ -156,9 +165,9 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     public Object executeInternal(VirtualFrame frame, Object[] args) throws NoGenericMethodException {
         if (unsuccessfulReads == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specialize(frame, false);
+            specialize(frame, null, false);
         } else {
-            executeReads(frame, false);
+            executeReads(frame, null, false);
         }
         return executeHelper(frame, args);
     }
@@ -208,18 +217,18 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
                     ArgumentsSignature varArgSignature = varArgs.getSignature();
                     for (int i = 0; i < varArgs.length(); i++) {
                         argNames[index] = varArgSignature.getName(i);
-                        addArg(argValues, varArgValues[i], index++);
+                        argValues[index++] = checkMissing(varArgValues[i]);
                     }
                 } else {
                     argNames[index] = suppliedSignature.getName(fi);
-                    addArg(argValues, arg, index++);
+                    argValues[index++] = checkMissing(arg);
                 }
             }
             signature = ArgumentsSignature.get(argNames);
         } else {
             argValues = new Object[argCount];
             for (int i = 0; i < argCount; i++) {
-                addArg(argValues, args[i], i);
+                argValues[i] = checkMissing(args[i]);
             }
             signature = suppliedSignature;
         }
@@ -230,14 +239,6 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, cachedFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-    }
-
-    private static void addArg(Object[] values, Object value, int index) {
-        if (RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value))) {
-            values[index] = null;
-        } else {
-            values[index] = value;
-        }
     }
 
     private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
@@ -294,7 +295,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
                 unsuccessfulReads.add(rvn);
             }
         }
-        return null;
+        return new TargetLookupResult(unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]), null, null, null, null);
     }
 }
 
@@ -383,18 +384,18 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
                     ArgumentsSignature varArgSignature = varArgs.getSignature();
                     for (int i = 0; i < varArgs.length(); i++) {
                         argNames[index] = varArgSignature.getName(i);
-                        addArg(argValues, varArgValues[i], index++);
+                        argValues[index++] = checkMissing(varArgValues[i]);
                     }
                 } else {
                     argNames[index] = suppliedSignature.getName(fi);
-                    addArg(argValues, arg, index++);
+                    argValues[index++] = checkMissing(arg);
                 }
             }
             signature = ArgumentsSignature.get(argNames);
         } else {
             argValues = new Object[argCount];
             for (int i = 0; i < argCount; i++) {
-                addArg(argValues, args[i], i);
+                argValues[i] = checkMissing(args[i]);
             }
             signature = suppliedSignature;
         }
@@ -405,14 +406,6 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-    }
-
-    private static void addArg(Object[] values, Object value, int index) {
-        if (RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value))) {
-            values[index] = null;
-        } else {
-            values[index] = value;
-        }
     }
 
     private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
