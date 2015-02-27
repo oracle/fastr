@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
  * Provides the generic mechanism for associating attributes with a R object. It does no special
  * analysis of the "name" of the attribute; that is left to other classes, e.g. {@link RVector}.
  */
-public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
+public final class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     public interface RAttribute {
         String getName();
@@ -67,170 +67,154 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
     }
 
-    public abstract void put(String name, Object value);
-
-    public abstract Object get(String name);
-
-    public abstract RAttributes copy();
-
-    public abstract int size();
-
-    public abstract boolean isEmpty();
-
-    public abstract void clear();
-
-    public abstract void remove(String name);
-
-    public abstract Iterator<RAttribute> iterator();
-
     private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
     public static RAttributes create() {
-        return new RAttributesImpl();
+        return new RAttributes();
     }
 
     /**
      * The implementation class which is separate to avoid a circularity that would result from the
      * {@code Iterable} in the abstract class.
      */
-    private static class RAttributesImpl extends RAttributes {
 
-        RAttributesImpl() {
-            if (statsProfile.profile(stats != null)) {
-                stats.init();
+    RAttributes() {
+        if (statsProfile.profile(stats != null)) {
+            stats.init();
+        }
+    }
+
+    private RAttributes(RAttributes attrs) {
+        if (attrs.size != 0) {
+            size = attrs.size;
+            names = Arrays.copyOf(attrs.names, size);
+            values = Arrays.copyOf(attrs.values, size);
+        }
+    }
+
+    private int find(String name) {
+        for (int i = 0; i < size; i++) {
+            if (names[i] != null && names[i] == name) {
+                return i;
             }
         }
+        return -1;
+    }
 
-        private RAttributesImpl(RAttributesImpl attrs) {
-            if (attrs.size != 0) {
-                size = attrs.size;
-                names = Arrays.copyOf(attrs.names, size);
-                values = Arrays.copyOf(attrs.values, size);
+    public void put(String name, Object value) {
+        assert isInterned(name);
+        int pos = find(name);
+        if (pos == -1) {
+            if (size == names.length) {
+                names = Arrays.copyOf(names, (size + 1) * 2);
+                values = Arrays.copyOf(values, (size + 1) * 2);
+                assert names.length == values.length;
             }
+            pos = size++;
+            names[pos] = name;
         }
+        values[pos] = value;
+        if (statsProfile.profile(stats != null)) {
+            stats.update(this);
+        }
+    }
 
-        private int find(String name) {
-            for (int i = 0; i < size; i++) {
-                if (names[i] != null && names[i].equals(name)) {
-                    return i;
-                }
+    @TruffleBoundary
+    private static boolean isInterned(String name) {
+        assert name == name.intern() : name;
+        return true;
+    }
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+
+    private String[] names = EMPTY_STRING_ARRAY;
+    private Object[] values = EMPTY_OBJECT_ARRAY;
+    private int size;
+
+    public int size() {
+        return size;
+    }
+
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    public void remove(String name) {
+        assert isInterned(name);
+        int pos = find(name);
+        if (pos != -1) {
+            size--;
+            for (int i = pos; i < size; i++) {
+                names[i] = names[i + 1];
+                values[i] = values[i + 1];
             }
-            return -1;
+            names[size] = null;
+            values[size] = null;
+        }
+    }
+
+    public Object get(String name) {
+        assert isInterned(name);
+        int pos = find(name);
+        return pos == -1 ? null : values[pos];
+    }
+
+    public void clear() {
+        names = EMPTY_STRING_ARRAY;
+        values = EMPTY_OBJECT_ARRAY;
+        size = 0;
+    }
+
+    public RAttributes copy() {
+        return new RAttributes(this);
+    }
+
+    /**
+     * An iterator for the attributes, specified in terms of {@code Map.Entry<String, Object> } to
+     * avoid copying in the normal case.
+     */
+    @Override
+    public Iterator<RAttribute> iterator() {
+        return new Iter();
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        StringBuffer sb = new StringBuffer().append('{');
+        for (int i = 0; i < size; i++) {
+            if (i != 0) {
+                sb.append(", ");
+            }
+            sb.append(names[i]).append('=').append(values[i]);
+        }
+        sb.append('}');
+        return sb.toString();
+    }
+
+    private class Iter implements Iterator<RAttribute> {
+        int index;
+
+        Iter() {
+            index = 0;
         }
 
         @Override
-        public void put(String newName, Object newValue) {
-            int pos = find(newName);
-            if (pos == -1) {
-                if (size == names.length) {
-                    names = Arrays.copyOf(names, (size + 1) * 2);
-                    values = Arrays.copyOf(values, (size + 1) * 2);
-                    assert names.length == values.length;
-                }
-                pos = size++;
-                names[pos] = newName;
-            }
-            values[pos] = newValue;
-            if (statsProfile.profile(stats != null)) {
-                stats.update(this);
-            }
-        }
-
-        private static final String[] EMPTY_STRING_ARRAY = new String[0];
-        private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-
-        private String[] names = EMPTY_STRING_ARRAY;
-        private Object[] values = EMPTY_OBJECT_ARRAY;
-        private int size;
-
-        @Override
-        public int size() {
-            return size;
+        public boolean hasNext() {
+            return index < size;
         }
 
         @Override
-        public boolean isEmpty() {
-            return size == 0;
+        public RAttribute next() {
+            return new AttrInstance(names[index], values[index++]);
         }
 
-        @Override
-        public void remove(String name) {
-            int pos = find(name);
-            if (pos != -1) {
-                size--;
-                for (int i = pos; i < size; i++) {
-                    names[i] = names[i + 1];
-                    values[i] = values[i + 1];
-                }
-                names[size] = null;
-                values[size] = null;
-            }
-        }
+    }
 
-        @Override
-        public Object get(String name) {
-            int pos = find(name);
-            return pos == -1 ? null : values[pos];
-        }
-
-        @Override
-        public void clear() {
-            names = EMPTY_STRING_ARRAY;
-            values = EMPTY_OBJECT_ARRAY;
-            size = 0;
-        }
-
-        @Override
-        public RAttributes copy() {
-            return new RAttributesImpl(this);
-        }
-
-        /**
-         * An iterator for the attributes, specified in terms of {@code Map.Entry<String, Object> }
-         * to avoid copying in the normal case.
-         */
-        @Override
-        public Iterator<RAttribute> iterator() {
-            return new Iter();
-        }
-
-        @Override
-        public String toString() {
-            CompilerAsserts.neverPartOfCompilation();
-            StringBuffer sb = new StringBuffer().append('{');
-            for (int i = 0; i < size; i++) {
-                if (i != 0) {
-                    sb.append(", ");
-                }
-                sb.append(names[i]).append('=').append(values[i]);
-            }
-            sb.append('}');
-            return sb.toString();
-        }
-
-        private class Iter implements Iterator<RAttribute> {
-            int index;
-
-            Iter() {
-                index = 0;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return index < size;
-            }
-
-            @Override
-            public RAttribute next() {
-                return new AttrInstance(names[index], values[index++]);
-            }
-
-        }
-
-        @TruffleBoundary
-        private static NoSuchElementException noSuchElement() {
-            throw new NoSuchElementException();
-        }
+    @TruffleBoundary
+    private static NoSuchElementException noSuchElement() {
+        throw new NoSuchElementException();
     }
 
     // Performance analysis
@@ -254,7 +238,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
         @TruffleBoundary
-        void update(RAttributesImpl attr) {
+        void update(RAttributes attr) {
             // incremented size by 1
             int s = attr.size();
             int effectivePrevSize = hist.effectiveBucket(s - 1);

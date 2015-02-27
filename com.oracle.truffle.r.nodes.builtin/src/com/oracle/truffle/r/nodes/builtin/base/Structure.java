@@ -65,7 +65,7 @@ public abstract class Structure extends RBuiltinNode {
         } else if (s.equals(".Label")) {
             return "levels";
         } else {
-            return s;
+            return s.intern();
         }
     }
 

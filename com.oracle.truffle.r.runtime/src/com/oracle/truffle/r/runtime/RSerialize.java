@@ -518,7 +518,7 @@ public class RSerialize {
             Object result = object;
             while (true) {
                 RSymbol tagSym = (RSymbol) pl.getTag();
-                String tag = tagSym.getName();
+                String tag = tagSym.getName().intern();
                 // this may convert a plain vector to a data.frame or factor
                 if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     result = ((RVector) result).setClassAttr((RStringVector) pl.car());
