@@ -124,7 +124,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (frame instanceof VirtualFrame) {
             func = lookup.execute((VirtualFrame) frame);
         } else {
-            func = lookup.execute(null, (MaterializedFrame) frame);
+            func = lookup.execute(null, frame);
         }
         if (func != null) {
             assert func instanceof RFunction;
@@ -164,7 +164,6 @@ abstract class S3DispatchLegacyNode extends S3DispatchNode {
 
     @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected RStringVector klass;
-    protected FunctionCall funCall;
     protected MaterializedFrame genCallEnv;
     protected MaterializedFrame genDefEnv;
     protected boolean isFirst;
@@ -176,12 +175,6 @@ abstract class S3DispatchLegacyNode extends S3DispatchNode {
 
 abstract class S3DispatchCachedNode extends S3DispatchNode {
     protected final RStringVector type;
-
-    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
-    protected RStringVector klass;
-    protected MaterializedFrame genCallEnv;
-    protected MaterializedFrame genDefEnv;
-    protected boolean isFirst;
 
     public S3DispatchCachedNode(String genericName, RStringVector type, ArgumentsSignature suppliedSignature) {
         super(genericName, suppliedSignature);

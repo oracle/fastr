@@ -13,10 +13,14 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -45,32 +49,102 @@ public abstract class UseMethodDispatchNode {
 
 final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
 
+    @NodeInfo(cost = NodeCost.NONE)
+    private static final class UnsuccessfulReadsNode extends Node {
+        @Children private final ReadVariableNode[] reads;
+
+        public UnsuccessfulReadsNode(ReadVariableNode[] reads) {
+            this.reads = reads;
+        }
+
+        @ExplodeLoop
+        public boolean executeReads(Frame callerFrame) {
+            for (ReadVariableNode read : reads) {
+                if (read.execute(null, callerFrame) != null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
 
     private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
 
+    @Child private UnsuccessfulReadsNode unsuccessfulReads;
+    @Child private ReadVariableNode successfulRead;
+    @Child private DirectCallNode call;
+    @CompilationFinal private RFunction cachedFunction;
+    @CompilationFinal private RStringVector cachedClass;
+    @CompilationFinal private String cachedFunctionName;
+
     public UseMethodDispatchCachedNode(String genericName, RStringVector type, ArgumentsSignature suppliedSignature) {
         super(genericName, type, suppliedSignature);
     }
 
-    private Frame getCallerFrame(VirtualFrame frame) {
-        Frame funFrame = RArguments.getCallerFrame(frame);
+    private MaterializedFrame getCallerFrame(VirtualFrame frame) {
+        MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
         if (callerFrameSlotPath.profile(funFrame == null)) {
-            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
+            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
             RError.performanceWarning("slow caller frame access in UseMethod dispatch");
         }
         // S3 method can be dispatched from top-level where there is no caller frame
-        return topLevelFrameProfile.profile(funFrame == null) ? frame : funFrame;
+        return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        Frame funFrame = getCallerFrame(frame);
-        if (targetFunction == null) {
-            findTargetFunction(RArguments.getEnclosingFrame(frame), true);
+        MaterializedFrame callerFrame = getCallerFrame(frame);
+        if (unsuccessfulReads == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specialize(callerFrame, true);
+        } else {
+            executeReads(callerFrame, true);
         }
-        return executeHelper(frame, funFrame);
+        return executeHelper(frame, callerFrame);
+    }
+
+    @ExplodeLoop
+    private void executeReads(Frame callerFrame, boolean throwsRError) {
+        if (!unsuccessfulReads.executeReads(callerFrame)) {
+            specialize(callerFrame, throwsRError);
+        }
+        if (successfulRead.execute(null, callerFrame) != cachedFunction) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specialize(callerFrame, throwsRError);
+        }
+    }
+
+    private void specialize(Frame callerFrame, boolean throwsRError) {
+        CompilerAsserts.neverPartOfCompilation();
+        TargetLookupResult result = findTargetFunctionLookup(callerFrame, type, genericName);
+        if (result == null) {
+            if (throwsRError) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, type);
+            } else {
+                throw new NoGenericMethodException();
+            }
+        }
+
+        cachedFunction = result.targetFunction;
+        cachedFunctionName = result.targetFunctionName;
+        cachedClass = result.clazz;
+
+        DirectCallNode newCall = Truffle.getRuntime().createDirectCallNode(cachedFunction.getTarget());
+        UnsuccessfulReadsNode newUnsuccessfulReads = new UnsuccessfulReadsNode(result.unsuccessfulReads);
+        if (call == null) {
+            call = insert(newCall);
+            unsuccessfulReads = insert(newUnsuccessfulReads);
+            successfulRead = insert(result.successfulRead);
+        } else {
+            RError.performanceWarning("re-specializing UseMethodDispatchCachedNode");
+            call.replace(newCall);
+            unsuccessfulReads.replace(newUnsuccessfulReads);
+            successfulRead.replace(result.successfulRead);
+        }
     }
 
     @Override
@@ -79,16 +153,18 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     }
 
     @Override
-    public Object executeInternal(VirtualFrame frame, Object[] args) {
-        if (targetFunction == null) {
-            // TBD getEnclosing?
-            findTargetFunction(frame, false);
+    public Object executeInternal(VirtualFrame frame, Object[] args) throws NoGenericMethodException {
+        if (unsuccessfulReads == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specialize(frame, false);
+        } else {
+            executeReads(frame, false);
         }
         return executeHelper(frame, args);
     }
 
     @Override
-    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) {
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) throws NoGenericMethodException {
         throw RInternalError.shouldNotReachHere();
     }
 
@@ -101,7 +177,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         for (; fi < argCount; ++fi) {
             argValues[fi] = RArguments.getArgument(frame, fi);
         }
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, argValues, RArguments.getSignature(frame), false, getSourceSection());
+        EvaluatedArguments reorderedArgs = reorderArgs(frame, cachedFunction, argValues, RArguments.getSignature(frame), false, getSourceSection());
         return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
     }
 
@@ -152,7 +228,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
 
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, cachedFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
         return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
     }
 
@@ -165,48 +241,60 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     }
 
     private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, signature);
+        Object[] argObject = RArguments.createS3Args(cachedFunction, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, arguments, signature);
         // todo: cannot create frame descriptors in compiled code
-        genCallEnv = callerFrame;
-        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
-        RArguments.setS3Method(argObject, targetFunctionName);
-        return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
+        defineVarsAsArguments(argObject, genericName, cachedClass, callerFrame, null);
+        RArguments.setS3Method(argObject, cachedFunctionName);
+        return call.call(frame, argObject);
     }
 
-    private void findTargetFunction(Frame callerFrame, boolean throwsRError) {
-        findTargetFunctionLookup(callerFrame);
-        if (targetFunction == null) {
-            errorProfile.enter();
-            if (throwsRError) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
-            } else {
-                throw new NoGenericMethodException();
-            }
+    private static final class TargetLookupResult {
+        private final ReadVariableNode[] unsuccessfulReads;
+        private final ReadVariableNode successfulRead;
+        private final RFunction targetFunction;
+        private final String targetFunctionName;
+        private final RStringVector clazz;
+
+        public TargetLookupResult(ReadVariableNode[] unsuccessfulReads, ReadVariableNode successfulRead, RFunction targetFunction, String targetFunctionName, RStringVector clazz) {
+            this.unsuccessfulReads = unsuccessfulReads;
+            this.successfulRead = successfulRead;
+            this.targetFunction = targetFunction;
+            this.targetFunctionName = targetFunctionName;
+            this.clazz = clazz;
         }
     }
 
-    @TruffleBoundary
-    private void findTargetFunctionLookup(Frame callerFrame) {
-        for (int i = 0; i < type.getLength(); ++i) {
-            findFunction(genericName, type.getDataAt(i), callerFrame);
-            if (targetFunction != null) {
-                RStringVector classVec = null;
-                if (i > 0) {
-                    isFirst = false;
-                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
-                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
+    private static TargetLookupResult findTargetFunctionLookup(Frame callerFrame, RStringVector type, String genericName) {
+        CompilerAsserts.neverPartOfCompilation();
+        RFunction targetFunction = null;
+        String targetFunctionName = null;
+        RStringVector clazz = null;
+        ArrayList<ReadVariableNode> unsuccessfulReads = new ArrayList<>();
+
+        for (int i = 0; i <= type.getLength(); ++i) {
+            String clazzName = i == type.getLength() ? RRuntime.DEFAULT : type.getDataAt(i);
+            String functionName = genericName + RRuntime.RDOT + clazzName;
+            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName, false);
+            Object func = rvn.execute(null, callerFrame);
+            if (func != null) {
+                assert func instanceof RFunction;
+                targetFunctionName = functionName;
+                targetFunction = (RFunction) func;
+
+                if (i == 0) {
+                    clazz = type.copyResized(type.getLength(), false);
+                } else if (i == type.getLength()) {
+                    clazz = null;
                 } else {
-                    isFirst = true;
-                    classVec = type.copyResized(type.getLength(), false);
+                    clazz = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
+                    clazz.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
                 }
-                klass = classVec;
-                break;
+                return new TargetLookupResult(unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]), rvn, targetFunction, targetFunctionName, clazz);
+            } else {
+                unsuccessfulReads.add(rvn);
             }
         }
-        if (targetFunction != null) {
-            return;
-        }
-        findFunction(genericName, RRuntime.DEFAULT, callerFrame);
+        return null;
     }
 }
 
