@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 import java.net.*;
 import java.nio.*;
+import java.nio.channels.*;
 import java.util.*;
 import java.util.zip.*;
 
@@ -1480,7 +1481,8 @@ public abstract class ConnectionFunctions {
     }
 
     private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
-        protected Socket socket;
+        private Socket socket;
+        private SocketChannel socketChannel;
         protected InputStream inputStream;
         protected OutputStream outputStream;
         protected final RSocketConnection thisBase;
@@ -1490,9 +1492,13 @@ public abstract class ConnectionFunctions {
             this.thisBase = base;
         }
 
-        protected void openStreams() throws IOException {
-            if (!thisBase.blocking) {
+        protected void openStreams(Socket socketArg) throws IOException {
+            this.socket = socketArg;
+            this.socketChannel = socket.getChannel();
+            if (thisBase.blocking) {
                 socket.setSoTimeout(thisBase.timeout * 1000);
+            } else {
+                socketChannel.configureBlocking(false);
             }
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
@@ -1566,9 +1572,11 @@ public abstract class ConnectionFunctions {
 
         RServerSocketConnection(RSocketConnection base) throws IOException {
             super(base);
-            serverSocket = new ServerSocket(base.port);
-            socket = serverSocket.accept();
-            openStreams();
+            InetSocketAddress addr = new InetSocketAddress(base.port);
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.bind(addr);
+            serverSocket = serverSocketChannel.socket();
+            openStreams(serverSocket.accept());
         }
 
         @Override
@@ -1579,10 +1587,11 @@ public abstract class ConnectionFunctions {
     }
 
     private static class RClientSocketConnection extends RSocketReadWriteConnection {
+
         RClientSocketConnection(RSocketConnection base) throws IOException {
             super(base);
-            socket = new Socket(base.host, base.port);
-            openStreams();
+            SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
+            openStreams(socketChannel.socket());
         }
 
     }
