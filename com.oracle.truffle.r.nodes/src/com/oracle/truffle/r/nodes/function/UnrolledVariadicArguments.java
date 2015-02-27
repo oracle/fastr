@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
@@ -36,24 +37,19 @@ public final class UnrolledVariadicArguments extends Arguments<RNode> implements
 
     private final IdentityHashMap<RNode, Closure> closureCache;
 
-    private UnrolledVariadicArguments(RNode[] arguments, String[] names, ClosureCache closureCache) {
-        super(arguments, names);
+    private UnrolledVariadicArguments(RNode[] arguments, ArgumentsSignature signature, ClosureCache closureCache) {
+        super(arguments, signature);
         this.closureCache = closureCache.getContent();
 
     }
 
-    public static UnrolledVariadicArguments create(RNode[] arguments, String[] names, ClosureCache closureCache) {
-        return new UnrolledVariadicArguments(arguments, names, closureCache);
+    public static UnrolledVariadicArguments create(RNode[] arguments, ArgumentsSignature signature, ClosureCache closureCache) {
+        return new UnrolledVariadicArguments(arguments, signature, closureCache);
     }
 
     @Override
     public RNode[] getArguments() {
         return arguments;
-    }
-
-    @Override
-    public String[] getNames() {
-        return names;
     }
 
     @Override

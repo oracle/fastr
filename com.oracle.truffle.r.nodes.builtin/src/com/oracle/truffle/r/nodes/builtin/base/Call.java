@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ public abstract class Call extends RBuiltinNode {
         int argLength = argsAndNames == null ? 0 : argsAndNames.length();
         RNode[] args = new RNode[argLength];
         Object[] values = argsAndNames == null ? null : argsAndNames.getValues();
-        String[] names = argsAndNames == null ? new String[0] : argsAndNames.getNames();
+        ArgumentsSignature signature = argsAndNames == null ? ArgumentsSignature.empty(0) : argsAndNames.getSignature();
 
         for (int i = 0; i < argLength; i++) {
             args[i] = RASTUtils.createNodeForValue(values[i]);
@@ -94,8 +94,7 @@ public abstract class Call extends RBuiltinNode {
 
         // TODO: handle replacement calls
         boolean isReplacement = false;
-        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, names);
+        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, signature);
         return RDataFactory.createLanguage(RASTUtils.createCall(fn, callArgsNode));
     }
-
 }

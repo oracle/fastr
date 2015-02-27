@@ -65,7 +65,7 @@ public abstract class Seq extends RBuiltinNode {
     private Object seqRecursive(VirtualFrame frame, Object start, Object to, Object stride, Object lengthOut, Object alongWith) {
         if (seqRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            seqRecursive = insert(SeqFactory.create(new RNode[5], getBuiltin(), getSuppliedArgsNames()));
+            seqRecursive = insert(SeqFactory.create(new RNode[5], getBuiltin(), getSuppliedSignature()));
         }
         return seqRecursive.execute(frame, start, to, stride, lengthOut, alongWith);
     }

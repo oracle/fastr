@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public final class Min extends RWrapperBuiltinNode {
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, false, true);
         RNode[] args = getArguments();
-        Combine combine = CombineFactory.create(new RNode[]{args[0]}, getBuiltin(), null);
+        Combine combine = CombineFactory.create(new RNode[]{args[0]}, getBuiltin(), ArgumentsSignature.empty(1));
         return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MIN, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
     }
 }

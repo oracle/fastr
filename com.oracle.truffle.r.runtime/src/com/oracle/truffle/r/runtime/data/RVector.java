@@ -66,7 +66,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.names = names;
         if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
-            assert names.getLength() == length;
+            assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
             if (dimensions == null || dimensions.length != 1) {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, names);
                 if (dimensions != null) {
@@ -629,7 +629,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         assert (this.names == null);
         assert (this.dimNames == null);
         assert (this.dimensions == null);
-        assert (this.attributes == null || this.attributes.size() == 0);
+        assert (this.attributes == null || this.attributes.size() == 0) : this.attributes.size();
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
             // only assign name attribute if it's not represented as dimnames (as is the case for
             // one-dimensional array)
@@ -767,8 +767,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final RStringVector getClassHierarchy() {
-        if (isObject()) {
-            return (RStringVector) this.attributes.get(RRuntime.CLASS_ATTR_KEY);
+        if (attributes != null) {
+            Object result = attributes.get(RRuntime.CLASS_ATTR_KEY);
+            if (result != null) {
+                return (RStringVector) result;
+            }
         }
         return getImplicitClassHr();
     }
@@ -777,16 +780,14 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     // As shape of the vector may change at run-time we need to compute
     // class hierarchy on the fly.
-    protected final RStringVector getClassHierarchyHelper(final String[] classHr, final String[] classHrDyn) {
+    protected final RStringVector getClassHierarchyHelper(RStringVector implicitClassHeader, RStringVector implicitClassHeaderArray, RStringVector implicitClassHeaderMatrix) {
         if (isMatrix()) {
-            classHrDyn[0] = RType.Matrix.getName();
-            return RDataFactory.createStringVector(classHrDyn, true);
+            return implicitClassHeaderMatrix;
         }
         if (isArray()) {
-            classHrDyn[0] = RType.Array.getName();
-            return RDataFactory.createStringVector(classHrDyn, true);
+            return implicitClassHeaderArray;
         }
-        return RDataFactory.createStringVector(classHr, true);
+        return implicitClassHeader;
     }
 
     @Override

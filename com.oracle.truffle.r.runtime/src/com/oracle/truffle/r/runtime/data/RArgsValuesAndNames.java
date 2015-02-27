@@ -22,84 +22,40 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
-public class RArgsValuesAndNames {
+public final class RArgsValuesAndNames {
     /**
      * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
      * The {@link RMissing#instance} for "...".
      */
-    public static final RArgsValuesAndNames EMPTY = new RArgsValuesAndNames(new Object[0], new String[0]);
+    public static final RArgsValuesAndNames EMPTY = new RArgsValuesAndNames(new Object[0], ArgumentsSignature.empty(0));
 
     @CompilationFinal private final Object[] values;
-    /**
-     * May NOT be null. A single <code>null</code> name denotes "no name provided".
-     */
-    @CompilationFinal private final String[] names;
-    /**
-     * @see #isAllNamesEmpty()
-     */
-    private final boolean allNamesEmpty;
+    private final ArgumentsSignature signature;
 
-    public RArgsValuesAndNames(Object[] values, String[] names) {
-        if (names != null) {
-            assert names.length == values.length;
-        }
+    public RArgsValuesAndNames(Object[] values, ArgumentsSignature signature) {
+        assert signature != null && signature.getLength() == values.length : Arrays.toString(values) + " " + signature;
         this.values = values;
-        if (names == null) {
-            this.names = new String[values.length];
-            this.allNamesEmpty = true;
-        } else {
-            this.names = names;
-            this.allNamesEmpty = allNamesNull(names);
-        }
-    }
-
-    @ExplodeLoop
-    private static boolean allNamesNull(String[] names) {
-        for (String name : names) {
-            if (name != null) {
-                return false;
-            }
-        }
-        return true;
+        this.signature = signature;
     }
 
     public Object[] getValues() {
         return values;
     }
 
-    /**
-     * @return {@link #names}
-     */
-    public String[] getNames() {
-        return names;
-    }
-
-    /**
-     * @return Returns {@link #names} OR <code>null</code> if {@link #allNamesEmpty}
-     */
-    public String[] getNamesNull() {
-        if (allNamesEmpty) {
-            return null;
-        }
-        return names;
+    public ArgumentsSignature getSignature() {
+        return signature;
     }
 
     public int length() {
-        assert names == null || values.length == names.length;
         return values.length;
-    }
-
-    /**
-     * @return {@link #isAllNamesEmpty()}
-     */
-    public boolean isAllNamesEmpty() {
-        return allNamesEmpty;
     }
 
     /**

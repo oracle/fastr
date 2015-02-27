@@ -67,11 +67,11 @@ public abstract class Options extends RBuiltinNode {
     @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
         Object[] values = args.getValues();
-        String[] argNames = args.getNames();
+        ArgumentsSignature signature = args.getSignature();
         Object[] data = new Object[values.length];
         String[] names = new String[values.length];
         for (int i = 0; i < values.length; i++) {
-            String argName = argNames[i];
+            String argName = signature.getName(i);
             Object value = values[i];
             if (argNameNull.profile(argName == null)) {
                 // getting

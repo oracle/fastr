@@ -30,7 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -53,11 +53,11 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("length<-", DispatchType.UseMethod, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create("length<-", DispatchType.UseMethod, getSuppliedSignature()));
         }
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return updateLength(container, lengthVector);
         }
 

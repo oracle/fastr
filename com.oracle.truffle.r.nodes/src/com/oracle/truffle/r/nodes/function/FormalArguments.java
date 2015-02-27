@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,13 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This class denotes a list of formal arguments which consist of the tuple
  * <ul>
- * <li>argument name (String, {@link #getNames()})</li>
+ * <li>argument name (part of the signature)</li>
  * <li>expression ({@link RNode}, {@link #getDefaultArgs()})</li>
  * </ul>
  * The order is always the one defined by the function definition.
@@ -43,54 +44,27 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  */
 public final class FormalArguments extends Arguments<RNode> implements ClosureCache {
 
-    public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
-
-    /**
-     * Serves as cache for {@link #hasVarArgs()}/{@link #getVarArgIndex()}.
-     */
-    private final int varArgsIndex;
+    public static final FormalArguments NO_ARGS = new FormalArguments(new RNode[0], ArgumentsSignature.empty(0));
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
-    /**
-     * @param argumentsNames {@link #getNames()}
-     * @param defaultArguments {@link #getDefaultArgs()}
-     */
-    private FormalArguments(String[] argumentsNames, RNode[] defaultArguments) {
-        super(defaultArguments, argumentsNames);
-        this.varArgsIndex = super.getVarArgIndex();
-        ArgumentsTrait.internalize(argumentsNames);
+    private FormalArguments(RNode[] defaultArguments, ArgumentsSignature signature) {
+        super(defaultArguments, signature);
     }
 
-    /**
-     * @param argumentsNames {@link #getNames()}
-     * @param defaultArguments {@link #getDefaultArgs()}, but handles <code>null</code>
-     * @return A fresh {@link FormalArguments}
-     */
-    public static FormalArguments create(String[] argumentsNames, RNode[] defaultArguments) {
+    public static FormalArguments create(RNode[] defaultArguments, ArgumentsSignature signature) {
+        assert signature != null;
         RNode[] newDefaults = new RNode[defaultArguments.length];
         for (int i = 0; i < newDefaults.length; i++) {
             RNode defArg = defaultArguments[i];
             newDefaults[i] = defArg instanceof ConstantMissingNode ? null : defArg;
         }
-        return new FormalArguments(argumentsNames, newDefaults);
-    }
-
-    @Override
-    public int getVarArgIndex() {
-        return varArgsIndex;
+        return new FormalArguments(newDefaults, signature);
     }
 
     @Override
     public IdentityHashMap<RNode, Closure> getContent() {
         return closureCache;
-    }
-
-    /**
-     * @return The list of argument names a function definition specifies
-     */
-    public String[] getNames() {
-        return names;
     }
 
     /**

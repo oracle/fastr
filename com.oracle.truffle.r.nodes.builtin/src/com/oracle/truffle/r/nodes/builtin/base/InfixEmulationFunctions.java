@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -237,6 +237,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+
         private static final String NAME = "[";
 
         @Child private DispatchedCallNode dcn;
@@ -250,11 +252,11 @@ public class InfixEmulationFunctions {
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
         }
@@ -276,11 +278,11 @@ public class InfixEmulationFunctions {
 
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "drop"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
             }
         }
@@ -351,6 +353,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+
         private static final String NAME = "[[";
 
         @Child private DispatchedCallNode dcn;
@@ -370,11 +374,11 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", "", "exact"}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
             }
         }
@@ -458,6 +462,8 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
+
         private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;
 
@@ -472,11 +478,11 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, new String[]{"", ""}));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 Object value = args.getValues()[args.length() - 1];
                 return update(frame, x, args, value, IS_SUBSET);
             }
@@ -511,11 +517,11 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, null));
+                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, ArgumentsSignature.empty(2)));
             }
             try {
                 return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
-            } catch (RError e) {
+            } catch (NoGenericMethodException e) {
                 Object value = args.getValues()[args.length() - 1];
                 return update(frame, x, args, value, IS_SUBSET);
             }

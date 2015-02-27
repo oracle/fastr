@@ -319,8 +319,8 @@ public abstract class Lapply extends RBuiltinNode {
                     FormalArguments formalArgs = ((RRootNode) callTarget.getRootNode()).getFormalArguments();
 
                     // The first parameter to the function call is named as defined by the function.
-                    String readVectorElementName = formalArgs.getNames()[0];
-                    if (Arguments.VARARG_NAME.equals(readVectorElementName)) {
+                    String readVectorElementName = formalArgs.getSignature().getName(0);
+                    if (ArgumentsSignature.VARARG_NAME.equals(readVectorElementName)) {
                         // "..." is no "supplied" name, instead the argument will match by position
                         // right away
                         readVectorElementName = null;
@@ -355,14 +355,16 @@ public abstract class Lapply extends RBuiltinNode {
                         names = new String[varArgs.length() + 1];
                         names[0] = readVectorElementName;
                         for (int i = 0; i < varArgs.length(); i++) {
-                            String name = varArgs.getNames()[i];
+                            String name = varArgs.getSignature().getName(i);
                             if (name != null && !name.isEmpty()) {
                                 // change "" to null
                                 names[i + 1] = name;
                             }
                         }
                     }
-                    CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, names);
+                    ArgumentsSignature callSignature = ArgumentsSignature.get(names);
+
+                    CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, callSignature);
                     return RCallNode.createCall(null, owner.functionNode, argsNode, null);
                 }
             }

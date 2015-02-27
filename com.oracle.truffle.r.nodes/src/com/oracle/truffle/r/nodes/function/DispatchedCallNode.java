@@ -15,11 +15,16 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchedCallNode extends RNode {
+
+    public static final class NoGenericMethodException extends ControlFlowException {
+        private static final long serialVersionUID = 344198853147758435L;
+    }
 
     public static enum DispatchType {
         UseMethod,
@@ -28,12 +33,12 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
 
-    public static DispatchedCallNode create(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
-        return new UninitializedDispatchedCallNode(genericName, dispatchType, useMethodArgNames);
+    public static DispatchedCallNode create(String genericName, DispatchType dispatchType, ArgumentsSignature signature) {
+        return new UninitializedDispatchedCallNode(genericName, dispatchType, signature);
     }
 
-    public static DispatchedCallNode create(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
-        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, argNames);
+    public static DispatchedCallNode create(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, ArgumentsSignature signature) {
+        return new UninitializedDispatchedCallNode(genericName, enclosingName, dispatchType, args, signature);
     }
 
     @Override
@@ -43,7 +48,7 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, RStringVector type);
 
-    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
+    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) throws NoGenericMethodException;
 
     @Override
     public boolean isSyntax() {
@@ -57,25 +62,19 @@ public abstract class DispatchedCallNode extends RNode {
         private final String enclosingName;
         private final DispatchType dispatchType;
         @CompilationFinal private final Object[] args;
-        @CompilationFinal private final String[] argNames;
-        @CompilationFinal private final String[] useMethodArgNames;
+        private final ArgumentsSignature signature;
 
-        private UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames, String[] useMethodArgNames) {
+        private UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, ArgumentsSignature signature) {
             this.genericName = genericName;
             this.enclosingName = enclosingName;
+            this.signature = signature;
             this.depth = 0;
             this.dispatchType = dispatchType;
             this.args = args;
-            this.argNames = argNames;
-            this.useMethodArgNames = useMethodArgNames;
         }
 
-        public UninitializedDispatchedCallNode(String genericName, String enclosingName, DispatchType dispatchType, Object[] args, String[] argNames) {
-            this(genericName, enclosingName, dispatchType, args, argNames, null);
-        }
-
-        public UninitializedDispatchedCallNode(String genericName, DispatchType dispatchType, String[] useMethodArgNames) {
-            this(genericName, null, dispatchType, null, null, useMethodArgNames);
+        public UninitializedDispatchedCallNode(String genericName, DispatchType dispatchType, ArgumentsSignature signature) {
+            this(genericName, null, dispatchType, null, signature);
         }
 
         private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
@@ -83,9 +82,8 @@ public abstract class DispatchedCallNode extends RNode {
             this.genericName = copy.genericName;
             this.enclosingName = copy.enclosingName;
             this.dispatchType = copy.dispatchType;
+            this.signature = copy.signature;
             this.args = null;
-            this.argNames = null;
-            this.useMethodArgNames = null; // TODO: is it OK to nullify these three?
         }
 
         @Override
@@ -95,7 +93,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) throws NoGenericMethodException {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return specialize(type).executeInternal(frame, type, args);
         }
@@ -103,19 +101,19 @@ public abstract class DispatchedCallNode extends RNode {
         private DispatchedCallNode specialize(RStringVector type) {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
-                DispatchNode current = createCurrentNode(type);
+                DispatchNode current = createCurrentNode(type, true);
                 return replace(new CachedNode(current, new UninitializedDispatchedCallNode(this, depth + 1), type));
             }
             RError.performanceWarning("S3 method dispatch fallback to generic");
-            return this.replace(new GenericDispatchNode(createCurrentNode(type)));
+            return this.replace(new GenericDispatchNode(createCurrentNode(type, false)));
         }
 
-        private DispatchNode createCurrentNode(RStringVector type) {
+        private DispatchNode createCurrentNode(RStringVector type, boolean cached) {
             switch (dispatchType) {
                 case NextMethod:
-                    return new NextMethodDispatchNode(genericName, type, args, argNames, enclosingName);
+                    return new NextMethodDispatchNode(genericName, type, args, signature, enclosingName);
                 case UseMethod:
-                    return new UseMethodDispatchNode(genericName, type, useMethodArgNames);
+                    return cached ? UseMethodDispatchNode.createCached(genericName, type, signature) : UseMethodDispatchNode.createGeneric(genericName, signature);
                 default:
                     throw RInternalError.shouldNotReachHere();
             }
@@ -136,37 +134,77 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) throws NoGenericMethodException {
             return dcn.executeInternalGeneric(frame, type, args);
         }
     }
 
     private static final class CachedNode extends DispatchedCallNode {
 
+        private final ConditionProfile sameIdentityProfile = ConditionProfile.createBinaryProfile();
+        private final BranchProfile nullTypeProfile = BranchProfile.create();
+        private final BranchProfile lengthMismatch = BranchProfile.create();
+        private final BranchProfile notIdentityEqualElements = BranchProfile.create();
+
         @Child private DispatchedCallNode nextNode;
         @Child private DispatchNode currentNode;
-        private final RStringVector type;
+        private final RStringVector cachedType;
+        @CompilationFinal private final String[] cachedTypeElements;
 
         CachedNode(DispatchNode currentNode, DispatchedCallNode nextNode, RStringVector type) {
             this.nextNode = nextNode;
             this.currentNode = currentNode;
-            this.type = type;
+            this.cachedType = type;
+            this.cachedTypeElements = type.getDataCopy();
+        }
+
+        private boolean isEqualType(RStringVector type) {
+            if (sameIdentityProfile.profile(type == cachedType)) {
+                return true;
+            }
+            if (cachedType == null) {
+                return false;
+            }
+            if (type == null) {
+                nullTypeProfile.enter();
+                return false;
+            }
+            if (type.getLength() != cachedTypeElements.length) {
+                lengthMismatch.enter();
+                return false;
+            }
+            return compareLoop(type);
+        }
+
+        @ExplodeLoop
+        private boolean compareLoop(RStringVector type) {
+            for (int i = 0; i < cachedTypeElements.length; i++) {
+                String elementOne = cachedTypeElements[i];
+                String elementTwo = type.getDataAt(i);
+                if (elementOne != elementTwo) {
+                    notIdentityEqualElements.enter();
+                    if (!elementOne.equals(elementTwo)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RStringVector aType) {
-            if (S3DispatchNode.isEqualType(type, aType)) {
+        public Object execute(VirtualFrame frame, RStringVector type) {
+            if (isEqualType(type)) {
                 return currentNode.execute(frame);
             }
-            return nextNode.execute(frame, aType);
+            return nextNode.execute(frame, type);
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
-            if (S3DispatchNode.isEqualType(type, aType)) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) throws NoGenericMethodException {
+            if (isEqualType(type)) {
                 return currentNode.executeInternal(frame, args);
             }
-            return nextNode.executeInternal(frame, aType, args);
+            return nextNode.executeInternal(frame, type, args);
         }
     }
 }

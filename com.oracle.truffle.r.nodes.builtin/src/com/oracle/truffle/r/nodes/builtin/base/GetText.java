@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
+import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -73,7 +75,7 @@ public abstract class GetText extends RBuiltinNode {
         // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
         RArgsValuesAndNames varargs = (RArgsValuesAndNames) args;
         Object[] argValues = varargs.getValues();
-        String[] a = varargs.getNames();
+        String[] a = new String[0];
         int aLength = 0;
         int index = 0;
         for (int i = 0; i < argValues.length; i++) {
@@ -82,7 +84,7 @@ public abstract class GetText extends RBuiltinNode {
                 RStringVector vector = (RStringVector) castString(frame, v);
                 elementNACheck.enable(vector);
                 aLength += vector.getLength();
-                a = Utils.resizeArray(a, aLength);
+                a = Utils.resizeArray(a, Math.max(aLength, a.length * 2));
                 for (int j = 0; j < vector.getLength(); j++) {
                     a[index] = vector.getDataAt(j);
                     elementNACheck.check(a[index]);
@@ -90,6 +92,7 @@ public abstract class GetText extends RBuiltinNode {
                 }
             }
         }
-        return RDataFactory.createStringVector(a, elementNACheck.neverSeenNA());
+
+        return RDataFactory.createStringVector(a.length == aLength ? a : Arrays.copyOf(a, aLength), elementNACheck.neverSeenNA());
     }
 }

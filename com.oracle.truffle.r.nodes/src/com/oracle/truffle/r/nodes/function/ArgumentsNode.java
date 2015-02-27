@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import java.util.*;
+
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
- * of {@link #arguments} and {@link #names} have to be defined by subclasses!
+ * of {@link #arguments} and the signature have to be defined by subclasses!
  */
 public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
 
@@ -39,47 +41,22 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
      */
     @Children protected final RNode[] arguments;
 
-    /**
-     * A list of arguments. Single names may be <code>null</code>; semantics have to be specified by
-     * implementing classes
-     */
-    @CompilationFinal protected final String[] names;
+    protected final ArgumentsSignature signature;
 
-    /**
-     * The number of {@link #names} given (i.e., not <code>null</code>).
-     *
-     * @see ArgumentsTrait#countNonNull(String[])
-     */
-    private final int nameCount;
-
-    protected ArgumentsNode(RNode[] arguments, String[] names) {
+    protected ArgumentsNode(RNode[] arguments, ArgumentsSignature signature) {
+        assert signature != null && signature.getLength() == arguments.length : Arrays.toString(arguments) + " " + signature;
         this.arguments = arguments;
-        this.names = names;
-        this.nameCount = ArgumentsTrait.countNonNull(names);
+        this.signature = signature;
     }
 
-    /**
-     * @return {@link #arguments}
-     */
     @CreateWrapper
     public RNode[] getArguments() {
         return arguments;
     }
 
-    /**
-     * @return {@link #names}
-     */
     @CreateWrapper
-    public String[] getNames() {
-        return names;
-    }
-
-    /**
-     * @return {@link #nameCount}
-     */
-    @CreateWrapper
-    public int getNameCount() {
-        return nameCount;
+    public ArgumentsSignature getSignature() {
+        return signature;
     }
 
     @Override
@@ -87,7 +64,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
         state.append('(');
         for (int i = 0; i < arguments.length; i++) {
             RNode argument = arguments[i];
-            String name = names[i];
+            String name = signature.getName(i);
             if (name != null) {
                 state.append(name);
                 state.append(" = ");
@@ -109,8 +86,6 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
      */
     protected ArgumentsNode() {
         arguments = new RNode[0];
-        names = null;
-        nameCount = 0;
+        signature = null;
     }
-
 }

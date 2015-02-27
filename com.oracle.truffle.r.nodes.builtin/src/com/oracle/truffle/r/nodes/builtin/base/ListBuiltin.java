@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     protected abstract Object executeObject(VirtualFrame frame, Object arg);
 
     private RList list(Object[] args) {
-        return RDataFactory.createList(args, argNameVector(getSuppliedArgsNames()));
+        return RDataFactory.createList(args, argNameVector(getSuppliedSignature()));
     }
 
     @Specialization
@@ -98,7 +98,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization(guards = "!missing")
     protected RList list(RArgsValuesAndNames args) {
         controlVisibility();
-        return RDataFactory.createList(args.getValues(), argNameVector(args.getNamesNull()));
+        return RDataFactory.createList(args.getValues(), argNameVector(args.getSignature()));
     }
 
     @Specialization(guards = "missing")
@@ -110,29 +110,28 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization
     protected RList list(RNull value) {
         controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
+        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedSignature()));
     }
 
     @Specialization
     protected RList list(REnvironment value) {
         controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
+        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedSignature()));
     }
 
     @Specialization
     protected RList list(RFunction value) {
         controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
+        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedSignature()));
     }
 
-    private RStringVector argNameVector(String[] suppliedArgs) {
-        String[] argNames = suppliedArgs;
-        if (namesNull.profile(argNames == null)) {
+    private RStringVector argNameVector(ArgumentsSignature signature) {
+        if (namesNull.profile(signature.getNonNullCount() == 0)) {
             return null;
         }
-        String[] names = new String[argNames.length];
+        String[] names = new String[signature.getLength()];
         for (int i = 0; i < names.length; i++) {
-            String orgName = argNames[i];
+            String orgName = signature.getName(i);
             names[i] = (orgName == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : orgName);
         }
         return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);

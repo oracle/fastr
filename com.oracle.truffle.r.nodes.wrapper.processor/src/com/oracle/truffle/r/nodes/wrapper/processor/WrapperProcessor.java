@@ -219,7 +219,11 @@ public class WrapperProcessor extends AbstractProcessor {
             wr.println();
             wr.printf("%s@Override%n", INDENT4);
             wr.printf("%spublic RNode substitute(REnvironment env) {%n", INDENT4);
-            wr.printf("%s%s wrapperSub = new %s((%s) child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName, qualClassName);
+            if (qualClassName.equals("com.oracle.truffle.r.nodes.RNode")) {
+                wr.printf("%s%s wrapperSub = new %s(child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName);
+            } else {
+                wr.printf("%s%s wrapperSub = new %s((%s) child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName, qualClassName);
+            }
             wr.printf("%sProbeNode.insertProbe(wrapperSub);%n", INDENT8);
             wr.printf("%sreturn wrapperSub;%n", INDENT8);
             wr.printf("%s}%n", INDENT8);

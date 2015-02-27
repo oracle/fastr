@@ -2790,9 +2790,11 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
         assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
+        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...,c=8)) } ; f() }");
 
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2)) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2, z=3)) }");
         assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; substitute(var, env=env) }");
         assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }");
 

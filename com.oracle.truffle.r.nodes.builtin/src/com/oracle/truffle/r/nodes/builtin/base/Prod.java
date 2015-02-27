@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,7 +40,7 @@ public abstract class Prod extends RBuiltinNode {
     protected Object prod(VirtualFrame frame, RArgsValuesAndNames args) {
         if (prodRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            prodRecursive = insert(ProdFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            prodRecursive = insert(ProdFactory.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
         }
         // TODO: eventually handle multiple vectors properly
         return prodRecursive.executeObject(frame, args.getValues()[0]);

@@ -81,7 +81,7 @@ public abstract class Match extends RBuiltinNode {
     private RIntVector matchRecursive(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matchRecursive = insert(MatchFactory.create(new RNode[4], getBuiltin(), getSuppliedArgsNames()));
+            matchRecursive = insert(MatchFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
         }
         return matchRecursive.executeRIntVector(frame, x, table, noMatch, incomparables);
     }

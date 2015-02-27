@@ -63,9 +63,9 @@ public abstract class Switch extends RBuiltinNode {
         controlVisibility();
         Object[] optionalArgValues = optionalArgs.getValues();
         final String xStr = x.getDataAt(0);
-        final String[] names = optionalArgs.getNames();
-        for (int i = 0; i < names.length; ++i) {
-            final String suppliedArgName = names[i];
+        ArgumentsSignature signature = optionalArgs.getSignature();
+        for (int i = 0; i < signature.getLength(); ++i) {
+            final String suppliedArgName = signature.getName(i);
             if (suppliedArgName == null) {
                 continue;
             } else if (suppliedArgName.length() == 0) {
@@ -95,8 +95,8 @@ public abstract class Switch extends RBuiltinNode {
         }
         // We didn't find a match, so check for default(s)
         Object currentDefault = null;
-        for (int i = 0; i < names.length; ++i) {
-            final String suppliedArgName = names[i];
+        for (int i = 0; i < signature.getLength(); ++i) {
+            final String suppliedArgName = signature.getName(i);
             if (suppliedArgName == null) {
                 suppliedArgNameIsNull.enter();
                 Object optionalArg = optionalArgValues[i];

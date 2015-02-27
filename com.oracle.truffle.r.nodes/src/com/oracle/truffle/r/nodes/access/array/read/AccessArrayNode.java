@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConvert
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
@@ -77,6 +78,7 @@ public abstract class AccessArrayNode extends RNode {
     @Child private GetDimNamesNode getDimNamesNode;
 
     @Child private DispatchedCallNode dcn;
+    @Child private DispatchedCallNode dcnDrop;
 
     public abstract RNode getVector();
 
@@ -238,16 +240,28 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
     }
 
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
+    private static final ArgumentsSignature DROP_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+    private static final ArgumentsSignature EXACT_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+
     @Specialization(guards = {"isObject", "isSubset"})
     protected Object accessObjectSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
-        if (dcn == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, new String[]{"", "", "drop"}));
-        }
+        Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
         try {
-            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, null) : position;
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
-        } catch (RError e) {
+            if (dropDim != RMissing.instance) {
+                if (dcnDrop == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    dcnDrop = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, DROP_SIGNATURE));
+                }
+                return dcnDrop.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
+            } else {
+                if (dcn == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, SIGNATURE));
+                }
+                return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds});
+            }
+        } catch (NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }
     }
@@ -256,12 +270,12 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessObject(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, new String[]{"", "", "exact"}));
+            dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, EXACT_SIGNATURE));
         }
         try {
-            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, null) : position;
+            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, exact});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }
     }

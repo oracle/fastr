@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -49,7 +50,7 @@ public abstract class Dim extends RBuiltinNode {
     private int dataFrameRowNames(VirtualFrame frame, RDataFrame operand) {
         if (shortRowNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            shortRowNames = insert(ShortRowNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+            shortRowNames = insert(ShortRowNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
         return (int) shortRowNames.executeObject(frame, operand, 2);
     }
@@ -95,11 +96,11 @@ public abstract class Dim extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, getSuppliedSignature()));
         }
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return hasDimensions(container) ? dimWithDimensions(container) : RNull.instance;
         }
 

@@ -15140,6 +15140,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSubstitute_c994964d27f25585c70d6bf7c5970d2d() {
+        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...,c=8)) } ; f() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSubstitute_dcda7433c118d9ecb4b91548f0d40c2c() {
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(1,2)) }");
     }
@@ -15147,6 +15152,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSubstitute_d0ab6188ca2103f260aa3f0f988db899() {
         assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstitute_db890a498277553e5205bd5a9b56e351() {
+        assertEval("{ f<-function(...) { substitute(list(...)) }; f(c(x=1, 2, z=3)) }");
     }
 
     @Test

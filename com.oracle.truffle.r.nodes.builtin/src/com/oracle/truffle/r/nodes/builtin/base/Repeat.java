@@ -72,7 +72,7 @@ public abstract class Repeat extends RBuiltinNode {
     private Object repeatRecursive(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (repeatRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            repeatRecursive = insert(RepeatFactory.create(new RNode[4], getBuiltin(), getSuppliedArgsNames()));
+            repeatRecursive = insert(RepeatFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
         }
         return repeatRecursive.execute(frame, x, times, lengthOut, each);
     }

@@ -244,16 +244,18 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return CastToContainerNodeGen.create(child, false, false, false);
     }
 
+    private static final ArgumentsSignature VALUE_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "value"});
+
     @Specialization(guards = {"isObject", "isSubset"})
     protected Object updateObjectSubset(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[<-", DispatchType.UseMethod, new String[]{"", "", "value"}));
+            dcn = insert(DispatchedCallNode.create("[<-", DispatchType.UseMethod, VALUE_SIGNATURE));
         }
         try {
-            Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, null) : positions;
+            Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }
@@ -262,12 +264,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
     protected Object updateObject(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[<-", DispatchType.UseMethod, new String[]{"", "", "value"}));
+            dcn = insert(DispatchedCallNode.create("[[<-", DispatchType.UseMethod, VALUE_SIGNATURE));
         }
         try {
-            Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, null) : positions;
+            Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (RError e) {
+        } catch (NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }

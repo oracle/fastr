@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -30,9 +29,9 @@ import com.oracle.truffle.r.runtime.*;
 
 /**
  * <p>
- * This class denotes a list of {@link #getNames()}/{@link #getArguments()} pairs which are in the
- * order of the {@link FormalArguments} of a function. Each argument is either filled with the
- * supplied argument, the default argument or <code>null</code>, if neither is provided.
+ * This class denotes a list of name/argument pairs which are in the order of the
+ * {@link FormalArguments} of a function. Each argument is either filled with the supplied argument,
+ * the default argument or <code>null</code>, if neither is provided.
  * </p>
  * <p>
  * The {@link #doExecuteArray(VirtualFrame)} method executes the argument nodes and converts them
@@ -43,11 +42,11 @@ public final class MatchedArguments extends Arguments<RNode> {
 
     public static final class MatchedArgumentsNode extends Node {
         @Children private final RNode[] arguments;
-        @CompilationFinal private final String[] names;
+        private final ArgumentsSignature signature;
 
-        private MatchedArgumentsNode(RNode[] arguments, String[] names) {
+        private MatchedArgumentsNode(RNode[] arguments, ArgumentsSignature signature) {
             this.arguments = arguments;
-            this.names = names;
+            this.signature = signature;
         }
 
         @ExplodeLoop
@@ -59,8 +58,8 @@ public final class MatchedArguments extends Arguments<RNode> {
             return result;
         }
 
-        public String[] getNames() {
-            return names;
+        public ArgumentsSignature getSignature() {
+            return signature;
         }
 
         public RNode[] getArguments() {
@@ -68,26 +67,20 @@ public final class MatchedArguments extends Arguments<RNode> {
         }
     }
 
-    /**
-     * @param arguments {@link #getArguments()}
-     * @param names {@link #getNames()}
-     */
-    private MatchedArguments(RNode[] arguments, String[] names) {
-        super(arguments, names);
+    private MatchedArguments(RNode[] arguments, ArgumentsSignature signature) {
+        super(arguments, signature);
     }
 
     public MatchedArgumentsNode createNode() {
-        return new MatchedArgumentsNode(arguments, names);
+        return new MatchedArgumentsNode(arguments, signature);
     }
 
     /**
-     * @param arguments
-     * @param names
      * @return A fresh {@link MatchedArguments}; arguments may contain <code>null</code> iff there
      *         is neither a supplied argument nor a default argument
      */
-    public static MatchedArguments create(RNode[] arguments, String[] names) {
-        return new MatchedArguments(arguments, names);
+    public static MatchedArguments create(RNode[] arguments, ArgumentsSignature signature) {
+        return new MatchedArguments(arguments, signature);
     }
 
     /**
@@ -121,13 +114,5 @@ public final class MatchedArguments extends Arguments<RNode> {
      */
     public int getNrOfArgs() {
         return arguments.length;
-    }
-
-    /**
-     * @return The name for every {@link #arguments}. May NOT contain <code>null</code>
-     */
-    @Override
-    public String[] getNames() {
-        return names;
     }
 }

@@ -20,7 +20,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class NextMethodDispatchNode extends S3DispatchNode {
+public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
 
     @Child private ReadVariableNode rvnDefEnv;
     @Child private ReadVariableNode rvnCallEnv;
@@ -36,13 +36,11 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private boolean hasGroup;
     private boolean lastHasGroup;
     @CompilationFinal private final Object[] args;
-    @CompilationFinal private final String[] argNames;
 
-    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, String[] argNames, String storedFunctionName) {
-        super(genericName);
+    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args, ArgumentsSignature suppliedSignature, String storedFunctionName) {
+        super(genericName, suppliedSignature);
         this.type = type;
         this.args = args;
-        this.argNames = argNames;
         this.storedFunctionName = storedFunctionName;
     }
 
@@ -68,70 +66,57 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         int argsLength = args == null ? 0 : args.length;
         // Extract arguments from current frame...
         int funArgsLength = RArguments.getArgumentsLength(frame);
-        assert RArguments.getNamesLength(frame) == 0 || RArguments.getNamesLength(frame) == funArgsLength;
-        boolean hasNames = RArguments.getNamesLength(frame) > 0;
+        ArgumentsSignature signature = RArguments.getSignature(frame);
+        assert signature.getLength() == funArgsLength;
         Object[] funArgValues = new Object[funArgsLength + argsLength];
-        String[] funArgNames = hasNames ? new String[funArgsLength + argsLength] : null;
+        String[] funArgNames = new String[funArgsLength + argsLength];
         int index = 0;
         for (int fi = 0; fi < funArgsLength; fi++) {
             Object argVal = RArguments.getArgument(frame, fi);
             if (argVal instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) argVal;
                 int varArgsLength = varArgs.length();
-                if (varArgsLength > 0) {
-                    if (varArgsLength > 1) {
-                        funArgValues = Utils.resizeArray(funArgValues, funArgValues.length + varArgsLength - 1);
-                    }
-                    System.arraycopy(varArgs.getValues(), 0, funArgValues, index, varArgsLength);
-                    if (hasNames) {
-                        if (varArgsLength > 1) {
-                            funArgNames = Utils.resizeArray(funArgNames, funArgNames.length + varArgsLength - 1);
-                        }
-                        if (varArgs.getNames() != null) {
-                            System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
-                        }
-                    } else if (varArgs.getNames() != null) {
-                        funArgNames = new String[funArgsLength + argsLength];
-                        System.arraycopy(varArgs.getNames(), 0, funArgNames, index, varArgsLength);
-                    }
-                    index += varArgsLength;
-                } else {
-                    funArgValues[index] = RMissing.instance;
-                    if (hasNames) {
-                        funArgNames[index] = RArguments.getName(frame, fi);
-                    }
-                    index++;
+                if (varArgsLength != 1) {
+                    funArgValues = Utils.resizeArray(funArgValues, funArgValues.length + varArgsLength - 1);
+                }
+                System.arraycopy(varArgs.getValues(), 0, funArgValues, index, varArgsLength);
+                if (varArgsLength != 1) {
+                    funArgNames = Utils.resizeArray(funArgNames, funArgNames.length + varArgsLength - 1);
+                }
+                for (int i = 0; i < varArgsLength; i++) {
+                    funArgNames[index++] = varArgs.getSignature().getName(i);
                 }
             } else {
                 funArgValues[index] = argVal;
-                if (hasNames) {
-                    funArgNames[index] = RArguments.getName(frame, fi);
-                }
+                funArgNames[index] = signature.getName(fi);
                 index++;
             }
         }
         if (argsLength > 0) {
-            if (funArgNames == null && argNames != null) {
-                funArgNames = new String[funArgsLength + argsLength];
-            }
             for (int i = 0; i < argsLength; i++) {
                 funArgValues[index] = args[i];
-                if (argNames != null) {
-                    funArgNames[index] = argNames[i];
+                if (suppliedSignature != null) {
+                    funArgNames[index] = suppliedSignature.getName(i);
                 }
                 index++;
             }
         }
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(funArgValues, funArgNames);
+
+        ArgumentsSignature evaluatedSignature = ArgumentsSignature.get(funArgNames);
+
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(funArgValues, evaluatedSignature);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getSourceSection(), promiseHelper, true);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getSourceSection(), true);
+        if (targetFunction.isBuiltin()) {
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+        }
         return reorderedArgs;
     }
 
     private Object executeHelper(VirtualFrame frame) {
         EvaluatedArguments evaledArgs = processArgs(frame);
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getNames());
-        defineVarsAsArguments(argObject);
+        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getSignature());
+        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
         if (storedFunctionName != null) {
             RArguments.setS3Method(argObject, storedFunctionName);
         } else {

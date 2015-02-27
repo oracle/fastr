@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,6 +36,34 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"})
 public abstract class Attr extends RBuiltinNode {
+
+    private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
+
+    @CompilationFinal private String cachedName = "";
+    @CompilationFinal private String cachedInternedName = "";
+
+    private String intern(String name) {
+        if (cachedName == null) {
+            // unoptimized case
+            return name.intern();
+        }
+        if (cachedName == name) {
+            // cached case
+            return cachedInternedName;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        // Checkstyle: stop StringLiteralEquality
+        if (cachedName == "") {
+            // Checkstyle: resume StringLiteralEquality
+            cachedName = name;
+            cachedInternedName = name.intern();
+        } else {
+            cachedName = null;
+            cachedInternedName = null;
+        }
+        return name.intern();
+    }
 
     private static Object searchKeyPartial(RAttributes attributes, String name) {
         Object val = RNull.instance;
@@ -49,13 +80,13 @@ public abstract class Attr extends RBuiltinNode {
         return val;
     }
 
-    private static Object attrRA(RAttributable attributable, String name) {
+    private Object attrRA(RAttributable attributable, String name) {
         RAttributes attributes = attributable.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
             Object result = attributes.get(name);
-            if (result == null) {
+            if (searchPartialProfile.profile(result == null)) {
                 return searchKeyPartial(attributes, name);
             }
             return result;
@@ -65,7 +96,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(guards = "!isRowNamesAttr")
     protected Object attr(RAbstractContainer container, String name) {
         controlVisibility();
-        return attrRA(container, name);
+        return attrRA(container, intern(name));
     }
 
     public static Object getFullRowNames(Object a) {
@@ -117,8 +148,9 @@ public abstract class Attr extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_CHARACTER, "which");
         }
         if (object instanceof RAttributable) {
-            return attrRA((RAttributable) object, sname);
+            return attrRA((RAttributable) object, intern(sname));
         } else {
+            errorProfile.enter();
             throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
         }
     }
@@ -134,5 +166,4 @@ public abstract class Attr extends RBuiltinNode {
     protected boolean emptyName(@SuppressWarnings("unused") RAbstractContainer container, RStringVector name) {
         return name.getLength() == 0;
     }
-
 }

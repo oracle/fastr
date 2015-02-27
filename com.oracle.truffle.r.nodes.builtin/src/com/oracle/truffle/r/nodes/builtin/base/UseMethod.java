@@ -55,7 +55,7 @@ public abstract class UseMethod extends RBuiltinNode {
         if (dispatchedCallNode == null || (cachedGeneric != generic && !cachedGeneric.equals(generic))) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             cachedGeneric = generic;
-            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, getSuppliedArgsNames());
+            DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), DispatchType.UseMethod, getSuppliedSignature());
             if (dispatchedCallNode == null) {
                 dispatchedCallNode = insert(newDispatched);
             } else {
@@ -91,13 +91,16 @@ public abstract class UseMethod extends RBuiltinNode {
         if (argsValueAndNamesProfile.profile(enclosingArg instanceof RArgsValuesAndNames)) {
             // The GnuR "1. argument" might be hidden inside a "..."! Unwrap for proper dispatch
             RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
+            if (varArgs.length() == 0) {
+                errorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, cachedGeneric, RRuntime.toString(RNull.instance));
+            }
             enclosingArg = varArgs.getValues()[0];
         }
         if (promiseCheckHelper == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             promiseCheckHelper = insert(new PromiseCheckHelperNode());
         }
-        enclosingArg = promiseCheckHelper.checkEvaluate(frame, enclosingArg);
-        return enclosingArg;
+        return promiseCheckHelper.checkEvaluate(frame, enclosingArg);
     }
 }

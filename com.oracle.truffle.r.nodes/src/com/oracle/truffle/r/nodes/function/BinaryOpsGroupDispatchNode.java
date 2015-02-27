@@ -40,20 +40,20 @@ public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
     @Override
     public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
-        String[] argNames = argAndNames.getNames();
+        ArgumentsSignature signature = argAndNames.getSignature();
         if (!isExecuted) {
             isExecuted = true;
             executeNoCache(frame, evaluatedArgs);
         }
         if (isBuiltinCalled || (targetFunctionR == null && targetFunction == null)) {
-            return callBuiltin(frame, evaluatedArgs, argNames);
+            return callBuiltin(frame, evaluatedArgs, signature);
         }
-        return executeHelper(frame, evaluatedArgs, argNames);
+        return executeHelper(frame, evaluatedArgs, signature);
     }
 
     @Override
     public boolean isSameType(Object[] args) {
-        return !isExecuted || S3DispatchNode.isEqualType(getArgClass(args[0]), this.typeL) && S3DispatchNode.isEqualType(getArgClass(args[1]), this.typeR);
+        return !isExecuted || isEqualType(getArgClass(args[0]), this.typeL) && isEqualType(getArgClass(args[1]), this.typeR);
     }
 
     protected void executeNoCache(VirtualFrame frame, Object[] evaluatedArgs) {
@@ -126,12 +126,11 @@ class GenericBinarysOpsGroupDispatchNode extends BinaryOpsGroupDispatchNode {
     @Override
     public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
-        String[] argNames = argAndNames.getNames();
         executeNoCache(frame, evaluatedArgs);
         if (isBuiltinCalled || (targetFunctionR == null && targetFunction == null)) {
-            return callBuiltin(frame, evaluatedArgs, argNames);
+            return callBuiltin(frame, evaluatedArgs, argAndNames.getSignature());
         }
-        return executeHelper(frame, evaluatedArgs, argNames);
+        return executeHelper(frame, evaluatedArgs, argAndNames.getSignature());
     }
 
 }

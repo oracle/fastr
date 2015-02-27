@@ -451,10 +451,9 @@ public abstract class ConstantNode extends RNode implements VisibilityController
 
         @Override
         public void deparse(State state) {
-            String[] names = value.getNames();
             Object[] values = value.getValues();
             for (int i = 0; i < values.length; i++) {
-                String name = names[i];
+                String name = value.getSignature().getName(i);
                 if (name != null) {
                     state.append(name);
                     state.append(" = ");

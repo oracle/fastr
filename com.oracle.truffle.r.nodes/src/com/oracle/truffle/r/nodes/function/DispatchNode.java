@@ -13,12 +13,12 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchNode extends RNode {
 
-    protected RStringVector type;
     protected final String genericName;
 
     public DispatchNode(String genericName) {
@@ -38,12 +38,12 @@ public abstract class DispatchNode extends RNode {
     public abstract Object executeGeneric(VirtualFrame frame, RStringVector aType);
 
     @SuppressWarnings("unused")
-    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) {
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) throws NoGenericMethodException {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    public Object executeInternal(VirtualFrame frame, Object[] args) {
+    public Object executeInternal(VirtualFrame frame, Object[] args) throws NoGenericMethodException {
         throw RInternalError.shouldNotReachHere();
     }
 

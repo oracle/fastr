@@ -56,6 +56,8 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     @CompilationFinal private String lastName;
 
     @CompilationFinal private final BranchProfile[] slotFoundOnIteration = {BranchProfile.create(), BranchProfile.create(), BranchProfile.create()};
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile warningProfile = BranchProfile.create();
     private final BranchProfile invalidateProfile = BranchProfile.create();
 
     private void ensureWrite(String x) {
@@ -68,13 +70,15 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         }
     }
 
-    private String checkVariable(RAbstractStringVector xVec) throws RError {
+    private String checkVariable(RAbstractStringVector xVec) {
         int len = xVec.getLength();
         if (len == 1) {
             return xVec.getDataAt(0);
         } else if (len == 0) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
         } else {
+            warningProfile.enter();
             RContext.getInstance().setEvalWarning("only the first element is used as variable name");
             return xVec.getDataAt(0);
         }
@@ -101,6 +105,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 REnvironment.globalEnv().put(x, value);
             }
         } catch (PutException ex) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return value;
@@ -144,11 +149,13 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         String x = checkVariable(xVec);
         controlVisibility();
         if (envir == REnvironment.emptyEnv()) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
         }
         try {
             envir.put(x, value);
         } catch (PutException ex) {
+            errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return value;

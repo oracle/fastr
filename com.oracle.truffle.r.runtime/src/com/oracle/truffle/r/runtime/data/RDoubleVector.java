@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -34,13 +33,9 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     private double[] data;
 
-    @CompilationFinal private static final String[] implicitClassHr = RRuntime.CLASS_DOUBLE;
-    @CompilationFinal private static final String[] implicitClassHrDyn;
-
-    static {
-        implicitClassHrDyn = new String[implicitClassHr.length + 1];
-        System.arraycopy(implicitClassHr, 0, implicitClassHrDyn, 1, implicitClassHr.length);
-    }
+    static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Double.getName(), RType.Numeric.getName()}, true);
+    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Double.getName(), RType.Numeric.getName()}, true);
+    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Double.getName(), RType.Numeric.getName()}, true);
 
     RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
@@ -237,6 +232,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     @Override
     protected RStringVector getImplicitClassHr() {
-        return getClassHierarchyHelper(implicitClassHr, implicitClassHrDyn);
+        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 }

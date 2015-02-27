@@ -25,7 +25,7 @@ public class UnaryOpsGroupDispatchNode extends GroupDispatchNode {
     }
 
     @Override
-    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, String[] argNames) {
+    protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, ArgumentsSignature signature) {
         initBuiltin(frame);
         Object[] argObject = RArguments.create(builtinFunc, callSrc, null, RArguments.getDepth(frame) + 1, new Object[]{evaluatedArgs[0], RMissing.instance});
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
@@ -41,18 +41,18 @@ class GenericUnaryOpsGroupDispatchNode extends UnaryOpsGroupDispatchNode {
     @Override
     public Object execute(VirtualFrame frame, final RArgsValuesAndNames argAndNames) {
         Object[] evaluatedArgs = argAndNames.getValues();
-        String[] argNames = argAndNames.getNames();
+        ArgumentsSignature signature = argAndNames.getSignature();
         this.type = getArgClass(evaluatedArgs[0]);
         if (this.type == null) {
-            return callBuiltin(frame, evaluatedArgs, argNames);
+            return callBuiltin(frame, evaluatedArgs, signature);
         }
         findTargetFunction(frame);
         if (targetFunction != null) {
             dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName, ""}, true);
         }
         if (targetFunction == null) {
-            callBuiltin(frame, evaluatedArgs, argNames);
+            callBuiltin(frame, evaluatedArgs, signature);
         }
-        return executeHelper(frame, evaluatedArgs, argNames);
+        return executeHelper(frame, evaluatedArgs, signature);
     }
 }

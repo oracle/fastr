@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,20 +27,10 @@ import com.oracle.truffle.r.nodes.*;
 /**
  * An interface all arguments that are going to be matched need to implement.
  */
-public interface UnmatchedArguments extends ClosureCache {
+public interface UnmatchedArguments extends ClosureCache, ArgumentsTrait {
     /**
-     * Always of same length as {@link #getNames()}.
-     *
      * @return The arguments to be matched. Individual {@link RNode}s may be <code>null</code> to
      *         denote "missingness"!
      */
     RNode[] getArguments();
-
-    /**
-     * Always of same length as {@link #getArguments()}.
-     *
-     * @return The names that may have been supplied to the individual arguments. <code>null</code>
-     *         if none has been provided.
-     */
-    String[] getNames();
 }

@@ -148,6 +148,8 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return (RList) passVector(list);
     }
 
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"..."});
+
     @Specialization(guards = "isNumericVersion")
     /**
      * A temporary specific hack for internal generic dispatch on "numeric_version" objects
@@ -156,7 +158,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     protected RList passNumericVersion(VirtualFrame frame, RList list) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("c", DispatchType.UseMethod, getSuppliedArgsNames()));
+            dcn = insert(DispatchedCallNode.create("c", DispatchType.UseMethod, SIGNATURE));
         }
         return (RList) dcn.executeInternal(frame, list.getClassHierarchy(), new Object[]{list});
     }
@@ -202,7 +204,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Specialization(guards = "hasArgNames")
     protected RIntVector passArgs(int value) {
         controlVisibility();
-        return RDataFactory.createIntVector(new int[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
+        return RDataFactory.createIntVector(new int[]{value}, true, getSuppliedSignature().createVector());
     }
 
     @Specialization(guards = "noArgNames")
@@ -214,7 +216,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Specialization(guards = "hasArgNames")
     protected RDoubleVector passArgs(double value) {
         controlVisibility();
-        return RDataFactory.createDoubleVector(new double[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
+        return RDataFactory.createDoubleVector(new double[]{value}, true, getSuppliedSignature().createVector());
     }
 
     @Specialization(guards = "noArgNames")
@@ -226,7 +228,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Specialization(guards = "hasArgNames")
     protected RLogicalVector passArgs(byte value) {
         controlVisibility();
-        return RDataFactory.createLogicalVector(new byte[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
+        return RDataFactory.createLogicalVector(new byte[]{value}, true, getSuppliedSignature().createVector());
     }
 
     @Specialization(guards = "noArgNames")
@@ -238,7 +240,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Specialization(guards = "hasArgNames")
     protected RStringVector passArgs(String value) {
         controlVisibility();
-        return RDataFactory.createStringVector(new String[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
+        return RDataFactory.createStringVector(new String[]{value}, true, getSuppliedSignature().createVector());
     }
 
     @Specialization(guards = "noArgNames")
@@ -250,7 +252,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Specialization(guards = "hasArgNames")
     protected RRawVector passArgs(RRaw value) {
         controlVisibility();
-        return RDataFactory.createRawVector(new byte[]{value.getValue()}, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
+        return RDataFactory.createRawVector(new byte[]{value.getValue()}, getSuppliedSignature().createVector());
     }
 
     @Specialization(guards = "noArgNames")
@@ -262,7 +264,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     @Specialization(guards = "hasArgNames")
     protected RComplexVector passArgs(RComplex value) {
         controlVisibility();
-        return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
+        return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, getSuppliedSignature().createVector());
     }
 
     public static RAbstractVector namesMerge(RAbstractVector vector, String name) {
@@ -332,7 +334,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         if (combineRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            combineRecursive = insert(CombineFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            combineRecursive = insert(CombineFactory.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
         }
         return combineRecursive.executeCombine(frame, args.getValues()[0]);
     }
@@ -356,10 +358,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castLogical(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castLogical(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castLogical(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castLogical(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeLogical(frame, current, other);
         }
         return current;
@@ -384,10 +386,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castInteger(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castInteger(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castInteger(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castInteger(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeInteger(frame, current, other);
         }
         return current;
@@ -412,10 +414,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castDouble(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castDouble(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castDouble(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castDouble(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeDouble(frame, current, other);
         }
         return current;
@@ -440,10 +442,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castComplex(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castComplex(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castComplex(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castComplex(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeComplex(frame, current, other);
         }
         return current;
@@ -468,10 +470,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castString(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castString(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castString(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castString(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeString(frame, current, other);
         }
         return current;
@@ -496,10 +498,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castRaw(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castRaw(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castRaw(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castRaw(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeRaw(frame, current, other);
         }
         return current;
@@ -523,10 +525,10 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         controlVisibility();
         Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castList(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castList(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeList(frame, current, other);
         }
         return current;
@@ -560,11 +562,11 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         Object[] array = args.getValues();
         Object op = unwrapExpression(frame, array[0]);
         RAbstractVector currentVector = castVector(frame, op);
-        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]), false);
+        Object current = castList(frame, namesMerge(currentVector, getSuppliedSignature().getName(0)), false);
         for (int i = 1; i < array.length; i++) {
             op = unwrapExpression(frame, array[i]);
             RAbstractVector otherVector = castVector(frame, op);
-            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]), false);
+            Object other = castList(frame, namesMerge(otherVector, getSuppliedSignature().getName(i)), false);
             current = foldOperation.executeList(frame, current, other);
         }
         return RDataFactory.createExpression((RList) current);
@@ -575,7 +577,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
     }
 
     protected boolean hasArgNames() {
-        return getSuppliedArgsNames() != null;
+        return getSuppliedSignature().getNonNullCount() > 0;
     }
 
     protected boolean noArgNames() {

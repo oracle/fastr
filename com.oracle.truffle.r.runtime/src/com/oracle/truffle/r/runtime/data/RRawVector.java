@@ -25,16 +25,17 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RRawVector extends RVector implements RAbstractRawVector {
 
-    private byte[] data;
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Raw.getName()}, true);
+    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Raw.getName()}, true);
+    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Raw.getName()}, true);
 
-    @CompilationFinal private static final String[] implicitClassHrDyn = new String[]{"", RType.Raw.getName()};
+    private byte[] data;
 
     RRawVector(byte[] data, int[] dims, RStringVector names) {
         super(true, data.length, dims, names);
@@ -188,6 +189,6 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
 
     @Override
     protected RStringVector getImplicitClassHr() {
-        return getClassHierarchyHelper(new String[]{RType.Raw.getName()}, implicitClassHrDyn);
+        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 }

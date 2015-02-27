@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -33,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class AsCall extends RBuiltinNode {
+
+    private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization
     protected RLanguage asCallFunction(RList x) {
@@ -53,25 +56,26 @@ public abstract class AsCall extends RBuiltinNode {
         return Call.makeCall(f, makeNamesAndValues(x.getList()));
     }
 
-    private static RArgsValuesAndNames makeNamesAndValues(RList x) {
+    private RArgsValuesAndNames makeNamesAndValues(RList x) {
         int length = x.getLength() - 1;
         Object[] values = new Object[length];
-        String[] names = null;
         System.arraycopy(x.getDataWithoutCopying(), 1, values, 0, length);
-        if (x.getNames() != null) {
+        ArgumentsSignature signature;
+        if (nullNamesProfile.profile(x.getNames() == null)) {
+            signature = ArgumentsSignature.empty(values.length);
+        } else {
+            String[] names = new String[length];
             // extract names, converting "" to null
             RStringVector ns = x.getNames();
             for (int i = 0; i < length; i++) {
                 String name = ns.getDataAt(i + 1);
                 if (name != null && !name.isEmpty()) {
-                    if (names == null) {
-                        names = new String[length];
-                    }
                     names[i] = name;
                 }
             }
+            signature = ArgumentsSignature.get(names);
         }
-        return new RArgsValuesAndNames(values, names);
-    }
 
+        return new RArgsValuesAndNames(values, signature);
+    }
 }

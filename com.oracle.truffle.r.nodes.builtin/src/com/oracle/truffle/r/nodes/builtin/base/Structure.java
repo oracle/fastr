@@ -65,7 +65,7 @@ public abstract class Structure extends RBuiltinNode {
         } else if (s.equals(".Label")) {
             return "levels";
         } else {
-            return s;
+            return s.intern();
         }
     }
 
@@ -73,8 +73,8 @@ public abstract class Structure extends RBuiltinNode {
     @TruffleBoundary
     protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
         Object[] values = args.getValues();
-        String[] argNames = getSuppliedArgsNames();
-        validateArgNames(argNames);
+        ArgumentsSignature signature = getSuppliedSignature();
+        validateArgNames(signature);
         RAbstractContainer res = obj;
         // TODO: should we consider storing attributes with sequences?
         if (res instanceof RSequence) {
@@ -82,7 +82,7 @@ public abstract class Structure extends RBuiltinNode {
         }
         for (int i = 0; i < values.length; i++) {
             Object value = fixupValue(values[i]);
-            String attrName = fixupAttrName(argNames[i + 1]);
+            String attrName = fixupAttrName(signature.getName(i + 1));
             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
                     res = (RAbstractContainer) res.setClassAttr(null);
@@ -109,17 +109,17 @@ public abstract class Structure extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private void validateArgNames(String[] argNames) {
+    private void validateArgNames(ArgumentsSignature signature) {
         int containerIndex = 0;
-        if (argNames == null || findNullIn(argNames, containerIndex + 1)) {
+        if (findNullIn(signature, containerIndex + 1)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
     }
 
     @TruffleBoundary
-    private static boolean findNullIn(String[] strings, int startIndex) {
-        for (int i = startIndex; i < strings.length; i++) {
-            if (strings[i] == null) {
+    private static boolean findNullIn(ArgumentsSignature signature, int startIndex) {
+        for (int i = startIndex; i < signature.getLength(); i++) {
+            if (signature.getName(i) == null) {
                 return true;
             }
         }

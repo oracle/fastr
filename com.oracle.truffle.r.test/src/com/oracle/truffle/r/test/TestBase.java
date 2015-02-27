@@ -687,17 +687,17 @@ public class TestBase {
         private boolean quiet;
 
         public void warning(String msg) {
-            System.out.println("warning: " + msg);
+            System.out.println("\nwarning: " + msg);
         }
 
         public void note(String msg) {
             if (!quiet) {
-                System.out.println("note: " + msg);
+                System.out.println("\nnote: " + msg);
             }
         }
 
         public void error(String msg) {
-            System.err.println("error: " + msg);
+            System.err.println("\nerror: " + msg);
         }
 
         void setQuiet() {
