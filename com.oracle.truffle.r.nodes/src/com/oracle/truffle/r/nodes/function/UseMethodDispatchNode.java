@@ -11,17 +11,13 @@
 
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.function.ArgumentMatcher.*;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
@@ -141,7 +137,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        Object[] arguments = extractArguments(frame);
+        Object[] arguments = extractArguments(frame, true);
         ArgumentsSignature signature = RArguments.getSignature(frame);
         MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
         MaterializedFrame callerFrame = getCallerFrame(frame);
@@ -182,13 +178,13 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     private void specialize(Frame callerFrame, MaterializedFrame genericDefFrame, ArgumentsSignature signature, Object[] arguments, boolean throwsRError) {
         CompilerAsserts.neverPartOfCompilation();
         // look for a match in the caller frame hierarchy
-        TargetLookupResult result = findTargetFunctionLookup(callerFrame, type, genericName);
+        TargetLookupResult result = findTargetFunctionLookup(callerFrame, type, genericName, true);
         ReadVariableNode[] unsuccessfulReadsCaller = result.unsuccessfulReads;
         ReadVariableNode[] unsuccessfulReadsDef = null;
         if (result.successfulRead == null) {
             if (genericDefFrame != null) {
                 // look for a match in the generic def frame hierarchy
-                result = findTargetFunctionLookup(genericDefFrame, type, genericName);
+                result = findTargetFunctionLookup(genericDefFrame, type, genericName, true);
                 unsuccessfulReadsDef = result.unsuccessfulReads;
             }
             if (result.successfulRead == null) {
@@ -275,7 +271,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         if (cached.function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
-        Object[] argObject = prepareArguments(frame, null, reorderedArgs, cached.function, cached.clazz, cached.functionName);
+        Object[] argObject = prepareArguments(frame.materialize(), null, reorderedArgs, cached.function, cached.clazz, cached.functionName);
         return call.call(frame, argObject);
     }
 
@@ -284,57 +280,11 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         throw RInternalError.shouldNotReachHere();
     }
 
-    private static final class TargetLookupResult {
-        private final ReadVariableNode[] unsuccessfulReads;
-        private final ReadVariableNode successfulRead;
-        private final RFunction targetFunction;
-        private final String targetFunctionName;
-        private final RStringVector clazz;
-
-        public TargetLookupResult(ReadVariableNode[] unsuccessfulReads, ReadVariableNode successfulRead, RFunction targetFunction, String targetFunctionName, RStringVector clazz) {
-            this.unsuccessfulReads = unsuccessfulReads;
-            this.successfulRead = successfulRead;
-            this.targetFunction = targetFunction;
-            this.targetFunctionName = targetFunctionName;
-            this.clazz = clazz;
-        }
-    }
-
-    private static TargetLookupResult findTargetFunctionLookup(Frame callerFrame, RStringVector type, String genericName) {
-        CompilerAsserts.neverPartOfCompilation();
-        RFunction targetFunction = null;
-        String targetFunctionName = null;
-        RStringVector clazz = null;
-        ArrayList<ReadVariableNode> unsuccessfulReads = new ArrayList<>();
-
-        for (int i = 0; i <= type.getLength(); ++i) {
-            String clazzName = i == type.getLength() ? RRuntime.DEFAULT : type.getDataAt(i);
-            String functionName = genericName + RRuntime.RDOT + clazzName;
-            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName, false);
-            Object func = rvn.execute(null, callerFrame);
-            if (func != null) {
-                assert func instanceof RFunction;
-                targetFunctionName = functionName;
-                targetFunction = (RFunction) func;
-
-                if (i == 0) {
-                    clazz = type.copyResized(type.getLength(), false);
-                } else if (i == type.getLength()) {
-                    clazz = null;
-                } else {
-                    clazz = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
-                    clazz.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
-                }
-                return new TargetLookupResult(unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]), rvn, targetFunction, targetFunctionName, clazz);
-            } else {
-                unsuccessfulReads.add(rvn);
-            }
-        }
-        return new TargetLookupResult(unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]), null, null, null, null);
-    }
 }
 
 final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
+
+    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
 
     public UseMethodDispatchGenericNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName, suppliedSignature);
@@ -347,9 +297,14 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame, RStringVector type) {
-        Frame callerFrame = getCallerFrame(frame);
-        findTargetFunction(RArguments.getEnclosingFrame(frame), type, true);
-        return executeHelper(frame, callerFrame, extractArguments(frame), RArguments.getSignature(frame), getSourceSection());
+        Object[] arguments = extractArguments(frame, false);
+        ArgumentsSignature signature = RArguments.getSignature(frame);
+        MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
+        MaterializedFrame callerFrame = getCallerFrame(frame);
+
+        TargetLookupResult lookupResult = findTargetFunction(callerFrame, genericDefFrame, type, true);
+        Object[] callArguments = executeHelper(frame, callerFrame, genericDefFrame, lookupResult, arguments, signature, getSourceSection());
+        return indirectCallNode.call(frame, lookupResult.targetFunction.getTarget(), callArguments);
     }
 
     @Override
@@ -358,54 +313,49 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
     }
 
     @Override
-    public Object executeInternalGeneric(VirtualFrame frame, RStringVector type, Object[] args) {
-        // TBD getEnclosing?
-        findTargetFunction(frame, type, false);
-        return executeHelper(frame, frame, args, suppliedSignature, getEncapsulatingSourceSection());
+    public Object executeInternalGeneric(VirtualFrame frame, RStringVector type, Object[] arguments) {
+        MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
+        MaterializedFrame callerFrame = getCallerFrame(frame);
+
+        TargetLookupResult lookupResult = findTargetFunction(callerFrame, genericDefFrame, type, true);
+        Object[] callArguments = executeHelper(frame, callerFrame, genericDefFrame, lookupResult, arguments, suppliedSignature, getEncapsulatingSourceSection());
+        return indirectCallNode.call(frame, lookupResult.targetFunction.getTarget(), callArguments);
     }
 
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
-        EvaluatedArguments reorderedArgs = reorderArguments(args, targetFunction, paramSignature, errorSourceSection);
-        if (targetFunction.isBuiltin()) {
+    private Object[] executeHelper(VirtualFrame frame, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, TargetLookupResult lookupResult, Object[] args,
+                    ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
+        RFunction function = lookupResult.targetFunction;
+        EvaluatedArguments reorderedArgs = reorderArguments(args, function, paramSignature, errorSourceSection);
+        if (function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
-        Object[] argObject = prepareArguments(callerFrame, RArguments.getEnclosingFrame(frame), reorderedArgs, targetFunction, klass, targetFunctionName);
-        return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
+        return prepareArguments(callerFrame, genericDefFrame, lookupResult, function, reorderedArgs);
     }
 
-    private void findTargetFunction(Frame callerFrame, RStringVector type, boolean throwsRError) {
-        findTargetFunctionLookup(callerFrame, type);
-        if (targetFunction == null) {
-            errorProfile.enter();
-            if (throwsRError) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
-            } else {
-                throw new NoGenericMethodException();
-            }
-        }
+    @Override
+    @TruffleBoundary
+    protected EvaluatedArguments reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
+        return super.reorderArguments(args, function, paramSignature, errorSourceSection);
     }
 
     @TruffleBoundary
-    private void findTargetFunctionLookup(Frame callerFrame, RStringVector type) {
-        for (int i = 0; i < type.getLength(); ++i) {
-            findFunction(genericName, type.getDataAt(i), callerFrame);
-            if (targetFunction != null) {
-                RStringVector classVec = null;
-                if (i > 0) {
-                    isFirst = false;
-                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
-                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
+    private Object[] prepareArguments(MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, TargetLookupResult lookupResult, RFunction function, EvaluatedArguments reorderedArgs) {
+        return super.prepareArguments(callerFrame, genericDefFrame, reorderedArgs, function, lookupResult.clazz, lookupResult.targetFunctionName);
+    }
+
+    @TruffleBoundary
+    private TargetLookupResult findTargetFunction(MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, RStringVector type, boolean throwsRError) {
+        TargetLookupResult lookupResult = findTargetFunctionLookup(callerFrame, type, genericName, false);
+        if (lookupResult == null) {
+            lookupResult = findTargetFunctionLookup(genericDefFrame, type, genericName, false);
+            if (lookupResult == null) {
+                if (throwsRError) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
                 } else {
-                    isFirst = true;
-                    classVec = type.copyResized(type.getLength(), false);
+                    throw new NoGenericMethodException();
                 }
-                klass = classVec;
-                break;
             }
         }
-        if (targetFunction != null) {
-            return;
-        }
-        findFunction(genericName, RRuntime.DEFAULT, callerFrame);
+        return lookupResult;
     }
 }

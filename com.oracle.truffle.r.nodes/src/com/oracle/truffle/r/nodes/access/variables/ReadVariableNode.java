@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -497,6 +498,38 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
 
         return lastLevel;
+    }
+
+    @TruffleBoundary
+    public static RFunction lookupFunction(String identifier, Frame variableFrame) {
+        Frame current = variableFrame;
+        do {
+            // see if the current frame has a value of the given name
+            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
+            if (frameSlot != null) {
+                Object value = current.getValue(frameSlot);
+
+                if (value != null) {
+                    if (value == RMissing.instance) {
+                        throw RError.error(RError.Message.ARGUMENT_MISSING, identifier);
+                    }
+                    if (value instanceof RPromise) {
+                        RPromise promise = (RPromise) value;
+                        if (promise.isEvaluated()) {
+                            value = promise.getValue();
+                        } else {
+                            value = PromiseHelperNode.evaluateSlowPath(null, promise);
+                            return (RFunction) value;
+                        }
+                    }
+                    if (RRuntime.checkType(value, RType.Function)) {
+                        return (RFunction) value;
+                    }
+                }
+            }
+            current = RArguments.getEnclosingFrame(current);
+        } while (current != null);
+        return null;
     }
 
     private Object getValue(Frame variableFrame, FrameSlot frameSlot) {

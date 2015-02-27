@@ -53,7 +53,7 @@ public class BinaryOpsGroupDispatchNode extends GroupDispatchNode {
 
     @Override
     public boolean isSameType(Object[] args) {
-        return !isExecuted || S3DispatchNode.isEqualType(getArgClass(args[0]), this.typeL) && S3DispatchNode.isEqualType(getArgClass(args[1]), this.typeR);
+        return !isExecuted || isEqualType(getArgClass(args[0]), this.typeL) && isEqualType(getArgClass(args[1]), this.typeR);
     }
 
     protected void executeNoCache(VirtualFrame frame, Object[] evaluatedArgs) {

@@ -11,11 +11,13 @@
 
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -27,21 +29,13 @@ public abstract class S3DispatchNode extends DispatchNode {
 
     @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
+    protected final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
-    protected final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile argumentCountProfile = ValueProfile.createPrimitiveProfile();
 
-    @CompilationFinal private String lastFun;
-    @Child private ReadVariableNode lookup;
-    protected String targetFunctionName;
-    protected RFunction targetFunction;
-
     protected final ArgumentsSignature suppliedSignature;
-
-    // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
-    // having one method with a rather convoluted control flow structure?
 
     public S3DispatchNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName);
@@ -58,16 +52,26 @@ public abstract class S3DispatchNode extends DispatchNode {
         return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
     }
 
-    protected Object[] extractArguments(VirtualFrame frame) {
+    protected Object[] extractArguments(VirtualFrame frame, boolean fixedLength) {
         int argCount = argumentCountProfile.profile(RArguments.getArgumentsLength(frame));
         Object[] argValues = new Object[argCount];
-        extractArgumentsLoop(frame, argCount, argValues);
+        if (fixedLength) {
+            extractArgumentsLoopFixedLength(frame, argCount, argValues);
+        } else {
+            extractArgumentsLoop(frame, argCount, argValues);
+        }
         return argValues;
     }
 
-    @ExplodeLoop
     private static void extractArgumentsLoop(VirtualFrame frame, int argCount, Object[] argValues) {
-        for (int i = 0; i < argCount; ++i) {
+        for (int i = 0; i < argCount; i++) {
+            argValues[i] = RArguments.getArgument(frame, i);
+        }
+    }
+
+    @ExplodeLoop
+    private static void extractArgumentsLoopFixedLength(VirtualFrame frame, int argCount, Object[] argValues) {
+        for (int i = 0; i < argCount; i++) {
             argValues[i] = RArguments.getArgument(frame, i);
         }
     }
@@ -126,12 +130,146 @@ public abstract class S3DispatchNode extends DispatchNode {
 
     private final ValueProfile callerFrameProfile = ValueProfile.createClassProfile();
 
-    protected final Object[] prepareArguments(Frame callerFrame, MaterializedFrame genericDefFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz, String functionName) {
-        Frame profiledCallerFrame = callerFrameProfile.profile(callerFrame);
+    protected final Object[] prepareArguments(MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz,
+                    String functionName) {
+        MaterializedFrame profiledCallerFrame = callerFrameProfile.profile(callerFrame);
         Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(profiledCallerFrame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         defineVarsAsArguments(argObject, genericName, clazz, profiledCallerFrame.materialize(), genericDefFrame);
         RArguments.setS3Method(argObject, functionName);
         return argObject;
+    }
+
+    protected static Object checkMissing(Object value) {
+        return RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value)) ? null : value;
+    }
+
+    @TruffleBoundary
+    protected static String functionName(String generic, String className) {
+        return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
+    }
+
+    protected static void defineVarsAsArguments(Object[] args, String genericName, RStringVector klass, MaterializedFrame genCallEnv, MaterializedFrame genDefEnv) {
+        RArguments.setS3Generic(args, genericName);
+        RArguments.setS3Class(args, klass);
+        RArguments.setS3CallEnv(args, genCallEnv);
+        RArguments.setS3DefEnv(args, genDefEnv);
+    }
+
+    protected static final class TargetLookupResult {
+        public final ReadVariableNode[] unsuccessfulReads;
+        public final ReadVariableNode successfulRead;
+        public final RFunction targetFunction;
+        public final String targetFunctionName;
+        public final RStringVector clazz;
+
+        public TargetLookupResult(ReadVariableNode[] unsuccessfulReads, ReadVariableNode successfulRead, RFunction targetFunction, String targetFunctionName, RStringVector clazz) {
+            this.unsuccessfulReads = unsuccessfulReads;
+            this.successfulRead = successfulRead;
+            this.targetFunction = targetFunction;
+            this.targetFunctionName = targetFunctionName;
+            this.clazz = clazz;
+        }
+    }
+
+    protected static TargetLookupResult findTargetFunctionLookup(Frame lookupFrame, RStringVector type, String genericName, boolean createReadVariableNodes) {
+        CompilerAsserts.neverPartOfCompilation();
+        RFunction targetFunction = null;
+        String targetFunctionName = null;
+        RStringVector clazz = null;
+        ArrayList<ReadVariableNode> unsuccessfulReads = createReadVariableNodes ? new ArrayList<>() : null;
+
+        for (int i = 0; i <= type.getLength(); i++) {
+            String clazzName = i == type.getLength() ? RRuntime.DEFAULT : type.getDataAt(i);
+            String functionName = genericName + RRuntime.RDOT + clazzName;
+            ReadVariableNode rvn;
+            Object func;
+            if (createReadVariableNodes) {
+                rvn = ReadVariableNode.createFunctionLookup(functionName, false);
+                func = rvn.execute(null, lookupFrame);
+            } else {
+                rvn = null;
+                func = ReadVariableNode.lookupFunction(functionName, lookupFrame);
+            }
+            if (func != null) {
+                assert func instanceof RFunction;
+                targetFunctionName = functionName;
+                targetFunction = (RFunction) func;
+
+                if (i == 0) {
+                    clazz = type.copyResized(type.getLength(), false);
+                } else if (i == type.getLength()) {
+                    clazz = null;
+                } else {
+                    clazz = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
+                    clazz.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
+                }
+                ReadVariableNode[] array = createReadVariableNodes ? unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]) : null;
+                return new TargetLookupResult(array, rvn, targetFunction, targetFunctionName, clazz);
+            } else {
+                if (createReadVariableNodes) {
+                    unsuccessfulReads.add(rvn);
+                }
+            }
+        }
+        if (createReadVariableNodes) {
+            return new TargetLookupResult(unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]), null, null, null, null);
+        } else {
+            return null;
+        }
+    }
+}
+
+abstract class S3DispatchLegacyNode extends S3DispatchNode {
+
+    protected RStringVector type;
+
+    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
+    protected RStringVector klass;
+    protected MaterializedFrame genCallEnv;
+    protected MaterializedFrame genDefEnv;
+    protected boolean isFirst;
+
+    @CompilationFinal private String lastFun;
+    @Child private ReadVariableNode lookup;
+    protected String targetFunctionName;
+    protected RFunction targetFunction;
+
+    public S3DispatchLegacyNode(String genericName, ArgumentsSignature suppliedSignature) {
+        super(genericName, suppliedSignature);
+    }
+
+    protected void findFunction(String functionName, Frame frame) {
+        if (lookup == null || !functionName.equals(lastFun)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lastFun = functionName;
+            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName, false);
+            lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
+        }
+        targetFunction = null;
+        targetFunctionName = null;
+        Object func;
+        if (frame instanceof VirtualFrame) {
+            func = lookup.execute((VirtualFrame) frame);
+        } else {
+            func = lookup.execute(null, frame);
+        }
+        if (func != null) {
+            assert func instanceof RFunction;
+            targetFunctionName = functionName;
+            targetFunction = (RFunction) func;
+        }
+    }
+
+    protected void findFunction(String generic, String className, Frame frame) {
+        checkLength(className, generic);
+        findFunction(functionName(generic, className), frame);
+    }
+
+    private void checkLength(String className, String generic) {
+        // The magic number two taken from src/main/objects.c
+        if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
+        }
     }
 
     protected EvaluatedArguments reorderArgs(VirtualFrame frame, RFunction func, Object[] evaluatedArgs, ArgumentsSignature signature, boolean hasVarArgs, SourceSection callSrc) {
@@ -178,10 +316,6 @@ public abstract class S3DispatchNode extends DispatchNode {
         return reorderedArgs;
     }
 
-    protected static Object checkMissing(Object value) {
-        return RMissingHelper.isMissing(value) || (value instanceof RPromise && RMissingHelper.isMissingName((RPromise) value)) ? null : value;
-    }
-
     public static boolean isEqualType(RStringVector one, RStringVector two) {
         if (one == null && two == null) {
             return true;
@@ -193,73 +327,12 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (one.getLength() != two.getLength()) {
             return false;
         }
-        for (int i = 0; i < one.getLength(); ++i) {
+        for (int i = 0; i < one.getLength(); i++) {
             if (!one.getDataAt(i).equals(two.getDataAt(i))) {
                 return false;
             }
         }
         return true;
-    }
-
-    protected void findFunction(String functionName, Frame frame) {
-        if (lookup == null || !functionName.equals(lastFun)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lastFun = functionName;
-            ReadVariableNode rvn = ReadVariableNode.createFunctionLookup(functionName, false);
-            lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
-        }
-        targetFunction = null;
-        targetFunctionName = null;
-        Object func;
-        if (frame instanceof VirtualFrame) {
-            func = lookup.execute((VirtualFrame) frame);
-        } else {
-            func = lookup.execute(null, frame);
-        }
-        if (func != null) {
-            assert func instanceof RFunction;
-            targetFunctionName = functionName;
-            targetFunction = (RFunction) func;
-        }
-    }
-
-    protected void findFunction(String generic, String className, Frame frame) {
-        checkLength(className, generic);
-        findFunction(functionName(generic, className), frame);
-    }
-
-    @TruffleBoundary
-    private static String functionName(String generic, String className) {
-        return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
-    }
-
-    protected static void defineVarsAsArguments(Object[] args, String genericName, RStringVector klass, MaterializedFrame genCallEnv, MaterializedFrame genDefEnv) {
-        RArguments.setS3Generic(args, genericName);
-        RArguments.setS3Class(args, klass);
-        RArguments.setS3CallEnv(args, genCallEnv);
-        RArguments.setS3DefEnv(args, genDefEnv);
-    }
-
-    private void checkLength(String className, String generic) {
-        // The magic number two taken from src/main/objects.c
-        if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
-        }
-    }
-}
-
-abstract class S3DispatchLegacyNode extends S3DispatchNode {
-
-    protected RStringVector type;
-
-    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
-    protected RStringVector klass;
-    protected MaterializedFrame genCallEnv;
-    protected MaterializedFrame genDefEnv;
-    protected boolean isFirst;
-
-    public S3DispatchLegacyNode(String genericName, ArgumentsSignature suppliedSignature) {
-        super(genericName, suppliedSignature);
     }
 }
 
@@ -273,12 +346,6 @@ abstract class S3DispatchCachedNode extends S3DispatchNode {
 }
 
 abstract class S3DispatchGenericNode extends S3DispatchNode {
-
-    @Child protected IndirectCallNode indirectCallNode = Truffle.getRuntime().createIndirectCallNode();
-    protected RStringVector klass;
-    protected MaterializedFrame genCallEnv;
-    protected MaterializedFrame genDefEnv;
-    protected boolean isFirst;
 
     public S3DispatchGenericNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName, suppliedSignature);

@@ -285,7 +285,7 @@ class GroupDispatchNode extends S3DispatchLegacyNode {
     }
 
     public boolean isSameType(Object[] args) {
-        return !isExecuted || S3DispatchNode.isEqualType(getArgClass(args[0]), this.type);
+        return !isExecuted || isEqualType(getArgClass(args[0]), this.type);
     }
 
     protected void initBuiltin(VirtualFrame frame) {
