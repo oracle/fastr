@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
@@ -104,7 +105,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         } else {
             executeReads(frame, callerFrame, true);
         }
-        return executeHelper(frame, callerFrame);
+        return executeHelper(frame, callerFrame, extractArguments(frame), RArguments.getSignature(frame), getSourceSection());
     }
 
     @ExplodeLoop
@@ -169,7 +170,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         } else {
             executeReads(frame, null, false);
         }
-        return executeHelper(frame, args);
+        return executeHelper(frame, frame, args, suppliedSignature, getEncapsulatingSourceSection());
     }
 
     @Override
@@ -177,35 +178,33 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         throw RInternalError.shouldNotReachHere();
     }
 
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
-        // Extract arguments from current frame...
+    @ExplodeLoop
+    private static Object[] extractArguments(VirtualFrame frame) {
         int argCount = RArguments.getArgumentsLength(frame);
-        assert RArguments.getSignature(frame).getLength() == argCount;
         Object[] argValues = new Object[argCount];
-        int fi = 0;
-        for (; fi < argCount; ++fi) {
-            argValues[fi] = RArguments.getArgument(frame, fi);
+        for (int i = 0; i < argCount; ++i) {
+            argValues[i] = RArguments.getArgument(frame, i);
         }
-        EvaluatedArguments reorderedArgs = reorderArgs(frame, cachedFunction, argValues, RArguments.getSignature(frame), false, getSourceSection());
-        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        return argValues;
     }
 
-    private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
-        // Extract arguments from current frame...
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
+        assert RArguments.getSignature(frame).getLength() == args.length;
+
         int argCount = args.length;
         int argListSize = argCount;
 
         boolean hasVarArgs = false;
         for (int fi = 0; fi < argCount; ++fi) {
             Object arg = args[fi];
-            if (arg instanceof RArgsValuesAndNames) {
+            if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
                 hasVarArgs = true;
                 argListSize += ((RArgsValuesAndNames) arg).length() - 1;
             }
         }
         Object[] argValues;
         ArgumentsSignature signature;
-        if (hasVarArgsProfile.profile(hasVarArgs)) {
+        if (hasVarArgs) {
             argValues = new Object[argListSize];
             String[] argNames = new String[argListSize];
             int index = 0;
@@ -220,7 +219,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
                         argValues[index++] = checkMissing(varArgValues[i]);
                     }
                 } else {
-                    argNames[index] = suppliedSignature.getName(fi);
+                    argNames[index] = paramSignature.getName(fi);
                     argValues[index++] = checkMissing(arg);
                 }
             }
@@ -230,15 +229,15 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             for (int i = 0; i < argCount; i++) {
                 argValues[i] = checkMissing(args[i]);
             }
-            signature = suppliedSignature;
+            signature = paramSignature;
         }
 
         // ...and use them as 'supplied' arguments...
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
 
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, cachedFunction, evaledArgs, getEncapsulatingSourceSection(), promiseHelper, false);
-        return executeHelper2(callerFrame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, cachedFunction, evaledArgs, errorSourceSection, promiseHelper, false);
+        return executeHelper2(frame, callerFrame.materialize(), reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
     }
 
     private Object executeHelper2(VirtualFrame frame, MaterializedFrame callerFrame, Object[] arguments, ArgumentsSignature signature) {
