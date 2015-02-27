@@ -11,8 +11,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -25,11 +25,20 @@ public class Covcor {
 
     private final NACheck check = new NACheck();
 
+    private final ConditionProfile noNAXProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile noNAYProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile xCompleteProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile yCompleteProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile bothZeroProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile tooManyMissing = BranchProfile.create();
+    private final BranchProfile naInRes = BranchProfile.create();
+    private final BranchProfile error = BranchProfile.create();
+    private final BranchProfile warning = BranchProfile.create();
+
     public static Covcor getInstance() {
         return singleton;
     }
 
-    @TruffleBoundary
     public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, boolean cor, SourceSection src) throws RError {
         boolean ansmat;
         boolean naFail;
@@ -53,12 +62,14 @@ public class Covcor {
             ncy = ncx;
         } else if (y.isMatrix()) {
             if (nrows(y) != n) {
+                error.enter();
                 error("incompatible dimensions");
             }
             ncy = ncols(y);
             ansmat = true;
         } else {
             if (y.getLength() != n) {
+                error.enter();
                 error("incompatible dimensions");
             }
             ncy = 1;
@@ -76,6 +87,7 @@ public class Covcor {
         emptyErr = false;
 
         if (emptyErr && x.getLength() == 0) {
+            error.enter();
             error("'x' is empty");
         }
 
@@ -102,12 +114,14 @@ public class Covcor {
         }
 
         if (sd0) { /* only in cor() */
+            warning.enter();
             RError.warning(src, RError.Message.SD_ZERO);
         }
 
         boolean seenNA = false;
         for (int i = 0; i < answerData.length; i++) {
             if (RRuntime.isNA(answerData[i])) {
+                naInRes.enter();
                 seenNA = true;
                 break;
             }
@@ -398,6 +412,7 @@ public class Covcor {
         boolean[] hasNAx = findNAs(n, ncx, x);
 
         if (n <= 1) { /* too many missing */
+            tooManyMissing.enter();
             for (int i = 0; i < ncx; i++) {
                 for (int j = 0; j < ncx; j++) {
                     ans[i + j * ncx] = RRuntime.DOUBLE_NA;
@@ -407,24 +422,21 @@ public class Covcor {
         }
 
         if (!iskendall) {
-            mean(n, ncx, xData, xm, hasNAx);
+            if (xCompleteProfile.profile(x.isComplete())) {
+                meanNoNA(n, ncx, xData, xm, hasNAx);
+            } else {
+                mean(n, ncx, xData, xm, hasNAx);
+            }
             n1 = n - 1;
         }
 
         for (int i = 0; i < ncx; i++) {
-            if (hasNAx[i]) {
-                for (int j = 0; j <= i; j++) {
-                    ans[j + i * ncx] = RRuntime.DOUBLE_NA;
-                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
-                }
-            } else {
+            if (noNAXProfile.profile(!hasNAx[i])) {
                 if (!iskendall) {
                     xxm = xm[i];
                     for (int j = 0; j <= i; j++) {
                         double r;
-                        if (hasNAx[j]) {
-                            r = RRuntime.DOUBLE_NA;
-                        } else {
+                        if (noNAXProfile.profile(!hasNAx[j])) {
                             yym = xm[j];
                             if (checkNAs(xxm, yym)) {
                                 r = RRuntime.DOUBLE_NA;
@@ -437,6 +449,8 @@ public class Covcor {
                                 }
                                 r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
                             }
+                        } else {
+                            r = RRuntime.DOUBLE_NA;
                         }
                         ans[j + i * ncx] = r;
                         ans[i + j * ncx] = r;
@@ -444,20 +458,25 @@ public class Covcor {
                 } else { /* Kendall's tau */
                     throw new UnsupportedOperationException("kendall's unsupported");
                 }
+            } else {
+                for (int j = 0; j <= i; j++) {
+                    ans[j + i * ncx] = RRuntime.DOUBLE_NA;
+                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                }
             }
         }
 
         if (cor) {
             for (int i = 0; i < ncx; i++) {
-                if (!hasNAx[i]) {
+                if (noNAXProfile.profile(!hasNAx[i])) {
                     double u = ans[i + i * ncx];
                     xm[i] = checkNAs(u) ? RRuntime.DOUBLE_NA : Math.sqrt(u);
                 }
             }
             for (int i = 0; i < ncx; i++) {
-                if (!hasNAx[i]) {
+                if (noNAXProfile.profile(!hasNAx[i])) {
                     for (int j = 0; j < i; j++) {
-                        if (xm[i] == 0 || xm[j] == 0) {
+                        if (bothZeroProfile.profile(xm[i] == 0 || xm[j] == 0)) {
                             sd0 = true;
                             ans[j + i * ncx] = RRuntime.DOUBLE_NA;
                             ans[i + j * ncx] = RRuntime.DOUBLE_NA;
@@ -479,6 +498,33 @@ public class Covcor {
         }
 
         return sd0;
+    }
+
+    private static void meanNoNA(int n, int ncx, double[] x, double[] xm, boolean[] hasNA) {
+        double sum;
+        double tmp;
+        /* variable means (has_na) */
+        for (int i = 0; i < ncx; i++) {
+            if (hasNA[i]) {
+                tmp = RRuntime.DOUBLE_NA;
+            } else {
+                sum = 0.0;
+                for (int k = 0; k < n; k++) {
+                    double u = x[i * n + k];
+                    sum += u;
+                }
+                tmp = sum / n;
+                if (RRuntime.isFinite(tmp)) {
+                    sum = 0.0;
+                    for (int k = 0; k < n; k++) {
+                        double u = x[i * n + k];
+                        sum += u - tmp;
+                    }
+                    tmp += sum / n;
+                }
+            }
+            xm[i] = tmp;
+        }
     }
 
     private void mean(int n, int ncx, double[] x, double[] xm, boolean[] hasNA) {
@@ -533,6 +579,7 @@ public class Covcor {
         boolean[] hasNAy = findNAs(n, ncy, y);
 
         if (n <= 1) { /* too many missing */
+            tooManyMissing.enter();
             for (int i = 0; i < ncx; i++) {
                 for (int j = 0; j < ncy; j++) {
                     ans[i + j * ncx] = RRuntime.DOUBLE_NA;
@@ -542,24 +589,26 @@ public class Covcor {
         }
 
         if (!iskendall) {
-            mean(n, ncx, xData, xm, hasNAx);
-            mean(n, ncy, yData, ym, hasNAy);
+            if (xCompleteProfile.profile(x.isComplete())) {
+                meanNoNA(n, ncx, xData, xm, hasNAx);
+            } else {
+                mean(n, ncx, xData, xm, hasNAx);
+            }
+            if (yCompleteProfile.profile(y.isComplete())) {
+                meanNoNA(n, ncy, yData, ym, hasNAy);
+            } else {
+                mean(n, ncy, yData, ym, hasNAy);
+            }
             n1 = n - 1;
         }
 
         for (int i = 0; i < ncx; i++) {
-            if (hasNAx[i]) {
-                for (int j = 0; j < ncy; j++) {
-                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
-                }
-            } else {
+            if (noNAXProfile.profile(!hasNAx[i])) {
                 if (!iskendall) {
                     xxm = xm[i];
                     for (int j = 0; j < ncy; j++) {
                         double r;
-                        if (hasNAy[j]) {
-                            r = RRuntime.DOUBLE_NA;
-                        } else {
+                        if (noNAYProfile.profile(!hasNAy[j])) {
                             yym = ym[j];
                             if (checkNAs(xxm, yym)) {
                                 r = RRuntime.DOUBLE_NA;
@@ -572,11 +621,17 @@ public class Covcor {
                                 }
                                 r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
                             }
+                        } else {
+                            r = RRuntime.DOUBLE_NA;
                         }
                         ans[i + j * ncx] = r;
                     }
                 } else { /* Kendall's tau */
                     throw new UnsupportedOperationException("kendall's unsupported");
+                }
+            } else {
+                for (int j = 0; j < ncy; j++) {
+                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
                 }
             }
         }
@@ -586,9 +641,9 @@ public class Covcor {
             covsdev(n, n1, ncy, y, hasNAy, ym, iskendall);
 
             for (int i = 0; i < ncx; i++) {
-                if (!hasNAx[i]) {
+                if (noNAXProfile.profile(!hasNAx[i])) {
                     for (int j = 0; j < ncy; j++) {
-                        if (!hasNAy[j]) {
+                        if (noNAYProfile.profile(!hasNAy[j])) {
                             if (xm[i] == 0.0 || ym[j] == 0.0) {
                                 sd0 = true;
                                 ans[i + j * ncx] = RRuntime.DOUBLE_NA;
