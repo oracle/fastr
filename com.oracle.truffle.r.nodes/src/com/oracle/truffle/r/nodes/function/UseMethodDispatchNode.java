@@ -19,7 +19,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher.*;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -55,14 +58,17 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         // if readsDefFrame != null, then this read will go to the def frame
         @Child private ReadVariableNode successfulRead;
 
-        public final RFunction function;
-        private final RStringVector clazz;
-        private final String functionName;
         private final ArgumentsSignature signature;
         @CompilationFinal private final ArgumentsSignature[] varArgSignature;
 
+        public final RFunction function;
+        public final RStringVector clazz;
+        public final String functionName;
+        @CompilationFinal public long[] preparePermutation;
+        public MatchPermutation permutation;
+
         public CheckReadsNode(ReadVariableNode[] unsuccessfulReadsCallerFrame, ReadVariableNode[] unsuccessfulReadsDefFrame, ReadVariableNode successfulRead, RFunction function, RStringVector clazz,
-                        String functionName, ArgumentsSignature signature, ArgumentsSignature[] varArgSignature) {
+                        String functionName, ArgumentsSignature signature, ArgumentsSignature[] varArgSignature, long[] preparePermutation, MatchPermutation permutation) {
             this.unsuccessfulReadsCallerFrame = unsuccessfulReadsCallerFrame;
             this.unsuccessfulReadsDefFrame = unsuccessfulReadsDefFrame;
             this.successfulRead = successfulRead;
@@ -71,9 +77,17 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             this.functionName = functionName;
             this.signature = signature;
             this.varArgSignature = varArgSignature;
+            this.preparePermutation = preparePermutation;
+            this.permutation = permutation;
         }
 
-        public boolean executeReads(Frame callerFrame, MaterializedFrame defFrame) {
+        public boolean executeReads(Frame callerFrame, MaterializedFrame defFrame, ArgumentsSignature actualSignature, Object[] actualArguments) {
+            if (actualSignature != signature) {
+                return false;
+            }
+            if (!checkLastArgSignature(actualArguments)) {
+                return false;
+            }
             if (!executeReads(unsuccessfulReadsCallerFrame, callerFrame)) {
                 return false;
             }
@@ -101,12 +115,17 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         }
 
         @ExplodeLoop
-        private static boolean checkLastArgSignature(Object[] args) {
-            for (int fi = 0; fi < args.length; ++fi) {
-                Object arg = args[fi];
+        private boolean checkLastArgSignature(Object[] arguments) {
+            for (int i = 0; i < arguments.length; i++) {
+                Object arg = arguments[i];
                 if (arg instanceof RArgsValuesAndNames) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    return false;
+                    if (varArgSignature == null || varArgSignature[i] != ((RArgsValuesAndNames) arg).getSignature()) {
+                        return false;
+                    }
+                } else {
+                    if (varArgSignature != null && varArgSignature[i] != null) {
+                        return false;
+                    }
                 }
             }
             return true;
@@ -127,17 +146,37 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
         MaterializedFrame callerFrame = getCallerFrame(frame);
 
-        if (cached == null || !cached.executeReads(callerFrame, genericDefFrame)) {
+        if (cached == null || !cached.executeReads(callerFrame, genericDefFrame, signature, arguments)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             specialize(frame, callerFrame, signature, arguments, true);
         }
 
-        EvaluatedArguments reorderedArgs = doReorderArguments(arguments, cached.function, signature, getSourceSection());
+        Object[] preparedArguments = prepareSuppliedArgument(cached.preparePermutation, arguments);
+
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(cached.permutation, cached.function, preparedArguments);
+
         if (cached.function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
+
         Object[] argObject = prepareArguments(callerFrame, genericDefFrame, reorderedArgs, cached.function, cached.clazz, cached.functionName);
+
         return call.call(frame, argObject);
+    }
+
+    @ExplodeLoop
+    private static Object[] prepareSuppliedArgument(long[] preparePermutation, Object[] arguments) {
+        Object[] result = new Object[preparePermutation.length];
+        for (int i = 0; i < result.length; i++) {
+            long source = preparePermutation[i];
+            if (source >= 0) {
+                result[i] = arguments[(int) source];
+            } else {
+                source = -source;
+                result[i] = ((RArgsValuesAndNames) arguments[(int) (source >> 32)]).getValues()[(int) source];
+            }
+        }
+        return result;
     }
 
     private void specialize(Frame callerFrame, MaterializedFrame genericDefFrame, ArgumentsSignature signature, Object[] arguments, boolean throwsRError) {
@@ -161,15 +200,54 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             }
         }
 
-        ArgumentsSignature[] varArgSignatures = new ArgumentsSignature[arguments.length];
+        int argCount = arguments.length;
+        int argListSize = argCount;
+
+        ArgumentsSignature[] varArgSignatures = null;
         for (int i = 0; i < arguments.length; i++) {
-            if (arguments[i] instanceof RArgsValuesAndNames) {
-                varArgSignatures[i] = ((RArgsValuesAndNames) arguments[i]).getSignature();
+            Object arg = arguments[i];
+            if (arg instanceof RArgsValuesAndNames) {
+                if (varArgSignatures == null) {
+                    varArgSignatures = new ArgumentsSignature[arguments.length];
+                }
+                varArgSignatures[i] = ((RArgsValuesAndNames) arg).getSignature();
+                argListSize += ((RArgsValuesAndNames) arg).length() - 1;
             }
         }
+        long[] preparePermutation;
+        ArgumentsSignature resultSignature;
+        if (varArgSignatures != null) {
+            preparePermutation = new long[argListSize];
+            String[] argNames = new String[argListSize];
+            int index = 0;
+            for (int fi = 0; fi < argCount; ++fi) {
+                Object arg = arguments[fi];
+                if (arg instanceof RArgsValuesAndNames) {
+                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
+                    ArgumentsSignature varArgSignature = varArgs.getSignature();
+                    for (int i = 0; i < varArgs.length(); i++) {
+                        argNames[index] = varArgSignature.getName(i);
+                        preparePermutation[index++] = -((((long) fi) << 32) + i);
+                    }
+                } else {
+                    argNames[index] = signature.getName(fi);
+                    preparePermutation[index++] = fi;
+                }
+            }
+            resultSignature = ArgumentsSignature.get(argNames);
+        } else {
+            preparePermutation = new long[argCount];
+            for (int i = 0; i < argCount; i++) {
+                preparePermutation[i] = i;
+            }
+            resultSignature = signature;
+        }
+
+        assert signature != null;
+        MatchPermutation permutation = ArgumentMatcher.matchArguments(result.targetFunction, resultSignature, getEncapsulatingSourceSection(), false);
 
         CheckReadsNode newCheckedReads = new CheckReadsNode(unsuccessfulReadsCaller, unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName,
-                        signature, varArgSignatures);
+                        signature, varArgSignatures, preparePermutation, permutation);
         DirectCallNode newCall = Truffle.getRuntime().createDirectCallNode(result.targetFunction.getTarget());
         if (call == null) {
             cached = insert(newCheckedReads);
@@ -187,14 +265,13 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     }
 
     @Override
-    public Object executeInternal(VirtualFrame frame, Object[] args) throws NoGenericMethodException {
-        Object[] arguments = extractArguments(frame);
-        ArgumentsSignature signature = RArguments.getSignature(frame);
-        if (cached == null || !cached.executeReads(frame, null)) {
+    public Object executeInternal(VirtualFrame frame, Object[] arguments) throws NoGenericMethodException {
+        ArgumentsSignature signature = suppliedSignature;
+        if (cached == null || !cached.executeReads(frame, null, signature, arguments)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             specialize(frame, null, signature, arguments, false);
         }
-        EvaluatedArguments reorderedArgs = reorderArguments(args, cached.function, suppliedSignature, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = reorderArguments(arguments, cached.function, suppliedSignature, getEncapsulatingSourceSection());
         if (cached.function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
