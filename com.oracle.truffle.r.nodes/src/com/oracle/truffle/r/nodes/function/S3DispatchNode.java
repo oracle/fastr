@@ -15,6 +15,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -26,6 +27,8 @@ public abstract class S3DispatchNode extends DispatchNode {
 
     @Child protected PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
+    private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
     protected final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
 
@@ -44,6 +47,16 @@ public abstract class S3DispatchNode extends DispatchNode {
         this.suppliedSignature = suppliedSignature;
     }
 
+    protected MaterializedFrame getCallerFrame(VirtualFrame frame) {
+        MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
+        if (callerFrameSlotPath.profile(funFrame == null)) {
+            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
+            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+        }
+        // S3 method can be dispatched from top-level where there is no caller frame
+        return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
+    }
+
     @ExplodeLoop
     protected static Object[] extractArguments(VirtualFrame frame) {
         int argCount = RArguments.getArgumentsLength(frame);
@@ -54,7 +67,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         return argValues;
     }
 
-    protected EvaluatedArguments reorderArguments(VirtualFrame frame, Object[] args, RFunction function, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
+    protected EvaluatedArguments reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
         assert paramSignature.getLength() == args.length;
 
         int argCount = args.length;
@@ -102,7 +115,8 @@ public abstract class S3DispatchNode extends DispatchNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
 
         // ...to match them against the chosen function's formal arguments
-        return ArgumentMatcher.matchArgumentsEvaluated(frame, function, evaledArgs, errorSourceSection, promiseHelper, false);
+        EvaluatedArguments evaluated = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, errorSourceSection, false);
+        return evaluated;
     }
 
     protected Object[] prepareArguments(Frame callerFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz, String functionName) {
@@ -149,7 +163,10 @@ public abstract class S3DispatchNode extends DispatchNode {
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(evaluatedArgsValues, evaluatedSignature);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, func, evaledArgs, callSrc, promiseHelper, false);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, callSrc, false);
+        if (func.isBuiltin()) {
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+        }
         return reorderedArgs;
     }
 

@@ -17,10 +17,8 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
@@ -70,9 +68,6 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         }
     }
 
-    private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
-
     @Child private UnsuccessfulReadsNode unsuccessfulReads;
     @Child private ReadVariableNode successfulRead;
     @Child private DirectCallNode call;
@@ -84,16 +79,6 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         super(genericName, type, suppliedSignature);
     }
 
-    private MaterializedFrame getCallerFrame(VirtualFrame frame) {
-        MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
-        if (callerFrameSlotPath.profile(funFrame == null)) {
-            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
-            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
-        }
-        // S3 method can be dispatched from top-level where there is no caller frame
-        return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
-    }
-
     @Override
     public Object execute(VirtualFrame frame) {
         MaterializedFrame callerFrame = getCallerFrame(frame);
@@ -103,7 +88,12 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         } else {
             executeReads(frame, callerFrame, true);
         }
-        return executeHelper(frame, callerFrame, extractArguments(frame), RArguments.getSignature(frame), getSourceSection());
+        EvaluatedArguments reorderedArgs = reorderArguments(extractArguments(frame), cachedFunction, RArguments.getSignature(frame), getSourceSection());
+        if (cachedFunction.isBuiltin()) {
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+        }
+        Object[] argObject = prepareArguments(callerFrame, reorderedArgs, cachedFunction, cachedClass, cachedFunctionName);
+        return call.call(frame, argObject);
     }
 
     @ExplodeLoop
@@ -168,18 +158,17 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         } else {
             executeReads(frame, null, false);
         }
-        return executeHelper(frame, frame, args, suppliedSignature, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = reorderArguments(args, cachedFunction, suppliedSignature, getEncapsulatingSourceSection());
+        if (cachedFunction.isBuiltin()) {
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+        }
+        Object[] argObject = prepareArguments(frame, reorderedArgs, cachedFunction, cachedClass, cachedFunctionName);
+        return call.call(frame, argObject);
     }
 
     @Override
     public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) throws NoGenericMethodException {
         throw RInternalError.shouldNotReachHere();
-    }
-
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
-        EvaluatedArguments reorderedArgs = reorderArguments(frame, args, cachedFunction, paramSignature, errorSourceSection);
-        Object[] argObject = prepareArguments(callerFrame, reorderedArgs, cachedFunction, cachedClass, cachedFunctionName);
-        return call.call(frame, argObject);
     }
 
     private static final class TargetLookupResult {
@@ -234,21 +223,8 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
 
 final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
 
-    private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
-
     public UseMethodDispatchGenericNode(String genericName, ArgumentsSignature suppliedSignature) {
         super(genericName, suppliedSignature);
-    }
-
-    private Frame getCallerFrame(VirtualFrame frame) {
-        Frame funFrame = RArguments.getCallerFrame(frame);
-        if (callerFrameSlotPath.profile(funFrame == null)) {
-            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
-        }
-        // S3 method can be dispatched from top-level where there is no caller frame
-        return topLevelFrameProfile.profile(funFrame == null) ? frame : funFrame;
     }
 
     @Override
@@ -276,7 +252,10 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
     }
 
     private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
-        EvaluatedArguments reorderedArgs = reorderArguments(frame, args, targetFunction, paramSignature, errorSourceSection);
+        EvaluatedArguments reorderedArgs = reorderArguments(args, targetFunction, paramSignature, errorSourceSection);
+        if (targetFunction.isBuiltin()) {
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+        }
         Object[] argObject = prepareArguments(callerFrame, reorderedArgs, targetFunction, klass, targetFunctionName);
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }

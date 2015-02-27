@@ -48,8 +48,8 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * {@link #matchArguments(RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)} .
  * The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
- * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection, PromiseHelperNode, boolean)}
- * for 'UseMethod' and
+ * {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, SourceSection, boolean)} for
+ * 'UseMethod' and
  * {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, SourceSection, SourceSection)} for
  * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
  * </p>
@@ -143,11 +143,89 @@ public class ArgumentMatcher {
         return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
     }
 
+    public static MatchPermutation matchArguments(RFunction function, ArgumentsSignature suppliedSignature, SourceSection callSrc, boolean forNextMethod) {
+        CompilerAsserts.neverPartOfCompilation();
+        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+        FormalArguments formals = rootNode.getFormalArguments();
+        MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, null, forNextMethod, index -> {
+            throw Utils.nyi("S3Dispatch should not have arg length mismatch");
+        }, index -> suppliedSignature.getName(index));
+        return match;
+    }
+
+    public static EvaluatedArguments matchArgumentsEvaluated(MatchPermutation match, RFunction function, Object[] evaluatedArgs) {
+        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+        FormalArguments formals = rootNode.getFormalArguments();
+        Object[] evaledArgs = new Object[match.resultPermutation.length];
+
+        permuteArguments(match, evaluatedArgs, evaledArgs);
+        replaceMissingWithDefault(function, formals, evaledArgs, formals.getDefaultArgs());
+        return new EvaluatedArguments(evaledArgs, formals.getSignature());
+    }
+
+    @ExplodeLoop
+    private static void replaceMissingWithDefault(RFunction function, FormalArguments formals, Object[] evaledArgs, RNode[] defaultArgs) {
+        for (int fi = 0; fi < defaultArgs.length; fi++) {
+            Object evaledArg = evaledArgs[fi];
+            if (evaledArg == null) {
+                // This is the case whenever there is a new parameter introduced in front of a
+                // vararg in the specific version of a generic
+                RNode defaultArg = formals.getDefaultArg(fi);
+                if (defaultArg == null) {
+                    // If neither supplied nor default argument
+
+                    if (formals.getSignature().getVarArgIndex() == fi) {
+                        // "...", but empty
+                        evaledArgs[fi] = RArgsValuesAndNames.EMPTY;
+                    } else {
+                        evaledArgs[fi] = RMissing.instance;
+                    }
+                } else {
+                    // <null> for environment leads to it being fitted with the REnvironment on the
+                    // callee side
+                    Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
+                    evaledArgs[fi] = RDataFactory.createPromise(function.isBuiltin() ? EvalPolicy.INLINED : EvalPolicy.PROMISED, PromiseType.ARG_DEFAULT, null, defaultClosure);
+                }
+            }
+        }
+    }
+
+    @ExplodeLoop
+    private static void permuteArguments(MatchPermutation match, Object[] evaluatedArgs, Object[] evaledArgs) {
+        for (int formalIndex = 0; formalIndex < match.resultPermutation.length; formalIndex++) {
+            int suppliedIndex = match.resultPermutation[formalIndex];
+
+            // Has varargs? Unfold!
+            if (suppliedIndex == MatchPermutation.VARARGS) {
+                int varArgsLen = match.varargsPermutation.length;
+                Object[] newVarArgs = new Object[varArgsLen];
+                if (permuteVarArgs(match, evaluatedArgs, varArgsLen, newVarArgs)) {
+                    evaledArgs[formalIndex] = new RArgsValuesAndNames(newVarArgs, match.varargsSignature);
+                } else {
+                    evaledArgs[formalIndex] = RArgsValuesAndNames.EMPTY;
+                }
+            } else if (suppliedIndex == MatchPermutation.UNMATCHED) {
+                // nothing to do... (resArgs[formalIndex] == null)
+            } else {
+                evaledArgs[formalIndex] = evaluatedArgs[suppliedIndex];
+            }
+        }
+    }
+
+    @ExplodeLoop
+    private static boolean permuteVarArgs(MatchPermutation match, Object[] evaluatedArgs, int varArgsLen, Object[] newVarArgs) {
+        boolean nonNull = false;
+        for (int i = 0; i < varArgsLen; i++) {
+            newVarArgs[i] = evaluatedArgs[match.varargsPermutation[i]];
+            nonNull |= newVarArgs[i] != null;
+        }
+        return nonNull;
+    }
+
     /**
      * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
      * the called, generic function and prepares them to be passed into the specific function
      *
-     * @param frame Needed for eventual promise reduction
      * @param function The 'Method' which is going to be 'Use'd
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
@@ -157,8 +235,7 @@ public class ArgumentMatcher {
      * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, PromiseHelperNode promiseHelper,
-                    boolean forNextMethod) {
+    public static EvaluatedArguments matchArgumentsEvaluated(RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals, callSrc, null, forNextMethod, index -> {
@@ -214,9 +291,6 @@ public class ArgumentMatcher {
                     Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
                     evaledArgs[fi] = RDataFactory.createPromise(function.isBuiltin() ? EvalPolicy.INLINED : EvalPolicy.PROMISED, PromiseType.ARG_DEFAULT, null, defaultClosure);
                 }
-            } else if (function.isBuiltin() && evaledArg instanceof RPromise) {
-                RPromise promise = (RPromise) evaledArg;
-                evaledArgs[fi] = promiseHelper.evaluate(frame, promise);
             }
         }
         for (int i = 0; i < evaledArgs.length; ++i) {
@@ -225,6 +299,16 @@ public class ArgumentMatcher {
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
+    }
+
+    public static void evaluatePromises(VirtualFrame frame, PromiseHelperNode promiseHelper, EvaluatedArguments args) {
+        Object[] argArray = args.arguments;
+        for (int i = 0; i < argArray.length; i++) {
+            Object arg = argArray[i];
+            if (arg instanceof RPromise) {
+                argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+            }
+        }
     }
 
     /**

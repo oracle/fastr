@@ -102,12 +102,14 @@ public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
             }
         }
 
-
         ArgumentsSignature evaluatedSignature = ArgumentsSignature.get(funArgNames);
 
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(funArgValues, evaluatedSignature);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getSourceSection(), promiseHelper, true);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getSourceSection(), true);
+        if (targetFunction.isBuiltin()) {
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+        }
         return reorderedArgs;
     }
 
