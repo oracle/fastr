@@ -1,0 +1,186 @@
+/*
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.runtime.conn;
+
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+
+import java.io.*;
+import java.net.*;
+import java.nio.*;
+import java.nio.channels.*;
+
+import com.oracle.truffle.r.runtime.data.model.*;
+
+public class SocketConnections {
+    /**
+     * Base class for socket connections.
+     *
+     * While binary operations, e.g. {@code writeBin} are only legal on binary connections, text
+     * operations are legal on text and binary connections.
+     */
+    public static class RSocketConnection extends BaseRConnection {
+        protected final boolean server;
+        protected final String host;
+        protected final int port;
+        protected final boolean blocking;
+        protected final int timeout;
+
+        public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout) throws IOException {
+            super(ConnectionClass.Socket, modeString);
+            this.server = server;
+            this.host = host;
+            this.port = port;
+            this.blocking = blocking;
+            this.timeout = timeout;
+            openNonLazyConnection();
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            DelegateRConnection delegate = server ? new RServerSocketConnection(this) : new RClientSocketConnection(this);
+            setDelegate(delegate);
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            return (server ? "<-" : "->") + host + ":" + port;
+        }
+    }
+
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
+        private Socket socket;
+        private SocketChannel socketChannel;
+        protected InputStream inputStream;
+        protected OutputStream outputStream;
+        protected final RSocketConnection thisBase;
+
+        protected RSocketReadWriteConnection(RSocketConnection base) {
+            super(base);
+            this.thisBase = base;
+        }
+
+        protected void openStreams(Socket socketArg) throws IOException {
+            this.socket = socketArg;
+            this.socketChannel = socket.getChannel();
+            if (thisBase.blocking) {
+                socket.setSoTimeout(thisBase.timeout * 1000);
+            } else {
+                socketChannel.configureBlocking(false);
+            }
+            inputStream = socket.getInputStream();
+            outputStream = socket.getOutputStream();
+        }
+
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            return readLinesHelper(inputStream, n);
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return inputStream;
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return outputStream;
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            writeLinesHelper(outputStream, lines, sep);
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            writeBinHelper(buffer, outputStream);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            return readBinHelper(buffer, inputStream);
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            writeCharHelper(outputStream, s, pad, eos);
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            return readCharHelper(nchars, inputStream, useBytes);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            return readBinCharsHelper(inputStream);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            outputStream.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            base.closed = true;
+            internalClose();
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            socket.close();
+        }
+
+    }
+
+    private static class RServerSocketConnection extends RSocketReadWriteConnection {
+        private ServerSocket serverSocket;
+
+        RServerSocketConnection(RSocketConnection base) throws IOException {
+            super(base);
+            InetSocketAddress addr = new InetSocketAddress(base.port);
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.bind(addr);
+            serverSocket = serverSocketChannel.socket();
+            openStreams(serverSocket.accept());
+        }
+
+        @Override
+        public void internalClose() throws IOException {
+            super.internalClose();
+            serverSocket.close();
+        }
+    }
+
+    private static class RClientSocketConnection extends RSocketReadWriteConnection {
+
+        RClientSocketConnection(RSocketConnection base) throws IOException {
+            super(base);
+            SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
+            openStreams(socketChannel.socket());
+        }
+
+    }
+
+}
