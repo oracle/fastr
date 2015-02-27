@@ -119,9 +119,9 @@ public abstract class S3DispatchNode extends DispatchNode {
         return evaluated;
     }
 
-    protected Object[] prepareArguments(Frame callerFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz, String functionName) {
+    protected final Object[] prepareArguments(Frame callerFrame, MaterializedFrame genericDefFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz, String functionName) {
         Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(callerFrame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
-        defineVarsAsArguments(argObject, genericName, clazz, callerFrame.materialize(), null);
+        defineVarsAsArguments(argObject, genericName, clazz, callerFrame.materialize(), genericDefFrame);
         RArguments.setS3Method(argObject, functionName);
         return argObject;
     }

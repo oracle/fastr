@@ -54,21 +54,26 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         @Children private final ReadVariableNode[] unsuccessfulReadsDefFrame;
         // if readsDefFrame != null, then this read will go to the def frame
         @Child private ReadVariableNode successfulRead;
+
         public final RFunction function;
         private final RStringVector clazz;
         private final String functionName;
+        private final ArgumentsSignature signature;
+        @CompilationFinal private final ArgumentsSignature[] varArgSignature;
 
         public CheckReadsNode(ReadVariableNode[] unsuccessfulReadsCallerFrame, ReadVariableNode[] unsuccessfulReadsDefFrame, ReadVariableNode successfulRead, RFunction function, RStringVector clazz,
-                        String functionName) {
+                        String functionName, ArgumentsSignature signature, ArgumentsSignature[] varArgSignature) {
             this.unsuccessfulReadsCallerFrame = unsuccessfulReadsCallerFrame;
             this.unsuccessfulReadsDefFrame = unsuccessfulReadsDefFrame;
             this.successfulRead = successfulRead;
             this.function = function;
             this.clazz = clazz;
             this.functionName = functionName;
+            this.signature = signature;
+            this.varArgSignature = varArgSignature;
         }
 
-        public boolean executeReads(Frame callerFrame, Frame defFrame) {
+        public boolean executeReads(Frame callerFrame, MaterializedFrame defFrame) {
             if (!executeReads(unsuccessfulReadsCallerFrame, callerFrame)) {
                 return false;
             }
@@ -94,6 +99,18 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             }
             return true;
         }
+
+        @ExplodeLoop
+        private static boolean checkLastArgSignature(Object[] args) {
+            for (int fi = 0; fi < args.length; ++fi) {
+                Object arg = args[fi];
+                if (arg instanceof RArgsValuesAndNames) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     @Child private CheckReadsNode cached;
@@ -106,39 +123,32 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Object[] arguments = extractArguments(frame);
+        ArgumentsSignature signature = RArguments.getSignature(frame);
+        MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
         MaterializedFrame callerFrame = getCallerFrame(frame);
-        if (cached == null) {
+
+        if (cached == null || !cached.executeReads(callerFrame, genericDefFrame)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specialize(frame, callerFrame, true);
-        } else {
-            executeReads(frame, callerFrame, true);
+            specialize(frame, callerFrame, signature, arguments, true);
         }
-// if (!checkLastArgSignature(arguments)) {
-// CompilerDirectives.transferToInterpreterAndInvalidate();
-// specialize(frame, callerFrame, true);
-// }
-        EvaluatedArguments reorderedArgs = reorderArguments(arguments, cached.function, RArguments.getSignature(frame), getSourceSection());
+
+        EvaluatedArguments reorderedArgs = doReorderArguments(arguments, cached.function, signature, getSourceSection());
         if (cached.function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
-        Object[] argObject = prepareArguments(callerFrame, reorderedArgs, cached.function, cached.clazz, cached.functionName);
+        Object[] argObject = prepareArguments(callerFrame, genericDefFrame, reorderedArgs, cached.function, cached.clazz, cached.functionName);
         return call.call(frame, argObject);
     }
 
-    @ExplodeLoop
-    private void executeReads(Frame callerFrame, MaterializedFrame genericDefEnv, boolean throwsRError) {
-        if (!cached.executeReads(callerFrame, genericDefEnv)) {
-            specialize(callerFrame, genericDefEnv, throwsRError);
-        }
-    }
-
-    private void specialize(Frame callerFrame, MaterializedFrame genericDefFrame, boolean throwsRError) {
+    private void specialize(Frame callerFrame, MaterializedFrame genericDefFrame, ArgumentsSignature signature, Object[] arguments, boolean throwsRError) {
         CompilerAsserts.neverPartOfCompilation();
+        // look for a match in the caller frame hierarchy
         TargetLookupResult result = findTargetFunctionLookup(callerFrame, type, genericName);
         ReadVariableNode[] unsuccessfulReadsCaller = result.unsuccessfulReads;
         ReadVariableNode[] unsuccessfulReadsDef = null;
         if (result.successfulRead == null) {
             if (genericDefFrame != null) {
+                // look for a match in the generic def frame hierarchy
                 result = findTargetFunctionLookup(genericDefFrame, type, genericName);
                 unsuccessfulReadsDef = result.unsuccessfulReads;
             }
@@ -151,15 +161,23 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             }
         }
 
+        ArgumentsSignature[] varArgSignatures = new ArgumentsSignature[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            if (arguments[i] instanceof RArgsValuesAndNames) {
+                varArgSignatures[i] = ((RArgsValuesAndNames) arguments[i]).getSignature();
+            }
+        }
+
+        CheckReadsNode newCheckedReads = new CheckReadsNode(unsuccessfulReadsCaller, unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName,
+                        signature, varArgSignatures);
         DirectCallNode newCall = Truffle.getRuntime().createDirectCallNode(result.targetFunction.getTarget());
-        CheckReadsNode newCheckedReads = new CheckReadsNode(unsuccessfulReadsCaller, unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName);
         if (call == null) {
-            call = insert(newCall);
             cached = insert(newCheckedReads);
+            call = insert(newCall);
         } else {
             RError.performanceWarning("re-specializing UseMethodDispatchCachedNode");
-            call.replace(newCall);
             cached.replace(newCheckedReads);
+            call.replace(newCall);
         }
     }
 
@@ -170,37 +188,23 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
 
     @Override
     public Object executeInternal(VirtualFrame frame, Object[] args) throws NoGenericMethodException {
+        Object[] arguments = extractArguments(frame);
+        ArgumentsSignature signature = RArguments.getSignature(frame);
         if (cached == null || !cached.executeReads(frame, null)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specialize(frame, null, false);
-        } else {
-            executeReads(frame, null, false);
+            specialize(frame, null, signature, arguments, false);
         }
         EvaluatedArguments reorderedArgs = reorderArguments(args, cached.function, suppliedSignature, getEncapsulatingSourceSection());
         if (cached.function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
-        Object[] argObject = prepareArguments(frame, reorderedArgs, cached.function, cached.clazz, cached.functionName);
+        Object[] argObject = prepareArguments(frame, null, reorderedArgs, cached.function, cached.clazz, cached.functionName);
         return call.call(frame, argObject);
     }
 
     @Override
     public Object executeInternalGeneric(VirtualFrame frame, RStringVector aType, Object[] args) throws NoGenericMethodException {
         throw RInternalError.shouldNotReachHere();
-    }
-
-    @CompilationFinal private ArgumentsSignature[] lastArgSignature;
-
-    @ExplodeLoop
-    private static boolean checkLastArgSignature(Object[] args) {
-        for (int fi = 0; fi < args.length; ++fi) {
-            Object arg = args[fi];
-            if (arg instanceof RArgsValuesAndNames) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return false;
-            }
-        }
-        return true;
     }
 
     private static final class TargetLookupResult {
@@ -288,7 +292,7 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
         if (targetFunction.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
-        Object[] argObject = prepareArguments(callerFrame, reorderedArgs, targetFunction, klass, targetFunctionName);
+        Object[] argObject = prepareArguments(callerFrame, RArguments.getEnclosingFrame(frame), reorderedArgs, targetFunction, klass, targetFunctionName);
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
