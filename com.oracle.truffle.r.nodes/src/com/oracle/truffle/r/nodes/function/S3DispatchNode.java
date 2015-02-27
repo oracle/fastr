@@ -31,6 +31,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     private final ConditionProfile callerFrameSlotPath = ConditionProfile.createBinaryProfile();
     protected final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile hasVarArgsProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile argumentCountProfile = ValueProfile.createPrimitiveProfile();
 
     @CompilationFinal private String lastFun;
     @Child private ReadVariableNode lookup;
@@ -57,14 +58,18 @@ public abstract class S3DispatchNode extends DispatchNode {
         return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
     }
 
-    @ExplodeLoop
-    protected static Object[] extractArguments(VirtualFrame frame) {
-        int argCount = RArguments.getArgumentsLength(frame);
+    protected Object[] extractArguments(VirtualFrame frame) {
+        int argCount = argumentCountProfile.profile(RArguments.getArgumentsLength(frame));
         Object[] argValues = new Object[argCount];
+        extractArgumentsLoop(frame, argCount, argValues);
+        return argValues;
+    }
+
+    @ExplodeLoop
+    private static void extractArgumentsLoop(VirtualFrame frame, int argCount, Object[] argValues) {
         for (int i = 0; i < argCount; ++i) {
             argValues[i] = RArguments.getArgument(frame, i);
         }
-        return argValues;
     }
 
     protected EvaluatedArguments reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
