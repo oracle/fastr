@@ -35,7 +35,9 @@ public final class RList extends RVector implements RAbstractVector {
 
     private Object[] data;
 
-    @CompilationFinal private static final String[] implicitClassHrDyn = {"", RType.List.getName()};
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.List.getName()}, true);
+    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.List.getName()}, true);
+    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.List.getName()}, true);
 
     @CompilationFinal public String elementNamePrefix;
 
@@ -227,7 +229,7 @@ public final class RList extends RVector implements RAbstractVector {
 
     @Override
     protected RStringVector getImplicitClassHr() {
-        return getClassHierarchyHelper(new String[]{RType.List.getName()}, implicitClassHrDyn);
+        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 
     public boolean checkCompleteness() {
