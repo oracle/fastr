@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.env.*;
 @NodeChild(value = "readArgNode", type = ReadArgumentNode.class)
 public abstract class AccessArgumentNode extends RNode {
 
-    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+    @Child private PromiseHelperNode promiseHelper;
 
     /**
      * The formal index of this argument.
@@ -123,7 +123,12 @@ public abstract class AccessArgumentNode extends RNode {
         assert !promise.isNonArgument();
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
-        if (promiseHelper.isInlined(promise)) {
+
+        if (promise.isInlined()) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
             return promiseHelper.evaluate(frame, promise);
         }
         return promise;
