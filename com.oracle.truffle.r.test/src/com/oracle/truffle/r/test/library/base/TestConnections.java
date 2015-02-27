@@ -22,11 +22,68 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
+import java.nio.file.*;
+
 import org.junit.*;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.*;
 
 public class TestConnections extends TestBase {
+    private static final class TestDir {
+        private final Path testDirPath;
+
+        TestDir() {
+            Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test");
+            testDirPath = TestBase.relativize(rpackages.resolve("library.base.conn"));
+            if (!testDirPath.toFile().exists()) {
+                testDirPath.toFile().mkdir();
+            }
+        }
+
+        String[] subDir(String p) {
+            return new String[]{testDirPath.resolve(p).toString()};
+        }
+    }
+
+    private static TestDir testDir;
+
+    @BeforeClass
+    public static void setupTestDir() {
+        testDir = new TestDir();
+    }
+
+    @AfterClass
+    public static void teardownTestDir() {
+        assertTrue(deleteDir(testDir.testDirPath));
+    }
+
+    @Test
+    public void testFileWriteReadLines() {
+        assertTemplateEval(TestBase.template("{ writeLines(c(\"line1\", \"line2\"), file(\"%0\")) }", testDir.subDir("wl1")));
+        assertTemplateEval(TestBase.template("{ readLines(file(\"%0\"), 2) }", testDir.subDir("wl1")));
+        assertTemplateEval(TestBase.template("{ con <- file(\"%0\"); writeLines(c(\"line1\", \"line2\"), con) }", testDir.subDir("wl2")));
+        assertTemplateEval(TestBase.template("{ con <- file(\"%0\"); readLines(con, 2) }", testDir.subDir("wl2")));
+    }
+
+    @Test
+    public void testFileWriteReadChar() {
+        assertTemplateEval(TestBase.template("{ writeChar(\"abc\", file(\"%0\")) }", testDir.subDir("wc1")));
+        assertTemplateEval(TestBase.template("{ readChar(file(\"%0\"), 3) }", testDir.subDir("wc1")));
+    }
+
+    @Test
+    public void testFileWriteReadBin() {
+        assertTemplateEval(TestBase.template("{ writeBin(\"abc\", file(\"%0\", open=\"wb\")) }", testDir.subDir("wb1")));
+        assertTemplateEval(TestBase.template("{ readBin(file(\"%0\", \"rb\"), 3) }", testDir.subDir("wb1")));
+    }
+
+    @Test
+    @Ignore
+    public void testWriteTextReadConnection() {
+        assertEvalError("{ writeChar(\"x\", textConnection(\"abc\")) }");
+    }
+
     @Test
     public void testTextReadConnection() {
         assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con) }");
@@ -36,7 +93,7 @@ public class TestConnections extends TestBase {
     }
 
     @Test
-    public void testPushBack() {
+    public void testPushBackTextConnection() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBackLength(con) }");
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); pushBackLength(con) }");
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); clearPushBack(con); pushBackLength(con) }");
@@ -57,4 +114,5 @@ public class TestConnections extends TestBase {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); readLines(con, 1) }");
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); readLines(con, 2) }");
     }
+
 }

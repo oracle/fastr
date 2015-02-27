@@ -297,6 +297,7 @@ public final class RError extends RuntimeException {
         CANNOT_WRITE_CONNECTION("cannot write to this connection"),
         ONLY_READ_BINARY_CONNECTION("can only read from a binary connection"),
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
+        MORE_CHARACTERS("more characters requested than are in the string - will zero-pad"),
         TOO_FEW_LINES_READ_LINES("too few lines read in readLineWRITE_ONs"),
         INVALID_CONNECTION("invalid connection"),
         OUT_OF_RANGE("out-of-range values treated as 0 in coercion to raw"),

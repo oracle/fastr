@@ -28,6 +28,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestConnections_testWriteTextReadConnection_a7a7cde7deb5eff04d965a6084a4b5a3() {
+        assertEvalError("{ writeChar(\"x\", textConnection(\"abc\")) }");
+        check("TestConnections_testWriteTextReadConnection_a7a7cde7deb5eff04d965a6084a4b5a3");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testIntegerOverflow_e56646664ed3ccebd0b978a474ccae3c() {
         assertEvalWarning("{ x <- 2147483647L ; x + 1L }");
         check("TestSimpleArithmetic_testIntegerOverflow_e56646664ed3ccebd0b978a474ccae3c");

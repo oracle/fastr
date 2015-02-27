@@ -242,27 +242,24 @@ public abstract class RConnection implements RClassHierarchy {
 
     public abstract void flush() throws IOException;
 
-    public RStringVector readChar(RAbstractIntVector nchars, @SuppressWarnings("unused") boolean useBytes) throws IOException {
-        InputStream inputStream = getInputStream();
-        String[] data = new String[nchars.getLength()];
-        for (int i = 0; i < data.length; i++) {
-            byte[] bytes = new byte[nchars.getDataAt(i)];
-            inputStream.read(bytes);
-            int j = 0;
-            for (; j < bytes.length; j++) {
-                // strings end at 0
-                if (bytes[j] == 0) {
-                    break;
-                }
-            }
-            data[i] = new String(bytes, 0, j, "US-ASCII");
-        }
-
-        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-
-    }
-
     public abstract int getDescriptor();
+
+    /**
+     * Internal connection-specific support for the {@code writeChar} builtin.
+     *
+     * @param s string to output
+     * @param pad number of (zero) pad bytes
+     * @param eos string to append to s
+     * @param useBytes TODO
+     */
+    public abstract void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException;
+
+    /**
+     * Internal connection-specific support for the {@code readChar} builtin.
+     *
+     * @param nchars number of characters to read
+     */
+    public abstract String readChar(int nchars, boolean useBytes) throws IOException;
 
     /**
      * Internal connection-specific support for the {@code writeBin} builtin. The implementation

@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
+import java.nio.file.attribute.*;
 
 import static org.junit.Assert.fail;
 
@@ -703,4 +704,34 @@ public class TestBase {
             quiet = true;
         }
     }
+
+    protected static boolean deleteDir(Path dir) {
+        try {
+            Files.walkFileTree(dir, DELETE_VISITOR);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    private static final class DeleteVisitor extends SimpleFileVisitor<Path> {
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            return del(file);
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            return del(dir);
+        }
+
+        private static FileVisitResult del(Path p) throws IOException {
+            Files.delete(p);
+            return FileVisitResult.CONTINUE;
+        }
+
+    }
+
+    private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
 }

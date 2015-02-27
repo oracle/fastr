@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.test.rpackages;
 
-import java.io.*;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
 import java.util.*;
 
 import org.junit.*;
@@ -94,33 +92,13 @@ public class TestRPackages extends TestBase {
         private boolean uninstallPackage(String packageName) {
             Path packageDir = rpackagesLibs.resolve(packageName);
             try {
-                Files.walkFileTree(packageDir, DELETE_VISITOR);
+                deleteDir(packageDir);
             } catch (Exception e) {
                 return false;
             }
             return true;
         }
 
-        private static final class DeleteVisitor extends SimpleFileVisitor<Path> {
-
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                return del(file);
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                return del(dir);
-            }
-
-            private static FileVisitResult del(Path p) throws IOException {
-                Files.delete(p);
-                return FileVisitResult.CONTINUE;
-            }
-
-        }
-
-        private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
     }
 
     private static final PackagePaths packagePaths = new PackagePaths();

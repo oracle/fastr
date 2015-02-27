@@ -10,97 +10,97 @@ import com.oracle.truffle.r.test.*;
 public class AllTests extends TestBase {
 
     @Test
-    public void TestConnections_testPushBack_57eb33ce24132c578875659c3672161c() {
+    public void TestConnections_testPushBackTextConnection_57eb33ce24132c578875659c3672161c() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_9ab94443d4655966c16600edc46013db() {
+    public void TestConnections_testPushBackTextConnection_9ab94443d4655966c16600edc46013db() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_fb83ddf08b850f1fb0fcfa825768f88c() {
+    public void TestConnections_testPushBackTextConnection_fb83ddf08b850f1fb0fcfa825768f88c() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); clearPushBack(con); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_55ed6d0b83e86e1385de091582e4af8d() {
+    public void TestConnections_testPushBackTextConnection_55ed6d0b83e86e1385de091582e4af8d() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); readLines(con, 1) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_d91ddfe61c4e439f5209ecaba013916d() {
+    public void TestConnections_testPushBackTextConnection_d91ddfe61c4e439f5209ecaba013916d() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con); readLines(con, 2) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_94a34439238e4c99bceeda15b2b188e9() {
+    public void TestConnections_testPushBackTextConnection_94a34439238e4c99bceeda15b2b188e9() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con, newLine=FALSE); readLines(con, 1) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_4fdcb63fc43fe75d3bcbc2d474febfd7() {
+    public void TestConnections_testPushBackTextConnection_4fdcb63fc43fe75d3bcbc2d474febfd7() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(\"G\", con, newLine=FALSE); readLines(con, 2) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_db52df62c6e2dbab91e2a3304e913e32() {
+    public void TestConnections_testPushBackTextConnection_db52df62c6e2dbab91e2a3304e913e32() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_c5817008fe12a3cea146ab439cf253d0() {
+    public void TestConnections_testPushBackTextConnection_c5817008fe12a3cea146ab439cf253d0() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con); readLines(con, 1) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_fd6725165764cf8a366286d2f48fd0bd() {
+    public void TestConnections_testPushBackTextConnection_fd6725165764cf8a366286d2f48fd0bd() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con); readLines(con, 2) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_196e9a486c227dad1cbdeb22ca8fbcb9() {
+    public void TestConnections_testPushBackTextConnection_196e9a486c227dad1cbdeb22ca8fbcb9() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con, newLine=FALSE); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_29dbbd688316a533cf6a889c7313ebf4() {
+    public void TestConnections_testPushBackTextConnection_29dbbd688316a533cf6a889c7313ebf4() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con, newLine=FALSE); readLines(con, 1) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_76de44fe978f208462151f57d1ee3aed() {
+    public void TestConnections_testPushBackTextConnection_76de44fe978f208462151f57d1ee3aed() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\", \"H\"), con, newLine=FALSE); readLines(con, 2) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_e4b327628b569f903a3f239f5a226fb7() {
+    public void TestConnections_testPushBackTextConnection_e4b327628b569f903a3f239f5a226fb7() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_d4d6eb9b95b2dee91619746ab87657ca() {
+    public void TestConnections_testPushBackTextConnection_d4d6eb9b95b2dee91619746ab87657ca() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con); readLines(con, 1) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_6f6542b9ba9f30da8906fc36a12e7b6f() {
+    public void TestConnections_testPushBackTextConnection_6f6542b9ba9f30da8906fc36a12e7b6f() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con); readLines(con, 2) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_3452d401d4b77d0a5da3cec670b75dd6() {
+    public void TestConnections_testPushBackTextConnection_3452d401d4b77d0a5da3cec670b75dd6() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); pushBackLength(con) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_ef4bb1fb2afbe783e73c8f6450c67c32() {
+    public void TestConnections_testPushBackTextConnection_ef4bb1fb2afbe783e73c8f6450c67c32() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); readLines(con, 1) }");
     }
 
     @Test
-    public void TestConnections_testPushBack_e0fcd304300ae2e3c775fa989d5a667d() {
+    public void TestConnections_testPushBackTextConnection_e0fcd304300ae2e3c775fa989d5a667d() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBack(c(\"G\\nH\"), con, newLine=FALSE); readLines(con, 2) }");
     }
 
@@ -122,6 +122,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestConnections_testTextReadConnection_dc19b2220ba560eec444032f971cff2f() {
         assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }");
+    }
+
+    @Test
+    public void TestConnections_testWriteTextReadConnection_a7a7cde7deb5eff04d965a6084a4b5a3() {
+        assertEvalError("{ writeChar(\"x\", textConnection(\"abc\")) }");
     }
 
     @Test
