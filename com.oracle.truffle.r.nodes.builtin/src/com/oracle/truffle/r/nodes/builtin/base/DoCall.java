@@ -57,7 +57,7 @@ public abstract class DoCall extends RBuiltinNode {
         return doDoCall(frame, func, argsAsList, env);
     }
 
-    @Specialization()
+    @Specialization
     protected Object doDoCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         Object[] argValues = argsAsList.getDataNonShared();
         RStringVector n = argsAsList.getNames();

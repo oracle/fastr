@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
-public class RArgsValuesAndNames {
+public final class RArgsValuesAndNames {
     /**
      * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
      * The {@link RMissing#instance} for "...".

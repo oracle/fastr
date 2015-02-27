@@ -164,7 +164,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(frame)) : frame);
     }
 
-    public Object execute(VirtualFrame frame, MaterializedFrame variableFrame) {
+    public Object execute(VirtualFrame frame, Frame variableFrame) {
         return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(variableFrame)) : variableFrame);
     }
 
