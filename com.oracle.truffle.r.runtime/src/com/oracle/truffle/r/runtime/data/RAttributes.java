@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,12 +32,6 @@ import com.oracle.truffle.r.runtime.*;
 /**
  * Provides the generic mechanism for associating attributes with a R object. It does no special
  * analysis of the "name" of the attribute; that is left to other classes, e.g. {@link RVector}.
- *
- * Experimentally, the typical size of an attribute set is 1, so the default implementation is
- * optimized for that case and encodes the singleton attribute directly in the fields
- * {@link RAttributesImpl#name1}and {@link RAttributesImpl#value1}. A {@code null} value for
- * {@code value1} indicates no attributes set. If the number of attributes exceeds 1, {@code value1}
- * is an {@link ArrayList} that stores instances of {@link AttrInstance}.
  */
 public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
 
@@ -98,7 +93,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
      * The implementation class which is separate to avoid a circularity that would result from the
      * {@code Iterable} in the abstract class.
      */
-    private static class RAttributesImpl extends RAttributes implements RAttribute {
+    private static class RAttributesImpl extends RAttributes {
 
         RAttributesImpl() {
             if (statsProfile.profile(stats != null)) {
@@ -107,144 +102,82 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
         private RAttributesImpl(RAttributesImpl attrs) {
-            if (attrs.value1 != null) {
-                if (attrs.value1 instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<AttrInstance> list = (ArrayList<AttrInstance>) attrs.value1;
-                    ArrayList<AttrInstance> newList = new ArrayList<>(list.size());
-                    // important to create new AttrInstance objects, but the
-                    // underlying data does not need to be deep copied
-                    for (int i = 0; i < list.size(); i++) {
-                        AttrInstance a = list.get(i);
-                        newList.add(new AttrInstance(a.name, a.value));
-                    }
-                    this.value1 = newList;
-                } else {
-                    this.name1 = attrs.name1;
-                    this.value1 = attrs.value1;
-                }
+            if (attrs.size != 0) {
+                size = attrs.size;
+                names = Arrays.copyOf(attrs.names, size);
+                values = Arrays.copyOf(attrs.values, size);
             }
         }
 
-        private static AttrInstance find(ArrayList<AttrInstance> list, String name) {
-            for (int i = 0; i < list.size(); i++) {
-                AttrInstance a = list.get(i);
-                if (a.name.equals(name)) {
-                    return a;
+        private int find(String name) {
+            for (int i = 0; i < size; i++) {
+                if (names[i] != null && names[i].equals(name)) {
+                    return i;
                 }
             }
-            return null;
+            return -1;
         }
 
         @Override
-        public void put(String name, Object value) {
-            if (value1 == null) {
-                name1 = name;
-                value1 = value;
-            } else if (value1 instanceof ArrayList) {
-                @SuppressWarnings("unchecked")
-                ArrayList<AttrInstance> list = (ArrayList<AttrInstance>) value1;
-                AttrInstance attr = find(list, name);
-                if (attr != null) {
-                    attr.value = value;
-                    // no stats update needed, same size
-                    return;
+        public void put(String newName, Object newValue) {
+            int pos = find(newName);
+            if (pos == -1) {
+                if (size == names.length) {
+                    names = Arrays.copyOf(names, (size + 1) * 2);
+                    values = Arrays.copyOf(values, (size + 1) * 2);
+                    assert names.length == values.length;
                 }
-                list.add(new AttrInstance(name, value));
-            } else {
-                if (name1.equals(name)) {
-                    value1 = value;
-                    // no stats update needed, same size
-                    return;
-                } else {
-                    ArrayList<AttrInstance> list = new ArrayList<>(2);
-                    list.add(new AttrInstance(name1, value1));
-                    list.add(new AttrInstance(name, value));
-                    value1 = list;
-                }
+                pos = size++;
+                names[pos] = newName;
             }
+            values[pos] = newValue;
             if (statsProfile.profile(stats != null)) {
                 stats.update(this);
             }
         }
 
-        /**
-         * For 1 attribute, the {@code name}.
-         */
-        private String name1;
-        /**
-         * For 1 attribute the {@code value}, else an instance of {@code ArrayList<AttrInstance>}. A
-         * value of {@code null} means no attributes.
-         */
-        private Object value1;
+        private static final String[] EMPTY_STRING_ARRAY = new String[0];
+        private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+
+        private String[] names = EMPTY_STRING_ARRAY;
+        private Object[] values = EMPTY_OBJECT_ARRAY;
+        private int size;
 
         @Override
-        @SuppressWarnings("unchecked")
         public int size() {
-            if (value1 == null) {
-                return 0;
-            } else if (value1 instanceof ArrayList) {
-                return ((ArrayList<AttrInstance>) value1).size();
-            } else {
-                return 1;
-            }
+            return size;
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public boolean isEmpty() {
-            if (value1 == null) {
-                return true;
-            } else if (value1 instanceof ArrayList) {
-                return ((ArrayList<AttrInstance>) value1).isEmpty();
-            } else {
-                return false;
-            }
+            return size == 0;
         }
 
         @Override
         public void remove(String name) {
-            if (value1 != null) {
-                if (value1 instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<AttrInstance> list = (ArrayList<AttrInstance>) value1;
-                    for (int i = 0; i < list.size(); i++) {
-                        AttrInstance a = list.get(i);
-                        if (a.name.equals(name)) {
-                            list.remove(i);
-                            return;
-                        }
-                    }
-                } else {
-                    if (name1.equals(name)) {
-                        value1 = null;
-                    }
+            int pos = find(name);
+            if (pos != -1) {
+                size--;
+                for (int i = pos; i < size; i++) {
+                    names[i] = names[i + 1];
+                    values[i] = values[i + 1];
                 }
+                names[size] = null;
+                values[size] = null;
             }
         }
 
         @Override
         public Object get(String name) {
-            if (value1 != null) {
-                if (value1 instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<AttrInstance> list = (ArrayList<AttrInstance>) value1;
-                    AttrInstance attr = find(list, name);
-                    if (attr != null) {
-                        return attr.value;
-                    }
-                } else {
-                    if (name1.equals(name)) {
-                        return value1;
-                    }
-                }
-            }
-            return null;
+            int pos = find(name);
+            return pos == -1 ? null : values[pos];
         }
 
         @Override
         public void clear() {
-            value1 = null;
+            names = EMPTY_STRING_ARRAY;
+            values = EMPTY_OBJECT_ARRAY;
+            size = 0;
         }
 
         @Override
@@ -263,76 +196,35 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             StringBuffer sb = new StringBuffer().append('{');
-            if (value1 != null) {
-                if (value1 instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<AttrInstance> list = (ArrayList<AttrInstance>) value1;
-                    for (int i = 0; i < list.size(); i++) {
-                        AttrInstance a = list.get(i);
-                        if (i != 0) {
-                            sb.append(", ");
-                        }
-                        sb.append(a.toString());
-                    }
-                } else {
-                    sb.append(name1);
-                    sb.append(": ");
-                    sb.append(value1.toString());
+            for (int i = 0; i < size; i++) {
+                if (i != 0) {
+                    sb.append(", ");
                 }
+                sb.append(names[i]).append('=').append(values[i]);
             }
             sb.append('}');
             return sb.toString();
         }
 
         private class Iter implements Iterator<RAttribute> {
-            ListIterator<AttrInstance> iter;
-            boolean readSingleton;
+            int index;
 
             Iter() {
-                if (value1 == null) {
-                    readSingleton = true;
-                } else if (value1 instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<AttrInstance> list = (ArrayList<AttrInstance>) value1;
-                    iter = list.listIterator();
-                } else {
-                    // singleton to read
-                }
-
+                index = 0;
             }
 
             @Override
             public boolean hasNext() {
-                if (iter != null) {
-                    return iter.hasNext();
-                } else {
-                    return !readSingleton;
-                }
+                return index < size;
             }
 
             @Override
             public RAttribute next() {
-                if (iter != null) {
-                    return iter.next();
-                } else {
-                    if (readSingleton) {
-                        throw noSuchElement();
-                    } else {
-                        readSingleton = true;
-                        return RAttributesImpl.this;
-                    }
-                }
+                return new AttrInstance(names[index], values[index++]);
             }
 
-        }
-
-        public String getName() {
-            return name1;
-        }
-
-        public Object getValue() {
-            return value1;
         }
 
         @TruffleBoundary

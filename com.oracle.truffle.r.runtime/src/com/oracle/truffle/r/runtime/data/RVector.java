@@ -629,7 +629,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         assert (this.names == null);
         assert (this.dimNames == null);
         assert (this.dimensions == null);
-        assert (this.attributes == null || this.attributes.size() == 0);
+        assert (this.attributes == null || this.attributes.size() == 0) : this.attributes.size();
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
             // only assign name attribute if it's not represented as dimnames (as is the case for
             // one-dimensional array)
