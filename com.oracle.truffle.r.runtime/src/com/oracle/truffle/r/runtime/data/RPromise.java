@@ -318,14 +318,14 @@ public class RPromise extends RLanguageRep {
      *
      * @param underEvaluation The new value to set
      */
-    public void setUnderEvaluation(boolean underEvaluation) {
+    public final void setUnderEvaluation(boolean underEvaluation) {
         this.underEvaluation = underEvaluation;
     }
 
     /**
      * @return The state of the {@link #underEvaluation} flag.
      */
-    public boolean isUnderEvaluation() {
+    public final boolean isUnderEvaluation() {
         return underEvaluation;
     }
 
@@ -350,7 +350,7 @@ public class RPromise extends RLanguageRep {
      * originally read from has not been altered in the mean time. If this cannot be guaranteed for
      * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
      */
-    public static class EagerPromise extends RPromise {
+    public static final class EagerPromise extends RPromise {
         protected final Object eagerValue;
 
         private final FrameSlotInfo notChangedNonLocally;
