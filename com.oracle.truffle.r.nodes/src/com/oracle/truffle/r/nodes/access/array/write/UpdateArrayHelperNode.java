@@ -676,19 +676,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
             int orgLength = resultVector.getLength();
-            resultVector.resize(highestPos, false);
+            resultVector = (RList) resultVector.resize(highestPos, false);
             for (int i = orgLength; i < highestPos; i++) {
                 resultVector.updateDataAt(i, RNull.instance, null);
             }
-        } else if (resetDims) {
-            vectorNoDims.enter();
-            resultVector.setDimensions(null);
-            resultVector.setDimNames(null);
-        }
-        if (resultVector.isShared()) {
+        } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RList) vector.copy();
             resultVector.markNonTemporary();
+        }
+        if (resetDims) {
+            vectorNoDims.enter();
+            resultVector.setDimensions(null);
+            resultVector.setDimNames(null);
         }
         return resultVector;
     }
@@ -1096,9 +1096,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RIntVector resultVector = vector.materialize();
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
-            resultVector.resize(highestPos, false);
-        }
-        if (resultVector.isShared()) {
+            resultVector = (RIntVector) resultVector.resize(highestPos, false);
+        } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
             resultVector.markNonTemporary();
@@ -1268,9 +1267,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RDoubleVector resultVector = vector.materialize();
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
-            resultVector.resize(highestPos, false);
-        }
-        if (resultVector.isShared()) {
+            resultVector = (RDoubleVector) resultVector.resize(highestPos, false);
+        } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
             resultVector.markNonTemporary();
@@ -1443,9 +1441,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RLogicalVector resultVector = vector;
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
-            resultVector.resize(highestPos, false);
-        }
-        if (vector.isShared()) {
+            resultVector = (RLogicalVector) resultVector.resize(highestPos, false);
+        } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
             resultVector.markNonTemporary();
@@ -1553,9 +1550,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RStringVector resultVector = vector;
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
-            resultVector.resize(highestPos, false);
-        }
-        if (vector.isShared()) {
+            resultVector = (RStringVector) resultVector.resize(highestPos, false);
+        } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
             resultVector.markNonTemporary();
@@ -1694,9 +1690,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RComplexVector resultVector = vector;
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
-            resultVector.resize(highestPos, false);
-        }
-        if (vector.isShared()) {
+            resultVector = (RComplexVector) resultVector.resize(highestPos, false);
+        } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
             resultVector.markNonTemporary();
@@ -1897,9 +1892,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RRawVector resultVector = vector;
         if (resultVector.getLength() < highestPos) {
             vectorTooShort.enter();
-            resultVector.resize(highestPos, false);
-        }
-        if (vector.isShared()) {
+            resultVector = (RRawVector) resultVector.resize(highestPos, false);
+        } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
             resultVector.markNonTemporary();

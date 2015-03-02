@@ -234,6 +234,9 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
             Object value = profiledGetValue(variableFrame, slot);
+            if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
+                return null;
+            }
             if (checkType(frame, value)) {
                 throw new LayoutChangedException();
             }
@@ -277,6 +280,9 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
             Object value = profiledGetValue(variableFrame, slot);
+            if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
+                return null;
+            }
             if (!checkType(frame, value)) {
                 throw new LayoutChangedException();
             }
@@ -432,7 +438,11 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             if (frameSlot != null) {
                 Object value = getValue(current, frameSlot);
                 valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
-                match = checkType(frame, value);
+                if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
+                    match = false;
+                } else {
+                    match = checkType(frame, value);
+                }
             }
 
             // figure out how to get to the next frame or descriptor
