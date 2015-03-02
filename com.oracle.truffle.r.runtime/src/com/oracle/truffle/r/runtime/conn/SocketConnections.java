@@ -127,6 +127,11 @@ public class SocketConnections {
         }
 
         @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            writeStringHelper(outputStream, s, nl);
+        }
+
+        @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
             return readCharHelper(nchars, inputStream, useBytes);
         }

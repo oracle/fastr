@@ -156,7 +156,12 @@ public class ConnectionSupport {
         }
 
         public String summaryString() {
-            return abstractOpenMode == AbstractOpenMode.Lazy ? "" : modeString;
+            /*
+             * FIXME this is not entirely consistent with GnuR, which sometimes displays "" for
+             * unopened connections instead of the default mode. E.g. file("foo") and
+             * socketConnection(open="", port=n) differ.
+             */
+            return modeString;
         }
     }
 
@@ -376,6 +381,12 @@ public class ConnectionSupport {
         }
 
         @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            checkOpen();
+            theConnection.writeString(s, nl);
+        }
+
+        @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
             checkOpen();
             return theConnection.readChar(nchars, useBytes);
@@ -578,6 +589,13 @@ public class ConnectionSupport {
             }
         }
 
+        default void writeStringHelper(OutputStream out, String s, boolean nl) throws IOException {
+            out.write(s.getBytes());
+            if (nl) {
+                out.write('\n');
+            }
+        }
+
         default void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
             out.write(s.getBytes());
             if (pad > 0) {
@@ -701,6 +719,11 @@ public class ConnectionSupport {
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
             throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
         }
 

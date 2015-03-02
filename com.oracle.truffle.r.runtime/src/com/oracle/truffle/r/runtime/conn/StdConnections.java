@@ -35,17 +35,49 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class StdConnections {
     private static StdinConnection stdin;
     private static StdoutConnection stdout;
-    private static StdoutConnection stderr;
+    private static StderrConnection stderr;
 
     public static void initialize() {
         // This ensures the connections are initialized on engine startup.
         try {
             stdin = new StdinConnection();
-            stdout = new StdoutConnection(false);
-            stderr = new StdoutConnection(true);
+            stdout = new StdoutConnection();
+            stderr = new StderrConnection();
         } catch (IOException ex) {
             Utils.fail("failed to open stdconnections:");
         }
+    }
+
+    public static RConnection getStdin() {
+        return stdin;
+    }
+
+    public static RConnection getStdout() {
+        return stdout;
+    }
+
+    public static RConnection getStderr() {
+        return stderr;
+    }
+
+    public static boolean pushDivertOut(RConnection conn, boolean closeOnExit) {
+        return stdout.pushDivert(conn, closeOnExit);
+    }
+
+    public static void popDivertOut() throws IOException {
+        stdout.popDivert();
+    }
+
+    public static void divertErr(RConnection conn) {
+        stderr.divertErr(conn);
+    }
+
+    public static int stdoutDiversions() {
+        return stdout.numDiversions();
+    }
+
+    public static int stderrDiversion() {
+        return stderr.diversionIndex();
     }
 
     /**
@@ -79,7 +111,12 @@ public class StdConnections {
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw new IOException("writeBin not implemented for this connection");
+            throw new IOException("'write' not enabled for this connection");
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            throw new IOException("'write' not enabled for this connection");
         }
 
         @Override
@@ -94,7 +131,7 @@ public class StdConnections {
 
         @Override
         public RConnection forceOpen(String modeString) {
-            throw RInternalError.shouldNotReachHere();
+            return this;
         }
     }
 
@@ -102,11 +139,6 @@ public class StdConnections {
 
         StdinConnection() throws IOException {
             super(AbstractOpenMode.Read, 0);
-        }
-
-        @Override
-        public boolean isStdin() {
-            return true;
         }
 
         @Override
@@ -143,23 +175,12 @@ public class StdConnections {
 
     }
 
-    public static RConnection getStdin() {
-        return stdin;
-    }
+    private abstract static class StdoutputAdapter extends StdConnection {
+        protected ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
 
-    private static class StdoutConnection extends StdConnection {
-
-        private final boolean isErr;
-
-        StdoutConnection(boolean isErr) throws IOException {
-            super(AbstractOpenMode.Write, isErr ? 2 : 1);
+        StdoutputAdapter(int index) throws IOException {
+            super(AbstractOpenMode.Write, index);
             this.opened = true;
-            this.isErr = isErr;
-        }
-
-        @Override
-        public String getSummaryDescription() {
-            return isErr ? "stderr" : "stdout";
         }
 
         @Override
@@ -172,38 +193,127 @@ public class StdConnections {
             return true;
         }
 
-        @Override
-        public boolean isStdout() {
-            return isErr ? false : true;
+    }
+
+    private static class StdoutConnection extends StdoutputAdapter {
+
+        private static class Diversion {
+            final RConnection conn;
+            final boolean closeOnExit;
+
+            Diversion(RConnection conn, boolean closeOnExit) {
+                this.conn = conn;
+                this.closeOnExit = closeOnExit;
+            }
+
+        }
+
+        private static final Diversion[] diversions = new Diversion[20];
+
+        private static int top = -1;
+
+        StdoutConnection() throws IOException {
+            super(1);
+        }
+
+        int numDiversions() {
+            return top + 1;
         }
 
         @Override
-        public boolean isStderr() {
-            return isErr ? true : false;
+        public String getSummaryDescription() {
+            return "stdout";
         }
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
-            ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             for (int i = 0; i < lines.getLength(); i++) {
                 String line = lines.getDataAt(i);
-                if (isErr) {
-                    ch.printError(line);
-                    ch.printError(sep);
+                writeString(line, false);
+                writeString(sep, false);
+            }
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            if (top < 0) {
+                if (nl) {
+                    consoleHandler.println(s);
                 } else {
-                    ch.print(line);
-                    ch.print(sep);
+                    consoleHandler.print(s);
+                }
+            } else {
+                diversions[top].conn.writeString(s, nl);
+            }
+        }
+
+        boolean pushDivert(RConnection conn, boolean closeOnExit) {
+            if (top < diversions.length - 1) {
+                top++;
+                diversions[top] = new Diversion(conn, closeOnExit);
+            } else {
+                return false;
+            }
+            return true;
+        }
+
+        void popDivert() throws IOException {
+            if (top >= 0) {
+                int ctop = top;
+                top--;
+                if (diversions[ctop].closeOnExit) {
+                    diversions[ctop].conn.closeAndDestroy();
                 }
             }
         }
     }
 
-    public static RConnection getStdout() {
-        return stdout;
-    }
+    private static class StderrConnection extends StdoutputAdapter {
+        RConnection diversion;
 
-    public static RConnection getStderr() {
-        return stderr;
+        StderrConnection() throws IOException {
+            super(2);
+        }
+
+        void divertErr(RConnection conn) {
+            if (conn == stderr) {
+                diversion = null;
+            } else {
+                diversion = conn;
+            }
+        }
+
+        int diversionIndex() {
+            return diversion == null ? 2 : diversion.getDescriptor();
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            return "stderr";
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                String line = lines.getDataAt(i);
+                writeString(line, false);
+                writeString(sep, false);
+            }
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            if (diversion != null) {
+                diversion.writeString(s, nl);
+            } else {
+                if (nl) {
+                    consoleHandler.printErrorln(s);
+                } else {
+                    consoleHandler.printError(s);
+                }
+            }
+        }
+
     }
 
 }
