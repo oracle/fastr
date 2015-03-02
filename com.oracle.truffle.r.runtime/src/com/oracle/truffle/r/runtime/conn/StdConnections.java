@@ -33,14 +33,28 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class StdConnections {
+    private static StdinConnection stdin;
+    private static StdoutConnection stdout;
+    private static StdoutConnection stderr;
+
+    public static void initialize() {
+        // This ensures the connections are initialized on engine startup.
+        try {
+            stdin = new StdinConnection();
+            stdout = new StdoutConnection(false);
+            stderr = new StdoutConnection(true);
+        } catch (IOException ex) {
+            Utils.fail("failed to open stdconnections:");
+        }
+    }
+
     /**
      * Subclasses are special in that they do not use delegation as the connection is always open.
      */
     private abstract static class StdConnection extends BaseRConnection {
-        StdConnection(OpenMode openMode, int index) {
-            super(ConnectionClass.Terminal, openMode, true);
+        StdConnection(AbstractOpenMode openMode, int index) throws IOException {
+            super(openMode, index);
             this.opened = true;
-            ConnectionSupport.setStdConnection(index, this);
         }
 
         @Override
@@ -54,7 +68,7 @@ public class StdConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             throw new IOException(RError.Message.CANNOT_CLOSE_STANDARD_CONNECTIONS.message);
         }
 
@@ -79,15 +93,15 @@ public class StdConnections {
         }
 
         @Override
-        public boolean forceOpen(String modeString) {
-            return true;
+        public RConnection forceOpen(String modeString) {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 
     private static class StdinConnection extends StdConnection {
 
-        StdinConnection() {
-            super(new OpenMode("r", AbstractOpenMode.Read), 0);
+        StdinConnection() throws IOException {
+            super(AbstractOpenMode.Read, 0);
         }
 
         @Override
@@ -129,8 +143,6 @@ public class StdConnections {
 
     }
 
-    private static final StdinConnection stdin = new StdinConnection();
-
     public static RConnection getStdin() {
         return stdin;
     }
@@ -139,8 +151,8 @@ public class StdConnections {
 
         private final boolean isErr;
 
-        StdoutConnection(boolean isErr) {
-            super(new OpenMode("w", AbstractOpenMode.Write), isErr ? 2 : 1);
+        StdoutConnection(boolean isErr) throws IOException {
+            super(AbstractOpenMode.Write, isErr ? 2 : 1);
             this.opened = true;
             this.isErr = isErr;
         }
@@ -186,13 +198,9 @@ public class StdConnections {
         }
     }
 
-    private static final StdoutConnection stdout = new StdoutConnection(false);
-
     public static RConnection getStdout() {
         return stdout;
     }
-
-    private static final StdoutConnection stderr = new StdoutConnection(true);
 
     public static RConnection getStderr() {
         return stderr;

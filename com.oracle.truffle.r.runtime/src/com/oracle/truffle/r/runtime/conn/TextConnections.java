@@ -38,7 +38,7 @@ public class TextConnections {
         protected REnvironment env;
 
         public TextRConnection(String nm, RAbstractStringVector object, REnvironment env, String modeString) throws IOException {
-            super(ConnectionClass.Text, modeString);
+            super(ConnectionClass.Text, modeString, AbstractOpenMode.Read);
             this.nm = nm;
             this.object = object;
             this.env = env;
@@ -105,12 +105,12 @@ public class TextConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
         }
 
         @Override
-        public void internalClose() {
+        public void close() {
         }
 
         @Override

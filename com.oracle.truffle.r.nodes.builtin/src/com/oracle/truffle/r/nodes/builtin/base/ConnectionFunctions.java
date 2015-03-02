@@ -232,9 +232,9 @@ public abstract class ConnectionFunctions {
             Object[] data = new Object[NAMES.getLength()];
             data[0] = baseCon.getSummaryDescription();
             data[1] = baseCon.getClassHr().getDataAt(0);
-            data[2] = baseCon.getOpenMode().modeString;
+            data[2] = baseCon.getOpenMode().summaryString();
             data[3] = baseCon.getSummaryText();
-            data[4] = baseCon.isClosed() || !baseCon.isOpen() ? "closed" : "opened";
+            data[4] = baseCon.isOpen() ? "opened" : "closed";
             data[5] = baseCon.canRead() ? "yes" : "no";
             data[6] = baseCon.canWrite() ? "yes" : "no";
             return RDataFactory.createList(data, NAMES);
@@ -279,7 +279,7 @@ public abstract class ConnectionFunctions {
         protected RLogicalVector isOpen(RConnection con, RAbstractIntVector rw) {
             controlVisibility();
             BaseRConnection baseCon = getBaseConnection(con);
-            boolean result = !baseCon.isClosed() && baseCon.isOpen();
+            boolean result = baseCon.isOpen();
             switch (rw.getDataAt(0)) {
                 case 0:
                     break;
@@ -311,7 +311,7 @@ public abstract class ConnectionFunctions {
         protected Object close(RConnection con) {
             forceVisibility(false);
             try {
-                con.close();
+                con.closeAndDestroy();
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
@@ -334,7 +334,7 @@ public abstract class ConnectionFunctions {
         protected void internalClose(RConnection con) throws RError {
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
-                baseConn.internalClose();
+                baseConn.close();
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
@@ -349,20 +349,14 @@ public abstract class ConnectionFunctions {
         protected Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding, @SuppressWarnings("unused") byte skipNul) {
             // TODO implement all the arguments
             controlVisibility();
-            boolean wasOpen = true;
-            try {
-                wasOpen = con.forceOpen("rt");
-                String[] lines = con.readLines(n);
+            try (RConnection openConn = con.forceOpen("rt")) {
+                String[] lines = openConn.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
                 }
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    internalClose(con);
-                }
             }
         }
 
@@ -385,16 +379,10 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
-            boolean wasOpen = true;
-            try {
-                wasOpen = con.forceOpen("wt");
-                con.writeLines(text, sep.getDataAt(0));
+            try (RConnection openConn = con.forceOpen("wt")) {
+                openConn.writeLines(text, sep.getDataAt(0));
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    internalClose(con);
-                }
             }
             forceVisibility(false);
             return RNull.instance;
@@ -527,20 +515,14 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RStringVector readChar(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
-            boolean wasOpen = true;
-            try {
-                wasOpen = con.forceOpen("rb");
+            try (RConnection openConn = con.forceOpen("rb")) {
                 String[] data = new String[nchars.getLength()];
                 for (int i = 0; i < data.length; i++) {
-                    data[i] = con.readChar(nchars.getDataAt(i), useBytes.getDataAt(0) == RRuntime.LOGICAL_TRUE);
+                    data[i] = openConn.readChar(nchars.getDataAt(i), useBytes.getDataAt(0) == RRuntime.LOGICAL_TRUE);
                 }
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    internalClose(con);
-                }
             }
         }
 
@@ -561,9 +543,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         protected RNull writeChar(RAbstractStringVector object, RConnection con, RAbstractIntVector nchars, RAbstractStringVector eos, byte useBytes) {
             controlVisibility();
-            boolean wasOpen = true;
-            try {
-                wasOpen = con.forceOpen("wb");
+            try (RConnection openConn = con.forceOpen("wb")) {
                 int length = object.getLength();
                 for (int i = 0; i < length; i++) {
                     String s = object.getDataAt(i);
@@ -572,14 +552,10 @@ public abstract class ConnectionFunctions {
                     if (pad > 0) {
                         RContext.getInstance().setEvalWarning(RError.Message.MORE_CHARACTERS.message);
                     }
-                    con.writeChar(s, pad, eos.getDataAt(i % length), RRuntime.fromLogical(useBytes));
+                    openConn.writeChar(s, pad, eos.getDataAt(i % length), RRuntime.fromLogical(useBytes));
                 }
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    internalClose(con);
-                }
             }
             forceVisibility(false);
             return RNull.instance;
@@ -613,14 +589,12 @@ public abstract class ConnectionFunctions {
         @Specialization
         protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, int size, byte signedArg, byte swapArg) {
             boolean swap = RRuntime.fromLogical(swapArg);
-            boolean wasOpen = true;
             RVector result = null;
             int n = nVec.getDataAt(0);
-            try {
-                if (getBaseConnection(con).getOpenMode().isText()) {
+            try (RConnection openConn = con.forceOpen("rb")) {
+                if (getBaseConnection(openConn).getOpenMode().isText()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_READ_BINARY_CONNECTION);
                 }
-                wasOpen = con.forceOpen("rb");
                 String what = whatVec.getDataAt(0);
                 switch (what) {
                     case "int":
@@ -648,10 +622,6 @@ public abstract class ConnectionFunctions {
                 }
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    internalClose(con);
-                }
             }
             return result;
         }
@@ -782,14 +752,12 @@ public abstract class ConnectionFunctions {
         @Specialization
         protected Object writeBin(RAbstractVector object, RConnection con, int size, byte swapArg, byte useBytesArg) {
             boolean swap = RRuntime.fromLogical(swapArg);
-            boolean wasOpen = true;
             boolean useBytes = RRuntime.fromLogical(useBytesArg);
             if (object.getLength() > 0) {
-                try {
-                    if (getBaseConnection(con).isTextMode()) {
+                try (RConnection openConn = con.forceOpen("wb")) {
+                    if (getBaseConnection(openConn).isTextMode()) {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_WRITE_BINARY_CONNECTION);
                     }
-                    wasOpen = con.forceOpen("wb");
                     if (object instanceof RAbstractIntVector) {
                         writeInteger((RAbstractIntVector) object, con, size, swap);
                     } else if (object instanceof RAbstractDoubleVector) {
@@ -807,10 +775,6 @@ public abstract class ConnectionFunctions {
                     }
                 } catch (IOException x) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
-                } finally {
-                    if (!wasOpen) {
-                        internalClose(con);
-                    }
                 }
             }
             forceVisibility(false);

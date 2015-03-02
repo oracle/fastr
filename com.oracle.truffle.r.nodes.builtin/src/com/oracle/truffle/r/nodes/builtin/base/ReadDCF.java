@@ -47,7 +47,7 @@ public abstract class ReadDCF extends RBuiltinNode {
     @TruffleBoundary
     protected RStringVector doReadDCF(RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
         DCF dcf = null;
-        try {
+        try (RConnection openConn = conn.forceOpen("r")) {
             dcf = DCF.read(conn.readLines(0));
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());

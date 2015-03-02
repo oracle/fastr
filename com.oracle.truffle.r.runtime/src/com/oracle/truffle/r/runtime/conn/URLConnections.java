@@ -36,7 +36,7 @@ public class URLConnections {
         protected final String urlString;
 
         public URLRConnection(String url, String modeString) throws IOException {
-            super(ConnectionClass.URL, modeString);
+            super(ConnectionClass.URL, modeString, AbstractOpenMode.Read);
             this.urlString = url;
         }
 
@@ -90,13 +90,13 @@ public class URLConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             inputStream.close();
         }
 

@@ -742,22 +742,11 @@ public class ForeignFunctions {
                     quoteSet = s;
                 }
             }
-            boolean wasOpen = true;
-            try {
-                wasOpen = conn.forceOpen("r");
-                return CountFields.execute(conn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
+            try (RConnection openConn = conn.forceOpen("r")) {
+                return CountFields.execute(openConn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
             } catch (IllegalStateException | IOException ex) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    try {
-                        conn.internalClose();
-                    } catch (IOException ex) {
-                        errorProfile.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                    }
-                }
             }
         }
 
@@ -772,22 +761,11 @@ public class ForeignFunctions {
             Object[] argValues = args.getValues();
             RConnection conn = (RConnection) argValues[0];
             int nlines = castInt(frame, castVector(frame, argValues[1]));
-            boolean wasOpen = true;
-            try {
-                wasOpen = conn.forceOpen("r");
-                return RDataFactory.createStringVector(conn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
+            try (RConnection openConn = conn.forceOpen("r")) {
+                return RDataFactory.createStringVector(openConn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
             } catch (IOException ex) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    try {
-                        conn.internalClose();
-                    } catch (IOException ex) {
-                        errorProfile.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                    }
-                }
             }
         }
 
@@ -921,22 +899,11 @@ public class ForeignFunctions {
                     quoteCol[qi - 1] = true;
                 }
             }
-            boolean wasOpen = true;
-            try {
-                wasOpen = conn.forceOpen("wt");
-                WriteTable.execute(conn, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
+            try (RConnection openConn = conn.forceOpen("wt")) {
+                WriteTable.execute(openConn, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
             } catch (IOException | IllegalArgumentException ex) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    try {
-                        conn.internalClose();
-                    } catch (IOException ex) {
-                        errorProfile.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                    }
-                }
             }
             return RNull.instance;
         }

@@ -80,7 +80,7 @@ public class ConnectionSupport {
         ReadAppend(new String[]{"a+"}, true, true, true),
         ReadAppendBinary(new String[]{"a+b"}, false, true, true);
 
-        private String[] modeStrings;
+        public final String[] modeStrings;
         public final boolean isText;
         public final boolean readable;
         public final boolean writeable;
@@ -113,15 +113,34 @@ public class ConnectionSupport {
      */
     public static class OpenMode {
         public final AbstractOpenMode abstractOpenMode;
+        /**
+         * When {@link #abstractOpenMode} is {@code Lazy}, this is used to store the default open
+         * mode, otherwise it is the actual string passed to the open.
+         */
         public final String modeString;
 
-        public OpenMode(String modeString) throws IOException {
-            this(modeString, AbstractOpenMode.getOpenMode(modeString));
+        /**
+         * For connections other than {@link StdConnections}.
+         */
+
+        public OpenMode(String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
+            this.abstractOpenMode = AbstractOpenMode.getOpenMode(modeString);
+            this.modeString = abstractOpenMode == AbstractOpenMode.Lazy ? defaultModeForLazy.modeStrings[0] : modeString;
         }
 
-        OpenMode(String modeString, AbstractOpenMode mode) {
-            this.modeString = modeString;
-            this.abstractOpenMode = mode;
+        /**
+         * For {@link StdConnections}.
+         */
+        OpenMode(AbstractOpenMode mode) throws IOException {
+            this(mode.modeStrings[0], mode);
+        }
+
+        /**
+         * Only used when a lazy connection is actually opened.
+         */
+        OpenMode(String modeString) throws IOException {
+            // defaultModeForLazy will not be used
+            this(modeString, null);
         }
 
         public boolean isText() {
@@ -134,6 +153,10 @@ public class ConnectionSupport {
 
         boolean canWrite() {
             return abstractOpenMode.writeable;
+        }
+
+        public String summaryString() {
+            return abstractOpenMode == AbstractOpenMode.Lazy ? "" : modeString;
         }
     }
 
@@ -158,9 +181,10 @@ public class ConnectionSupport {
     /**
      * Class that holds common state for all {@link RConnection} instances. It supports lazy
      * opening, as required by the R spec, through the {@link #theConnection} field, which
-     * ultimately holds the actual connection instance when opened. The default implementations of
-     * the {@link RConnection} methods check whether the connection is open and if not, call
-     * {@link #createDelegateConnection()} and then forward the operation. The result of
+     * ultimately holds the actual connection instance when opened. Any builtin that uses a
+     * connection passed in as argument must call {@link RConnection#forceOpen} to check whether the
+     * connection is already open. If not already open {@link #forceOpen} will call
+     * {@link #createDelegateConnection()} to create the actual connection. The result of
      * {@link #createDelegateConnection()} should be a subclass of {@link DelegateRConnection},
      * which subclasses {@link RConnection} directly. A subclass may choose not to use delegation by
      * overriding the default implementations of the methods in this class. A
@@ -187,11 +211,19 @@ public class ConnectionSupport {
         protected boolean closed;
 
         /**
+         * Supports the auto-close operation for connections opened just for a single operation.
+         */
+        private boolean tempOpened;
+
+        /**
          * if {@link #opened} is {@code true} the {@link OpenMode} that this connection is opened
          * in, otherwise {@link AbstractOpenMode#Lazy}.
          */
         private OpenMode openMode;
 
+        /**
+         * The classes of the connection, which always includes "connection".
+         */
         private final RStringVector classHr;
 
         /**
@@ -199,29 +231,41 @@ public class ConnectionSupport {
          */
         protected DelegateRConnection theConnection;
 
+        /**
+         * An integer used to identify the connection to the {@code getAllConnections} builtin.
+         */
         private int descriptor;
 
         /**
-         * The constructor to use for a connection class whose default open mode is not "read", but
-         * specified explicitly by "lazyMode".
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         *
          */
-        protected BaseRConnection(ConnectionClass conClass, String modeString) throws IOException {
-            this(conClass, new OpenMode(modeString), false);
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
+            this(conClass, new OpenMode(modeString, defaultModeForLazy));
+            setDescriptor(getConnectionIndex());
         }
 
         /**
-         * Primitive constructor that just assigns state. Used by {@link StdConnections} as they are
-         * a special case, but should not be used by other connection types.
+         * The constructor for {@link StdConnections}.
          */
-        protected BaseRConnection(ConnectionClass conClass, OpenMode mode, boolean std) {
+        protected BaseRConnection(AbstractOpenMode mode, int index) throws IOException {
+            this(ConnectionClass.Terminal, new OpenMode(mode));
+            setDescriptor(index);
+        }
+
+        /**
+         * Primitive constructor that just assigns state.
+         */
+        private BaseRConnection(ConnectionClass conClass, OpenMode mode) {
             this.openMode = mode;
             String[] classes = new String[2];
             classes[0] = conClass.printName;
             classes[1] = "connection";
             this.classHr = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
-            if (!std) {
-                registerConnection();
-            }
         }
 
         protected void openNonLazyConnection() throws IOException {
@@ -233,7 +277,8 @@ public class ConnectionSupport {
         /**
          * A connection is "active" if it has been opened and not yet closed.
          */
-        protected boolean isActive() {
+        @Override
+        public boolean isOpen() {
             return !closed && opened;
         }
 
@@ -242,7 +287,7 @@ public class ConnectionSupport {
          */
         @Override
         public boolean canRead() {
-            if (isActive()) {
+            if (isOpen()) {
                 return getOpenMode().canRead();
             } else {
                 // Might think to check the lazy open mode, but GnuR doesn't
@@ -255,7 +300,7 @@ public class ConnectionSupport {
          */
         @Override
         public boolean canWrite() {
-            if (isActive()) {
+            if (isOpen()) {
                 return getOpenMode().canWrite();
             } else {
                 // Might think to check the lazy open mode, but GnuR doesn't
@@ -271,32 +316,30 @@ public class ConnectionSupport {
             return getOpenMode().isText();
         }
 
-        private void registerConnection() {
+        private static int getConnectionIndex() {
             for (int i = 3; i < allConnections.length; i++) {
                 if (allConnections[i] == null) {
-                    allConnections[i] = this;
-                    descriptor = i;
-                    return;
+                    return i;
                 }
             }
             throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
         @Override
-        public boolean forceOpen(String modeString) throws IOException {
-            boolean ret = opened;
+        public RConnection forceOpen(String modeString) throws IOException {
             if (closed) {
                 throw new IOException(RError.Message.INVALID_CONNECTION.message);
             }
             if (!opened) {
+                tempOpened = true;
                 // internal closed or lazy
-                if (getOpenMode().abstractOpenMode == AbstractOpenMode.Lazy) {
+                if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
                     // modeString may override the default
-                    openMode = new OpenMode(modeString);
+                    openMode = new OpenMode(modeString == null ? openMode.modeString : modeString);
                 }
                 createDelegateConnection();
             }
-            return ret;
+            return this;
         }
 
         protected void checkOpen() {
@@ -369,22 +412,25 @@ public class ConnectionSupport {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             closed = true;
             if (theConnection != null) {
-                theConnection.close();
+                theConnection.closeAndDestroy();
             }
             assert allConnections[this.descriptor] != null;
             allConnections[this.descriptor] = null;
         }
 
         @Override
-        public void internalClose() throws IOException {
-            opened = false;
-            if (theConnection != null) {
-                DelegateRConnection tc = theConnection;
-                theConnection = null;
-                tc.internalClose();
+        public void close() throws IOException {
+            if (tempOpened) {
+                tempOpened = false;
+                opened = false;
+                if (theConnection != null) {
+                    DelegateRConnection tc = theConnection;
+                    theConnection = null;
+                    tc.close();
+                }
             }
         }
 
@@ -420,6 +466,12 @@ public class ConnectionSupport {
             return descriptor;
         }
 
+        private void setDescriptor(int index) {
+            assert allConnections[index] == null;
+            this.descriptor = index;
+            allConnections[index] = this;
+        }
+
         public static BaseRConnection getConnection(int descriptor) {
             if (descriptor >= allConnections.length || allConnections[descriptor] == null) {
                 throw RError.error(RError.Message.INVALID_CONNECTION);
@@ -450,10 +502,6 @@ public class ConnectionSupport {
 
         public RStringVector getClassHr() {
             return classHr;
-        }
-
-        public boolean isOpen() {
-            return opened;
         }
 
         public boolean isClosed() {
@@ -630,7 +678,12 @@ public class ConnectionSupport {
         }
 
         @Override
-        public boolean forceOpen(String modeString) throws IOException {
+        public boolean isOpen() {
+            return base.isOpen();
+        }
+
+        @Override
+        public RConnection forceOpen(String modeString) throws IOException {
             return base.forceOpen(modeString);
         }
 
@@ -739,7 +792,11 @@ public class ConnectionSupport {
         protected final String path;
 
         protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString) throws IOException {
-            super(connectionClass, modeString);
+            this(path, connectionClass, modeString, AbstractOpenMode.Read);
+        }
+
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode) throws IOException {
+            super(connectionClass, modeString, defaultLazyOpenMode);
             this.path = Utils.tildeExpand(path);
         }
 

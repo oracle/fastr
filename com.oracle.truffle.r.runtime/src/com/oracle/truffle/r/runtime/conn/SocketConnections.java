@@ -46,7 +46,7 @@ public class SocketConnections {
         protected final int timeout;
 
         public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout) throws IOException {
-            super(ConnectionClass.Socket, modeString);
+            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read);
             this.server = server;
             this.host = host;
             this.port = port;
@@ -142,13 +142,13 @@ public class SocketConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             socket.close();
         }
 
@@ -167,8 +167,8 @@ public class SocketConnections {
         }
 
         @Override
-        public void internalClose() throws IOException {
-            super.internalClose();
+        public void close() throws IOException {
+            super.close();
             serverSocket.close();
         }
     }

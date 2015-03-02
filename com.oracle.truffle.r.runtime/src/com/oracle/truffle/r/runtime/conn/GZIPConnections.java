@@ -33,12 +33,14 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class GZIPConnections {
+    private static final int GZIP_BUFFER_SIZE = (2 << 20);
+
     /**
      * Base class for all modes of gzfile connections.
      */
     public static class GZIPRConnection extends BasePathRConnection {
         public GZIPRConnection(String path, String modeString) throws IOException {
-            super(path, ConnectionClass.GZFile, modeString);
+            super(path, ConnectionClass.GZFile, modeString, AbstractOpenMode.ReadBinary);
             openNonLazyConnection();
         }
 
@@ -70,7 +72,7 @@ public class GZIPConnections {
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
             super(base);
-            inputStream = new GZIPInputStream(new FileInputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
+            inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE);
         }
 
         @Override
@@ -99,13 +101,13 @@ public class GZIPConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             inputStream.close();
         }
 
@@ -116,7 +118,7 @@ public class GZIPConnections {
 
         GZIPOutputRConnection(GZIPRConnection base) throws IOException {
             super(base);
-            outputStream = new GZIPOutputStream(new FileOutputStream(base.path), RConnection.GZIP_BUFFER_SIZE);
+            outputStream = new GZIPOutputStream(new FileOutputStream(base.path), GZIP_BUFFER_SIZE);
         }
 
         @Override
@@ -125,13 +127,13 @@ public class GZIPConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             flush();
             outputStream.close();
         }

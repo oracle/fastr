@@ -32,10 +32,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
+ *
+ * TODO Refactor the pushBack code into ConnectionsSupport
  */
-public abstract class RConnection implements RClassHierarchy {
-
-    public static final int GZIP_BUFFER_SIZE = (2 << 20);
+public abstract class RConnection implements RClassHierarchy, AutoCloseable {
 
     private LinkedList<String> pushBack;
 
@@ -158,7 +158,7 @@ public abstract class RConnection implements RClassHierarchy {
     /**
      * Close the connection. The corresponds to the {@code R close} function.
      */
-    public abstract void close() throws IOException;
+    public abstract void closeAndDestroy() throws IOException;
 
     /**
      * Returns {@ode true} iff we can read on this connection.
@@ -171,30 +171,33 @@ public abstract class RConnection implements RClassHierarchy {
     public abstract boolean canWrite();
 
     /**
-     * Forces the connection open. If the connection was already open, returns {@code true} and does
-     * nothing. Otherwise, tries to open the connection in the given mode, returning {@code false}
-     * if successful and throwing an {@link IOException} if not.
+     * Forces the connection open. If the connection was already open does nothing. Otherwise, tries
+     * to open the connection in the given mode. In either case returns an opened connection.
      *
-     * For builtins that implicitly open/close a connection, the following idiom should be used:
+     * builtins that need to ensure that a connection is open should use thr try-with-resources
+     * pattern, e.g:
+     *
      *
      * <pre>
      * boolean wasOpen = true;
-     * try {
-     *     wasOpen = conn.forceOpen(mode);
-     * } finally {
-     *     if (!wasOpen) {
-     *         conn.internalClose();
-     *     }
+     * try (RConnection openConn = conn.forceOpen(mode)) {
+     *     // work with openConn
+     * } catch (IOException ex) {
+     *     throw RError ...
      * }
      * </pre>
+     *
+     * N.B. While the returned value likely will be the same as {@code this}, callers should not
+     * rely on it but should use the result in the body of the {@code try} block. If the connection
+     * cannot be opened {@link IOException} is thrown.
      */
-    public abstract boolean forceOpen(String modeString) throws IOException;
+    public abstract RConnection forceOpen(String modeString) throws IOException;
 
     /**
      * Closes the internal state of the stream, but does not set the connection state to "closed",
      * i.e., allowing it to be re-opened.
      */
-    public abstract void internalClose() throws IOException;
+    public abstract void close() throws IOException;
 
     /**
      * Implements {@link RClassHierarchy}.
@@ -288,5 +291,10 @@ public abstract class RConnection implements RClassHierarchy {
      * Returns {@code true} iff this is a text mode connection.
      */
     public abstract boolean isTextMode();
+
+    /**
+     * Returns {@code true} iff this connection is open.
+     */
+    public abstract boolean isOpen();
 
 }

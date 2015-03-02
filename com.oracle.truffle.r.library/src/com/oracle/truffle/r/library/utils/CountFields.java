@@ -44,15 +44,6 @@ public class CountFields {
         byte[] convbuf = new byte[100];
         InputStream is;
 
-        private void checkClose() {
-            if (wasopen) {
-                try {
-                    con.close();
-                } catch (IOException ex) {
-                    // Ignore
-                }
-            }
-        }
     }
 
     @TruffleBoundary
@@ -61,7 +52,6 @@ public class CountFields {
         data.sepchar = sepChar;
         data.comchar = comChar;
         data.quoteset = quoteSet;
-        data.is = file.getInputStream();
 
         if (file.isStdin()) {
             data.ttyflag = true;
@@ -69,6 +59,8 @@ public class CountFields {
         } else {
             data.ttyflag = false;
         }
+
+        data.wasopen = file.isOpen();
 
         data.save = 0;
         int quote = 0;
@@ -78,90 +70,89 @@ public class CountFields {
         int blocksize = SCAN_BLOCKSIZE;
         int[] ans = new int[blocksize];
 
-        while (true) {
-            int c = scanchar(inquote, data);
-            if (c == R_EOF) {
-                if (nfields != 0) {
-                    ans[nlines] = nfields;
-                } else {
-                    nlines--;
-                }
-                break;
-            } else if (c == '\n') {
-                if (inquote != 0) {
-                    ans[nlines] = RRuntime.INT_NA;
-                    nlines++;
-                } else if (nfields > 0 || !blskip) {
-                    ans[nlines] = nfields;
-                    nlines++;
-                    nfields = 0;
-                    inquote = 0;
-                }
-                if (nlines == blocksize) {
-                    int[] bns = ans;
-                    blocksize = 2 * blocksize;
-                    ans = new int[blocksize];
-                    System.arraycopy(bns, 0, ans, 0, bns.length);
-                }
-                continue;
-            } else if (data.sepchar != 0) {
-                if (nfields == 0)
-                    nfields++;
-                if (inquote != 0 && c == R_EOF) {
-                    data.checkClose();
-                    throw new IllegalStateException("quoted string on line " + inquote + " terminated by EOF");
-                }
-                if (inquote != 0 && c == quote)
-                    inquote = 0;
-                else if (data.quoteset.indexOf(c) > 0) {
-                    inquote = nlines + 1;
-                    quote = c;
-                }
-                if (c == data.sepchar && inquote == 0)
-                    nfields++;
-            } else if (!Rspace(c)) {
-                if (data.quoteset.indexOf(c) > 0) {
-                    quote = c;
-                    inquote = nlines + 1;
-                    while ((c = scanchar(inquote, data)) != quote) {
-                        if (c == R_EOF) {
-                            data.checkClose();
-                            throw new IllegalStateException("quoted string on line " + inquote + " terminated by EOF");
-                        } else if (c == '\n') {
-                            ans[nlines] = RRuntime.INT_NA;
-                            nlines++;
-                            if (nlines == blocksize) {
-                                int[] bns = ans;
-                                blocksize = 2 * blocksize;
-                                ans = new int[blocksize];
-                                System.arraycopy(bns, 0, ans, 0, bns.length);
+        try (RConnection openConn = file.forceOpen("r")) {
+            data.is = openConn.getInputStream();
+            while (true) {
+                int c = scanchar(inquote, data);
+                if (c == R_EOF) {
+                    if (nfields != 0) {
+                        ans[nlines] = nfields;
+                    } else {
+                        nlines--;
+                    }
+                    break;
+                } else if (c == '\n') {
+                    if (inquote != 0) {
+                        ans[nlines] = RRuntime.INT_NA;
+                        nlines++;
+                    } else if (nfields > 0 || !blskip) {
+                        ans[nlines] = nfields;
+                        nlines++;
+                        nfields = 0;
+                        inquote = 0;
+                    }
+                    if (nlines == blocksize) {
+                        int[] bns = ans;
+                        blocksize = 2 * blocksize;
+                        ans = new int[blocksize];
+                        System.arraycopy(bns, 0, ans, 0, bns.length);
+                    }
+                    continue;
+                } else if (data.sepchar != 0) {
+                    if (nfields == 0)
+                        nfields++;
+                    if (inquote != 0 && c == R_EOF) {
+                        throw new IllegalStateException("quoted string on line " + inquote + " terminated by EOF");
+                    }
+                    if (inquote != 0 && c == quote)
+                        inquote = 0;
+                    else if (data.quoteset.indexOf(c) > 0) {
+                        inquote = nlines + 1;
+                        quote = c;
+                    }
+                    if (c == data.sepchar && inquote == 0)
+                        nfields++;
+                } else if (!Rspace(c)) {
+                    if (data.quoteset.indexOf(c) > 0) {
+                        quote = c;
+                        inquote = nlines + 1;
+                        while ((c = scanchar(inquote, data)) != quote) {
+                            if (c == R_EOF) {
+                                throw new IllegalStateException("quoted string on line " + inquote + " terminated by EOF");
+                            } else if (c == '\n') {
+                                ans[nlines] = RRuntime.INT_NA;
+                                nlines++;
+                                if (nlines == blocksize) {
+                                    int[] bns = ans;
+                                    blocksize = 2 * blocksize;
+                                    ans = new int[blocksize];
+                                    System.arraycopy(bns, 0, ans, 0, bns.length);
+                                }
                             }
                         }
+                        inquote = 0;
+                    } else {
+                        do {
+                            // if (dbcslocale && btowc(c) == WEOF)
+                            // scanchar2(&data);
+                            c = scanchar(0, data);
+                        } while (!Rspace(c) && c != R_EOF);
+                        if (c == R_EOF)
+                            c = '\n';
+                        unscanchar(c, data);
                     }
-                    inquote = 0;
-                } else {
-                    do {
-                        // if (dbcslocale && btowc(c) == WEOF)
-                        // scanchar2(&data);
-                        c = scanchar(0, data);
-                    } while (!Rspace(c) && c != R_EOF);
-                    if (c == R_EOF)
-                        c = '\n';
-                    unscanchar(c, data);
+                    nfields++;
                 }
-                nfields++;
-            }
 
+            }
         }
         /*
          * we might have a character that was unscanchar-ed. So pushback if possible
          */
-        // if (data.save && !data.ttyflag && data.wasopen) {
-        // char line[2] = " ";
-        // line[0] = (char) data.save;
-        // con_pushback(data.con, FALSE, line);
-        // }
-        data.checkClose();
+        if (data.save != 0 && !data.ttyflag && data.wasopen) {
+            // TODO use more primitive method when available
+            file.pushBack(RDataFactory.createStringVectorFromScalar(new String(new char[]{(char) data.save})), false);
+        }
 
         if (nlines < 0) {
             return RNull.instance;

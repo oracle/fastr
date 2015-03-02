@@ -37,9 +37,6 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public class SerializeFunctions {
 
-    // TODO This code needs to check for unopened connections as per GnuR,
-    // which requires more publicly visible support in RConnection
-
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
         @Specialization
@@ -50,24 +47,14 @@ public class SerializeFunctions {
         @TruffleBoundary
         protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook, int depth) {
             controlVisibility();
-            boolean wasOpen = true;
-            try {
-                wasOpen = conn.forceOpen("rb");
-                if (!conn.canRead()) {
+            try (RConnection openConn = conn.forceOpen("rb")) {
+                if (!openConn.canRead()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_READ);
                 }
-                Object result = RSerialize.unserialize(conn, depth);
+                Object result = RSerialize.unserialize(openConn, depth);
                 return result;
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    try {
-                        conn.internalClose();
-                    } catch (IOException ex) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                    }
-                }
             }
         }
 
@@ -88,28 +75,18 @@ public class SerializeFunctions {
         @TruffleBoundary
         protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook, int depth) {
             controlVisibility();
-            boolean wasOpen = true;
-            try {
+            try (RConnection openConn = conn.forceOpen("wb")) {
                 boolean ascii = RRuntime.fromLogical(asciiLogical);
-                wasOpen = conn.forceOpen("wb");
-                if (!conn.canWrite()) {
+                if (!openConn.canWrite()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_WRITE);
                 }
-                if (!ascii && conn.isTextMode()) {
+                if (!ascii && openConn.isTextMode()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
-                RSerialize.serialize(conn, object, ascii, 2, null, depth);
+                RSerialize.serialize(openConn, object, ascii, 2, null, depth);
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-            } finally {
-                if (!wasOpen) {
-                    try {
-                        conn.internalClose();
-                    } catch (IOException ex) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
-                    }
-                }
             }
         }
     }

@@ -105,13 +105,13 @@ public class FileConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             inputStream.close();
         }
 
@@ -147,13 +147,13 @@ public class FileConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             outputStream.close();
         }
 
@@ -198,13 +198,13 @@ public class FileConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             inputStream.close();
         }
 
@@ -234,13 +234,13 @@ public class FileConnections {
         }
 
         @Override
-        public void close() throws IOException {
+        public void closeAndDestroy() throws IOException {
             base.closed = true;
-            internalClose();
+            close();
         }
 
         @Override
-        public void internalClose() throws IOException {
+        public void close() throws IOException {
             flush();
             outputStream.close();
         }
