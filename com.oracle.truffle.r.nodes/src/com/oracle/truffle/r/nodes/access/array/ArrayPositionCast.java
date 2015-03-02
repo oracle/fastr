@@ -480,23 +480,29 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 } else {
                     return assignment ? operand : RRuntime.INT_NA;
                 }
-            } else if (operand < 0 && -operand > dimSize) {
-                outOfBoundsNegative.enter();
-                if (dimSizeOneProfile.profile(dimSize == 1)) {
-                    // e.g. c(7)[-2] vs c(7)[[-2]]
-                    return isSubset ? /* only one element to be picked */1 : /* ultimately an error */operand;
-                } else {
-                    // e.g. c(7, 42)[-7] vs c(, 427)[[-7]]
-                    return isSubset ? expandMissing(container) : operand;
-                }
             } else if (operand < 0) {
-                negative.enter();
-                if (dimSizeOneProfile.profile(dimSize == 1)) {
-                    // it's negative, but not out of bounds and dimension has length one - result is
-                    // no dimensions left
-                    return 0;
+                if (-operand > dimSize) {
+                    outOfBoundsNegative.enter();
+                    if (dimSizeOneProfile.profile(dimSize == 1)) {
+                        /*
+                         * e.g. c(7)[-2] vs c(7)[[-2]]
+                         * 
+                         * only one element to be picked or ultimately an error caused by operand
+                         */
+                        return isSubset ? 1 : operand;
+                    } else {
+                        // e.g. c(7, 42)[-7] vs c(, 427)[[-7]]
+                        return isSubset ? expandMissing(container) : operand;
+                    }
                 } else {
-                    return doIntNegativeMultiDim(frame, container, operand);
+                    negative.enter();
+                    if (dimSizeOneProfile.profile(dimSize == 1)) {
+                        // it's negative, but not out of bounds and dimension has length one -
+                        // result is no dimensions left
+                        return 0;
+                    } else {
+                        return doIntNegativeMultiDim(frame, container, operand);
+                    }
                 }
             } else {
                 nonNegative.enter();
