@@ -238,6 +238,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 return null;
             }
             if (checkType(frame, value)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
             }
             return next.execute(frame, variableFrame);
