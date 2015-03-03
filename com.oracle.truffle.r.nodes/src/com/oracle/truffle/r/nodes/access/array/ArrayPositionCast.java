@@ -46,8 +46,6 @@ abstract class ArrayPositionsCastBase extends RNode {
     protected final boolean assignment;
     protected final boolean isSubset;
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     protected ArrayPositionsCastBase(int dimension, int numDimensions, boolean assignment, boolean isSubset) {
         this.dimension = dimension;
         this.numDimensions = numDimensions;
@@ -67,6 +65,7 @@ abstract class ArrayPositionsCastBase extends RNode {
     private final BranchProfile intVectorMet = BranchProfile.create();
 
     private final ConditionProfile dataFrameProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile dimNullProfile = ConditionProfile.createBinaryProfile();
 
     protected int[] getDimensions(RAbstractContainer container) {
         if (dataFrameProfile.profile(container.getElementClass() == RDataFrame.class)) {
@@ -94,21 +93,30 @@ abstract class ArrayPositionsCastBase extends RNode {
         return rowNames.getLength();
     }
 
-    protected void verifyDimensions(int[] dimensions) {
-        if ((dimensions == null && (dimension != 0 || numDimensions > 1)) || (dimensions != null && dimension >= dimensions.length)) {
-            errorProfile.enter();
-            if (assignment) {
-                if (isSubset) {
-                    if (numDimensions == 2) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
-                    } else {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
-                    }
+    protected void dimensionsError() {
+        if (assignment) {
+            if (isSubset) {
+                if (numDimensions == 2) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
                 }
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
+            }
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
+        }
+    }
+
+    protected void verifyDimensions(int[] dimensions) {
+        if (dimNullProfile.profile(dimensions == null)) {
+            if (dimension != 0 || numDimensions > 1) {
+                dimensionsError();
+            }
+        } else {
+            if (dimension >= dimensions.length) {
+                dimensionsError();
             }
         }
     }
