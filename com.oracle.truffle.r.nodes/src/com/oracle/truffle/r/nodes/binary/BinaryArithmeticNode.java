@@ -794,6 +794,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             return emptyConstructor.get();
         }
         int length = Math.max(leftLength, rightLength);
+        reportWork(length);
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
@@ -849,6 +850,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return emptyConstructor.get();
         }
+        reportWork(length);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
         for (int i = 0; i < length; ++i) {
@@ -866,6 +868,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         if (emptyVector.profile(length == 0)) {
             return emptyConstructor.get();
         }
+        reportWork(length);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(source);
         for (int i = 0; i < length; ++i) {
