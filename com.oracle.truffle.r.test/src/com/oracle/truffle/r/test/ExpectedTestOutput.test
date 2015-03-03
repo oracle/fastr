@@ -4742,6 +4742,10 @@ NAs introduced by coercion
 [1] NA
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsComplex
+#{ as.complex(NULL) }
+complex(0)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsComplex
 #{ as.complex(TRUE) }
 [1] 1+0i
 
@@ -4782,6 +4786,10 @@ imaginary parts discarded in coercion
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsDouble
 #{ as.double(1L) }
 [1] 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsDouble
+#{ as.double(NULL) }
+numeric(0)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsDouble
 #{ as.double(as.raw(1)) }
@@ -4891,6 +4899,10 @@ Warning message:
 NAs introduced by coercion
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
+#{ as.integer(NULL) }
+integer(0)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
 #{ as.integer(as.raw(1)) }
 [1] 1
 
@@ -4965,6 +4977,10 @@ NULL
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsLogical
 #{ as.logical(10+2i) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsLogical
+#{ as.logical(NULL) }
+logical(0)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsLogical
 #{ as.logical(c("1","hello")) }

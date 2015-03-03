@@ -109,9 +109,9 @@ public abstract class AsInteger extends RBuiltinNode {
     }
 
     @Specialization
-    protected int asInteger(RNull vector) {
+    protected RIntVector asInteger(VirtualFrame frame, RNull value) {
         controlVisibility();
-        return RRuntime.INT_NA;
+        return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization
