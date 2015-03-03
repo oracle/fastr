@@ -47,6 +47,8 @@ public abstract class DoCall extends RBuiltinNode {
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
     @CompilationFinal private boolean needsCallerFrame;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Specialization(guards = "lengthOne")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
         if (getNode == null) {
@@ -60,7 +62,7 @@ public abstract class DoCall extends RBuiltinNode {
     @Specialization
     protected Object doDoCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         Object[] argValues = argsAsList.getDataNonShared();
-        RStringVector n = argsAsList.getNames();
+        RStringVector n = argsAsList.getNames(attrProfiles);
         String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();
         ArgumentsSignature signature = ArgumentsSignature.get(argNames);
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);

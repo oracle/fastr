@@ -58,6 +58,8 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
 
     private final ConditionProfile noAttributesAndNamesProfile = ConditionProfile.createBinaryProfile();
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     public abstract Object executeCombine(VirtualFrame frame, Object value);
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
@@ -104,11 +106,11 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
 
     private RVector passVector(RVector vector) {
         controlVisibility();
-        if (noAttributesAndNamesProfile.profile(vector.getAttributes() == null && vector.getNames() == null && vector.getDimNames() == null)) {
+        if (noAttributesAndNamesProfile.profile(vector.getAttributes() == null && vector.getNames(attrProfiles) == null && vector.getDimNames() == null)) {
             return vector;
         } else {
             RVector result = vector.copyDropAttributes();
-            result.copyNamesFrom(vector);
+            result.copyNamesFrom(attrProfiles, vector);
             return result;
         }
     }
@@ -163,8 +165,8 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return (RList) dcn.executeInternal(frame, list.getClassHierarchy(), new Object[]{list});
     }
 
-    public static boolean isNumericVersion(RList list) {
-        RStringVector klass = list.getClassAttr();
+    public boolean isNumericVersion(RList list) {
+        RStringVector klass = list.getClassAttr(attrProfiles);
         if (klass != null) {
             for (int i = 0; i < klass.getLength(); i++) {
                 if (klass.getDataAt(i).equals("numeric_version")) {
@@ -267,8 +269,8 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, getSuppliedSignature().createVector());
     }
 
-    public static RAbstractVector namesMerge(RAbstractVector vector, String name) {
-        RStringVector orgNamesObject = vector.getNames();
+    public RAbstractVector namesMerge(RAbstractVector vector, String name) {
+        RStringVector orgNamesObject = vector.getNames(attrProfiles);
         if ((orgNamesObject == null && name == null) || vector.getLength() == 0) {
             return vector;
         }

@@ -29,6 +29,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CastExpressionNode extends CastNode {
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     public abstract Object executeExpression(VirtualFrame frame, Object o);
 
     @Specialization
@@ -76,7 +79,7 @@ public abstract class CastExpressionNode extends CastNode {
         if (obj instanceof RList) {
             RList list = (RList) obj;
             // TODO other attributes
-            return RDataFactory.createExpression(RDataFactory.createList(data, list.getNames()));
+            return RDataFactory.createExpression(RDataFactory.createList(data, list.getNames(attrProfiles)));
         } else {
             return create(data);
         }

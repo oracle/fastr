@@ -54,6 +54,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"})
 public abstract class Lapply extends RBuiltinNode {
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     /**
      * The default implementation.
      */
@@ -67,7 +69,7 @@ public abstract class Lapply extends RBuiltinNode {
         Object[] result = doApply.execute(frame, vecMat, fun, optionalArgs);
         // set here else it gets overridden by the iterator evaluation
         controlVisibility();
-        return RDataFactory.createList(result, vecMat.getNames());
+        return RDataFactory.createList(result, vecMat.getNames(attrProfiles));
     }
 
     public static final class GeneralLApplyNode extends RNode {

@@ -66,11 +66,12 @@ abstract class ArrayPositionsCastBase extends RNode {
 
     private final ConditionProfile dataFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimNullProfile = ConditionProfile.createBinaryProfile();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     protected int[] getDimensions(RAbstractContainer container) {
         if (dataFrameProfile.profile(container.getElementClass() == RDataFrame.class)) {
             // this largely reproduces code from ShortRowNames
-            Object rowNames = container.getRowNames();
+            Object rowNames = container.getRowNames(attrProfiles);
             if (nameConditionProfile.profile(rowNames == RNull.instance)) {
                 return new int[]{0, container.getLength()};
             } else {
@@ -200,7 +201,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
     @Specialization
     protected Object doIntVector(RAbstractContainer container, RAbstractIntVector operand) {
-        if (primitiveProfile.profile(operand.getLength() == 1 && operand.getNames() == null)) {
+        if (primitiveProfile.profile(operand.getLength() == 1 && operand.getNames(attrProfiles) == null)) {
             return operand.getDataAtAsObject(0);
         } else if (emptyOpProfile.profile(operand.getLength() == 0)) {
             return 0;
@@ -214,7 +215,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
     }
 
     protected boolean operandHasNames(RAbstractContainer container, RAbstractIntVector operand) {
-        return operand.getNames() != null;
+        return operand.getNames(attrProfiles) != null;
     }
 
     protected boolean numDimensionsOne() {
@@ -697,10 +698,10 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             // single-dimension access
             if (assignment) {
                 // with assignment, container's names can be set by the operand
-                return findPositionWithNames(container, container.getNames(), operand);
-            } else if (container.getNames() != null) {
+                return findPositionWithNames(container, container.getNames(attrProfiles), operand);
+            } else if (container.getNames(attrProfiles) != null) {
                 // with vector read, we need names to even try finding container components
-                int result = findPosition(container, container.getNames(), operand, exact);
+                int result = findPosition(container, container.getNames(attrProfiles), operand, exact);
 
                 if (container instanceof RList) {
                     // container is a list
@@ -1005,9 +1006,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (isSubset) {
                     if (numDimensions == 1) {
                         if (assignment) {
-                            return findPositionsWithNames(frame, container, container.getNames(), operand, assignment);
-                        } else if (namesProfile.profile(container.getNames() != null)) {
-                            return findPositions(frame, container, container.getNames(), operand, assignment);
+                            return findPositionsWithNames(frame, container, container.getNames(attrProfiles), operand, assignment);
+                        } else if (namesProfile.profile(container.getNames(attrProfiles) != null)) {
+                            return findPositions(frame, container, container.getNames(attrProfiles), operand, assignment);
                         } else {
                             int[] data = new int[operand.getLength()];
                             Arrays.fill(data, RRuntime.INT_NA);
@@ -1117,7 +1118,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     int[] data = eliminateZeros(container, positions, zeroCount);
                     return RDataFactory.createIntVector(data, positionNACheck.neverSeenNA() && !outOfBounds);
                 } else {
-                    if (assignment && numDimensions == 1 && positions.getNames() != null) {
+                    if (assignment && numDimensions == 1 && positions.getNames(attrProfiles) != null) {
                         // in this case, positions having the "names" attribute is considered a
                         // special case needed for handling assignments using string indexes (which
                         // update "names" attribute of the updated vector)
@@ -1212,7 +1213,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
 
         protected boolean operandHasNames(RNull vector, RAbstractIntVector operand) {
-            return operand.getNames() != null;
+            return operand.getNames(attrProfiles) != null;
         }
     }
 
@@ -1223,6 +1224,8 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Child ContainerRowNamesGet rowNamesGetter;
         @Child private CastStringNode castString;
+
+        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         public abstract RList execute(VirtualFrame frame, RAbstractContainer container);
 
@@ -1249,7 +1252,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Specialization(guards = "isDataFrame")
         RList getDimDataFrame(VirtualFrame frame, RAbstractContainer container) {
-            return RDataFactory.createList(new Object[]{castString(frame, getContainerRowNames(frame, container)), container.getNames()});
+            return RDataFactory.createList(new Object[]{castString(frame, getContainerRowNames(frame, container)), container.getNames(attrProfiles)});
         }
 
         protected boolean isDataFrame(RAbstractContainer container) {

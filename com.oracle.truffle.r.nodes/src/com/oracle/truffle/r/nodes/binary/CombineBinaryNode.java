@@ -33,15 +33,16 @@ public abstract class CombineBinaryNode extends BinaryNode {
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile hasNamesProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object executeCombine(VirtualFrame frame, Object left, Object right);
 
     protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty) {
-        if (orgVector.getNames() == null) {
+        if (orgVector.getNames(attrProfiles) == null) {
             return null;
         }
         hasNamesProfile.enter();
-        RStringVector orgNames = orgVector.getNames();
+        RStringVector orgNames = orgVector.getNames(attrProfiles);
         int orgLength = orgVector.getLength();
         String[] namesData = new String[orgLength + 1];
         int i = 0;
@@ -62,8 +63,8 @@ public abstract class CombineBinaryNode extends BinaryNode {
     }
 
     protected RStringVector combineNames(RAbstractVector left, RAbstractVector right) {
-        Object leftNames = left.getNames();
-        Object rightNames = right.getNames();
+        Object leftNames = left.getNames(attrProfiles);
+        Object rightNames = right.getNames(attrProfiles);
         if ((leftNames == null || leftNames == RNull.instance) && (rightNames == null || rightNames == RNull.instance)) {
             return null;
         }

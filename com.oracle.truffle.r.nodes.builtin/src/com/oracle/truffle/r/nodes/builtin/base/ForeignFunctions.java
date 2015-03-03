@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
  * See <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Foreign.html">here</a>.
  */
 public class ForeignFunctions {
-    public abstract static class FortranCAdapter extends RBuiltinNode {
+    public abstract static class FortranCAdapter extends CastAdapter {
 
         protected final BranchProfile errorProfile = BranchProfile.create();
 
@@ -148,7 +148,7 @@ public class ForeignFunctions {
                 int[] info = infoVec.getDataTemp();
                 RFFIFactory.getRFFI().getRDerivedRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
-                coef.copyAttributesFrom(bVec);
+                coef.copyAttributesFrom(attrProfiles, bVec);
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR),
@@ -463,7 +463,7 @@ public class ForeignFunctions {
             return RNull.instance;
         }
 
-        public static boolean isFlushconsole(RList f) {
+        public boolean isFlushconsole(RList f) {
             return matchName(f, "flushconsole");
         }
 
@@ -475,7 +475,7 @@ public class ForeignFunctions {
             return Crc64.crc64(input);
         }
 
-        public static boolean isCrc64(RList f) {
+        public boolean isCrc64(RList f) {
             return matchName(f, "crc64");
         }
 
@@ -495,7 +495,7 @@ public class ForeignFunctions {
             return Menu.menu(choices);
         }
 
-        public static boolean isMenu(RList f) {
+        public boolean isMenu(RList f) {
             return matchName(f, "menu");
         }
 
@@ -505,7 +505,7 @@ public class ForeignFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        public static boolean isCairoProps(RList f) {
+        public boolean isCairoProps(RList f) {
             return matchName(f, "cairoProps");
         }
 
@@ -515,7 +515,7 @@ public class ForeignFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        public static boolean isMakeQuartzDefault(RList f) {
+        public boolean isMakeQuartzDefault(RList f) {
             return matchName(f, "makeQuartzDefault");
         }
 
@@ -574,7 +574,7 @@ public class ForeignFunctions {
             RDoubleVector xout = (RDoubleVector) castVector(frame, argValues[0]);
             // This is called with the result of SplineCoef, so it is surely an RList
             RList z = (RList) argValues[1];
-            return SplineFunctions.splineEval(xout, z);
+            return SplineFunctions.splineEval(attrProfiles, xout, z);
         }
 
         public boolean isSplineEval(RList f) {
@@ -587,7 +587,7 @@ public class ForeignFunctions {
             String name = null;
             if (fobj instanceof RList) {
                 RList f = (RList) fobj;
-                RStringVector names = f.getNames();
+                RStringVector names = f.getNames(attrProfiles);
                 for (int i = 0; i < names.getLength(); i++) {
                     if (names.getDataAt(i).equals("name")) {
                         name = (String) f.getDataAt(i);
@@ -598,24 +598,6 @@ public class ForeignFunctions {
             throw new RInternalError(".Call specialization failure: %s ", name == null ? "<unknown>" : name);
         }
 
-    }
-
-    /**
-     * This is an inefficient guard but it matters little unless there are many different calls
-     * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a more
-     * efficient basis.
-     */
-    private static boolean matchName(RList f, String name) {
-        if (f.getNames() == null) {
-            return false;
-        }
-        RStringVector names = f.getNames();
-        for (int i = 0; i < names.getLength(); i++) {
-            if (names.getDataAt(i).equals("name")) {
-                return f.getDataAt(i).equals(name) ? true : false;
-            }
-        }
-        return false;
     }
 
     private static String isString(Object arg) {
@@ -636,12 +618,14 @@ public class ForeignFunctions {
      * Casts for use on value elements of {@link RArgsValuesAndNames}. Since the starting value
      * could a scalar, first use {@link #castVector}.
      */
-    private abstract static class CastAdapter extends RBuiltinNode {
+    protected abstract static class CastAdapter extends RBuiltinNode {
         @Child private CastLogicalNode castLogical;
         @Child private CastIntegerNode castInt;
         @Child private CastDoubleNode castDouble;
         @Child private CastComplexNode castComplex;
         @Child private CastToVectorNode castVector;
+
+        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         protected byte castLogical(VirtualFrame frame, RAbstractVector operand) {
             if (castLogical == null) {
@@ -681,6 +665,24 @@ public class ForeignFunctions {
                 castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
             }
             return (RAbstractVector) castVector.executeObject(frame, value);
+        }
+
+        /**
+         * This is an inefficient guard but it matters little unless there are many different calls
+         * being made within the same evaluation. A {@code NativeSymbolInfo} object would provide a
+         * more efficient basis.
+         */
+        protected boolean matchName(RList f, String name) {
+            if (f.getNames(attrProfiles) == null) {
+                return false;
+            }
+            RStringVector names = f.getNames(attrProfiles);
+            for (int i = 0; i < names.getLength(); i++) {
+                if (names.getDataAt(i).equals("name")) {
+                    return f.getDataAt(i).equals(name) ? true : false;
+                }
+            }
+            return false;
         }
 
     }
@@ -815,7 +817,7 @@ public class ForeignFunctions {
             }
             byte lowerTail = castLogical(frame, castVector(frame, argValues[3]));
             byte logP = castLogical(frame, castVector(frame, argValues[4]));
-            return GammaFunctions.Qgamma.getInstance().qgamma(p, shape, scale, lowerTail, logP);
+            return GammaFunctions.Qgamma.getInstance().qgamma(p, shape, scale, lowerTail, logP, attrProfiles);
         }
 
         public boolean isQgamma(RList f) {

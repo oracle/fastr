@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "log10", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Log10 extends RBuiltinNode {
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @SuppressWarnings("unused")
     @Specialization
     protected RNull log(RNull x) {
@@ -63,7 +65,7 @@ public abstract class Log10 extends RBuiltinNode {
             }
             resultVector[i] = result;
         }
-        RDoubleVector res = RDataFactory.createDoubleVector(resultVector, vector.isComplete(), vector.getNames());
+        RDoubleVector res = RDataFactory.createDoubleVector(resultVector, vector.isComplete(), vector.getNames(attrProfiles));
         res.copyRegAttributesFrom(vector);
         return res;
     }
@@ -79,7 +81,7 @@ public abstract class Log10 extends RBuiltinNode {
             }
             doubleVector[i] = value;
         }
-        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, vector.isComplete(), vector.getNames());
+        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, vector.isComplete(), vector.getNames(attrProfiles));
         res.copyRegAttributesFrom(vector);
         return res;
     }

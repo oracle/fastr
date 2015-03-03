@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Options extends RBuiltinNode {
 
     private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @TruffleBoundary
     @Specialization
@@ -84,7 +85,7 @@ public abstract class Options extends RBuiltinNode {
                     // setting
                     RList list = (RList) value;
                     RStringVector thisListnames = null;
-                    Object nn = list.getNames();
+                    Object nn = list.getNames(attrProfiles);
                     if (nn instanceof RStringVector) {
                         thisListnames = (RStringVector) nn;
                     } else {

@@ -37,6 +37,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
     private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private static byte not(byte value) {
         return (value == RRuntime.LOGICAL_TRUE ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE);
@@ -89,7 +90,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyAttributesFrom(vector);
+        resultVector.copyAttributesFrom(attrProfiles, vector);
         return resultVector;
     }
 
@@ -108,7 +109,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(vector, getSourceSection());
+        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, getSourceSection());
         return resultVector;
     }
 
@@ -127,7 +128,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(vector, getSourceSection());
+        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, getSourceSection());
         return resultVector;
     }
 
@@ -144,7 +145,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RRawVector resultVector = RDataFactory.createRawVector(result);
-        resultVector.copyAttributesFrom(vector);
+        resultVector.copyAttributesFrom(attrProfiles, vector);
         return resultVector;
     }
 

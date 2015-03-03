@@ -30,6 +30,8 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Child private CastDoubleNode castDouble;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Specialization
     protected double cummin(double arg) {
         controlVisibility();
@@ -66,13 +68,13 @@ public abstract class CumMin extends RBuiltinNode {
         if (v.getStride() > 0) {
             // all numbers are bigger than the first one
             Arrays.fill(cminV, v.getStart());
-            return RDataFactory.createIntVector(cminV, RDataFactory.COMPLETE_VECTOR, v.getNames());
+            return RDataFactory.createIntVector(cminV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
         } else {
             cminV[0] = v.getStart();
             for (int i = 1; i < v.getLength(); i++) {
                 cminV[i] = cminV[i - 1] + v.getStride();
             }
-            return RDataFactory.createIntVector(cminV, RDataFactory.COMPLETE_VECTOR, v.getNames());
+            return RDataFactory.createIntVector(cminV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
         }
     }
 
@@ -96,7 +98,7 @@ public abstract class CumMin extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cminV, i, cminV.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), v.getNames());
+        return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
     @Specialization
@@ -119,7 +121,7 @@ public abstract class CumMin extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cminV, i, cminV.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames());
+        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
     @Specialization
@@ -142,7 +144,7 @@ public abstract class CumMin extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cminV, i, cminV.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames());
+        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
     @Specialization

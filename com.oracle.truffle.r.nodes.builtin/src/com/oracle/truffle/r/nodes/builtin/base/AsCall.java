@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class AsCall extends RBuiltinNode {
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected RLanguage asCallFunction(RList x) {
@@ -61,12 +62,12 @@ public abstract class AsCall extends RBuiltinNode {
         Object[] values = new Object[length];
         System.arraycopy(x.getDataWithoutCopying(), 1, values, 0, length);
         ArgumentsSignature signature;
-        if (nullNamesProfile.profile(x.getNames() == null)) {
+        if (nullNamesProfile.profile(x.getNames(attrProfiles) == null)) {
             signature = ArgumentsSignature.empty(values.length);
         } else {
             String[] names = new String[length];
             // extract names, converting "" to null
-            RStringVector ns = x.getNames();
+            RStringVector ns = x.getNames(attrProfiles);
             for (int i = 0; i < length; i++) {
                 String name = ns.getDataAt(i + 1);
                 if (name != null && !name.isEmpty()) {

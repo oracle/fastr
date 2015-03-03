@@ -36,11 +36,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class GetOldClass extends RBuiltinNode {
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected Object getOldClass(RAbstractContainer arg) {
         controlVisibility();
-        if (isObjectProfile.profile(arg.isObject())) {
+        if (isObjectProfile.profile(arg.isObject(attrProfiles))) {
             return arg.getClassHierarchy();
         } else {
             return RNull.instance;

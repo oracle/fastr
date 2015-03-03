@@ -72,7 +72,7 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getNames() {
+    public final RStringVector getNames(RAttributeProfiles attrProfiles) {
         return null;
     }
 
@@ -82,7 +82,7 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public final Object getRowNames() {
+    public final Object getRowNames(RAttributeProfiles attrProfiles) {
         return RNull.instance;
     }
 
@@ -106,7 +106,8 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         return false;
     }
 
-    public final boolean isObject() {
+    @Override
+    public final boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }
 

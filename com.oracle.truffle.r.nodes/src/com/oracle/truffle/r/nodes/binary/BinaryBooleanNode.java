@@ -52,6 +52,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @Child private BooleanOperation logic;
     @Child private BinaryBooleanNode recursiveOp;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     private Object recursiveOp(VirtualFrame frame, Object left, Object right) {
         if (recursiveOp == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1368,7 +1370,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     private RLogicalVector createResult(RAbstractVector left, byte[] result, boolean naResult) {
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
+        ret.copyNamesFrom(attrProfiles, left);
         return ret;
     }
 
@@ -1431,7 +1433,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             result[i] = resultValue;
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
+        ret.copyNamesFrom(attrProfiles, left);
         return ret;
     }
 
@@ -1491,7 +1493,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             result[i] = resultValue;
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
+        ret.copyNamesFrom(attrProfiles, left);
         return ret;
     }
 
@@ -1529,7 +1531,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             result[i] = resultValue;
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(), left.getDimensions());
-        ret.copyNamesFrom(left);
+        ret.copyNamesFrom(attrProfiles, left);
         return ret;
     }
 
@@ -1665,7 +1667,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             result[i] = resultValue;
         }
         RRawVector ret = RDataFactory.createRawVector(result, left.getDimensions());
-        ret.copyNamesFrom(left);
+        ret.copyNamesFrom(attrProfiles, left);
         return ret;
     }
 
@@ -1689,7 +1691,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null ? left : right);
+        ret.copyNamesFrom(attrProfiles, left.getNames(attrProfiles) != null ? left : right);
         return ret;
     }
 
@@ -1751,7 +1753,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
-        ret.copyNamesFrom(leftLength == resultLength ? left : right);
+        ret.copyNamesFrom(attrProfiles, leftLength == resultLength ? left : right);
         return ret;
     }
 
@@ -1775,7 +1777,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null ? left : right);
+        ret.copyNamesFrom(attrProfiles, left.getNames(attrProfiles) != null ? left : right);
         return ret;
     }
 
@@ -1837,7 +1839,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
-        ret.copyNamesFrom(leftLength == resultLength ? left : right);
+        ret.copyNamesFrom(attrProfiles, leftLength == resultLength ? left : right);
         return ret;
     }
 
@@ -1861,7 +1863,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null ? left : right);
+        ret.copyNamesFrom(attrProfiles, left.getNames(attrProfiles) != null ? left : right);
         return ret;
     }
 
@@ -1891,7 +1893,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
-        ret.copyNamesFrom(leftLength == resultLength ? left : right);
+        ret.copyNamesFrom(attrProfiles, leftLength == resultLength ? left : right);
         return ret;
     }
 
@@ -1915,7 +1917,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA(),
                         left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null ? left : right);
+        ret.copyNamesFrom(attrProfiles, left.getNames(attrProfiles) != null ? left : right);
         return ret;
     }
 
@@ -1977,7 +1979,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !naResult && leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
-        ret.copyNamesFrom(leftLength == resultLength ? left : right);
+        ret.copyNamesFrom(attrProfiles, leftLength == resultLength ? left : right);
         return ret;
     }
 
@@ -1998,7 +2000,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             result[i] = resultValue;
         }
         RRawVector ret = RDataFactory.createRawVector(result, left.hasDimensions() ? left.getDimensions() : right.getDimensions());
-        ret.copyNamesFrom(left.getNames() != null ? left : right);
+        ret.copyNamesFrom(attrProfiles, left.getNames(attrProfiles) != null ? left : right);
         return ret;
     }
 
@@ -2022,7 +2024,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         }
         RRawVector ret = RDataFactory.createRawVector(result);
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
-        ret.copyNamesFrom(leftLength == resultLength ? left : right);
+        ret.copyNamesFrom(attrProfiles, leftLength == resultLength ? left : right);
         return ret;
     }
 

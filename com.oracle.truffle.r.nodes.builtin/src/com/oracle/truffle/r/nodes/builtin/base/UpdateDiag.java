@@ -44,6 +44,8 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     @Child private CastDoubleNode castDouble;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     protected static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
@@ -123,7 +125,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         controlVisibility();
         initCastDoubleNode();
         RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(frame, vector);
-        resultVector.copyAttributesFrom(vector);
+        resultVector.copyAttributesFrom(attrProfiles, vector);
         return updateDiag(resultVector, valueVector);
     }
 

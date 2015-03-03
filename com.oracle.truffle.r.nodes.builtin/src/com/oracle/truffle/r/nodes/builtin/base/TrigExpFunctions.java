@@ -46,6 +46,7 @@ public class TrigExpFunctions {
     public abstract static class AdapterCall1 extends RBuiltinNode {
         private static final BranchProfile notCompleteIntValueMet = BranchProfile.create();
         private static final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Override
         public RNode[] getParameterValues() {
@@ -97,9 +98,9 @@ public class TrigExpFunctions {
             return createDoubleVectorBasedOnOrigin(resultVector, vector);
         }
 
-        private static RDoubleVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
+        private RDoubleVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
             RDoubleVector result = RDataFactory.createDoubleVector(values, originVector.isComplete());
-            result.copyAttributesFrom(originVector);
+            result.copyAttributesFrom(attrProfiles, originVector);
             return result;
         }
     }

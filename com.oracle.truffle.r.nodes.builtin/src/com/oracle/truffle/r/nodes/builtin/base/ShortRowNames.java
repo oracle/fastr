@@ -43,6 +43,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
     private final ConditionProfile typeConditionProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile naValueMet = BranchProfile.create();
     private final BranchProfile intVectorMet = BranchProfile.create();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object executeObject(VirtualFrame frame, Object operand, Object type);
 
@@ -70,14 +71,14 @@ public abstract class ShortRowNames extends RBuiltinNode {
     @Specialization(guards = {"!invalidType", "!returnScalar"})
     protected Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
-        return operand.getRowNames();
+        return operand.getRowNames(attrProfiles);
     }
 
     @Specialization(guards = {"!invalidType", "returnScalar"})
     protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         int t = type.getDataAt(0);
-        Object rowNames = operand.getRowNames();
+        Object rowNames = operand.getRowNames(attrProfiles);
         if (nameConditionProfile.profile(rowNames == RNull.instance)) {
             return 0;
         } else {

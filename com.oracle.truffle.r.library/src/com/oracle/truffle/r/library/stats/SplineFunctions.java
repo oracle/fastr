@@ -63,7 +63,7 @@ public class SplineFunctions {
     /*
      * Periodic Spline --------------- The end conditions here match spline (and its derivatives) at
      * x[1] and x[n].
-     * 
+     *
      * Note: There is an explicit check that the user has supplied data with y[1] equal to y[n].
      */
     private static void periodicSpline(int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
@@ -182,7 +182,7 @@ public class SplineFunctions {
     /*
      * Natural Splines --------------- Here the end-conditions are determined by setting the second
      * derivative of the spline at the end-points to equal to zero.
-     * 
+     *
      * There are n-2 unknowns (y[i]'' at x[2], ..., x[n-1]) and n-2 equations to determine them.
      * Either Choleski or Gaussian elimination could be used.
      */
@@ -340,23 +340,23 @@ public class SplineFunctions {
         return;
     }
 
-    @TruffleBoundary
-    public static RDoubleVector splineEval(RDoubleVector xout, RList z) {
+    public static RDoubleVector splineEval(RAttributeProfiles attrProfiles, RDoubleVector xout, RList z) {
         int nu = xout.getLength();
         double[] yout = new double[nu];
-        int method = (int) z.getDataAt(z.getElementIndexByName("method"));
-        int nx = (int) z.getDataAt(z.getElementIndexByName("n"));
-        RDoubleVector x = (RDoubleVector) z.getDataAt(z.getElementIndexByName("x"));
-        RDoubleVector y = (RDoubleVector) z.getDataAt(z.getElementIndexByName("y"));
-        RDoubleVector b = (RDoubleVector) z.getDataAt(z.getElementIndexByName("b"));
-        RDoubleVector c = (RDoubleVector) z.getDataAt(z.getElementIndexByName("c"));
-        RDoubleVector d = (RDoubleVector) z.getDataAt(z.getElementIndexByName("d"));
+        int method = (int) z.getDataAt(z.getElementIndexByName(attrProfiles, "method"));
+        int nx = (int) z.getDataAt(z.getElementIndexByName(attrProfiles, "n"));
+        RDoubleVector x = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "x"));
+        RDoubleVector y = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "y"));
+        RDoubleVector b = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "b"));
+        RDoubleVector c = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "c"));
+        RDoubleVector d = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "d"));
 
         splineEval(method, nu, xout.getDataWithoutCopying(), yout, nx, x.getDataWithoutCopying(), y.getDataWithoutCopying(), b.getDataWithoutCopying(), c.getDataWithoutCopying(),
                         d.getDataWithoutCopying());
         return RDataFactory.createDoubleVector(yout, xout.isComplete() && x.isComplete() && y.isComplete());
     }
 
+    @TruffleBoundary
     private static void splineEval(int method, int nu, double[] u, double[] v, int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
         /*
          * Evaluate v[l] := spline(u[l], ...), l = 1,..,nu, i.e. 0:(nu-1) Nodes x[i], coef (y[i];

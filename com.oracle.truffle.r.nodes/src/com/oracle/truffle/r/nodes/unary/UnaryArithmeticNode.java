@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +39,8 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     private final NAProfile naProfile = NAProfile.create();
     private final NACheck na = NACheck.create();
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private final Message error;
 
@@ -75,11 +76,10 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return naProfile.isNA(operand) ? RRuntime.INT_NA : arithmetic.op(operand);
     }
 
-    @TruffleBoundary
-    private static void copyAttributes(RVector ret, RAbstractVector v) {
+    private void copyAttributes(RVector ret, RAbstractVector v) {
         ret.copyRegAttributesFrom(v);
         ret.setDimensions(v.getDimensions());
-        ret.copyNamesFrom(v);
+        ret.copyNamesFrom(attrProfiles, v);
     }
 
     @Specialization(guards = "isComplete")

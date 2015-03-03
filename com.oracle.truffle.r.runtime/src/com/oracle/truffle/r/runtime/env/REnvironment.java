@@ -384,9 +384,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins,
      * e.g. {@code substitute}.
      */
-    public static REnvironment createFromList(RList list, REnvironment parent) {
+    public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
         REnvironment result = RDataFactory.createNewEnv(parent, 0);
-        RStringVector names = list.getNames();
+        RStringVector names = list.getNames(attrProfiles);
         for (int i = 0; i < list.getLength(); i++) {
             try {
                 result.put(names.getDataAt(i), list.getDataAt(i));
@@ -402,8 +402,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final RStringVector ENVIRONMENT = RDataFactory.createStringVectorFromScalar(RType.Environment.getName());
 
     @Override
-    public RStringVector getClassAttr() {
-        RStringVector v = RAttributable.super.getClassAttr();
+    public RStringVector getClassAttr(RAttributeProfiles attrProfiles) {
+        RStringVector v = RAttributable.super.getClassAttr(attrProfiles);
         if (v == null) {
             return ENVIRONMENT;
         } else {

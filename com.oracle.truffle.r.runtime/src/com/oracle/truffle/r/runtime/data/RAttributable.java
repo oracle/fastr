@@ -48,12 +48,13 @@ public interface RAttributable {
     /**
      * Get the value of an attribute. Returns {@code null} if not set.
      */
-    default Object getAttr(String name) {
+    default Object getAttr(RAttributeProfiles profiles, String name) {
         RAttributes attributes = getAttributes();
-        if (attributes == null) {
+        if (profiles.attrNullProfile(attributes == null)) {
             return null;
+        } else {
+            return attributes.get(name);
         }
-        return attributes.get(name);
     }
 
     /**
@@ -72,9 +73,11 @@ public interface RAttributable {
      * Remove the attribute {@code name}. No error if {@code name} is not an attribute. This is
      * generic; a class may need to override this to handle certain attributes specially.
      */
-    default void removeAttr(String name) {
+    default void removeAttr(RAttributeProfiles profiles, String name) {
         RAttributes attributes = getAttributes();
-        if (attributes != null) {
+        if (profiles.attrNullProfile(attributes == null)) {
+            return;
+        } else {
             attributes.remove(name);
         }
     }
@@ -84,8 +87,8 @@ public interface RAttributable {
         return this;
     }
 
-    default RStringVector getClassAttr() {
-        return (RStringVector) getAttr(RRuntime.CLASS_ATTR_KEY);
+    default RStringVector getClassAttr(RAttributeProfiles profiles) {
+        return (RStringVector) getAttr(profiles, RRuntime.CLASS_ATTR_KEY);
     }
 
 }

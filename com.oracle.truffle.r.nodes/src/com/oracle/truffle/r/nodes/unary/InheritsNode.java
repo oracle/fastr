@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class InheritsNode extends BinaryNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract byte execute(VirtualFrame frame, Object x, Object what);
 
@@ -41,17 +42,17 @@ public abstract class InheritsNode extends BinaryNode {
 
     @Specialization
     protected Object doesInherit(REnvironment x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassAttr(), what);
+        return checkDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization
     protected Object doesInherit(RSymbol x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassAttr(), what);
+        return checkDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization
     protected Object doesInherit(RFunction x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassAttr(), what);
+        return checkDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization

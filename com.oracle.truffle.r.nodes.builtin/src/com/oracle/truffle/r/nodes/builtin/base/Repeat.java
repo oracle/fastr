@@ -68,6 +68,7 @@ public abstract class Repeat extends RBuiltinNode {
     private final BranchProfile errorBranch = BranchProfile.create();
     private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
     private final ConditionProfile replicateOnce = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private Object repeatRecursive(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (repeatRecursive == null) {
@@ -96,8 +97,8 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    protected static boolean hasNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
-        return x.getNames() != null;
+    protected boolean hasNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+        return x.getNames(attrProfiles) != null;
     }
 
     private RError invalidTimes() {
@@ -134,7 +135,7 @@ public abstract class Repeat extends RBuiltinNode {
             throw invalidTimes();
         }
         RAbstractVector input = handleEach(x, each);
-        RStringVector names = (RStringVector) handleEach(x.getNames(), each);
+        RStringVector names = (RStringVector) handleEach(x.getNames(attrProfiles), each);
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             names = (RStringVector) handleLengthOut(names, lengthOut, false);
             RVector r = handleLengthOut(input, lengthOut, false);
@@ -151,12 +152,12 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(guards = {"!eachGreaterOne", "hasNames"})
     public RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-            RStringVector names = (RStringVector) handleLengthOut(x.getNames(), lengthOut, true);
+            RStringVector names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
             RVector r = handleLengthOut(x, lengthOut, true);
             r.setNames(names);
             return r;
         } else {
-            RStringVector names = (RStringVector) handleTimes(x.getNames(), times, true);
+            RStringVector names = (RStringVector) handleTimes(x.getNames(attrProfiles), times, true);
             RVector r = handleTimes(x, times, true);
             r.setNames(names);
             return r;
@@ -167,7 +168,7 @@ public abstract class Repeat extends RBuiltinNode {
     public RAbstractContainer rep(VirtualFrame frame, RFactor x, RAbstractIntVector times, int lengthOut, int each) {
         RVector vec = (RVector) repeatRecursive(frame, x.getVector(), times, lengthOut, each);
         vec.setLevels(x.getLevels());
-        return RVector.setVectorClassAttr(vec, x.getClassAttr(), null, null);
+        return RVector.setVectorClassAttr(vec, x.getClassAttr(attrProfiles), null, null);
     }
 
     /**

@@ -31,6 +31,7 @@ public abstract class Format extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
 
     protected final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
@@ -177,7 +178,7 @@ public abstract class Format extends RBuiltinNode {
                 result.setDimensions(value.getDimensions());
                 result.setDimNames(value.getDimNames());
             } else {
-                result.setNames(value.getNames());
+                result.setNames(value.getNames(attrProfiles));
             }
             return result;
         }

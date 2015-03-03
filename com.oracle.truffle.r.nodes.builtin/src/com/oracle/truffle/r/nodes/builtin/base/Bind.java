@@ -53,6 +53,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullNames = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     protected String getBindType() {
         // this method should be abstract but due to annotation processor problem it does not work
@@ -162,7 +163,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         int[] dims = getDimensions(vec, cbind);
         // for cbind dimNamesA is names for the 1st dim and dimNamesB is names for 2nd dim; for
         // rbind the other way around
-        Object dimNamesA = vec.getNames() == null ? RNull.instance : vec.getNames();
+        Object dimNamesA = vec.getNames(attrProfiles) == null ? RNull.instance : vec.getNames(attrProfiles);
         Object dimNamesB;
 
         ArgumentsSignature signature = args.getSignature();
@@ -198,7 +199,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
      * @param dimLength
      * @return dimnames
      */
-    protected static Object getDimResultNamesFromElements(RAbstractVector vec, int dimLength, int dimInd) {
+    protected Object getDimResultNamesFromElements(RAbstractVector vec, int dimLength, int dimInd) {
         Object firstDimResultNames = RNull.instance;
         Object firstDimNames = RNull.instance;
         if (vec.isMatrix()) {
@@ -207,7 +208,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 firstDimNames = vecDimNames.getDataAt(dimInd);
             }
         } else if (!vec.isArray() || vec.getDimensions().length == 1) {
-            RStringVector names = vec.getNames();
+            RStringVector names = vec.getNames(attrProfiles);
             firstDimNames = names == null ? RNull.instance : names;
         } else {
             Utils.nyi("binding multi-dimensional arrays is not supported");

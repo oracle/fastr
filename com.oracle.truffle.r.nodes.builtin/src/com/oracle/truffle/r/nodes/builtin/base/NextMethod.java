@@ -38,6 +38,7 @@ public abstract class NextMethod extends RBuiltinNode {
     @CompilationFinal private String cachedGeneric;
 
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     public RNode[] getParameterValues() {
@@ -99,7 +100,7 @@ public abstract class NextMethod extends RBuiltinNode {
             arg = promiseHelper.evaluate(frame, (RPromise) arg);
         }
         RAbstractContainer enclosingArg = (RAbstractContainer) arg;
-        if (!enclosingArg.isObject()) {
+        if (!enclosingArg.isObject(attrProfiles)) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }

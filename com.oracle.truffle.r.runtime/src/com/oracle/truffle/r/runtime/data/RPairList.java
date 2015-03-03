@@ -149,7 +149,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return pl.car;
     }
 
-    public RStringVector getNames() {
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
@@ -173,7 +173,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return null;
     }
 
-    public Object getRowNames() {
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
         return null;
     }
 
@@ -181,7 +181,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return RDataFactory.createStringVector(RType.PairList.getName());
     }
 
-    public boolean isObject() {
+    public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }
 }

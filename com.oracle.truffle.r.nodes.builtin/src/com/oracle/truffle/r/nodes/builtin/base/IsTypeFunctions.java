@@ -419,10 +419,12 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsObject extends IsFalseAdapter {
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         @Specialization
         protected byte isObject(RAbstractContainer arg) {
             controlVisibility();
-            return arg.isObject() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+            return arg.isObject(attrProfiles) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
@@ -466,6 +468,8 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
     public abstract static class IsVector extends ErrorAdapter {
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         @Override
         public RNode[] getParameterValues() {
             // x, mode = "any"
@@ -493,9 +497,9 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        protected static boolean namesOnlyOrNoAttr(RAbstractVector x) {
+        protected boolean namesOnlyOrNoAttr(RAbstractVector x) {
             // there should be no attributes other than names
-            if (x.getNames() == null) {
+            if (x.getNames(attrProfiles) == null) {
                 assert x.getAttributes() == null || x.getAttributes().size() > 0;
                 return x.getAttributes() == null ? true : false;
             } else {

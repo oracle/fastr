@@ -42,15 +42,15 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy {
 
     Object getDataAtAsObject(int index);
 
-    RStringVector getNames();
+    RStringVector getNames(RAttributeProfiles attrProfiles);
 
     RList getDimNames();
 
-    Object getRowNames();
+    Object getRowNames(RAttributeProfiles attrProfiles);
 
     /**
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
      * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
      */
-    boolean isObject();
+    boolean isObject(RAttributeProfiles attrProfiles);
 }
