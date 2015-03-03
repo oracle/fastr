@@ -342,6 +342,8 @@ public final class RError extends RuntimeException {
         ONLY_SQUARE_INVERTED("only square matrices can be inverted"),
         NON_NUMERIC_ARGUMENT_FUNCTION("non-numeric argument to function"),
         SEED_LENGTH(".Random.seed has wrong length"),
+        SAME_TYPE("'%s' and '%s' must have the same type"),
+        UNIMPLEMENTED_TYPE_IN_FUNCTION("unimplemented type '%s' in '%s'"),
         // below: not exactly GNU-R message
         PROMISE_CYCLE("promise already under evaluation: recursive default argument reference or earlier problems?"),
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
