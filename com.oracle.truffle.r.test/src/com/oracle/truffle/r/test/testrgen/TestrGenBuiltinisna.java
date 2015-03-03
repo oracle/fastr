@@ -192,7 +192,6 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna35() {
         assertEval("argv <- list(NA_complex_);is.na(argv[[1]]);");
     }

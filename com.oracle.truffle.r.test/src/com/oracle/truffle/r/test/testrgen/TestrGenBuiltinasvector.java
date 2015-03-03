@@ -193,7 +193,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector33() {
         assertEval("argv <- list(quote(list(cut(Dtimes, \'3 months\'))), \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
@@ -410,7 +409,6 @@ public class TestrGenBuiltinasvector extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testasvector76() {
         assertEval("argv <- list(structure(list(c0 = structure(character(0), class = \'AsIs\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }

@@ -90,7 +90,6 @@ public class TestrGenBuiltinsep extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsep14() {
         assertEval("argv <- list(structure(list(A = c(52L, 52L, 47L, 45L, 40L, 37L, 27L, 27L, 23L, 22L, 21L, 25L, 24L, 22L, 22L, 20L, 16L, 17L, 14L, 13L, 13L, 14L, 24L), F = c(42L, 44L, 48L, 49L, 50L, 54L, 58L, 54L, 59L, 59L, 60L, 53L, 54L, 55L, 56L, 58L, 62L, 57L, 54L, 55L, 52L, 47L, 56L), M = c(6L, 4L, 5L, 6L, 10L, 9L, 15L, 19L, 18L, 19L, 19L, 22L, 22L, 23L, 22L, 22L, 22L, 26L, 32L, 32L, 35L, 39L, 20L)), .Names = c(\'A\', \'F\', \'M\'), class = \'data.frame\', row.names = c(NA, 23L)), 100);`/`(argv[[1]],argv[[2]]);");
     }
