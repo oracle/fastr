@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -56,8 +55,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
-
-    private final ConditionProfile sharedProfile = ConditionProfile.createBinaryProfile();
 
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
@@ -698,7 +695,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RShareable resize(int size, boolean resetAll) {
         this.complete &= getLength() >= size;
         RVector res = this;
-        if (sharedProfile.profile(this.isShared())) {
+        if (this.isShared()) {
             res = copyResized(size, true);
             res.markNonTemporary();
         } else {
@@ -792,7 +789,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     @Override
     public final RVector materializeNonSharedVector() {
-        if (sharedProfile.profile(this.isShared())) {
+        if (this.isShared()) {
             RVector res = this.copy();
             res.markNonTemporary();
             return res;
