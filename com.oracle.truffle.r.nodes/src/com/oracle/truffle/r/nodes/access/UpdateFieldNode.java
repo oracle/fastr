@@ -50,16 +50,17 @@ public abstract class UpdateFieldNode extends RNode {
     private final BranchProfile inexactMatch = BranchProfile.create();
     private final BranchProfile noRemoval = BranchProfile.create();
     private final ConditionProfile nullValueProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private CastListNode castList;
 
     @Specialization(guards = "!isNullValue")
     protected Object updateField(RList object, Object value) {
         String field = getField();
-        int index = object.getElementIndexByName(field);
+        int index = object.getElementIndexByName(attrProfiles, field);
         if (index == -1) {
             inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(field);
+            index = object.getElementIndexByNameInexact(attrProfiles, field);
         }
 
         int newLength = object.getLength() + (index == -1 ? 1 : 0);
@@ -72,10 +73,10 @@ public abstract class UpdateFieldNode extends RNode {
 
         String[] resultNames = new String[newLength];
         boolean namesComplete = true;
-        if (object.getNames() == null) {
+        if (object.getNames(attrProfiles) == null) {
             Arrays.fill(resultNames, "");
         } else {
-            RStringVector names = object.getNames();
+            RStringVector names = object.getNames(attrProfiles);
             System.arraycopy(names.getDataWithoutCopying(), 0, resultNames, 0, names.getLength());
             namesComplete = names.isComplete();
         }
@@ -84,7 +85,7 @@ public abstract class UpdateFieldNode extends RNode {
         resultNames[index] = field;
 
         RList result = RDataFactory.createList(resultData);
-        result.copyAttributesFrom(object);
+        result.copyAttributesFrom(attrProfiles, object);
         result.setNames(RDataFactory.createStringVector(resultNames, namesComplete));
 
         return result;
@@ -93,10 +94,10 @@ public abstract class UpdateFieldNode extends RNode {
     @Specialization(guards = "isNullValue")
     protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value) {
         String field = getField();
-        int index = object.getElementIndexByName(field);
+        int index = object.getElementIndexByName(attrProfiles, field);
         if (index == -1) {
             inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(field);
+            index = object.getElementIndexByNameInexact(attrProfiles, field);
         }
 
         if (index == -1) {
@@ -116,10 +117,10 @@ public abstract class UpdateFieldNode extends RNode {
 
         String[] resultNames = new String[newLength];
         boolean namesComplete = true;
-        if (object.getNames() == null) {
+        if (object.getNames(attrProfiles) == null) {
             Arrays.fill(resultNames, "");
         } else {
-            RStringVector names = object.getNames();
+            RStringVector names = object.getNames(attrProfiles);
             ind = 0;
             for (int i = 0; i < names.getLength(); i++) {
                 if (i != index) {
@@ -130,7 +131,7 @@ public abstract class UpdateFieldNode extends RNode {
         }
 
         RList result = RDataFactory.createList(resultData);
-        result.copyAttributesFrom(object);
+        result.copyAttributesFrom(attrProfiles, object);
         result.setNames(RDataFactory.createStringVector(resultNames, namesComplete));
 
         return result;

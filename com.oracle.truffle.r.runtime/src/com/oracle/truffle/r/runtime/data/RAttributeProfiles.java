@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,41 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.utilities.*;
 
-/**
- * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
- * Truffle sense.
- */
-@ValueType
-public class RSymbol extends RAttributeStorage implements RAttributable {
+public class RAttributeProfiles {
+    private final ConditionProfile attrNullProfile = ConditionProfile.createBinaryProfile();
 
-    public static final RSymbol MISSING = RDataFactory.createSymbol("");
-
-    private final String name;
-
-    public RSymbol(String name) {
-        this.name = name;
+    public boolean attrNullProfile(boolean cond) {
+        return attrNullProfile.profile(cond);
     }
 
-    public String getName() {
-        return name;
+    public static RAttributeProfiles create() {
+        return new RAttributeProfiles();
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    private static final RStringVector SYMBOL = RDataFactory.createStringVectorFromScalar("name");
-
-    @Override
-    public RStringVector getClassAttr(RAttributeProfiles attrProfiles) {
-        RStringVector v = RAttributable.super.getClassAttr(attrProfiles);
-        if (v == null) {
-            return SYMBOL;
-        } else {
-            return v;
-        }
-    }
 }

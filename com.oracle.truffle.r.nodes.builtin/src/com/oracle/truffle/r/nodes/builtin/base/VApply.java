@@ -52,6 +52,7 @@ public abstract class VApply extends RCastingBuiltinNode {
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimsProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
 
@@ -111,7 +112,7 @@ public abstract class VApply extends RCastingBuiltinNode {
 
         // TODO: handle names in case of matrices
         if (useNamesProfile.profile(RRuntime.fromLogical(useNames))) {
-            RStringVector names = vecMat.getNames();
+            RStringVector names = vecMat.getNames(attrProfiles);
             RStringVector newNames = null;
             if (names != null) {
                 newNames = names;

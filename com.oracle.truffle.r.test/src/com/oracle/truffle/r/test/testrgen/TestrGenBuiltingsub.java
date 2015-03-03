@@ -156,7 +156,6 @@ public class TestrGenBuiltingsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgsub25() {
         assertEval("argv <- list(\'%\', \'\\\\\\\\%\', structure(\'foo\', .Names = \'object\'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -168,7 +167,6 @@ public class TestrGenBuiltingsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgsub27() {
         assertEval("argv <- list(\'.__T__(.*):([^:]+(.*))\', \'\\\\2\', c(\'.__T__!:base\', \'.__T__%%:base\', \'.__T__%*%:base\', \'.__T__%/%:base\', \'.__T__&:base\', \'.__T__*:base\', \'.__T__+:base\', \'.__T__-:base\', \'.__T__/:base\', \'.__T__Arith:base\', \'.__T__BunchKaufman:Matrix\', \'.__T__Cholesky:Matrix\', \'.__T__Compare:methods\', \'.__T__Logic:base\', \'.__T__Math2:methods\', \'.__T__Math:base\', \'.__T__Ops:base\', \'.__T__Schur:Matrix\', \'.__T__Summary:base\', \'.__T__[:base\', \'.__T__[<-:base\', \'.__T__^:base\', \'.__T__all.equal:base\', \'.__T__all:base\', \'.__T__any:base\', \'.__T__as.array:base\', \'.__T__as.integer:base\', \'.__T__as.logical:base\', \'.__T__as.matrix:base\', \'.__T__as.numeric:base\', \'.__T__as.vector:base\', \'.__T__band:Matrix\', \'.__T__cbind2:methods\', \'.__T__chol2inv:base\', \'.__T__chol:base\', \'.__T__coerce:methods\', \'.__T__coerce<-:methods\', \'.__T__colMeans:base\', \'.__T__colSums:base\', \'.__T__cov2cor:stats\', \'.__T__crossprod:base\', \'.__T__determinant:base\', \'.__T__diag:base\', \'.__T__diag<-:base\', \'.__T__diff:base\', \'.__T__dim:base\', \'.__T__dim<-:base\', \'.__T__dimnames:base\', \'.__T__dimnames<-:base\', \'.__T__drop:base\', \'.__T__expand:Matrix\', \'.__T__expm:Matrix\', \'.__T__facmul:Matrix\', \'.__T__forceSymmetric:Matrix\', \'.__T__format:base\', \'.__T__head:utils\', \'.__T__image:graphics\', \'.__T__initialize:methods\', \'.__T__is.finite:base\', \'.__T__is.infinite:base\', \'.__T__is.na:base\', \'.__T__isDiagonal:Matrix\', \'.__T__isSymmetric:base\', \'.__T__isTriangular:Matrix\', \'.__T__kronecker:base\', \'.__T__length:base\', \'.__T__lu:Matrix\', \'.__T__mean:base\', \'.__T__nnzero:Matrix\', \'.__T__norm:base\', \'.__T__pack:Matrix\', \'.__T__print:base\', \'.__T__prod:base\', \'.__T__qr.Q:base\', \'.__T__qr.R:base\', \'.__T__qr.coef:base\', \'.__T__qr.fitted:base\', \'.__T__qr.qty:base\', \'.__T__qr.qy:base\', \'.__T__qr.resid:base\', \'.__T__qr:base\', \'.__T__rbind2:methods\', \'.__T__rcond:base\', \'.__T__rep:base\', \'.__T__rowMeans:base\', \'.__T__rowSums:base\', \'.__T__show:methods\', \'.__T__skewpart:Matrix\', \'.__T__solve:base\', \'.__T__sum:base\', \'.__T__summary:base\', \'.__T__symmpart:Matrix\', \'.__T__t:base\', \'.__T__tail:utils\', \'.__T__tcrossprod:base\', \'.__T__toeplitz:stats\', \'.__T__tril:Matrix\', \'.__T__triu:Matrix\', \'.__T__unname:base\', \'.__T__unpack:Matrix\', \'.__T__update:stats\', \'.__T__updown:Matrix\', \'.__T__which:base\', \'.__T__writeMM:Matrix\', \'.__T__zapsmall:base\'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }

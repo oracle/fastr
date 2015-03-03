@@ -35,6 +35,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Child private TypeofNode typeof;
 
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
@@ -68,7 +69,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected Object setClass(VirtualFrame frame, RAbstractContainer arg, String className) {
         controlVisibility();
         initTypeof();
-        if (!arg.isObject()) {
+        if (!arg.isObject(attrProfiles)) {
             RType argType = this.typeof.execute(frame, arg);
             if (argType.equals(className) || (RType.Numeric.getName().equals(className) && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)

@@ -326,20 +326,19 @@ public final class REngine implements RContext.Engine {
             }
             String line = source.getCode(e.line);
             String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, Math.min(line.length(), e.charPositionInLine + 1)) + "\"";
-            singleton.context.getConsoleHandler().println(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"));
+            writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
             return null;
         } catch (RError e) {
-            singleton.context.getConsoleHandler().println(e.getMessage());
+            writeStderr(e.getMessage(), true);
             return null;
         } catch (UnsupportedSpecializationException use) {
-            ConsoleHandler ch = singleton.context.getConsoleHandler();
-            ch.println("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
-                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()));
+            writeStderr("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()), true);
             throw use;
         } catch (DebugExitException | BrowserQuitException e) {
             throw e;
         } catch (RecognitionException | RuntimeException e) {
-            singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
+            writeStderr("Exception while parsing: " + e, true);
             e.printStackTrace();
             return null;
         }
@@ -484,7 +483,8 @@ public final class REngine implements RContext.Engine {
     public void printRError(RError e) {
         String es = e.toString();
         if (!es.isEmpty()) {
-            context.getConsoleHandler().printErrorln(e.toString());
+            writeStderr(e.toString(), true);
+
         }
         reportWarnings(true);
     }
@@ -493,9 +493,10 @@ public final class REngine implements RContext.Engine {
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
+        // We don't call writeStdErr as that may exercise the (broken) implementation
         singleton.context.getConsoleHandler().printErrorln(out.toString());
         // R suicide, unless, e.g., we are running units tests.
-        // We don't call quit as the system is broken.
+        // We also don't call quit as the system is broken.
         if (singleton.crashOnFatalError) {
             Utils.exit(2);
         }
@@ -507,22 +508,32 @@ public final class REngine implements RContext.Engine {
         if (!reportWarnings) {
             return;
         }
-        ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
-        // GnuR outputs warnings to the stderr, so we do too
         if (evalWarnings != null && evalWarnings.size() > 0) {
             if (inAddition) {
-                consoleHandler.printError("In addition: ");
+                writeStderr("In addition: ", false);
             }
             if (evalWarnings.size() == 1) {
-                consoleHandler.printErrorln("Warning message:");
-                consoleHandler.printErrorln(evalWarnings.get(0));
+                writeStderr("Warning message:", true);
+                writeStderr(evalWarnings.get(0), true);
             } else {
-                consoleHandler.printErrorln("Warning messages:");
+                writeStderr("Warning messages:", true);
                 for (int i = 0; i < evalWarnings.size(); i++) {
-                    consoleHandler.printErrorln((i + 1) + ":");
-                    consoleHandler.printErrorln("  " + evalWarnings.get(i));
+                    writeStderr((i + 1) + ":", true);
+                    writeStderr("  " + evalWarnings.get(i), true);
                 }
             }
+        }
+    }
+
+    private static void writeStderr(String s, boolean nl) {
+        try {
+            StdConnections.getStderr().writeString(s, nl);
+        } catch (IOException ex) {
+            // Very unlikely
+            ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
+            consoleHandler.printErrorln("Error writing to stderr: " + ex.getMessage());
+            consoleHandler.printErrorln(s);
+
         }
     }
 

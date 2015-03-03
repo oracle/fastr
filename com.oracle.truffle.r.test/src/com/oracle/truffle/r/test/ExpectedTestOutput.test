@@ -4742,6 +4742,10 @@ NAs introduced by coercion
 [1] NA
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsComplex
+#{ as.complex(NULL) }
+complex(0)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsComplex
 #{ as.complex(TRUE) }
 [1] 1+0i
 
@@ -4782,6 +4786,10 @@ imaginary parts discarded in coercion
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsDouble
 #{ as.double(1L) }
 [1] 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsDouble
+#{ as.double(NULL) }
+numeric(0)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsDouble
 #{ as.double(as.raw(1)) }
@@ -4891,6 +4899,10 @@ Warning message:
 NAs introduced by coercion
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
+#{ as.integer(NULL) }
+integer(0)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
 #{ as.integer(as.raw(1)) }
 [1] 1
 
@@ -4965,6 +4977,10 @@ NULL
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsLogical
 #{ as.logical(10+2i) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsLogical
+#{ as.logical(NULL) }
+logical(0)
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsLogical
 #{ as.logical(c("1","hello")) }
@@ -18103,6 +18119,11 @@ Levels: y z
 ##com.oracle.truffle.r.test.library.base.TestSimpleDataFrames.testAccess
 #{ x<-list(7,42); class(x)<-"data.frame"; row.names(x)<-"r1"; x[[1]] }
 [1] 7
+
+##com.oracle.truffle.r.test.library.base.TestSimpleDataFrames.testAsDataFrame
+#{ x<-1; class(x)<-"foo"; y<-as.data.frame(x) }
+Error in as.data.frame.default(x) :
+  cannot coerce class ""foo"" to a data.frame
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleDataFrames.testAsDataFrame
 #{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm="x"); attributes(y); }
@@ -57945,6 +57966,60 @@ Error in `[[.default`(x, "z", exact = TRUE) : subscript out of bounds
 #{ x<-factor(c("a", "b", "a")); .subset2(x, 1) }
 [1] 1
 
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1, drop=FALSE) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[.factor`(x, 1, drop=TRUE) }
+[1] a
+Levels: a
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[[.factor`(x, 1) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[[`(x, 1) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[`(x, 1) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", "b", "a")); `[`(x, 1, drop=FALSE) }
+[1] a
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", z="b", "a")); `[[.factor`(x, "z") }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", zz="b", "a")); `[[.factor`(x, "z", exact=FALSE) }
+[1] b
+Levels: a b
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", zz="b", "a")); `[[.factor`(x, "z", exact=TRUE) }
+Error in `[[.default`(x, "z", exact = TRUE) : subscript out of bounds
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testObjectDirectAccess
+#{ x<-factor(c("a", zz="b", "a")); `[[`(x, "z", exact=FALSE) }
+[1] b
+Levels: a b
+
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ mp<-getOption("max.print"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, "foo")<-"foo"; print(x); options(max.print=mp) }
 [1] 1 2 3
@@ -63978,6 +64053,10 @@ $two
 [26] 0.0181818182 0.0129870130 0.0086580087 0.0051948052 0.0025974026
 [31] 0.0008658009
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinReduce.testReduce1
+#argv <- structure(list(f = '+', x = 1:7, accumulate = TRUE),     .Names = c('f', 'x', 'accumulate'));do.call('Reduce', argv)
+[1]  1  3  6 10 15 21 28
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinSysgetenv.testSysgetenv2
 #argv <- list('SWEAVE_OPTIONS', NA_character_); .Internal(Sys.getenv(argv[[1]], argv[[2]]))
 [1] NA
@@ -64167,6 +64246,10 @@ numeric(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinallequal.testallequal1
 #argv <- structure(list(target = 0.261799387799149, current = 6.54498469497874),     .Names = c('target', 'current'));do.call('all.equal', argv)
 [1] "Mean relative difference: 24"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinallequalPOSIXt.testallequalPOSIXt1
+#argv <- structure(list(target = structure(1412833061.16639, class = c('POSIXct',     'POSIXt')), current = structure(1412833061.16839, class = c('POSIXct',     'POSIXt'))), .Names = c('target', 'current'));do.call('all.equal.POSIXt', argv)
+[1] "Mean absolute difference: 0.002000093"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinallequalcharacter.testallequalcharacter1
 #argv <- structure(list(target = structure(c('A', 'E', 'I', 'M',     'Q', 'U', 'B', 'F', 'J', 'N', 'R', 'V', 'C', 'G', 'K', 'O',     'S', 'W', 'D', 'H', 'L', 'P', 'T', 'X'), .Dim = c(6L, 4L)),     current = structure(c('A', 'E', 'I', 'M', 'Q', 'U', 'B',         'F', 'J', 'N', 'R', 'V', 'C', 'G', 'K', 'O', 'S', 'W',         'D', 'H', 'L', 'P', 'T', 'X'), .Dim = c(6L, 4L))), .Names = c('target',     'current'));do.call('all.equal.character', argv)
@@ -64443,6 +64526,10 @@ numeric(0)
 [4,]  -10    0  170    0    0    0  330  370
 [5,]  -10    0  180    0    0    0  340  380
 [6,]    0    0    0    0    0    0    0    0
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinappend.testappend1
+#argv <- structure(list(x = 1:5, values = 0:1, after = 3), .Names = c('x',     'values', 'after'));do.call('append', argv)
+[1] 1 2 3 0 1 4 5
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinargs.testargs1
 #argv <- list(NULL); .Internal(args(argv[[1]]))
@@ -65453,6 +65540,10 @@ complex(0)
 #argv <- list('1.3');as.complex(argv[[1]]);
 [1] 1.3+0i
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinascomplex.testascomplex7
+#argv <- list(NA_complex_);as.complex(argv[[1]]);
+[1] NA
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinascomplex.testascomplex8
 #argv <- list(integer(0));as.complex(argv[[1]]);
 complex(0)
@@ -65687,6 +65778,10 @@ integer(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasinteger.testasinteger6
 #argv <- list(2e+05);as.integer(argv[[1]]);
 [1] 200000
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasinteger.testasinteger7
+#argv <- list(NULL);as.integer(argv[[1]]);
+integer(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasinteger.testasinteger8
 #argv <- list(list(7L, 20, 0L, 1));as.integer(argv[[1]]);
@@ -65987,6 +66082,15 @@ $g2
 #argv <- list(structure(1:12, .Dim = 3:4, .Dimnames = list(c('A', 'B', 'C'), c('D', 'E', 'F', 'G'))), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))
  [1]  1  2  3  4  5  6  7  8  9 10 11 12
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasvector.testasvector33
+#argv <- list(quote(list(cut(Dtimes, '3 months'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))
+[[1]]
+list
+
+[[2]]
+cut(Dtimes, "3 months")
+
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasvector.testasvector35
 #argv <- list(structure(list(a = 1), .Names = 'a'), 'double'); .Internal(as.vector(argv[[1]], argv[[2]]))
 [1] 1
@@ -66100,6 +66204,10 @@ $a4
 #argv <- list(FALSE, 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))
 [1] "FALSE"
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasvector.testasvector76
+#argv <- list(structure(list(c0 = structure(character(0), class = 'AsIs')), .Names = 'c0', row.names = character(0), class = 'data.frame'), 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))
+[1] "character(0)"
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinasvector.testasvector77
 #argv <- list(structure(list(), .Dim = 0L), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))
 list()
@@ -66191,6 +66299,16 @@ diff
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinatan.testatan5
 #argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));atan(argv[[1]]);
 <0 x 0 matrix>
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinatan2.testatan23
+#argv <- list(c(-1.95681154249341, -2.88854075894443, -2.84850921846233, -2.14635417317387, -1.72790445779804, -0.92649412488672, -0.261537463816701, 0.948205247045638, 1.0990096500205, 2.09024037060933, 2.90928417418961, 4.00425294069879, 1.70515935701163), c(-3.2406391957027, -2.61163262017643, -0.21977838696678, 1.24931893031091, 1.6032898858835, 2.16902716372255, 2.15792786802985, 2.10075226013806, 2.04989923648162, 1.49269068253165, 0.515893014329757, -2.61745072267338, -4.64929811590859)); .Internal(atan2(argv[[1]], argv[[2]]))
+ [1] -2.5983580 -2.3058916 -1.6477994 -1.0436683 -0.8227891 -0.4036880
+ [7] -0.1206102  0.4239882  0.4921311  0.9506540  1.3952942  2.1497456
+[13]  2.7900689
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinatan2.testatan26
+#argv <- list(logical(0), logical(0)); .Internal(atan2(argv[[1]], argv[[2]]))
+numeric(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinattr.testattr1
 #argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1), .Dim = c(32L, 23L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32'), c('(Intercept)', 'HairBrown', 'HairRed', 'HairBlond', 'EyeBlue', 'EyeHazel', 'EyeGreen', 'SexFemale', 'HairBrown:EyeBlue', 'HairRed:EyeBlue', 'HairBlond:EyeBlue', 'HairBrown:EyeHazel', 'HairRed:EyeHazel', 'HairBlond:EyeHazel', 'HairBrown:EyeGreen', 'HairRed:EyeGreen', 'HairBlond:EyeGreen', 'HairBrown:SexFemale', 'HairRed:SexFemale', 'HairBlond:SexFemale', 'EyeBlue:SexFemale', 'EyeHazel:SexFemale', 'EyeGreen:SexFemale')), assign = c(0L, 1L, 1L, 1L, 2L, 2L, 2L, 3L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 5L, 5L, 5L, 6L, 6L, 6L), contrasts = structure(list(Hair = 'contr.treatment',     Eye = 'contr.treatment', Sex = 'contr.treatment'), .Names = c('Hair', 'Eye', 'Sex'))), 'assign');attr(argv[[1]],argv[[2]]);
@@ -67502,6 +67620,10 @@ head
 #argv <- list(c(-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3,     3.5, 4));do.call('ceiling', argv)
  [1] -2 -1 -1  0  0  1  1  2  2  3  3  4  4
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltincharToRaw.testcharToRaw1
+#argv <- list(''); .Internal(charToRaw(argv[[1]]))
+raw(0)
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltincharacter.testcharacter1
 #argv <- structure(list(length = 0L), .Names = 'length');do.call('character', argv)
 character(0)
@@ -68623,6 +68745,10 @@ NULL
 #argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(environmentName(argv[[1]]))
 [1] ""
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinexists.testexists1
+#argv <- structure(list(x = '.Device'), .Names = 'x');do.call('exists', argv)
+[1] TRUE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinexp.testexp1
 #argv <- list(-3.99290891786396);exp(argv[[1]]);
 [1] 0.01844598
@@ -68664,6 +68790,29 @@ NULL
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinexpm1.testexpm15
 #argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));expm1(argv[[1]]);
 <0 x 0 matrix>
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinextract_parentasis_assign_factor.testextract_parentasis_assign_factor1
+#argv <- structure(list(x = structure(c(4L, 1L, 4L, 4L, 6L, 4L,     5L, 5L, 4L, 6L, 6L, 2L, 3L, 6L, 4L, 2L, 1L, 6L, 1L, 3L, 3L,     5L, 2L, 2L, 2L, 5L, 3L, 3L, 1L, 2L, 5L, 6L, 6L, 6L, 6L, 2L,     6L, 1L, 5L, 1L, 2L, 4L, 4L, 6L, 5L, 5L, 2L, 6L, 4L, 6L, 5L,     1L, 2L, 5L, 1L, 1L, 4L, 3L, 3L, 4L, 4L, 2L, 5L, 3L, 4L, 5L,     4L, 6L, 4L, 5L, 2L, 6L, 2L, 4L, 2L, 2L, 4L, 4L, 1L, 6L, 2L,     1L, 5L, 3L, 5L, 1L, 2L, 2L, 4L, 2L, 4L, 2L, 5L, 6L, 5L, 6L,     3L, 1L, 2L, 4L, 6L, 6L, 3L, 3L, 2L, 6L, 2L, 5L, 3L, 4L, 3L,     4L, 6L, 3L, 4L, 2L, 3L, 1L, 6L, 2L, 4L, 4L, 1L, 3L, 4L, 3L,     4L, 1L, 4L, 1L, 3L, 5L, 5L, 5L, 4L, 4L, 6L, 2L, 6L, 3L, 2L,     1L, 1L, 6L, 2L, 2L, 5L, 1L, 5L, 3L, 2L, 2L, 5L, 1L, 6L, 3L,     6L, 4L, 2L, 2L, 5L, 6L, 6L, 1L, 1L, 6L, 6L, 5L, 2L, 5L, 6L,     5L, 4L, 6L, 2L, 5L, 4L, 3L, 5L, 1L, 3L, 4L, 4L, 3L, 1L, 1L,     5L, 4L, 1L, 3L, 5L, 4L, 5L, 4L, 6L, 6L, 2L, 4L, 3L, 3L),     .Label = c('a', 'b', 'c', 'd', 'e', 'f'), class = 'factor'),     c(189L, 84L, 154L, 9L, 130L, 44L, 137L, 12L, 50L, 1L, 42L,         174L, 194L, 131L, 157L, 101L, 37L, 128L, 117L, 181L,         51L, 109L, 110L, 67L, 69L, 124L, 192L, 65L, 171L, 168L),     value = NA), .Names = c('x', '', 'value'));do.call('[<-.factor', argv)
+  [1] <NA> a    d    d    f    d    e    e    <NA> f    f    <NA> c    f    d
+ [16] b    a    f    a    c    c    e    b    b    b    e    c    c    a    b
+ [31] e    f    f    f    f    b    <NA> a    e    a    b    <NA> d    <NA> e
+ [46] e    b    f    d    <NA> <NA> a    b    e    a    a    d    c    c    d
+ [61] d    b    e    c    <NA> e    <NA> f    <NA> e    b    f    b    d    b
+ [76] b    d    d    a    f    b    a    e    <NA> e    a    b    b    d    b
+ [91] d    b    e    f    e    f    c    a    b    d    <NA> f    c    c    b
+[106] f    b    e    <NA> <NA> c    d    f    c    d    b    <NA> a    f    b
+[121] d    d    a    <NA> d    c    d    <NA> d    <NA> <NA> e    e    e    d
+[136] d    <NA> b    f    c    b    a    a    f    b    b    e    a    e    c
+[151] b    b    e    <NA> f    c    <NA> d    b    b    e    f    f    a    a
+[166] f    f    <NA> b    e    <NA> e    d    <NA> b    e    d    c    e    a
+[181] <NA> d    d    c    a    a    e    d    <NA> c    e    <NA> e    <NA> f
+[196] f    b    d    c    c
+Levels: a b c d e f
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinextract_parentasis_extract_parentasis_assign_factor.testextract_parentasis_extract_parentasis_assign_factor1
+#argv <- structure(list(x = structure(c(2L, 2L, 3L), .Label = c('One',     'Two', 'Three'), class = 'factor'), 2, value = 'One'), .Names = c('x',     '', 'value'));do.call('[[<-.factor', argv)
+[1] Two   One   Three
+Levels: One Two Three
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinfactor.testfactor1
 #argv <- structure(list(x = c(1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L,     0L, 0L, 0L, 0L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 1L, 0L,     0L, 1L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 0L,     0L, 0L, 1L, 0L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 1L, 1L, 0L,     1L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 0L,     0L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 0L, 1L, 0L, 1L, 0L, 0L, 0L,     1L, 0L, 0L, 0L, 0L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 1L, 0L, 0L,     1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L,     1L, 1L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 0L, 0L,     0L, 0L, 0L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 1L, 1L,     0L, 0L, 1L, 1L, 1L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 1L, 0L, 0L,     0L, 1L, 1L, 1L, 0L, 1L, 0L, 0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L,     1L, 0L, 0L, 0L, 0L, 1L, 0L, 0L, 1L, 1L, 1L, 0L, 1L, 0L, 0L,     1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 0L, 1L, 0L, 0L, 1L, 0L,     0L, 0L, 1L, 0L, 0L, 1L, 0L, 1L, 0L, 0L, 1L, 0L, 0L, 1L, 0L,     1L, 1L, 0L, 1L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 0L, 0L, 1L, 1L,     1L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 0L, 1L, 0L, 1L, 0L, 0L, 0L,     0L, 1L, 0L, 0L, 0L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 0L,     1L, 1L, 1L, 1L, 0L, 0L, 1L, 0L, 0L, 1L, 0L, 1L, 1L, 1L, 1L,     1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 0L, 0L, 0L,     0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 1L,     1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 0L,     1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,     1L, 0L, 1L, 1L, 1L, 0L, 1L, 1L, 0L, 1L, 1L, 0L, 1L, 1L, 1L,     0L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,     0L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 1L, 1L,     1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 0L, 1L, 1L, 1L,     1L, 1L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 0L,     0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 0L, 1L, 1L,     0L, 0L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L,     0L, 0L, 0L, 1L, 0L, 0L, 0L, 0L, 1L, 0L, 0L, 1L, 0L, 1L, 1L,     1L, 1L, 0L, 1L, 1L, 0L, 1L, 0L, 1L, 0L, 0L, 1L, 1L, 1L, 0L,     1L, 0L, 0L, 1L, 0L, 0L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 1L,     0L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 1L, 1L, 0L, 1L, 0L,     0L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 1L,     1L, 0L, 1L, 0L, 0L, 0L, 1L, 1L, 0L, 1L, 0L, 0L, 0L, 0L, 0L,     1L, 0L, 1L, 0L, 1L, 1L, 0L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 1L,     0L, 1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 0L,     0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 1L, 0L, 0L, 1L, 0L,     0L, 0L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L,     0L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 0L, 1L, 0L,     0L, 1L, 0L, 0L, 1L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 1L, 0L, 1L,     0L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L,     0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 0L,     1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 1L, 0L, 0L, 1L, 0L,     0L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L,     1L, 0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 0L,     0L, 1L, 0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 1L, 1L, 1L, 0L, 0L,     0L, 0L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 1L, 1L, 1L, 0L, 0L, 1L,     0L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 0L, 1L,     1L, 0L, 1L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 0L,     0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 0L, 1L, 0L,     0L, 0L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 1L, 1L, 0L, 0L,     1L, 0L, 0L, 1L, 0L, 0L, 1L, 0L, 1L, 0L, 0L, 0L, 1L, 1L, 0L,     1L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 1L, 0L, 1L, 0L, 0L, 1L, 1L,     0L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 0L, 0L,     0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 1L, 0L, 1L, 0L, 0L,     0L, 1L, 1L, 1L, 0L, 1L, 0L, 0L, 0L, 1L, 0L, 1L, 0L, 1L, 0L,     1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 1L,     0L, 0L, 1L, 0L, 1L, 0L, 1L, 0L, 0L, 0L, 1L, 0L, 0L, 0L, 1L,     0L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 1L, 1L, 1L, 0L, 0L,     1L, 0L, 0L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 0L, 1L, 0L,     0L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 1L, 1L, 1L, 0L, 0L, 0L, 0L,     0L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 0L, 1L, 1L, 0L,     0L, 1L, 0L, 0L, 1L, 1L, 0L, 1L, 1L, 0L, 0L, 0L, 1L, 0L, 0L,     0L, 0L, 1L, 1L, 0L, 1L, 0L, 0L, 1L, 1L, 0L, 1L, 1L, 0L, 1L,     1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 1L,     0L, 1L)), .Names = 'x');do.call('factor', argv)
@@ -69047,6 +69196,32 @@ character(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingsub.testgsub24
 #argv <- list('.__M__(.*):([^:]+)', '\\1', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
 character(0)
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingsub.testgsub25
+#argv <- list('%', '\\\\%', structure('foo', .Names = 'object'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
+object
+ "foo"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingsub.testgsub27
+#argv <- list('.__T__(.*):([^:]+(.*))', '\\2', c('.__T__!:base', '.__T__%%:base', '.__T__%*%:base', '.__T__%/%:base', '.__T__&:base', '.__T__*:base', '.__T__+:base', '.__T__-:base', '.__T__/:base', '.__T__Arith:base', '.__T__BunchKaufman:Matrix', '.__T__Cholesky:Matrix', '.__T__Compare:methods', '.__T__Logic:base', '.__T__Math2:methods', '.__T__Math:base', '.__T__Ops:base', '.__T__Schur:Matrix', '.__T__Summary:base', '.__T__[:base', '.__T__[<-:base', '.__T__^:base', '.__T__all.equal:base', '.__T__all:base', '.__T__any:base', '.__T__as.array:base', '.__T__as.integer:base', '.__T__as.logical:base', '.__T__as.matrix:base', '.__T__as.numeric:base', '.__T__as.vector:base', '.__T__band:Matrix', '.__T__cbind2:methods', '.__T__chol2inv:base', '.__T__chol:base', '.__T__coerce:methods', '.__T__coerce<-:methods', '.__T__colMeans:base', '.__T__colSums:base', '.__T__cov2cor:stats', '.__T__crossprod:base', '.__T__determinant:base', '.__T__diag:base', '.__T__diag<-:base', '.__T__diff:base', '.__T__dim:base', '.__T__dim<-:base', '.__T__dimnames:base', '.__T__dimnames<-:base', '.__T__drop:base', '.__T__expand:Matrix', '.__T__expm:Matrix', '.__T__facmul:Matrix', '.__T__forceSymmetric:Matrix', '.__T__format:base', '.__T__head:utils', '.__T__image:graphics', '.__T__initialize:methods', '.__T__is.finite:base', '.__T__is.infinite:base', '.__T__is.na:base', '.__T__isDiagonal:Matrix', '.__T__isSymmetric:base', '.__T__isTriangular:Matrix', '.__T__kronecker:base', '.__T__length:base', '.__T__lu:Matrix', '.__T__mean:base', '.__T__nnzero:Matrix', '.__T__norm:base', '.__T__pack:Matrix', '.__T__print:base', '.__T__prod:base', '.__T__qr.Q:base', '.__T__qr.R:base', '.__T__qr.coef:base', '.__T__qr.fitted:base', '.__T__qr.qty:base', '.__T__qr.qy:base', '.__T__qr.resid:base', '.__T__qr:base', '.__T__rbind2:methods', '.__T__rcond:base', '.__T__rep:base', '.__T__rowMeans:base', '.__T__rowSums:base', '.__T__show:methods', '.__T__skewpart:Matrix', '.__T__solve:base', '.__T__sum:base', '.__T__summary:base', '.__T__symmpart:Matrix', '.__T__t:base', '.__T__tail:utils', '.__T__tcrossprod:base', '.__T__toeplitz:stats', '.__T__tril:Matrix', '.__T__triu:Matrix', '.__T__unname:base', '.__T__unpack:Matrix', '.__T__update:stats', '.__T__updown:Matrix', '.__T__which:base', '.__T__writeMM:Matrix', '.__T__zapsmall:base'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
+  [1] "base"     "base"     "base"     "base"     "base"     "base"
+  [7] "base"     "base"     "base"     "base"     "Matrix"   "Matrix"
+ [13] "methods"  "base"     "methods"  "base"     "base"     "Matrix"
+ [19] "base"     "base"     "base"     "base"     "base"     "base"
+ [25] "base"     "base"     "base"     "base"     "base"     "base"
+ [31] "base"     "Matrix"   "methods"  "base"     "base"     "methods"
+ [37] "methods"  "base"     "base"     "stats"    "base"     "base"
+ [43] "base"     "base"     "base"     "base"     "base"     "base"
+ [49] "base"     "base"     "Matrix"   "Matrix"   "Matrix"   "Matrix"
+ [55] "base"     "utils"    "graphics" "methods"  "base"     "base"
+ [61] "base"     "Matrix"   "base"     "Matrix"   "base"     "base"
+ [67] "Matrix"   "base"     "Matrix"   "base"     "Matrix"   "base"
+ [73] "base"     "base"     "base"     "base"     "base"     "base"
+ [79] "base"     "base"     "base"     "methods"  "base"     "base"
+ [85] "base"     "base"     "methods"  "Matrix"   "base"     "base"
+ [91] "base"     "Matrix"   "base"     "utils"    "base"     "stats"
+ [97] "Matrix"   "Matrix"   "base"     "Matrix"   "stats"    "Matrix"
+[103] "base"     "Matrix"   "base"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingsub.testgsub8
 #argv <- list(''([^']*)'', '‘\\1’', '‘/home/lzhao/hg/r-instrumented/tests/rpart.Rcheck’', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
@@ -69856,6 +70031,10 @@ Levels: a.b.c a.b.b.c a.c
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltiniscomplex.testiscomplex3
 #argv <- list(structure(1:24, .Dim = 2:4));is.complex(argv[[1]]);
 [1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltiniscomplex.testiscomplex4
+#argv <- list(NA_complex_);is.complex(argv[[1]]);
+[1] TRUE
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltiniscomplex.testiscomplex5
 #argv <- list(1.3+0i);is.complex(argv[[1]]);
@@ -70722,6 +70901,10 @@ FALSE
 [7,] FALSE FALSE FALSE FALSE FALSE
 [8,] FALSE FALSE FALSE FALSE FALSE
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisna.testisna35
+#argv <- list(NA_complex_);is.na(argv[[1]]);
+[1] TRUE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisna.testisna36
 #argv <- list(complex(0));is.na(argv[[1]]);
 logical(0)
@@ -70801,6 +70984,10 @@ logical(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisnull.testisnull13
 #argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.null(argv[[1]]);
+[1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisnull.testisnull14
+#argv <- list(NA_complex_);do.call('is.null', argv)
 [1] FALSE
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisnull.testisnull15
@@ -71294,6 +71481,11 @@ logical(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinisvector.testisvector9
 #argv <- list(structure(list(Plant = structure(c(5L, 5L, 5L, 5L, 5L, 5L, 5L), .Label = c('Qn1', 'Qn2', 'Qn3', 'Qc1', 'Qc3', 'Qc2', 'Mn3', 'Mn2', 'Mn1', 'Mc2', 'Mc3', 'Mc1'), class = c('ordered', 'factor')), Type = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L), .Label = c('Quebec', 'Mississippi'), class = 'factor'), Treatment = structure(c(2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('nonchilled', 'chilled'), class = 'factor')), .Names = c('Plant', 'Type', 'Treatment'), class = 'data.frame', row.names = 36:42), 'any'); .Internal(is.vector(argv[[1]], argv[[2]]))
 [1] FALSE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlabels.testlabels1
+#argv <- structure(list(object = structure(c(-469.098459411633,     469.356672501203, -0.429918004252249, 0.00364370239091614,     -0.256875513692359, -0.0204799335117722, 2.00613934942808),     .Names = c('(Intercept)', 'gravity', 'ph', 'osmo', 'conduct',         'urea', 'log(calc)'))), .Names = 'object');do.call('labels', argv)
+[1] "(Intercept)" "gravity"     "ph"          "osmo"        "conduct"
+[6] "urea"        "log(calc)"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlength.testlength1
 #argv <- list('~ . + Soft+M.user:Temp');length(argv[[1]]);
@@ -72361,6 +72553,15 @@ Vcells 18316380 139.8   26424236 201.7         NA 22608335 172.5
 #argv <- list(numeric(0), 1, 1L, FALSE, NULL, TRUE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
      [,1]
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmatrix.testmatrix28
+#argv <- list(NA_complex_, 5L, 1L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
+     [,1]
+[1,]   NA
+[2,]   NA
+[3,]   NA
+[4,]   NA
+[5,]   NA
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmatrix.testmatrix3
 #argv <- list(NA, 0L, 0L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
 <0 x 0 matrix>
@@ -72610,6 +72811,10 @@ object "foo"
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmean.testmean16
 #argv <- list(numeric(0)); .Internal(mean(argv[[1]]))
 [1] NaN
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmean.testmean19
+#argv <- structure(list(x = structure(c(31, NA, NA, 31), units = 'days',     class = 'difftime'), na.rm = TRUE), .Names = c('x', 'na.rm'));do.call('mean', argv)
+Time difference of 31 days
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmean.testmean20
 #argv <- structure(list(x = c(TRUE, FALSE, TRUE, TRUE)), .Names = 'x');do.call('mean', argv)
@@ -73107,6 +73312,15 @@ logical(0)
 
 104.6608
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators110
+#argv <- list(structure(list(Fertility = c(80.2, 83.1, 92.5, 85.8, 76.9), Agriculture = c(17, 45.1, 39.7, 36.5, 43.5), Examination = c(15L, 6L, 5L, 12L, 17L), Education = c(12L, 9L, 5L, 7L, 15L)), .Names = c('Fertility', 'Agriculture', 'Examination', 'Education'), row.names = c('Courtelary', 'Delemont', 'Franches-Mnt', 'Moutier', 'Neuveville'), class = 'data.frame'), 6);`<=`(argv[[1]],argv[[2]]);
+             Fertility Agriculture Examination Education
+Courtelary       FALSE       FALSE       FALSE     FALSE
+Delemont         FALSE       FALSE        TRUE     FALSE
+Franches-Mnt     FALSE       FALSE        TRUE      TRUE
+Moutier          FALSE       FALSE       FALSE     FALSE
+Neuveville       FALSE       FALSE       FALSE     FALSE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators111
 #argv <- list(c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, NA, 2L, 2L, 0L, NA, 1L, 1L), c(0, 0, 0, 0, 0, 0, 0, 0, 1, NA, 2, 2, 0, NA, 1, 1));`==`(argv[[1]],argv[[2]]);
  [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE   NA TRUE TRUE TRUE   NA TRUE
@@ -73184,6 +73398,11 @@ logical(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators125
 #argv <- list('«Latin-1 accented chars»: ghè øØ å<Å æ<Æ gh ghè', '«Latin-1 accented chars»: ghè øØ å<Å æ<Æ gh ghè');`==`(argv[[1]],argv[[2]]);
 [1] TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators126
+#argv <- list(structure(list(cde = 2L, cd = 4L), .Names = c('cde', 'cd'), row.names = 'ab', class = 'data.frame'), c(2, 4));`==`(argv[[1]],argv[[2]]);
+    cde   cd
+ab TRUE TRUE
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators127
 #argv <- list(1, structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), .Names = c('is.array', 'is.atomic', 'is.call', 'is.character', 'is.complex', 'is.data.frame', 'is.double', 'is.environment', 'is.expression', 'is.factor', 'is.finite', 'is.function', 'is.infinite', 'is.integer', 'is.language', 'is.list', 'is.logical', 'is.matrix', 'is.na', 'is.name', 'is.nan', 'is.null', 'is.numeric', 'is.numeric_version', 'is.object', 'is.ordered', 'is.package_version', 'is.pairlist', 'is.primitive', 'is.qr', 'is.raw', 'is.recursive', 'is.symbol', 'is.table', 'is.vector')));`==`(argv[[1]],argv[[2]]);
@@ -73557,6 +73776,15 @@ logical(0)
 #argv <- list(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE));`&`(argv[[1]],argv[[2]]);
 [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators192
+#argv <- list(structure(c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, NA), .Dim = c(5L, 2L), .Dimnames = list(NULL, c('VAR1', 'VAR3'))), structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE), .Dim = c(5L, 2L), .Dimnames = list(NULL, c('VAR1', 'VAR3'))));`&`(argv[[1]],argv[[2]]);
+      VAR1  VAR3
+[1,]  TRUE  TRUE
+[2,] FALSE  TRUE
+[3,] FALSE  TRUE
+[4,] FALSE  TRUE
+[5,] FALSE FALSE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators193
 #argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')), structure(c(TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));`&`(argv[[1]],argv[[2]]);
    100 -1e-13    Inf   -Inf    NaN   3.14     NA
@@ -73754,6 +73982,15 @@ FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators260
 #argv <- list(c(-Inf, Inf), c(-Inf, Inf));`==`(argv[[1]],argv[[2]]);
 [1] TRUE TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators261
+#argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c('VAR1', 'VAR3'), class = 'data.frame', row.names = c(NA, -5L)), 1);`==`(argv[[1]],argv[[2]]);
+      VAR1 VAR3
+[1,]  TRUE TRUE
+[2,] FALSE TRUE
+[3,] FALSE TRUE
+[4,] FALSE TRUE
+[5,] FALSE   NA
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators262
 #argv <- list(structure(1:20, .Dim = c(2L, 2L, 5L)), structure(1:20, .Dim = c(2L, 2L, 5L)));`==`(argv[[1]],argv[[2]]);
@@ -74045,6 +74282,11 @@ FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
    40    42    43    44    45    46    47    48    49    50    51    52    53
 FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators313
+#argv <- list(structure(c(NA, FALSE, TRUE, NA, FALSE, TRUE, NA, FALSE, TRUE), .Names = c(NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE')), structure(c(NA, NA, NA, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), .Names = c(NA, NA, NA, 'FALSE', 'FALSE', 'FALSE', 'TRUE', 'TRUE', 'TRUE')));`|`(argv[[1]],argv[[2]]);
+ <NA> FALSE  TRUE  <NA> FALSE  TRUE  <NA> FALSE  TRUE
+   NA    NA  TRUE    NA FALSE  TRUE  TRUE  TRUE  TRUE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators316
 #argv <- list(character(0));`!`(argv[[1]]);
 logical(0)
@@ -74163,6 +74405,10 @@ rate
  [1]  0 -1  0 -1 -1  0 NA NA  0  0  0  0  0  7  0  8  9  0  0  0 NA  0  0  0  0
 [26]  0 NA  0  0  0  0  0  0  0  0  0  0 15  0 16 17  0  0 17  0 18 19  0
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators337
+#argv <- list(c(TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE), c(TRUE, TRUE, TRUE, NA, FALSE, FALSE, TRUE, NA));`&`(argv[[1]],argv[[2]]);
+[1]  TRUE  TRUE  TRUE FALSE FALSE FALSE  TRUE FALSE
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators338
 #argv <- list(structure(c(FALSE, FALSE), .Names = c('(Intercept)', 'age')));`!`(argv[[1]]);
 (Intercept)         age
@@ -74202,6 +74448,11 @@ is.na.numeric_version               is.name                is.nan
                  TRUE                  TRUE                 FALSE
             is.vector
                  TRUE
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators342
+#argv <- list(structure(c(NA, FALSE, TRUE, NA, FALSE, TRUE, NA, FALSE, TRUE), .Names = c(NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE')), structure(c(NA, NA, NA, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), .Names = c(NA, NA, NA, 'FALSE', 'FALSE', 'FALSE', 'TRUE', 'TRUE', 'TRUE')));`&`(argv[[1]],argv[[2]]);
+ <NA> FALSE  TRUE  <NA> FALSE  TRUE  <NA> FALSE  TRUE
+   NA FALSE    NA FALSE FALSE FALSE    NA FALSE  TRUE
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators344
 #argv <- list(list());`&`(argv[[1]]);
@@ -74340,6 +74591,13 @@ data
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators48
 #argv <- list(41L, 0L);`-`(argv[[1]],argv[[2]]);
 [1] 41
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators51
+#argv <- list(structure(c(94694400, 126230400, 157766400, 189302400, 220924800, 252460800, 283996800, 315532800, 362793600, 394329600, 425865600, 489024000, 567993600, 631152000, 662688000, 709948800, 741484800, 773020800, 820454400, 867715200, 915148800, 1136073600, 1230768000, 1341100800), class = c('POSIXct', 'POSIXt')), structure(c(78796800, 94694400, 126230400, 157766400, 189302400, 220924800, 252460800, 283996800, 315532800, 362793600, 394329600, 425865600, 489024000, 567993600, 631152000, 662688000, 709948800, 741484800, 773020800, 820454400, 867715200, 1136073600, 1230768000, 1341100800), class = c('POSIXct', 'POSIXt')));`-`(argv[[1]],argv[[2]]);
+Time differences in secs
+ [1] 15897600 31536000 31536000 31536000 31622400 31536000 31536000 31536000
+ [9] 47260800 31536000 31536000 63158400 78969600 63158400 31536000 47260800
+[17] 31536000 31536000 47433600 47260800 47433600        0        0        0
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators53
 #argv <- list(structure(c(58.56, 2.776, 61.341, 0, 0), .Names = c('user.self', 'sys.self', 'elapsed', 'user.child', 'sys.child'), class = 'proc_time'), structure(c(40.692, 0.307, 41, 0, 0), .Names = c('user.self', 'sys.self', 'elapsed', 'user.child', 'sys.child'), class = 'proc_time'));`-`(argv[[1]],argv[[2]]);
@@ -74546,6 +74804,30 @@ data
  [8,]    0    0    0    0    0    0    0   -1    0     0
  [9,]    0    0    0    0    0    0    0    0   -1     0
 [10,]    0    0    0    0    0    0    0    0    0    -1
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators63
+#argv <- list(structure(list(war = c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L), fly = c(1L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), ver = c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L), end = c(1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, NA, 1L, 1L, 2L, 1L, 1L, NA, 2L), gro = c(2L, 2L, 1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, NA, 2L, 2L, 1L, NA, 2L, 2L, NA, 1L, 2L), hai = c(1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L)), .Names = c('war', 'fly', 'ver', 'end', 'gro', 'hai'), class = 'data.frame', row.names = c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha')), 1);`-`(argv[[1]],argv[[2]]);
+    war fly ver end gro hai
+ant   0   0   0   0   1   0
+bee   0   1   0   0   1   1
+cat   1   0   1   0   0   1
+cpl   0   0   0   0   0   1
+chi   1   0   1   1   1   1
+cow   1   0   1   0   1   1
+duc   1   1   1   0   1   0
+eag   1   1   1   1   0   0
+ele   1   0   1   1   1   0
+fly   0   1   0   0   0   0
+fro   0   0   1   1  NA   0
+her   0   0   1   0   1   0
+lio   1   0   1  NA   1   1
+liz   0   0   1   0   0   0
+lob   0   0   0   0  NA   0
+man   1   0   1   1   1   1
+rab   1   0   1   0   1   1
+sal   0   0   1   0  NA   0
+spi   0   0   0  NA   0   1
+wha   1   0   1   1   1   0
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinoperators.testoperators65
 #argv <- list(c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L, 8L, NA, 7L, 16L, 11L, 14L, 18L, 14L, 34L, 6L, 30L, 11L, 1L, 11L, 4L, 32L, NA, NA, NA, 23L, 45L, 115L, 37L, NA, NA, NA, NA, NA, NA, 29L, NA, 71L, 39L, NA, NA, 23L, NA, NA, 21L, 37L, 20L, 12L, 13L, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 135L, 49L, 32L, NA, 64L, 40L, 77L, 97L, 97L, 85L, NA, 10L, 27L, NA, 7L, 48L, 35L, 61L, 79L, 63L, 16L, NA, NA, 80L, 108L, 20L, 52L, 82L, 50L, 64L, 59L, 39L, 9L, 16L, 78L, 35L, 66L, 122L, 89L, 110L, NA, NA, 44L, 28L, 65L, NA, 22L, 59L, 23L, 31L, 44L, 21L, 9L, NA, 45L, 168L, 73L, NA, 76L, 118L, 84L, 85L, 96L, 78L, 73L, 91L, 47L, 32L, 20L, 23L, 21L, 24L, 44L, 21L, 28L, 9L, 13L, 46L, 18L, 13L, 24L, 16L, 13L, 23L, 36L, 7L, 14L, 30L, NA, 14L, 18L, 20L));`-`(argv[[1]]);
@@ -75418,6 +75700,10 @@ y ~ A:U + A:V - 1
 [31] "NM"   "NY"   "NC"   "ND"   "Oh"   "Ok"   "Or"   "Pn"   "RI"   "SC"
 [41] "SD"   "Tn"   "Tx"   "Ut"   "Vrm"  "Vrg"  "Wsh"  "WV"   "Wsc"  "Wy"
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinprintfunction.testprintfunction4
+#argv <- list(.Primitive('.Internal'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))
+function (call)  .Primitive(".Internal")
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinprod.testprod1
 #argv <- list(9L);prod(argv[[1]]);
 [1] 9
@@ -76046,6 +76332,33 @@ Malaysia           1     1   1    1
 [25] 0.111111111 0.062500000 0.027777778 0.040000000 0.023668639 0.040000000
 [31] 0.010000000 0.027777778 0.003086420 0.049382716 0.002500000
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsep.testsep14
+#argv <- list(structure(list(A = c(52L, 52L, 47L, 45L, 40L, 37L, 27L, 27L, 23L, 22L, 21L, 25L, 24L, 22L, 22L, 20L, 16L, 17L, 14L, 13L, 13L, 14L, 24L), F = c(42L, 44L, 48L, 49L, 50L, 54L, 58L, 54L, 59L, 59L, 60L, 53L, 54L, 55L, 56L, 58L, 62L, 57L, 54L, 55L, 52L, 47L, 56L), M = c(6L, 4L, 5L, 6L, 10L, 9L, 15L, 19L, 18L, 19L, 19L, 22L, 22L, 23L, 22L, 22L, 22L, 26L, 32L, 32L, 35L, 39L, 20L)), .Names = c('A', 'F', 'M'), class = 'data.frame', row.names = c(NA, 23L)), 100);`/`(argv[[1]],argv[[2]]);
+      A    F    M
+1  0.52 0.42 0.06
+2  0.52 0.44 0.04
+3  0.47 0.48 0.05
+4  0.45 0.49 0.06
+5  0.40 0.50 0.10
+6  0.37 0.54 0.09
+7  0.27 0.58 0.15
+8  0.27 0.54 0.19
+9  0.23 0.59 0.18
+10 0.22 0.59 0.19
+11 0.21 0.60 0.19
+12 0.25 0.53 0.22
+13 0.24 0.54 0.22
+14 0.22 0.55 0.23
+15 0.22 0.56 0.22
+16 0.20 0.58 0.22
+17 0.16 0.62 0.22
+18 0.17 0.57 0.26
+19 0.14 0.54 0.32
+20 0.13 0.55 0.32
+21 0.13 0.52 0.35
+22 0.14 0.47 0.39
+23 0.24 0.56 0.20
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsep.testsep15
 #argv <- list(c(1, 0), structure(c(1, 0, 0, 1), .Dim = c(2L, 2L)));`/`(argv[[1]],argv[[2]]);
      [,1] [,2]
@@ -76494,6 +76807,13 @@ integer(0)
 [4,]  0.2798734 -0.2717041 -0.7945601
 [5,]  0.8192892  0.6027311  0.7009196
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsink.testsink1
+#argv <- list(structure(2L, class = c('terminal', 'connection')), FALSE, TRUE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsinknumber.testsinknumber1
+#argv <- list(FALSE); .Internal(sink.number(argv[[1]]))
+[1] 2
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsort.testsort1
 #argv <- list('x1', FALSE); .Internal(sort(argv[[1]], argv[[2]]))
 [1] "x1"
@@ -76670,6 +76990,10 @@ $`4`
 [17] 123.7872 123.7872
 
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsplit.testsplit15
+#argv <- list(character(0), structure(integer(0), .Label = character(0), class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))
+named list()
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsplit.testsplit17
 #argv <- structure(list(x = c(5.1, 4.9, 4.7, 4.6, 5, 5.4, 4.6,     5, 4.4, 4.9, 5.4, 4.8, 4.8, 4.3, 5.8, 5.7, 5.4, 5.1, 5.7,     5.1, 5.4, 5.1, 4.6, 5.1, 4.8, 5, 5, 5.2, 5.2, 4.7, 4.8, 5.4,     5.2, 5.5, 4.9, 5, 5.5, 4.9, 4.4, 5.1, 5, 4.5, 4.4, 5, 5.1,     4.8, 5.1, 4.6, 5.3, 5, 7, 6.4, 6.9, 5.5, 6.5, 5.7, 6.3, 4.9,     6.6, 5.2, 5, 5.9, 6, 6.1, 5.6, 6.7, 5.6, 5.8, 6.2, 5.6, 5.9,     6.1, 6.3, 6.1, 6.4, 6.6, 6.8, 6.7, 6, 5.7, 5.5, 5.5, 5.8,     6, 5.4, 6, 6.7, 6.3, 5.6, 5.5, 5.5, 6.1, 5.8, 5, 5.6, 5.7,     5.7, 6.2, 5.1, 5.7, 6.3, 5.8, 7.1, 6.3, 6.5, 7.6, 4.9, 7.3,     6.7, 7.2, 6.5, 6.4, 6.8, 5.7, 5.8, 6.4, 6.5, 7.7, 7.7, 6,     6.9, 5.6, 7.7, 6.3, 6.7, 7.2, 6.2, 6.1, 6.4, 7.2, 7.4, 7.9,     6.4, 6.3, 6.1, 7.7, 6.3, 6.4, 6, 6.9, 6.7, 6.9, 5.8, 6.8,     6.7, 6.7, 6.3, 6.5, 6.2, 5.9), f = structure(list(col2 = structure(c(3L,     2L, 2L, 2L, 3L, 3L, 2L, 2L, 2L, 2L, 3L, 2L, 2L, 2L, 3L, 3L,     3L, 3L, 3L, 3L, 2L, 3L, 3L, 2L, 2L, 2L, 2L, 3L, 2L, 2L, 2L,     2L, 3L, 3L, 2L, 2L, 3L, 3L, 2L, 2L, 3L, 1L, 2L, 3L, 3L, 2L,     3L, 2L, 3L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L, 2L, 1L,     2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 2L, 2L,     2L, 2L, 2L, 2L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 1L, 2L,     2L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L,     1L, 2L, 1L, 3L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 3L, 2L, 1L, 2L,     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 2L, 2L, 2L, 2L,     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L),     .Label = c('2', '3', '4'), class = 'factor'), col5 = structure(c(1L,     1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L,     1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L,     1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L,     1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L,     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L,     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L,     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L,     3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L,     3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L,     3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L),     .Label = c('setosa', 'versicolor', 'virginica'), class = 'factor')),     .Names = c('col2', 'col5'))), .Names = c('x', 'f'));do.call('split', argv)
 $`2.setosa`
@@ -76757,6 +77081,35 @@ $`4`
 $`5`
  [1] 96 78 73 91 47 32 20 23 21 24 44 21 28  9 13 46 18 13 24 16 13 23 36  7 14
 [26] 30 NA 14 18 20
+
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsplit.testsplit7
+#argv <- list(structure(c('Sex/(Age + Eth * Lrn)', 'Sex + Sex:Age + Sex:Eth + Sex:Lrn + Sex:Eth:Lrn + Sex:Age:Lrn', 'Sex + Sex:Age + Sex:Eth + Sex:Lrn + Sex:Eth:Lrn + Sex:Age:Lrn + Sex:Age:Eth + Sex:Age:Eth:Lrn', '1.597991', '1.686899', '1.928360', '132', '128', '118', '-1063.025', '-1055.398', '-1039.324', '', '1 vs 2', '2 vs 3', '', ' 4', '10', '', ' 7.627279', '16.073723', '', '0.10622602', '0.09754136'), .Dim = c(3L, 8L)), structure(c(1L, 1L, 1L, 2L, 2L, 2L, 3L, 3L, 3L, 4L, 4L, 4L, 5L, 5L, 5L, 6L, 6L, 6L, 7L, 7L, 7L, 8L, 8L, 8L), .Label = c('1', '2', '3', '4', '5', '6', '7', '8'), class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))
+$`1`
+[1] "Sex/(Age + Eth * Lrn)"
+[2] "Sex + Sex:Age + Sex:Eth + Sex:Lrn + Sex:Eth:Lrn + Sex:Age:Lrn"
+[3] "Sex + Sex:Age + Sex:Eth + Sex:Lrn + Sex:Eth:Lrn + Sex:Age:Lrn + Sex:Age:Eth + Sex:Age:Eth:Lrn"
+
+$`2`
+[1] "1.597991" "1.686899" "1.928360"
+
+$`3`
+[1] "132" "128" "118"
+
+$`4`
+[1] "-1063.025" "-1055.398" "-1039.324"
+
+$`5`
+[1] ""       "1 vs 2" "2 vs 3"
+
+$`6`
+[1] ""   " 4" "10"
+
+$`7`
+[1] ""          " 7.627279" "16.073723"
+
+$`8`
+[1] ""           "0.10622602" "0.09754136"
 
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsplit.testsplit8
@@ -77116,9 +77469,109 @@ $`117`
 [1] 0 0 0 1
 
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsplit.testsplit9
+#argv <- list(structure(c(NA, NA), .Dim = 1:2), structure(1:2, .Label = c('1', '2'), class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))
+$`1`
+[1] NA
+
+$`2`
+[1] NA
+
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf1
+#argv <- list('%s is not TRUE', 'identical(fxy, c(1, 2, 3))'); .Internal(sprintf(argv[[1]], argv[[2]]))
+[1] "identical(fxy, c(1, 2, 3)) is not TRUE"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf11
+#argv <- list('%1$d %1$x %1$X', 0:15); .Internal(sprintf(argv[[1]], argv[[2]]))
+ [1] "0 0 0"  "1 1 1"  "2 2 2"  "3 3 3"  "4 4 4"  "5 5 5"  "6 6 6"  "7 7 7"
+ [9] "8 8 8"  "9 9 9"  "10 a A" "11 b B" "12 c C" "13 d D" "14 e E" "15 f F"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf12
+#argv <- list('%03o', 1:255); .Internal(sprintf(argv[[1]], argv[[2]]))
+  [1] "001" "002" "003" "004" "005" "006" "007" "010" "011" "012" "013" "014"
+ [13] "015" "016" "017" "020" "021" "022" "023" "024" "025" "026" "027" "030"
+ [25] "031" "032" "033" "034" "035" "036" "037" "040" "041" "042" "043" "044"
+ [37] "045" "046" "047" "050" "051" "052" "053" "054" "055" "056" "057" "060"
+ [49] "061" "062" "063" "064" "065" "066" "067" "070" "071" "072" "073" "074"
+ [61] "075" "076" "077" "100" "101" "102" "103" "104" "105" "106" "107" "110"
+ [73] "111" "112" "113" "114" "115" "116" "117" "120" "121" "122" "123" "124"
+ [85] "125" "126" "127" "130" "131" "132" "133" "134" "135" "136" "137" "140"
+ [97] "141" "142" "143" "144" "145" "146" "147" "150" "151" "152" "153" "154"
+[109] "155" "156" "157" "160" "161" "162" "163" "164" "165" "166" "167" "170"
+[121] "171" "172" "173" "174" "175" "176" "177" "200" "201" "202" "203" "204"
+[133] "205" "206" "207" "210" "211" "212" "213" "214" "215" "216" "217" "220"
+[145] "221" "222" "223" "224" "225" "226" "227" "230" "231" "232" "233" "234"
+[157] "235" "236" "237" "240" "241" "242" "243" "244" "245" "246" "247" "250"
+[169] "251" "252" "253" "254" "255" "256" "257" "260" "261" "262" "263" "264"
+[181] "265" "266" "267" "270" "271" "272" "273" "274" "275" "276" "277" "300"
+[193] "301" "302" "303" "304" "305" "306" "307" "310" "311" "312" "313" "314"
+[205] "315" "316" "317" "320" "321" "322" "323" "324" "325" "326" "327" "330"
+[217] "331" "332" "333" "334" "335" "336" "337" "340" "341" "342" "343" "344"
+[229] "345" "346" "347" "350" "351" "352" "353" "354" "355" "356" "357" "360"
+[241] "361" "362" "363" "364" "365" "366" "367" "370" "371" "372" "373" "374"
+[253] "375" "376" "377"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf13
+#argv <- list('%d y value <= 0 omitted from logarithmic plot', 1L); .Internal(sprintf(argv[[1]], argv[[2]]))
+[1] "1 y value <= 0 omitted from logarithmic plot"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf14
+#argv <- list('%o', 1:255); .Internal(sprintf(argv[[1]], argv[[2]]))
+  [1] "1"   "2"   "3"   "4"   "5"   "6"   "7"   "10"  "11"  "12"  "13"  "14"
+ [13] "15"  "16"  "17"  "20"  "21"  "22"  "23"  "24"  "25"  "26"  "27"  "30"
+ [25] "31"  "32"  "33"  "34"  "35"  "36"  "37"  "40"  "41"  "42"  "43"  "44"
+ [37] "45"  "46"  "47"  "50"  "51"  "52"  "53"  "54"  "55"  "56"  "57"  "60"
+ [49] "61"  "62"  "63"  "64"  "65"  "66"  "67"  "70"  "71"  "72"  "73"  "74"
+ [61] "75"  "76"  "77"  "100" "101" "102" "103" "104" "105" "106" "107" "110"
+ [73] "111" "112" "113" "114" "115" "116" "117" "120" "121" "122" "123" "124"
+ [85] "125" "126" "127" "130" "131" "132" "133" "134" "135" "136" "137" "140"
+ [97] "141" "142" "143" "144" "145" "146" "147" "150" "151" "152" "153" "154"
+[109] "155" "156" "157" "160" "161" "162" "163" "164" "165" "166" "167" "170"
+[121] "171" "172" "173" "174" "175" "176" "177" "200" "201" "202" "203" "204"
+[133] "205" "206" "207" "210" "211" "212" "213" "214" "215" "216" "217" "220"
+[145] "221" "222" "223" "224" "225" "226" "227" "230" "231" "232" "233" "234"
+[157] "235" "236" "237" "240" "241" "242" "243" "244" "245" "246" "247" "250"
+[169] "251" "252" "253" "254" "255" "256" "257" "260" "261" "262" "263" "264"
+[181] "265" "266" "267" "270" "271" "272" "273" "274" "275" "276" "277" "300"
+[193] "301" "302" "303" "304" "305" "306" "307" "310" "311" "312" "313" "314"
+[205] "315" "316" "317" "320" "321" "322" "323" "324" "325" "326" "327" "330"
+[217] "331" "332" "333" "334" "335" "336" "337" "340" "341" "342" "343" "344"
+[229] "345" "346" "347" "350" "351" "352" "353" "354" "355" "356" "357" "360"
+[241] "361" "362" "363" "364" "365" "366" "367" "370" "371" "372" "373" "374"
+[253] "375" "376" "377"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf15
+#argv <- list('%s-class.Rd', structure('foo', .Names = 'foo')); .Internal(sprintf(argv[[1]], argv[[2]]))
+[1] "foo-class.Rd"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf16
+#argv <- list('checkRd: (%d) %s', -3, 'evalSource.Rd:157: Unnecessary braces at ‘{\'sourceEnvironment\'}’'); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))
+[1] "checkRd: (-3) evalSource.Rd:157: Unnecessary braces at ‘{'sourceEnvironment'}’"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf17
+#argv <- list('tools:::check_compiled_code(\'%s\')', '/home/lzhao/hg/r-instrumented/library/foreign'); .Internal(sprintf(argv[[1]], argv[[2]]))
+[1] "tools:::check_compiled_code('/home/lzhao/hg/r-instrumented/library/foreign')"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf19
+#argv <- list('%G', 3.14159265358979e-06); .Internal(sprintf(argv[[1]], argv[[2]]))
+[1] "3.14159E-06"
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf21
 #argv <- structure(list(fmt = '%9.4g', 12345.6789), .Names = c('fmt',     ''));do.call('sprintf', argv)
 [1] "1.235e+04"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf4
+#argv <- list('%o', integer(0)); .Internal(sprintf(argv[[1]], argv[[2]]))
+character(0)
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf5
+#argv <- list('%*s', 1, ''); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))
+[1] " "
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf6
+#argv <- list('p,L,S = (%2d,%2d,%2d): ', TRUE, TRUE, FALSE); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))
+[1] "p,L,S = ( 1, 1, 0): "
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsqrt.testsqrt1
 #argv <- list(12.8025995273675);sqrt(argv[[1]]);
@@ -77269,6 +77722,12 @@ B FALSE TRUE
 [1] "exNSS4"
 
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit11
+#argv <- list(structure('pkgB', .Names = 'name'), '_', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
+$name
+[1] "pkgB"
+
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinstrsplit.teststrsplit13
 #argv <- list('x', '', FALSE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))
 [[1]]
@@ -77309,6 +77768,11 @@ integer(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsub.testsub1
 #argv <- list('^..dfd.', '', c('aa', '..dfd.row.names'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
 [1] "aa"        "row.names"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsub.testsub10
+#argv <- list('^[[:space:]]*([[:alnum:].]+).*$', '\\1', structure('MASS', .Names = 'Suggests'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
+Suggests
+  "MASS"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsub.testsub11
 #argv <- list(' +$', '', c(NA, '1', NA, '2', '1', NA, NA, '1', '4', '1', NA, '4', '1', '3', NA, '4', '2', '2', NA, '4', '4', '2', '4', '4', '2', '1', '4', '4', '3', '1', '1', '4', '1', '4', NA, '1', '4', '4', '2', '2', '4', '4', '3', '4', '2', '2', '3', '3', '4', '1', '1', '1', '4', '1', '4', '4', '4', '4', NA, '4', '4', '4', NA, '1', '2', '3', '4', '3', '4', '2', '4', '4', '1', '4', '1', '4', NA, '4', '2', '1', '4', '1', '1', '1', '4', '4', '2', '4', '1', '1', '1', '4', '1', '1', '1', '4', '3', '1', '4', '3', '2', '4', '3', '1', '4', '2', '4', NA, '4', '4', '4', '2', '1', '4', '4', NA, '2', '4', '4', '1', '1', '1', '1', '4', '1', '2', '3', '2', '1', '4', '4', '4', '1', NA, '4', '2', '2', '2', '4', '4', '3', '3', '4', '2', '4', '3', '1', '1', '4', '2', '4', '3', '1', '4', '3', '4', '4', '1', '1', '4', '4', '3', '1', '1', '2', '1', '3', '4', '2', '2', '2', '4', '4', '3', '2', '1', '1', '4', '1', '1', '2', NA, '2', '3', '3', '2', '1', '1', '1', '1', '4', '4', '4', '4', '4', '4', '2', '2', '1', '4', '1', '4', '3', '4', '2', '3', '1', '3', '1', '4', '1', '4', '1', '4', '3', '3', '4', '4', '1', NA, '3', '4', '4', '4', '4', '4', '4', '3', '4', '3', '4', '2', '4', '4', '1', '2', NA, '4', '4', '4', '4', '1', '2', '1', '1', '2', '1', '4', '2', '3', '1', '4', '4', '4', '1', '2', '1', '4', '2', '1', '3', '1', '2', '2', '1', '2', '1', NA, '3', '2', '2', '4', '1', '4', '4', '2', '4', '4', '4', '2', '1', '4', '2', '4', '4', '4', '4', '4', '1', '3', '4', '3', '4', '1', NA, '4', NA, '1', '1', '1', '4', '4', '4', '4', '2', '4', '3', '2', NA, '1', '4', '4', '3', '4', '4', '4', '2', '4', '2', '1', '4', '4', NA, '4', '4', '3', '3', '4', '2', '2', '4', '1', '4', '4', '4', '3', '4', '4', '4', '3', '2', '1', '3', '1', '4', '1', '4', '2', NA, '1', '4', '4', '3', '1', '4', '1', '4', '1', '4', '4', '1', '2', '2', '1', '4', '1', '1', '4', NA, '4', NA, '4', '4', '4', '1', '4', '2', '1', '2', '2', '2', '2', '1', '1', '2', '1', '4', '2', '3', '3', '1', '3', '1', '4', '1', '3', '2', '2', '4', '1', NA, '3', '4', '2', '4', '4', '4', '4', '4', '4', '3', '4', '4', '3', '2', '1', '4', '4', '2', '4', '2', '1', '2', '1', '1', '1', '1', '4', '4', '1', '1', '4', '1', '4', '4', '4', '1', '1', NA, '3', '2', '4', '4', '4', '4', '2', '3', '3', '2', NA, '4', '2', '4', '4', '1', '1', '4', '4', '1', '1', '4', '1', '2', '2', '2', '2', '1', '4', '4', '1', '2', '2', '2', '3', '4', '4', '3', '4', '1', '1', '4', '4', NA, '4', '1', '4', '4', '4', '1', '4', '4', '1', '2', '4', '4', '4', '4', '1', '2', '4', '4', '2', '1', '4', '2', '4', '2', '2', '4', '1', '3', '3', '2', '4', '1', '4', '4', '4', '1', NA, '4', '4', '2', '4', '4', '4', '4', '4', '2', NA, '4', '2', '4', '3', '1', '4', '4', '3', '4', '2', '4', '4', '1', '2', '1', '4', '1', '3', '3', '1', '4', '4', '2', '4', '4', '4', '4', '3', '2', '3', '3', '2', NA, '3', '4', '4', '3', '3', '4', '4', '4', '1', '4', '4', '4', '4', '4', '4', '4', '2', '4', '2', '3', '4', '1', '3', '1', NA, '4', '1', '2', '2', '1', '4', '3', '3', '4', '1', '1', '3'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
@@ -77353,6 +77817,10 @@ integer(0)
  [5] "Cylinders6"      "Cylinders8"      "Cylindersrotary" "TypeLarge"
  [9] "TypeMidsize"     "TypeSmall"       "TypeSporty"      "TypeVan"
 [13] "EngineSize"      "DriveTrainFront" "DriveTrainRear"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsub.testsub17
+#argv <- list('^msgstr[[:blank:]]+[\'](.*)[\'][[:blank:]]*$', '\\1', 'msgstr \'<U+043E><U+0442><U+0440><U+0438><U+0446><U+0430><U+0442><U+0435><U+043B><U+044C><U+043D><U+044B><U+0435> <U+0432><U+0435><U+0441><U+0430> <U+043D><U+0435> <U+0440><U+0430><U+0437><U+0440><U+0435><U+0448><U+0435><U+043D><U+044B>\'', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
+[1] "<U+043E><U+0442><U+0440><U+0438><U+0446><U+0430><U+0442><U+0435><U+043B><U+044C><U+043D><U+044B><U+0435> <U+0432><U+0435><U+0441><U+0430> <U+043D><U+0435> <U+0440><U+0430><U+0437><U+0440><U+0435><U+0448><U+0435><U+043D><U+044B>"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsub.testsub19
 #argv <- list('([^:]*):(.*)', '\\2', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
@@ -78333,11 +78801,31 @@ NULL
 #argv <- list(c('colors', 'colours'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))
 [1] "colors"  "colours"
 
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinunique.testunique7
+#argv <- list(structure(list(a = 1), .Names = 'a'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))
+[[1]]
+[1] 1
+
+
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinunique.testunique8
 #argv <- list(c(1, 258, 516, 774, 1032, 1290, 1548, 1806, 2064, 2322, 2580, 2838, 3096, 3354, 3612, 3870, 4128, 4386, 4644, 4902, 5160, 1, 259, 517, 775, 1033, 1291, 1549, 1807, 2065, 2323, 2581, 2839, 3097, 3355, 3613, 3871, 4129, 4387, 4645, 4903, 5160), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))
  [1]    1  258  516  774 1032 1290 1548 1806 2064 2322 2580 2838 3096 3354 3612
 [16] 3870 4128 4386 4644 4902 5160  259  517  775 1033 1291 1549 1807 2065 2323
 [31] 2581 2839 3097 3355 3613 3871 4129 4387 4645 4903
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinunique.testunique9
+#argv <- list(list(FALSE), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))
+[[1]]
+[1] FALSE
+
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinunitsassign_.testunitsassign_1
+#argv <- structure(list(x = structure(500, units = 'secs', class = 'difftime',     .Names = 'a'), value = 'mins'), .Names = c('x', 'value'));do.call('units<-', argv)
+Time difference of 8.333333 mins
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinunitsassign_difftime.testunitsassign_difftime1
+#argv <- structure(list(x = structure(500, units = 'secs', class = 'difftime',     .Names = 'a'), value = 'mins'), .Names = c('x', 'value'));do.call('units<-.difftime', argv)
+Time difference of 8.333333 mins
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinvector.testvector1
 #argv <- list('integer', 0L); .Internal(vector(argv[[1]], argv[[2]]))
@@ -78361,6 +78849,10 @@ NULL
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinvector.testvector5
 #argv <- list('double', 2); .Internal(vector(argv[[1]], argv[[2]]))
 [1] 0 0
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinvector.testvector9
+#argv <- list('raw', 0L); .Internal(vector(argv[[1]], argv[[2]]))
+raw(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinwhich.testwhich1
 #argv <- list(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE)); .Internal(which(argv[[1]]))
@@ -78408,6 +78900,9 @@ named integer(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinwhichmax.testwhichmax3
 #argv <- list(c(7985.84636551931, 7366.07281363396, 7342.71367123673, 7315.48787041648, 7290.90503004105)); .Internal(which.max(argv[[1]]))
 [1] 1
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinwriteLines.testwriteLines1
+#argv <- structure(list(text = ' \'  A  \'; \'B\' ;\'C\';\' D \';\'E \';  F  ;G  ',     con = 'foo'), .Names = c('text', 'con'));do.call('writeLines', argv)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinxtfrmdefault.testxtfrmdefault1
 #argv <- structure(list(x = structure(1:3, id = 'An Example',     class = structure('numWithId', package = '.GlobalEnv'))),     .Names = 'x');do.call('xtfrm.default', argv)

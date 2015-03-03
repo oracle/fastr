@@ -24,6 +24,8 @@ import com.oracle.truffle.r.runtime.env.*;
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetClass extends RBuiltinNode {
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Specialization(guards = {"isObject", "!isLanguage", "!isExpression"})
     protected Object getClassForObject(RAbstractContainer arg) {
         controlVisibility();
@@ -43,7 +45,7 @@ public abstract class GetClass extends RBuiltinNode {
     @Specialization
     protected Object getClass(RFunction arg) {
         controlVisibility();
-        Object attr = arg.getAttr(RRuntime.CLASS_ATTR_KEY);
+        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
         if (attr == null) {
             return RType.Function.getName();
         } else {
@@ -72,7 +74,7 @@ public abstract class GetClass extends RBuiltinNode {
     @Specialization
     protected Object getClass(REnvironment arg) {
         controlVisibility();
-        Object attr = arg.getAttr(RRuntime.CLASS_ATTR_KEY);
+        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
         if (attr == null) {
             return RType.Environment.getName();
         } else {
@@ -83,7 +85,7 @@ public abstract class GetClass extends RBuiltinNode {
     @Specialization
     protected Object getClass(RPairList arg) {
         controlVisibility();
-        Object attr = arg.getAttr(RRuntime.CLASS_ATTR_KEY);
+        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
         if (attr == null) {
             return RType.PairList.getName();
         } else {
@@ -118,7 +120,7 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     protected boolean isObject(RAbstractContainer arg) {
-        return arg.isObject();
+        return arg.isObject(attrProfiles);
     }
 
     public abstract Object execute(VirtualFrame frame, RAbstractVector o);

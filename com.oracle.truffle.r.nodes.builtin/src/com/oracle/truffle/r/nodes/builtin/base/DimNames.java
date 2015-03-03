@@ -43,6 +43,8 @@ public abstract class DimNames extends RBuiltinNode {
 
     @Child private DispatchedCallNode dcn;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Specialization
     protected RNull getDimNames(RNull operand) {
         controlVisibility();
@@ -81,7 +83,7 @@ public abstract class DimNames extends RBuiltinNode {
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
-        return container.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        return container.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
     }
 
 }

@@ -38,6 +38,7 @@ public abstract class CastNode extends UnaryNode {
     private final ConditionProfile hasDimNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasDimensionsProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object executeCast(VirtualFrame frame, Object value);
 
@@ -63,7 +64,7 @@ public abstract class CastNode extends UnaryNode {
     }
 
     protected RStringVector getPreservedNames(RAbstractContainer operand) {
-        RStringVector names = isPreserveNames() ? operand.getNames() : null;
+        RStringVector names = isPreserveNames() ? operand.getNames(attrProfiles) : null;
         RStringVector preservedNames = hasNamesProfile.profile(names != null) ? names : null;
         return preservedNames;
     }

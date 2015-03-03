@@ -142,6 +142,11 @@ public class FileConnections {
         }
 
         @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            writeStringHelper(outputStream, s, nl);
+        }
+
+        @Override
         public OutputStream getOutputStream() throws IOException {
             return outputStream;
         }
@@ -252,6 +257,11 @@ public class FileConnections {
                 outputStream.write(line.getBytes());
                 outputStream.write(sep.getBytes());
             }
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            writeStringHelper(outputStream, s, nl);
         }
 
         @Override

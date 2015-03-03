@@ -39,6 +39,8 @@ public abstract class NChar extends RBuiltinNode {
 
     @Child private CastStringNode convertString;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     private String coerceContent(VirtualFrame frame, Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -102,7 +104,7 @@ public abstract class NChar extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(i).length();
         }
-        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
+        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames(attrProfiles));
     }
 
     @SuppressWarnings("unused")
@@ -119,7 +121,7 @@ public abstract class NChar extends RBuiltinNode {
             for (int i = 0; i < len; i++) {
                 result[i] = coerceContent(frame, vector.getDataAtAsObject(i)).length();
             }
-            return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
+            return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames(attrProfiles));
         } else {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
         }

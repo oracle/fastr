@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.env.*;
 // TODO inherits is applicable to every type of object, if only because of "try-error".
 public abstract class Inherits extends RBuiltinNode {
 
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Child private InheritsNode inheritsNode;
 
     @Override
@@ -84,7 +86,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization(guards = "!whichFalse")
     protected Object doesInheritWT(REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassAttr(), what);
+        return doDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization(guards = "whichFalse")
@@ -94,7 +96,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization(guards = "!whichFalse")
     protected Object doesInheritWT(RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassAttr(), what);
+        return doDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization(guards = "whichFalse")
@@ -104,7 +106,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization(guards = "!whichFalse")
     protected Object doesInheritWT(RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassAttr(), what);
+        return doDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization(guards = "whichFalse")

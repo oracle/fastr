@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.io.*;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "contributors", kind = SUBSTITUTE, parameterNames = {})
@@ -39,7 +42,11 @@ public abstract class Contributors extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected Object contributors() {
         controlVisibility();
-        RContext.getInstance().getConsoleHandler().println(CONTRIBUTORS);
+        try {
+            StdConnections.getStdout().writeString(CONTRIBUTORS, true);
+        } catch (IOException ex) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+        }
         return RNull.instance;
     }
 }

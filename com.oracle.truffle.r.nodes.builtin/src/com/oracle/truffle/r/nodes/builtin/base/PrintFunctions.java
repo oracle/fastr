@@ -24,18 +24,25 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.io.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
         @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeGen.create(null, null, null, null, false);
 
-        protected static void printHelper(String string) {
-            RContext.getInstance().getConsoleHandler().println(string);
+        protected void printHelper(String string) {
+            try {
+                StdConnections.getStdout().writeString(string, true);
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
         }
 
     }

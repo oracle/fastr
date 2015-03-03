@@ -43,6 +43,7 @@ public abstract class AccessFieldNode extends RNode {
     public abstract String getField();
 
     private final BranchProfile inexactMatch = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected RNull access(@SuppressWarnings("unused") RNull object) {
@@ -51,10 +52,10 @@ public abstract class AccessFieldNode extends RNode {
 
     @Specialization(guards = "hasNames")
     protected Object accessField(RList object) {
-        int index = object.getElementIndexByName(getField());
+        int index = object.getElementIndexByName(attrProfiles, getField());
         if (index == -1) {
             inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(getField());
+            index = object.getElementIndexByNameInexact(attrProfiles, getField());
         }
         return index == -1 ? RNull.instance : object.getDataAt(index);
     }
@@ -67,10 +68,10 @@ public abstract class AccessFieldNode extends RNode {
     // TODO: this should ultimately be a generic function
     @Specialization(guards = "hasNames")
     protected Object accessField(RDataFrame object) {
-        int index = object.getElementIndexByName(getField());
+        int index = object.getElementIndexByName(attrProfiles, getField());
         if (index == -1) {
             inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(getField());
+            index = object.getElementIndexByNameInexact(attrProfiles, getField());
             // TODO: add warning if index found (disabled by default using options)
         }
         return index == -1 ? RNull.instance : object.getDataAtAsObject(index);
@@ -95,7 +96,7 @@ public abstract class AccessFieldNode extends RNode {
     @Specialization(guards = "hasNames")
     protected Object accessFieldHasNames(RLanguage object) {
         String field = getField();
-        RStringVector names = object.getNames();
+        RStringVector names = object.getNames(attrProfiles);
         for (int i = 0; i < names.getLength(); i++) {
             if (field.equals(names.getDataAt(i))) {
                 return RContext.getRASTHelper().getDataAtAsObject(object, i);
@@ -109,8 +110,8 @@ public abstract class AccessFieldNode extends RNode {
         return RNull.instance;
     }
 
-    protected static boolean hasNames(RAbstractContainer object) {
-        return object.getNames() != null;
+    protected boolean hasNames(RAbstractContainer object) {
+        return object.getNames(attrProfiles) != null;
     }
 
     @Override

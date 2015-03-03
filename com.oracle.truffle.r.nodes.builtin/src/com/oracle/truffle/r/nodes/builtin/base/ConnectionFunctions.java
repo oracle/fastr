@@ -555,7 +555,7 @@ public abstract class ConnectionFunctions {
                     openConn.writeChar(s, pad, eos.getDataAt(i % length), RRuntime.fromLogical(useBytes));
                 }
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
             forceVisibility(false);
             return RNull.instance;

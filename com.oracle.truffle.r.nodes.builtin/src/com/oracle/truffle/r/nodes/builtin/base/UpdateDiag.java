@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,8 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     private final NACheck naCheck = NACheck.create();
 
     @Child private CastDoubleNode castDouble;
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     protected static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
@@ -123,7 +125,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         controlVisibility();
         initCastDoubleNode();
         RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(frame, vector);
-        resultVector.copyAttributesFrom(vector);
+        resultVector.copyAttributesFrom(attrProfiles, vector);
         return updateDiag(resultVector, valueVector);
     }
 

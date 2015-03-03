@@ -34,6 +34,8 @@ public abstract class CastListNode extends CastNode {
 
     @Child CastListNode castListRecursive;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     public abstract RList executeList(VirtualFrame frame, Object o);
 
     private RList castList(VirtualFrame frame, Object operand) {
@@ -81,7 +83,7 @@ public abstract class CastListNode extends CastNode {
     @Specialization
     protected RList doLanguage(RLanguage operand) {
         RList result = RContext.getRASTHelper().asList(operand);
-        result.copyAttributesFrom(operand);
+        result.copyAttributesFrom(attrProfiles, operand);
         return result;
     }
 

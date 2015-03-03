@@ -95,6 +95,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private final BranchProfile recLevelZero = BranchProfile.create();
     private final ConditionProfile twoPosProfile = ConditionProfile.createBinaryProfile();
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     public UpdateArrayHelperNode(boolean isSubset, boolean forObjects) {
         this.isSubset = isSubset;
         this.forObjects = forObjects;
@@ -456,27 +458,27 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     private RStringVector getNamesVector(RVector resultVector) {
-        if (noResultNames.profile(resultVector.getNames() == null)) {
+        if (noResultNames.profile(resultVector.getNames(attrProfiles) == null)) {
             String[] namesData = new String[resultVector.getLength()];
             Arrays.fill(namesData, RRuntime.NAMES_ATTR_EMPTY_VALUE);
             RStringVector names = RDataFactory.createStringVector(namesData, RDataFactory.COMPLETE_VECTOR);
             resultVector.setNames(names);
             return names;
         } else {
-            return resultVector.getNames();
+            return resultVector.getNames(attrProfiles);
         }
     }
 
     private final BranchProfile posNames = BranchProfile.create();
 
     private void updateNames(RVector resultVector, RIntVector positions) {
-        if (positions.getNames() != null) {
+        if (positions.getNames(attrProfiles) != null) {
             posNames.enter();
             RStringVector names = getNamesVector(resultVector);
             if (names.isShared()) {
                 names = (RStringVector) names.copy();
             }
-            RStringVector newNames = positions.getNames();
+            RStringVector newNames = positions.getNames(attrProfiles);
             namesNACheck.enable(newNames);
             for (int i = 0; i < positions.getLength(); i++) {
                 int p = positions.getDataAt(i);
@@ -774,7 +776,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     private Object updateListRecursive(VirtualFrame frame, Object v, Object value, RList vector, int recLevel, RStringVector p) {
-        int position = AccessArrayNode.getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error);
+        int position = AccessArrayNode.getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error, attrProfiles);
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
@@ -874,9 +876,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         Object[] data = new Object[vector.getLength() - 1];
         RStringVector orgNames = null;
         String[] namesData = null;
-        if (vector.getNames() != null) {
+        if (vector.getNames(attrProfiles) != null) {
             namesData = new String[vector.getLength() - 1];
-            orgNames = vector.getNames();
+            orgNames = vector.getNames(attrProfiles);
         }
 
         int ind = 0;
@@ -941,7 +943,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         Object[] data = new Object[resultVectorLength];
 
         RList result;
-        if (noResultNames.profile(vector.getNames() == null)) {
+        if (noResultNames.profile(vector.getNames(attrProfiles) == null)) {
             int ind = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 Object el = list.getDataAt(i);
@@ -954,7 +956,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             result = RDataFactory.createList(data);
         } else {
             String[] namesData = new String[resultVectorLength];
-            RStringVector orgNames = vector.getNames();
+            RStringVector orgNames = vector.getNames(attrProfiles);
             int ind = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 Object el = list.getDataAt(i);
@@ -2026,7 +2028,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     protected boolean posNames(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
-        return positions.getNames() != null;
+        return positions.getNames(attrProfiles) != null;
     }
 
     protected boolean isPositionNegative(Object v, Object value, int recLevel, int position) {
@@ -2156,7 +2158,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     protected boolean isObject(Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
-        return container.isObject() && forObjects;
+        return container.isObject(attrProfiles) && forObjects;
     }
 
     /**

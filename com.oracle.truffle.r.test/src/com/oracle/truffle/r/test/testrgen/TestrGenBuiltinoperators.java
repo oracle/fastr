@@ -289,7 +289,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators51() {
         assertEval("argv <- list(structure(c(94694400, 126230400, 157766400, 189302400, 220924800, 252460800, 283996800, 315532800, 362793600, 394329600, 425865600, 489024000, 567993600, 631152000, 662688000, 709948800, 741484800, 773020800, 820454400, 867715200, 915148800, 1136073600, 1230768000, 1341100800), class = c(\'POSIXct\', \'POSIXt\')), structure(c(78796800, 94694400, 126230400, 157766400, 189302400, 220924800, 252460800, 283996800, 315532800, 362793600, 394329600, 425865600, 489024000, 567993600, 631152000, 662688000, 709948800, 741484800, 773020800, 820454400, 867715200, 1136073600, 1230768000, 1341100800), class = c(\'POSIXct\', \'POSIXt\')));`-`(argv[[1]],argv[[2]]);");
     }
@@ -354,7 +353,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators63() {
         assertEval("argv <- list(structure(list(war = c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L), fly = c(1L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), ver = c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L), end = c(1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, NA, 1L, 1L, 2L, 1L, 1L, NA, 2L), gro = c(2L, 2L, 1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, NA, 2L, 2L, 1L, NA, 2L, 2L, NA, 1L, 2L), hai = c(1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L)), .Names = c(\'war\', \'fly\', \'ver\', \'end\', \'gro\', \'hai\'), class = \'data.frame\', row.names = c(\'ant\', \'bee\', \'cat\', \'cpl\', \'chi\', \'cow\', \'duc\', \'eag\', \'ele\', \'fly\', \'fro\', \'her\', \'lio\', \'liz\', \'lob\', \'man\', \'rab\', \'sal\', \'spi\', \'wha\')), 1);`-`(argv[[1]],argv[[2]]);");
     }
@@ -602,7 +600,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators110() {
         assertEval("argv <- list(structure(list(Fertility = c(80.2, 83.1, 92.5, 85.8, 76.9), Agriculture = c(17, 45.1, 39.7, 36.5, 43.5), Examination = c(15L, 6L, 5L, 12L, 17L), Education = c(12L, 9L, 5L, 7L, 15L)), .Names = c(\'Fertility\', \'Agriculture\', \'Examination\', \'Education\'), row.names = c(\'Courtelary\', \'Delemont\', \'Franches-Mnt\', \'Moutier\', \'Neuveville\'), class = \'data.frame\'), 6);`<=`(argv[[1]],argv[[2]]);");
     }
@@ -689,7 +686,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators126() {
         assertEval("argv <- list(structure(list(cde = 2L, cd = 4L), .Names = c(\'cde\', \'cd\'), row.names = \'ab\', class = \'data.frame\'), c(2, 4));`==`(argv[[1]],argv[[2]]);");
     }
@@ -1039,7 +1035,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators192() {
         assertEval("argv <- list(structure(c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, NA), .Dim = c(5L, 2L), .Dimnames = list(NULL, c(\'VAR1\', \'VAR3\'))), structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE), .Dim = c(5L, 2L), .Dimnames = list(NULL, c(\'VAR1\', \'VAR3\'))));`&`(argv[[1]],argv[[2]]);");
     }
@@ -1392,7 +1387,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators261() {
         assertEval("argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c(\'VAR1\', \'VAR3\'), class = \'data.frame\', row.names = c(NA, -5L)), 1);`==`(argv[[1]],argv[[2]]);");
     }
@@ -1668,7 +1662,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators313() {
         assertEval("argv <- list(structure(c(NA, FALSE, TRUE, NA, FALSE, TRUE, NA, FALSE, TRUE), .Names = c(NA, \'FALSE\', \'TRUE\', NA, \'FALSE\', \'TRUE\', NA, \'FALSE\', \'TRUE\')), structure(c(NA, NA, NA, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), .Names = c(NA, NA, NA, \'FALSE\', \'FALSE\', \'FALSE\', \'TRUE\', \'TRUE\', \'TRUE\')));`|`(argv[[1]],argv[[2]]);");
     }
@@ -1803,7 +1796,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators337() {
         assertEval("argv <- list(c(TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE), c(TRUE, TRUE, TRUE, NA, FALSE, FALSE, TRUE, NA));`&`(argv[[1]],argv[[2]]);");
     }
@@ -1831,7 +1823,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators342() {
         assertEval("argv <- list(structure(c(NA, FALSE, TRUE, NA, FALSE, TRUE, NA, FALSE, TRUE), .Names = c(NA, \'FALSE\', \'TRUE\', NA, \'FALSE\', \'TRUE\', NA, \'FALSE\', \'TRUE\')), structure(c(NA, NA, NA, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), .Names = c(NA, NA, NA, \'FALSE\', \'FALSE\', \'FALSE\', \'TRUE\', \'TRUE\', \'TRUE\')));`&`(argv[[1]],argv[[2]]);");
     }

@@ -53,7 +53,7 @@ public class CountFields {
         data.comchar = comChar;
         data.quoteset = quoteSet;
 
-        if (file.isStdin()) {
+        if (file == StdConnections.getStdin()) {
             data.ttyflag = true;
             throw new IOException("count.fields not implemented for stdin");
         } else {

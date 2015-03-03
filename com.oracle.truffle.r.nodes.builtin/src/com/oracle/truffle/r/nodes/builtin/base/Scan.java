@@ -43,6 +43,7 @@ public abstract class Scan extends RBuiltinNode {
 
     private final NACheck naCheck = new NACheck();
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private CastToVectorNode castVector;
 
@@ -383,7 +384,7 @@ public abstract class Scan extends RBuiltinNode {
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
             }
         }
-        list.setNames(what.getNames());
+        list.setNames(what.getNames(attrProfiles));
 
         naCheck.enable(true);
 
@@ -472,7 +473,8 @@ public abstract class Scan extends RBuiltinNode {
         }
 
         if (!data.quiet) {
-            RContext.getInstance().getConsoleHandler().printf("Read %d record%s\n", records, (records == 1) ? "" : "s");
+            String s = String.format("Read %d record%s", records, (records == 1) ? "" : "s");
+            StdConnections.getStdout().writeString(s, true);
         }
         // trim vectors if necessary
         for (int i = 0; i < nc; i++) {
@@ -528,7 +530,8 @@ public abstract class Scan extends RBuiltinNode {
 
         }
         if (!data.quiet) {
-            RContext.getInstance().getConsoleHandler().printf("Read %d item%s\n", n, (n == 1) ? "" : "s");
+            String s = String.format("Read %d item%s", n, (n == 1) ? "" : "s");
+            StdConnections.getStdout().writeString(s, true);
         }
         // trim vector if necessary
         return vec.getLength() > n ? vec.copyResized(n, false) : vec;

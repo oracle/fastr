@@ -271,6 +271,8 @@ class GroupDispatchNode extends S3DispatchLegacyNode {
     protected final SourceSection callSrc;
     protected final SourceSection argSrc;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Override
     public Object executeGeneric(VirtualFrame frame, RStringVector aType) {
         throw new AssertionError();
@@ -378,7 +380,7 @@ class GroupDispatchNode extends S3DispatchLegacyNode {
     }
 
     protected RStringVector getArgClass(Object arg) {
-        if (arg instanceof RAbstractContainer && ((RAbstractContainer) arg).isObject()) {
+        if (arg instanceof RAbstractContainer && ((RAbstractContainer) arg).isObject(attrProfiles)) {
             return ((RAbstractContainer) arg).getClassHierarchy();
         }
         return null;

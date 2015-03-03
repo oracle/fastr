@@ -33,7 +33,6 @@ public class TestrGenBuiltiniscomplex extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testiscomplex4() {
         assertEval("argv <- list(NA_complex_);is.complex(argv[[1]]);");
     }

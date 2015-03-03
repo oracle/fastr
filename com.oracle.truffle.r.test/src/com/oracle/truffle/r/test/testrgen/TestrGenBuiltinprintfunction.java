@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,7 +36,6 @@ public class TestrGenBuiltinprintfunction extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintfunction4() {
         assertEval("argv <- list(.Primitive(\'.Internal\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
@@ -47,4 +46,3 @@ public class TestrGenBuiltinprintfunction extends TestBase {
         assertEval("argv <- list(.Primitive(\'log\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 }
-

@@ -76,23 +76,24 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getDataAtAsObject(index);
     }
 
-    public RStringVector getNames() {
-        return data.getNames();
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return data.getNames(attrProfiles);
     }
 
     public RList getDimNames() {
         return data.getDimNames();
     }
 
-    public Object getRowNames() {
-        return data.getRowNames();
+    @Override
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
+        return data.getRowNames(attrProfiles);
     }
 
     public RStringVector getClassHierarchy() {
         return data.getClassHierarchy();
     }
 
-    public boolean isObject() {
+    public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }
 

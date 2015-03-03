@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,7 +70,6 @@ public class TestrGenBuiltinsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsub10() {
         assertEval("argv <- list(\'^[[:space:]]*([[:alnum:].]+).*$\', \'\\\\1\', structure(\'MASS\', .Names = \'Suggests\'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -110,7 +109,6 @@ public class TestrGenBuiltinsub extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsub17() {
         assertEval("argv <- list(\'^msgstr[[:blank:]]+[\\\'](.*)[\\\'][[:blank:]]*$\', \'\\\\1\', \'msgstr \\\'<U+043E><U+0442><U+0440><U+0438><U+0446><U+0430><U+0442><U+0435><U+043B><U+044C><U+043D><U+044B><U+0435> <U+0432><U+0435><U+0441><U+0430> <U+043D><U+0435> <U+0440><U+0430><U+0437><U+0440><U+0435><U+0448><U+0435><U+043D><U+044B>\\\'\', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
@@ -126,4 +124,3 @@ public class TestrGenBuiltinsub extends TestBase {
         assertEval("argv <- list(\'([^:]*):(.*)\', \'\\\\2\', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 }
-

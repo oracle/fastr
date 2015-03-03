@@ -727,6 +727,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
         assertEval("{ as.integer(1.1:5.1) }");
+        assertEval("{ as.integer(NULL) }");
     }
 
     @Test
@@ -759,6 +760,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalWarning("{ as.double(c(3+3i, 4+4i)) }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
+        assertEval("{ as.double(NULL) }");
     }
 
     @Test
@@ -772,6 +774,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.logical(\"TRUE\") }");
         assertEval("{ as.logical(10+2i) }");
         assertEval("{ as.logical(c(3+3i, 4+4i)) }");
+        assertEval("{ as.logical(NULL) }");
     }
 
     @Test
@@ -790,6 +793,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.complex(\"Inf\") }");
         assertEval("{ as.complex(\"NaN\") }");
         assertEval("{ as.complex(\"0x42\") }");
+        assertEval("{ as.complex(NULL) }");
     }
 
     @Test

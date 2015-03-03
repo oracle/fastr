@@ -25,6 +25,8 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "Date2POSIXlt", kind = RBuiltinKind.INTERNAL, parameterNames = "x")
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         private static final String[] LT_NAMES = new String[]{"sec", "min", "hour", "mday", "mon", "year", "wday", "yday", "isdst"};
         private static final RStringVector LT_NAMES_VEC = RDataFactory.createStringVector(LT_NAMES, RDataFactory.COMPLETE_VECTOR);
         private static final int[] DAYS_IN_MONTH = new int[]{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -107,9 +109,9 @@ public class DatePOSIXFunctions {
             RList result = RDataFactory.createList(data, LT_NAMES_VEC);
             result.setClassAttr(CLASS_ATTR);
             result.setAttr("tzone", "UTC");
-            RStringVector xNames = x.getNames();
+            RStringVector xNames = x.getNames(attrProfiles);
             if (xNames != null) {
-                ((RIntVector) data[5]).copyNamesFrom(x);
+                ((RIntVector) data[5]).copyNamesFrom(attrProfiles, x);
             }
             return result;
         }

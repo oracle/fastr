@@ -46,6 +46,7 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
     @Child private DispatchedCallNode dcn;
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object execute(VirtualFrame frame, Object obj);
 
@@ -153,6 +154,6 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
-        return container.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        return container.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
     }
 }

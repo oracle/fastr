@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class Abs extends RBuiltinNode {
 
     private final NACheck check = NACheck.create();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @SuppressWarnings("unused")
     @Specialization
@@ -108,7 +109,7 @@ public abstract class Abs extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             intVector[i] = performInt(vector.getDataAt(i));
         }
-        RIntVector res = RDataFactory.createIntVector(intVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RIntVector res = RDataFactory.createIntVector(intVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames(attrProfiles));
         res.copyRegAttributesFrom(vector);
         return res;
     }
@@ -121,7 +122,7 @@ public abstract class Abs extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             doubleVector[i] = performDouble(vector.getDataAt(i));
         }
-        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames(attrProfiles));
         res.copyRegAttributesFrom(vector);
         return res;
     }
@@ -134,7 +135,7 @@ public abstract class Abs extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             doubleVector[i] = performComplex(vector.getDataAt(i));
         }
-        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames(attrProfiles));
         res.copyRegAttributesFrom(vector);
         return res;
     }

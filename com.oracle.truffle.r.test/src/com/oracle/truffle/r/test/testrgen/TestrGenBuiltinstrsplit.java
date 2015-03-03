@@ -74,7 +74,6 @@ public class TestrGenBuiltinstrsplit extends TestBase {
     }
 
     @Test
-    @Ignore
     public void teststrsplit11() {
         assertEval("argv <- list(structure(\'pkgB\', .Names = \'name\'), \'_\', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }

@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private UpdateNames updateNames;
     @Child private CastIntegerNode castInteger;
@@ -91,7 +92,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractContainer updateAttributes(VirtualFrame frame, RAbstractContainer container, RList list) {
         controlVisibility();
-        Object listNamesObject = list.getNames();
+        Object listNamesObject = list.getNames(attrProfiles);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
@@ -122,7 +123,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @TruffleBoundary
     @ExplodeLoop
     private void checkAttributeForEmptyValue(RList rlist) {
-        RStringVector listNames = rlist.getNames();
+        RStringVector listNames = rlist.getNames(attrProfiles);
         int length = rlist.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 1; i < length; i++) {
@@ -135,7 +136,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @ExplodeLoop
     private void setDimAttribute(VirtualFrame virtualFrame, RVector resultVector, RList sourceList) {
-        RStringVector listNames = sourceList.getNames();
+        RStringVector listNames = sourceList.getNames(attrProfiles);
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 0; i < sourceList.getLength(); i++) {
@@ -157,7 +158,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @ExplodeLoop
     private RAbstractContainer setRemainingAttributes(VirtualFrame virtualFrame, RAbstractContainer container, RVector resultVector, RList sourceList) {
-        RStringVector listNames = sourceList.getNames();
+        RStringVector listNames = sourceList.getNames(attrProfiles);
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         RAbstractContainer res = resultVector;
@@ -187,7 +188,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 resultVector.setLevels(castVector(virtualFrame, value));
             } else {
                 if (value == RNull.instance) {
-                    resultVector.removeAttr(attrName);
+                    resultVector.removeAttr(attrProfiles, attrName);
                 } else {
                     resultVector.setAttr(attrName, value);
                 }

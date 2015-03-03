@@ -154,6 +154,11 @@ public class GZIPConnections {
         }
 
         @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            writeStringHelper(outputStream, s, nl);
+        }
+
+        @Override
         public void flush() throws IOException {
             outputStream.flush();
         }

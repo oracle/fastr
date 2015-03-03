@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ public abstract class Round extends RBuiltinNode {
     @Child private UnaryArithmetic roundOp = UnaryArithmetic.ROUND.create();
 
     private final NACheck check = NACheck.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     public RNode[] getParameterValues() {
@@ -90,7 +91,7 @@ public abstract class Round extends RBuiltinNode {
             check.check(result[i]);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        ret.copyAttributesFrom(attrProfiles, x);
         return ret;
     }
 
@@ -104,7 +105,7 @@ public abstract class Round extends RBuiltinNode {
             check.check(result[i]);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        ret.copyAttributesFrom(attrProfiles, x);
         return ret;
     }
 
@@ -133,7 +134,7 @@ public abstract class Round extends RBuiltinNode {
             check.check(r);
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        ret.copyAttributesFrom(attrProfiles, x);
         return ret;
     }
 
@@ -150,7 +151,7 @@ public abstract class Round extends RBuiltinNode {
             check.check(r);
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        ret.copyAttributesFrom(attrProfiles, x);
         return ret;
     }
 

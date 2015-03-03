@@ -123,27 +123,6 @@ public abstract class RConnection implements RClassHierarchy, AutoCloseable {
     }
 
     /**
-     * Returns {@code true} if this is the "stdin" connection.
-     */
-    public boolean isStdin() {
-        return false;
-    }
-
-    /**
-     * Returns {@code true} if this is the "stdour" connection.
-     */
-    public boolean isStdout() {
-        return false;
-    }
-
-    /**
-     * Returns {@code true} if this is the "stderr" connection.
-     */
-    public boolean isStderr() {
-        return false;
-    }
-
-    /**
      * Return the underlying input stream (for internal use). TODO Replace with a more principled
      * solution.
      */
@@ -246,6 +225,14 @@ public abstract class RConnection implements RClassHierarchy, AutoCloseable {
     public abstract void flush() throws IOException;
 
     public abstract int getDescriptor();
+
+    /**
+     * Writes {@code s} optionally followed by a newline to the connection. This does not correspond
+     * to any R builtin function but is used internally for console output, errors, warnings etc.
+     * Since these can be diverted by the {@code sink} builtin, every output connection class must
+     * support this.
+     */
+    public abstract void writeString(String s, boolean nl) throws IOException;
 
     /**
      * Internal connection-specific support for the {@code writeChar} builtin.

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,6 +31,7 @@ public abstract class Format extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
 
     protected final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
@@ -177,7 +178,7 @@ public abstract class Format extends RBuiltinNode {
                 result.setDimensions(value.getDimensions());
                 result.setDimNames(value.getDimNames());
             } else {
-                result.setNames(value.getNames());
+                result.setNames(value.getNames(attrProfiles));
             }
             return result;
         }

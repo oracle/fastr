@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ public abstract class Signif extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile identity = BranchProfile.create();
     private final ConditionProfile infProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -82,7 +83,7 @@ public abstract class Signif extends RBuiltinNode {
             }
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(data, naCheck.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        ret.copyAttributesFrom(attrProfiles, x);
         return ret;
     }
 

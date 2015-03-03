@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ public abstract class CumSum extends RBuiltinNode {
     private final NACheck na = NACheck.create();
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected double cumsum(double arg) {
@@ -81,7 +83,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -101,7 +103,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(res, na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createDoubleVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -124,7 +126,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -144,7 +146,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -165,7 +167,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(res, na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createDoubleVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -186,7 +188,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, 2 * i, res.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createComplexVector(res, na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createComplexVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
 }

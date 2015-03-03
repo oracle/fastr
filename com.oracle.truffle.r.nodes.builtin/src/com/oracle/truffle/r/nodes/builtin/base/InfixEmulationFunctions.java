@@ -171,6 +171,7 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
         @Child private AccessArrayNode accessNode;
         @Child private AccessPositions positions;
+        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
@@ -295,7 +296,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
         }
 
     }
@@ -391,7 +392,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
         }
 
     }
@@ -416,6 +417,8 @@ public class InfixEmulationFunctions {
         @Child private UpdateArrayHelperNode updateNode;
         @Child private UpdatePositions positions;
         @Child private CoerceVector coerceVector;
+
+        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
@@ -496,7 +499,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
         }
     }
 
@@ -535,7 +538,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject() && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
         }
 
     }

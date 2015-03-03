@@ -41,6 +41,8 @@ public abstract class Unlist extends RBuiltinNode {
     @Child private Length lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     protected Unlist() {
     }
 
@@ -161,14 +163,14 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static RAbstractVector unlistHelper(RList list, boolean recursive, boolean useNames, int precedence, int totalSize) {
+    private RAbstractVector unlistHelper(RList list, boolean recursive, boolean useNames, int precedence, int totalSize) {
         String[] namesData = useNames ? new String[totalSize] : null;
         NamesInfo namesInfo = useNames ? new NamesInfo() : null;
         switch (precedence) {
             case PrecedenceNode.RAW_PRECEDENCE: {
                 byte[] result = new byte[totalSize];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -183,7 +185,7 @@ public abstract class Unlist extends RBuiltinNode {
             case PrecedenceNode.LOGICAL_PRECEDENCE: {
                 byte[] result = new byte[totalSize];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -199,7 +201,7 @@ public abstract class Unlist extends RBuiltinNode {
             case PrecedenceNode.INT_PRECEDENCE: {
                 int[] result = new int[totalSize];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -215,7 +217,7 @@ public abstract class Unlist extends RBuiltinNode {
             case PrecedenceNode.DOUBLE_PRECEDENCE: {
                 double[] result = new double[totalSize];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -231,7 +233,7 @@ public abstract class Unlist extends RBuiltinNode {
             case PrecedenceNode.COMPLEX_PRECEDENCE: {
                 double[] result = new double[totalSize << 1];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -247,7 +249,7 @@ public abstract class Unlist extends RBuiltinNode {
             case PrecedenceNode.STRING_PRECEDENCE: {
                 String[] result = new String[totalSize];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -263,7 +265,7 @@ public abstract class Unlist extends RBuiltinNode {
             case PrecedenceNode.LIST_PRECEDENCE: {
                 Object[] result = new Object[totalSize];
                 if (!recursive) {
-                    RStringVector listNames = useNames && list.getNames() != null ? (RStringVector) list.getNames() : null;
+                    RStringVector listNames = useNames && list.getNames(attrProfiles) != null ? (RStringVector) list.getNames(attrProfiles) : null;
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
@@ -298,7 +300,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -314,7 +316,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -334,7 +336,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -350,7 +352,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -370,7 +372,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -386,7 +388,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -406,7 +408,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -422,7 +424,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -442,7 +444,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -458,7 +460,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -482,7 +484,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
         Object o = obj;
         int position = pos;
         int saveFirstPos = 0;
@@ -503,7 +505,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
@@ -523,7 +525,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private static int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -539,7 +541,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
-            RStringVector listNames = useNames && v.getNames() != null ? (RStringVector) v.getNames() : null;
+            RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
             for (int i = 0; i < v.getLength(); ++i) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);

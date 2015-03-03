@@ -1306,12 +1306,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleDataFrames_testAsDataFrameIgnore_0f990604bed45f9a868ddd4f5616f9ee() {
-        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
-        check("TestSimpleDataFrames_testAsDataFrameIgnore_0f990604bed45f9a868ddd4f5616f9ee");
-    }
-
-    @Test
     public void TestSimpleFunctions_testDefinitionsIgnore_6ff99329ff4c5405259dd094d456df82() {
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
         check("TestSimpleFunctions_testDefinitionsIgnore_6ff99329ff4c5405259dd094d456df82");
@@ -1795,72 +1789,6 @@ public class FailingTests extends TestBase {
     public void TestSimpleVectors_testNullUpdate_a2146a5c80766a6d5cc2f40c06202033() {
         assertEval("{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
         check("TestSimpleVectors_testNullUpdate_a2146a5c80766a6d5cc2f40c06202033");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_01eabfb2c4e15bb5a7006319a4337fd2() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1) }");
-        check("TestSimpleVectors_testObjectDirectAccess_01eabfb2c4e15bb5a7006319a4337fd2");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_6f3b4849970406b2315eabe72503d201() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=TRUE) }");
-        check("TestSimpleVectors_testObjectDirectAccess_6f3b4849970406b2315eabe72503d201");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_1be9c6acb933e025c3d74895ff9d7d02() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[.factor`(x, 1, drop=FALSE) }");
-        check("TestSimpleVectors_testObjectDirectAccess_1be9c6acb933e025c3d74895ff9d7d02");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_b79b4f8ad5b7cc5a833d720266dd1a1d() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[.factor`(x, 1) }");
-        check("TestSimpleVectors_testObjectDirectAccess_b79b4f8ad5b7cc5a833d720266dd1a1d");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_660880a286cd3118a6c3ffb5f976c827() {
-        assertEval("{ x<-factor(c(\"a\", z=\"b\", \"a\")); `[[.factor`(x, \"z\") }");
-        check("TestSimpleVectors_testObjectDirectAccess_660880a286cd3118a6c3ffb5f976c827");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_c1ed9317efa96b573485632db9fb0241() {
-        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=FALSE) }");
-        check("TestSimpleVectors_testObjectDirectAccess_c1ed9317efa96b573485632db9fb0241");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_4833fbe2c62756ace2e149c452458e59() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1) }");
-        check("TestSimpleVectors_testObjectDirectAccess_4833fbe2c62756ace2e149c452458e59");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_4eccdd1f73e019373d9d154b833fece5() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[`(x, 1, drop=FALSE) }");
-        check("TestSimpleVectors_testObjectDirectAccess_4eccdd1f73e019373d9d154b833fece5");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_945fe85394239f5303dea1a491a918d1() {
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[`(x, 1) }");
-        check("TestSimpleVectors_testObjectDirectAccess_945fe85394239f5303dea1a491a918d1");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_b51fa52db3d6fc7ed30f6cffba2dadff() {
-        assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[`(x, \"z\", exact=FALSE) }");
-        check("TestSimpleVectors_testObjectDirectAccess_b51fa52db3d6fc7ed30f6cffba2dadff");
-    }
-
-    @Test
-    public void TestSimpleVectors_testObjectDirectAccess_68b89b4e74c36289fd7aef12dbd3c682() {
-        assertEvalError("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[.factor`(x, \"z\", exact=TRUE) }");
-        check("TestSimpleVectors_testObjectDirectAccess_68b89b4e74c36289fd7aef12dbd3c682");
     }
 
     @Test
@@ -2380,12 +2308,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinReduce_testReduce1_c625550da029520d4fafd5b5027e5da0() {
-        assertEval("argv <- structure(list(f = '+', x = 1:7, accumulate = TRUE),     .Names = c('f', 'x', 'accumulate'));do.call('Reduce', argv)");
-        check("TestrGenBuiltinReduce_testReduce1_c625550da029520d4fafd5b5027e5da0");
-    }
-
-    @Test
     public void TestrGenBuiltinReduce_testReduce2_68d707d9c4b93d3fb0e16facc6d179cb() {
         assertEval("argv <- structure(list(f = function(f, ...) f(...), x = list(.Primitive('log'),     .Primitive('exp'), .Primitive('acos'), .Primitive('cos')),     init = 0, right = TRUE), .Names = c('f', 'x', 'init', 'right'));do.call('Reduce', argv)");
         check("TestrGenBuiltinReduce_testReduce2_68d707d9c4b93d3fb0e16facc6d179cb");
@@ -2704,12 +2626,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinallequalPOSIXt_testallequalPOSIXt1_7794d4288c2e86a1333c51371fee2e39() {
-        assertEval("argv <- structure(list(target = structure(1412833061.16639, class = c('POSIXct',     'POSIXt')), current = structure(1412833061.16839, class = c('POSIXct',     'POSIXt'))), .Names = c('target', 'current'));do.call('all.equal.POSIXt', argv)");
-        check("TestrGenBuiltinallequalPOSIXt_testallequalPOSIXt1_7794d4288c2e86a1333c51371fee2e39");
-    }
-
-    @Test
     public void TestrGenBuiltinallequalPOSIXt_testallequalPOSIXt2_01a0f550f6faaf9ef6896423d050ba55() {
         assertEval("argv <- structure(list(target = structure(1412833061.16639, class = c('POSIXct',     'POSIXt')), current = structure(list(sec = 41.1663863658905,     min = 37L, hour = 1L, mday = 9L, mon = 9L, year = 114L, wday = 4L,     yday = 281L, isdst = 1L, zone = 'EDT', gmtoff = -14400L),     .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday',         'yday', 'isdst', 'zone', 'gmtoff'), class = c('POSIXlt',         'POSIXt'), tzone = c('', 'EST', 'EDT'))), .Names = c('target',     'current'));do.call('all.equal.POSIXt', argv)");
         check("TestrGenBuiltinallequalPOSIXt_testallequalPOSIXt2_01a0f550f6faaf9ef6896423d050ba55");
@@ -2893,12 +2809,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinaperm_testaperm9_24f3176a36b0c1834e883156b6faf749() {
         assertEval("argv <- list(structure(c(0.36376697930799, 0.252815298286177, 0.144820268657847, 0.059950033165656, 0.0137701755391906, 0.00220408917547991, 6.22489401973083e-05, -0.36376697846279, -0.252815298708777, -0.144820267390048, -0.0599500327958813, -0.0137701747732286, -0.00220408987788688, -6.22486118855004e-05), .Dim = c(7L, 2L, 1L)), 1:3, TRUE); .Internal(aperm(argv[[1]], argv[[2]], argv[[3]]))");
         check("TestrGenBuiltinaperm_testaperm9_24f3176a36b0c1834e883156b6faf749");
-    }
-
-    @Test
-    public void TestrGenBuiltinappend_testappend1_88044ff0906016f8294b3bc2e7230739() {
-        assertEval("argv <- structure(list(x = 1:5, values = 0:1, after = 3), .Names = c('x',     'values', 'after'));do.call('append', argv)");
-        check("TestrGenBuiltinappend_testappend1_88044ff0906016f8294b3bc2e7230739");
     }
 
     @Test
@@ -3340,12 +3250,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinascomplex_testascomplex7_5fe78ce599bd28e6b314c3eca83c918e() {
-        assertEval("argv <- list(NA_complex_);as.complex(argv[[1]]);");
-        check("TestrGenBuiltinascomplex_testascomplex7_5fe78ce599bd28e6b314c3eca83c918e");
-    }
-
-    @Test
     public void TestrGenBuiltinasdataframetable_testasdataframetable1_8bbd665649f9d07a7c2d6f8392d71df8() {
         assertEval("argv <- structure(list(x = structure(integer(0), .Dim = 0L, .Dimnames = structure(list(NULL),     .Names = ''), class = 'table')), .Names = 'x');do.call('as.data.frame.table', argv)");
         check("TestrGenBuiltinasdataframetable_testasdataframetable1_8bbd665649f9d07a7c2d6f8392d71df8");
@@ -3508,12 +3412,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinasinteger_testasinteger7_9e449efb52d7355d0d205d0c066c6d01() {
-        assertEval("argv <- list(NULL);as.integer(argv[[1]]);");
-        check("TestrGenBuiltinasinteger_testasinteger7_9e449efb52d7355d0d205d0c066c6d01");
-    }
-
-    @Test
     public void TestrGenBuiltinasvector_testasvector11_d827720825cadd44936157d0200afa8a() {
         assertEval("argv <- list(structure(c(0.00290239468554411, 0.00140705152597282, 0.00182415100508824, 0.000171517300342798, 0.0747454613066297, 0.00103234723292905, 0.000179983318697139, 0.035258608446556, 0.00336847595628205, 0.0640696486471418, 0.0132108002751951, 0.00194778778741288, 0.00351950115137134, 0.00070046832029645, 0.00252844357734999, 0.014372012195495, 0.00923422554274329, 7.64817786749709e-06, 0.00387339857745524, 0.00121246491006704, 0.00624917129689857, 0.00187753034805145, 0.000103002251547081, 0.0136703020254034, 0.000349542811339765, 0.00120367047056318, 0.00194205014408536, 0.00462815827742801, 0.000149291834133955, 0.00193441236645678, 9.00084520363788e-05, 0.0160915134527436, 0.00346675958538611, 0.00481936427422656, 3.13343033856204e-05, 0.0564685345533007, 0.00929771993193244, 0.0103876340982415, 0.0133005891226512, 0.0325989357511189, 0.00228122925969392, 0.0460976655088242, 0.00300363745967821, 0.000271060875811077, 0.0301696315261026, 4.72002631048228e-05, 0.0262321004865233, 0.00594174673473013, 0.00288915040856096, 0.00635277836091399, 0.00569342819072193, 0.0163907345734163, 0.000360581939026215, 0.00023772587191537, 0.0164062036225435, 0.0238391417439454, NaN, 0.0421542087325977, 0.00133954856768466, 0.0113421570571088, 0.0081824228772913, 0.000149291834133955, 0.00162069399881579, 0.0018026229128858, 0.0043164627226381, 0.000407784303899559, 0.00876301280354452, 0.00179253664026376, 0.000416739394150718, 0.014372012195495, 0.000179983318697139, 0.00115986529332945, 0.00377736311314377, 0.00219491136307178, 0.00070046832029645, 0.000522557531637993, 9.86336244510646e-05, 0.0216346027446621, 0.000659639144027202, 0.0137501462695058, 5.91425796335962e-08, 0.0279425064631674, 0.000170828237014775, 0.0042454690355613, 0.0114879015536739, 0.000173346990819198, 0.00138111062254461, 0.00772582941114727, 0.0277947034678616, 0.00892024547056825, 0.0618577709874562, 0.0125790610228498, 0.0277947034678616), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93')), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinasvector_testasvector11_d827720825cadd44936157d0200afa8a");
@@ -3583,12 +3481,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinasvector_testasvector32_a21d54f394149e88a72b425a3c0d3e13() {
         assertEval("argv <- list(quote(list(x = c(2:3, NA), y = c(3:4, NA))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinasvector_testasvector32_a21d54f394149e88a72b425a3c0d3e13");
-    }
-
-    @Test
-    public void TestrGenBuiltinasvector_testasvector33_7f02cce69ded51871ea4562243a768b3() {
-        assertEval("argv <- list(quote(list(cut(Dtimes, '3 months'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinasvector_testasvector33_7f02cce69ded51871ea4562243a768b3");
     }
 
     @Test
@@ -3730,12 +3622,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinasvector_testasvector76_82c4e8b63b58404186231e6e216abf15() {
-        assertEval("argv <- list(structure(list(c0 = structure(character(0), class = 'AsIs')), .Names = 'c0', row.names = character(0), class = 'data.frame'), 'character'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinasvector_testasvector76_82c4e8b63b58404186231e6e216abf15");
-    }
-
-    @Test
     public void TestrGenBuiltinasvector_testasvector9_7676f2a631f4a36e921e0abfa4f463f7() {
         assertEval("argv <- list(quote(list(x = 1:100, z = 1:100 + rnorm(100, 10))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinasvector_testasvector9_7676f2a631f4a36e921e0abfa4f463f7");
@@ -3766,12 +3652,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinatan2_testatan23_1691a85681428b29f2b8e93909606e43() {
-        assertEval("argv <- list(c(-1.95681154249341, -2.88854075894443, -2.84850921846233, -2.14635417317387, -1.72790445779804, -0.92649412488672, -0.261537463816701, 0.948205247045638, 1.0990096500205, 2.09024037060933, 2.90928417418961, 4.00425294069879, 1.70515935701163), c(-3.2406391957027, -2.61163262017643, -0.21977838696678, 1.24931893031091, 1.6032898858835, 2.16902716372255, 2.15792786802985, 2.10075226013806, 2.04989923648162, 1.49269068253165, 0.515893014329757, -2.61745072267338, -4.64929811590859)); .Internal(atan2(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinatan2_testatan23_1691a85681428b29f2b8e93909606e43");
-    }
-
-    @Test
     public void TestrGenBuiltinatan2_testatan24_c446d53bd8c4c893f98362165043ce44() {
         assertEval("argv <- list(0+1i, 0+0i); .Internal(atan2(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinatan2_testatan24_c446d53bd8c4c893f98362165043ce44");
@@ -3781,12 +3661,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinatan2_testatan25_e61d7a90cbac83910e9739b5f4bce322() {
         assertEval("argv <- list(2.43782895752771e-05, 0.999996523206508); .Internal(atan2(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinatan2_testatan25_e61d7a90cbac83910e9739b5f4bce322");
-    }
-
-    @Test
-    public void TestrGenBuiltinatan2_testatan26_2faa23c0efa0572ba47394d813dd43b3() {
-        assertEval("argv <- list(logical(0), logical(0)); .Internal(atan2(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinatan2_testatan26_2faa23c0efa0572ba47394d813dd43b3");
     }
 
     @Test
@@ -4495,12 +4369,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinceiling_testceiling7_2fb13b9335b8e0692e5224868afa548b() {
         assertEval("argv <- list(1e+05);ceiling(argv[[1]]);");
         check("TestrGenBuiltinceiling_testceiling7_2fb13b9335b8e0692e5224868afa548b");
-    }
-
-    @Test
-    public void TestrGenBuiltincharToRaw_testcharToRaw1_f6ac05ee10c8b34d9c24558aed17abd0() {
-        assertEval("argv <- list(''); .Internal(charToRaw(argv[[1]]))");
-        check("TestrGenBuiltincharToRaw_testcharToRaw1_f6ac05ee10c8b34d9c24558aed17abd0");
     }
 
     @Test
@@ -5992,12 +5860,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinexists_testexists1_f048c8e191a9ca92fa7722dee8ade8e2() {
-        assertEval("argv <- structure(list(x = '.Device'), .Names = 'x');do.call('exists', argv)");
-        check("TestrGenBuiltinexists_testexists1_f048c8e191a9ca92fa7722dee8ade8e2");
-    }
-
-    @Test
     public void TestrGenBuiltinexp_testexp10_37d07ab33adb8aa318383f2302accf5f() {
         assertEval("argv <- list(c(47.5645940356179, -6.38155741912049, -4.72835558025993, -9.12276173822938, 16.7269898773273, 1.72738845624351, 2.57214256243276, -6.38155741912049, 54.3235157345705, -1.01577550708815, 1.03229146110395, -7.85550713095368, -0.907238963715769, -0.92327375484205, -4.72835558025993, -1.01577550708815, 46.5450612116912, 4.59443066488959, -2.69397762349353, -13.3238428844397, -4.89920529326131, -9.12276173822938, 1.03229146110395, 4.59443066488959, 47.7416929123262, -3.84567249122941, -9.99434616922533, -0.0518296900644576, 16.7269898773273, -7.85550713095368, -2.69397762349353, -3.84567249122941, 49.4381847193856, 8.76151535039852, 0.371991514317358, 1.72738845624351, -0.907238963715769, -13.3238428844397, -9.99434616922533, 8.76151535039852, 50.1823716395239, -1.41801229530673, 2.57214256243276, -0.92327375484205, -4.89920529326131, -0.0518296900644576, 0.371991514317358, -1.41801229530673, 44.6019728197531));exp(argv[[1]]);");
         check("TestrGenBuiltinexp_testexp10_37d07ab33adb8aa318383f2302accf5f");
@@ -6070,12 +5932,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinextract_parentasis_assign_factor_testextract_parentasis_assign_factor1_6ab7f28cbfdde795b5454d7c3e767116() {
-        assertEval("argv <- structure(list(x = structure(c(4L, 1L, 4L, 4L, 6L, 4L,     5L, 5L, 4L, 6L, 6L, 2L, 3L, 6L, 4L, 2L, 1L, 6L, 1L, 3L, 3L,     5L, 2L, 2L, 2L, 5L, 3L, 3L, 1L, 2L, 5L, 6L, 6L, 6L, 6L, 2L,     6L, 1L, 5L, 1L, 2L, 4L, 4L, 6L, 5L, 5L, 2L, 6L, 4L, 6L, 5L,     1L, 2L, 5L, 1L, 1L, 4L, 3L, 3L, 4L, 4L, 2L, 5L, 3L, 4L, 5L,     4L, 6L, 4L, 5L, 2L, 6L, 2L, 4L, 2L, 2L, 4L, 4L, 1L, 6L, 2L,     1L, 5L, 3L, 5L, 1L, 2L, 2L, 4L, 2L, 4L, 2L, 5L, 6L, 5L, 6L,     3L, 1L, 2L, 4L, 6L, 6L, 3L, 3L, 2L, 6L, 2L, 5L, 3L, 4L, 3L,     4L, 6L, 3L, 4L, 2L, 3L, 1L, 6L, 2L, 4L, 4L, 1L, 3L, 4L, 3L,     4L, 1L, 4L, 1L, 3L, 5L, 5L, 5L, 4L, 4L, 6L, 2L, 6L, 3L, 2L,     1L, 1L, 6L, 2L, 2L, 5L, 1L, 5L, 3L, 2L, 2L, 5L, 1L, 6L, 3L,     6L, 4L, 2L, 2L, 5L, 6L, 6L, 1L, 1L, 6L, 6L, 5L, 2L, 5L, 6L,     5L, 4L, 6L, 2L, 5L, 4L, 3L, 5L, 1L, 3L, 4L, 4L, 3L, 1L, 1L,     5L, 4L, 1L, 3L, 5L, 4L, 5L, 4L, 6L, 6L, 2L, 4L, 3L, 3L),     .Label = c('a', 'b', 'c', 'd', 'e', 'f'), class = 'factor'),     c(189L, 84L, 154L, 9L, 130L, 44L, 137L, 12L, 50L, 1L, 42L,         174L, 194L, 131L, 157L, 101L, 37L, 128L, 117L, 181L,         51L, 109L, 110L, 67L, 69L, 124L, 192L, 65L, 171L, 168L),     value = NA), .Names = c('x', '', 'value'));do.call('[<-.factor', argv)");
-        check("TestrGenBuiltinextract_parentasis_assign_factor_testextract_parentasis_assign_factor1_6ab7f28cbfdde795b5454d7c3e767116");
-    }
-
-    @Test
     public void TestrGenBuiltinextract_parentasis_dataframe_testextract_parentasis_dataframe1_b62183b96921d7174a56f16f6dc89057() {
         assertEval("argv <- structure(list(x = structure(list(ID = c(13, 41, 121,     202, 247, 292, 415, 492), Location = c(0.15998329123474,     0.533277637449134, 1.5998329123474, 2.6797201281819, 3.27965747031217,     3.87959481244245, 5.51942354759854, 6.54598299968812), Peak_Value = c(0.997547264684804,     0.949162789397664, 0.990440013891923, 0.973478735915337,     0.93861267739627, 0.957347289323235, 0.924803043529451, 0.968307855031101)),     .Names = c('ID', 'Location', 'Peak_Value'), row.names = c(NA,         -8L), class = 'data.frame'), i = 2), .Names = c('x',     'i'));do.call('[.data.frame', argv)");
         check("TestrGenBuiltinextract_parentasis_dataframe_testextract_parentasis_dataframe1_b62183b96921d7174a56f16f6dc89057");
@@ -6085,12 +5941,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinextract_parentasis_dataframe_testextract_parentasis_dataframe2_5a2ab0c147f4f04db1c0405c273b36bf() {
         assertEval("argv <- structure(list(x = structure(list(Satellites = c(8L,     0L, 9L, 0L, 4L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 11L, 0L, 14L,     8L, 1L, 1L, 0L, 5L, 4L, 3L, 1L, 2L, 3L, 0L, 3L, 5L, 0L, 0L,     4L, 0L, 0L, 8L, 5L, 0L, 0L, 6L, 0L, 6L, 3L, 5L, 6L, 5L, 9L,     4L, 6L, 4L, 3L, 3L, 5L, 5L, 6L, 4L, 5L, 15L, 3L, 3L, 0L,     0L, 0L, 5L, 3L, 5L, 1L, 8L, 10L, 0L, 0L, 3L, 7L, 1L, 0L,     6L, 0L, 0L, 3L, 4L, 0L, 5L, 0L, 0L, 0L, 4L, 0L, 3L, 0L, 0L,     0L, 0L, 5L, 0L, 0L, 0L, 0L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L,     4L, 1L, 1L, 1L, 1L, 2L, 4L, 3L, 6L, 0L, 2L, 2L, 0L, 12L,     0L, 5L, 6L, 6L, 2L, 0L, 2L, 3L, 0L, 3L, 4L, 2L, 6L, 6L, 0L,     4L, 10L, 7L, 0L, 5L, 5L, 6L, 6L, 7L, 3L, 3L, 0L, 0L, 8L,     4L, 4L, 10L, 9L, 4L, 0L, 0L, 0L, 0L, 4L, 0L, 2L, 0L, 4L,     4L, 3L, 8L, 0L, 7L, 0L, 0L, 2L, 3L, 4L, 0L, 0L, 0L), Width = c(28.3,     22.5, 26, 24.8, 26, 23.8, 26.5, 24.7, 23.7, 25.6, 24.3, 25.8,     28.2, 21, 26, 27.1, 25.2, 29, 24.7, 27.4, 23.2, 25, 22.5,     26.7, 25.8, 26.2, 28.7, 26.8, 27.5, 24.9, 29.3, 25.8, 25.7,     25.7, 26.7, 23.7, 26.8, 27.5, 23.4, 27.9, 27.5, 26.1, 27.7,     30, 28.5, 28.9, 28.2, 25, 28.5, 30.3, 24.7, 27.7, 27.4, 22.9,     25.7, 28.3, 27.2, 26.2, 27.8, 25.5, 27.1, 24.5, 27, 26, 28,     30, 29, 26.2, 26.5, 26.2, 25.6, 23, 23, 25.4, 24.2, 22.9,     26, 25.4, 25.7, 25.1, 24.5, 27.5, 23.1, 25.9, 25.8, 27, 28.5,     25.5, 23.5, 24, 29.7, 26.8, 26.7, 28.7, 23.1, 29, 25.5, 26.5,     24.5, 28.5, 28.2, 24.5, 27.5, 24.7, 25.2, 27.3, 26.3, 29,     25.3, 26.5, 27.8, 27, 25.7, 25, 31.9, 23.7, 29.3, 22, 25,     27, 23.8, 30.2, 26.2, 24.2, 27.4, 25.4, 28.4, 22.5, 26.2,     24.9, 24.5, 25.1, 28, 25.8, 27.9, 24.9, 28.4, 27.2, 25, 27.5,     33.5, 30.5, 29, 24.3, 25.8, 25, 31.7, 29.5, 24, 30, 27.6,     26.2, 23.1, 22.9, 24.5, 24.7, 28.3, 23.9, 23.8, 29.8, 26.5,     26, 28.2, 25.7, 26.5, 25.8, 24.1, 26.2, 26.1, 29, 28, 27,     24.5), Dark = structure(c(1L, 2L, 1L, 2L, 2L, 1L, 1L, 2L,     1L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L,     2L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L,     2L, 1L, 2L, 1L, 1L, 1L, 2L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L,     1L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L,     1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L, 2L, 2L, 2L,     2L, 1L, 2L, 1L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 2L, 1L, 2L, 2L,     2L, 2L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L,     1L, 1L, 2L, 2L, 2L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 2L, 2L,     1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 2L,     1L, 1L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L,     2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 1L),     .Label = c('no', 'yes'), class = 'factor'), GoodSpine = structure(c(1L,     1L, 2L, 1L, 1L, 1L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 2L,     1L, 1L, 1L, 1L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L,     1L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 1L,     1L, 1L, 1L, 2L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 1L,     1L, 2L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L,     2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 2L, 2L,     2L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 1L,     1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L,     2L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L,     2L, 1L, 2L, 1L, 2L, 1L, 1L, 2L, 1L, 1L, 2L, 1L, 1L, 1L, 1L,     1L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L,     1L, 1L, 1L, 1L, 2L, 1L, 2L), .Label = c('no', 'yes'), class = 'factor'),     Rep1 = c(2, 4, 5, 6, 6, 8, 9, 9, 10, 10, 11, 11, 13, 15,         15, 15, 15, 15, 17, 18, 19, 19, 19, 20, 20, 21, 21, 22,         23, 25, 25, 26, 27, 27, 28, 29, 29, 31, 33, 33, 36, 39,         40, 40, 41, 42, 43, 44, 45, 45, 49, 50, 51, 53, 55, 55,         56, 56, 56, 58, 59, 59, 60, 60, 62, 63, 64, 64, 64, 65,         66, 66, 67, 68, 70, 70, 71, 74, 75, 76, 76, 77, 79, 79,         79, 80, 80, 81, 82, 83, 83, 84, 87, 88, 88, 91, 92, 95,         97, 97, 97, 98, 98, 99, 100, 100, 101, 101, 103, 103,         103, 106, 107, 107, 111, 112, 112, 113, 113, 116, 116,         117, 117, 120, 122, 122, 122, 124, 125, 126, 127, 128,         128, 129, 130, 131, 133, 134, 134, 135, 141, 144, 146,         147, 147, 153, 153, 154, 154, 155, 155, 155, 156, 157,         157, 161, 163, 163, 164, 164, 164, 165, 167, 168, 168,         169, 170, 170, 170, 171, 171, 173, 173), Rep2 = c(2,         5, 6, 6, 8, 8, 9, 11, 12, 13, 13, 15, 15, 15, 16, 17,         17, 18, 19, 20, 23, 24, 24, 24, 25, 25, 26, 26, 27, 28,         29, 30, 30, 32, 33, 34, 38, 39, 39, 41, 42, 47, 48, 49,         49, 51, 54, 55, 55, 56, 57, 59, 59, 62, 63, 65, 67, 68,         69, 69, 70, 73, 75, 76, 76, 77, 78, 79, 81, 82, 83, 84,         85, 85, 85, 86, 87, 88, 89, 91, 92, 92, 92, 92, 96, 98,         98, 99, 100, 101, 101, 102, 103, 104, 104, 104, 105,         107, 107, 107, 108, 109, 109, 110, 111, 111, 111, 112,         112, 112, 113, 113, 115, 116, 117, 120, 122, 123, 123,         124, 124, 125, 125, 126, 128, 130, 131, 131, 131, 131,         132, 133, 133, 134, 134, 136, 137, 138, 139, 139, 141,         143, 144, 144, 145, 145, 150, 150, 150, 152, 152, 153,         154, 155, 155, 156, 157, 157, 158, 159, 160, 161, 163,         163, 166, 167, 169, 170, 172, 173, 173, 173, 173)), .Names = c('Satellites',     'Width', 'Dark', 'GoodSpine', 'Rep1', 'Rep2'), row.names = c(NA,     -173L), class = 'data.frame'), i = c(2, 4, 5, 6, 6, 8, 9,     9, 10, 10, 11, 11, 13, 15, 15, 15, 15, 15, 17, 18, 19, 19,     19, 20, 20, 21, 21, 22, 23, 25, 25, 26, 27, 27, 28, 29, 29,     31, 33, 33, 36, 39, 40, 40, 41, 42, 43, 44, 45, 45, 49, 50,     51, 53, 55, 55, 56, 56, 56, 58, 59, 59, 60, 60, 62, 63, 64,     64, 64, 65, 66, 66, 67, 68, 70, 70, 71, 74, 75, 76, 76, 77,     79, 79, 79, 80, 80, 81, 82, 83, 83, 84, 87, 88, 88, 91, 92,     95, 97, 97, 97, 98, 98, 99, 100, 100, 101, 101, 103, 103,     103, 106, 107, 107, 111, 112, 112, 113, 113, 116, 116, 117,     117, 120, 122, 122, 122, 124, 125, 126, 127, 128, 128, 129,     130, 131, 133, 134, 134, 135, 141, 144, 146, 147, 147, 153,     153, 154, 154, 155, 155, 155, 156, 157, 157, 161, 163, 163,     164, 164, 164, 165, 167, 168, 168, 169, 170, 170, 170, 171,     171, 173, 173), j = c(-5L, -6L)), .Names = c('x', 'i', 'j'));do.call('[.data.frame', argv)");
         check("TestrGenBuiltinextract_parentasis_dataframe_testextract_parentasis_dataframe2_5a2ab0c147f4f04db1c0405c273b36bf");
-    }
-
-    @Test
-    public void TestrGenBuiltinextract_parentasis_extract_parentasis_assign_factor_testextract_parentasis_extract_parentasis_assign_factor1_5605f01dadc0e5f8b00b150f5ce0d8fd() {
-        assertEval("argv <- structure(list(x = structure(c(2L, 2L, 3L), .Label = c('One',     'Two', 'Three'), class = 'factor'), 2, value = 'One'), .Names = c('x',     '', 'value'));do.call('[[<-.factor', argv)");
-        check("TestrGenBuiltinextract_parentasis_extract_parentasis_assign_factor_testextract_parentasis_extract_parentasis_assign_factor1_5605f01dadc0e5f8b00b150f5ce0d8fd");
     }
 
     @Test
@@ -6922,21 +6772,9 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltingsub_testgsub25_e759254c5e5d6da45f534f8e03283b99() {
-        assertEval("argv <- list('%', '\\\\\\\\%', structure('foo', .Names = 'object'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
-        check("TestrGenBuiltingsub_testgsub25_e759254c5e5d6da45f534f8e03283b99");
-    }
-
-    @Test
     public void TestrGenBuiltingsub_testgsub26_a6631bc9f1b0c1f13b46d61f09bc359e() {
         assertEval("argv <- list('\\\\\\\\(l|)dots', '...', structure('plot(1:10, 1:10, main = \\'text(...) examples\\\\n~~~~~~~~~~~~~~\\',\\n', Rd_tag = 'RCODE'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
         check("TestrGenBuiltingsub_testgsub26_a6631bc9f1b0c1f13b46d61f09bc359e");
-    }
-
-    @Test
-    public void TestrGenBuiltingsub_testgsub27_abf221cb6ca381e202b1dd98ead58967() {
-        assertEval("argv <- list('.__T__(.*):([^:]+(.*))', '\\\\2', c('.__T__!:base', '.__T__%%:base', '.__T__%*%:base', '.__T__%/%:base', '.__T__&:base', '.__T__*:base', '.__T__+:base', '.__T__-:base', '.__T__/:base', '.__T__Arith:base', '.__T__BunchKaufman:Matrix', '.__T__Cholesky:Matrix', '.__T__Compare:methods', '.__T__Logic:base', '.__T__Math2:methods', '.__T__Math:base', '.__T__Ops:base', '.__T__Schur:Matrix', '.__T__Summary:base', '.__T__[:base', '.__T__[<-:base', '.__T__^:base', '.__T__all.equal:base', '.__T__all:base', '.__T__any:base', '.__T__as.array:base', '.__T__as.integer:base', '.__T__as.logical:base', '.__T__as.matrix:base', '.__T__as.numeric:base', '.__T__as.vector:base', '.__T__band:Matrix', '.__T__cbind2:methods', '.__T__chol2inv:base', '.__T__chol:base', '.__T__coerce:methods', '.__T__coerce<-:methods', '.__T__colMeans:base', '.__T__colSums:base', '.__T__cov2cor:stats', '.__T__crossprod:base', '.__T__determinant:base', '.__T__diag:base', '.__T__diag<-:base', '.__T__diff:base', '.__T__dim:base', '.__T__dim<-:base', '.__T__dimnames:base', '.__T__dimnames<-:base', '.__T__drop:base', '.__T__expand:Matrix', '.__T__expm:Matrix', '.__T__facmul:Matrix', '.__T__forceSymmetric:Matrix', '.__T__format:base', '.__T__head:utils', '.__T__image:graphics', '.__T__initialize:methods', '.__T__is.finite:base', '.__T__is.infinite:base', '.__T__is.na:base', '.__T__isDiagonal:Matrix', '.__T__isSymmetric:base', '.__T__isTriangular:Matrix', '.__T__kronecker:base', '.__T__length:base', '.__T__lu:Matrix', '.__T__mean:base', '.__T__nnzero:Matrix', '.__T__norm:base', '.__T__pack:Matrix', '.__T__print:base', '.__T__prod:base', '.__T__qr.Q:base', '.__T__qr.R:base', '.__T__qr.coef:base', '.__T__qr.fitted:base', '.__T__qr.qty:base', '.__T__qr.qy:base', '.__T__qr.resid:base', '.__T__qr:base', '.__T__rbind2:methods', '.__T__rcond:base', '.__T__rep:base', '.__T__rowMeans:base', '.__T__rowSums:base', '.__T__show:methods', '.__T__skewpart:Matrix', '.__T__solve:base', '.__T__sum:base', '.__T__summary:base', '.__T__symmpart:Matrix', '.__T__t:base', '.__T__tail:utils', '.__T__tcrossprod:base', '.__T__toeplitz:stats', '.__T__tril:Matrix', '.__T__triu:Matrix', '.__T__unname:base', '.__T__unpack:Matrix', '.__T__update:stats', '.__T__updown:Matrix', '.__T__which:base', '.__T__writeMM:Matrix', '.__T__zapsmall:base'), FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
-        check("TestrGenBuiltingsub_testgsub27_abf221cb6ca381e202b1dd98ead58967");
     }
 
     @Test
@@ -7255,12 +7093,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltiniscall_testiscall26_753ff719553b6809d09c4ecb670b117d() {
         assertEval("argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
         check("TestrGenBuiltiniscall_testiscall26_753ff719553b6809d09c4ecb670b117d");
-    }
-
-    @Test
-    public void TestrGenBuiltiniscomplex_testiscomplex4_7f99f72176d8256c0360850982256f99() {
-        assertEval("argv <- list(NA_complex_);is.complex(argv[[1]]);");
-        check("TestrGenBuiltiniscomplex_testiscomplex4_7f99f72176d8256c0360850982256f99");
     }
 
     @Test
@@ -7714,12 +7546,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisna_testisna35_3a958646dfd6addce10492f5e23b6947() {
-        assertEval("argv <- list(NA_complex_);is.na(argv[[1]]);");
-        check("TestrGenBuiltinisna_testisna35_3a958646dfd6addce10492f5e23b6947");
-    }
-
-    @Test
     public void TestrGenBuiltinisna_testisna37_1dee0e5e27f42092b55314e66ddc2e5c() {
         assertEval("argv <- list(structure(list(sec = 40, min = 24L, hour = 11L, mday = 15L, mon = 11L, year = 100L, wday = 5L, yday = 349L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt')));is.na(argv[[1]]);");
         check("TestrGenBuiltinisna_testisna37_1dee0e5e27f42092b55314e66ddc2e5c");
@@ -7804,12 +7630,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinisnull_testisnull14_50434f5c1b341684b0b42a3e1175c33d() {
-        assertEval("argv <- list(NA_complex_);do.call('is.null', argv)");
-        check("TestrGenBuiltinisnull_testisnull14_50434f5c1b341684b0b42a3e1175c33d");
-    }
-
-    @Test
     public void TestrGenBuiltinisnull_testisnull16_6aed923cc68e227d5514bf5a366ffbb7() {
         assertEval("argv <- list(function(file = ifelse(onefile, 'Rplots.pdf', 'Rplot%03d.pdf'),     width, height, onefile, family, title, fonts, version, paper,     encoding, bg, fg, pointsize, pagecentre, colormodel, useDingbats,     useKerning, fillOddEven, compress) {    initPSandPDFfonts()    new <- list()    if (!missing(width)) new$width <- width    if (!missing(height)) new$height <- height    if (!missing(onefile)) new$onefile <- onefile    if (!missing(title)) new$title <- title    if (!missing(fonts)) new$fonts <- fonts    if (!missing(version)) new$version <- version    if (!missing(paper)) new$paper <- paper    if (!missing(encoding)) new$encoding <- encoding    if (!missing(bg)) new$bg <- bg    if (!missing(fg)) new$fg <- fg    if (!missing(pointsize)) new$pointsize <- pointsize    if (!missing(pagecentre)) new$pagecentre <- pagecentre    if (!missing(colormodel)) new$colormodel <- colormodel    if (!missing(useDingbats)) new$useDingbats <- useDingbats    if (!missing(useKerning)) new$useKerning <- useKerning    if (!missing(fillOddEven)) new$fillOddEven <- fillOddEven    if (!missing(compress)) new$compress <- compress    old <- check.options(new, name.opt = '.PDF.Options', envir = .PSenv)    if (!missing(family) && (inherits(family, 'Type1Font') ||         inherits(family, 'CIDFont'))) {        enc <- family$encoding        if (inherits(family, 'Type1Font') && !is.null(enc) &&             enc != 'default' && (is.null(old$encoding) || old$encoding ==             'default')) old$encoding <- enc        family <- family$metrics    }    if (is.null(old$encoding) || old$encoding == 'default') old$encoding <- guessEncoding()    if (!missing(family)) {        if (length(family) == 4L) {            family <- c(family, 'Symbol.afm')        } else if (length(family) == 5L) {        } else if (length(family) == 1L) {            pf <- pdfFonts(family)[[1L]]            if (is.null(pf)) stop(gettextf('unknown family '%s'',                 family), domain = NA)            matchFont(pf, old$encoding)        } else stop('invalid 'family' argument')        old$family <- family    }    version <- old$version    versions <- c('1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7',         '2.0')    if (version %in% versions) version <- as.integer(strsplit(version,         '[.]')[[1L]]) else stop('invalid PDF version')    onefile <- old$onefile    if (!checkIntFormat(file)) stop(gettextf('invalid 'file' argument '%s'',         file), domain = NA)    .External(C_PDF, file, old$paper, old$family, old$encoding,         old$bg, old$fg, old$width, old$height, old$pointsize,         onefile, old$pagecentre, old$title, old$fonts, version[1L],         version[2L], old$colormodel, old$useDingbats, old$useKerning,         old$fillOddEven, old$compress)    invisible()});do.call('is.null', argv)");
         check("TestrGenBuiltinisnull_testisnull16_6aed923cc68e227d5514bf5a366ffbb7");
@@ -7861,12 +7681,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinjulianDate_testjulianDate1_e2611ffbc0bb4eb7d2e9db89106c26d1() {
         assertEval("argv <- structure(list(x = structure(16352, class = 'Date'),     origin = -2440588), .Names = c('x', 'origin'));do.call('julian.Date', argv)");
         check("TestrGenBuiltinjulianDate_testjulianDate1_e2611ffbc0bb4eb7d2e9db89106c26d1");
-    }
-
-    @Test
-    public void TestrGenBuiltinlabels_testlabels1_9429b8f435fb4d93c055e4d34115a4bb() {
-        assertEval("argv <- structure(list(object = structure(c(-469.098459411633,     469.356672501203, -0.429918004252249, 0.00364370239091614,     -0.256875513692359, -0.0204799335117722, 2.00613934942808),     .Names = c('(Intercept)', 'gravity', 'ph', 'osmo', 'conduct',         'urea', 'log(calc)'))), .Names = 'object');do.call('labels', argv)");
-        check("TestrGenBuiltinlabels_testlabels1_9429b8f435fb4d93c055e4d34115a4bb");
     }
 
     @Test
@@ -8434,12 +8248,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinmatrix_testmatrix28_41e0446a1e0ca65f255d4d46f04b6f03() {
-        assertEval("argv <- list(NA_complex_, 5L, 1L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
-        check("TestrGenBuiltinmatrix_testmatrix28_41e0446a1e0ca65f255d4d46f04b6f03");
-    }
-
-    @Test
     public void TestrGenBuiltinmatrix_testmatrix29_eb80b03f9fa1526f108b3e3ab317fd08() {
         assertEval("argv <- list(NA_character_, 4L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
         check("TestrGenBuiltinmatrix_testmatrix29_eb80b03f9fa1526f108b3e3ab317fd08");
@@ -8569,12 +8377,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinmean_testmean17_3ff1f045467adce67fbf87c1dec8e1f2() {
         assertEval("argv <- list(c(1.77635683940025e-15, 7.105427357601e-14, 4.54747350886464e-13, 4.54747350886464e-13, 1.81898940354586e-12, 7.27595761418343e-12, 7.27595761418343e-12, 1.45519152283669e-11, 2.91038304567337e-11, 5.82076609134674e-11)); .Internal(mean(argv[[1]]))");
         check("TestrGenBuiltinmean_testmean17_3ff1f045467adce67fbf87c1dec8e1f2");
-    }
-
-    @Test
-    public void TestrGenBuiltinmean_testmean19_6620b77cdd646a0c73fb0012b5450b0f() {
-        assertEval("argv <- structure(list(x = structure(c(31, NA, NA, 31), units = 'days',     class = 'difftime'), na.rm = TRUE), .Names = c('x', 'na.rm'));do.call('mean', argv)");
-        check("TestrGenBuiltinmean_testmean19_6620b77cdd646a0c73fb0012b5450b0f");
     }
 
     @Test
@@ -8890,12 +8692,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinoperators_testoperators110_5e09a2dbdb2811ad41daadd0ac7279bd() {
-        assertEval("argv <- list(structure(list(Fertility = c(80.2, 83.1, 92.5, 85.8, 76.9), Agriculture = c(17, 45.1, 39.7, 36.5, 43.5), Examination = c(15L, 6L, 5L, 12L, 17L), Education = c(12L, 9L, 5L, 7L, 15L)), .Names = c('Fertility', 'Agriculture', 'Examination', 'Education'), row.names = c('Courtelary', 'Delemont', 'Franches-Mnt', 'Moutier', 'Neuveville'), class = 'data.frame'), 6);`<=`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators110_5e09a2dbdb2811ad41daadd0ac7279bd");
-    }
-
-    @Test
     public void TestrGenBuiltinoperators_testoperators112_3963dd31b169d53844495e248c650658() {
         assertEval("argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
         check("TestrGenBuiltinoperators_testoperators112_3963dd31b169d53844495e248c650658");
@@ -8923,12 +8719,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinoperators_testoperators120_571abbafc889c01f539529e23ed0df5e() {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), .Tsp = c(1959, 1997.91666666667, 12), class = 'ts'), 10L);`==`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators120_571abbafc889c01f539529e23ed0df5e");
-    }
-
-    @Test
-    public void TestrGenBuiltinoperators_testoperators126_b247bd4cada9ea987df987f69c0254ca() {
-        assertEval("argv <- list(structure(list(cde = 2L, cd = 4L), .Names = c('cde', 'cd'), row.names = 'ab', class = 'data.frame'), c(2, 4));`==`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators126_b247bd4cada9ea987df987f69c0254ca");
     }
 
     @Test
@@ -9067,12 +8857,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinoperators_testoperators19_35579b6bb06ebf62a6bd7cd24bb396bb() {
         assertEval("argv <- list(structure(c(798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988, 798.368155587988), .Tsp = c(1971, 2000, 1), class = 'ts'), structure(c(96.1627886140128, 99.5328179233045, 102.792420797859, 105.951789523417, 109.019638748919, 112.00348906474, 114.909884224142, 117.744560053261, 120.512577567101, 123.218429147578, 125.866124161059, 128.459258681722, 131.001072784874, 133.494498015905, 135.942197018618, 138.34659685001, 140.70991716901, 143.034194231449, 145.321301429523, 147.572966965162, 149.790789131479, 151.976249586445, 154.130724932091, 156.255496856342, 158.351761049736, 160.420635073182, 162.463165323754, 164.480333221768, 166.473060722972, 168.442215243699), .Tsp = c(1971, 2000, 1), class = 'ts'));`+`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators19_35579b6bb06ebf62a6bd7cd24bb396bb");
-    }
-
-    @Test
-    public void TestrGenBuiltinoperators_testoperators192_aa8cb7d7de7b90b7539ec5efc857a229() {
-        assertEval("argv <- list(structure(c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, NA), .Dim = c(5L, 2L), .Dimnames = list(NULL, c('VAR1', 'VAR3'))), structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE), .Dim = c(5L, 2L), .Dimnames = list(NULL, c('VAR1', 'VAR3'))));`&`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators192_aa8cb7d7de7b90b7539ec5efc857a229");
     }
 
     @Test
@@ -9292,12 +9076,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinoperators_testoperators261_cba752dcaf75cdd4235e6d15b592d9fa() {
-        assertEval("argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c('VAR1', 'VAR3'), class = 'data.frame', row.names = c(NA, -5L)), 1);`==`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators261_cba752dcaf75cdd4235e6d15b592d9fa");
-    }
-
-    @Test
     public void TestrGenBuiltinoperators_testoperators272_b8f9baa9b9d7a0fe22ff221de6356d02() {
         assertEval("argv <- list(structure(c(4, 3, 2, 1, 0), .Tsp = c(-1, 3, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators272_b8f9baa9b9d7a0fe22ff221de6356d02");
@@ -9406,12 +9184,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinoperators_testoperators313_752d12f515bacd25ca236c8fb4b76e1f() {
-        assertEval("argv <- list(structure(c(NA, FALSE, TRUE, NA, FALSE, TRUE, NA, FALSE, TRUE), .Names = c(NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE')), structure(c(NA, NA, NA, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), .Names = c(NA, NA, NA, 'FALSE', 'FALSE', 'FALSE', 'TRUE', 'TRUE', 'TRUE')));`|`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators313_752d12f515bacd25ca236c8fb4b76e1f");
-    }
-
-    @Test
     public void TestrGenBuiltinoperators_testoperators314_9be667d83c3750672072fb07114a3b67() {
         assertEval("argv <- list(structure(120L, class = 'octmode'), '644');`|`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators314_9be667d83c3750672072fb07114a3b67");
@@ -9502,12 +9274,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinoperators_testoperators337_0a2327b7e83d6accfbb3a38e14d5e48a() {
-        assertEval("argv <- list(c(TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE), c(TRUE, TRUE, TRUE, NA, FALSE, FALSE, TRUE, NA));`&`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators337_0a2327b7e83d6accfbb3a38e14d5e48a");
-    }
-
-    @Test
     public void TestrGenBuiltinoperators_testoperators34_a9431d2364dde2ac140f6f17c920c1ad() {
         assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));`+`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators34_a9431d2364dde2ac140f6f17c920c1ad");
@@ -9523,12 +9289,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinoperators_testoperators341_7aebbf647e9c2fe68e5efbab86240d11() {
         assertEval("argv <- list(structure(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(101L, 3L), .Dimnames = list(NULL, c('t1', '10 * t1', 't1 - 4')), .Tsp = c(1, 101, 1), class = c('mts', 'ts', 'matrix')), structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(101L, 3L), .Dimnames = list(NULL, c('t1', '10 * t1', 't1 - 4'))));`&`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators341_7aebbf647e9c2fe68e5efbab86240d11");
-    }
-
-    @Test
-    public void TestrGenBuiltinoperators_testoperators342_21dec62d790ce46198eed22072f9caab() {
-        assertEval("argv <- list(structure(c(NA, FALSE, TRUE, NA, FALSE, TRUE, NA, FALSE, TRUE), .Names = c(NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE', NA, 'FALSE', 'TRUE')), structure(c(NA, NA, NA, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), .Names = c(NA, NA, NA, 'FALSE', 'FALSE', 'FALSE', 'TRUE', 'TRUE', 'TRUE')));`&`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators342_21dec62d790ce46198eed22072f9caab");
     }
 
     @Test
@@ -9724,12 +9484,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinoperators_testoperators51_67e818b19655041f681c5fe551540318() {
-        assertEval("argv <- list(structure(c(94694400, 126230400, 157766400, 189302400, 220924800, 252460800, 283996800, 315532800, 362793600, 394329600, 425865600, 489024000, 567993600, 631152000, 662688000, 709948800, 741484800, 773020800, 820454400, 867715200, 915148800, 1136073600, 1230768000, 1341100800), class = c('POSIXct', 'POSIXt')), structure(c(78796800, 94694400, 126230400, 157766400, 189302400, 220924800, 252460800, 283996800, 315532800, 362793600, 394329600, 425865600, 489024000, 567993600, 631152000, 662688000, 709948800, 741484800, 773020800, 820454400, 867715200, 1136073600, 1230768000, 1341100800), class = c('POSIXct', 'POSIXt')));`-`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators51_67e818b19655041f681c5fe551540318");
-    }
-
-    @Test
     public void TestrGenBuiltinoperators_testoperators52_0ae639664f63b4b213e6235475e82a0a() {
         assertEval("argv <- list(structure(c(9, 12, 12, 15, 9, 9, 13, 11, 15, 10, 13, 13, 13, 15, 8, 13, 13, 10, 7, 9, 6, 11, 3, 5, 9, 3, 5, 1, 1, 2, NA, 10, 1, 4, 7, 4, NA, NA, 5, 2, 4, 3, 3, 6, 1, 1, 63, 41, 59, 50, 290, 226, 60, 36, 32, 121, 70, 51, 79, 32, 42, 39, 76, 60, 56, 88, 57, 309, 254, 146, 43, 78, 88, 314, 149, 78, NA, 238, 153, 159, 222, 203, NA, NA, 74, 100, 111, 9, 180, 50, 256, 107), .Dim = c(23L, 4L), .Dimnames = list(NULL, c('V1', 'V2', 'V3', 'V4'))), structure(c(10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 10.8260869565217, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 3.85, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 95.2608695652174, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9, 137.9), .Dim = c(23L, 4L)));`-`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators52_0ae639664f63b4b213e6235475e82a0a");
@@ -9751,12 +9505,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinoperators_testoperators58_db0f2e287893afc566c292115e43b72c() {
         assertEval("argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinoperators_testoperators58_db0f2e287893afc566c292115e43b72c");
-    }
-
-    @Test
-    public void TestrGenBuiltinoperators_testoperators63_3284f8169b83e55f63c16b6a572bf1b4() {
-        assertEval("argv <- list(structure(list(war = c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L), fly = c(1L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), ver = c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L), end = c(1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, NA, 1L, 1L, 2L, 1L, 1L, NA, 2L), gro = c(2L, 2L, 1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, NA, 2L, 2L, 1L, NA, 2L, 2L, NA, 1L, 2L), hai = c(1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L)), .Names = c('war', 'fly', 'ver', 'end', 'gro', 'hai'), class = 'data.frame', row.names = c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha')), 1);`-`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinoperators_testoperators63_3284f8169b83e55f63c16b6a572bf1b4");
     }
 
     @Test
@@ -10081,12 +9829,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinprintfunction_testprintfunction3_dab1c69d5d496ff15cb56eb6d8a68170() {
         assertEval("argv <- list(.Primitive('c'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinprintfunction_testprintfunction3_dab1c69d5d496ff15cb56eb6d8a68170");
-    }
-
-    @Test
-    public void TestrGenBuiltinprintfunction_testprintfunction4_e6dc900fb27246048b43ec42f83eb5d0() {
-        assertEval("argv <- list(.Primitive('.Internal'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinprintfunction_testprintfunction4_e6dc900fb27246048b43ec42f83eb5d0");
     }
 
     @Test
@@ -10918,12 +10660,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsep_testsep14_65c05ddeeafeda38f6377c0a4512aa3a() {
-        assertEval("argv <- list(structure(list(A = c(52L, 52L, 47L, 45L, 40L, 37L, 27L, 27L, 23L, 22L, 21L, 25L, 24L, 22L, 22L, 20L, 16L, 17L, 14L, 13L, 13L, 14L, 24L), F = c(42L, 44L, 48L, 49L, 50L, 54L, 58L, 54L, 59L, 59L, 60L, 53L, 54L, 55L, 56L, 58L, 62L, 57L, 54L, 55L, 52L, 47L, 56L), M = c(6L, 4L, 5L, 6L, 10L, 9L, 15L, 19L, 18L, 19L, 19L, 22L, 22L, 23L, 22L, 22L, 22L, 26L, 32L, 32L, 35L, 39L, 20L)), .Names = c('A', 'F', 'M'), class = 'data.frame', row.names = c(NA, 23L)), 100);`/`(argv[[1]],argv[[2]]);");
-        check("TestrGenBuiltinsep_testsep14_65c05ddeeafeda38f6377c0a4512aa3a");
-    }
-
-    @Test
     public void TestrGenBuiltinsep_testsep16_04768845c16f7d46591acb6c2369960d() {
         assertEval("argv <- list(structure(c(126.49966838981, 123.340306958365, 124.994330270046, 129.001056705356, 131.639025779016, 124.408594738421, 125.475982014377, 125.929559340094, 126.630542479839, 127.249057014908, 127.661400038288, 128.403617480371, 129.888052364537, 131.702361667407, 133.516670970277, 135.001105854443, 135.990729110554, 137.310226785368, 144.127817178676, 144.648818160919, 147.114894939813, 142.21953431078, 139.936534657354, 152.343274976711), .Tsp = c(1949, 1950.91666666667, 12), class = 'ts'), structure(c(NA, NA, NA, NA, NA, NA, 126.791666666667, 127.25, 127.958333333333, 128.583333333333, 129, 129.75, 131.25, 133.083333333333, 134.916666666667, 136.416666666667, 137.416666666667, 138.75, NA, NA, NA, NA, NA, NA), .Tsp = c(1949, 1950.91666666667, 12), class = 'ts'));`/`(argv[[1]],argv[[2]]);");
         check("TestrGenBuiltinsep_testsep16_04768845c16f7d46591acb6c2369960d");
@@ -11374,21 +11110,9 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsink_testsink1_1f2f54c86246d0e139afd22163c76df3() {
-        assertEval("argv <- list(structure(2L, class = c('terminal', 'connection')), FALSE, TRUE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-        check("TestrGenBuiltinsink_testsink1_1f2f54c86246d0e139afd22163c76df3");
-    }
-
-    @Test
     public void TestrGenBuiltinsink_testsink3_0d11da5ed60ecce0a15b0a8857faf2eb() {
         assertEval("argv <- list(-1L, FALSE, FALSE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
         check("TestrGenBuiltinsink_testsink3_0d11da5ed60ecce0a15b0a8857faf2eb");
-    }
-
-    @Test
-    public void TestrGenBuiltinsinknumber_testsinknumber1_8599c5fbb4d4e97c1b0e82b6b0732efc() {
-        assertEval("argv <- list(FALSE); .Internal(sink.number(argv[[1]]))");
-        check("TestrGenBuiltinsinknumber_testsinknumber1_8599c5fbb4d4e97c1b0e82b6b0732efc");
     }
 
     @Test
@@ -11419,12 +11143,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinsplit_testsplit14_d5f5ee939bde53323df5d127bf51a728() {
         assertEval("argv <- list(structure(c(123.48457192908, 239.059434652297, 290.055338401838, 18.397281603467, 6.57585722655537, 0.670931786731845, 0.178466148156965, 0.245410750178149, 0.363167328274208, 0.194808268742596, 2172.67583033103, 8.91763605923317e+38), .Dim = c(1L, 12L), .Dimnames = list(NULL, c('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'))), structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), .Label = '1', class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinsplit_testsplit14_d5f5ee939bde53323df5d127bf51a728");
-    }
-
-    @Test
-    public void TestrGenBuiltinsplit_testsplit15_894df85ef61c740797eff5749f2f7e96() {
-        assertEval("argv <- list(character(0), structure(integer(0), .Label = character(0), class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsplit_testsplit15_894df85ef61c740797eff5749f2f7e96");
     }
 
     @Test
@@ -11464,81 +11182,15 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsplit_testsplit7_c8635a0f41744cd3be693fd1f670d24b() {
-        assertEval("argv <- list(structure(c('Sex/(Age + Eth * Lrn)', 'Sex + Sex:Age + Sex:Eth + Sex:Lrn + Sex:Eth:Lrn + Sex:Age:Lrn', 'Sex + Sex:Age + Sex:Eth + Sex:Lrn + Sex:Eth:Lrn + Sex:Age:Lrn + Sex:Age:Eth + Sex:Age:Eth:Lrn', '1.597991', '1.686899', '1.928360', '132', '128', '118', '-1063.025', '-1055.398', '-1039.324', '', '1 vs 2', '2 vs 3', '', ' 4', '10', '', ' 7.627279', '16.073723', '', '0.10622602', '0.09754136'), .Dim = c(3L, 8L)), structure(c(1L, 1L, 1L, 2L, 2L, 2L, 3L, 3L, 3L, 4L, 4L, 4L, 5L, 5L, 5L, 6L, 6L, 6L, 7L, 7L, 7L, 8L, 8L, 8L), .Label = c('1', '2', '3', '4', '5', '6', '7', '8'), class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsplit_testsplit7_c8635a0f41744cd3be693fd1f670d24b");
-    }
-
-    @Test
-    public void TestrGenBuiltinsplit_testsplit9_1b57cbe8f915a71b63e9b370cb6ce3da() {
-        assertEval("argv <- list(structure(c(NA, NA), .Dim = 1:2), structure(1:2, .Label = c('1', '2'), class = 'factor')); .Internal(split(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsplit_testsplit9_1b57cbe8f915a71b63e9b370cb6ce3da");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf1_616a46b4d84336c3102cffdafbe6120b() {
-        assertEval("argv <- list('%s is not TRUE', 'identical(fxy, c(1, 2, 3))'); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf1_616a46b4d84336c3102cffdafbe6120b");
-    }
-
-    @Test
     public void TestrGenBuiltinsprintf_testsprintf10_6172749ae549a836aadb4dd013b21de5() {
         assertEval("argv <- list('%.0f%% said yes (out of a sample of size %.0f)', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
         check("TestrGenBuiltinsprintf_testsprintf10_6172749ae549a836aadb4dd013b21de5");
     }
 
     @Test
-    public void TestrGenBuiltinsprintf_testsprintf11_d23addb4a3134230d0dc4278eb1922e5() {
-        assertEval("argv <- list('%1$d %1$x %1$X', 0:15); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf11_d23addb4a3134230d0dc4278eb1922e5");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf12_f4d7713d7b5a3f4a6b1a93394506cd3c() {
-        assertEval("argv <- list('%03o', 1:255); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf12_f4d7713d7b5a3f4a6b1a93394506cd3c");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf13_478f180082d0ac4a879d1a33ff328f6b() {
-        assertEval("argv <- list('%d y value <= 0 omitted from logarithmic plot', 1L); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf13_478f180082d0ac4a879d1a33ff328f6b");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf14_79114a50f7b2d99eaf7f123f770951a5() {
-        assertEval("argv <- list('%o', 1:255); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf14_79114a50f7b2d99eaf7f123f770951a5");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf15_abe68cd9419b74554ccc9eefb2a5e000() {
-        assertEval("argv <- list('%s-class.Rd', structure('foo', .Names = 'foo')); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf15_abe68cd9419b74554ccc9eefb2a5e000");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf16_f2c00ebf15d0dde06e0056b870d0fbe6() {
-        assertEval("argv <- list('checkRd: (%d) %s', -3, 'evalSource.Rd:157: Unnecessary braces at ‘{\\'sourceEnvironment\\'}’'); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
-        check("TestrGenBuiltinsprintf_testsprintf16_f2c00ebf15d0dde06e0056b870d0fbe6");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf17_100d8c9855a2bd879eea0aa999086568() {
-        assertEval("argv <- list('tools:::check_compiled_code(\\'%s\\')', '/home/lzhao/hg/r-instrumented/library/foreign'); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf17_100d8c9855a2bd879eea0aa999086568");
-    }
-
-    @Test
     public void TestrGenBuiltinsprintf_testsprintf18_7c78033017935e48884a106c97df1044() {
         assertEval("argv <- list('%5g', structure(c(18, 18, 0, 14, 4, 12, 12, 0, 4, 8, 26, 23, 3, 18, 5, 8, 5, 3, 0, 5, 21, 0, 21, 0, 0), .Dim = c(5L, 5L), .Dimnames = list(NULL, c('', '', '', '', '')))); .Internal(sprintf(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinsprintf_testsprintf18_7c78033017935e48884a106c97df1044");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf19_8449b4ebb95f08588a64017df0462c09() {
-        assertEval("argv <- list('%G', 3.14159265358979e-06); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf19_8449b4ebb95f08588a64017df0462c09");
     }
 
     @Test
@@ -11551,24 +11203,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinsprintf_testsprintf3_4500fd7dacd66c3f6fa9f34111311bc6() {
         assertEval("argv <- list('min 10-char string '%10s'', c('a', 'ABC', 'and an even longer one')); .Internal(sprintf(argv[[1]], argv[[2]]))");
         check("TestrGenBuiltinsprintf_testsprintf3_4500fd7dacd66c3f6fa9f34111311bc6");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf4_4ba398000579f50256b550139ded0f38() {
-        assertEval("argv <- list('%o', integer(0)); .Internal(sprintf(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinsprintf_testsprintf4_4ba398000579f50256b550139ded0f38");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf5_64e1e861b692ffee9902ef9fbea83743() {
-        assertEval("argv <- list('%*s', 1, ''); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
-        check("TestrGenBuiltinsprintf_testsprintf5_64e1e861b692ffee9902ef9fbea83743");
-    }
-
-    @Test
-    public void TestrGenBuiltinsprintf_testsprintf6_42afa56096704b74cdced3cc2cefb49d() {
-        assertEval("argv <- list('p,L,S = (%2d,%2d,%2d): ', TRUE, TRUE, FALSE); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-        check("TestrGenBuiltinsprintf_testsprintf6_42afa56096704b74cdced3cc2cefb49d");
     }
 
     @Test
@@ -11698,12 +11332,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinstrsplit_teststrsplit11_c85911589c86839478dfc0ab22a937a6() {
-        assertEval("argv <- list(structure('pkgB', .Names = 'name'), '_', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
-        check("TestrGenBuiltinstrsplit_teststrsplit11_c85911589c86839478dfc0ab22a937a6");
-    }
-
-    @Test
     public void TestrGenBuiltinstrsplit_teststrsplit12_5de2449138882559ccc5a074c2e9851f() {
         assertEval("argv <- list('Keywords:  utilities ', '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
         check("TestrGenBuiltinstrsplit_teststrsplit12_5de2449138882559ccc5a074c2e9851f");
@@ -11818,12 +11446,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinsub_testsub10_8d6b7828b958f5447e6d29a1c78b3799() {
-        assertEval("argv <- list('^[[:space:]]*([[:alnum:].]+).*$', '\\\\1', structure('MASS', .Names = 'Suggests'), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
-        check("TestrGenBuiltinsub_testsub10_8d6b7828b958f5447e6d29a1c78b3799");
-    }
-
-    @Test
     public void TestrGenBuiltinsub_testsub12_18c19215e492e38ebc1c19bacd9268cb() {
         assertEval("argv <- list('.* : ', '', structure('Error in rnorm(2, c(1, NA)) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, c(1, NA)))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
         check("TestrGenBuiltinsub_testsub12_18c19215e492e38ebc1c19bacd9268cb");
@@ -11845,12 +11467,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinsub_testsub15_efadebb02fe28ae700fc046ae4ceef86() {
         assertEval("argv <- list('.* : ', '', structure('Error in rnorm(1, sd = Inf) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
         check("TestrGenBuiltinsub_testsub15_efadebb02fe28ae700fc046ae4ceef86");
-    }
-
-    @Test
-    public void TestrGenBuiltinsub_testsub17_80f9e2840d0a867ca64b619296c7d243() {
-        assertEval("argv <- list('^msgstr[[:blank:]]+[\\'](.*)[\\'][[:blank:]]*$', '\\\\1', 'msgstr \\'<U+043E><U+0442><U+0440><U+0438><U+0446><U+0430><U+0442><U+0435><U+043B><U+044C><U+043D><U+044B><U+0435> <U+0432><U+0435><U+0441><U+0430> <U+043D><U+0435> <U+0440><U+0430><U+0437><U+0440><U+0435><U+0448><U+0435><U+043D><U+044B>\\'', FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
-        check("TestrGenBuiltinsub_testsub17_80f9e2840d0a867ca64b619296c7d243");
     }
 
     @Test
@@ -12634,30 +12250,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinunique_testunique7_082eba594b16036fba4b798f0c39c014() {
-        assertEval("argv <- list(structure(list(a = 1), .Names = 'a'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-        check("TestrGenBuiltinunique_testunique7_082eba594b16036fba4b798f0c39c014");
-    }
-
-    @Test
-    public void TestrGenBuiltinunique_testunique9_687732fcbebb2f8bd30a841a31f4d5a4() {
-        assertEval("argv <- list(list(FALSE), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-        check("TestrGenBuiltinunique_testunique9_687732fcbebb2f8bd30a841a31f4d5a4");
-    }
-
-    @Test
-    public void TestrGenBuiltinunitsassign__testunitsassign_1_2c87fe903851db3f18f0b22fb1584518() {
-        assertEval("argv <- structure(list(x = structure(500, units = 'secs', class = 'difftime',     .Names = 'a'), value = 'mins'), .Names = c('x', 'value'));do.call('units<-', argv)");
-        check("TestrGenBuiltinunitsassign__testunitsassign_1_2c87fe903851db3f18f0b22fb1584518");
-    }
-
-    @Test
-    public void TestrGenBuiltinunitsassign_difftime_testunitsassign_difftime1_89ecf98c73b6274d721260d35b2439ea() {
-        assertEval("argv <- structure(list(x = structure(500, units = 'secs', class = 'difftime',     .Names = 'a'), value = 'mins'), .Names = c('x', 'value'));do.call('units<-.difftime', argv)");
-        check("TestrGenBuiltinunitsassign_difftime_testunitsassign_difftime1_89ecf98c73b6274d721260d35b2439ea");
-    }
-
-    @Test
     public void TestrGenBuiltinunlink_testunlink1_5ead42fd735cfdc73231e3241d3171cb() {
         assertEval("argv <- list('/tmp/RtmptPgrXI/Pkgs', TRUE, FALSE); .Internal(unlink(argv[[1]], argv[[2]], argv[[3]]))");
         check("TestrGenBuiltinunlink_testunlink1_5ead42fd735cfdc73231e3241d3171cb");
@@ -13000,12 +12592,6 @@ public class FailingTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinvector_testvector9_3ec6b6e35abf3a65efefe2397e0034e4() {
-        assertEval("argv <- list('raw', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
-        check("TestrGenBuiltinvector_testvector9_3ec6b6e35abf3a65efefe2397e0034e4");
-    }
-
-    @Test
     public void TestrGenBuiltinwarning_testwarning1_34fbe2e558b975829460c2ad85dee3a1() {
         assertEval("argv <- list('OGXAGDISZSNLYDBXLBQMQHECNODETNWRASXQCXRDTYKHGFOTROVTAJBUYOWPRNTXVBABWOIYPNJIVBJWSRJODUXFUPYENWWAZMKKCEKIKHOEYBJZQBKLNLQDXOODTMUBVHHQYAJKLSXQXTDDELCFOKOVQKSCHPEWWMUHBLMIENAUOQMHLUPKVIPLGOGOLDQODOLLVSLNGBKAWZSVXOOHRGHSSEHJCSODZOUWWUQQHAKJKEIKTHDAUMUCCDTTZQHFUSFTWNPYYRBVMKHGKYGOFFSIDBYODOOVSOSTJHNGVKBYFKQQIDXPTXNJBWNFJFLGDBRHDZKKQXFOSKCQAFRWUDKUSPDOLTAFWCZKWXMSMZBEUOKZGNCVJUFYINCXYBMFWNAHIPGBCSYICIQLUHOBESVNOADWCGZPGPADSBQYCZASLOWOTQIKFWPTOHTOINVNFWJHUTVOAMOVSOBDRCFJWGSCUGOAUIXJZJMMAQNIPQLESTVNHLJGRYHQNPAADACMFVGMQEVLGHEPDEIEKPRVJYAPMJWBWEFWBGZRLJLURMBGGFBMGTOYCYSXPEESPIUIWPKYMCMZYLWHUUKJQWRNDPBMTTBLNHPTSDOUGSVDYTVEAWXDMMSBTKLSMZVVTCVVZBTKPVAAZTIVZFQLYZLFSOPLLPLYVFKKAJKESATLTABKQFVSXKKGJGYMBUIORHBLPZZCMKKIRHKZUIVFNEDXCWHAUJATALGMQCECVQQKLJUXQPIBPETHQDGVUBWDPMOSMZZKPILFAABTMWPEPXUNKRXXEGCUCVUYMYUWKCHSJJANDXBUWAHQUKYKLHPOBTFRNQQHFOZIIANPTYMCGWWVYQMESCLYVSDPZQHBBWJYONYCVJOICUFRLFZLAYWPHVYWDZOADAVUYJZVUQZMXKLYRAEMLZXISXRQDPHLFGQMEHSPDBZJRVGAPVJIQYPNEVFRQBYPWNGPURMMQLPAZKDWOWAWSUWNYFAIRIYUIMKUMAQGTHXWMBPPZIRYORCWNFKXMRHVGJGYKDXJWDJGBUFKIPOZGTZOKVCNLHEWOOPSQPBOPQQCCRVDUMZMOJNBOYNLAABEMUHTNHARBVDRVGDTFGNMJUOEZGDFJJHBYOFWMOUQDIYETLDFRDKLQGMEWECXHTKLEDDNMQLBAFWGPPZETGIAZLZFCGRPKSOPPFCTPYYTLELTXXVFBMPCYEXDRUTRDWQVEAIHVYDXPKRTNKZBDSSCMQKZRIDHCAITYKNBQJLZRSEFWVSHFMNFTASVYRHFWAWNLYEJDDROMVZNSEJBDCHKQSIZSEJHLVGKZDQSPZBZTLDLELVBIVBUZRAMSAVTGTRERYWURPKDVSUAEPCSOHKRECNCCQOHGQVBZAEIWEUWMQIMYGAZGRBZXWLUHHZZMTIGQIBZRWMDRAEXDGGIFAXYYLLBJXJNNEOCPOFXFKWGHWQWMXEQSEORXIOAJQPVDRFPSNJSMGLCGOAFQSUBCYYXQEXXEBOJLMUVHSMBAGFKOSGXMGIRSOWKFMJGYMAYJAZJZDOUFSOAGMYZFOQXTPFXUIFRTMWREAWCILQIPVIJPMCVLTUKATBNDRBURGEBAVGBJPUIDUWZRGQLFPZFLIACKBAEJPIMTEVIGIUGXDFQGSTGOXSVXHQDWRTIRMQUXNEHDGSQLQNIUQUEKZJCNYWORNYCMUWXVDSTRXKYLFPENKVOLFMGIWLLMVAICVMNKLCAACJTTCZDMOYVNJOUQCEVMUVHFQJXDEQERNTICKOTEPMYXDHSTNFEIBRTGMBCXPQLHYAEZUZGPBUWXAGPJSBRFHTEKRKOLDAEUDBAKWILKJYYHSFYBZFIDPRZFVQZLSBQFXVWVKZMMIBXFHROZCOXWXUEDDLUXLVMRTRWIECAXUCCENTDCOHLDXTLRHRJRKSHTOAJLKOWTBDIITDZWPXAUXCMRMWKOQHXDOGBTPIXPYXKSVXDBZKSNKSWDJUFQJPOSVLJVNTWLKWSPSTGHFYHMAUKLYKTUFBIRTQYAJQCADTWIGGYMSXPGXSBQWDYBEAKSRMCZOSHUQXKITSLUHXQUSRSFPTGRCTYRRKDMCTJOJFNKWCBEYLRAMBQWFHWAULCXETLREWBFGTKHCNLZDVAUFDEFYZIDRPIVHVDWBLRFYJQERTMWVZRQBEAWLVDKSBIUVWYJYSKKFTLLCJXOAKCHSJQMUPEYBCVKSTZYDRAMUJYRLVULIOWPQTSWCPGMHXKOCYTMESPBBLEMZFSDNVDVGCERRDZDYSOGIVXNXSLHZDRVFPEKGNRXIGIFDGYBNUVOGPDMCHRFKUFBURNFEPBFVHAZCTVAWOIIQDIPTORJXZTANUFKOTIILHQBPKBZQVKYJVAWBVPRSHRHOBJMNVNWPNQHOZXUVXPJTMARKYDJXUNAGHRCZWHLIJHXHWVEFRMCDIPYKYCWGHEACDFVAKXAILOXNTQFNBUFWNGVBAPWLNFSNBVGNICWQWDRPYPHYVLMTGVVKXBVMHQIQXOQKUWJMXMFRTQFYAXCVOPVGBDCEYFIRSHHLJXNPNNLFIGAFZLZGDOLWXQVHXDDPZNDEUQOTIKJQEGYZNBPSPNJCDJPGAICGDJDOOEYQBERXVLEEMKUUKQKJQYMQHKLHZWVSEBCWJUXQPBGKVJLODARVYBRKODGISEDOBLMMMTZVCWORUKWEMDFXMOZZRUASXLSVMVMALMPLHRPZEZPTWQSZWTDCNFTMDVYHDSOCOPOKKXRYDOCQGMMVXOYHQQQGKENPCSPRHJQYJFGMKIJRWMPMRRCCYKOYFFQVVDCUYQLRWNNUJYAIDIMTUKAYXPXQDDRXDXLBVZUHFFJFECQUBCADYEZSIIUMMGYRSHPYANWHJXCNKELEWRDDHYYEXBWBYEPSHASIWMZCAOPATBMYBYUWFZSHVYXDBVWBFSCAXBWDKFUOFLLXMYKUTIYNILMVYMJFASSAENEGXJZSDPWTMNOFXEPMFZIBTOAHWGBSNKLXXFOBOCTCFTKOWSTPCVTWCVHIXEASAVXEFUXGLKRHUIGAJPIEZGODRLJKKVXTJRNAQQIAZZBNZCJMXOAWVWVACVFAOTWBFKKPYZDHVZRCDIGGUEPRXRHABEWBHXOUYRKZYNDQVDPZFKCHNIPZPDSRILHVPUHDXAOZGZAGGYZTHKFTTMRTUPKRWLDQMYGUTROPWMZBOEHVFPKHMTZEDPDFIGSSUHEMOQMDWZWWJQNATVBXJSSRHHMBMPGZEOKDJZUJYSMVRJMPSJPNPXWVEIYYQUOBHMLYQAAHHVSRJEFSGFPDBAVUAPHPFYCDDHPFLLJZAWCELSEDFEWTOWDJIAKSGQEUMBUWPPKBQNUOLVRBDVKNIQPFQJLKFGELPKXHFOJYQLHAOIMVFCUEUAWVXJHXIYPPTKJLISGWYMAYLVNMDBQJABVTBSAPFQONGJHEQADNMNRZYYRTYFRCMTAECUJQTGJISODHKNPIJYOPGKQJMEMYAJGPBQBHILLZPIWIRXVCHNJVWRNUBGFVVVHAQTNJIJJOQKPSXYKQECOVTOZZIEJOVSXSGITFHXEDTOOSQTHZZATJJATECSLAXULDVSKEAIEOPHYSHSPKEAEPFBXWVPSUWSIMUKPHDHFFNXPGJOERAARFJESPBKCKLQCIAIUTVBDQKEDDQNMWETFEDXRLSSQXFLAESTLJMAWQEOWFIUGBKFQQKDELKBAWHZRWLYTHRXTRTCBJNYYQINRWOCSVKFGANPPXLGNBRTFEWHZSYTIJAXNIVUUNCXDVOOTKVWUKESCBAQSEUUQYDBYWJKZCSOWTQEMLEVHQMOPCMELROGHAHSBZUXNIMCFJKRDMDOAUVFOPDSWYTAUIKAIILVRJUJYUHGEXOXZOIRWZKTILGSKRYBQTRWUWZOUPBMDOBTACXZIQQPWUHBLLQTPMFLTGSUKICMTNYAXPVLIKHDHHIATLPCAEAYMUOCALFUNOYBAOCGDDOBQTJSBPGEHPKQYNGTNDGDCQTLDVZANUNGMHZSTAKLDGDKFNXNLHFBUYXHGIIPQCMBRYYXMJKYRKMTTMKKRRBLNEHFDWIBQTNNTXVNUFJKCAKEWPLNBTRDPQIROHXBXVIKNOBIGCZIYVKUGUCFZBORHMWMDITBYRKDYGTAGZSQGCHOUHIYMZVZCIYQZZSKRGIVRUIQPFGWUATXXDZXGXVLBWIGVZFCQWENJVMGHVAKPNRNOVIAVUWBAPWLAKJMDMGMXNSBRUAAPUTGULEPVUCBYCFLUWQKDWWINMUXPVUHNHWSJZSGQIUIGBOAHHVDGLYIUDMNXJMLSBSRRMHJCGBMIFTGKSCDZZTAZTXFHPITBXUWYIEDCMVWBTZISPBLQUOWALMUHPEUPHUPYEAJUOECWDQLYPBNRMQMWGKUWOIPIENADEIJWJYMWIIEQEOFCIPRFKDFTMGULEEZNNRUSWDGXJYIQNOMNJPGQROITWJLWKMNBKLORRXRNIADNNCGEHDLFCWFFIITOEVXGTFVHTDVVWAAHIBSAVNTYOYIHZGUHSTHAKPLINFHANKZBQMAEQNXRNHKDJHYGTBJFWLIKEQUXPQRYZGHXJSVDVRACLVIHXKOGDFNYKVCTGNBUXTCYEURKTKPIQJWKLXQARGZLRCFYOKPDMEGVRZDLMOLESXHTYANGMKVDWKQDWQNQZUYRLYRJJALNBTDIJXQWKSFNXHHLXRLVGJDGRZVSNEZVZNTUNNSMHNPRYHGGLLKOJJHQEDCBRZURRIQKDUWKQOXKKICSXODXKDXLLKIDUVFLGCTHNDMWAZUGTMAPKZLAAHDCLKHKOGBZEPYZPUCCDFIPFHCQWTPRTLFGLCAQNVRMWUJZFZLIWSOGNTMMNPMFNXBMWIPMTNZYODGZKFJOAAIGATUSBRTIKAMDUKYTLUJJRLSLRNXYYGLKENYCREGPCRQWFIKYBFSBZANWHQOLYJIYCXHECCGWKSYHTRHAJGNRHMJCEVMWVESLPTYUYHAETQNABEZUNBHCSKXJLBLSVDOLSKLTGMFLXYPQYTYRGSMXYMLPSZMHVXPHLYNGKFNWAVGSRPQPRZVBNELCCVYKJLLZTHMZOCBXVQFJDLUXVYJBHZLZSHXMVGYMDUDORONYFAHIXODFCWBINIWWXUXLKJNBSGVZCMRVTLYSIMZXFHJBZVRKGYJONYNQGJXTUICYLOEAFIPBGAFNITYFZCTHHBFTISFBSGIWALDNZRWTNXMUNCOJNQGLCACFDVKOPBUPULQTSZHBLHLLQAGMXHHZMABYMVVTPONGQWTEJTCRSWFHVHWQGQBXXRYOUUGHFWSDWQOBHPYBLKNBWGLFYSKHSFHXMYUWOBNXACQMZTUKZLZOTRVRABYLQPYSFJRGPCYGHLMGFSKQQBMQISXKKMBIEJLEBRKCMHCENENJVINGIKQBSOITGCJCFZDPRNKKNRZNMHEIHJMJLFBWONQFNSAQTLURPETKCEUDMJMOYEKLWAAIIWODBDVKZSGXQZCUZTUZIJEKKPKCRAEZNHAIWEJOMSVKFNHVGMCHVMLFGOSEEXDAHRNIEZTKCRPQTPCSAZYVGPIZWSUTIXBOITQKWOWNQGHZZHPJZXNMKWXHWMQKCEAJSGKUUKTMFFBPZBSAZZSULTRANTASWMGULWQLNZRVKXAJRLFERRKPKNWGRKOZPEWIWCBCWKWJJGMFVKTWWJOCDDEAGBBFEEPDSZSYXZGUSLRDADRIJXMTQVNLMBPQEKHJUZNVZKXARKHVOQJPXWZLWJBKMTGKKUNCMCXOYUQIUHGAKQVEZRVYPIUTWLVQJDORBXEZCDLSJHSSTLFKHTOUNPRRDQGPSNTVLTYUYWGSULVDNIOEZJVHNKSDJGVQTPZIJVJBARWYMIDQFHMMIUGECHFSNREUFXCUCDFORINMIVXPHORLQRWDWIVYFTOEHCBEQSQRCHYJEVVJRMDQVLLGCIFDORIXGPRULGOLOLYBINRRATGXMBJTMTHKTSFCNPCAEQSYMYKAASYJJMYACQFHWQJLMDOQKSYNLSGIDXZJNHEWKWQTAPBYLEOWBYWNVSZSNWEFBVSBXZVHLJBPICAKINJJAZOANLNWBFBLDZDAMFLCHTHFCRGGDLRUYORAXHITCZVDDKCMUGKCEZRYPCVAVKDRQLUWZKJDZYYKUKAKYNRANTLTOTSISOWBJQAFQXMETAQODBBEGUEZMKNVBCYYKMKFTRNFTNEOJWWHHJMOMVEZQYNVZAEVQUTGGHBCOMHNNBLBKODDHJFVIIRODTKDVXYVLXIISBNSSTYZJYPICEDTHZJDDFXYEZGPDBLHKWSZAMJGHQWOEEESYXLNUTLPYRKKCWZPXHRTKVPMEAYYNFWJMYOAXDHFECOWAXWRRIDIOHLHLRAVCIRQVAXNIEQWRWCAFVIHDLWVOTUFHQFIEXUBQUMXLAUTLJHOHKITBVXSDLHIELTKQPRFVSFEOBJPERMWHTYPZTZEUDGCTNUTWVUYNQELWGVPEMUJGGIEJEYYLPLIRBCOCIBMPKSUNMTLSZPWXOPGOWLEFMIUBIKJRREOKKPKBPHRJXWIYXABSGECTQJRSCCNYEORABQUZMYDYMEKVJZBRHHLUBWQGXUUGFXGRIRSPMBEVBZSKDNRMNKTGWXCSWRTUJJMBRYTEBNYXCKAZVABMKVCSAOIVTRQOGAMVLSMLIAQPDJQQJJJXTDIGEZCBTDAWIMOCCWNMTEAPEFYEGPEQFNIOOHGXPMTBQQUKFQLOTDNDPFNWORMYDKOQIVYXHOOVAOGRFEXMLPOQQDHTQQYPTETUFKOMPHGUOEZMEFSCDKQADGSLCJNNXEKKLAXTZXZJJUDNTFRLXHOAOOYROETHRDMCHDJMALXFBIHMJRXKNIVEJRYFRCSYVEBOMVPRFINYGHPBATPTGUVEAINZKKVVBLHITASDQBPDBSUTPMAGLRVETLGKVYIVQFVTQFGKUSYAEQLHVGFABOIEWYCPKEVRNNSWYXVDSQREDOUVSXRDNHCAOTXTHTAPZQHIWFTJYZMPJJYQZIQXOUUAGHRBENJMUUFDUCRKYBZUHIQCYJPTGXEXXQZRDSOZBDNRJJMXZYCARBZHHMFFNJXGJZDFNKALBXWHRCAWTXABIKQLBMXIXEGWWJPMTFTVCHAPZVPIQADNWCZYYTALDLOTTXHOFUPOEXZZADSCAAIPYGWWCABPNREBRAEPBBIDCHWSJCMEXBZJMFQYXOLZDJVUBLKHIYHXAHHCXOIYGWGAEAOOSWYLBHQYLZPODKNPDJTEEBNIATQZWMUTWTCRLNMNTRLKKDYGWWBIJKEYZSIGWXNPOQRULMUMSQBJHIHVHTWNYVEBSBDLHKQVLIGBCPJENVSBEASLDGHZREGLFQMUNIVYKEBUGRGDEMQYZGUGLWSIYLJUTOSILYNITUMTJIHZPKMBJLOQFVFTXHEZQYEHKBQFESSGPUJEPCNTFOCJOLEJMABCETPTWZOBEJIMWSSDUPVFQNWBEEQFJRPWXESEGMJJENMHIIUHILTNTTIPYRNEGMNOECTFEIXNAADXJQGSXRMPQATNOMVARUTBBJDBAHKWYMEJQXRXPJKFGRGRNWXDFMLROFUCKATMBMTINMDBAUJOTHQIJUNJOZFVNFODGTPMQTSETNRMQVMPRJCJTOHGZPHCAIXVHMSXPNWVEQDHWUEVBEUPMYZOQTJXGPYBCLTUSEHJYIFAMUQEZCTGYHGPBBVDBHCNSWMHUQYWVAQKSUOLYUNLUUEONJANOIBXLXKRVJGHGEAGTKWQKZYUIGEWPCTEBDBMNARXATBWQMVWJQXVHGLGXRMDNZEPNTGQAYEIKLOOWLNNLIWVZLMMWNREMRAJEPHNDQDRIQVUEGOIKRUENWLKHMVEWWNQZQMIZGLGBYCMEZYNYSRFQWHJGSGCETHRGASFUDYVASRFJKKUBBMNFPQRDDZGFRKOCUJVZOJZSOEQYRRDGOPJJPSMFIRDYEXAQPQLRTVPQGSHTCPFTZNTVCIAOHNRDPXGDGXPDSEZUKMKARYGAVGCBOHANSJKHYLDPCFXAOEBATTFZRDWEMESUYNHREUTPORPDRMPGSCCDRVZCMIIVSQXTMQSLIAGHICXJYZDOOGRVCRPMIKALTMHTBOZGUUWGOXAEGUBXIXPLSTNABRSLFSAOCXULPTFLATSCSSLJFQCEHSJZEYDVWGHQQLPARKIJSMOHXTOZGWYTKNONYWQXTHAVCDEDPYTNCNUVZKWFEODBGIYLLBJOWGYWFKQDHPEMWNJPSJEJPTAYDAVLGVMDDWBJKTSYEVOXYAKCMSMEPHTXGOTNFKOBTADKPQQCKAIXGSXRCVSSLDCXFCEIRQKPXSMVHFHCEDMSFIMRRWAGIVQGMTCNRFMVWTQFFNTZJFSLXXJDTZBGAHAMOWAZARZTQCPOMAXKKYUKOMHNELAOMBBIIJDSOPXFVUFXACKODFHHQRMUZQNHWWEWKEUQTDCYGPMWLQHLCUYDUBWGNPWIRILVGICVQFVKKFEIUDDRKWMPVYBBSFESJTNQMYLYEBQIQBIDSPYQQFUQRGUPROKKQETIFRPIWJGDMILMXGFJODKUGZZIQRWYSJVJZTNEVLXHXEZRPLNZPAWTVFQKRDVSBXXREEPYYLPOGMIKMNEDMWMTKNQVMCIWIPHSHIHFGHEWPWNYXMEFTYGBQLASFDXBVRNYMGHGMEGYHGYFUFZHVHLSQQPRXGJTZAGWLPLIKRZCGGSOBBDMUMDKNCEWJBDBMHOYJOAPIKAPFTRTHXDFULBREUQJATSHPJUVVACPLVAJWTYGXOMNLMKCVLGFFJRWFHLMTOZLEUEMHOZESJRGFRCWSIZAHFHEWWZOAYNRNBTRSFJNYLBLLJKZAYZEWPWWNWSEFXCGXOTOOAOLKAUAOQKQSVIQPGTFPUBYMUMPIMQYTAWVJLJDEUVEPQFOUOFAROYILGVDHDVFPXFTKPWYFYKVFDQYRKNKJ');do.call('warning', argv)");
         check("TestrGenBuiltinwarning_testwarning1_34fbe2e558b975829460c2ad85dee3a1");
@@ -13099,12 +12685,6 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinwithin_testwithin1_848180660a72bcab410265b73db45ed4() {
         assertEval("argv <- structure(list(data = structure(list(a = 1:5, b = 2:6,     c = 3:7), .Names = c('a', 'b', 'c'), row.names = c(NA, -5L),     class = 'data.frame')), .Names = 'data');do.call('within', argv)");
         check("TestrGenBuiltinwithin_testwithin1_848180660a72bcab410265b73db45ed4");
-    }
-
-    @Test
-    public void TestrGenBuiltinwriteLines_testwriteLines1_d6f43d236f0f017f994619383dfd8fbc() {
-        assertEval("argv <- structure(list(text = ' \\'  A  \\'; \\'B\\' ;\\'C\\';\\' D \\';\\'E \\';  F  ;G  ',     con = 'foo'), .Names = c('text', 'con'));do.call('writeLines', argv)");
-        check("TestrGenBuiltinwriteLines_testwriteLines1_d6f43d236f0f017f994619383dfd8fbc");
     }
 
     @Test

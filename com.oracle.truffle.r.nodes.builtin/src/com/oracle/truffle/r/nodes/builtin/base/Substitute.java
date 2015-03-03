@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class Substitute extends RBuiltinNode {
 
     @Child private Quote quote;
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     protected abstract Object executeObject(VirtualFrame frame, RPromise promise, Object env);
 
@@ -79,7 +80,7 @@ public abstract class Substitute extends RBuiltinNode {
     @Specialization
     protected Object doSubstitute(VirtualFrame frame, RPromise expr, RList list) {
         controlVisibility();
-        return doSubstituteWithEnv(frame, expr, REnvironment.createFromList(list, REnvironment.baseEnv()));
+        return doSubstituteWithEnv(frame, expr, REnvironment.createFromList(attrProfiles, list, REnvironment.baseEnv()));
     }
 
     /**

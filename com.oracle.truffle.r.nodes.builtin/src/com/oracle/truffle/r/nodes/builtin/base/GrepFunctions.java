@@ -252,6 +252,7 @@ public class GrepFunctions {
     protected abstract static class SubAdapter extends CommonCodeAdapter {
         private final ConditionProfile fixedProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile gsubProfile = ConditionProfile.createBinaryProfile();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         protected RStringVector doSub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector vector, boolean fixed, boolean gsub) {
             // FIXME print a warning that only pattern[1] is used
@@ -285,7 +286,7 @@ public class GrepFunctions {
                 result[i] = value;
             }
             RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
-            ret.copyAttributesFrom(vector);
+            ret.copyAttributesFrom(attrProfiles, vector);
             return ret;
         }
 
@@ -541,6 +542,7 @@ public class GrepFunctions {
 
         private final NACheck na = NACheck.create();
         private final ConditionProfile emptySplitProfile = ConditionProfile.createBinaryProfile();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Specialization
         protected RList split(RAbstractStringVector x, RAbstractStringVector split, byte fixed, byte perl, byte useBytes) {
@@ -562,8 +564,8 @@ public class GrepFunctions {
                 }
             }
             RList ret = RDataFactory.createList(result);
-            if (x.getNames() != null) {
-                ret.copyNamesFrom(x);
+            if (x.getNames(attrProfiles) != null) {
+                ret.copyNamesFrom(attrProfiles, x);
             }
             return ret;
         }

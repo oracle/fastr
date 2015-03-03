@@ -47,6 +47,7 @@ public abstract class Quit extends RInvisibleBuiltinNode {
     protected Object doQuit(final String saveArg, int status, byte runLast) {
         controlVisibility();
         String save = saveArg;
+        // Quit does not divert its output to sink
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
             if (RCmdOptions.NO_SAVE.getValue()) {
