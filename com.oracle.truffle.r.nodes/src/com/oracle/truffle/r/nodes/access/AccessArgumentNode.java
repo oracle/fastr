@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -49,6 +50,10 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class AccessArgumentNode extends RNode {
 
     @Child private PromiseHelperNode promiseHelper;
+
+    private final ConditionProfile topLevelInlinedPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile varArgInlinedPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile varArgIsPromiseProfile = ConditionProfile.createBinaryProfile();
 
     /**
      * The formal index of this argument.
@@ -105,7 +110,7 @@ public abstract class AccessArgumentNode extends RNode {
 
     @Specialization
     public Object doArgument(VirtualFrame frame, RPromise promise) {
-        return handlePromise(frame, promise);
+        return handlePromise(frame, promise, topLevelInlinedPromiseProfile);
     }
 
     @Specialization
@@ -114,17 +119,17 @@ public abstract class AccessArgumentNode extends RNode {
         for (int i = 0; i < varArgsContainer.length(); i++) {
             // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
             // "..." is a different expression
-            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i]) : varArgs[i];
+            varArgs[i] = varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise) ? handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile) : varArgs[i];
         }
         return varArgsContainer;
     }
 
-    private Object handlePromise(VirtualFrame frame, RPromise promise) {
+    private Object handlePromise(VirtualFrame frame, RPromise promise, ConditionProfile inlinedPromiseProfile) {
         assert !promise.isNonArgument();
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
 
-        if (promise.isInlined()) {
+        if (inlinedPromiseProfile.profile(promise.isInlined())) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
