@@ -33,46 +33,48 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "copyDFattr", kind = INTERNAL, parameterNames = {"", ""})
 public abstract class CopyDFAttr extends RInvisibleBuiltinNode {
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Specialization(guards = "!isInDataFrame")
     protected RAttributable copy(RAbstractContainer in, RAbstractVector out) {
         RVector res = out.materialize();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(in);
+        return res.copyAttributesFrom(attrProfiles, in);
     }
 
     @Specialization(guards = "!isInDataFrame")
     protected RAttributable copy(RAbstractContainer in, RFactor out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(in);
+        return res.copyAttributesFrom(attrProfiles, in);
     }
 
     @Specialization(guards = "!isInDataFrame")
     protected RAttributable copy(RAbstractContainer in, RDataFrame out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(in);
+        return res.copyAttributesFrom(attrProfiles, in);
     }
 
     @Specialization
     protected RAttributable copy(RDataFrame in, RAbstractVector out) {
         RVector res = out.materialize();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(in.getVector());
+        return res.copyAttributesFrom(attrProfiles, in.getVector());
     }
 
     @Specialization
     protected RAttributable copy(RDataFrame in, RFactor out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(in.getVector());
+        return res.copyAttributesFrom(attrProfiles, in.getVector());
     }
 
     @Specialization
     protected RAttributable copy(RDataFrame in, RDataFrame out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(in.getVector());
+        return res.copyAttributesFrom(attrProfiles, in.getVector());
     }
 
     protected boolean isInDataFrame(RAbstractContainer in) {

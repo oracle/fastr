@@ -39,6 +39,8 @@ public class AttachFunctions {
     @RBuiltin(name = "attach", kind = INTERNAL, parameterNames = {"what", "pos", "name"})
     public abstract static class Attach extends RInvisibleBuiltinNode {
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
             arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
@@ -72,7 +74,7 @@ public class AttachFunctions {
         protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
-            RStringVector names = what.getNames();
+            RStringVector names = what.getNames(attrProfiles);
             for (int i = 0; i < names.getLength(); i++) {
                 env.safePut(names.getDataAt(i), what.getDataAt(i));
             }

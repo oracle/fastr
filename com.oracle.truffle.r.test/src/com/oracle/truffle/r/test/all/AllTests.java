@@ -18425,7 +18425,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleDataFrames_testAsDataFrameIgnore_0f990604bed45f9a868ddd4f5616f9ee() {
+    public void TestSimpleDataFrames_testAsDataFrame_0f990604bed45f9a868ddd4f5616f9ee() {
         assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
     }
 

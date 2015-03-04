@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,6 +28,8 @@ public abstract class CumProd extends RBuiltinNode {
     private final NACheck na = NACheck.create();
 
     @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.create();
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected int cumprod(int arg) {
@@ -71,7 +73,7 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, i, array.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(array, !na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createIntVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -94,7 +96,7 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, i, array.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -117,7 +119,7 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, i, array.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(array, !na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createIntVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -137,7 +139,7 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, i, array.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 
     @Specialization
@@ -161,6 +163,6 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, 2 * i, array.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createComplexVector(array, !na.neverSeenNA(), arg.getNames());
+        return RDataFactory.createComplexVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
     }
 }

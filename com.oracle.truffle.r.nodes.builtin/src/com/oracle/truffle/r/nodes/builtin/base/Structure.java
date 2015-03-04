@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "structure", kind = SUBSTITUTE, parameterNames = {".Data", "..."})
 public abstract class Structure extends RBuiltinNode {
     private final ConditionProfile instanceOfStringProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @SuppressWarnings("unused")
     @Specialization
@@ -91,7 +92,7 @@ public abstract class Structure extends RBuiltinNode {
                 }
             } else {
                 if (value == RNull.instance) {
-                    res.removeAttr(attrName);
+                    res.removeAttr(attrProfiles, attrName);
                 } else {
                     res.setAttr(attrName, value);
                 }

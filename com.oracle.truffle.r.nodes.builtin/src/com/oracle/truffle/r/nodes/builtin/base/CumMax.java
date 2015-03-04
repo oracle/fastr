@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class CumMax extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private CastDoubleNode castDouble;
 
@@ -66,13 +67,13 @@ public abstract class CumMax extends RBuiltinNode {
 
         if (v.getStride() < 0) { // all numbers are bigger than the first one
             Arrays.fill(cmaxV, v.getStart());
-            return RDataFactory.createIntVector(cmaxV, RDataFactory.COMPLETE_VECTOR, v.getNames());
+            return RDataFactory.createIntVector(cmaxV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
         } else {
             cmaxV[0] = v.getStart();
             for (int i = 1; i < v.getLength(); i++) {
                 cmaxV[i] = cmaxV[i - 1] + v.getStride();
             }
-            return RDataFactory.createIntVector(cmaxV, RDataFactory.COMPLETE_VECTOR, v.getNames());
+            return RDataFactory.createIntVector(cmaxV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
         }
     }
 
@@ -96,7 +97,7 @@ public abstract class CumMax extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), v.getNames());
+        return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
     @Specialization
@@ -119,7 +120,7 @@ public abstract class CumMax extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), v.getNames());
+        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
     @Specialization
@@ -142,7 +143,7 @@ public abstract class CumMax extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), v.getNames());
+        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
     @Specialization

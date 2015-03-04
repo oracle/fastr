@@ -42,6 +42,8 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     @Child private DispatchedCallNode dcn;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // length argument is at index 1, and cast to int
@@ -95,7 +97,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
         // if execution got here via S3 dispatch, treat objects as non-objects
-        return container.isObject() && !RArguments.hasS3Args(frame);
+        return container.isObject(attrProfiles) && !RArguments.hasS3Args(frame);
     }
 
 }

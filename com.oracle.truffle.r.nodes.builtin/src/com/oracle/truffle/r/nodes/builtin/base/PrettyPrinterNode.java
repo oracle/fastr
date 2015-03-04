@@ -76,6 +76,8 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     protected abstract boolean isPrintingAttributes();
 
     private static final FrameAccess FRAME_ACCESS = FrameAccess.NONE;
@@ -266,7 +268,7 @@ public abstract class PrettyPrinterNode extends RNode {
         StringBuilder builder = new StringBuilder();
         builder.append("expression(");
         RList exprs = expr.getList();
-        RStringVector names = (RStringVector) expr.getAttr(RRuntime.NAMES_ATTR_KEY);
+        RStringVector names = (RStringVector) expr.getAttr(attrProfiles, RRuntime.NAMES_ATTR_KEY);
         for (int i = 0; i < exprs.getLength(); i++) {
             if (i != 0) {
                 builder.append(", ");
@@ -450,13 +452,13 @@ public abstract class PrettyPrinterNode extends RNode {
         int maxPrint = getMaxPrintLength();
         if (values.length == 0) {
             String result = concat(RRuntime.classToString(vector.getElementClass()), "(0)");
-            if (vector.getNames() != null) {
+            if (vector.getNames(attrProfiles) != null) {
                 result = concat("named ", result);
             }
             return result;
         } else {
-            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames() != null);
-            RStringVector names = printNamesHeader ? (RStringVector) vector.getNames() : null;
+            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames(attrProfiles) != null);
+            RStringVector names = printNamesHeader ? (RStringVector) vector.getNames(attrProfiles) : null;
             int maxWidth = 0;
             for (String s : values) {
                 maxWidth = Math.max(maxWidth, s.length());
@@ -689,7 +691,7 @@ public abstract class PrettyPrinterNode extends RNode {
         int length = operand.getLength();
         if (length == 0) {
             String result = "list()";
-            if (operand.getNames() != null) {
+            if (operand.getNames(attrProfiles) != null) {
                 result = concat("named ", result);
             }
             return result;

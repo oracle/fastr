@@ -44,6 +44,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @ValueType
 public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable {
 
+    private final RAttributeProfiles localAttrProfiles = RAttributeProfiles.create();
+
     private RAttributes attributes;
     /**
      * Lazily computed value.
@@ -105,23 +107,27 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return RContext.getRASTHelper().getDataAtAsObject(this, index);
     }
 
-    public RStringVector getNames() {
-        return (RStringVector) getAttr(RRuntime.NAMES_ATTR_KEY);
+    @Override
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return (RStringVector) getAttr(attrProfiles, RRuntime.NAMES_ATTR_KEY);
     }
 
+    @Override
     public RList getDimNames() {
-        return (RList) getAttr(RRuntime.DIMNAMES_ATTR_KEY);
+        return (RList) getAttr(localAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
     }
 
-    public Object getRowNames() {
-        return getAttr(RRuntime.ROWNAMES_ATTR_KEY);
+    @Override
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
+        return getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     public RStringVector getClassHierarchy() {
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
 
-    public boolean isObject() {
+    @Override
+    public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }
 

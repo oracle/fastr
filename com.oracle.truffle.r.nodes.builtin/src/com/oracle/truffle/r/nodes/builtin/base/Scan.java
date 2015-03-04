@@ -43,6 +43,7 @@ public abstract class Scan extends RBuiltinNode {
 
     private final NACheck naCheck = new NACheck();
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private CastToVectorNode castVector;
 
@@ -383,7 +384,7 @@ public abstract class Scan extends RBuiltinNode {
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
             }
         }
-        list.setNames(what.getNames());
+        list.setNames(what.getNames(attrProfiles));
 
         naCheck.enable(true);
 

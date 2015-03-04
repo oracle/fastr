@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @SuppressWarnings("unused")
 public abstract class Transpose extends RBuiltinNode {
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance)};
@@ -84,7 +86,7 @@ public abstract class Transpose extends RBuiltinNode {
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
-    private static RIntVector performAbstractIntVector(RAbstractIntVector vector, int[] dim) {
+    private RIntVector performAbstractIntVector(RAbstractIntVector vector, int[] dim) {
         int firstDim = dim[0]; // rows
         int secondDim = dim[1];
         int[] result = new int[vector.getLength()];
@@ -97,7 +99,7 @@ public abstract class Transpose extends RBuiltinNode {
         }
         int[] newDim = new int[]{secondDim, firstDim};
         RIntVector r = RDataFactory.createIntVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
+        r.copyAttributesFrom(attrProfiles, vector);
         r.setDimensions(newDim);
         return r;
     }
@@ -109,7 +111,7 @@ public abstract class Transpose extends RBuiltinNode {
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
-    private static RDoubleVector performAbstractDoubleVector(RAbstractDoubleVector vector, int[] dim) {
+    private RDoubleVector performAbstractDoubleVector(RAbstractDoubleVector vector, int[] dim) {
         int firstDim = dim[0];
         int secondDim = dim[1];
         double[] result = new double[vector.getLength()];
@@ -122,7 +124,7 @@ public abstract class Transpose extends RBuiltinNode {
         }
         int[] newDim = new int[]{secondDim, firstDim};
         RDoubleVector r = RDataFactory.createDoubleVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
+        r.copyAttributesFrom(attrProfiles, vector);
         r.setDimensions(newDim);
         return r;
     }
@@ -134,7 +136,7 @@ public abstract class Transpose extends RBuiltinNode {
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
-    private static RStringVector performAbstractStringVector(RAbstractStringVector vector, int[] dim) {
+    private RStringVector performAbstractStringVector(RAbstractStringVector vector, int[] dim) {
         int firstDim = dim[0];
         int secondDim = dim[1];
         String[] result = new String[vector.getLength()];
@@ -147,7 +149,7 @@ public abstract class Transpose extends RBuiltinNode {
         }
         int[] newDim = new int[]{secondDim, firstDim};
         RStringVector r = RDataFactory.createStringVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
+        r.copyAttributesFrom(attrProfiles, vector);
         r.setDimensions(newDim);
         return r;
     }

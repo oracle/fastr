@@ -50,7 +50,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique7() {
         assertEval("argv <- list(structure(list(a = 1), .Names = \'a\'), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
@@ -61,7 +60,6 @@ public class TestrGenBuiltinunique extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testunique9() {
         assertEval("argv <- list(list(FALSE), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }

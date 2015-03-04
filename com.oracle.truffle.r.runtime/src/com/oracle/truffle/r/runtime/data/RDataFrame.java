@@ -113,8 +113,8 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RStringVector getNames() {
-        return vector.getNames();
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return vector.getNames(attrProfiles);
     }
 
     @Override
@@ -124,8 +124,8 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public Object getRowNames() {
-        return vector.getRowNames();
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
+        return vector.getRowNames(attrProfiles);
     }
 
     @Override
@@ -134,7 +134,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public boolean isObject() {
+    public boolean isObject(RAttributeProfiles attrProfiles) {
         return true;
     }
 
@@ -147,12 +147,12 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         return this;
     }
 
-    public int getElementIndexByName(String name) {
-        return vector.getElementIndexByName(name);
+    public int getElementIndexByName(RAttributeProfiles attrProfiles, String name) {
+        return vector.getElementIndexByName(attrProfiles, name);
     }
 
-    public int getElementIndexByNameInexact(String name) {
-        return vector.getElementIndexByNameInexact(name);
+    public int getElementIndexByNameInexact(RAttributeProfiles attrProfiles, String name) {
+        return vector.getElementIndexByNameInexact(attrProfiles, name);
     }
 
     @Override

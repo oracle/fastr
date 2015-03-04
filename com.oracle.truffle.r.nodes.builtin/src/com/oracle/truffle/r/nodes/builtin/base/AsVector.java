@@ -46,6 +46,8 @@ public abstract class AsVector extends RBuiltinNode {
     @Child private CastSymbolNode castSymbol;
     @Child private CastExpressionNode castExpression;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     private RIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -192,7 +194,7 @@ public abstract class AsVector extends RBuiltinNode {
     protected RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         RList result = x.copyWithNewDimensions(null);
-        result.copyNamesFrom(x);
+        result.copyNamesFrom(attrProfiles, x);
         return result;
     }
 

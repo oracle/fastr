@@ -48,6 +48,7 @@ public class WhichFunctions {
     public abstract static class Which extends RBuiltinNode {
 
         private final NACheck naCheck = NACheck.create();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Override
         public RNode[] getParameterValues() {
@@ -77,7 +78,7 @@ public class WhichFunctions {
             controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
             ArrayList<String> n = new ArrayList<>();
-            RStringVector oldNames = x.getNames();
+            RStringVector oldNames = x.getNames(attrProfiles);
             naCheck.enable(oldNames);
             for (int i = 0; i < x.getLength(); ++i) {
                 if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
@@ -96,7 +97,7 @@ public class WhichFunctions {
         }
 
         protected boolean hasNames(RAbstractLogicalVector x) {
-            return x.getNames() != null;
+            return x.getNames(attrProfiles) != null;
         }
     }
 

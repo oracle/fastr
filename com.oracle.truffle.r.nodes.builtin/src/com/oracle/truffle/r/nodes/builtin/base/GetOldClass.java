@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class GetOldClass extends RBuiltinNode {
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected Object getOldClass(RAbstractContainer arg) {
         controlVisibility();
-        if (isObjectProfile.profile(arg.isObject())) {
+        if (isObjectProfile.profile(arg.isObject(attrProfiles))) {
             return arg.getClassHierarchy();
         } else {
             return RNull.instance;

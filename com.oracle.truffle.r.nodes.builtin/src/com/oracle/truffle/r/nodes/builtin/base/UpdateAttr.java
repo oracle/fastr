@@ -47,6 +47,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
@@ -215,7 +216,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {
-                attributable.removeAttr(internedName);
+                attributable.removeAttr(attrProfiles, internedName);
             } else {
                 attributable.setAttr(internedName, value);
             }

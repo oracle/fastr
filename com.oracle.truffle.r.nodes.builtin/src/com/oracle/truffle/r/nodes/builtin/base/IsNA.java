@@ -40,6 +40,8 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Child private IsNA recursiveIsNA;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     private Object isNARecursive(VirtualFrame frame, Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -63,7 +65,7 @@ public abstract class IsNA extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
         }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
     }
 
     @Specialization
@@ -79,7 +81,7 @@ public abstract class IsNA extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(vector.getDataAt(i)));
         }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
     }
 
     @Specialization
@@ -90,7 +92,7 @@ public abstract class IsNA extends RBuiltinNode {
             RComplex complex = vector.getDataAt(i);
             resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(complex.getRealPart()) || RRuntime.isNAorNaN(complex.getImaginaryPart()));
         }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
     }
 
     @Specialization
@@ -106,7 +108,7 @@ public abstract class IsNA extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
         }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
     }
 
     @Specialization
@@ -149,7 +151,7 @@ public abstract class IsNA extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
         }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
     }
 
     @Specialization
@@ -182,6 +184,6 @@ public abstract class IsNA extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.LOGICAL_FALSE;
         }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
     }
 }
