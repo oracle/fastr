@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -161,13 +160,7 @@ public final class RContext extends ExecutionContext {
          * Parse an R expression and return an {@link RExpression} object representing the Truffle
          * ASTs for the components.
          */
-        RExpression parse(String rscript) throws ParseException;
-
-        /**
-         * Evaluates a single R expression and returns the AST node for it, For internal use. Parse
-         * errors are fatal.
-         */
-        Node parseSingle(String singleExpression);
+        RExpression parse(Source source) throws ParseException;
 
         /**
          * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the

@@ -181,6 +181,16 @@ public class ConnectionSupport {
 
     }
 
+    public static final String FILE_URL_PREFIX = "file://";
+
+    public static String removeFileURLPrefix(String path) {
+        if (path.startsWith(FILE_URL_PREFIX)) {
+            return path.replace(FILE_URL_PREFIX, "");
+        } else {
+            return path;
+        }
+    }
+
     // TODO implement all open modes
 
     /**

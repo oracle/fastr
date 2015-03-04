@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -358,7 +359,8 @@ public class RSerialize {
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            RExpression expr = RContext.getEngine().parse(deparse);
+                            Source source = Source.asPseudoFile(deparse, "<package deparse>");
+                            RExpression expr = RContext.getEngine().parse(source);
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                             result = func;

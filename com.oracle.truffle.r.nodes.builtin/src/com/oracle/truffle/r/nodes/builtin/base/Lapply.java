@@ -20,6 +20,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
@@ -30,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.base.Lapply.GeneralLApplyNode.LapplyIt
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -115,6 +117,7 @@ public abstract class Lapply extends RBuiltinNode {
          */
         protected static class LapplyIteratorNode extends RNode {
             private static final String ITER_INDEX_NAME = AnonymousFrameVariable.create("LAPPLY_ITER_INDEX");
+            private static final Source ACCESS_ARRAY_SOURCE = Source.asPseudoFile("X[[i]]", "<lapply_array_access>");
 
             /**
              * Increments the iterator index, updating the {@link #ITER_INDEX_NAME} variable. Always
@@ -147,7 +150,12 @@ public abstract class Lapply extends RBuiltinNode {
 
             RNode getIndexedLoad() {
                 if (indexedLoad == null) {
-                    AccessArrayNode indexNode = (AccessArrayNode) RContext.getEngine().parseSingle("X[[i]]");
+                    AccessArrayNode indexNode;
+                    try {
+                        indexNode = (AccessArrayNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
+                    } catch (ParseException ex) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
                     REnvironment env = RDataFactory.createNewEnv("dummy");
                     env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(ITER_INDEX_NAME, false)));
                     indexedLoad = indexNode.substitute(env);

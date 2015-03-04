@@ -630,12 +630,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(Break n) {
-        return new BreakNode();
+        return new BreakNode(n.getSource());
     }
 
     @Override
     public RNode visit(Next n) {
-        return new NextNode();
+        return new NextNode(n.getSource());
     }
 
     @Override

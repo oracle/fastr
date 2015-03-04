@@ -29,9 +29,6 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 
 public final class NextNode extends RNode {
 
-    public NextNode() {
-    }
-
     public NextNode(SourceSection src) {
         assignSourceSection(src);
     }

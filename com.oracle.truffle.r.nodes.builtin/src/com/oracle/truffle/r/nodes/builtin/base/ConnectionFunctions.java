@@ -96,8 +96,9 @@ public abstract class ConnectionFunctions {
             if (!RRuntime.fromLogical(blocking)) {
                 throw RError.nyi(getEncapsulatingSourceSection(), " non-blocking mode not supported");
             }
+            String path = removeFileURLPrefix(description.getDataAt(0));
             try {
-                return new FileRConnection(description.getDataAt(0), open.getDataAt(0));
+                return new FileRConnection(path, open.getDataAt(0));
             } catch (IOException ex) {
                 RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);

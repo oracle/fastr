@@ -29,9 +29,6 @@ import com.oracle.truffle.r.runtime.RDeparse.*;
 
 public final class BreakNode extends RNode {
 
-    public BreakNode() {
-    }
-
     public BreakNode(SourceSection src) {
         assignSourceSection(src);
     }

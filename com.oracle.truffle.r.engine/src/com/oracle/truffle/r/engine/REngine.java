@@ -34,7 +34,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
@@ -210,18 +209,9 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    public Node parseSingle(String singleExpression) {
+    public RExpression parse(Source source) throws RContext.Engine.ParseException {
         try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(singleExpression), Source.asPseudoFile(singleExpression, "<parse_input>"));
-            return transform(seq.getExpressions()[0]);
-        } catch (RecognitionException ex) {
-            throw Utils.fatalError("parseSingle failed");
-        }
-    }
-
-    public RExpression parse(String rscript) throws RContext.Engine.ParseException {
-        try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
+            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
             ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
@@ -463,7 +453,7 @@ public final class REngine implements RContext.Engine {
     }
 
     // Only relevant when running without base package loaded
-    private static final String INTERNAL_PRINT = ".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))" + "}";
+    private static final Source INTERNAL_PRINT = Source.asPseudoFile(".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))}", "<internal_print>");
     @CompilationFinal private static RFunction printInternal;
 
     private static RFunction getPrintInternal() {

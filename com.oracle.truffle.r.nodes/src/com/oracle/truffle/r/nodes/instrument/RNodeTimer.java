@@ -28,7 +28,9 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -128,7 +130,19 @@ public class RNodeTimer {
                 data.toArray(sortedData);
                 Arrays.sort(sortedData);
                 for (StatementData sd : sortedData) {
-                    System.out.printf("%10d: %s%n", sd.time, sd.node.getSourceSection().getCode());
+                    System.out.printf("%10d: %s%n", sd.time, safeGetCode(sd.node));
+                }
+            }
+
+            private static String safeGetCode(Node node) {
+                SourceSection ss = node.getSourceSection();
+                if (ss != null) {
+                    return ss.getCode();
+                } else {
+                    FunctionDefinitionNode rootNode = (FunctionDefinitionNode) node.getRootNode();
+                    RDeparse.State state = RDeparse.State.createPrintableState();
+                    rootNode.deparse(state);
+                    return state.toString();
                 }
             }
 
