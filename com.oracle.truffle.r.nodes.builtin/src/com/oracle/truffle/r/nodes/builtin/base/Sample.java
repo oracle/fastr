@@ -26,6 +26,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -49,28 +50,28 @@ public abstract class Sample extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "invalidFirstArgument")
+    @Specialization(guards = "invalidFirstArgument(x, size)")
     @SuppressWarnings("unused")
     protected RIntVector doSampleInvalidFirstArg(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
     }
 
-    @Specialization(guards = "invalidProb")
+    @Specialization(guards = "invalidProb(x, prob)")
     @SuppressWarnings("unused")
     protected RIntVector doSampleInvalidProb(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_NUM_PROB);
     }
 
-    @Specialization(guards = "largerPopulation")
+    @Specialization(guards = "largerPopulation(x, size, isRepeatable)")
     @SuppressWarnings("unused")
     protected RIntVector doSampleLargerPopulation(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SAMPLE_LARGER_THAN_POPULATION);
     }
 
-    @Specialization(guards = "invalidSizeArgument")
+    @Specialization(guards = "invalidSizeArgument(size)")
     @SuppressWarnings("unused")
     protected RIntVector doSampleInvalidSize(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
@@ -78,7 +79,7 @@ public abstract class Sample extends RBuiltinNode {
 
     }
 
-    @Specialization(guards = {"!invalidFirstArgument", "!invalidProb", "!largerPopulation", "!invalidSizeArgument", "withReplacement"})
+    @Specialization(guards = {"!invalidFirstArgument(x, size)", "!invalidProb(x, prob)", "!largerPopulation(x, size, isRepeatable)", "!invalidSizeArgument(size)", "withReplacement(isRepeatable)"})
     @TruffleBoundary
     protected RIntVector doSampleWithReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         // The following code is transcribed from GNU R src/main/random.c lines 493-501 in
@@ -99,7 +100,7 @@ public abstract class Sample extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"!invalidFirstArgument", "!invalidProb", "!largerPopulation", "!invalidSizeArgument", "!withReplacement"})
+    @Specialization(guards = {"!invalidFirstArgument(x, size)", "!invalidProb(x, prob)", "!largerPopulation(x, size, isRepeatable)", "!invalidSizeArgument(size)", "!withReplacement(isRepeatable)"})
     @TruffleBoundary
     protected RIntVector doSampleNoReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         double[] probArray = prob.getDataCopy();
@@ -108,27 +109,27 @@ public abstract class Sample extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "invalidFirstArgumentNullProb")
+    @Specialization(guards = "invalidFirstArgumentNullProb(x, size)")
     protected RIntVector doSampleInvalidFirstArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "invalidSizeArgument")
+    @Specialization(guards = "invalidSizeArgument(size)")
     protected RIntVector doSampleInvalidSizeArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.intToString(size));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "largerPopulation")
+    @Specialization(guards = "largerPopulation(x, size, isRepeatable)")
     protected RIntVector doSampleInvalidLargerPopulation(final int x, final int size, final byte isRepeatable, final RNull prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_NUM_PROB);
     }
 
-    @Specialization(guards = {"!invalidFirstArgumentNullProb", "!invalidSizeArgument", "!largerPopulation"})
+    @Specialization(guards = {"!invalidFirstArgumentNullProb(x, size)", "!invalidSizeArgument(size)", "!largerPopulation(x, size, isRepeatable)"})
     @TruffleBoundary
     protected RIntVector doSample(final int x, final int size, final byte isRepeatable, @SuppressWarnings("unused") final RNull prob) {
         // TODO:Add support of long integers.
@@ -156,7 +157,7 @@ public abstract class Sample extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "invalidIsRepeatable")
+    @Specialization(guards = "invalidIsRepeatable(isRepeatable)")
     protected RIntVector doSampleInvalidIsRepeatable(int x, int size, byte isRepeatable, RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.logicalToString(isRepeatable));
@@ -187,48 +188,31 @@ public abstract class Sample extends RBuiltinNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean invalidFirstArgumentNullProb(final int x, final int size, final byte isRepeatable, final RNull prob) {
+    protected static boolean invalidFirstArgumentNullProb(final int x, final int size) {
         return !RRuntime.isFinite(x) || x < 0 || x > 4.5e15 || (size > 0 && x == 0);
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean invalidSizeArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
+    protected static boolean invalidSizeArgument(int size) {
         return RRuntime.isNA(size) || size < 0;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean largerPopulation(final int x, final int size, final byte isRepeatable, final RNull prob) {
+    protected static boolean largerPopulation(final int x, final int size, final byte isRepeatable) {
         return isRepeatable == RRuntime.LOGICAL_FALSE && size > x;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean invalidFirstArgument(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    protected static boolean invalidFirstArgument(final int x, final int size) {
         return RRuntime.isNA(x) || x < 0 || (size > 0 && x == 0);
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean invalidSizeArgument(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        return RRuntime.isNA(size) || size < 0;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean invalidProb(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    protected static boolean invalidProb(final int x, final RAbstractVector prob) {
         return prob.getLength() != x;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean withReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    protected static boolean withReplacement(final byte isRepeatable) {
         return isRepeatable == RRuntime.LOGICAL_TRUE;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean largerPopulation(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        return isRepeatable == RRuntime.LOGICAL_FALSE && size > x;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean invalidIsRepeatable(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    protected static boolean invalidIsRepeatable(final byte isRepeatable) {
         return RRuntime.isNA(isRepeatable);
     }
 

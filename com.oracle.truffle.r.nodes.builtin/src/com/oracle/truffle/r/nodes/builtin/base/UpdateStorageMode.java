@@ -44,7 +44,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
         }
         initTypeOfNode();
-        RType typeX = typeof.execute(frame, x);
+        RType typeX = typeof.execute(x);
         if (typeX == mode) {
             return x;
         }

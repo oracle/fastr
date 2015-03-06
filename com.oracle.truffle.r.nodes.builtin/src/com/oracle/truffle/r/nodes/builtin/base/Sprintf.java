@@ -51,7 +51,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return fmt;
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, RMissing x) {
         return sprintf(fmt.getDataAt(0), x);
@@ -64,7 +64,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return format(fmt, x);
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, int x) {
         return sprintf(fmt.getDataAt(0), x);
@@ -81,7 +81,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
         return sprintf(fmt.getDataAt(0), x);
@@ -101,7 +101,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return format(fmt, x);
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, double x) {
         return sprintf(fmt.getDataAt(0), x);
@@ -118,7 +118,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
         return sprintf(fmt.getDataAt(0), x);
@@ -131,7 +131,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return format(fmt, x);
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, String x) {
         return sprintf(fmt.getDataAt(0), x);
@@ -148,20 +148,20 @@ public abstract class Sprintf extends RBuiltinNode {
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = "fmtLengthOne")
+    @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
-    @Specialization(guards = "!oneElement")
+    @Specialization(guards = "!oneElement(args)")
     @TruffleBoundary
     protected String sprintf(String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         return format(fmt, args.getValues());
     }
 
-    @Specialization(guards = "oneElement")
+    @Specialization(guards = "oneElement(args)")
     protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
         controlVisibility();
         if (sprintfRecursive == null) {
@@ -171,13 +171,13 @@ public abstract class Sprintf extends RBuiltinNode {
         return sprintfRecursive.executeObject(frame, fmt, args.getValues()[0]);
     }
 
-    @Specialization(guards = {"!oneElement", "fmtLengthOne"})
+    @Specialization(guards = {"!oneElement(args)", "fmtLengthOne(fmt)"})
     @TruffleBoundary
     protected String sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintf(fmt.getDataAt(0), args);
     }
 
-    @Specialization(guards = {"oneElement", "fmtLengthOne"})
+    @Specialization(guards = {"oneElement(args)", "fmtLengthOne(fmt)"})
     protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(frame, fmt.getDataAt(0), args);
     }
@@ -474,7 +474,7 @@ public abstract class Sprintf extends RBuiltinNode {
         return fmt.getLength() == 1;
     }
 
-    protected boolean oneElement(@SuppressWarnings("unused") Object fmt, RArgsValuesAndNames args) {
+    protected boolean oneElement(RArgsValuesAndNames args) {
         return args.length() == 1;
     }
 

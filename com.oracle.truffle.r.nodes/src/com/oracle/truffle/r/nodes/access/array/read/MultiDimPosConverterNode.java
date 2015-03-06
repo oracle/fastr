@@ -44,12 +44,12 @@ public abstract class MultiDimPosConverterNode extends RNode {
         this.isSubset = other.isSubset;
     }
 
-    @Specialization(guards = {"!singleOpNegative", "!multiPos"})
+    @Specialization(guards = {"!singleOpNegative(positions)", "!multiPos(positions)"})
     protected RAbstractIntVector doIntVector(@SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
         return positions;
     }
 
-    @Specialization(guards = {"!singleOpNegative", "multiPos"})
+    @Specialization(guards = {"!singleOpNegative(positions)", "multiPos(positions)"})
     protected RAbstractIntVector doIntVectorMultiPos(@SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
         if (isSubset) {
             return positions;
@@ -58,7 +58,7 @@ public abstract class MultiDimPosConverterNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"singleOpNA"})
+    @Specialization(guards = {"singleOpNA(positions)"})
     protected RAbstractIntVector doIntVectorNA(Object vector, RAbstractIntVector positions) {
         if (isSubset || vector == RNull.instance) {
             return positions;
@@ -68,13 +68,13 @@ public abstract class MultiDimPosConverterNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"singleOpNegative", "!singleOpNA"})
+    @Specialization(guards = {"singleOpNegative(positions)", "!singleOpNA(positions)"})
     protected RAbstractIntVector doIntVectorNegative(Object vector, RAbstractIntVector positions) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "noPosition")
+    @Specialization(guards = "noPosition(positions)")
     protected Object accessListEmptyPos(RAbstractVector vector, RList positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -84,13 +84,13 @@ public abstract class MultiDimPosConverterNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "onePosition")
+    @Specialization(guards = "onePosition(positions)")
     protected Object accessListOnePos(RAbstractVector vector, RList positions) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "multiPos")
+    @Specialization(guards = "multiPos(positions)")
     protected Object accessListMultiPos(RAbstractVector vector, RList positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
@@ -111,33 +111,23 @@ public abstract class MultiDimPosConverterNode extends RNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean singleOpNegative(Object vector, RAbstractIntVector p) {
+    protected static boolean singleOpNegative(RAbstractIntVector p) {
         return p.getLength() == 1 && p.getDataAt(0) < 0;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean singleOpNA(Object vector, RAbstractIntVector p) {
+    protected static boolean singleOpNA(RAbstractIntVector p) {
         return p.getLength() == 1 && RRuntime.isNA(p.getDataAt(0));
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean onePosition(RAbstractVector vector, RAbstractVector p) {
+    protected static boolean onePosition(RAbstractVector p) {
         return p.getLength() == 1;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean noPosition(RAbstractVector vector, RAbstractVector p) {
+    protected static boolean noPosition(RAbstractVector p) {
         return p.getLength() == 0;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean multiPos(RAbstractVector vector, RAbstractVector positions) {
-        return positions.getLength() > 1;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean multiPos(Object vector, RAbstractVector positions) {
+    protected static boolean multiPos(RAbstractVector positions) {
         return positions.getLength() > 1;
     }
 }

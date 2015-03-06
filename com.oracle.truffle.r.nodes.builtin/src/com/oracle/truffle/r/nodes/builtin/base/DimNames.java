@@ -51,19 +51,20 @@ public abstract class DimNames extends RBuiltinNode {
         return operand;
     }
 
-    @Specialization(guards = {"!isNull", "!isObject"})
-    protected RList getDimNames(RAbstractContainer container) {
+    @Specialization(guards = {"!isNull(container)", "!isObject(frame, container)"})
+    protected RList getDimNames(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         return container.getDimNames();
     }
 
-    @Specialization(guards = {"isNull", "!isObject"})
-    protected RNull getDimNamesNull(@SuppressWarnings("unused") RAbstractContainer vector) {
+    @Specialization(guards = {"isNull(vector)", "!isObject(frame, vector)"})
+    @SuppressWarnings("unused")
+    protected RNull getDimNamesNull(VirtualFrame frame, RAbstractContainer vector) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = "isObject")
+    @Specialization(guards = "isObject(frame, container)")
     protected Object getDimNamesOnject(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         if (dcn == null) {

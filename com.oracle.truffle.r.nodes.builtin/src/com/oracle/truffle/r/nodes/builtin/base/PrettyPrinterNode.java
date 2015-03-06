@@ -727,49 +727,49 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RList operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, true, false, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RAbstractStringVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, right == RRuntime.LOGICAL_FALSE, false, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RAbstractComplexVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, true, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RAbstractRawVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, true, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RAbstractDoubleVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, false, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RAbstractIntVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, false, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore(operand)")
     protected String prettyPrintM(RAbstractLogicalVector operand, Object listElementName, byte quote, byte right) {
         return printVectorMultiDim(operand, false, false, quote);
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RList operand, Object listElementName, byte quote, byte right) {
         return prettyPrintList0(operand, listElementName, quote, right);
     }
@@ -795,7 +795,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractDoubleVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -810,7 +810,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractIntVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -822,7 +822,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractStringVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -842,7 +842,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractLogicalVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -854,7 +854,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractRawVector operand, Object listElementName, byte quote, byte right) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -866,7 +866,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore(operand)")
     protected String prettyPrint(RAbstractComplexVector operand, Object listElementName, byte quote, byte right) {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
@@ -900,34 +900,6 @@ public abstract class PrettyPrinterNode extends RNode {
 
     protected static boolean twoDimsOrMore(RAbstractVector v) {
         return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RAbstractDoubleVector v) {
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RAbstractIntVector v) {
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RAbstractStringVector v) {
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RAbstractLogicalVector v) {
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RAbstractRawVector v) {
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RAbstractComplexVector v) {
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    protected static boolean twoDimsOrMore(RList l) {
-        return l.hasDimensions() && l.getDimensions().length > 1;
     }
 
     protected static boolean isLengthOne(RAbstractIntVector v) {
@@ -1272,13 +1244,13 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @TruffleBoundary
-        @Specialization(guards = {"!isLengthOne", "!isVectorList"})
+        @Specialization(guards = {"operand.getLength() != 1", "!isVectorList(operand)"})
         protected String prettyPrintVectorElement(RAbstractVector operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @TruffleBoundary
-        @Specialization(guards = {"isLengthOne", "!isVectorList"})
+        @Specialization(guards = {"operand.getLength() == 1", "!isVectorList(operand)"})
         protected String prettyPrintVectorElementLengthOne(RAbstractVector operand, byte isQuoted) {
             return prettyPrintRecursive(operand.getDataAtAsObject(0), isQuoted);
         }
@@ -1430,7 +1402,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "isEmpty")
+        @Specialization(guards = "vector.getLength() == 0")
         protected String printVector2DimEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1467,7 +1439,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "!isEmpty")
+        @Specialization(guards = "vector.getLength() != 0")
         protected String printVector2Dim(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1529,7 +1501,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "!isEmpty")
+        @Specialization(guards = "vector.getLength() != 0")
         protected String printVector2Dim(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1584,7 +1556,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @TruffleBoundary
-        @Specialization(guards = {"!isEmpty", "notDoubleOrComplex"})
+        @Specialization(guards = {"vector.getLength() != 0", "notDoubleOrComplex(vector)"})
         protected String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1750,18 +1722,6 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
             }
             return builderToString(b);
-        }
-
-        protected boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
-            return vector.getLength() == 0;
-        }
-
-        protected boolean isEmpty(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
-            return vector.getLength() == 0;
-        }
-
-        protected boolean isEmpty(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
-            return vector.getLength() == 0;
         }
 
     }

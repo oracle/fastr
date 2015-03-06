@@ -45,12 +45,12 @@ public abstract class Complex extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "resultEmpty")
+    @Specialization(guards = "resultEmpty(lengthOut, realAbsVec, imaginaryAbsVec)")
     protected RComplexVector complexEmpty(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
         return RDataFactory.createEmptyComplexVector();
     }
 
-    @Specialization(guards = "!resultEmpty")
+    @Specialization(guards = "!resultEmpty(lengthOut, realAbsVec, imaginaryAbsVec)")
     protected RComplexVector complex(int lengthOut, RAbstractDoubleVector realAbsVec, RAbstractDoubleVector imaginaryAbsVec) {
         controlVisibility();
         RDoubleVector real = checkLength(realAbsVec);

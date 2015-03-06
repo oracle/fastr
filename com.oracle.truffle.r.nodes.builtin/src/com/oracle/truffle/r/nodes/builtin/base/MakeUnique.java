@@ -88,20 +88,20 @@ public abstract class MakeUnique extends RBuiltinNode {
         return s1 + sep + index;
     }
 
-    @Specialization(guards = "sepIsString")
+    @Specialization(guards = "sepIsString(sep)")
     protected RAbstractStringVector makeUnique(RAbstractStringVector names, RAbstractVector sep) {
         return makeUnique(names, (String) sep.getDataAtAsObject(0));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!sepIsString")
+    @Specialization(guards = "!sepIsString(sep)")
     protected RAbstractStringVector makeUniqueWrongSep(RAbstractStringVector names, RAbstractVector sep) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "sep");
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!namesIsStringVector")
+    @Specialization(guards = "!namesIsStringVector(names)")
     protected RAbstractStringVector makeUnique(RAbstractVector names, Object sep) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_CHARACTER_VECTOR, "names");
@@ -111,7 +111,7 @@ public abstract class MakeUnique extends RBuiltinNode {
         return names.getElementClass() == RString.class;
     }
 
-    protected boolean sepIsString(@SuppressWarnings("unused") Object names, RAbstractVector sep) {
+    protected boolean sepIsString(RAbstractVector sep) {
         return sep.getElementClass() == RString.class && sep.getLength() == 1;
     }
 

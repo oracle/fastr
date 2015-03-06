@@ -26,15 +26,14 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * The {@code assign} builtin. There are two special cases worth optimizing:
@@ -76,7 +75,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     /**
      * The general case that requires searching the environment hierarchy.
      */
-    @Specialization(guards = {"inheritsIsTrue"})
+    @Specialization(guards = {"inheritsIsTrue(inherits)"})
     protected Object assignInherit(RAbstractStringVector xVec, Object value, REnvironment envir, @SuppressWarnings("unused") byte inherits) {
         controlVisibility();
         String x = checkVariable(xVec);
@@ -100,7 +99,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return value;
     }
 
-    @Specialization(guards = {"!inheritsIsTrue"})
+    @Specialization(guards = {"!inheritsIsTrue(inherits)"})
     @SuppressWarnings("unused")
     protected Object assignNoInherit(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits) {
         String x = checkVariable(xVec);
@@ -131,8 +130,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean inheritsIsTrue(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment envir, byte inherits) {
+    protected static boolean inheritsIsTrue(byte inherits) {
         return inherits == RRuntime.LOGICAL_TRUE;
     }
 

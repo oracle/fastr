@@ -59,7 +59,7 @@ public abstract class Crossprod extends RBuiltinNode {
         return transpose.execute(frame, value);
     }
 
-    @Specialization(guards = {"isMatrix(arguments[0])", "isMatrix(arguments[1])"})
+    @Specialization(guards = {"isMatrix(x)", "isMatrix(y)"})
     protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
         controlVisibility();
         ensureMatMult();
@@ -96,7 +96,7 @@ public abstract class Crossprod extends RBuiltinNode {
         return matMult(frame, transpose(frame, x), y);
     }
 
-    @Specialization(guards = "isMatrix(arguments[0])")
+    @Specialization(guards = "isMatrix(x)")
     protected Object crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
         controlVisibility();
         ensureMatMult();

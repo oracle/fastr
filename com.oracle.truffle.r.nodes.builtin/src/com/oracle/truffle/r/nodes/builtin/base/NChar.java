@@ -82,21 +82,21 @@ public abstract class NChar extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "lengthZero")
+    @Specialization(guards = "vector.getLength() == 0")
     protected RIntVector ncharL0(RAbstractStringVector vector, String type, byte allowNA) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "lengthOne")
+    @Specialization(guards = "vector.getLength() == 1")
     protected int ncharL1(RAbstractStringVector vector, String type, byte allowNA) {
         controlVisibility();
         return vector.getDataAt(0).length();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "lengthGT1")
+    @Specialization(guards = "vector.getLength() > 1")
     protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA) {
         controlVisibility();
         int len = vector.getLength();
@@ -125,21 +125,6 @@ public abstract class NChar extends RBuiltinNode {
         } else {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
         }
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean lengthGT1(RAbstractStringVector vector, String type, byte allowNA) {
-        return vector.getLength() > 1;
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean lengthOne(RAbstractStringVector vector, String type, byte allowNA) {
-        return vector.getLength() == 1;
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean lengthZero(RAbstractStringVector vector, String type, byte allowNA) {
-        return vector.getLength() == 0;
     }
 
 }

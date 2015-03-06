@@ -79,7 +79,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "emptyArg")
+    @Specialization(guards = "emptyArg(arg)")
     @TruffleBoundary
     protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         controlVisibility();
@@ -87,7 +87,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!emptyArg", "wrongParams"})
+    @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
     @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         RInternalError.shouldNotReachHere();
@@ -95,20 +95,20 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!emptyArg", "!wrongParams"})
+    @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
     @TruffleBoundary
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!emptyArg", "!wrongParams", "wrongValue"})
+    @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)", "wrongValue(value)"})
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
-    @Specialization(guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
+    @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)", "!wrongValue(value)"})
     @TruffleBoundary
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
         controlVisibility();
@@ -133,20 +133,18 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     }
 
-    @SuppressWarnings("unused")
-    protected boolean emptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean emptyArg(RAbstractStringVector arg) {
         return arg.getLength() == 0;
     }
 
-    protected boolean wrongParams(@SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean wrongParams(RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }
         return false;
     }
 
-    @SuppressWarnings("unused")
-    protected boolean wrongValue(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
+    protected boolean wrongValue(RAbstractVector value) {
         return value.getElementClass() != RString.class || value.getLength() == 0;
     }
 

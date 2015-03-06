@@ -34,26 +34,22 @@ public abstract class CastToVectorNode extends CastNode {
 
     public abstract boolean isNonVectorPreserved();
 
-    protected boolean preserveNonVector() {
-        return isNonVectorPreserved();
-    }
-
-    @Specialization(guards = "preserveNonVector")
+    @Specialization(guards = "isNonVectorPreserved()")
     protected RNull castNull(@SuppressWarnings("unused") RNull rnull) {
         return RNull.instance;
     }
 
-    @Specialization(guards = "!preserveNonVector")
+    @Specialization(guards = "!isNonVectorPreserved()")
     protected RAbstractVector cast(@SuppressWarnings("unused") RNull rnull) {
         return RDataFactory.createList();
     }
 
-    @Specialization(guards = "preserveNonVector")
+    @Specialization(guards = "isNonVectorPreserved()")
     protected RFunction castFunction(RFunction f) {
         return f;
     }
 
-    @Specialization(guards = "!preserveNonVector")
+    @Specialization(guards = "!isNonVectorPreserved()")
     protected RAbstractVector cast(@SuppressWarnings("unused") RFunction f) {
         return RDataFactory.createList();
     }

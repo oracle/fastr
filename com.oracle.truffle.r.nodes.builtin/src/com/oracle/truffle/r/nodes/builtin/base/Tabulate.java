@@ -36,7 +36,7 @@ public abstract class Tabulate extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = {"isValidNBin"})
+    @Specialization(guards = {"isValidNBin(nBins)"})
     @TruffleBoundary
     public RIntVector tabulate(RAbstractIntVector bin, int nBins) {
         controlVisibility();
@@ -50,7 +50,7 @@ public abstract class Tabulate extends RBuiltinNode {
         return RDataFactory.createIntVector(ans, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = {"isValidNBin"})
+    @Specialization(guards = {"isValidNBin(nBins)"})
     @TruffleBoundary
     public RIntVector tabulate(RFactor bin, int nBins) {
         return tabulate(bin.getVector(), nBins);
@@ -63,7 +63,7 @@ public abstract class Tabulate extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT);
     }
 
-    protected boolean isValidNBin(@SuppressWarnings("unused") RAbstractContainer bin, int nBins) {
+    protected boolean isValidNBin(int nBins) {
         if (RRuntime.isNA(nBins) || nBins < 0) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "nbin");
         }

@@ -49,7 +49,7 @@ public class REntryCounters {
         public final Instrument instrument;
 
         public Basic(Object tag) {
-            instrument = Instrument.create(new SimpleEventReceiver() {
+            instrument = Instrument.create(new SimpleEventListener() {
 
                 @Override
                 public void enter(Node node, VirtualFrame frame) {

@@ -49,7 +49,7 @@ public abstract class DoCall extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = "lengthOne")
+    @Specialization(guards = "fname.getLength() == 1")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -80,7 +80,4 @@ public abstract class DoCall extends RBuiltinNode {
         return callCache.execute(frame, func.getTarget(), callArgs);
     }
 
-    public static boolean lengthOne(RAbstractStringVector vec) {
-        return vec.getLength() == 1;
-    }
 }

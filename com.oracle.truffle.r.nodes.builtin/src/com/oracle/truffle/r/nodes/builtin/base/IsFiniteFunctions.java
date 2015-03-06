@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -80,12 +79,12 @@ public class IsFiniteFunctions {
         @Child private TypeofNode typeofNode;
 
         @Fallback
-        protected Object doIsFiniteOther(VirtualFrame frame, Object x) {
+        protected Object doIsFiniteOther(Object x) {
             controlVisibility();
             if (typeofNode == null) {
                 typeofNode = insert(TypeofNodeGen.create(null));
             }
-            String type = typeofNode.execute(frame, x).getName();
+            String type = typeofNode.execute(x).getName();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);
         }
 

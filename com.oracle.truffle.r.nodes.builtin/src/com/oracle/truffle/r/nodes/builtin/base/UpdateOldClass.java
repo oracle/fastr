@@ -46,7 +46,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
-    @Specialization(guards = "!isStringVector")
+    @Specialization(guards = "!isStringVector(className)")
     protected Object setOldClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
@@ -92,7 +92,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
         return arg;
     }
 
-    protected boolean isStringVector(@SuppressWarnings("unused") RAbstractContainer arg, RAbstractVector className) {
+    protected boolean isStringVector(RAbstractVector className) {
         return className.getElementClass() == RString.class;
     }
 

@@ -127,12 +127,12 @@ public abstract class PMinMax extends RBuiltinNode {
         return length;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "oneVector"})
-    protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    @Specialization(guards = {"isIntegerPrecedence(frame, args)", "oneVector(args)"})
+    protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
         return args.getValues()[0];
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "!oneVector"})
+    @Specialization(guards = {"isIntegerPrecedence(frame, args)", "!oneVector(args)"})
     protected RIntVector pMinMaxInt(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(frame, args, getIntegerCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
@@ -169,22 +169,23 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"isLogicalPrecedence", "oneVector"})
-    protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    @Specialization(guards = {"isLogicalPrecedence(frame, args)", "oneVector(args)"})
+    protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
         return args.getValues()[0];
     }
 
-    @Specialization(guards = {"isLogicalPrecedence", "!oneVector"})
+    @Specialization(guards = {"isLogicalPrecedence(frame, args)", "!oneVector(args)"})
     protected RIntVector pMinMaxLogical(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         return pMinMaxInt(frame, naRm, args);
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "oneVector"})
-    protected Object pMinMaxOneVecDouble(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    @Specialization(guards = {"isDoublePrecedence(frame, args)", "oneVector(args)"})
+    @SuppressWarnings("unused")
+    protected Object pMinMaxOneVecDouble(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         return args.getValues()[0];
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "!oneVector"})
+    @Specialization(guards = {"isDoublePrecedence(frame, args)", "!oneVector(args)"})
     protected RDoubleVector pMinMaxDouble(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(frame, args, getDoubleCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
@@ -221,12 +222,13 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"isStringPrecedence", "oneVector"})
-    protected Object pMinMaxOneVecString(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    @Specialization(guards = {"isStringPrecedence(frame, args)", "oneVector(args)"})
+    @SuppressWarnings("unused")
+    protected Object pMinMaxOneVecString(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         return args.getValues()[0];
     }
 
-    @Specialization(guards = {"isStringPrecedence", "!oneVector"})
+    @Specialization(guards = {"isStringPrecedence(frame, args)", "!oneVector(args)"})
     protected RStringVector pMinMaxString(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(frame, args, getStringCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
@@ -244,14 +246,14 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isComplexPrecedence")
-    protected RComplexVector pMinMaxComplex(byte naRm, RArgsValuesAndNames args) {
+    @Specialization(guards = "isComplexPrecedence(frame, args)")
+    protected RComplexVector pMinMaxComplex(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT_TYPE);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isRawPrecedence")
-    protected RRawVector pMinMaxRaw(byte naRm, RArgsValuesAndNames args) {
+    @Specialization(guards = "isRawPrecedence(frame, args)")
+    protected RRawVector pMinMaxRaw(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT_TYPE);
     }
 
@@ -273,31 +275,31 @@ public abstract class PMinMax extends RBuiltinNode {
 
     }
 
-    protected boolean isIntegerPrecedence(VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean isIntegerPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.INT_PRECEDENCE;
     }
 
-    protected boolean isLogicalPrecedence(VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean isLogicalPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.LOGICAL_PRECEDENCE;
     }
 
-    protected boolean isDoublePrecedence(VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean isDoublePrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.DOUBLE_PRECEDENCE;
     }
 
-    protected boolean isStringPrecedence(VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean isStringPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.STRING_PRECEDENCE;
     }
 
-    protected boolean isComplexPrecedence(VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean isComplexPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.COMPLEX_PRECEDENCE;
     }
 
-    protected boolean isRawPrecedence(VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean isRawPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return precedence(frame, args) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
-    protected boolean oneVector(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected boolean oneVector(RArgsValuesAndNames args) {
         return args.length() == 1;
     }
 

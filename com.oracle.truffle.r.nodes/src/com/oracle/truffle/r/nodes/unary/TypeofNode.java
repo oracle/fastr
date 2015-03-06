@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.*;
 @SuppressWarnings("unused")
 public abstract class TypeofNode extends UnaryNode {
 
-    public abstract RType execute(VirtualFrame frame, Object x);
+    public abstract RType execute(Object x);
 
     @Specialization
     protected RType typeof(RNull vector) {
@@ -149,12 +149,12 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.PairList;
     }
 
-    @Specialization(guards = "isFunctionBuiltin")
+    @Specialization(guards = "obj.isBuiltin()")
     protected RType typeofBuiltin(RFunction obj) {
         return RType.Builtin;
     }
 
-    @Specialization(guards = "!isFunctionBuiltin")
+    @Specialization(guards = "!obj.isBuiltin()")
     protected RType typeofClosure(RFunction obj) {
         return RType.Closure;
     }
@@ -179,7 +179,4 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.Integer;
     }
 
-    public static boolean isFunctionBuiltin(RFunction fun) {
-        return fun.isBuiltin();
-    }
 }

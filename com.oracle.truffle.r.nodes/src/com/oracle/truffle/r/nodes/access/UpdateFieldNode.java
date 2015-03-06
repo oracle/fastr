@@ -54,7 +54,7 @@ public abstract class UpdateFieldNode extends RNode {
 
     @Child private CastListNode castList;
 
-    @Specialization(guards = "!isNullValue")
+    @Specialization(guards = "!isNull(value)")
     protected Object updateField(RList object, Object value) {
         String field = getField();
         int index = object.getElementIndexByName(attrProfiles, field);
@@ -91,7 +91,7 @@ public abstract class UpdateFieldNode extends RNode {
         return result;
     }
 
-    @Specialization(guards = "isNullValue")
+    @Specialization(guards = "isNull(value)")
     protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value) {
         String field = getField();
         int index = object.getElementIndexByName(attrProfiles, field);
@@ -162,7 +162,7 @@ public abstract class UpdateFieldNode extends RNode {
         }
     }
 
-    protected boolean isNullValue(@SuppressWarnings("unused") RAbstractVector object, Object value) {
+    protected static boolean isNull(Object value) {
         return value == RNull.instance;
     }
 

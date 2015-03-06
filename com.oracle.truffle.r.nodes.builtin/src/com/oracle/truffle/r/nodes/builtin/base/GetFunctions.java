@@ -72,18 +72,17 @@ public class GetFunctions {
 
         public abstract Object execute(VirtualFrame frame, RAbstractStringVector name, REnvironment envir, String mode, byte inherits);
 
-        @SuppressWarnings("unused")
-        public static boolean isInherits(RAbstractStringVector x, REnvironment envir, String mode, byte inherits) {
+        public static boolean isInherits(byte inherits) {
             return inherits == RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isInherits")
+        @Specialization(guards = "!isInherits(inherits)")
         protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             return getAndCheck(frame, xv, envir, mode, true);
         }
 
-        @Specialization(guards = "isInherits")
+        @Specialization(guards = "isInherits(inherits)")
         protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             Object r = getAndCheck(frame, xv, envir, mode, false);
@@ -131,8 +130,7 @@ public class GetFunctions {
 
         @CompilationFinal private boolean needsCallerFrame;
 
-        @SuppressWarnings("unused")
-        public static boolean isInherits(RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, byte inherits) {
+        public static boolean isInherits(byte inherits) {
             return inherits == RRuntime.LOGICAL_TRUE;
         }
 
@@ -184,7 +182,7 @@ public class GetFunctions {
 
         }
 
-        @Specialization(guards = "!isInherits")
+        @Specialization(guards = "!isInherits(inherits)")
         protected RList mgetNonInherit(VirtualFrame frame, RStringVector xv, REnvironment env, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);
@@ -202,7 +200,7 @@ public class GetFunctions {
             return state.getResult();
         }
 
-        @Specialization(guards = "isInherits")
+        @Specialization(guards = "isInherits(inherits)")
         protected RList mgetInherit(VirtualFrame frame, RStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
             State state = checkArgs(xv, mode, ifNotFound);

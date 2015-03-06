@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 @SuppressWarnings("unused")
-@GenerateNodeFactory
 public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
 
     private final BooleanOperationFactory factory;
@@ -143,12 +142,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() != 0"})
     protected byte doLogical(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return logic.op(RRuntime.logical2int(left), right.getDataAt(0));
     }
 
-    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() == 0"})
     protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.INT_NA);
     }
@@ -158,12 +157,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() != 0"})
     protected byte doLogical(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return logic.op(RRuntime.logical2double(left), right.getDataAt(0));
     }
 
-    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() == 0"})
     protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return logic.op(RRuntime.logical2double(left), RRuntime.DOUBLE_NA);
     }
@@ -173,12 +172,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() != 0"})
     protected byte doLogical(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right.getDataAt(0)));
     }
 
-    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() == 0"})
     protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.INT_NA);
     }
@@ -188,12 +187,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() != 0"})
     protected byte doLogical(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return logic.op(RRuntime.logical2int(left), right.getDataAt(0));
     }
 
-    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() == 0"})
     protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.STRING_NA);
     }
@@ -203,12 +202,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() != 0"})
     protected byte doLogical(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return logic.op(RRuntime.logical2complex(left), right.getDataAt(0));
     }
 
-    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() == 0"})
     protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return logic.op(RRuntime.logical2complex(left), RRuntime.createComplexNA());
     }
@@ -218,12 +217,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
         return left;
     }
 
-    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() != 0"})
     protected byte doLogical(Object left, boolean needsRightOperand, RAbstractRawVector right) {
         return logic.op(left, right.getDataAt(0));
     }
 
-    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "right.getLength() == 0"})
     protected byte doLogicalEmpty(Object left, boolean needsRightOperand, RAbstractRawVector right) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", logic.opName());
     }
@@ -288,22 +287,22 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
-        @Specialization(guards = {"isZeroLength", "!isStringVector", "!isRawVector"})
+        @Specialization(guards = {"operand.getLength() == 0", "!isStringVector(operand)", "!isRawVector(operand)"})
         protected byte doLogical(RAbstractVector operand) {
             return RRuntime.LOGICAL_NA;
         }
 
-        @Specialization(guards = "!isZeroLength")
+        @Specialization(guards = "operand.getLength() != 0")
         protected byte doLogical(RAbstractDoubleVector operand) {
             return RRuntime.double2logical(operand.getDataAt(0));
         }
 
-        @Specialization(guards = "!isZeroLength")
+        @Specialization(guards = "operand.getLength() != 0")
         protected byte doLogical(RAbstractComplexVector operand) {
             return RRuntime.complex2logical(operand.getDataAt(0));
         }
 
-        @Specialization(guards = "!isZeroLength")
+        @Specialization(guards = "operand.getLength() != 0")
         protected byte doLogical(RAbstractLogicalVector operand) {
             return operand.getDataAt(0);
         }
@@ -318,20 +317,16 @@ public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
-        @Specialization(guards = "!isZeroLength")
+        @Specialization(guards = "operand.getLength() != 0")
         protected byte doLogical(RAbstractIntVector operand) {
             return RRuntime.int2logical(operand.getDataAt(0));
         }
 
-        protected boolean isZeroLength(RAbstractVector operand) {
-            return operand.getLength() == 0;
-        }
-
-        protected boolean isStringVector(RAbstractVector vector) {
+        protected static boolean isStringVector(RAbstractVector vector) {
             return vector.getElementClass() == RString.class;
         }
 
-        protected boolean isRawVector(RAbstractVector vector) {
+        protected static boolean isRawVector(RAbstractVector vector) {
             return vector.getElementClass() == RRaw.class;
         }
     }

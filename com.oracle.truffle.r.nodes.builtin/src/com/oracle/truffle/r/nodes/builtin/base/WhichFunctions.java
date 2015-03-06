@@ -55,7 +55,7 @@ public class WhichFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
 
-        @Specialization(guards = "!hasNames")
+        @Specialization(guards = "!hasNames(x)")
         @TruffleBoundary
         protected RIntVector which(RAbstractLogicalVector x) {
             controlVisibility();
@@ -72,7 +72,7 @@ public class WhichFunctions {
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization(guards = "hasNames")
+        @Specialization(guards = "hasNames(x)")
         @TruffleBoundary
         protected RIntVector whichNames(RAbstractLogicalVector x) {
             controlVisibility();

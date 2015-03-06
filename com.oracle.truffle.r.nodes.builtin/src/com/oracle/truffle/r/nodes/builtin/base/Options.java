@@ -59,12 +59,12 @@ public abstract class Options extends RBuiltinNode {
         return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
     }
 
-    @Specialization(guards = "isMissing")
+    @Specialization(guards = "isMissing(args)")
     protected Object optionsMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
         return options(RMissing.instance);
     }
 
-    @Specialization(guards = "!isMissing")
+    @Specialization(guards = "!isMissing(args)")
     @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
         Object[] values = args.getValues();

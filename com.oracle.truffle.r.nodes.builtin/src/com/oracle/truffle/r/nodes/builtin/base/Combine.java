@@ -145,14 +145,14 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return (RLogicalVector) passVector(vector);
     }
 
-    @Specialization(guards = "!isNumericVersion")
+    @Specialization(guards = "!isNumericVersion(list)")
     protected RList pass(RList list) {
         return (RList) passVector(list);
     }
 
     private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"..."});
 
-    @Specialization(guards = "isNumericVersion")
+    @Specialization(guards = "isNumericVersion(list)")
     /**
      * A temporary specific hack for internal generic dispatch on "numeric_version" objects
      * which are {@link Rlist}s.
@@ -197,73 +197,73 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return expr;
     }
 
-    @Specialization(guards = "noArgNames")
+    @Specialization(guards = "noArgNames()")
     protected int pass(int value) {
         controlVisibility();
         return value;
     }
 
-    @Specialization(guards = "hasArgNames")
+    @Specialization(guards = "hasArgNames()")
     protected RIntVector passArgs(int value) {
         controlVisibility();
         return RDataFactory.createIntVector(new int[]{value}, true, getSuppliedSignature().createVector());
     }
 
-    @Specialization(guards = "noArgNames")
+    @Specialization(guards = "noArgNames()")
     protected double pass(double value) {
         controlVisibility();
         return value;
     }
 
-    @Specialization(guards = "hasArgNames")
+    @Specialization(guards = "hasArgNames()")
     protected RDoubleVector passArgs(double value) {
         controlVisibility();
         return RDataFactory.createDoubleVector(new double[]{value}, true, getSuppliedSignature().createVector());
     }
 
-    @Specialization(guards = "noArgNames")
+    @Specialization(guards = "noArgNames()")
     protected byte pass(byte value) {
         controlVisibility();
         return value;
     }
 
-    @Specialization(guards = "hasArgNames")
+    @Specialization(guards = "hasArgNames()")
     protected RLogicalVector passArgs(byte value) {
         controlVisibility();
         return RDataFactory.createLogicalVector(new byte[]{value}, true, getSuppliedSignature().createVector());
     }
 
-    @Specialization(guards = "noArgNames")
+    @Specialization(guards = "noArgNames()")
     protected String pass(String value) {
         controlVisibility();
         return value;
     }
 
-    @Specialization(guards = "hasArgNames")
+    @Specialization(guards = "hasArgNames()")
     protected RStringVector passArgs(String value) {
         controlVisibility();
         return RDataFactory.createStringVector(new String[]{value}, true, getSuppliedSignature().createVector());
     }
 
-    @Specialization(guards = "noArgNames")
+    @Specialization(guards = "noArgNames()")
     protected RRaw pass(RRaw value) {
         controlVisibility();
         return value;
     }
 
-    @Specialization(guards = "hasArgNames")
+    @Specialization(guards = "hasArgNames()")
     protected RRawVector passArgs(RRaw value) {
         controlVisibility();
         return RDataFactory.createRawVector(new byte[]{value.getValue()}, getSuppliedSignature().createVector());
     }
 
-    @Specialization(guards = "noArgNames")
+    @Specialization(guards = "noArgNames()")
     protected RComplex pass(RComplex value) {
         controlVisibility();
         return value;
     }
 
-    @Specialization(guards = "hasArgNames")
+    @Specialization(guards = "hasArgNames()")
     protected RComplexVector passArgs(RComplex value) {
         controlVisibility();
         return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, getSuppliedSignature().createVector());
@@ -325,13 +325,13 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         }
     }
 
-    @Specialization(guards = "isNullPrecedence")
+    @Specialization(guards = "isNullPrecedence(frame, args)")
     protected RNull allNull(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = {"!isNullPrecedence", "oneElement"})
+    @Specialization(guards = {"!isNullPrecedence(frame, args)", "oneElement(args)"})
     protected Object allOneElem(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         if (combineRecursive == null) {
@@ -341,7 +341,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return combineRecursive.executeCombine(frame, args.getValues()[0]);
     }
 
-    @Specialization(guards = {"isLogicalPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isLogicalPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allLogical(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -354,7 +354,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isLogicalPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isLogicalPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allLogicalArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -369,7 +369,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isIntegerPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allInt(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -382,7 +382,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isIntegerPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allIntArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -397,7 +397,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isDoublePrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allDouble(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -410,7 +410,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isDoublePrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allDoubleArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -425,7 +425,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isComplexPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isComplexPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allComplex(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -438,7 +438,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isComplexPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isComplexPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allComplexArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -453,7 +453,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isStringPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isStringPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allString(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -466,7 +466,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isStringPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isStringPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allStringArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -481,7 +481,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isRawPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isRawPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allRaw(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -494,7 +494,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isRawPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isRawPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object allRawArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -509,7 +509,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isListPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isListPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object list(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -522,7 +522,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isListPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isListPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     protected Object listArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();
@@ -544,7 +544,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return unwrapExpression.executeObject(frame, operand);
     }
 
-    @Specialization(guards = {"isExprPrecedence", "noArgNames", "!oneElement"})
+    @Specialization(guards = {"isExprPrecedence(frame, args)", "noArgNames()", "!oneElement(args)"})
     @ExplodeLoop
     protected Object expr(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
@@ -558,7 +558,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return RDataFactory.createExpression(current);
     }
 
-    @Specialization(guards = {"isExprPrecedence", "hasArgNames", "!oneElement"})
+    @Specialization(guards = {"isExprPrecedence(frame, args)", "hasArgNames()", "!oneElement(args)"})
     protected Object exprArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] array = args.getValues();

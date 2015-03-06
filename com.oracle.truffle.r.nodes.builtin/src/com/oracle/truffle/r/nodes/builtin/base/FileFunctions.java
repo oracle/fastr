@@ -593,13 +593,13 @@ public class FileFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "lengthZero")
+        @Specialization(guards = "lengthZero(vec)")
         @TruffleBoundary
         protected RStringVector doFilePathZero(RList vec, RAbstractStringVector fsep) {
             return RDataFactory.createEmptyStringVector();
         }
 
-        @Specialization(guards = "!lengthZero")
+        @Specialization(guards = "!lengthZero(args)")
         protected RStringVector doFilePath(VirtualFrame frame, RList args, RAbstractStringVector fsepVec) {
             Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;
@@ -648,7 +648,7 @@ public class FileFunctions {
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        public static boolean lengthZero(RList list, @SuppressWarnings("unused") RAbstractStringVector fsep) {
+        public static boolean lengthZero(RList list) {
             if (list.getLength() == 0) {
                 return true;
             }

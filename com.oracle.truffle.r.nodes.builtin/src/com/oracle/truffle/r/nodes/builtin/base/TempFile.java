@@ -55,15 +55,14 @@ public abstract class TempFile extends RBuiltinNode {
         return "invalid '" + msg + "'";
     }
 
-    @Specialization(guards = "tempDirL1")
+    @Specialization(guards = "tempDirL1(tempDir)")
     @TruffleBoundary
     protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         controlVisibility();
         return RDataFactory.createStringVector(createNonExistedFilePath(pattern, tempDir.getDataAt(0), fileExt));
     }
 
-    @SuppressWarnings("unused")
-    public static boolean tempDirL1(String pattern, RAbstractStringVector tempDir, String fileExt) {
+    public static boolean tempDirL1(RAbstractStringVector tempDir) {
         return tempDir.getLength() == 1;
     }
 

@@ -57,7 +57,7 @@ public class RNodeTimer {
         public final Instrument instrument;
 
         public Basic(RInstrument.NodeId tag) {
-            instrument = Instrument.create(new SimpleEventReceiver() {
+            instrument = Instrument.create(new SimpleEventListener() {
 
                 @Override
                 public void enter(Node node, VirtualFrame frame) {

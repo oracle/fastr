@@ -45,12 +45,12 @@ public abstract class Call extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(guards = "!isEmptyName")
+    @Specialization(guards = "!isEmptyName(name)")
     protected RLanguage call(RAbstractStringVector name, @SuppressWarnings("unused") RMissing args) {
         return makeCall(name.getDataAt(0), null);
     }
 
-    @Specialization(guards = "!isEmptyName")
+    @Specialization(guards = "!isEmptyName(name)")
     protected RLanguage call(RAbstractStringVector name, RArgsValuesAndNames args) {
         return makeCall(name.getDataAt(0), args);
     }

@@ -126,7 +126,7 @@ public class DynLoadFunctions {
             return getResult(symbolInfo, withReg);
         }
 
-        @Specialization(guards = "isDLLInfo")
+        @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected Object getSymbolInfo(String symbol, RExternalPtr externalPtr, byte withReg) {
             controlVisibility();
@@ -152,7 +152,7 @@ public class DynLoadFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
         }
 
-        public static boolean isDLLInfo(@SuppressWarnings("unused") String symbol, RExternalPtr externalPtr) {
+        public static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
         }
 

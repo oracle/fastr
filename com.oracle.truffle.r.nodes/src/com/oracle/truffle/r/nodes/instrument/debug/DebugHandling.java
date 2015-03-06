@@ -22,34 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.instrument.debug;
 
-import com.oracle.truffle.api.Assumption;
+import java.util.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Instrument;
-import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.ProbeNode;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
-import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import com.oracle.truffle.api.instrument.SyntaxTag;
-import com.oracle.truffle.api.instrument.SyntaxTagTrap;
-import com.oracle.truffle.api.instrument.TruffleEventReceiver;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeVisitor;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.function.FunctionUID;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RFunction;
-
-import java.util.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * The implementation of the R debug functions.
@@ -172,7 +159,7 @@ public class DebugHandling {
         });
     }
 
-    private abstract static class DebugEventReceiver implements TruffleEventReceiver {
+    private abstract static class DebugEventReceiver implements TruffleEventListener {
 
         protected final Object text;
         protected final Object condition;
@@ -523,7 +510,7 @@ public class DebugHandling {
 
         static void clearTrap() {
             if (set) {
-                Probe.clearTagTrap();
+                Probe.setTagTrap(null);
                 set = false;
             }
         }
