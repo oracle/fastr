@@ -238,7 +238,7 @@ public abstract class Scan extends RBuiltinNode {
         Object result = RNull.instance;
         data.save = 0;
 
-        try {
+        try (RConnection openConn = data.con.forceOpen("r")) {
             if (nskip > 0) {
                 data.con.readLines(nskip);
             }

@@ -257,7 +257,7 @@ public abstract class ConnectionFunctions {
                     RContext.getInstance().setEvalWarning(RError.Message.ALREADY_OPEN_CONNECTION.message);
                     return RNull.instance;
                 }
-                baseConn.forceOpen(open.getDataAt(0));
+                baseConn.open(open.getDataAt(0));
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }

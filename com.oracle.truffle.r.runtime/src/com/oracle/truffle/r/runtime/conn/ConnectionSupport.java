@@ -357,6 +357,17 @@ public class ConnectionSupport {
             return this;
         }
 
+        /**
+         * This is used exclusively by the {@code open} builtin.
+         */
+        public void open(String modeString) throws IOException {
+            if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
+                // modeString may override the default
+                openMode = new OpenMode(modeString == null ? openMode.modeString : modeString);
+            }
+            createDelegateConnection();
+        }
+
         protected void checkOpen() {
             assert !closed && opened;
         }
