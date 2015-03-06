@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -78,5 +79,11 @@ public class ReadVariadicComponentNode extends RNode {
             ret = promiseHelper.evaluate(frame, (RPromise) ret);
         }
         return ret == null ? RMissing.instance : ret;
+    }
+
+    @Override
+    public void deparse(State state) {
+        state.append("..");
+        state.append(Integer.toString(index + 1));
     }
 }

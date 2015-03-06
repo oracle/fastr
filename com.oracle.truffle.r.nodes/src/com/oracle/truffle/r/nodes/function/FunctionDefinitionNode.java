@@ -88,8 +88,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.create(RFrameSlot.OnExit, false);
-        this.instrumentationApplied = substituteFrame;
-        this.uuid = substituteFrame ? null : FunctionUIDFactory.get().createUID();
+        this.uuid = FunctionUIDFactory.get().createUID();
 
         this.checkSingletonFrame = !substituteFrame;
     }

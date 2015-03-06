@@ -176,23 +176,31 @@ public class RSerialize {
      * This variant exists for the {@code lazyLoadDBFetch} function. In certain cases, when
      * {@link Input#persistentRestore} is called, an R function needs to be evaluated with an
      * argument read from the serialized stream. This is handled with a callback object.
+     *
+     * @param packageName the name of the package that the lozyLoad is from
      */
     @TruffleBoundary
-    public static Object unserialize(byte[] data, CallHook hook, int depth) throws IOException {
+    public static Object unserialize(byte[] data, CallHook hook, int depth, String packageName) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        Input instance = trace() ? new TracingInput(is, hook, depth) : new Input(is, hook, depth);
+        Input instance = trace() ? new TracingInput(is, hook, depth, packageName) : new Input(is, hook, depth, packageName);
         return instance.unserialize();
     }
 
     private static class Input extends Common {
         protected final PInputStream stream;
+        /**
+         * Only set when called from lazyLoadDBFetch. Helps to identify the package of the deparsed
+         * closure.
+         */
+        protected final String packageName;
 
         private Input(RConnection conn, int depth) throws IOException {
-            this(conn.getInputStream(), null, depth);
+            this(conn.getInputStream(), null, depth, null);
         }
 
-        private Input(InputStream is, CallHook hook, int depth) throws IOException {
+        private Input(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
             super(hook, depth);
+            this.packageName = packageName;
             byte[] buf = new byte[2];
             is.read(buf);
             switch (buf[0]) {
@@ -359,7 +367,8 @@ public class RSerialize {
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            Source source = Source.asPseudoFile(deparse, "<package deparse>");
+                            String packageId = "<package:" + packageName + " deparse>";
+                            Source source = Source.asPseudoFile(deparse, packageId);
                             RExpression expr = RContext.getEngine().parse(source);
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
@@ -759,11 +768,11 @@ public class RSerialize {
         private int nesting;
 
         private TracingInput(RConnection conn, int depth) throws IOException {
-            this(conn.getInputStream(), null, depth);
+            this(conn.getInputStream(), null, depth, null);
         }
 
-        private TracingInput(InputStream is, CallHook hook, int depth) throws IOException {
-            super(is, hook, depth);
+        private TracingInput(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
+            super(is, hook, depth, packageName);
         }
 
         @Override

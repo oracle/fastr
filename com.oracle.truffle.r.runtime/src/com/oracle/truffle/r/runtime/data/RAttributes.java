@@ -222,15 +222,15 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
     @CompilationFinal private static PerfHandler stats;
 
     static {
-        RPerfAnalysis.register(new PerfHandler());
+        RPerfStats.register(new PerfHandler());
     }
 
     /**
      * Collects data on the maximum size of the attribute set. So only interested in adding not
      * removing attributes.
      */
-    public static class PerfHandler implements RPerfAnalysis.Handler {
-        private static final RPerfAnalysis.Histogram hist = new RPerfAnalysis.Histogram(5);
+    public static class PerfHandler implements RPerfStats.Handler {
+        private static final RPerfStats.Histogram hist = new RPerfStats.Histogram(5);
 
         @TruffleBoundary
         void init() {
@@ -247,7 +247,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             hist.inc(effectiveSizeNow);
         }
 
-        public void initialize() {
+        public void initialize(String optionText) {
             stats = this;
         }
 
@@ -257,7 +257,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
         public void report() {
-            System.out.printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
+            RPerfStats.out().printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
             hist.report();
         }
 

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -37,6 +38,11 @@ public class FastRFunctionEntry {
         } else if (name.equals("stacktrace")) {
             fastRNode.forceVisibility(false);
             return FastRStackTrace.printStackTrace(checkLogical(argValues[0], fastRNode));
+        } else if (name.equals("debug")) {
+            fastRNode.forceVisibility(false);
+            FastROptions.debugUpdate(checkString(argValues[0], fastRNode));
+            return RNull.instance;
+
         }
         // The remainder all take a func argument
         RFunction func = checkFunction(arg0, fastRNode);
@@ -86,6 +92,15 @@ public class FastRFunctionEntry {
             return (byte) arg;
         } else {
             throw RError.error(fastRNode.getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, "logical");
+        }
+    }
+
+    private static String checkString(Object arg, RBuiltinNode fastRNode) throws RError {
+        String s = RRuntime.asString(arg);
+        if (s != null) {
+            return s;
+        } else {
+            throw RError.error(fastRNode.getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, "character");
         }
     }
 

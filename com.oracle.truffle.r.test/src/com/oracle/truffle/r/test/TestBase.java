@@ -133,7 +133,7 @@ public class TestBase {
                 if (diffsOutputFile != null) {
                     TestOutputManager.writeDiffsTestOutputFile(diffsOutputFile, expectedOutputManager, fastROutputManager);
                 }
-                RPerfAnalysis.report();
+                RPerfStats.report();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

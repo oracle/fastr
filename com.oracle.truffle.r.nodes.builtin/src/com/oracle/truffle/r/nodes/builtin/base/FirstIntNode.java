@@ -27,6 +27,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantIntegerScalarNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @NodeChild("argument")
@@ -78,5 +79,10 @@ abstract class FirstIntNode extends RNode {
             return value;
         }
         return FirstIntNodeGen.create(value, emptyError, null, argumentName, 0);
+    }
+
+    @Override
+    public void deparse(State state) {
+        state.append(Integer.toString(getDefaultValue()));
     }
 }

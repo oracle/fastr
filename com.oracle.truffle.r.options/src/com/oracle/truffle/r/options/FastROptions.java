@@ -53,8 +53,10 @@ public class FastROptions {
     public static final OptionValue<Boolean> Instrument = new OptionValue<>(false);
     @Option(help = "Trace all R function calls (requires +Instrumentation)")
     public static final OptionValue<Boolean> TraceCalls = new OptionValue<>(false);
-    @Option(help = "Collect Performance Data")
+    @Option(help = "PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.")
     public static final OptionValue<String> PerfStats = new OptionValue<>(null);
+    @Option(help = "PerfStatsFile=file; Send performance stats to 'file', default stdout")
+    public static final OptionValue<String> PerfStatsFile = new OptionValue<>(null);
     @Option(help = "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)")
     public static final OptionValue<String> Rdebug = new OptionValue<>(null);
     @Option(help = "Print FastR performance warning")
@@ -115,34 +117,67 @@ public class FastROptions {
      *
      */
     public static boolean debugMatches(String element) {
-        return matchesElement(element, Debug);
+        return matchesElement(element, Debug) != null;
     }
 
     /**
      * Convenience function for matching against an option whose value is expected to be a comma
      * separated list. If the option is set without a value, i.e. just plain {@code -R:Option}, all
-     * elements are deemed to match.
+     * elements are deemed to match. Matching is done with {@link String#startsWith} to allow
+     * additional data to be tagged onto the element.
+     *
+     * E.g.
+     * <ul>
+     * <li>{@code -R:Option} returns {@code ""} for all values of {@code element}.</li>
+     * <li>{@code -R:Option=foo} returns {@code foo} iff {@code element.equals("foo")}, else
+     * {@code null}.
+     * <li>{@code -R:Option=foo,bar=xx} returns {@code bar=xx} iff {@code element.equals("bar")},
+     * else {@code null}.
      *
      * @param element string to match against the option value list.
-     * @return {@code true} if the option is set with no {@code =value} component, or if
-     *         {@code element} matches an element, {@code false} otherwise.
+     * @return {@code ""} if the option is set with no {@code =value} component, the element if
+     *         {@code element} matches an element, {@code null} otherwise.
      */
-    public static boolean matchesElement(String element, OptionValue<String> stringOption) {
+    public static String matchesElement(String element, OptionValue<String> stringOption) {
         initialize();
         String s = stringOption.getValue();
         if (s == null) {
-            return false;
+            return null;
         } else if (s.length() == 0) {
-            return true;
+            return s;
         } else {
             String[] parts = s.split(",");
             for (String part : parts) {
-                if (part.equals(element)) {
-                    return true;
+                if (part.startsWith(element)) {
+                    return s;
                 }
             }
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * Updates the value of the Debug option, adding only. TODO maybe support removal if there is a
+     * use-case.
+     */
+    public static void debugUpdate(String element) {
+        String s = Debug.getValue();
+        if (s == null) {
+            // nothing was set
+            s = element;
+        } else if (s.length() == 0) {
+            // everything on, we can't change this
+        } else {
+            String[] parts = s.split(",");
+            for (String part : parts) {
+                if (part.startsWith(element)) {
+                    // already on
+                    return;
+                }
+            }
+            s = s + "," + element;
+        }
+        Debug.setValue(s);
     }
 
     private static OptionDescriptor findOption(String key) {

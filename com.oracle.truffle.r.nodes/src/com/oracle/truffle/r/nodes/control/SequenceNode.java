@@ -144,10 +144,10 @@ public class SequenceNode extends RNode {
     // Performance analysis
 
     static {
-        RPerfAnalysis.register(new PerfHandler());
+        RPerfStats.register(new PerfHandler());
     }
 
-    public static class PerfHandler implements RPerfAnalysis.Handler {
+    public static class PerfHandler implements RPerfStats.Handler {
 
         private static ConcurrentLinkedDeque<SequenceNode> timedSequences;
 
@@ -160,7 +160,7 @@ public class SequenceNode extends RNode {
             return null;
         }
 
-        public void initialize() {
+        public void initialize(String optionText) {
             timedSequences = new ConcurrentLinkedDeque<>();
         }
 
@@ -179,8 +179,8 @@ public class SequenceNode extends RNode {
                         FunctionDefinitionNode rootNode = (FunctionDefinitionNode) sequence.getRootNode();
                         RDeparse.State state = RDeparse.State.createPrintableState();
                         rootNode.deparse(state);
-                        System.out.println("Source (" + rootNode + "): " + (total / 1000000) + "ms");
-                        System.out.println(state.toString());
+                        RPerfStats.out().println("Source (" + rootNode + "): " + (total / 1000000) + "ms");
+                        RPerfStats.out().println(state.toString());
                     } else {
                         Source source = sequence.getSourceSection().getSource();
                         long[] time = new long[source.getLineCount() + 1];
@@ -194,9 +194,9 @@ public class SequenceNode extends RNode {
                         if (total > 1000000000L) {
                             int startLine = sequence.getSourceSection().getStartLine();
                             int endLine = startLine + sequence.getSourceSection().getCode().split("\n").length - 1;
-                            System.out.println("File " + source.getName() + " lines " + startLine + "-" + endLine + ", total: " + (total / 1000000) + "ms");
+                            RPerfStats.out().println("File " + source.getName() + " lines " + startLine + "-" + endLine + ", total: " + (total / 1000000) + "ms");
                             for (int i = startLine; i <= endLine; i++) {
-                                System.out.printf("%2d%%: %s%n", (time[i] + (total / 200)) * 100 / total, source.getCode(i));
+                                RPerfStats.out().printf("%2d%%: %s%n", (time[i] + (total / 200)) * 100 / total, source.getCode(i));
                             }
                         }
                     }

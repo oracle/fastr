@@ -106,7 +106,7 @@ public final class REngine implements RContext.Engine {
         MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
         if (!initialized) {
             RInstrument.initialize();
-            RPerfAnalysis.initialize();
+            RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
             ROptions.initialize();

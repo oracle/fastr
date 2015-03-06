@@ -433,6 +433,22 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
+     * If this is not a "package" environent return "this", otherwise return the associated
+     * "namespace" env.
+     */
+    public REnvironment getPackageNamespaceEnv() {
+        if (this == baseEnv) {
+            return baseNamespaceEnv();
+        }
+        String envName = getName();
+        if (envName.startsWith("package:")) {
+            return REnvironment.getRegisteredNamespace(envName.replace("package:", ""));
+        } else {
+            return this;
+        }
+    }
+
+    /**
      * Return the "spec" attribute of the "info" env in a namespace or {@code null} if not found.
      */
     private RStringVector getNamespaceSpec() {
@@ -448,15 +464,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             }
         }
         return null;
-    }
-
-    @TruffleBoundary
-    public static String packageQualName(PackageKind packageKind, String packageName) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(packageKind.name().toLowerCase());
-        sb.append(':');
-        sb.append(packageName);
-        return sb.toString();
     }
 
     // end of static members
@@ -492,9 +499,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * The "simple" name of the environment. For "package:xxx", "namespace:xxx", "imports:xxx", this
-     * is "xxx". If the environment has been given a "name" attribute, then it is that value. This
-     * is the value returned by the R {@code environmentName} function.
+     * The "simple" name of the environment. This is the value returned by the R
+     * {@code environmentName} function.
      */
     public String getName() {
         String attrName = attributes == null ? null : (String) RRuntime.asString(attributes.get(NAME_ATTR_KEY));
@@ -692,6 +698,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     public static final class Global extends REnvironment {
 
+        static final String SEARCHNAME = ".GlobalEnv";
+
         private Global(REnvironment parent, MaterializedFrame frame) {
             super(parent, "R_GlobalEnv", frame);
             RArguments.setEnclosingFrame(frame, parent.getFrame());
@@ -699,7 +707,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
         @Override
         protected String getSearchName() {
-            return ".GlobalEnv";
+            return SEARCHNAME;
         }
     }
 

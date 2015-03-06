@@ -169,18 +169,23 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
+            File dbPathFile = new File(dbPath);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
-                File file = new File(dbPath);
-                assert file.exists();
-                dbData = new byte[(int) file.length()];
-                try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(file))) {
+                assert dbPathFile.exists();
+                dbData = new byte[(int) dbPathFile.length()];
+                try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(dbPathFile))) {
                     bs.read(dbData);
                 } catch (IOException ex) {
                     // unexpected
                     throw RError.error(Message.GENERIC, ex.getMessage());
                 }
                 dbCache.put(dbPath, dbData);
+            }
+            String packageName = dbPathFile.getName();
+            int dotIndex;
+            if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
+                packageName = packageName.substring(0, dotIndex);
             }
             int offset = key.getDataAt(0);
             int length = key.getDataAt(1);
@@ -208,7 +213,7 @@ public class HiddenInternalFunctions {
                         }
 
                     };
-                    Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame));
+                    Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame), packageName);
                     return result;
                 } catch (IOException ex) {
                     // unexpected

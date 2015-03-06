@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,20 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.nodes.Node.Child;
+
 /**
- * Visitor for the syntax nodes in the tree, defined by {@link RSyntaxNode#isSyntax()} returning
- * {@code true}. This interface is intended for the Truffle instrumentation layer.
+ * Visitor for the syntax nodes in the tree. This interface is intended for the Truffle
+ * instrumentation layer.
  */
 public interface RSyntaxNodeVisitor {
     /**
-     * This visitor method is called for every node in the tree for which
-     * {@link RSyntaxNode#isSyntax()} returns {@code true}. Its return value determines if the
-     * children of this node should be excluded in the iteration.
+     * This visitor method is called for every node in the tree that is considered part of the
+     * syntactic backbone. Its return value determines if the children of this node should be
+     * excluded in the iteration.
      *
-     * N.B. The visit order for child nodes is non-deterministic. The only guarantee is that every
-     * "syntactic" child will be visited.
+     * N.B. The visit order for "child" nodes, e.g. annotated with {@link Child}, is
+     * non-deterministic. The only guarantee is that every "syntactic" child will be visited.
      *
      * @param node the node that is currently visited
      * @param depth the current depth in the tree

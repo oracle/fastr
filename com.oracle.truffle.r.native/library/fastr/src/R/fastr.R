@@ -41,3 +41,5 @@ fastr.typeof <- function(x) .FastR(.NAME="typeof", x)
 
 fastr.stacktrace <- function(print.frame.contents=TRUE) .FastR(.NAME="stacktrace", print.frame.contents)
 
+fastr.debug <- function(element) .FastR(.NAME="debug", element)
+

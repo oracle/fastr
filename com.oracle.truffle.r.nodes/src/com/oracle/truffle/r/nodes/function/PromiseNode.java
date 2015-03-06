@@ -512,5 +512,16 @@ public abstract class PromiseNode extends RNode {
             ArgumentsSignature actualSignature = argsValueAndNamesProfile.profile(evaluatedNames != null) ? ArgumentsSignature.get(evaluatedNames) : signature;
             return new RArgsValuesAndNames(evaluatedArgs, actualSignature);
         }
+
+        @Override
+        public void deparse(State state) {
+            for (int i = 0; i < varargs.length; i++) {
+                RNode argValue = varargs[i];
+                argValue.deparse(state);
+                if (i != varargs.length - 1) {
+                    state.append(", ");
+                }
+            }
+        }
     }
 }

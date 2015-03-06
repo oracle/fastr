@@ -185,7 +185,7 @@ public final class Utils {
      * All terminations should go through this method.
      */
     public static RuntimeException exit(int status) {
-        RPerfAnalysis.report();
+        RPerfStats.report();
         if (RCmdOptions.DEBUGGER.getValue() != null) {
             throw new DebugExitException();
         } else {

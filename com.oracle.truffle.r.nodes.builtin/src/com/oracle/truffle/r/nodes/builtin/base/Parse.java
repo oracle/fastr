@@ -222,8 +222,8 @@ public abstract class Parse extends RBuiltinNode {
             int[] llocData = new int[8];
             int startLine = ss.getStartLine();
             int startColumn = ss.getStartColumn();
-            int lastLine = source.getLineNumber(ss.getCharEndIndex());
-            int lastColumn = source.getColumnNumber(ss.getCharEndIndex()) - 1;
+            int lastLine = source.getLineNumber(ss.getCharEndIndex() - 1);
+            int lastColumn = source.getColumnNumber(ss.getCharEndIndex() - 1) - 1;
             // no multi-byte support, so byte==line
             llocData[0] = startLine;
             llocData[1] = startColumn;

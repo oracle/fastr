@@ -424,26 +424,26 @@ public final class RDataFactory {
     }
 
     static {
-        RPerfAnalysis.register(new PerfHandler());
+        RPerfStats.register(new PerfHandler());
     }
 
-    private static class PerfHandler implements RPerfAnalysis.Handler {
-        private static Map<Class<?>, RPerfAnalysis.Histogram> histMap;
+    private static class PerfHandler implements RPerfStats.Handler {
+        private static Map<Class<?>, RPerfStats.Histogram> histMap;
 
         @TruffleBoundary
         void record(Object data) {
             Class<?> klass = data.getClass();
             boolean isBounded = data instanceof RBounded;
-            RPerfAnalysis.Histogram hist = histMap.get(klass);
+            RPerfStats.Histogram hist = histMap.get(klass);
             if (hist == null) {
-                hist = new RPerfAnalysis.Histogram(isBounded ? 10 : 1);
+                hist = new RPerfStats.Histogram(isBounded ? 10 : 1);
                 histMap.put(klass, hist);
             }
             int length = isBounded ? ((RBounded) data).getLength() : 0;
             hist.inc(length);
         }
 
-        public void initialize() {
+        public void initialize(String optionData) {
             stats = this;
             histMap = new HashMap<>();
         }
@@ -453,23 +453,23 @@ public final class RDataFactory {
         }
 
         public void report() {
-            System.out.println("Scalar types");
-            for (Map.Entry<Class<?>, RPerfAnalysis.Histogram> entry : histMap.entrySet()) {
-                RPerfAnalysis.Histogram hist = entry.getValue();
+            RPerfStats.out().println("Scalar types");
+            for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
+                RPerfStats.Histogram hist = entry.getValue();
                 if (hist.numBuckets() == 1) {
-                    System.out.printf("%s: %d%n", entry.getKey().getSimpleName(), hist.getTotalCount());
+                    RPerfStats.out().printf("%s: %d%n", entry.getKey().getSimpleName(), hist.getTotalCount());
                 }
             }
-            System.out.println();
-            System.out.println("Vector types");
-            for (Map.Entry<Class<?>, RPerfAnalysis.Histogram> entry : histMap.entrySet()) {
-                RPerfAnalysis.Histogram hist = entry.getValue();
+            RPerfStats.out().println();
+            RPerfStats.out().println("Vector types");
+            for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
+                RPerfStats.Histogram hist = entry.getValue();
                 if (hist.numBuckets() > 1) {
-                    System.out.printf("%s: %d, max size %d%n", entry.getKey().getSimpleName(), hist.getTotalCount(), hist.getMaxSize());
+                    RPerfStats.out().printf("%s: %d, max size %d%n", entry.getKey().getSimpleName(), hist.getTotalCount(), hist.getMaxSize());
                     entry.getValue().report();
                 }
             }
-            System.out.println();
+            RPerfStats.out().println();
         }
     }
 
