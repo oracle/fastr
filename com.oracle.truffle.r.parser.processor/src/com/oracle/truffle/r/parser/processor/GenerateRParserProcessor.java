@@ -23,12 +23,14 @@
 package com.oracle.truffle.r.parser.processor;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 import javax.annotation.processing.*;
 import javax.lang.model.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
+import javax.tools.Diagnostic.Kind;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.parser.processor.GenerateRParser")
@@ -58,17 +60,23 @@ public class GenerateRParserProcessor extends AbstractProcessor {
                 // processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, e);
                 // }
 
-                Process process = Runtime.getRuntime().exec(command, null, parserSrcDir);
-                int rc = process.waitFor();
-                if (rc != 0) {
-                    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Parser generator failed: " + rc);
-                    return false;
+                File tempFile = File.createTempFile("rparser", "out");
+                try {
+                    int rc = new ProcessBuilder(command).directory(parserSrcDir).redirectError(tempFile).start().waitFor();
+                    if (rc != 0) {
+                        String out = new String(Files.readAllBytes(tempFile.toPath()));
+                        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, //
+                                        String.format("Parser failed to execute command %s. Return code %s.%nOutput:%s", Arrays.toString(command), rc, out), element);
+                        return false;
+                    }
+                } finally {
+                    tempFile.delete();
                 }
                 // Now create the actual source files, copying the ANTLR output
                 createSourceFile(filer, pkg, "RParser", antlrGenDir);
                 createSourceFile(filer, pkg, "RLexer", antlrGenDir);
             } catch (Exception ex) {
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "exec of Parser generator failed: " + ex);
+                handleThrowable(ex, element);
                 return false;
             } finally {
                 if (antlrGenDir != null) {
@@ -77,6 +85,20 @@ public class GenerateRParserProcessor extends AbstractProcessor {
             }
         }
         return true;
+    }
+
+    private void handleThrowable(Throwable t, Element e) {
+        String message = "Uncaught error in " + getClass().getSimpleName() + " while processing " + e + " ";
+        processingEnv.getMessager().printMessage(Kind.ERROR, message + ": " + printException(t), e);
+    }
+
+    private static String printException(Throwable e) {
+        StringWriter string = new StringWriter();
+        PrintWriter writer = new PrintWriter(string);
+        e.printStackTrace(writer);
+        writer.flush();
+        string.flush();
+        return e.getMessage() + "\n" + string.toString();
     }
 
     private static File join(File parent, String... args) {
@@ -94,6 +116,7 @@ public class GenerateRParserProcessor extends AbstractProcessor {
         try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(antlrFile)); BufferedOutputStream os = new BufferedOutputStream(file.openOutputStream())) {
             is.read(content);
             os.write("// GENERATED CONTENT - DO NOT EDIT\n".getBytes());
+            os.write("// Checkstyle: stop\n".getBytes());
             os.write(content);
         }
     }
