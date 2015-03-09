@@ -172,7 +172,7 @@ public class RNodeTimer {
                                 } else {
                                     long[] time = createLineTimes(fdi);
                                     int startLine = ss.getStartLine();
-                                    int lastLine = fdi.source.getLineNumber(ss.getCharEndIndex() - 1);
+                                    int lastLine = ss.getEndLine();
                                     for (int i = startLine; i <= lastLine; i++) {
                                         RPerfStats.out().printf("%8dms: %s%n", time[i], fdi.source.getCode(i));
                                     }

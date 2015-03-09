@@ -135,7 +135,7 @@ public abstract class Parse extends RBuiltinNode {
             return RDataFactory.createExpression(RDataFactory.createList());
         }
         try {
-            Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn);
+            Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
             RExpression exprs = RContext.getEngine().parse(source);
             if (n > 0 && n > exprs.getLength()) {
                 RList list = exprs.getList();
@@ -181,7 +181,7 @@ public abstract class Parse extends RBuiltinNode {
                 } else {
                     path = fileName;
                 }
-                return createFileSource(path);
+                return createFileSource(path, coalescedLines);
             } else {
                 return Source.asPseudoFile(coalescedLines, "<parse>");
             }
@@ -190,25 +190,21 @@ public abstract class Parse extends RBuiltinNode {
             if (srcFileText.equals("<text>")) {
                 return Source.asPseudoFile(coalescedLines, "<parse>");
             } else {
-                return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText));
+                return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines);
             }
         }
 
     }
 
-    private static Source createSource(RConnection conn) {
+    private static Source createSource(RConnection conn, String coalescedLines) {
         // TODO check if file
         String path = ConnectionSupport.getBaseConnection(conn).getSummaryDescription();
-        return createFileSource(path);
+        return createFileSource(path, coalescedLines);
     }
 
-    private static Source createFileSource(String path) {
+    private static Source createFileSource(String path, CharSequence chars) {
         try {
-            /*
-             * Although we have read the source, it will be re-read in parse as there is currently
-             * no way to pass the source we have to Source.fromFileName.
-             */
-            return Source.fromFileName(path);
+            return Source.fromFileName(chars, path);
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -222,8 +218,8 @@ public abstract class Parse extends RBuiltinNode {
             int[] llocData = new int[8];
             int startLine = ss.getStartLine();
             int startColumn = ss.getStartColumn();
-            int lastLine = source.getLineNumber(ss.getCharEndIndex() - 1);
-            int lastColumn = source.getColumnNumber(ss.getCharEndIndex() - 1) - 1;
+            int lastLine = ss.getEndLine();
+            int lastColumn = ss.getEndColumn();
             // no multi-byte support, so byte==line
             llocData[0] = startLine;
             llocData[1] = startColumn;
