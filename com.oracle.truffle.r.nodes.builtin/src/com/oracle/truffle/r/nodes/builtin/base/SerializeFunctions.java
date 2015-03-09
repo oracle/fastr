@@ -37,13 +37,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public class SerializeFunctions {
 
-    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
-    public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
-        @Specialization
-        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
-            return doUnserializeFromConn(conn, null, RArguments.getDepth(frame));
-        }
-
+    public abstract static class Adapter extends RInvisibleBuiltinNode {
         @TruffleBoundary
         protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook, int depth) {
             controlVisibility();
@@ -56,20 +50,6 @@ public class SerializeFunctions {
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
-        }
-
-        @Specialization
-        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
-            // TODO figure out what this really means?
-            return doUnserializeFromConn(frame, conn, RNull.instance);
-        }
-    }
-
-    @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
-    public abstract static class SerializeToConn extends RInvisibleBuiltinNode {
-        @Specialization
-        protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
         }
 
         @TruffleBoundary
@@ -91,4 +71,51 @@ public class SerializeFunctions {
         }
     }
 
+    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
+    public abstract static class UnserializeFromConn extends Adapter {
+        @Specialization
+        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+            return doUnserializeFromConn(conn, null, RArguments.getDepth(frame));
+        }
+
+        @Specialization
+        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
+            // TODO figure out what this really means?
+            return doUnserializeFromConn(frame, conn, RNull.instance);
+        }
+    }
+
+    @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    public abstract static class SerializeToConn extends Adapter {
+        @Specialization
+        protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
+            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+        }
+
+    }
+
+    @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"})
+    public abstract static class Unserialize extends Adapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object unSerialize(VirtualFrame frame, RConnection conn, RNull refhook) {
+            return doUnserializeFromConn(conn, null, RArguments.getDepth(frame));
+        }
+    }
+
+    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    public abstract static class Serialize extends Adapter {
+        @Specialization
+        protected Object serialize(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
+            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+        }
+    }
+
+    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    public abstract static class SerializeB extends Adapter {
+        @Specialization
+        protected Object serializeB(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
+            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+        }
+    }
 }

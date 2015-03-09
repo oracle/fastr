@@ -83,7 +83,12 @@ public class SocketConnections {
             this.socket = socketArg;
             this.socketChannel = socket.getChannel();
             if (thisBase.blocking) {
-                socket.setSoTimeout(thisBase.timeout * 1000);
+                // Java (int) timeouts do not meet the POSIX standard of 31 days
+                long millisTimeout = ((long) thisBase.timeout) * 1000;
+                if (millisTimeout > Integer.MAX_VALUE) {
+                    millisTimeout = Integer.MAX_VALUE;
+                }
+                socket.setSoTimeout((int) millisTimeout);
             } else {
                 socketChannel.configureBlocking(false);
             }
