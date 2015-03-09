@@ -42,7 +42,9 @@ public class FastRFunctionEntry {
             fastRNode.forceVisibility(false);
             FastROptions.debugUpdate(checkString(argValues[0], fastRNode));
             return RNull.instance;
-
+        } else if (name.equals("inspect")) {
+            fastRNode.forceVisibility(false);
+            return FastRInspect.inspect(argValues);
         }
         // The remainder all take a func argument
         RFunction func = checkFunction(arg0, fastRNode);

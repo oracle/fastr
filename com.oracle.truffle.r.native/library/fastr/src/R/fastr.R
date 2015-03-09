@@ -43,3 +43,4 @@ fastr.stacktrace <- function(print.frame.contents=TRUE) .FastR(.NAME="stacktrace
 
 fastr.debug <- function(element) .FastR(.NAME="debug", element)
 
+fastr.inspect <- function(...) .FastR(.NAME="inspect", ...)
