@@ -56,6 +56,10 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         super(rep);
     }
 
+    public RType getRType() {
+        return RType.Language;
+    }
+
     public RAttributes getAttributes() {
         return attributes;
     }

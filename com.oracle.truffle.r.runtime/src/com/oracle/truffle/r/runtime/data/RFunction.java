@@ -58,6 +58,11 @@ public final class RFunction extends RScalar implements RAttributable {
         this.enclosingFrame = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
     }
 
+    @Override
+    public RType getRType() {
+        return isBuiltin() ? RType.Builtin : RType.Closure;
+    }
+
     public boolean isBuiltin() {
         return builtin != null;
     }

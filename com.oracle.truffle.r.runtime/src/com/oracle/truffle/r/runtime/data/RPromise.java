@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotIn
  * which is used for manual method dispatch.
  */
 @ValueType
-public class RPromise extends RLanguageRep {
+public class RPromise extends RLanguageRep implements RTypedValue {
 
     /**
      * The policy used to evaluate a promise.
@@ -199,6 +199,10 @@ public class RPromise extends RLanguageRep {
         // Not needed as already evaluated:
         this.execFrame = null;
         this.closure = null;
+    }
+
+    public RType getRType() {
+        return RType.Promise;
     }
 
     public final boolean isInlined() {

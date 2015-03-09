@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RExpression implements RShareable, RAbstractContainer {
@@ -30,6 +31,10 @@ public class RExpression implements RShareable, RAbstractContainer {
 
     public RExpression(RList data) {
         this.data = data;
+    }
+
+    public RType getRType() {
+        return RType.Expression;
     }
 
     public RList getList() {

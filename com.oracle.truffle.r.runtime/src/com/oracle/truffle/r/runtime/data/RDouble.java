@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.*;
 
 @ValueType
 public final class RDouble extends RScalar {
@@ -36,6 +37,11 @@ public final class RDouble extends RScalar {
 
     public double getValue() {
         return value;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Double;
     }
 
     @Override

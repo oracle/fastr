@@ -39,6 +39,11 @@ public final class RInt extends RScalar {
     }
 
     @Override
+    public RType getRType() {
+        return RType.Integer;
+    }
+
+    @Override
     public String toString() {
         return RRuntime.intToString(value);
     }

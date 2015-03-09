@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.*;
 
-public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTypedValue {
+/**
+ * Interface for R values that are publicly flowing through the interpreter. Be aware that also the
+ * primitive values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are
+ * not implementing this interface.
+ */
+public interface RTypedValue {
 
-    boolean isComplete();
+    RType getRType();
 
-    int getLength();
-
-    boolean hasDimensions();
-
-    int[] getDimensions();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    RShareable materializeToShareable();
-
-    Object getDataAtAsObject(int index);
-
-    RStringVector getNames(RAttributeProfiles attrProfiles);
-
-    RList getDimNames();
-
-    Object getRowNames(RAttributeProfiles attrProfiles);
-
-    /**
-     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
-     */
-    boolean isObject(RAttributeProfiles attrProfiles);
 }

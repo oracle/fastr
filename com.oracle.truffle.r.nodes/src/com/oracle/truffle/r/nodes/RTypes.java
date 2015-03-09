@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.env.*;
                 RRawVector.class, RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REnvironment.class, RExpression.class,
                 RConnection.class, MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
                 RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RDataFrame.class, RFactor.class, RSymbol.class, RPromise.class, RLanguage.class,
-                RPairList.class, RFormula.class, RExternalPtr.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RType.class, Object[].class})
+                RPairList.class, RFormula.class, RExternalPtr.class, RAbstractContainer.class, RAttributable.class, RTypedValue.class, RArgsValuesAndNames.class, RType.class, Object[].class})
 public class RTypes {
 
     @TypeCheck(RNull.class)

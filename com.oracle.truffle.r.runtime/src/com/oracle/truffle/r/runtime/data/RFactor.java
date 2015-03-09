@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RFactor implements RShareable, RAbstractContainer {
@@ -33,6 +34,10 @@ public final class RFactor implements RShareable, RAbstractContainer {
     public RFactor(RIntVector vector, boolean ordered) {
         this.vector = vector;
         this.ordered = ordered;
+    }
+
+    public RType getRType() {
+        return RType.Integer;
     }
 
     public RIntVector getVector() {

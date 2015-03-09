@@ -79,7 +79,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * most one for a function frame, allowing equality to be tested using {@code ==}.
  *
  */
-public abstract class REnvironment extends RAttributeStorage implements RAttributable {
+public abstract class REnvironment extends RAttributeStorage implements RAttributable, RTypedValue {
 
     /**
      * Controls whether a separate frame, with a different enclosing frame is created to the
@@ -116,6 +116,10 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private final String name;
     final REnvFrameAccess frameAccess;
     private boolean locked;
+
+    public RType getRType() {
+        return RType.Environment;
+    }
 
     /**
      * Value returned by {@code emptyenv()}.
