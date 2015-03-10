@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
+import java.lang.ProcessBuilder.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -43,6 +44,9 @@ public abstract class SystemFunction extends RBuiltinNode {
             shell = "/bin/sh";
         }
         ProcessBuilder pb = new ProcessBuilder(shell, "-c", command.getDataAt(0));
+        pb.redirectInput(Redirect.INHERIT);
+        pb.redirectOutput(Redirect.INHERIT);
+        pb.redirectError(Redirect.INHERIT);
         int rc;
         try {
             Process p = pb.start();
