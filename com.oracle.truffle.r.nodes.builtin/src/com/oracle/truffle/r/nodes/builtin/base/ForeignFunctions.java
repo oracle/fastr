@@ -824,6 +824,32 @@ public class ForeignFunctions {
             return matchName(f, "qgamma");
         }
 
+        @Specialization(guards = "isDownload(f)")
+        protected int doDownload(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            String url = isString(argValues[0]);
+            String destFile = isString(argValues[1]);
+            byte quiet = castLogical(frame, castVector(frame, argValues[2]));
+            String mode = isString(argValues[3]);
+            byte cacheOK = castLogical(frame, castVector(frame, argValues[4]));
+            if (url == null || destFile == null || mode == null) {
+                errorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            }
+            try {
+                Download.download(url, destFile, RRuntime.fromLogical(quiet), mode, RRuntime.fromLogical(cacheOK));
+                return 0;
+            } catch (IOException ex) {
+                errorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
+        public boolean isDownload(RList f) {
+            return matchName(f, "download");
+        }
+
     }
 
     @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
