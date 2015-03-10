@@ -306,10 +306,10 @@ public class FileFunctions {
             // @formatter:off
             switch(column) {
                 case size: ((double[]) data[slot])[index] = (double) value; complete[slot] = (double) value != RRuntime.DOUBLE_NA; return;
-                case isdir: ((byte[]) data[slot])[index] = (byte) value; complete[slot] = (byte) value == RRuntime.LOGICAL_NA; return;
+                case isdir: ((byte[]) data[slot])[index] = (byte) value; complete[slot] = (byte) value != RRuntime.LOGICAL_NA; return;
                 case mode: case mtime: case ctime: case atime:
-                case uid: case gid: ((int[]) data[slot])[index] = (int) value; complete[slot] = (int) value == RRuntime.INT_NA; return;
-                case uname: case grname: ((String[]) data[slot])[index] = (String) value; complete[slot] = (String) value == RRuntime.STRING_NA; return;
+                case uid: case gid: ((int[]) data[slot])[index] = (int) value; complete[slot] = (int) value != RRuntime.INT_NA; return;
+                case uname: case grname: ((String[]) data[slot])[index] = (String) value; complete[slot] = (String) value != RRuntime.STRING_NA; return;
                 default: throw RInternalError.shouldNotReachHere();
             }
             // @formatter:on
