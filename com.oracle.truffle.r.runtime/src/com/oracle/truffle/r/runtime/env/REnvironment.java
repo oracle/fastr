@@ -80,11 +80,14 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  *
  */
 public abstract class REnvironment extends RAttributeStorage implements RAttributable {
-    public enum PackageKind {
-        PACKAGE,
-        IMPORTS,
-        NAMESPACE
-    }
+
+    /**
+     * Controls whether a separate frame, with a different enclosing frame is created to the
+     * "namespace:base" environment. This is correct semantics and required to resolve unqualified
+     * references to names between packages, but requires a fix to {@link FrameSlotChangeMonitor} to
+     * work. TODO Remove once fix in place.
+     */
+    private static final boolean NS_BASE_FRAME = false;
 
     public static class PutException extends RErrorException {
         private static final long serialVersionUID = 1L;
@@ -190,17 +193,15 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * The base "package" is special, it has no "imports" and the parent of its associated namespace
      * is {@link #globalEnv}. Unlike other packages, there is no difference between the bindings in
      * "package:base" and its associated namespace. The way this is implemented in FastR is that the
-     * {@link #frameAccess} value is identical for both environments. I.e. they share the same
-     * underlying frame. N.B. Although the {@link #parent} field of "namespace:base" is
-     * {@link #globalEnv} the {@code enclosingFrame} does NOT reference {@code globalFrame} as this
-     * would produce a circularity in the Truffle search logic.
-     *
-     * TODO neither of these frames really need to be a Truffle frames.
+     * underlying {@link MaterializedFrame} is shared. The {@link #frameAccess} value for
+     * "namespace:base" refers to {@link NSBaseMaterializedFrame}, which delegates all its
+     * operations to {@code baseFrame}, but it's "enclosingFrame" field in {@link RArguments}
+     * differs, referring to {@code globalFrame}.
      */
     public static void baseInitialize(MaterializedFrame globalFrame, MaterializedFrame baseFrame) {
 
         namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
-        baseEnv = new Base(baseFrame);
+        baseEnv = new Base(baseFrame, globalFrame);
 
         globalEnv = new Global(baseEnv, globalFrame);
         baseEnv.namespaceEnv.parent = globalEnv;
@@ -653,6 +654,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
             namespaceRegistry.safePut(name, this);
+            if (NS_BASE_FRAME) {
+                RArguments.setEnvironment(frameAccess.getFrame(), this);
+            }
         }
 
         @Override
@@ -664,17 +668,21 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final class Base extends REnvironment {
         private final BaseNamespace namespaceEnv;
 
-        private Base(MaterializedFrame frame) {
-            super(emptyEnv, "base", frame);
-            // The namespace parent will change to globalEnv once that is created
-            // (circular dependency)
-            this.namespaceEnv = new BaseNamespace(emptyEnv, "base", this.frameAccess);
-            RArguments.setEnclosingFrame(frame, parent.getFrame());
-            // This is important so that "environment(func)" gives the correct
-            // answer for functions defined in base. The sharing of the
-            // frame would otherwise report "package:base"
-            RArguments.setEnvironment(frame, this.namespaceEnv);
-
+        private Base(MaterializedFrame baseFrame, MaterializedFrame globalFrame) {
+            super(emptyEnv, "base", baseFrame);
+            /*
+             * We create the NSBaseMaterializedFrame using globalFrame as the enclosing frame. The
+             * namespaceEnv parent field will change to globalEnv after the latter is created
+             */
+            MaterializedFrame nsFrame = new NSBaseMaterializedFrame(baseFrame, globalFrame);
+            REnvFrameAccess baseFrameAccess = NS_BASE_FRAME ? new REnvTruffleFrameAccess(nsFrame) : this.frameAccess;
+            this.namespaceEnv = new BaseNamespace(emptyEnv, "base", baseFrameAccess);
+            if (!NS_BASE_FRAME) {
+                // This is important so that "environment(func)" gives the correct
+                // answer for functions defined in base. The sharing of the
+                // frame would otherwise report "package:base"
+                RArguments.setEnvironment(baseFrame, this.namespaceEnv);
+            }
         }
 
         @Override

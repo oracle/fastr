@@ -53,7 +53,7 @@ public abstract class Switch extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(guards = "isLengthOne")
+    @Specialization(guards = "isLengthOne(x)")
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         return prepareResult(doSwitchString(frame, x, optionalArgs));

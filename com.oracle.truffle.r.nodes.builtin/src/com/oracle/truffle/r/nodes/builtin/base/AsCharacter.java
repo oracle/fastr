@@ -120,25 +120,26 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(0);
     }
 
-    @Specialization(guards = "!isObject")
-    protected RStringVector doStringVector(RStringVector vector) {
+    @Specialization(guards = "!isObject(frame, vector)")
+    protected RStringVector doStringVector(@SuppressWarnings("unused") VirtualFrame frame, RStringVector vector) {
         controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
-    @Specialization(guards = "!isObject")
-    protected RStringVector doList(@SuppressWarnings("unused") RList list) {
+    @Specialization(guards = "!isObject(frame, list)")
+    @SuppressWarnings("unused")
+    protected RStringVector doList(VirtualFrame frame, RList list) {
         controlVisibility();
         throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
     }
 
-    @Specialization(guards = "!isObject")
+    @Specialization(guards = "!isObject(frame, container)")
     protected RStringVector doVector(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         return castStringVector(frame, container);
     }
 
-    @Specialization(guards = "isObject")
+    @Specialization(guards = "isObject(frame, container)")
     protected Object doObject(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         if (dcn == null) {

@@ -91,13 +91,7 @@ public abstract class Repeat extends RBuiltinNode {
         return arguments;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean eachGreaterOne(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
-        return each > 1;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean hasNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected boolean hasNames(RAbstractVector x) {
         return x.getNames(attrProfiles) != null;
     }
 
@@ -105,7 +99,7 @@ public abstract class Repeat extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "times");
     }
 
-    @Specialization(guards = {"eachGreaterOne", "!hasNames"})
+    @Specialization(guards = {"each > 1", "!hasNames(x)"})
     public RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
             errorBranch.enter();
@@ -119,7 +113,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"!eachGreaterOne", "!hasNames"})
+    @Specialization(guards = {"each <= 1", "!hasNames(x)"})
     public RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             return handleLengthOut(x, lengthOut, true);
@@ -128,7 +122,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"eachGreaterOne", "hasNames"})
+    @Specialization(guards = {"each > 1", "hasNames(x)"})
     public RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
             errorBranch.enter();
@@ -149,7 +143,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"!eachGreaterOne", "hasNames"})
+    @Specialization(guards = {"each <= 1", "hasNames(x)"})
     public RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             RStringVector names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);

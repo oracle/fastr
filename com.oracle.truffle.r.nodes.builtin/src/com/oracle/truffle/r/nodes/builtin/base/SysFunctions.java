@@ -160,7 +160,7 @@ public class SysFunctions {
             return RNull.instance;
         }
 
-        @Specialization(guards = "lengthOne")
+        @Specialization(guards = "lengthOne(secondsVector)")
         @TruffleBoundary
         protected Object sysSleep(RStringVector secondsVector) {
             controlVisibility();

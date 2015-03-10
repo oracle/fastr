@@ -241,7 +241,7 @@ public class HiddenInternalFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_DLLINFO);
         }
 
-        @Specialization(guards = "isDLLInfo")
+        @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
             Object[] data = new Object[NAMES.getLength()];

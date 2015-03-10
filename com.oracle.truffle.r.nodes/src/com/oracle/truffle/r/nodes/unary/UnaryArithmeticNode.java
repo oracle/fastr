@@ -82,7 +82,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         ret.copyNamesFrom(attrProfiles, v);
     }
 
-    @Specialization(guards = "isComplete")
+    @Specialization(guards = "operands.isComplete()")
     protected RDoubleVector doDoubleVector(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -93,7 +93,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return ret;
     }
 
-    @Specialization(guards = "!isComplete")
+    @Specialization(guards = "!operands.isComplete()")
     protected RDoubleVector doDoubleVectorNA(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -108,7 +108,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return ret;
     }
 
-    @Specialization(guards = "isComplete")
+    @Specialization(guards = "operands.isComplete()")
     protected RComplexVector doComplexVector(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -121,7 +121,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return ret;
     }
 
-    @Specialization(guards = "!isComplete")
+    @Specialization(guards = "!operands.isComplete()")
     protected RComplexVector doComplexVectorNA(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -139,7 +139,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return ret;
     }
 
-    @Specialization(guards = "isComplete")
+    @Specialization(guards = "operands.isComplete()")
     protected RIntVector doIntVector(RAbstractIntVector operands) {
         int[] res = new int[operands.getLength()];
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -150,7 +150,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return ret;
     }
 
-    @Specialization(guards = "!isComplete")
+    @Specialization(guards = "!operands.isComplete()")
     protected RIntVector doIntVectorNA(RAbstractIntVector operands) {
         int[] res = new int[operands.getLength()];
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -165,12 +165,12 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return ret;
     }
 
-    @Specialization(guards = "isComplete")
+    @Specialization(guards = "operands.isComplete()")
     protected RIntVector doLogicalVector(RAbstractLogicalVector operands) {
         return doIntVector(RClosures.createLogicalToIntVector(operands, na));
     }
 
-    @Specialization(guards = "!isComplete")
+    @Specialization(guards = "!operands.isComplete()")
     protected RIntVector doLogicalVectorNA(RAbstractLogicalVector operands) {
         return doIntVectorNA(RClosures.createLogicalToIntVector(operands, na));
     }
@@ -180,7 +180,4 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         throw RError.error(getEncapsulatingSourceSection(), error);
     }
 
-    protected static boolean isComplete(RAbstractVector cv) {
-        return cv.isComplete();
-    }
 }

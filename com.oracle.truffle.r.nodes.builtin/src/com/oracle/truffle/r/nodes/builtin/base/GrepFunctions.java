@@ -108,15 +108,10 @@ public class GrepFunctions {
             }
         }
 
-        @SuppressWarnings("unused")
-        protected boolean isFixed(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected boolean isTrue(byte fixed) {
             return RRuntime.fromLogical(fixed);
         }
 
-        @SuppressWarnings("unused")
-        protected boolean isValue(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
-            return RRuntime.fromLogical(value);
-        }
     }
 
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
@@ -126,7 +121,7 @@ public class GrepFunctions {
             return vector.getLength() == 1 && RRuntime.isNA(vector.getDataAt(0)) && perl == RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isValue")
+        @Specialization(guards = "!isTrue(value)")
         @TruffleBoundary
         protected RIntVector grepValueFalse(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed,
                         byte useBytes, byte invert) {
@@ -169,7 +164,7 @@ public class GrepFunctions {
             }
         }
 
-        @Specialization(guards = "isValue")
+        @Specialization(guards = "isTrue(value)")
         @TruffleBoundary
         protected RStringVector grepValueTrue(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, @SuppressWarnings("unused") byte value, byte perl, byte fixed,
                         byte useBytes, byte invert) {
@@ -220,7 +215,7 @@ public class GrepFunctions {
     // invert is passed but is always FALSE
     public abstract static class GrepL extends CommonCodeAdapter {
 
-        @Specialization(guards = "!isFixed")
+        @Specialization(guards = "!isTrue(fixed)")
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object grepl(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
@@ -234,7 +229,7 @@ public class GrepFunctions {
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization(guards = "isFixed")
+        @Specialization(guards = "isTrue(fixed)")
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object greplFixed(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,7 +101,7 @@ public abstract class Diag extends RBuiltinNode {
         return dim(val, rows, rows);
     }
 
-    @Specialization(guards = "isMatrix")
+    @Specialization(guards = "isMatrix(vector)")
     protected RIntVector dimWithDimensions(RIntVector vector, Object rows, Object cols) {
         controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
@@ -118,7 +118,7 @@ public abstract class Diag extends RBuiltinNode {
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
-    @Specialization(guards = "isMatrix")
+    @Specialization(guards = "isMatrix(vector)")
     protected RDoubleVector dimWithDimensions(RDoubleVector vector, Object rows, Object cols) {
         controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
@@ -135,11 +135,11 @@ public abstract class Diag extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, check.neverSeenNA());
     }
 
-    public static boolean isMatrix(RIntVector vector, Object rows, Object cols) {
+    public static boolean isMatrix(RIntVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
 
-    public static boolean isMatrix(RDoubleVector vector, Object rows, Object cols) {
+    public static boolean isMatrix(RDoubleVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
 }

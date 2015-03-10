@@ -93,7 +93,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return v;
     }
 
-    @Specialization(guards = "isZeroLength")
+    @Specialization(guards = "isZeroLength(list)")
     @TruffleBoundary
     protected RAbstractVector updateDimnamesEmpty(RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
@@ -102,7 +102,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return v;
     }
 
-    @Specialization(guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength(list)")
     protected RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
@@ -110,7 +110,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return v;
     }
 
-    @Specialization(guards = "!isVectorList")
+    @Specialization(guards = "!isVectorList(v)")
     protected RAbstractVector updateDimnamesError(RAbstractVector vector, RAbstractVector v) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
@@ -124,11 +124,11 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
-    protected boolean isVectorList(RAbstractVector vector, RAbstractVector v) {
+    protected boolean isVectorList(RAbstractVector v) {
         return v instanceof RList;
     }
 
-    protected boolean isZeroLength(VirtualFrame frame, RAbstractVector vector, RList list) {
+    protected boolean isZeroLength(RList list) {
         return list.getLength() == 0;
     }
 }

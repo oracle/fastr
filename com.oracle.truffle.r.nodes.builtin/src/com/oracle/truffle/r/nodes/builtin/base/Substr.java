@@ -46,21 +46,21 @@ public abstract class Substr extends RBuiltinNode {
     private final ConditionProfile naIndexesProfile = ConditionProfile.createBinaryProfile();
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "emptyArg")
+    @Specialization(guards = "emptyArg(arg)")
     protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!emptyArg", "wrongParams"})
+    @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
     @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
-    @Specialization(guards = {"!emptyArg", "!wrongParams"})
+    @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
     @ExplodeLoop
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         controlVisibility();
@@ -132,12 +132,11 @@ public abstract class Substr extends RBuiltinNode {
     // return x.substring(actualStart - 1, actualStop);
     // }
 
-    @SuppressWarnings("unused")
-    protected boolean emptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean emptyArg(RAbstractStringVector arg) {
         return arg.getLength() == 0;
     }
 
-    protected boolean wrongParams(@SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean wrongParams(RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }

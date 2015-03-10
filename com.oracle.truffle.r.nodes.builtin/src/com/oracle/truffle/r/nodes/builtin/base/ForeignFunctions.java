@@ -85,7 +85,7 @@ public class ForeignFunctions {
         private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "dqrdc2")
+        @Specialization(guards = "dqrdc2(f)")
         protected RList fortranDqrdc2(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -128,7 +128,7 @@ public class ForeignFunctions {
         private static final RStringVector DQRCF_NAMES = RDataFactory.createStringVector(new String[]{E, E, E, E, E, E, "coef", "info"}, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "dqrcf")
+        @Specialization(guards = "dqrcf(f)")
         protected RList fortranDqrcf(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -304,7 +304,7 @@ public class ForeignFunctions {
 
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
-        @Specialization(guards = "fft")
+        @Specialization(guards = "fft(f)")
         protected RComplexVector callFFT(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -373,7 +373,7 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "initMethodDispatch")
+        @Specialization(guards = "initMethodDispatch(f)")
         @TruffleBoundary
         protected REnvironment initMethodDispatch(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
@@ -389,7 +389,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @TruffleBoundary
-        @Specialization(guards = "methodsPackageMetaName")
+        @Specialization(guards = "methodsPackageMetaName(f)")
         protected String callMethodsPackageMetaName(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -406,7 +406,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @TruffleBoundary
-        @Specialization(guards = "getClassFromCache")
+        @Specialization(guards = "getClassFromCache(f)")
         protected Object callGetClassFromCache(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -425,7 +425,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @TruffleBoundary
-        @Specialization(guards = "setMethodDispatch")
+        @Specialization(guards = "setMethodDispatch(f)")
         protected Object callSetMethodDispatch(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -458,7 +458,7 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isFlushconsole")
+        @Specialization(guards = "isFlushconsole(f)")
         protected RNull flushConsole(RList f, RArgsValuesAndNames args, RMissing packageName) {
             return RNull.instance;
         }
@@ -468,7 +468,7 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isCrc64")
+        @Specialization(guards = "isCrc64(f)")
         protected String crc64(RList f, RArgsValuesAndNames args, RMissing packageName) {
             Object[] argValues = args.getValues();
             String input = RRuntime.asString(argValues[0]);
@@ -480,7 +480,7 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isMenu")
+        @Specialization(guards = "isMenu(f)")
         @TruffleBoundary
         protected int menu(RList f, RArgsValuesAndNames args, RMissing packageName) {
             Object[] values = args.getValues();
@@ -500,7 +500,7 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isCairoProps")
+        @Specialization(guards = "isCairoProps(f)")
         protected byte cairoProps(RList f, RArgsValuesAndNames args, RMissing packageName) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -510,7 +510,7 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isMakeQuartzDefault")
+        @Specialization(guards = "isMakeQuartzDefault(f)")
         protected byte makeQuartzDefault(RList f, RArgsValuesAndNames args, RMissing packageName) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -519,7 +519,7 @@ public class ForeignFunctions {
             return matchName(f, "makeQuartzDefault");
         }
 
-        @Specialization(guards = "isCor")
+        @Specialization(guards = "isCor(f)")
         protected Object doCor(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return doCovCor(frame, false, args);
         }
@@ -528,7 +528,7 @@ public class ForeignFunctions {
             return matchName(f, "cor");
         }
 
-        @Specialization(guards = "isCov")
+        @Specialization(guards = "isCov(f)")
         protected Object doCov(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return doCovCor(frame, true, args);
         }
@@ -555,7 +555,7 @@ public class ForeignFunctions {
 
         }
 
-        @Specialization(guards = "isSplineCoef")
+        @Specialization(guards = "isSplineCoef(f)")
         protected RList splineCoef(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             Object[] argValues = args.getValues();
             int method = castInt(frame, castVector(frame, argValues[0]));
@@ -568,7 +568,7 @@ public class ForeignFunctions {
             return matchName(f, "SplineCoef");
         }
 
-        @Specialization(guards = "isSplineEval")
+        @Specialization(guards = "isSplineEval(f)")
         protected RDoubleVector splineEval(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             Object[] argValues = args.getValues();
             RDoubleVector xout = (RDoubleVector) castVector(frame, argValues[0]);
@@ -694,7 +694,7 @@ public class ForeignFunctions {
 
         // Transcribed from GnuR, library/utils/src/io.c
         @SuppressWarnings("unused")
-        @Specialization(guards = "isCountFields")
+        @Specialization(guards = "isCountFields(f)")
         protected Object countFields(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -756,7 +756,7 @@ public class ForeignFunctions {
             return matchName(f, "countfields");
         }
 
-        @Specialization(guards = "isReadTableHead")
+        @Specialization(guards = "isReadTableHead(f)")
         protected Object doReadTableHead(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             // TODO This is quite incomplete and just uses readLines, which works for some inputs
             controlVisibility();
@@ -775,7 +775,7 @@ public class ForeignFunctions {
             return matchName(f, "readtablehead");
         }
 
-        @Specialization(guards = "isRnorm")
+        @Specialization(guards = "isRnorm(f)")
         protected Object doRnorm(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -790,7 +790,7 @@ public class ForeignFunctions {
             return matchName(f, "rnorm");
         }
 
-        @Specialization(guards = "isRunif")
+        @Specialization(guards = "isRunif(f)")
         protected Object doRunif(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -805,7 +805,7 @@ public class ForeignFunctions {
             return matchName(f, "runif");
         }
 
-        @Specialization(guards = "isQgamma")
+        @Specialization(guards = "isQgamma(f)")
         protected RDoubleVector doQgamma(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -832,7 +832,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         // Transcribed from GnuR, library/utils/src/io.c
-        @Specialization(guards = "isWriteTable")
+        @Specialization(guards = "isWriteTable(f)")
         protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -920,7 +920,7 @@ public class ForeignFunctions {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "isTypeConvert")
+        @Specialization(guards = "isTypeConvert(f)")
         protected Object doTypeConvert(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             Object[] argValues = args.getValues();
@@ -936,7 +936,7 @@ public class ForeignFunctions {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "isPar")
+        @Specialization(guards = "isPar(f)")
         protected Object doPar(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             return GraphicsCCalls.par(args);
@@ -950,7 +950,7 @@ public class ForeignFunctions {
     @RBuiltin(name = ".External.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
     public abstract static class DotExternalGraphics extends CastAdapter {
         @TruffleBoundary
-        @Specialization(guards = "isPlotXY")
+        @Specialization(guards = "isPlotXY(f)")
         protected RNull doPlotXY(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             GraphicsCCalls.plotXy((RDoubleVector) args.getValues()[0]);

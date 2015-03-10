@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Multiply;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@GenerateNodeFactory
 public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Child private BinaryArithmetic arithmetic;
@@ -104,44 +103,44 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return arithmetic instanceof Multiply;
     }
 
-    @Specialization(guards = "isAdd")
+    @Specialization(guards = "isAdd()")
     protected RIntSequence doIntAdd(int left, RIntSequence right) {
         // TODO: handle cases that exit the int range
         return RDataFactory.createIntSequence(right.getStart() + left, right.getStride(), right.getLength());
     }
 
-    @Specialization(guards = "isMul")
+    @Specialization(guards = "isMul()")
     protected RIntSequence doIntMul(RIntSequence left, int right) {
         // TODO: handle cases that exit the int range
         return RDataFactory.createIntSequence(left.getStart() * right, left.getStride() * right, left.getLength());
     }
 
-    @Specialization(guards = "isAdd")
+    @Specialization(guards = "isAdd()")
     protected RDoubleSequence doDoubleAdd(int left, RDoubleSequence right) {
         return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
     }
 
-    @Specialization(guards = "isMul")
+    @Specialization(guards = "isMul()")
     protected RDoubleSequence doDoubleMul(RDoubleSequence left, int right) {
         return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
     }
 
-    @Specialization(guards = "isAdd")
+    @Specialization(guards = "isAdd()")
     protected RDoubleSequence doDoubleAdd(double left, RDoubleSequence right) {
         return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
     }
 
-    @Specialization(guards = "isMul")
+    @Specialization(guards = "isMul()")
     protected RDoubleSequence doDoubleMul(RDoubleSequence left, double right) {
         return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
     }
 
-    @Specialization(guards = "isAdd")
+    @Specialization(guards = "isAdd()")
     protected RDoubleSequence doDoubleAdd(double left, RIntSequence right) {
         return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
     }
 
-    @Specialization(guards = "isMul")
+    @Specialization(guards = "isMul()")
     protected RDoubleSequence doDoubleMul(RIntSequence left, double right) {
         return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
     }
@@ -189,7 +188,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "nonNumeric")
+    @Specialization(guards = "nonNumeric(right)")
     protected RComplexVector doLeftNull(RNull left, RAbstractVector right) {
         throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
@@ -224,7 +223,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "nonNumeric")
+    @Specialization(guards = "nonNumeric(left)")
     protected RComplexVector doRightNull(RAbstractVector left, RNull right) {
         throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
@@ -235,24 +234,24 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return RDataFactory.createEmptyDoubleVector();
     }
 
-    @Specialization(guards = "!isFactorRight")
+    @Specialization(guards = "!isFactor(right)")
     protected Object doLeftString(RAbstractStringVector left, RAbstractContainer right) {
         return doRightString(right, left);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isFactorLeft")
+    @Specialization(guards = "!isFactor(left)")
     protected Object doRightString(RAbstractContainer left, RAbstractStringVector right) {
         throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
-    @Specialization(guards = "!isFactorRight")
+    @Specialization(guards = "!isFactor(right)")
     protected Object doLeftRaw(RAbstractRawVector left, RAbstractContainer right) {
         return doRightRaw(right, left);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isFactorLeft")
+    @Specialization(guards = "!isFactor(left)")
     protected Object doRightRaw(RAbstractContainer left, RAbstractRawVector right) {
         throw RError.error(getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
@@ -263,7 +262,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     // int
 
-    @Specialization(guards = {"supportsIntResult"})
+    @Specialization(guards = {"supportsIntResult()"})
     public int doInt(int left, int right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
@@ -284,14 +283,14 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return performArithmeticDoubleEnableNACheck(left, rightNACheck.check(right) ? RRuntime.DOUBLE_NA : RRuntime.int2doubleNoCheck(right));
     }
 
-    @Specialization(guards = {"supportsIntResult"})
+    @Specialization(guards = {"supportsIntResult()"})
     protected int doInt(int left, byte right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         return performArithmeticEnableNACheck(left, rightNACheck.check(right) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(right));
     }
 
-    @Specialization(guards = {"supportsIntResult"})
+    @Specialization(guards = {"supportsIntResult()"})
     protected int doInt(byte left, int right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
@@ -308,17 +307,17 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return performArithmeticComplexEnableNACheck(left, RRuntime.int2complex(right));
     }
 
-    @Specialization(guards = {"!supportsIntResult"})
+    @Specialization(guards = {"!supportsIntResult()"})
     protected double doIntDouble(int left, int right) {
         return performArithmeticIntIntDoubleEnableNACheck(left, right);
     }
 
-    @Specialization(guards = {"!supportsIntResult"})
+    @Specialization(guards = {"!supportsIntResult()"})
     protected double doIntDouble(int left, byte right) {
         return performArithmeticIntIntDoubleEnableNACheck(left, RRuntime.logical2int(right));
     }
 
-    @Specialization(guards = {"!supportsIntResult"})
+    @Specialization(guards = {"!supportsIntResult()"})
     protected double doIntDouble(byte left, int right) {
         return performArithmeticIntIntDoubleEnableNACheck(RRuntime.logical2int(left), right);
     }
@@ -358,7 +357,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     // logical
 
-    @Specialization(guards = {"supportsIntResult"})
+    @Specialization(guards = {"supportsIntResult()"})
     protected int doLogical(byte left, byte right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
@@ -376,7 +375,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return performArithmeticComplexEnableNACheck(left, RRuntime.logical2complex(right));
     }
 
-    @Specialization(guards = {"!supportsIntResult"})
+    @Specialization(guards = {"!supportsIntResult()"})
     protected double doLogicalDouble(byte left, byte right) {
         return performArithmeticIntIntDoubleEnableNACheck(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
@@ -407,7 +406,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "differentDimensions")
+    @Specialization(guards = "differentDimensions(left, right)")
     protected RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
@@ -418,128 +417,128 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return vector.isTemporary();
     }
 
-    @Specialization(guards = {"supportsIntResult", "isTemporary(arguments[0])"})
+    @Specialization(guards = {"supportsIntResult()", "isTemporary(left)"})
     protected RIntVector doIntVectorScalar(RIntVector left, int right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         return performOpVectorScalar(left, RIntVector::getDataWithoutCopying, RDataFactory::createEmptyIntVector, (array, i) -> array[i] = performArithmetic(array[i], right));
     }
 
-    @Specialization(guards = {"supportsIntResult", "isTemporary(arguments[1])"})
+    @Specialization(guards = {"supportsIntResult()", "isTemporary(right)"})
     protected RIntVector doIntVectorScalar(int left, RIntVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         return performOpVectorScalar(right, RIntVector::getDataWithoutCopying, RDataFactory::createEmptyIntVector, (array, i) -> array[i] = performArithmetic(left, array[i]));
     }
 
-    @Specialization(guards = "!supportsIntResult")
+    @Specialization(guards = "!supportsIntResult()")
     protected RDoubleVector doIntVectorScalar(RIntVector left, double right) {
         return performOpDifferentLength(left, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
                         (array, i) -> array[i] = performArithmeticDouble(leftNACheck.convertIntToDouble(left.getDataAt(i)), right));
     }
 
-    @Specialization(guards = "!supportsIntResult")
+    @Specialization(guards = "!supportsIntResult()")
     protected RDoubleVector doIntVectorScalar(double left, RIntVector right) {
         return performOpDifferentLength(right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
                         (array, i) -> array[i] = performArithmeticDouble(left, rightNACheck.convertIntToDouble(right.getDataAt(i))));
     }
 
-    @Specialization(guards = {"!areSameLength", "supportsIntResult", "!differentDimensions"})
+    @Specialization(guards = {"!areSameLength(left, right)", "supportsIntResult()", "!differentDimensions(left, right)"})
     protected RIntVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = {"areSameLength", "supportsIntResult", "!differentDimensions"})
+    @Specialization(guards = {"areSameLength(left, right)", "supportsIntResult()", "!differentDimensions(left, right)"})
     protected RIntVector doIntVectorSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = {"!areSameLength", "!differentDimensions"})
+    @Specialization(guards = {"!areSameLength(left, right)", "!differentDimensions(left, right)"})
     protected RDoubleVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = {"areSameLength", "!differentDimensions"})
+    @Specialization(guards = {"areSameLength(left, right)", "!differentDimensions(left, right)"})
     protected RDoubleVector doIntVectorSameLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = {"!areSameLength", "!differentDimensions"})
+    @Specialization(guards = {"!areSameLength(left, right)", "!differentDimensions(left, right)"})
     protected RDoubleVector doIntVectorDifferentLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "!differentDimensions"})
+    @Specialization(guards = {"areSameLength(left, right)", "!differentDimensions(left, right)"})
     protected RDoubleVector doIntVectorIntVectorSameLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "supportsIntResult", "!differentDimensions"})
+    @Specialization(guards = {"!areSameLength(left, right)", "supportsIntResult()", "!differentDimensions(left, right)"})
     protected RIntVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "supportsIntResult()"})
     protected RIntVector doIntVectorSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpSameLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"!areSameLength(left, right)", "supportsIntResult()"})
     protected RIntVector doIntVectorDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = {"areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "supportsIntResult()"})
     protected RIntVector doIntVectorSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doIntVectorSameLength(RAbstractIntVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doIntVectorDifferentLength(RAbstractComplexVector left, RAbstractIntVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doIntVectorSameLength(RAbstractComplexVector left, RAbstractIntVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"!areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doIntVectorDoubleDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpDoubleDifferentLength(left, right);
     }
 
-    @Specialization(guards = {"areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doIntVectorDoubleSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpDoubleSameLength(left, right);
     }
 
-    @Specialization(guards = {"!areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"!areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doIntVectorDoubleDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDoubleDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doIntVectorDoubleSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDoubleSameLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"!areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doIntVectorDoubleDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpDoubleDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = {"areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doIntVectorDoubleSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpDoubleSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
@@ -550,14 +549,14 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return vector.isTemporary();
     }
 
-    @Specialization(guards = "isTemporary(arguments[0])")
+    @Specialization(guards = "isTemporary(left)")
     protected RDoubleVector doDoubleVectorScalarTempLeft(RDoubleVector left, double right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
         return performOpVectorScalar(left, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(array[i], right));
     }
 
-    @Specialization(guards = "isTemporary(arguments[1])")
+    @Specialization(guards = "isTemporary(right)")
     protected RDoubleVector doDoubleVectorScalarTempRight(double left, RDoubleVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
@@ -580,118 +579,118 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
                         (array, i) -> array[i] = performArithmeticDouble(left, right.getDataAt(i)));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RDoubleVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = {"areSameLength", "isTemporary(arguments[0])"})
+    @Specialization(guards = {"areSameLength(left, right)", "isTemporary(left)"})
     protected RDoubleVector doDoubleVectorTempLeft(RDoubleVector left, RDoubleVector right) {
         double[] rightArray = right.getDataWithoutCopying();
         return performOpVectorScalar(left, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(array[i], rightArray[i]));
     }
 
-    @Specialization(guards = {"areSameLength", "isTemporary(arguments[1])"})
+    @Specialization(guards = {"areSameLength(left, right)", "isTemporary(right)"})
     protected RDoubleVector doDoubleVectorTempRight(RDoubleVector left, RDoubleVector right) {
         double[] leftArray = left.getDataWithoutCopying();
         return performOpVectorScalar(right, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(leftArray[i], array[i]));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RDoubleVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(left, right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RDoubleVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RDoubleVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RDoubleVector doDoubleVectorDifferentLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RDoubleVector doDoubleVectorSameLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doDoubleVectorDifferentLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doDoubleVectorSameLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
     // logical vector and vectors
 
-    @Specialization(guards = {"!areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"!areSameLength(left, right)", "supportsIntResult()"})
     protected RIntVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "supportsIntResult()"})
     protected RIntVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doLogicalVectorDifferentLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doLogicalVectorSameLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"!areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"!areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doLogicalVectorDoubleDifferentLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDoubleDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(guards = {"areSameLength", "!supportsIntResult"})
+    @Specialization(guards = {"areSameLength(left, right)", "!supportsIntResult()"})
     protected RDoubleVector doLogicalVectorDoubleSameLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDoubleSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     // complex vector and vectors
 
-    @Specialization(guards = "!areSameLength")
+    @Specialization(guards = "!areSameLength(left, right)")
     protected RComplexVector doComplexVectorDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         return performComplexVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(guards = "areSameLength")
+    @Specialization(guards = "areSameLength(left, right)")
     protected RComplexVector doComplexVectorSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         return performComplexVectorOpSameLength(left, right);
     }
@@ -718,24 +717,12 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return RDataFactory.createNAVector(Math.max(left.getLength(), right.getLength()));
     }
 
-    protected boolean nonNumeric(@SuppressWarnings("unused") RNull left, RAbstractContainer right) {
-        return right.getElementClass() == RString.class || right.getElementClass() == RRaw.class;
+    protected boolean nonNumeric(RAbstractContainer operand) {
+        return operand.getElementClass() == RString.class || operand.getElementClass() == RRaw.class;
     }
 
-    protected boolean nonNumeric(RAbstractContainer left) {
-        return left.getElementClass() == RString.class || left.getElementClass() == RRaw.class;
-    }
-
-    protected boolean isFactorLeft(RAbstractContainer left) {
-        return left.getElementClass() == RFactor.class;
-    }
-
-    protected boolean isFactorRight(@SuppressWarnings("unused") RAbstractStringVector left, RAbstractContainer right) {
-        return right.getElementClass() == RFactor.class;
-    }
-
-    protected boolean isFactorRight(@SuppressWarnings("unused") RAbstractRawVector left, RAbstractContainer right) {
-        return right.getElementClass() == RFactor.class;
+    protected boolean isFactor(RAbstractContainer operand) {
+        return operand.getElementClass() == RFactor.class;
     }
 
     // implementation

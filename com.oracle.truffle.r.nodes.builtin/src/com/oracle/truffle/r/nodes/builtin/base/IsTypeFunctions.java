@@ -96,7 +96,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(guards = "!isListVector")
+        @Specialization(guards = "!isListVector(arg)")
         protected byte isRecursive(RAbstractVector arg) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
@@ -134,7 +134,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isListVector")
+        @Specialization(guards = "!isListVector(arg)")
         protected byte isAtomic(RAbstractVector arg) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;

@@ -375,7 +375,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(guards = "!isStringVectorTable")
+    @Specialization(guards = "!isStringVectorTable(table)")
     @SuppressWarnings("unused")
     protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -448,7 +448,7 @@ public abstract class Match extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
-    protected boolean isStringVectorTable(@SuppressWarnings("unused") RAbstractStringVector x, RAbstractVector table) {
+    protected boolean isStringVectorTable(RAbstractVector table) {
         return table.getElementClass() == String.class;
     }
 

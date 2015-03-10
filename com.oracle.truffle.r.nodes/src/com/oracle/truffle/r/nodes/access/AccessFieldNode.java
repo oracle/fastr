@@ -50,7 +50,7 @@ public abstract class AccessFieldNode extends RNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = "hasNames")
+    @Specialization(guards = "hasNames(object)")
     protected Object accessField(RList object) {
         int index = object.getElementIndexByName(attrProfiles, getField());
         if (index == -1) {
@@ -60,13 +60,13 @@ public abstract class AccessFieldNode extends RNode {
         return index == -1 ? RNull.instance : object.getDataAt(index);
     }
 
-    @Specialization(guards = "!hasNames")
+    @Specialization(guards = "!hasNames(object)")
     protected Object accessFieldNoNames(@SuppressWarnings("unused") RList object) {
         return RNull.instance;
     }
 
     // TODO: this should ultimately be a generic function
-    @Specialization(guards = "hasNames")
+    @Specialization(guards = "hasNames(object)")
     protected Object accessField(RDataFrame object) {
         int index = object.getElementIndexByName(attrProfiles, getField());
         if (index == -1) {
@@ -77,7 +77,7 @@ public abstract class AccessFieldNode extends RNode {
         return index == -1 ? RNull.instance : object.getDataAtAsObject(index);
     }
 
-    @Specialization(guards = "!hasNames")
+    @Specialization(guards = "!hasNames(object)")
     protected Object accessFieldNoNames(@SuppressWarnings("unused") RDataFrame object) {
         return RNull.instance;
     }
@@ -93,7 +93,7 @@ public abstract class AccessFieldNode extends RNode {
         throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
-    @Specialization(guards = "hasNames")
+    @Specialization(guards = "hasNames(object)")
     protected Object accessFieldHasNames(RLanguage object) {
         String field = getField();
         RStringVector names = object.getNames(attrProfiles);
@@ -105,7 +105,7 @@ public abstract class AccessFieldNode extends RNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = "!hasNames")
+    @Specialization(guards = "!hasNames(object)")
     protected Object accessField(@SuppressWarnings("unused") RLanguage object) {
         return RNull.instance;
     }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,7 +41,7 @@ public abstract class ColMeans extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "!isNaRm")
+    @Specialization(guards = "!isNaRm(naRm)")
     protected RDoubleVector colMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
@@ -67,7 +67,7 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
-    @Specialization(guards = "isNaRm")
+    @Specialization(guards = "isNaRm(naRm)")
     protected RDoubleVector colMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
@@ -93,7 +93,7 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!isNaRm")
+    @Specialization(guards = "!isNaRm(naRm)")
     protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
@@ -113,7 +113,7 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm")
+    @Specialization(guards = "isNaRm(naRm)")
     protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
@@ -139,7 +139,7 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!isNaRm")
+    @Specialization(guards = "!isNaRm(naRm)")
     protected RDoubleVector colMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
@@ -159,7 +159,7 @@ public abstract class ColMeans extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm")
+    @Specialization(guards = "isNaRm(naRm)")
     protected RDoubleVector colMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
@@ -192,18 +192,8 @@ public abstract class ColMeans extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isNaRm(RDoubleVector x, int rowNum, int colNum, byte naRm) {
+    protected boolean isNaRm(byte naRm) {
         return naRm == RRuntime.LOGICAL_TRUE;
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isNaRm(RIntVector x, int rowNum, int colNum, byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isNaRm(RLogicalVector x, int rowNum, int colNum, byte naRm) {
-        return naRm == RRuntime.LOGICAL_TRUE;
-    }
 }

@@ -264,7 +264,7 @@ public abstract class Unique extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "lengthOne")
+    @Specialization(guards = "lengthOne(list)")
     protected RList doUnique(RList list, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         return (RList) list.copyDropAttributes();
     }

@@ -66,7 +66,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     // /////////////
     // RNull vectors
 
-    @Specialization(guards = {"!singlePosNegative"})
+    @Specialization(guards = {"!singlePosNegative(positions)"})
     protected RAbstractIntVector doIntVector(RNull vector, RNull value, RAbstractIntVector positions) {
         if (isSubset || positions.getLength() <= 1) {
             return positions;
@@ -76,11 +76,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    private static boolean singlePosNegative(RAbstractIntVector p) {
-        return p.getLength() == 1 && p.getDataAt(0) < 0 && !RRuntime.isNA(p.getDataAt(0));
-    }
-
-    @Specialization(guards = {"!isPosVectorInt"})
+    @Specialization(guards = {"!isPosVectorInt(positions)"})
     protected RAbstractVector doIntVector(RNull vector, Object value, RAbstractVector positions) {
         if (!isSubset || positions.getLength() <= 1) {
             return positions;
@@ -94,7 +90,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return value instanceof RNull || ((RAbstractVector) value).getLength() == 0;
     }
 
-    @Specialization(guards = {"!emptyValue"})
+    @Specialization(guards = {"!emptyValue(value)"})
     protected RAbstractIntVector doIntVector(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
         if (singlePosNegative(positions)) {
             errorProfile.enter();
@@ -107,7 +103,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return positions;
     }
 
-    @Specialization(guards = {"emptyValue", "!isPosVectorInt"})
+    @Specialization(guards = {"emptyValue(value)", "!isPosVectorInt(positions)"})
     protected RAbstractVector doIntVectorEmptyValue(RNull vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
@@ -152,7 +148,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"noPosition"})
+    @Specialization(guards = {"noPosition(positions)"})
     protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractContainer container, Object value, RAbstractVector positions) {
         if (!isSubset) {
             RError.Message message;
@@ -170,7 +166,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "emptyValue"})
+    @Specialization(guards = {"onePosition(positions)", "emptyValue(value)"})
     protected RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
@@ -181,7 +177,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return positions;
     }
 
-    @Specialization(guards = {"onePosition"})
+    @Specialization(guards = {"onePosition(positions)"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
@@ -192,7 +188,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return positions;
     }
 
-    @Specialization(guards = {"onePosition", "emptyValue", "!isContainerList"})
+    @Specialization(guards = {"onePosition(positions)", "emptyValue(value)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
@@ -201,7 +197,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "!emptyValue"})
+    @Specialization(guards = {"onePosition(positions)", "!emptyValue(value)"})
     protected RAbstractVector accessListOnePosNonEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
@@ -212,7 +208,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return positions;
     }
 
-    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isContainerList"})
+    @Specialization(guards = {"onePosition(positions)", "valueLongerThanOne(value)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
@@ -221,7 +217,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "!isContainerList"})
+    @Specialization(guards = {"onePosition(positions)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
@@ -230,7 +226,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "emptyValue", "!isPosVectorInt"})
+    @Specialization(guards = {"onePosition(positions)", "emptyValue(value)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
@@ -240,7 +236,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "!isPosVectorInt"})
+    @Specialization(guards = {"onePosition(positions)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
@@ -250,7 +246,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "emptyValue", "!isContainerList", "!isPosVectorInt"})
+    @Specialization(guards = {"onePosition(positions)", "emptyValue(value)", "!isContainerList(container)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             errorProfile.enter();
@@ -263,7 +259,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
+    @Specialization(guards = {"onePosition(positions)", "valueLengthOne(value)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosValueLengthOne(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
@@ -273,7 +269,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt"})
+    @Specialization(guards = {"onePosition(positions)", "valueLongerThanOne(value)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
@@ -283,7 +279,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt", "!isContainerList"})
+    @Specialization(guards = {"onePosition(positions)", "valueLongerThanOne(value)", "!isPosVectorInt(positions)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
@@ -294,7 +290,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = {"onePosition", "!isContainerList", "!isPosVectorInt"})
+    @Specialization(guards = {"onePosition(positions)", "!isContainerList(container)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RNull value, RAbstractVector positions) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
@@ -306,7 +302,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    @Specialization(guards = "multiPos")
+    @Specialization(guards = "multiPos(positions)")
     protected RAbstractVector accessListMultiPos(RAbstractContainer container, Object value, RAbstractVector positions) {
         if (!isSubset) {
             RError.Message message;
@@ -324,11 +320,11 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         }
     }
 
-    protected boolean singlePosNegative(Object vector, Object value, RAbstractIntVector p) {
+    protected static boolean singlePosNegative(RAbstractIntVector p) {
         return p.getLength() == 1 && p.getDataAt(0) < 0 && !RRuntime.isNA(p.getDataAt(0));
     }
 
-    protected boolean firstPosZero(Object vector, Object value, RAbstractIntVector p) {
+    protected boolean firstPosZero(RAbstractIntVector p) {
         return p.getDataAt(0) == 0;
     }
 
@@ -336,31 +332,31 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         return container instanceof RList;
     }
 
-    protected boolean isPosVectorInt(Object vector, Object value, RAbstractVector p) {
+    protected boolean isPosVectorInt(RAbstractVector p) {
         return p instanceof RAbstractIntVector;
     }
 
-    protected boolean noPosition(RAbstractContainer container, Object value, RAbstractVector p) {
+    protected boolean noPosition(RAbstractVector p) {
         return p.getLength() == 0;
     }
 
-    protected boolean onePosition(Object vector, Object value, RAbstractVector p) {
+    protected boolean onePosition(RAbstractVector p) {
         return p.getLength() == 1;
     }
 
-    protected boolean multiPos(Object vector, Object value, RAbstractVector p) {
+    protected boolean multiPos(RAbstractVector p) {
         return p.getLength() > 1;
     }
 
-    protected boolean emptyValue(Object vector, RAbstractVector value) {
+    protected boolean emptyValue(RAbstractVector value) {
         return value.getLength() == 0;
     }
 
-    protected boolean valueLengthOne(Object vector, RAbstractVector value) {
+    protected boolean valueLengthOne(RAbstractVector value) {
         return value.getLength() == 1;
     }
 
-    protected boolean valueLongerThanOne(Object vector, RAbstractVector value) {
+    protected boolean valueLongerThanOne(RAbstractVector value) {
         return value.getLength() > 1;
     }
 }

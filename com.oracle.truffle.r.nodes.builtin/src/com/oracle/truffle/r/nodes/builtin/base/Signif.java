@@ -59,7 +59,7 @@ public abstract class Signif extends RBuiltinNode {
 
     // TODO: consider porting signif implementation from GNU R
 
-    @Specialization(guards = "digitsVecLengthOne")
+    @Specialization(guards = "digitsVec.getLength() == 1")
     protected RAbstractDoubleVector signif(RAbstractDoubleVector x, RAbstractIntVector digitsVec) {
         controlVisibility();
         int digits = digitsVec.getDataAt(0) <= 0 ? 1 : digitsVec.getDataAt(0);
@@ -87,16 +87,12 @@ public abstract class Signif extends RBuiltinNode {
         return ret;
     }
 
-    @Specialization(guards = "digitsVecLengthOne")
+    @Specialization(guards = "digits.getLength() == 1")
     protected RAbstractIntVector roundDigits(RAbstractIntVector x, @SuppressWarnings("unused") RAbstractIntVector digits) {
         controlVisibility();
         return x;
     }
 
     // TODO: add support for digit vectors of length different than 1
-
-    protected boolean digitsVecLengthOne(@SuppressWarnings("unused") RAbstractVector x, RAbstractIntVector digitsVec) {
-        return digitsVec.getLength() == 1;
-    }
 
 }

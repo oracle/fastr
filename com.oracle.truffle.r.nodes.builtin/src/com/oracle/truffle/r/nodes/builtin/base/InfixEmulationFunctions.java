@@ -143,7 +143,7 @@ public class InfixEmulationFunctions {
         }
 
         @ExplodeLoop
-        @Specialization(guards = "!argsEmpty")
+        @Specialization(guards = "!argsEmpty(args)")
         protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
             Object[] values = args.getValues();
             for (int i = 0; i < values.length; i++) {
@@ -152,7 +152,7 @@ public class InfixEmulationFunctions {
             return args;
         }
 
-        @Specialization(guards = "argsEmpty")
+        @Specialization(guards = "argsEmpty(args)")
         protected RArgsValuesAndNames evalEmpty(RArgsValuesAndNames args) {
             return args;
         }
@@ -195,7 +195,7 @@ public class InfixEmulationFunctions {
             return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(frame, vector, pos, exact, pos), dropDim);
         }
 
-        protected boolean noInd(@SuppressWarnings("unused") RAbstractContainer x, RArgsValuesAndNames inds) {
+        protected boolean noInd(RArgsValuesAndNames inds) {
             return inds.length() == 0;
         }
 
@@ -222,7 +222,7 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
+        @Specialization(guards = "noInd(inds)")
         protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, Object dropVec) {
             return x;
         }
@@ -249,7 +249,7 @@ public class InfixEmulationFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -263,12 +263,12 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
             byte drop;
             if (multiIndexProfile.profile(inds.length() > 1)) {
@@ -289,7 +289,7 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
@@ -310,13 +310,13 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = "!noInd")
+        @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
 
         @Override
-        @Specialization(guards = "!noInd")
+        @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
@@ -339,7 +339,7 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
+        @Specialization(guards = "noInd(inds)")
         protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
@@ -365,7 +365,7 @@ public class InfixEmulationFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
@@ -385,7 +385,7 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             return super.get(frame, x, inds, exactVec);
         }
@@ -406,7 +406,7 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = "!noInd")
+        @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             return super.get(frame, x, inds, exactVec);
         }
@@ -451,12 +451,12 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
+        @Specialization(guards = "noInd(args)")
         protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames args) {
             throw RError.error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
         }
 
-        protected boolean noInd(@SuppressWarnings("unused") RAbstractContainer x, RArgsValuesAndNames args) {
+        protected boolean noInd(RArgsValuesAndNames args) {
             return args.length() == 0;
         }
 
@@ -477,7 +477,7 @@ public class InfixEmulationFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -491,7 +491,7 @@ public class InfixEmulationFunctions {
             }
         }
 
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
         protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             Object value = args.getValues()[args.length() - 1];
             return update(frame, x, args, value, IS_SUBSET);
@@ -516,7 +516,7 @@ public class InfixEmulationFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -530,7 +530,7 @@ public class InfixEmulationFunctions {
             }
         }
 
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
         protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             Object value = args.getValues()[args.length() - 1];
             return update(frame, x, args, value, IS_SUBSET);

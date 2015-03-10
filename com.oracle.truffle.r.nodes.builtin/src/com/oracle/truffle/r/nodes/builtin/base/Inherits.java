@@ -48,29 +48,8 @@ public abstract class Inherits extends RBuiltinNode {
         return inheritsNode;
     }
 
-    @SuppressWarnings("unused")
-    public boolean whichFalse(RAbstractContainer x, RAbstractStringVector what, byte which) {
-        return which != RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean whichFalse(RConnection x, RAbstractStringVector what, byte which) {
-        return which != RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean whichFalse(RFunction x, RAbstractStringVector what, byte which) {
-        return which != RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean whichFalse(REnvironment x, RAbstractStringVector what, byte which) {
-        return which != RRuntime.LOGICAL_TRUE;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean whichFalse(RSymbol x, RAbstractStringVector what, byte which) {
-        return which != RRuntime.LOGICAL_TRUE;
+    protected static boolean isTrue(byte value) {
+        return RRuntime.fromLogical(value);
     }
 
     @SuppressWarnings("unused")
@@ -79,52 +58,52 @@ public abstract class Inherits extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "whichFalse")
+    @Specialization(guards = "!isTrue(which)")
     protected Object doesInherit(VirtualFrame frame, REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
-    @Specialization(guards = "!whichFalse")
+    @Specialization(guards = "isTrue(which)")
     protected Object doesInheritWT(REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
-    @Specialization(guards = "whichFalse")
+    @Specialization(guards = "!isTrue(which)")
     protected Object doesInherit(VirtualFrame frame, RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
-    @Specialization(guards = "!whichFalse")
+    @Specialization(guards = "isTrue(which)")
     protected Object doesInheritWT(RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
-    @Specialization(guards = "whichFalse")
+    @Specialization(guards = "!isTrue(which)")
     protected Object doesInherit(VirtualFrame frame, RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
-    @Specialization(guards = "!whichFalse")
+    @Specialization(guards = "isTrue(which)")
     protected Object doesInheritWT(RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
-    @Specialization(guards = "whichFalse")
+    @Specialization(guards = "!isTrue(which)")
     protected byte doesInherit(VirtualFrame frame, RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
-    @Specialization(guards = "!whichFalse")
+    @Specialization(guards = "isTrue(which)")
     protected Object doesInheritWT(RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassHierarchy(), what);
     }
 
-    @Specialization(guards = "whichFalse")
+    @Specialization(guards = "!isTrue(which)")
     protected byte doesInherit(VirtualFrame frame, RAbstractContainer x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
-    @Specialization(guards = "!whichFalse")
+    @Specialization(guards = "isTrue(which)")
     protected Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassHierarchy(), what);
     }

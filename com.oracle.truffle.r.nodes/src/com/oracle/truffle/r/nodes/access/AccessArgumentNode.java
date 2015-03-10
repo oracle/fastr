@@ -134,14 +134,14 @@ public abstract class AccessArgumentNode extends RNode {
         return promise;
     }
 
-    @Specialization(guards = {"!hasDefaultArg", "!isVarArgIndex"})
+    @Specialization(guards = {"!hasDefaultArg()", "!isVarArgIndex()"})
     public Object doArgumentNoDefaultArg(RMissing argMissing) {
         // Simply return missing if there's no default arg OR it represents an empty "..."
         // (Empty "..." defaults to missing anyway, this way we don't have to rely on )
         return argMissing;
     }
 
-    @Specialization(guards = {"hasDefaultArg"})
+    @Specialization(guards = {"hasDefaultArg()"})
     public Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
         Object result;
         if (canBeOptimized()) {

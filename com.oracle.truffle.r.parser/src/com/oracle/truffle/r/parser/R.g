@@ -34,7 +34,6 @@ import com.oracle.truffle.r.parser.ast.BinaryOperation.*;
 }
 
 @lexer::header {
-//Checkstyle: stop
 //@formatter:off
 package com.oracle.truffle.r.parser;
 }

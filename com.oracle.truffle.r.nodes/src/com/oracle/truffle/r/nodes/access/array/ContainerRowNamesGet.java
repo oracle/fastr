@@ -51,7 +51,7 @@ public abstract class ContainerRowNamesGet extends RNode {
         }
     }
 
-    @Specialization(guards = "!isDataFrame")
+    @Specialization(guards = "!isDataFrame(container)")
     Object getRowNames(RAbstractContainer container) {
         return container.getRowNames(attrProfiles);
     }

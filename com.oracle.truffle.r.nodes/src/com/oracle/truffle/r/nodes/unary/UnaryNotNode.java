@@ -149,23 +149,19 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(guards = {"isZeroLength"})
+    @Specialization(guards = {"vector.getLength() == 0"})
     protected RLogicalVector doStringVector(@SuppressWarnings("unused") RAbstractStringVector vector) {
         return RDataFactory.createEmptyLogicalVector();
     }
 
-    @Specialization(guards = {"isZeroLength"})
+    @Specialization(guards = {"vector.getLength() == 0"})
     protected RLogicalVector doComplexVector(@SuppressWarnings("unused") RAbstractComplexVector vector) {
         return RDataFactory.createEmptyLogicalVector();
     }
 
-    @Specialization(guards = {"isZeroLength"})
+    @Specialization(guards = {"list.getLength() == 0"})
     protected RLogicalVector doList(@SuppressWarnings("unused") RList list) {
         return RDataFactory.createEmptyLogicalVector();
-    }
-
-    protected boolean isZeroLength(RAbstractVector vector) {
-        return vector.getLength() == 0;
     }
 
     @Fallback

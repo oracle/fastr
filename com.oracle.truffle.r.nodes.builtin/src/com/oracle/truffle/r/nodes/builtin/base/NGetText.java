@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,48 +49,48 @@ public abstract class NGetText extends RBuiltinNode {
         return new RNode[]{CastIntegerNodeGen.create(children[0], false, false, false), children[1], children[2], children[3]};
     }
 
-    @Specialization(guards = "wrongNVector")
+    @Specialization(guards = "wrongNVector(nVector)")
     protected String getTextEmpty(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "n");
     }
 
-    @Specialization(guards = "!wrongNVector")
+    @Specialization(guards = "!wrongNVector(nVector)")
     protected String getText(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
         int n = nVector.getDataAt(0);
         return n == 1 ? msg1 : msg2;
     }
 
-    @Specialization(guards = "!wrongNVector")
+    @Specialization(guards = "!wrongNVector(nVector)")
     protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RNull msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
-    @Specialization(guards = "!wrongNVector")
+    @Specialization(guards = "!wrongNVector(nVector)")
     protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RAbstractVector msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
-    @Specialization(guards = {"!wrongNVector", "!msg1StringVectorOneElem"})
+    @Specialization(guards = {"!wrongNVector(nVector)", "!msgStringVectorOneElem(msg1)"})
     protected String getTextMsg1WrongMsg2Null(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
-    @Specialization(guards = {"!wrongNVector", "!msg1StringVectorOneElem"})
+    @Specialization(guards = {"!wrongNVector(nVector)", "!msgStringVectorOneElem(msg1)"})
     protected String getTextMsg1Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
-    @Specialization(guards = {"!wrongNVector", "msg1StringVectorOneElem"})
+    @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)"})
     protected String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
     }
 
-    @Specialization(guards = {"!wrongNVector", "msg1StringVectorOneElem", "!msg2StringVectorOneElem"})
+    @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)", "!msgStringVectorOneElem(msg2)"})
     protected String getTextMsg2Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
     }
 
-    @Specialization(guards = {"!wrongNVector", "msg1StringVectorOneElem", "msg2StringVectorOneElem"})
+    @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)", "msgStringVectorOneElem(msg2)"})
     protected String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
         return getText(nVector, ((RAbstractStringVector) msg1).getDataAt(0), ((RAbstractStringVector) msg2).getDataAt(0), domain);
     }
@@ -99,11 +99,8 @@ public abstract class NGetText extends RBuiltinNode {
         return nVector.getLength() == 0 || (nVector.getLength() > 0 && nVector.getDataAt(0) < 0);
     }
 
-    protected boolean msg1StringVectorOneElem(RAbstractIntVector nVector, RAbstractVector msg1) {
+    protected boolean msgStringVectorOneElem(RAbstractVector msg1) {
         return msg1.getElementClass() == RString.class && msg1.getLength() == 1;
     }
 
-    protected boolean msg2StringVectorOneElem(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2) {
-        return msg2.getElementClass() == RString.class && msg2.getLength() == 1;
-    }
 }

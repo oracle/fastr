@@ -169,18 +169,18 @@ public abstract class MakeNames extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "!wrongAllowUnderscore")
+    @Specialization(guards = "!wrongAllowUnderscore(allowUnderScoreArg)")
     protected RAbstractStringVector makeNames(RAbstractStringVector names, RAbstractLogicalVector allowUnderScoreArg) {
         return makeNames(names, allowUnderScoreArg.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "wrongAllowUnderscore")
+    @Specialization(guards = "wrongAllowUnderscore(allowUnderScoreArg)")
     protected RAbstractStringVector makeNamesWrongUnderscoreEmpty(RAbstractStringVector names, RAbstractLogicalVector allowUnderScoreArg) {
         throw invalidAllowValue(getEncapsulatingSourceSection());
     }
 
-    protected boolean wrongAllowUnderscore(@SuppressWarnings("unused") Object names, RAbstractLogicalVector allowUnderScoreArg) {
+    protected static boolean wrongAllowUnderscore(RAbstractLogicalVector allowUnderScoreArg) {
         return allowUnderScoreArg.getLength() == 0 || RRuntime.isNA(allowUnderScoreArg.getDataAt(0));
     }
 

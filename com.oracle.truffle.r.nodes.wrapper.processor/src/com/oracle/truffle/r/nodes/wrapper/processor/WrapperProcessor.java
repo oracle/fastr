@@ -58,6 +58,8 @@ public class WrapperProcessor extends AbstractProcessor {
             if (roundEnv.processingOver()) {
                 return true;
             }
+            System.setProperty("line.separator", "\n");
+
             note("CreateWrapperProcessor: analyzing classes");
             createWrapperElement = processingEnv.getElementUtils().getTypeElement("com.oracle.truffle.r.nodes.instrument.CreateWrapper");
             for (Element element : roundEnv.getElementsAnnotatedWith(createWrapperElement)) {
@@ -108,6 +110,7 @@ public class WrapperProcessor extends AbstractProcessor {
         PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()));
         try {
             wr.println("// DO NOT EDIT, generated automatically");
+            wr.println("// Checkstyle: stop");
             wr.printf("package %s;%n", packageName);
             wr.println();
             wr.printf("import com.oracle.truffle.api.instrument.Probe;%n");

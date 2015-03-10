@@ -103,7 +103,7 @@ public abstract class Identical extends RBuiltinNode {
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "!vectorsLists")
+    @Specialization(guards = "!vectorsLists(x, y)")
     protected byte doInternalIdentialGeneric(RAbstractVector x, RAbstractVector y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
