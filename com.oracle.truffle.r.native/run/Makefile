@@ -21,19 +21,21 @@
 # questions.
 #
 
-.PHONY: all clean
+.PHONY: bindir all rcmd
 
-export TOPDIR = $(CURDIR)
+FASTR_BINDIR = $(TOPDIR)/../bin
 
-all:
-	$(MAKE) -C builtinlibs
-	$(MAKE) -C fficall
-	$(MAKE) -C library
-	$(MAKE) -C run
+all: bindir rcmd
+
+bindir:
+	mkdir -p $(FASTR_BINDIR)
+	
+rcmd: $(FASTR_BINDIR)/R
+
+$(FASTR_BINDIR)/R: R.sh Rscript.sh
+	cp R.sh $(FASTR_BINDIR)/R
+	cp Rscript.sh $(FASTR_BINDIR)/Rscript
+	chmod +x $(FASTR_BINDIR)/R
+	touch $(FASTR_BINDIR)/INSTALL
 
 clean:
-	$(MAKE) -C builtinlibs clean
-	$(MAKE) -C fficall clean
-	$(MAKE) -C library clean
-	$(MAKE) -C run clean
-	
