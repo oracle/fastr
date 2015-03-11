@@ -119,7 +119,10 @@ public abstract class AccessArgumentNode extends RNode {
         for (int i = 0; i < varArgsContainer.length(); i++) {
             // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
             // "..." is a different expression
-            varArgs[i] = varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise) ? handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile) : varArgs[i];
+
+            if (varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise)) {
+                varArgs[i] = handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile);
+            }
         }
         return varArgsContainer;
     }
