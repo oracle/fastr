@@ -149,15 +149,13 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class PromisedNode extends PromiseNode {
 
-        private final ConditionProfile isSuppliedArgProfile = ConditionProfile.createBinaryProfile();
-
         private PromisedNode(RPromiseFactory factory) {
             super(factory);
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            MaterializedFrame execFrame = isSuppliedArgProfile.profile(factory.getType() == PromiseType.ARG_SUPPLIED) ? frame.materialize() : null;
+            MaterializedFrame execFrame = factory.getType() == PromiseType.ARG_SUPPLIED ? frame.materialize() : null;
             return factory.createPromise(execFrame);
         }
     }
