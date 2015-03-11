@@ -29,9 +29,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.RASTUtils.ExpandedDotsNode;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -43,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
@@ -135,13 +138,10 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * @param promise
-     * @return Creates a {@link VarArgNode} for the given {@link RPromise}
+     * @return Creates a {@link VarArgNode} for the given
      */
-    public static VarArgNode createVarArg(RPromise promise) {
-        VarArgNode result = new VarArgNode(promise);
-        result.assignSourceSection(((RNode) promise.getRep()).getSourceSection());
-        return result;
+    public static VarArgNode createVarArg(int varArgIndex) {
+        return new VarArgNode(varArgIndex);
     }
 
     /**
@@ -202,7 +202,11 @@ public abstract class PromiseNode extends RNode {
             // At this point we simply circumvent VarArgNode (by directly passing the contained
             // Promise); BUT we have to respect the RPromise! Thus we use a RPromise class which
             // knows that it contains a RPromise..
-            return factory.createVarargPromise(varargNode.getPromise());
+            return factory.createVarargPromise(varargNode.executeNonEvaluated(frame));
+        }
+
+        public RNode substitute(REnvironment env) {
+            return varargNode.substitute(env);
         }
 
         public VarArgNode getVarArgNode() {
@@ -320,43 +324,56 @@ public abstract class PromiseNode extends RNode {
      * In a certain sense this is the class corresponding class for GNU R's PROMSXP (AST equivalent
      * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
      * other varargs classes)
-     *
-     * FIXME This class effectively captures frame-specific state since the {@link RPromise} value
-     * refers to a specific frame through the {@code execFrame} field. So subsequent calls to a
-     * function containing one of these nodes will return a stale value when the promise is
-     * evaluated. We need to find a better way. The current workaround is to call
-     * {@link #setPromise} to update the state.
      */
     public static final class VarArgNode extends RNode {
-        private RPromise promise;
-        private boolean isEvaluated = false;
 
-        private VarArgNode(RPromise promise) {
-            this.promise = promise;
+        @Child private FrameSlotNode varArgsSlotNode;
+        @Child private PromiseHelperNode promiseHelper;
+
+        private final int index;
+
+        private VarArgNode(int index) {
+            this.index = index;
+        }
+
+        public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+            if (varArgsSlotNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                varArgsSlotNode = insert(FrameSlotNode.create(ArgumentsSignature.VARARG_NAME));
+            }
+            RArgsValuesAndNames varArgsAndNames;
+            try {
+                varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
+            } catch (FrameSlotTypeException | ClassCastException e) {
+                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+            }
+            return varArgsAndNames;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            // ExpressionExecutorNode would be overkill, as this is only executed once, and not in
-            // the correct frame anyway
-            if (!isEvaluated) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                Object result = PromiseHelperNode.evaluateSlowPath(frame, promise);
-                isEvaluated = promise.isEvaluated();
-                return result;
+            RPromise promise = executeNonEvaluated(frame);
+            if (promise.isEvaluated()) {
+                return promise.getValue();
             }
-
-            // Should easily compile to constant
-            return promise.getValue();
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper.evaluate(frame, promise);
         }
 
-        public RPromise getPromise() {
-            return promise;
+        public RPromise executeNonEvaluated(VirtualFrame frame) {
+            return (RPromise) getVarargsAndNames(frame).getValues()[index];
         }
 
-        public void setPromise(RPromise promise) {
-            isEvaluated = false;
-            this.promise = promise;
+        public RNode substitute(REnvironment env) {
+            Object obj = ((RArgsValuesAndNames) env.get("...")).getValues()[index];
+            return obj instanceof RPromise ? (RNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
+        }
+
+        public int getIndex() {
+            return index;
         }
     }
 
@@ -433,6 +450,10 @@ public abstract class PromiseNode extends RNode {
                 }
             }
             state.append(')');
+        }
+
+        public RNode substitute(REnvironment env) {
+            return RASTUtils.substituteName("...", env);
         }
 
         public Closure[] getClosures() {

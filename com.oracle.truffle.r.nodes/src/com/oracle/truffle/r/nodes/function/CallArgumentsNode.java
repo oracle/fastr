@@ -225,7 +225,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
                         // RMissing.instance. Both need to be wrapped into ConstantNodes, so
                         // they might get wrapped into new promises later on
                         Object varArgValue = varArgInfo.getValues()[j];
-                        values[index] = wrapVarArgValue(varArgValue);
+                        values[index] = wrapVarArgValue(varArgValue, j);
                         String newName = varArgInfo.getSignature().getName(j);
                         newNames[index] = newName;
                         index++;
@@ -244,9 +244,9 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
     }
 
     @TruffleBoundary
-    public static RNode wrapVarArgValue(Object varArgValue) {
+    public static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {
         if (varArgValue instanceof RPromise) {
-            return PromiseNode.createVarArg((RPromise) varArgValue);
+            return PromiseNode.createVarArg(varArgIndex);
         } else {
             return ConstantNode.create(varArgValue);
         }

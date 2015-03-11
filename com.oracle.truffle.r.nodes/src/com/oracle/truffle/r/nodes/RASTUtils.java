@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
@@ -98,9 +99,6 @@ public class RASTUtils {
             return ((ConstantNode) argNode).getValue();
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
-        } else if (argNode instanceof VarArgNode) {
-            RPromise p = ((VarArgNode) argNode).getPromise();
-            return createLanguageElement(unwrap(p.getRep()));
         } else if (argNode instanceof VarArgsPromiseNode) {
             /*
              * This is mighty tedious, but GnuR represents this as a pairlist and we do have to
@@ -122,6 +120,7 @@ public class RASTUtils {
             }
             return result;
         } else {
+            assert !(argNode instanceof VarArgNode);
             return RDataFactory.createLanguage(argNode);
         }
     }
@@ -324,6 +323,20 @@ public class RASTUtils {
             RNode[] expandedNodes = new RNode[values.length];
             for (int i = 0; i < values.length; i++) {
                 Object argval = values[i];
+                while (argval instanceof RPromise) {
+                    RPromise promise = (RPromise) argval;
+                    Node unwrap = RASTUtils.unwrap(promise.getRep());
+                    if (unwrap instanceof VarArgNode) {
+                        VarArgNode varArgNode = (VarArgNode) unwrap;
+                        try {
+                            RArgsValuesAndNames v = (RArgsValuesAndNames) promise.getFrame().getObject(promise.getFrame().getFrameDescriptor().findFrameSlot("..."));
+                            argval = v.getValues()[varArgNode.getIndex()];
+                        } catch (FrameSlotTypeException e) {
+                            throw RInternalError.shouldNotReachHere();
+                        }
+                    }
+                    break;
+                }
                 if (argval instanceof RPromise) {
                     RPromise promise = (RPromise) argval;
                     expandedNodes[i] = (RNode) RASTUtils.unwrap(promise.getRep());

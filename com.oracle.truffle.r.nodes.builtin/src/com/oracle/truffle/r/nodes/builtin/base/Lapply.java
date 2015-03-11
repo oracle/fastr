@@ -294,28 +294,7 @@ public abstract class Lapply extends RBuiltinNode {
                     if (target != originalTarget || signature.isNotEqualTo(originalSignature)) {
                         return next.execute(frame, target, varArgs);
                     } else {
-                        MatchedArgumentsNode m = callNode.getMatchedArgumentsNode();
-                        if (m != null && varArgNodeStates != null) {
-                            RNode[] matchedArgs = m.getArguments();
-                            for (RNode matchedArg : matchedArgs) {
-                                if (matchedArg instanceof PromiseNode.VarargPromiseNode) {
-                                    PromiseNode.VarArgNode varArgNode = ((PromiseNode.VarargPromiseNode) matchedArg).getVarArgNode();
-                                    updatePromise(varArgNode, varArgs);
-                                }
-                            }
-                        }
                         return callNode.execute(frame);
-                    }
-                }
-
-                private void updatePromise(PromiseNode.VarArgNode varArgNode, RArgsValuesAndNames varArgs) {
-                    Object varArgNodePromiseRep = varArgNode.getPromise().getRep();
-                    for (VarArgNodeState varArgNodeState : varArgNodeStates) {
-                        Object thisRep = varArgNodeState.varArgNode.getPromise().getRep();
-                        if (varArgNodePromiseRep == thisRep) {
-                            RPromise promise = (RPromise) varArgs.getValues()[varArgNodeState.argIndex];
-                            varArgNode.setPromise(promise);
-                        }
                     }
                 }
 
@@ -351,7 +330,7 @@ public abstract class Lapply extends RBuiltinNode {
                         args[0] = owner.readVectorElement;
                         Object[] varArgsValues = varArgs.getValues();
                         for (int i = 0; i < varArgs.length(); i++) {
-                            RNode node = CallArgumentsNode.wrapVarArgValue(varArgsValues[i]);
+                            RNode node = CallArgumentsNode.wrapVarArgValue(varArgsValues[i], i);
                             if (node instanceof PromiseNode.VarArgNode) {
                                 if (varArgNodeStates == null) {
                                     varArgNodeStates = new ArrayList<>(varArgs.length());

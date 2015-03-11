@@ -34,6 +34,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -311,6 +312,24 @@ public class ArgumentMatcher {
         }
     }
 
+    private static String getErrorForArgument(RNode[] suppliedArgs, int index) {
+        RNode node = suppliedArgs[index];
+        if (node instanceof VarArgNode) {
+            CompilerAsserts.neverPartOfCompilation();
+            VirtualFrame frame = Utils.getActualCurrentFrame();
+            try {
+                // TODO: this error handling code takes many assumptions about the argument types
+                RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
+                RPromise promise = (RPromise) varArg.getValues()[((VarArgNode) node).getIndex()];
+                return ((Node) promise.getRep()).getSourceSection().getCode();
+            } catch (FrameSlotTypeException | ClassCastException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        } else {
+            return node.getSourceSection().getCode();
+        }
+    }
+
     /**
      * Matches the supplied arguments to the formal ones and returns them as consolidated
      * {@code RNode[]}. Handles named args and varargs.<br/>
@@ -336,7 +355,7 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, argsSrc, false, index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])),
-                        index -> suppliedArgs[index].getSourceSection().getCode());
+                        index -> getErrorForArgument(suppliedArgs, index));
 
         RNode[] defaultArgs = formals.getDefaultArgs();
         RNode[] resArgs = new RNode[match.resultPermutation.length];
