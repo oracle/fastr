@@ -188,10 +188,6 @@ public final class RArguments {
         return a;
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth) {
-        return create(functionObj, callSrc, callerFrame, depth, EMPTY_OBJECT_ARRAY);
-    }
-
     public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs) {
         if (functionObj != null) {
             return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrame(), evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length));

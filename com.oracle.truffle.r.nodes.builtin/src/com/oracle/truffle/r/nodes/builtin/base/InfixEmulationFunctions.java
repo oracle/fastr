@@ -238,7 +238,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "drop");
 
         private static final String NAME = "[";
 
@@ -354,7 +354,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "exact");
 
         private static final String NAME = "[[";
 
@@ -465,7 +465,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "");
 
         private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;

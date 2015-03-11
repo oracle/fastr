@@ -150,7 +150,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return (RList) passVector(list);
     }
 
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"..."});
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("...");
 
     @Specialization(guards = "isNumericVersion(list)")
     /**

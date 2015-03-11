@@ -39,7 +39,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     public static final int NO_VARARG = -1;
 
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
-    public static final ArgumentsSignature VARARG_SIGNATURE = get(new String[]{VARARG_NAME});
+    public static final ArgumentsSignature VARARG_SIGNATURE = get(VARARG_NAME);
 
     static {
         for (int i = 0; i < EMPTY_SIGNATURES.length; i++) {
@@ -48,7 +48,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     }
 
     @TruffleBoundary
-    public static ArgumentsSignature get(String[] names) {
+    public static ArgumentsSignature get(String... names) {
         assert names != null;
         ArgumentsSignature newSignature = new ArgumentsSignature(names);
         ArgumentsSignature oldSignature = signatures.putIfAbsent(newSignature, newSignature);

@@ -242,9 +242,9 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
     }
 
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
-    private static final ArgumentsSignature DROP_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
-    private static final ArgumentsSignature EXACT_SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "");
+    private static final ArgumentsSignature DROP_SIGNATURE = ArgumentsSignature.get("", "", "drop");
+    private static final ArgumentsSignature EXACT_SIGNATURE = ArgumentsSignature.get("", "", "exact");
 
     @Specialization(guards = {"isObject(container)", "isSubset()"})
     protected Object accessObjectSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {

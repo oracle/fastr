@@ -437,6 +437,9 @@ public final class REngine implements RContext.Engine {
         return true;
     }
 
+    private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
+    private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
+
     @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
@@ -444,10 +447,10 @@ public final class REngine implements RContext.Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}));
+                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
             } else {
                 // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}));
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
             }
         }
     }
