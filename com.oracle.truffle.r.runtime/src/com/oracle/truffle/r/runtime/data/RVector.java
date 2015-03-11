@@ -129,8 +129,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     /*
-     * Version without profiles is used by RDeparse and for internal attribute coopying (both are
-     * not performance-critical)
+     * Version without profiles is used by RDeparse and for internal attribute copying (both are not
+     * performance-critical)
      */
     public final RStringVector getNames() {
         if (names == null) {

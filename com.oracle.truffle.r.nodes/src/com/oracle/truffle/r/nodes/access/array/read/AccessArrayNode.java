@@ -856,13 +856,9 @@ public abstract class AccessArrayNode extends RNode {
             if (elementNACheck.check(position)) {
                 data[i] = RRuntime.INT_NA;
             } else {
-                try {
-                    data[i] = vector.getDataAt(position - 1);
-                } catch (ArrayIndexOutOfBoundsException x) {
-                    x.printStackTrace();
-
-                }
-                elementNACheck.check(data[i]);
+                int value = vector.getDataAt(position - 1);
+                data[i] = value;
+                elementNACheck.check(value);
             }
         }
         return data;
@@ -1007,6 +1003,45 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
+    protected double[] accessInternal(RDoubleVector vector, RIntVector p) {
+        /*
+         * this method (along with the associated specializations) is just a temporary workaround to
+         * avoid the getDataAt call in the inner loop - this will ultimately need a different
+         * solution.
+         */
+        int resLength = p.getLength();
+        double[] data = new double[resLength];
+        double[] vectorData = vector.getDataWithoutCopying();
+        elementNACheck.enable(vector);
+        elementNACheck.enable(p);
+        for (int i = 0; i < resLength; i++) {
+            int position = p.getDataAt(i);
+            if (elementNACheck.check(position)) {
+                data[i] = RRuntime.DOUBLE_NA;
+            } else {
+                double value = vectorData[position - 1];
+                data[i] = value;
+                elementNACheck.check(value);
+            }
+        }
+        return data;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    protected RDoubleVector accessNames(RDoubleVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
+        double[] data = accessInternal(vector, p);
+        RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
+        return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), names);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    protected RDoubleVector access(RDoubleVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
+        double[] data = accessInternal(vector, p);
+        return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA());
+    }
+
     protected double[] accessInternal(RAbstractDoubleVector vector, RIntVector p) {
         int resLength = p.getLength();
         double[] data = new double[resLength];
@@ -1017,8 +1052,9 @@ public abstract class AccessArrayNode extends RNode {
             if (elementNACheck.check(position)) {
                 data[i] = RRuntime.DOUBLE_NA;
             } else {
-                data[i] = vector.getDataAt(position - 1);
-                elementNACheck.check(data[i]);
+                double value = vector.getDataAt(position - 1);
+                data[i] = value;
+                elementNACheck.check(value);
             }
         }
         return data;
@@ -1173,8 +1209,9 @@ public abstract class AccessArrayNode extends RNode {
             if (elementNACheck.check(position)) {
                 data[i] = RRuntime.LOGICAL_NA;
             } else {
-                data[i] = vector.getDataAt(position - 1);
-                elementNACheck.check(data[i]);
+                byte value = vector.getDataAt(position - 1);
+                data[i] = value;
+                elementNACheck.check(value);
             }
         }
         return data;
@@ -1329,8 +1366,9 @@ public abstract class AccessArrayNode extends RNode {
             if (elementNACheck.check(position)) {
                 data[i] = RRuntime.STRING_NA;
             } else {
-                data[i] = vector.getDataAt(position - 1);
-                elementNACheck.check(data[i]);
+                String value = vector.getDataAt(position - 1);
+                data[i] = value;
+                elementNACheck.check(value);
             }
         }
         return data;
@@ -1639,15 +1677,14 @@ public abstract class AccessArrayNode extends RNode {
     protected byte[] accessInternal(RRawVector vector, RIntVector p) {
         int resLength = p.getLength();
         byte[] data = new byte[resLength];
-        elementNACheck.enable(vector);
+        byte[] vectorData = vector.getDataWithoutCopying();
         elementNACheck.enable(p);
         for (int i = 0; i < resLength; i++) {
             int position = p.getDataAt(i);
             if (elementNACheck.check(position)) {
                 data[i] = 0;
             } else {
-                data[i] = vector.getDataAt(position - 1).getValue();
-                elementNACheck.check(data[i]);
+                data[i] = vectorData[position - 1];
             }
         }
         return data;
