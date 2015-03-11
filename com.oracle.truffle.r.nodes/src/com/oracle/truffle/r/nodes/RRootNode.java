@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * The base class for R code that can be executed, namely {@link FunctionDefinitionNode} and
  * {@link RBuiltinNode}.
  */
-public abstract class RRootNode extends RootNode {
+public abstract class RRootNode extends RootNode implements HasSignature {
 
     @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
     @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
@@ -109,6 +109,10 @@ public abstract class RRootNode extends RootNode {
      */
     public FormalArguments getFormalArguments() {
         return formalArguments;
+    }
+
+    public ArgumentsSignature getSignature() {
+        return formalArguments.getSignature();
     }
 
     @TruffleBoundary
