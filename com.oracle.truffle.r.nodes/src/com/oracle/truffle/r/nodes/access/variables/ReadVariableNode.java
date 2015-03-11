@@ -33,6 +33,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -460,12 +461,14 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         FrameLevel lastLevel = null;
 
+        boolean complex = false;
         ListIterator<ReadVariableLevel> iter = levels.listIterator(levels.size());
         if (match) {
             ReadVariableLevel level = levels.get(levels.size() - 1);
             if (level.valueAssumption != null) {
                 lastLevel = new DescriptorStableMatch(level.valueAssumption);
             } else {
+                complex = true;
                 lastLevel = new Match(level.slot);
             }
             iter.previous();
@@ -480,12 +483,14 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (level.enclosingDescriptorAssumption != null) {
                     assumptions.add(level.enclosingDescriptorAssumption.getAssumption());
                 } else {
+                    complex = true;
                     lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
                 }
             } else {
                 if (level.enclosingFrameAssumption != null) {
                     lastLevel = new NextFrameFromDescriptorLevel(lastLevel, level.enclosingFrameAssumption);
                 } else {
+                    complex = true;
                     lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
                 }
             }
@@ -500,12 +505,17 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (level.valueAssumption != null && lastLevel instanceof DescriptorLevel) {
                     assumptions.add(level.valueAssumption.getAssumption());
                 } else {
+                    complex = true;
                     lastLevel = new Mismatch(lastLevel, level.slot);
                 }
             }
         }
         if (!assumptions.isEmpty()) {
             lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
+        }
+
+        if (FastROptions.PrintComplexLookups.getValue() && levels.size() > 1 && complex) {
+            System.out.println(identifier + " " + lastLevel);
         }
 
         return lastLevel;
