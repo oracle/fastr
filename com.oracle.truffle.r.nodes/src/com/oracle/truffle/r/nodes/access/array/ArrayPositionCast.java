@@ -53,6 +53,8 @@ abstract class ArrayPositionsCastBase extends RNode {
         this.isSubset = isSubset;
     }
 
+    private final BranchProfile errorProfile = BranchProfile.create();
+
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile naValueMet = BranchProfile.create();
     private final BranchProfile intVectorMet = BranchProfile.create();
@@ -87,7 +89,8 @@ abstract class ArrayPositionsCastBase extends RNode {
         return rowNames.getLength();
     }
 
-    protected void dimensionsError() {
+    private void dimensionsError() {
+        errorProfile.enter();
         if (assignment) {
             if (isSubset) {
                 if (numDimensions == 2) {
