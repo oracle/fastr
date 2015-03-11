@@ -226,10 +226,12 @@ public final class FrameSlotChangeMonitor {
 
     private static int rewriteFrameDescriptorAssumptionsCount;
 
-    public static synchronized void initializeFrameDescriptor(FrameDescriptor frameDescriptor, boolean frameCreated) {
+    public static synchronized void initializeFrameDescriptor(FrameDescriptor frameDescriptor, boolean functionFrame) {
         descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
         descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
-        descriptorSingletonAssumptions.put(frameDescriptor, frameCreated ? Boolean.TRUE : Boolean.FALSE);
+        if (!functionFrame) {
+            descriptorSingletonAssumptions.put(frameDescriptor, Boolean.FALSE);
+        }
     }
 
     public static synchronized StableValue<MaterializedFrame> getEnclosingFrameAssumption(FrameDescriptor descriptor) {

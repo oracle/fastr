@@ -186,7 +186,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
 
             FrameDescriptor descriptor = new FrameDescriptor();
-            FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
+            FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, true);
             String description = getFunctionDescription(func);
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);

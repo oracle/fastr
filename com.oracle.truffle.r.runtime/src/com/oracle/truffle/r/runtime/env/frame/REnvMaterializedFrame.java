@@ -46,7 +46,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public REnvMaterializedFrame(UsesREnvMap env) {
         descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, true);
+        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
         REnvMapFrameAccess frameAccess = env.getFrameAccess();
         map = frameAccess.getMap();
         tags = new byte[map.size()];

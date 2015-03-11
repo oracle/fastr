@@ -385,7 +385,7 @@ public final class REngine implements RContext.Engine {
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
         FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
+        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, true);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
