@@ -56,6 +56,7 @@ public final class VarArgsSignature {
      */
     public static final RNode NO_VARARGS = ConstantNode.create(RArgsValuesAndNames.EMPTY);
     public static final VarArgsSignature TAKES_NO_VARARGS = new VarArgsSignature(null, 0);
+    public static final VarArgsSignature NO_VARARGS_GIVEN = new VarArgsSignature(new Object[]{NO_VARARGS}, 0);
 
     @CompilationFinal private final Object[] expressions;
     private final int times;

@@ -278,7 +278,7 @@ public abstract class Lapply extends RBuiltinNode {
                 protected ResolvedCachedCallNode(RootCallTarget originalTarget, RArgsValuesAndNames varArgs, CachedCallNode next) {
                     super(next.owner);
                     this.originalTarget = originalTarget;
-                    this.originalSignature = CallArgumentsNode.createSignature(varArgs, 1, true);
+                    this.originalSignature = CallArgumentsNode.createSignature(varArgs, 1);
                     this.callNode = checkFunction(originalTarget, varArgs);
                     this.next = next;
                 }
@@ -290,7 +290,7 @@ public abstract class Lapply extends RBuiltinNode {
 
                 @Override
                 public Object execute(VirtualFrame frame, RootCallTarget target, RArgsValuesAndNames varArgs) {
-                    VarArgsSignature signature = CallArgumentsNode.createSignature(varArgs, 1, true);
+                    VarArgsSignature signature = CallArgumentsNode.createSignature(varArgs, 1);
                     if (target != originalTarget || signature.isNotEqualTo(originalSignature)) {
                         return next.execute(frame, target, varArgs);
                     } else {

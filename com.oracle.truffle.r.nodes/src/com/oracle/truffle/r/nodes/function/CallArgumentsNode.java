@@ -59,6 +59,11 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      */
     @CompilationFinal private final int[] varArgsSymbolIndices;
 
+    private static final int UNINITIALIZED = -1;
+    private static final int VARIABLE = -2;
+
+    @CompilationFinal private int cachedSignatureLength = UNINITIALIZED;
+
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     /**
@@ -150,7 +155,28 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
 
         // Unroll "..."s and insert their arguments into VarArgsSignature
         int times = varArgsSymbolIndices.length;
-        return createSignature(getVarargsAndNames(frame), times, true);
+        RArgsValuesAndNames varArgsAndNames = getVarargsAndNames(frame);
+
+        // "..." empty?
+        if (varArgsAndNames.isEmpty()) {
+            return VarArgsSignature.NO_VARARGS_GIVEN;
+        } else {
+            // Arguments wrapped into "..."
+            Object[] varArgs = varArgsAndNames.getValues();
+            Object[] content;
+            if (cachedSignatureLength != VARIABLE && cachedSignatureLength != varArgs.length) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cachedSignatureLength = cachedSignatureLength == UNINITIALIZED ? varArgs.length : VARIABLE;
+            }
+            if (cachedSignatureLength == VARIABLE) {
+                content = new Object[varArgs.length];
+                createSignatureLoop(content, varArgs);
+            } else {
+                content = new Object[cachedSignatureLength];
+                createSignatureLoopUnrolled(content, varArgs, cachedSignatureLength);
+            }
+            return VarArgsSignature.create(content, times);
+        }
     }
 
     public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
@@ -163,33 +189,46 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         return varArgsAndNames;
     }
 
-    public static VarArgsSignature createSignature(RArgsValuesAndNames varArgsAndNames, int times, boolean allowConstants) {
-        Object[] content;
+    public static VarArgsSignature createSignature(RArgsValuesAndNames varArgsAndNames, int times) {
         // "..." empty?
         if (varArgsAndNames.isEmpty()) {
-            content = new Object[]{VarArgsSignature.NO_VARARGS};
+            return VarArgsSignature.NO_VARARGS_GIVEN;
         } else {
-
             // Arguments wrapped into "..."
             Object[] varArgs = varArgsAndNames.getValues();
-            content = new Object[varArgs.length];
+            Object[] content = new Object[varArgs.length];
 
-            // As we want to check on expression identity later on:
-            for (int i = 0; i < varArgs.length; i++) {
-                Object varArg = varArgs[i];
-                if (varArg instanceof RPromise) {
-                    // Unwrap expression (one instance per argument/call site)
-                    content[i] = ((RPromise) varArg).getRep();
-                } else if (RMissingHelper.isMissing(varArg)) {
-                    // Use static symbol for "missing" instead of ConstantNode.create
-                    content[i] = VarArgsSignature.NO_VARARGS;
-                } else {
-                    assert allowConstants;
-                    content[i] = varArg;
-                }
-            }
+            createSignatureLoop(content, varArgs);
+            return VarArgsSignature.create(content, times);
         }
-        return VarArgsSignature.create(content, times);
+    }
+
+    private static void createSignatureLoop(Object[] content, Object[] varArgs) {
+        // As we want to check on expression identity later on:
+        for (int i = 0; i < varArgs.length; i++) {
+            createSignatureLoopContents(content, varArgs, i);
+        }
+    }
+
+    @ExplodeLoop
+    private static void createSignatureLoopUnrolled(Object[] content, Object[] varArgs, int length) {
+        // As we want to check on expression identity later on:
+        for (int i = 0; i < length; i++) {
+            createSignatureLoopContents(content, varArgs, i);
+        }
+    }
+
+    private static void createSignatureLoopContents(Object[] content, Object[] varArgs, int i) {
+        Object varArg = varArgs[i];
+        if (varArg instanceof RPromise) {
+            // Unwrap expression (one instance per argument/call site)
+            content[i] = ((RPromise) varArg).getRep();
+        } else if (RMissingHelper.isMissing(varArg)) {
+            // Use static symbol for "missing" instead of ConstantNode.create
+            content[i] = VarArgsSignature.NO_VARARGS;
+        } else {
+            content[i] = varArg;
+        }
     }
 
     @ExplodeLoop

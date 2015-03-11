@@ -113,16 +113,30 @@ public abstract class AccessArgumentNode extends RNode {
         return handlePromise(frame, promise, topLevelInlinedPromiseProfile);
     }
 
-    @Specialization
+    private void handleVarArgPromise(VirtualFrame frame, Object[] varArgs, int i) {
+        // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
+        // "..." is a different expression
+
+        if (varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise)) {
+            varArgs[i] = handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile);
+        }
+    }
+
+    @Specialization(limit = "1", guards = "cachedVarArgLength == varArgsContainer.length()")
+    @ExplodeLoop
+    protected Object doArgumentCached(VirtualFrame frame, RArgsValuesAndNames varArgsContainer, @Cached("varArgsContainer.length()") int cachedVarArgLength) {
+        Object[] varArgs = varArgsContainer.getValues();
+        for (int i = 0; i < cachedVarArgLength; i++) {
+            handleVarArgPromise(frame, varArgs, i);
+        }
+        return varArgsContainer;
+    }
+
+    @Specialization(contains = "doArgumentCached")
     protected Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
         Object[] varArgs = varArgsContainer.getValues();
         for (int i = 0; i < varArgsContainer.length(); i++) {
-            // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
-            // "..." is a different expression
-
-            if (varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise)) {
-                varArgs[i] = handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile);
-            }
+            handleVarArgPromise(frame, varArgs, i);
         }
         return varArgsContainer;
     }
