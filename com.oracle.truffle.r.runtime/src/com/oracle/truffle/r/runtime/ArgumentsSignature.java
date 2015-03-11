@@ -165,4 +165,40 @@ public final class ArgumentsSignature implements Iterable<String> {
     public String toString() {
         return "Signature " + Arrays.toString(names);
     }
+
+    /*
+     * Utility functions
+     */
+
+    public static long[] flattenIndexes(ArgumentsSignature[] varArgSignatures, int argListSize) {
+        long[] preparePermutation = new long[argListSize];
+        int index = 0;
+        for (int i = 0; i < varArgSignatures.length; i++) {
+            ArgumentsSignature varArgSignature = varArgSignatures[i];
+            if (varArgSignature != null) {
+                for (int j = 0; j < varArgSignature.getLength(); j++) {
+                    preparePermutation[index++] = -((((long) i) << 32) + j);
+                }
+            } else {
+                preparePermutation[index++] = i;
+            }
+        }
+        return preparePermutation;
+    }
+
+    public static ArgumentsSignature flattenNames(ArgumentsSignature signature, ArgumentsSignature[] varArgSignatures, int argListSize) {
+        String[] argNames = new String[argListSize];
+        int index = 0;
+        for (int i = 0; i < varArgSignatures.length; i++) {
+            ArgumentsSignature varArgSignature = varArgSignatures[i];
+            if (varArgSignature != null) {
+                for (int j = 0; j < varArgSignature.getLength(); j++) {
+                    argNames[index++] = varArgSignature.getName(j);
+                }
+            } else {
+                argNames[index++] = signature.getName(i);
+            }
+        }
+        return ArgumentsSignature.get(argNames);
+    }
 }
