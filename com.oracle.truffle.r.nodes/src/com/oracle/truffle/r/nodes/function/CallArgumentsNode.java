@@ -57,7 +57,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
      * the index of the name. Otherwise it is an empty list.
      */
-    @CompilationFinal private final Integer[] varArgsSymbolIndices;
+    @CompilationFinal private final int[] varArgsSymbolIndices;
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
@@ -78,7 +78,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, Integer[] varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, signature);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
@@ -119,7 +119,10 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        Integer[] varArgsSymbolIndicesArr = varArgsSymbolIndices.toArray(new Integer[varArgsSymbolIndices.size()]);
+        int[] varArgsSymbolIndicesArr = new int[varArgsSymbolIndices.size()];
+        for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
+            varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
+        }
         CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr, modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
@@ -150,7 +153,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         return createSignature(getVarargsAndNames(frame), times, true);
     }
 
-    private RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+    public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
         RArgsValuesAndNames varArgsAndNames;
         try {
             varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
@@ -254,6 +257,10 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      */
     public boolean containsVarArgsSymbol() {
         return varArgsSymbolIndices.length > 0;
+    }
+
+    public int[] getVarArgsSymbolIndices() {
+        return varArgsSymbolIndices;
     }
 
     @Override
