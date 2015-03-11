@@ -24,19 +24,31 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"})
+@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode {
 
     @CompilationFinal private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
+    @Child private PromiseHelperNode promiseHelper;
+
+    protected PromiseHelperNode initPromiseHelper() {
+        if (promiseHelper == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            promiseHelper = insert(new PromiseHelperNode());
+        }
+        return promiseHelper;
+    }
 
     @Override
     public RNode[] getParameterValues() {
@@ -44,11 +56,19 @@ public abstract class Return extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object returnFunction(Object value) {
-        /*
-         * Do not call controlVisibility, otherwise return(invisible(e)) will not work. Whatever the
-         * visibility state at this point is preserved.
-         */
+    protected Object returnFunction(@SuppressWarnings("unused") RMissing arg) {
+        throw new ReturnException(RNull.instance);
+    }
+
+    @Specialization
+    protected Object returnFunction(RNull arg) {
+        throw new ReturnException(arg);
+    }
+
+    @Specialization
+    protected Object returnFunction(VirtualFrame frame, RPromise expr) {
+        controlVisibility();
+        Object value = initPromiseHelper().evaluate(frame, expr);
         throw new ReturnException(value);
     }
 }
