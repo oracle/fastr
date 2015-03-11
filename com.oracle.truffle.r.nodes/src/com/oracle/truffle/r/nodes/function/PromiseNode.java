@@ -448,7 +448,7 @@ public abstract class PromiseNode extends RNode {
      * more complicated, as "..." might include values from an outer "...", which might resolve to
      * an empty argument list.
      */
-    public static final class InlineVarArgsPromiseNode extends RNode {
+    private static final class InlineVarArgsPromiseNode extends RNode {
         @Children private final RNode[] varargs;
         protected final ArgumentsSignature signature;
 
@@ -459,10 +459,6 @@ public abstract class PromiseNode extends RNode {
             this.varargs = nodes;
             this.signature = signature;
             assert varargs.length == signature.getLength();
-        }
-
-        public RNode[] getVarArgs() {
-            return varargs;
         }
 
         @Override

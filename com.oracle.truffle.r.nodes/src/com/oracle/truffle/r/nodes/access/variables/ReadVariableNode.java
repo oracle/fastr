@@ -118,7 +118,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    public ReadVariableNode(String identifier, RType mode, ReadKind kind) {
+    private ReadVariableNode(String identifier, RType mode, ReadKind kind) {
         this.identifier = identifier;
         this.mode = mode;
         this.kind = kind;
@@ -142,7 +142,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         return kind;
     }
 
-    public boolean seenValueKind(FrameSlotKind slotKind) {
+    private boolean seenValueKind(FrameSlotKind slotKind) {
         return seenValueKinds[slotKind.ordinal()];
     }
 
@@ -201,7 +201,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         return result;
     }
 
-    public static final class LayoutChangedException extends SlowPathException {
+    private static final class LayoutChangedException extends SlowPathException {
         private static final long serialVersionUID = 3380913774357492013L;
     }
 
@@ -296,7 +296,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public final class Unknown extends DescriptorLevel {
+    private final class Unknown extends DescriptorLevel {
 
         @Override
         public Object execute(VirtualFrame frame) {
@@ -313,7 +313,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public static final class NextFrameFromDescriptorLevel extends DescriptorLevel {
+    private static final class NextFrameFromDescriptorLevel extends DescriptorLevel {
 
         private final FrameLevel next;
         private final StableValue<MaterializedFrame> enclosingFrameAssumption;
@@ -335,7 +335,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public static final class NextFrameLevel extends FrameLevel {
+    private static final class NextFrameLevel extends FrameLevel {
 
         private final FrameLevel next;
         private final FrameDescriptor nextDescriptor;
@@ -372,7 +372,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public static final class MultiAssumptionLevel extends FrameLevel {
+    private static final class MultiAssumptionLevel extends FrameLevel {
 
         private final FrameLevel next;
         @CompilationFinal private final Assumption[] assumptions;
@@ -591,7 +591,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
      * @param objArg The object to check for proper type
      * @return see above
      */
-    public boolean checkType(VirtualFrame frame, Object objArg) {
+    protected boolean checkType(VirtualFrame frame, Object objArg) {
         Object obj = objArg;
         if (isNullProfile.profile(obj == null)) {
             return false;

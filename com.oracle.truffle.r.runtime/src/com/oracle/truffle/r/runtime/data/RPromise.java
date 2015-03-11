@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
@@ -105,14 +104,14 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     /**
      * @see EvalPolicy
      */
-    protected final EvalPolicy evalPolicy;
+    private final EvalPolicy evalPolicy;
 
     /**
      * @see PromiseType
      */
-    protected final PromiseType type;
+    private final PromiseType type;
 
-    protected final OptType optType;
+    private final OptType optType;
 
     /**
      * @see #getFrame()
@@ -128,12 +127,12 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     /**
      * When {@code null} the promise has not been evaluated.
      */
-    protected Object value = null;
+    private Object value = null;
 
     /**
      * A flag to indicate the promise has been evaluated.
      */
-    protected boolean isEvaluated = false;
+    private boolean isEvaluated = false;
 
     /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
@@ -237,17 +236,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         if (newValue instanceof RShareable) {
             ((RShareable) newValue).makeShared();
         }
-    }
-
-    @TruffleBoundary
-    protected final Object doEvalArgument(SourceSection callSrc) {
-        assert execFrame != null;
-        return RContext.getEngine().evalPromise(this, callSrc);
-    }
-
-    @TruffleBoundary
-    protected final Object doEvalArgument(MaterializedFrame frame) {
-        return RContext.getEngine().evalPromise(this, frame);
     }
 
     /**

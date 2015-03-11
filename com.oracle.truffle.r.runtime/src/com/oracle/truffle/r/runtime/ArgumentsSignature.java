@@ -110,14 +110,6 @@ public final class ArgumentsSignature implements Iterable<String> {
         return nonNullCount;
     }
 
-    public boolean isVarArg(int index) {
-        return isVarArg[index];
-    }
-
-    public boolean isVarArgGetter(int index) {
-        return isVarArgGetter[index];
-    }
-
     public int getVarArgIndex() {
         assert varArgIndexes.length <= 1 : "cannot ask for _the_ vararg index if there are multiple varargs";
         return varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];

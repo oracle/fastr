@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class UpdateArrayHelperNode extends RNode {
 
     protected final boolean isSubset;
-    public final boolean forObjects;
+    private final boolean forObjects;
 
     private final NACheck elementNACheck = NACheck.create();
     private final NACheck posNACheck = NACheck.create();
@@ -97,13 +97,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public UpdateArrayHelperNode(boolean isSubset, boolean forObjects) {
+    protected UpdateArrayHelperNode(boolean isSubset, boolean forObjects) {
         this.isSubset = isSubset;
         this.forObjects = forObjects;
         this.recursiveIsSubset = isSubset;
     }
 
-    public UpdateArrayHelperNode(UpdateArrayHelperNode other) {
+    protected UpdateArrayHelperNode(UpdateArrayHelperNode other) {
         this.isSubset = other.isSubset;
         this.forObjects = other.forObjects;
         this.recursiveIsSubset = other.recursiveIsSubset;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public abstract class ColSums extends RBuiltinNode {
     private final BinaryConditionProfile removeNA = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
     @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
+    protected RNode[] castArguments(RNode[] arguments) {
         arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
         arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;

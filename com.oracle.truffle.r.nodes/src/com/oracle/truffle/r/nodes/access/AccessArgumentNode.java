@@ -73,11 +73,11 @@ public abstract class AccessArgumentNode extends RNode {
     @CompilationFinal private boolean deoptimized;
     @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();
 
-    public AccessArgumentNode(int index) {
+    protected AccessArgumentNode(int index) {
         this.index = index;
     }
 
-    public AccessArgumentNode(AccessArgumentNode prev) {
+    protected AccessArgumentNode(AccessArgumentNode prev) {
         this.index = prev.index;
         formals = prev.formals;
         hasDefaultArg = prev.hasDefaultArg;
@@ -109,12 +109,12 @@ public abstract class AccessArgumentNode extends RNode {
     }
 
     @Specialization
-    public Object doArgument(VirtualFrame frame, RPromise promise) {
+    protected Object doArgument(VirtualFrame frame, RPromise promise) {
         return handlePromise(frame, promise, topLevelInlinedPromiseProfile);
     }
 
     @Specialization
-    public Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
+    protected Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
         Object[] varArgs = varArgsContainer.getValues();
         for (int i = 0; i < varArgsContainer.length(); i++) {
             // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
@@ -140,14 +140,14 @@ public abstract class AccessArgumentNode extends RNode {
     }
 
     @Specialization(guards = {"!hasDefaultArg()", "!isVarArgIndex()"})
-    public Object doArgumentNoDefaultArg(RMissing argMissing) {
+    protected Object doArgumentNoDefaultArg(RMissing argMissing) {
         // Simply return missing if there's no default arg OR it represents an empty "..."
         // (Empty "..." defaults to missing anyway, this way we don't have to rely on )
         return argMissing;
     }
 
     @Specialization(guards = {"hasDefaultArg()"})
-    public Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
+    protected Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
         Object result;
         if (canBeOptimized()) {
             // Insert default value
@@ -179,7 +179,7 @@ public abstract class AccessArgumentNode extends RNode {
         return isVarArgIndex;
     }
 
-    protected boolean canBeOptimized() {
+    private boolean canBeOptimized() {
         return !deoptimized && defaultArgCanBeOptimized;
     }
 
@@ -216,7 +216,7 @@ public abstract class AccessArgumentNode extends RNode {
     }
 
     @Fallback
-    public Object doArgument(Object obj) {
+    protected Object doArgument(Object obj) {
         return obj;
     }
 

@@ -99,7 +99,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
 
-    public static final String UNNAMED = new String("");
+    private static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
 
     private static final Empty emptyEnv = new Empty();
@@ -114,7 +114,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     protected REnvironment parent;
     private final String name;
-    final REnvFrameAccess frameAccess;
+    protected final REnvFrameAccess frameAccess;
     private boolean locked;
 
     public RType getRType() {
@@ -143,28 +143,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * environment is created the value is stored in the associated frame. Therefore {@code env}
      * could never match lazy {@code null}.
      */
-    public static boolean isFrameForEnv(Frame frame, REnvironment env) {
+    private static boolean isFrameForEnv(Frame frame, REnvironment env) {
         return RArguments.getEnvironment(frame) == env;
-    }
-
-    /**
-     * Looks up the search path for an environment that is associated with {@code frame}.
-     *
-     * @param frame
-     * @return the corresponding {@link REnvironment} or {@code null} if not found. If the
-     *         environment is {@code base} the "namespace:base" instance is returned.
-     */
-    public static REnvironment lookupEnvForFrame(MaterializedFrame frame) {
-        for (REnvironment env : searchPath) {
-            if (isFrameForEnv(frame, env)) {
-                if (env == baseEnv) {
-                    return baseEnv.getNamespace();
-                } else {
-                    return env;
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -476,7 +456,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * The basic constructor; just assigns the essential fields.
      */
-    protected REnvironment(REnvironment parent, String name, REnvFrameAccess frameAccess) {
+    private REnvironment(REnvironment parent, String name, REnvFrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
         this.frameAccess = frameAccess;
@@ -485,7 +465,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * An environment associated with an already materialized frame.
      */
-    protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
+    private REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
         this(parent, name, new REnvTruffleFrameAccess(frame));
         // Associate frame with the environment
         RArguments.setEnvironment(frame, this);

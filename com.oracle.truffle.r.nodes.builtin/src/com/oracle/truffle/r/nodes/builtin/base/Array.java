@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,7 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @CreateCast({"arguments"})
-    public RNode[] createCastDimensions(RNode[] children) {
+    protected RNode[] createCastDimensions(RNode[] children) {
         RNode dimsVector = CastToVectorNodeGen.create(children[1], false, false, false, false);
         return new RNode[]{children[0], CastIntegerNodeGen.create(dimsVector, false, false, false), children[2]};
     }

@@ -89,8 +89,8 @@ public abstract class Lapply extends RBuiltinNode {
         /**
          * These nodes are all independent of the details of a particular call.
          */
-        @Child LapplyIteratorNode iterator = new LapplyIteratorNode();
-        @Child LapplyFunctionNode functionNode = new LapplyFunctionNode();
+        @Child private LapplyIteratorNode iterator = new LapplyIteratorNode();
+        @Child private LapplyFunctionNode functionNode = new LapplyFunctionNode();
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(LAPPLY_VEC_ELEM, iterator, false, false);
         @Child private ReadVariableNode readVectorElement = ReadVariableNode.create(LAPPLY_VEC_ELEM, false);
 
@@ -125,17 +125,17 @@ public abstract class Lapply extends RBuiltinNode {
              * Increments the iterator index, updating the {@link #ITER_INDEX_NAME} variable. Always
              * specializes to the same tree.
              */
-            @Child WriteVariableNode incIndex;
+            @Child private WriteVariableNode incIndex;
             /**
              * Initializes the {@link #ITER_INDEX_NAME} variable to 1 (R indexing rules). Always
              * specializes to the same tree.
              */
-            @Child WriteVariableNode zeroIndex;
+            @Child private WriteVariableNode zeroIndex;
             /**
              * Loads the element of the vector based on the {@code X} variable and the current
              * {@link #ITER_INDEX_NAME} variable. Specialized based on the type of {@code X}.
              */
-            @Child RNode indexedLoad;
+            @Child private RNode indexedLoad;
 
             LapplyIteratorNode() {
                 RNode[] incArgs = new RNode[]{ReadVariableNode.create(ITER_INDEX_NAME, false), ConstantNode.create(1)};
@@ -183,7 +183,7 @@ public abstract class Lapply extends RBuiltinNode {
         protected static class LapplyFunctionNode extends RNode {
             private static final String LAPPLY_FUN = new String("FUN");
 
-            @Child ReadVariableNode readFun;
+            @Child private ReadVariableNode readFun;
 
             public LapplyFunctionNode() {
                 readFun = insert(ReadVariableNode.create(LAPPLY_FUN, false));

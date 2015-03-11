@@ -165,7 +165,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return (RList) dcn.executeInternal(frame, list.getClassHierarchy(), new Object[]{list});
     }
 
-    public boolean isNumericVersion(RList list) {
+    protected boolean isNumericVersion(RList list) {
         RStringVector klass = list.getClassAttr(attrProfiles);
         if (klass != null) {
             for (int i = 0; i < klass.getLength(); i++) {
@@ -269,7 +269,7 @@ public abstract class Combine extends RPrecedenceBuiltinNode {
         return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, getSuppliedSignature().createVector());
     }
 
-    public RAbstractVector namesMerge(RAbstractVector vector, String name) {
+    protected RAbstractVector namesMerge(RAbstractVector vector, String name) {
         RStringVector orgNamesObject = vector.getNames(attrProfiles);
         if ((orgNamesObject == null && name == null) || vector.getLength() == 0) {
             return vector;

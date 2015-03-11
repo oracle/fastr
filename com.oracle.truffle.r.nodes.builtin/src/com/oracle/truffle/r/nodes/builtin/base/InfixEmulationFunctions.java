@@ -70,7 +70,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPositions) {
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < getLength(); i++) {
                 newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, newPositions[i], i);
@@ -97,7 +97,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < getLength(); i++) {
                 newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], true, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, value, newPositions[i], i);

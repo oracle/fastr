@@ -233,7 +233,7 @@ public abstract class CastRawNode extends CastNode {
 
     @Fallback
     @TruffleBoundary
-    public int doOther(Object operand) {
+    protected int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
 }

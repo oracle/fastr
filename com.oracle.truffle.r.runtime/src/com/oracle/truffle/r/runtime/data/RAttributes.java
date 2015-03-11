@@ -69,7 +69,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
-    public static RAttributes create() {
+    static RAttributes create() {
         return new RAttributes();
     }
 
@@ -229,7 +229,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
      * Collects data on the maximum size of the attribute set. So only interested in adding not
      * removing attributes.
      */
-    public static class PerfHandler implements RPerfStats.Handler {
+    private static class PerfHandler implements RPerfStats.Handler {
         private static final RPerfStats.Histogram hist = new RPerfStats.Histogram(5);
 
         @TruffleBoundary

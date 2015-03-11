@@ -439,7 +439,7 @@ public class ArgumentMatcher {
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
-    public static MatchPermutation permuteArguments(ArgumentsSignature signature, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
+    private static MatchPermutation permuteArguments(ArgumentsSignature signature, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
                     IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString) {
         // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
 
@@ -613,7 +613,7 @@ public class ArgumentMatcher {
      * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
      *         {@link PromiseNode}
      */
-    public static EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int formalIndex) {
+    private static EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int formalIndex) {
         // This is for actual function calls. However, if the arguments are meant for a
         // builtin, we have to consider whether they should be forced or not!
         return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
@@ -633,7 +633,7 @@ public class ArgumentMatcher {
      *         {@link RMissing} in case neither is present!
      */
     @TruffleBoundary
-    public static RNode wrap(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex, boolean isBuiltin,
+    private static RNode wrap(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex, boolean isBuiltin,
                     boolean noOpt) {
         // Determine whether to choose supplied argument or default value
         RNode expr = null;

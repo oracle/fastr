@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -222,15 +221,6 @@ public final class Utils {
         } else {
             return path;
         }
-    }
-
-    private static volatile Charset UTF8;
-
-    public static Charset getUTF8() {
-        if (UTF8 == null) {
-            UTF8 = Charset.forName("UTF-8");
-        }
-        return UTF8;
     }
 
     /**

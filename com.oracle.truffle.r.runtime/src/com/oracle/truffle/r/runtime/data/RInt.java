@@ -30,7 +30,7 @@ public final class RInt extends RScalar {
 
     private final int value;
 
-    RInt(byte value) {
+    private RInt(byte value) {
         this.value = value;
     }
 

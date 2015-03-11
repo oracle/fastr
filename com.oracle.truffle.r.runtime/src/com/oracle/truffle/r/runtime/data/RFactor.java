@@ -151,14 +151,6 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return this;
     }
 
-    public int getElementIndexByName(RAttributeProfiles attrProfiles, String name) {
-        return vector.getElementIndexByName(attrProfiles, name);
-    }
-
-    public int getElementIndexByNameInexact(RAttributeProfiles attrProfiles, String name) {
-        return vector.getElementIndexByNameInexact(attrProfiles, name);
-    }
-
     public void setLevels(Object newLevels) {
         vector.setLevels(newLevels);
     }
@@ -176,5 +168,4 @@ public final class RFactor implements RShareable, RAbstractContainer {
         RVector levels = vector.getLevels();
         return levels == null ? 0 : levels.getLength();
     }
-
 }
