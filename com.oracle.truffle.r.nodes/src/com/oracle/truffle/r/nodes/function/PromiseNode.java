@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -394,12 +395,15 @@ public abstract class PromiseNode extends RNode {
      * This class is used for wrapping arguments into "..." ({@link RArgsValuesAndNames}).
      */
     public static final class VarArgsPromiseNode extends RNode {
-        @Children protected final RNode[] nodes;
+        @CompilationFinal private final Closure[] closures;
         private final ArgumentsSignature signature;
         protected final ClosureCache closureCache;
 
         public VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
-            this.nodes = nodes;
+            this.closures = new Closure[nodes.length];
+            for (int i = 0; i < nodes.length; i++) {
+                this.closures[i] = closureCache.getOrCreateClosure(nodes[i]);
+            }
             this.signature = signature;
             this.closureCache = closureCache;
         }
@@ -407,10 +411,9 @@ public abstract class PromiseNode extends RNode {
         @Override
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
-            Object[] promises = new Object[nodes.length];
-            for (int i = 0; i < nodes.length; i++) {
-                Closure closure = closureCache.getOrCreateClosure(nodes[i]);
-                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
+            Object[] promises = new Object[closures.length];
+            for (int i = 0; i < closures.length; i++) {
+                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closures[i]);
             }
             return new RArgsValuesAndNames(promises, signature);
         }
@@ -420,22 +423,22 @@ public abstract class PromiseNode extends RNode {
             // In support of match.call(expand.dots=FALSE)
             // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
             state.append("list(");
-            for (int i = 0; i < nodes.length; i++) {
+            for (int i = 0; i < closures.length; i++) {
                 String name = signature.getName(i);
                 if (name != null) {
                     state.append(name);
                     state.append(" = ");
                 }
-                nodes[i].deparse(state);
-                if (i < nodes.length - 1) {
+                ((RNode) closures[i].getExpr()).deparse(state);
+                if (i < closures.length - 1) {
                     state.append(", ");
                 }
             }
             state.append(')');
         }
 
-        public RNode[] getNodes() {
-            return nodes;
+        public Closure[] getClosures() {
+            return closures;
         }
 
         public ArgumentsSignature getSignature() {

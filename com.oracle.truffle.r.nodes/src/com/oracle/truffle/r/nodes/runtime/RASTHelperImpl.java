@@ -122,7 +122,7 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof AccessFieldNode) {
             return 3;
         } else if (node instanceof VarArgsPromiseNode) {
-            return ((VarArgsPromiseNode) node).getNodes().length;
+            return ((VarArgsPromiseNode) node).getClosures().length;
         } else {
             // TODO fill out
             assert false : node;
