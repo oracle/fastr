@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,18 +57,24 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     protected Object returnFunction(@SuppressWarnings("unused") RMissing arg) {
-        throw new ReturnException(RNull.instance);
+        throw new ReturnException(RNull.instance, null);
     }
 
     @Specialization
     protected Object returnFunction(RNull arg) {
-        throw new ReturnException(arg);
+        throw new ReturnException(arg, null);
     }
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise expr) {
         controlVisibility();
         Object value = initPromiseHelper().evaluate(frame, expr);
-        throw new ReturnException(value);
+        /*
+         * The function we want to return from may not be the currently executing function, if
+         * "return(expr)" was passed as an argument; see the implementation of tryCatch. In that
+         * case "frame" identifies the function to return from, so we pass it in the
+         * ReturnException, to be checked in FunctionDefinitionNode.execute.
+         */
+        throw new ReturnException(value, frame.materialize());
     }
 }

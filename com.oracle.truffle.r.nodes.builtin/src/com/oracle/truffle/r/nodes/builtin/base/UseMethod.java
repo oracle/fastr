@@ -75,7 +75,7 @@ public abstract class UseMethod extends RBuiltinNode {
         } else {
             dispatchedObject = arg;
         }
-        throw new ReturnException(dispatchedCallNode.execute(frame, classHierarchyNode.execute(frame, dispatchedObject)));
+        throw new ReturnException(dispatchedCallNode.execute(frame, classHierarchyNode.execute(frame, dispatchedObject)), null);
     }
 
     /**

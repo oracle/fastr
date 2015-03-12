@@ -256,6 +256,16 @@ public class RASTHelperImpl implements RASTHelper {
         RASTDeparse.deparse(state, f);
     }
 
+    private static RCallNode getCallNode(Source source) {
+        try {
+            return (RCallNode) ((RLanguage) RContext.getEngine().parse(source).getDataAt(0)).getRep();
+        } catch (ParseException ex) {
+            // most unexpected
+            throw RInternalError.shouldNotReachHere();
+        }
+
+    }
+
     private static final Source GET_NAMESPACE_SOURCE = Source.asPseudoFile("..getNamespace(name)", "<..getNamespace>");
     private static RCallNode getNamespaceCall;
 
@@ -265,16 +275,27 @@ public class RASTHelperImpl implements RASTHelper {
     @Override
     public REnvironment findNamespace(RStringVector name, int depth) {
         if (getNamespaceCall == null) {
-            try {
-                getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse(GET_NAMESPACE_SOURCE).getDataAt(0)).getRep();
-            } catch (ParseException ex) {
-                // most unexpected
-                Utils.fail("findNameSpace");
-            }
+            getNamespaceCall = getCallNode(GET_NAMESPACE_SOURCE);
         }
         RCallNode call = RCallNode.createCloneReplacingArgs(getNamespaceCall, ConstantNode.create(name));
         try {
             return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
+        } catch (PutException ex) {
+            throw RError.error((SourceSection) null, ex);
+        }
+    }
+
+    private static final Source HANDLE_SIMPLE_ERROR_SOURCE = Source.asPseudoFile(".handleSimpleError(h, msg, call)", "<.handleSimpleError>");
+    private static RCallNode handleSimpleErrorCall;
+
+    @Override
+    public void handleSimpleError(RFunction f, RStringVector msg, Object call, int depth) {
+        if (handleSimpleErrorCall == null) {
+            handleSimpleErrorCall = getCallNode(HANDLE_SIMPLE_ERROR_SOURCE);
+        }
+        RCallNode callNode = RCallNode.createCloneReplacingArgs(handleSimpleErrorCall, ConstantNode.create(f), ConstantNode.create(msg), ConstantNode.create(call));
+        try {
+            RContext.getEngine().eval(RDataFactory.createLanguage(callNode), REnvironment.globalEnv(), depth + 1);
         } catch (PutException ex) {
             throw RError.error((SourceSection) null, ex);
         }

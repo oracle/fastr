@@ -111,6 +111,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
+        /*
+         * It should be possible to be clever and only record this iff a handler is installed, by
+         * using the RArguments array.
+         */
+        Object handlerStack = ConditionsSupport.getHandlerStack();
+        Object restartStack = ConditionsSupport.getRestartStack();
         try {
             verifyEnclosingAssumptions(vf);
             if (s3SlotsProfile.profile(RArguments.hasS3Args(vf))) {
@@ -119,8 +125,15 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
-            return ex.getResult();
+            MaterializedFrame returnFrame = ex.getReturnFrame();
+            if (returnFrame != null && returnFrame != vf.materialize()) {
+                throw ex;
+            } else {
+                return ex.getResult();
+            }
         } finally {
+            // Precise relationship between condition handling and on.exit TBD
+            ConditionsSupport.restoreStacks(handlerStack, restartStack);
             if (onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
                 if (onExitExpressionCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();

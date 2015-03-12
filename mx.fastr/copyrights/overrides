@@ -65,6 +65,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/B
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/BaseVariables.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/BaseGammaFunctions.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/CharMatch.java,purdue.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/ConditionFunctions.java,gnur.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/CumProd.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/ColMeans.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/CumMax.java,purdue.copyright
@@ -180,6 +181,7 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/PrettyPrinter.
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/TreeViewer.java,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RSerialize.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RDeparse.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ConditionsSupport.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ROptions.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r.copyright

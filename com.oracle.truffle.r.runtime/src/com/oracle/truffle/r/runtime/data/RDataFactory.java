@@ -390,6 +390,10 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise.VarargPromise(type, promisedVararg, exprClosure));
     }
 
+    public static RPairList createPairList(Object car, Object cdr) {
+        return traceDataCreated(new RPairList(car, cdr, RNull.instance, null));
+    }
+
     public static RPairList createPairList(Object car, Object cdr, Object tag) {
         return traceDataCreated(new RPairList(car, cdr, tag, null));
     }

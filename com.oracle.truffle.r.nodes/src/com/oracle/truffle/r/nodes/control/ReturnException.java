@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 
 @SuppressWarnings("serial")
 public final class ReturnException extends ControlFlowException {
 
     public final Object result;
+    private final MaterializedFrame returnFrame;
 
-    public ReturnException(Object result) {
+    /**
+     * Support for the "return" builtin.
+     * 
+     * @param result the value to return
+     * @param returnFrame if not {@code null}, the frame of the function that the return should go
+     *            to, skipping intermediate frames.
+     */
+    public ReturnException(Object result, MaterializedFrame returnFrame) {
         this.result = result;
+        this.returnFrame = returnFrame;
     }
 
     /**
@@ -38,5 +48,9 @@ public final class ReturnException extends ControlFlowException {
      */
     public Object getResult() {
         return result;
+    }
+
+    public MaterializedFrame getReturnFrame() {
+        return returnFrame;
     }
 }

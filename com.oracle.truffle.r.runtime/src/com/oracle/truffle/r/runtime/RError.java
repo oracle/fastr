@@ -101,6 +101,9 @@ public final class RError extends RuntimeException {
             preamble += " in " + src.getCode() + " :";
             errorMsg = wrapMessage(preamble, formattedMsg);
         }
+        // Check if there is a condition handler for the error
+        ConditionsSupport.signalError(safeGetFrame(frame), errorMsg);
+
         RError rError = new RError(errorMsg);
         RInternalError.reportError(rError, src);
 
@@ -114,10 +117,7 @@ public final class RError extends RuntimeException {
                 errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
             if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                if (frame == null) {
-                    frame = Utils.getActualCurrentFrame();
-                }
-                MaterializedFrame materializedFrame = frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
+                MaterializedFrame materializedFrame = safeGetFrame(frame);
                 if (errorExpr instanceof RLanguage) {
                     RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
                 } else if (errorExpr instanceof RExpression) {
@@ -132,6 +132,14 @@ public final class RError extends RuntimeException {
         } else {
             throw rError;
         }
+    }
+
+    private static MaterializedFrame safeGetFrame(VirtualFrame frameA) {
+        VirtualFrame frame = frameA;
+        if (frame == null) {
+            frame = Utils.getActualCurrentFrame();
+        }
+        return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
     }
 
     /**
@@ -583,6 +591,7 @@ public final class RError extends RuntimeException {
         APPLY_NON_FUNCTION("attempt to apply non-function"),
         NO_INDEX("no index specified"),
         INVALID_ARG_NUMBER("%s: invalid number of arguments"),
+        BAD_HANDLER_DATA("bad handler data"),
         PERFORMANCE("performance problem: %s");
 
         public final String message;
