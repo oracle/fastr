@@ -44,6 +44,8 @@ com.oracle.truffle.r.native/library/tools/src/tools.h,no.copyright
 com.oracle.truffle.r.native/library/tools/src/init.c,no.copyright
 com.oracle.truffle.r.native/library/utils/src/utils.h,no.copyright
 com.oracle.truffle.r.native/library/utils/src/init.c,no.copyright
+com.oracle.truffle.r.native/run/R.sh,gnu_r.copyright
+com.oracle.truffle.r.native/run/Rscript.sh,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/BinaryOpsGroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchedCallNode.java,purdue.copyright
