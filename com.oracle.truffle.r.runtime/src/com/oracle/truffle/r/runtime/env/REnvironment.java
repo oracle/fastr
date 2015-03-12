@@ -79,15 +79,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * most one for a function frame, allowing equality to be tested using {@code ==}.
  *
  */
-public abstract class REnvironment extends RAttributeStorage implements RAttributable {
-
-    /**
-     * Controls whether a separate frame, with a different enclosing frame is created to the
-     * "namespace:base" environment. This is correct semantics and required to resolve unqualified
-     * references to names between packages, but requires a fix to {@link FrameSlotChangeMonitor} to
-     * work. TODO Remove once fix in place.
-     */
-    private static final boolean NS_BASE_FRAME = false;
+public abstract class REnvironment extends RAttributeStorage implements RAttributable, RTypedValue {
 
     public static class PutException extends RErrorException {
         private static final long serialVersionUID = 1L;
@@ -99,7 +91,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
 
-    public static final String UNNAMED = new String("");
+    private static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
 
     private static final Empty emptyEnv = new Empty();
@@ -114,8 +106,12 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     protected REnvironment parent;
     private final String name;
-    final REnvFrameAccess frameAccess;
+    protected final REnvFrameAccess frameAccess;
     private boolean locked;
+
+    public RType getRType() {
+        return RType.Environment;
+    }
 
     /**
      * Value returned by {@code emptyenv()}.
@@ -139,28 +135,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * environment is created the value is stored in the associated frame. Therefore {@code env}
      * could never match lazy {@code null}.
      */
-    public static boolean isFrameForEnv(Frame frame, REnvironment env) {
+    private static boolean isFrameForEnv(Frame frame, REnvironment env) {
         return RArguments.getEnvironment(frame) == env;
-    }
-
-    /**
-     * Looks up the search path for an environment that is associated with {@code frame}.
-     *
-     * @param frame
-     * @return the corresponding {@link REnvironment} or {@code null} if not found. If the
-     *         environment is {@code base} the "namespace:base" instance is returned.
-     */
-    public static REnvironment lookupEnvForFrame(MaterializedFrame frame) {
-        for (REnvironment env : searchPath) {
-            if (isFrameForEnv(frame, env)) {
-                if (env == baseEnv) {
-                    return baseEnv.getNamespace();
-                } else {
-                    return env;
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -472,7 +448,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * The basic constructor; just assigns the essential fields.
      */
-    protected REnvironment(REnvironment parent, String name, REnvFrameAccess frameAccess) {
+    private REnvironment(REnvironment parent, String name, REnvFrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
         this.frameAccess = frameAccess;
@@ -481,7 +457,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * An environment associated with an already materialized frame.
      */
-    protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
+    private REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
         this(parent, name, new REnvTruffleFrameAccess(frame));
         // Associate frame with the environment
         RArguments.setEnvironment(frame, this);
@@ -654,9 +630,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
             namespaceRegistry.safePut(name, this);
-            if (NS_BASE_FRAME) {
-                RArguments.setEnvironment(frameAccess.getFrame(), this);
-            }
+            RArguments.setEnvironment(frameAccess.getFrame(), this);
         }
 
         @Override
@@ -674,15 +648,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
              * We create the NSBaseMaterializedFrame using globalFrame as the enclosing frame. The
              * namespaceEnv parent field will change to globalEnv after the latter is created
              */
-            MaterializedFrame nsFrame = new NSBaseMaterializedFrame(baseFrame, globalFrame);
-            REnvFrameAccess baseFrameAccess = NS_BASE_FRAME ? new REnvTruffleFrameAccess(nsFrame) : this.frameAccess;
+            REnvFrameAccess baseFrameAccess = new REnvTruffleFrameAccess(new NSBaseMaterializedFrame(baseFrame, globalFrame));
             this.namespaceEnv = new BaseNamespace(emptyEnv, "base", baseFrameAccess);
-            if (!NS_BASE_FRAME) {
-                // This is important so that "environment(func)" gives the correct
-                // answer for functions defined in base. The sharing of the
-                // frame would otherwise report "package:base"
-                RArguments.setEnvironment(baseFrame, this.namespaceEnv);
-            }
         }
 
         @Override

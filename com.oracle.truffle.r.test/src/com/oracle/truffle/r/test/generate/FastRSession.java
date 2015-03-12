@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import java.util.concurrent.*;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.options.FastROptions;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
@@ -99,6 +101,8 @@ public final class FastRSession implements RSession {
     private final ConsoleHandler consoleHandler;
     private static FastRSession singleton;
 
+    private EvalThread evalThread;
+
     public static FastRSession create() {
         if (singleton == null) {
             singleton = new FastRSession();
@@ -122,24 +126,58 @@ public final class FastRSession implements RSession {
     public String eval(String expression) {
         consoleHandler.reset();
 
-        // run the script in a different thread and kill it after the timeout
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                REngine.getInstance().parseAndEvalTest(expression, true);
-            }
-        };
-        thread.start();
-        try {
-            thread.join(TIMEOUT);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        EvalThread thread = evalThread;
+        if (thread == null || !thread.isAlive()) {
+            thread = new EvalThread();
+            thread.setName("FastR evaluation");
+            thread.start();
+            evalThread = thread;
         }
-        if (thread.isAlive()) {
-            consoleHandler.println("<timeout>");
-            thread.stop();
+
+        thread.push(expression);
+
+        try {
+            thread.await(TIMEOUT);
+        } catch (InterruptedException e1) {
+            if (thread.isAlive()) {
+                consoleHandler.println("<timeout>");
+                thread.stop();
+            }
         }
         return consoleHandler.buffer.toString();
+    }
+
+    private static final class EvalThread extends Thread {
+
+        private String expression;
+        private final Semaphore entry = new Semaphore(0);
+        private final Semaphore exit = new Semaphore(0);
+
+        public void push(String exp) {
+            this.expression = exp;
+            this.entry.release();
+        }
+
+        public void await(int millisTimeout) throws InterruptedException {
+            this.exit.tryAcquire(millisTimeout, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    entry.acquire();
+                } catch (InterruptedException e) {
+                    break;
+                }
+                try {
+                    REngine.getInstance().parseAndEvalTest(expression, true);
+                } finally {
+                    exit.release();
+                }
+            }
+        }
+
     }
 
     public String name() {

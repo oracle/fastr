@@ -199,6 +199,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         int argCount = arguments.length;
         int argListSize = argCount;
 
+        // extract vararg signatures from the arguments
         ArgumentsSignature[] varArgSignatures = null;
         for (int i = 0; i < arguments.length; i++) {
             Object arg = arguments[i];
@@ -210,27 +211,12 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
                 argListSize += ((RArgsValuesAndNames) arg).length() - 1;
             }
         }
+
         long[] preparePermutation;
         ArgumentsSignature resultSignature;
         if (varArgSignatures != null) {
-            preparePermutation = new long[argListSize];
-            String[] argNames = new String[argListSize];
-            int index = 0;
-            for (int fi = 0; fi < argCount; ++fi) {
-                Object arg = arguments[fi];
-                if (arg instanceof RArgsValuesAndNames) {
-                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
-                    ArgumentsSignature varArgSignature = varArgs.getSignature();
-                    for (int i = 0; i < varArgs.length(); i++) {
-                        argNames[index] = varArgSignature.getName(i);
-                        preparePermutation[index++] = -((((long) fi) << 32) + i);
-                    }
-                } else {
-                    argNames[index] = signature.getName(fi);
-                    preparePermutation[index++] = fi;
-                }
-            }
-            resultSignature = ArgumentsSignature.get(argNames);
+            resultSignature = ArgumentsSignature.flattenNames(signature, varArgSignatures, argListSize);
+            preparePermutation = ArgumentsSignature.flattenIndexes(varArgSignatures, argListSize);
         } else {
             preparePermutation = new long[argCount];
             for (int i = 0; i < argCount; i++) {
@@ -239,7 +225,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             resultSignature = signature;
         }
 
-        assert signature != null;
+        assert resultSignature != null;
         MatchPermutation permutation = ArgumentMatcher.matchArguments(result.targetFunction, resultSignature, getEncapsulatingSourceSection(), false);
 
         CheckReadsNode newCheckedReads = new CheckReadsNode(unsuccessfulReadsCaller, unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName,

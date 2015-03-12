@@ -28,11 +28,11 @@ public class FunctionCall extends Call {
         this.isReplacement = isReplacement;
     }
 
-    public FunctionCall(SourceSection src, String funName, List<ArgNode> arguments) {
+    FunctionCall(SourceSection src, String funName, List<ArgNode> arguments) {
         this(src, funName, arguments, false);
     }
 
-    public FunctionCall(SourceSection src, FunctionCall funCall, List<ArgNode> arguments) {
+    FunctionCall(SourceSection src, FunctionCall funCall, List<ArgNode> arguments) {
         this(src, funCall, arguments, false);
     }
 

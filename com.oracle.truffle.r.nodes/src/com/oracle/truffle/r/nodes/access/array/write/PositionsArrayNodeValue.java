@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.RDeparse.*;
 
 public class PositionsArrayNodeValue extends RNode {
 
-    @Child PositionsArrayConversionValueNodeMultiDimAdapter conversionAdapter;
-    @Child PositionsArrayNodeAdapter positionsAdapter;
+    @Child private PositionsArrayConversionValueNodeMultiDimAdapter conversionAdapter;
+    @Child private PositionsArrayNodeAdapter positionsAdapter;
     @Child private PromiseHelperNode promiseHelper;
     private final boolean hasVarArg;
 
@@ -62,14 +62,14 @@ public class PositionsArrayNodeValue extends RNode {
     }
 
     @ExplodeLoop
-    public Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object value) {
+    private Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object value) {
         int length = conversionAdapter.getLength();
         Object[] evaluatedElements = PositionsArrayNode.explodeLoopNoVarArg(frame, positionsAdapter, length);
         executeEvalInternal(frame, vector, value, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
-    public Object executeEvalVarArg(VirtualFrame frame, Object vector, Object value) {
+    private Object executeEvalVarArg(VirtualFrame frame, Object vector, Object value) {
         int length = conversionAdapter.getLength();
         Object[] evaluatedElements = PositionsArrayNode.explodeLoopVarArg(frame, positionsAdapter, length, promiseHelper);
         if (evaluatedElements.length != conversionAdapter.getLength()) {
@@ -82,7 +82,7 @@ public class PositionsArrayNodeValue extends RNode {
     }
 
     @ExplodeLoop
-    public void executeEvalInternal(VirtualFrame frame, Object vector, Object value, Object[] evaluatedElements, int length) {
+    private void executeEvalInternal(VirtualFrame frame, Object vector, Object value, Object[] evaluatedElements, int length) {
         for (int i = 0; i < length; i++) {
             Object convertedOperator = conversionAdapter.executeConvert(frame, vector, evaluatedElements[i], RRuntime.LOGICAL_TRUE, i);
             evaluatedElements[i] = conversionAdapter.executeArg(frame, vector, convertedOperator, i);
@@ -96,5 +96,4 @@ public class PositionsArrayNodeValue extends RNode {
     public void deparse(State state) {
         positionsAdapter.deparse(state);
     }
-
 }

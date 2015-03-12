@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -34,52 +33,43 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * Perform a field access. This node represents the {@code $} operator in R.
  */
-@NodeChild(value = "object", type = RNode.class)
-@NodeField(name = "field", type = String.class)
-public abstract class AccessFieldNode extends RNode {
-
-    public abstract RNode getObject();
-
-    public abstract String getField();
-
-    private final BranchProfile inexactMatch = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+public abstract class AccessFieldNode extends AccessFieldBaseNode {
 
     @Specialization
     protected RNull access(@SuppressWarnings("unused") RNull object) {
         return RNull.instance;
     }
 
-    @Specialization(guards = "hasNames(object)")
+    @Specialization
     protected Object accessField(RList object) {
-        int index = object.getElementIndexByName(attrProfiles, getField());
-        if (index == -1) {
-            inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(attrProfiles, getField());
+        RStringVector names = object.getNames(attrProfiles);
+        if (hasNamesProfile.profile(names != null)) {
+            int index = getElementIndexByName(names, getField());
+            if (index == -1) {
+                inexactMatch.enter();
+                index = object.getElementIndexByNameInexact(attrProfiles, getField());
+            }
+            return index == -1 ? RNull.instance : object.getDataAt(index);
+        } else {
+            return RNull.instance;
         }
-        return index == -1 ? RNull.instance : object.getDataAt(index);
-    }
-
-    @Specialization(guards = "!hasNames(object)")
-    protected Object accessFieldNoNames(@SuppressWarnings("unused") RList object) {
-        return RNull.instance;
     }
 
     // TODO: this should ultimately be a generic function
-    @Specialization(guards = "hasNames(object)")
+    @Specialization
     protected Object accessField(RDataFrame object) {
-        int index = object.getElementIndexByName(attrProfiles, getField());
-        if (index == -1) {
-            inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(attrProfiles, getField());
-            // TODO: add warning if index found (disabled by default using options)
+        RStringVector names = object.getNames(attrProfiles);
+        if (hasNamesProfile.profile(names != null)) {
+            int index = getElementIndexByName(names, getField());
+            if (index == -1) {
+                inexactMatch.enter();
+                index = object.getElementIndexByNameInexact(attrProfiles, getField());
+                // TODO: add warning if index found (disabled by default using options)
+            }
+            return index == -1 ? RNull.instance : object.getDataAtAsObject(index);
+        } else {
+            return RNull.instance;
         }
-        return index == -1 ? RNull.instance : object.getDataAtAsObject(index);
-    }
-
-    @Specialization(guards = "!hasNames(object)")
-    protected Object accessFieldNoNames(@SuppressWarnings("unused") RDataFrame object) {
-        return RNull.instance;
     }
 
     @Specialization
@@ -93,25 +83,15 @@ public abstract class AccessFieldNode extends RNode {
         throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
-    @Specialization(guards = "hasNames(object)")
+    @Specialization
     protected Object accessFieldHasNames(RLanguage object) {
-        String field = getField();
         RStringVector names = object.getNames(attrProfiles);
-        for (int i = 0; i < names.getLength(); i++) {
-            if (field.equals(names.getDataAt(i))) {
-                return RContext.getRASTHelper().getDataAtAsObject(object, i);
-            }
+        if (hasNamesProfile.profile(names != null)) {
+            int index = getElementIndexByName(names, getField());
+            return index == -1 ? RNull.instance : RContext.getRASTHelper().getDataAtAsObject(object, index);
+        } else {
+            return RNull.instance;
         }
-        return RNull.instance;
-    }
-
-    @Specialization(guards = "!hasNames(object)")
-    protected Object accessField(@SuppressWarnings("unused") RLanguage object) {
-        return RNull.instance;
-    }
-
-    protected boolean hasNames(RAbstractContainer object) {
-        return object.getNames(attrProfiles) != null;
     }
 
     @Override
@@ -136,5 +116,4 @@ public abstract class AccessFieldNode extends RNode {
         }
         return AccessFieldNodeGen.create(object, field);
     }
-
 }

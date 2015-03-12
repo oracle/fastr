@@ -20,37 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTypedValue {
+@NodeChild(value = "object", type = RNode.class)
+@NodeField(name = "field", type = String.class)
+public abstract class AccessFieldBaseNode extends RNode {
 
-    boolean isComplete();
+    public abstract RNode getObject();
 
-    int getLength();
+    public abstract String getField();
 
-    boolean hasDimensions();
+    protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
+    protected final BranchProfile inexactMatch = BranchProfile.create();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    int[] getDimensions();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    RShareable materializeToShareable();
-
-    Object getDataAtAsObject(int index);
-
-    RStringVector getNames(RAttributeProfiles attrProfiles);
-
-    RList getDimNames();
-
-    Object getRowNames(RAttributeProfiles attrProfiles);
-
-    /**
-     * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
-     */
-    boolean isObject(RAttributeProfiles attrProfiles);
+    @TruffleBoundary
+    public static int getElementIndexByName(RStringVector names, String name) {
+        for (int i = 0; i < names.getLength(); ++i) {
+            if (names.getDataAt(i).equals(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

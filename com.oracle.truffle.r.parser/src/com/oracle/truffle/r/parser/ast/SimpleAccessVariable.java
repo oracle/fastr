@@ -14,13 +14,12 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-@Precedence(Precedence.MAX)
 public class SimpleAccessVariable extends AccessVariable {
 
     private final String variable;
     private final boolean shouldCopyValue;
 
-    public SimpleAccessVariable(SourceSection source, String variable, boolean shouldCopyValue) {
+    SimpleAccessVariable(SourceSection source, String variable, boolean shouldCopyValue) {
         super(source);
         this.variable = variable;
         this.shouldCopyValue = shouldCopyValue;
@@ -28,6 +27,11 @@ public class SimpleAccessVariable extends AccessVariable {
 
     public String getVariable() {
         return variable;
+    }
+
+    @Override
+    public int getPrecedence() {
+        return Operation.MAX_PRECEDENCE;
     }
 
     public boolean shouldCopyValue() {

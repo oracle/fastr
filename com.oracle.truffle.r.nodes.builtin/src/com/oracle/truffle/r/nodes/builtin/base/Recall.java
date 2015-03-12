@@ -24,11 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -48,9 +50,15 @@ public abstract class Recall extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
 
+        EvaluatedArguments evaluated = match(args, function);
+
         // Use arguments in "..." as arguments for RECALL call
-        Object[] argsObject = RArguments.create(function, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, args.getValues());
+        Object[] argsObject = RArguments.create(function, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, evaluated.getEvaluatedArgs(), evaluated.getSignature());
         return callCache.execute(frame, function.getTarget(), argsObject);
     }
 
+    @TruffleBoundary
+    private EvaluatedArguments match(RArgsValuesAndNames args, RFunction function) {
+        return ArgumentMatcher.matchArgumentsEvaluated(function, EvaluatedArguments.create(args.getValues(), args.getSignature()), getSourceSection(), false);
+    }
 }

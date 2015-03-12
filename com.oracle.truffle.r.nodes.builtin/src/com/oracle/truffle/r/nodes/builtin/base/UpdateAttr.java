@@ -197,7 +197,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
     // the guard is necessary as RNull and Object cannot be distinguished in case of multiple
     // specializations, such as in: x<-1; attr(x, "dim")<-1; attr(x, "dim")<-NULL
-    public boolean nullValue(Object value) {
+    protected boolean nullValue(Object value) {
         return value == RNull.instance;
     }
 
@@ -225,9 +225,5 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             errorProfile.enter();
             throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
         }
-    }
-
-    public boolean nullValueforEnv(REnvironment env, String name, Object value) {
-        return value == RNull.instance;
     }
 }

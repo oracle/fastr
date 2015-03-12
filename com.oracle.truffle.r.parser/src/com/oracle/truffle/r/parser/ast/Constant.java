@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -15,16 +15,15 @@ import java.util.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
-@Precedence(Precedence.MAX)
 public final class Constant extends ASTNode {
 
     public enum ConstantType {
+// FORMULA,
         DOUBLE,
         COMPLEX,
         INT,
         BOOL,
         STRING,
-        FORMULA,
         NULL
     }
 
@@ -43,6 +42,11 @@ public final class Constant extends ASTNode {
 
     public ConstantType getType() {
         return type;
+    }
+
+    @Override
+    public int getPrecedence() {
+        return Operation.MAX_PRECEDENCE;
     }
 
     public String prettyValue() {

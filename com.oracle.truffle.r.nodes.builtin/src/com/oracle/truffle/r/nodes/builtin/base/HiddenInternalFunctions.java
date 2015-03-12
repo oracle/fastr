@@ -166,6 +166,8 @@ public class HiddenInternalFunctions {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
         }
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
+
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
@@ -207,7 +209,7 @@ public class HiddenInternalFunctions {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
 
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, ArgumentsSignature.empty(1));
+                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
                             // TODO this cast is problematic
                             return callCache.execute((VirtualFrame) frame, envhook.getTarget(), callArgs);
                         }

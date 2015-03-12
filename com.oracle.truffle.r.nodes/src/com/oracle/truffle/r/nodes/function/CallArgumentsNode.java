@@ -57,7 +57,12 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
      * the index of the name. Otherwise it is an empty list.
      */
-    @CompilationFinal private final Integer[] varArgsSymbolIndices;
+    @CompilationFinal private final int[] varArgsSymbolIndices;
+
+    private static final int UNINITIALIZED = -1;
+    private static final int VARIABLE = -2;
+
+    @CompilationFinal private int cachedSignatureLength = UNINITIALIZED;
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
@@ -78,7 +83,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, Integer[] varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, signature);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
@@ -119,7 +124,10 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        Integer[] varArgsSymbolIndicesArr = varArgsSymbolIndices.toArray(new Integer[varArgsSymbolIndices.size()]);
+        int[] varArgsSymbolIndicesArr = new int[varArgsSymbolIndices.size()];
+        for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
+            varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
+        }
         CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr, modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
@@ -147,10 +155,31 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
 
         // Unroll "..."s and insert their arguments into VarArgsSignature
         int times = varArgsSymbolIndices.length;
-        return createSignature(getVarargsAndNames(frame), times, true);
+        RArgsValuesAndNames varArgsAndNames = getVarargsAndNames(frame);
+
+        // "..." empty?
+        if (varArgsAndNames.isEmpty()) {
+            return VarArgsSignature.NO_VARARGS_GIVEN;
+        } else {
+            // Arguments wrapped into "..."
+            Object[] varArgs = varArgsAndNames.getValues();
+            Object[] content;
+            if (cachedSignatureLength != VARIABLE && cachedSignatureLength != varArgs.length) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cachedSignatureLength = cachedSignatureLength == UNINITIALIZED ? varArgs.length : VARIABLE;
+            }
+            if (cachedSignatureLength == VARIABLE) {
+                content = new Object[varArgs.length];
+                createSignatureLoop(content, varArgs);
+            } else {
+                content = new Object[cachedSignatureLength];
+                createSignatureLoopUnrolled(content, varArgs, cachedSignatureLength);
+            }
+            return VarArgsSignature.create(content, times);
+        }
     }
 
-    private RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+    public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
         RArgsValuesAndNames varArgsAndNames;
         try {
             varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
@@ -160,33 +189,46 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         return varArgsAndNames;
     }
 
-    public static VarArgsSignature createSignature(RArgsValuesAndNames varArgsAndNames, int times, boolean allowConstants) {
-        Object[] content;
+    public static VarArgsSignature createSignature(RArgsValuesAndNames varArgsAndNames, int times) {
         // "..." empty?
         if (varArgsAndNames.isEmpty()) {
-            content = new Object[]{VarArgsSignature.NO_VARARGS};
+            return VarArgsSignature.NO_VARARGS_GIVEN;
         } else {
-
             // Arguments wrapped into "..."
             Object[] varArgs = varArgsAndNames.getValues();
-            content = new Object[varArgs.length];
+            Object[] content = new Object[varArgs.length];
 
-            // As we want to check on expression identity later on:
-            for (int i = 0; i < varArgs.length; i++) {
-                Object varArg = varArgs[i];
-                if (varArg instanceof RPromise) {
-                    // Unwrap expression (one instance per argument/call site)
-                    content[i] = ((RPromise) varArg).getRep();
-                } else if (RMissingHelper.isMissing(varArg)) {
-                    // Use static symbol for "missing" instead of ConstantNode.create
-                    content[i] = VarArgsSignature.NO_VARARGS;
-                } else {
-                    assert allowConstants;
-                    content[i] = varArg;
-                }
-            }
+            createSignatureLoop(content, varArgs);
+            return VarArgsSignature.create(content, times);
         }
-        return VarArgsSignature.create(content, times);
+    }
+
+    private static void createSignatureLoop(Object[] content, Object[] varArgs) {
+        // As we want to check on expression identity later on:
+        for (int i = 0; i < varArgs.length; i++) {
+            createSignatureLoopContents(content, varArgs, i);
+        }
+    }
+
+    @ExplodeLoop
+    private static void createSignatureLoopUnrolled(Object[] content, Object[] varArgs, int length) {
+        // As we want to check on expression identity later on:
+        for (int i = 0; i < length; i++) {
+            createSignatureLoopContents(content, varArgs, i);
+        }
+    }
+
+    private static void createSignatureLoopContents(Object[] content, Object[] varArgs, int i) {
+        Object varArg = varArgs[i];
+        if (varArg instanceof RPromise) {
+            // Unwrap expression (one instance per argument/call site)
+            content[i] = ((RPromise) varArg).getRep();
+        } else if (RMissingHelper.isMissing(varArg)) {
+            // Use static symbol for "missing" instead of ConstantNode.create
+            content[i] = VarArgsSignature.NO_VARARGS;
+        } else {
+            content[i] = varArg;
+        }
     }
 
     @ExplodeLoop
@@ -222,7 +264,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
                         // RMissing.instance. Both need to be wrapped into ConstantNodes, so
                         // they might get wrapped into new promises later on
                         Object varArgValue = varArgInfo.getValues()[j];
-                        values[index] = wrapVarArgValue(varArgValue);
+                        values[index] = wrapVarArgValue(varArgValue, j);
                         String newName = varArgInfo.getSignature().getName(j);
                         newNames[index] = newName;
                         index++;
@@ -241,9 +283,9 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
     }
 
     @TruffleBoundary
-    public static RNode wrapVarArgValue(Object varArgValue) {
+    public static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {
         if (varArgValue instanceof RPromise) {
-            return PromiseNode.createVarArg((RPromise) varArgValue);
+            return PromiseNode.createVarArg(varArgIndex);
         } else {
             return ConstantNode.create(varArgValue);
         }
@@ -254,6 +296,10 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
      */
     public boolean containsVarArgsSymbol() {
         return varArgsSymbolIndices.length > 0;
+    }
+
+    public int[] getVarArgsSymbolIndices() {
+        return varArgsSymbolIndices;
     }
 
     @Override

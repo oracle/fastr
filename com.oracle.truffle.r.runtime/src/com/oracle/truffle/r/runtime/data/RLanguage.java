@@ -56,6 +56,10 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         super(rep);
     }
 
+    public RType getRType() {
+        return RType.Language;
+    }
+
     public RAttributes getAttributes() {
         return attributes;
     }
@@ -129,10 +133,6 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     @Override
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
-    }
-
-    public RList asList() {
-        return RContext.getRASTHelper().asList(this);
     }
 
     public RLanguage copy() {

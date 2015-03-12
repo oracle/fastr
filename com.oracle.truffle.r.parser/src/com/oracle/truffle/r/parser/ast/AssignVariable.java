@@ -62,11 +62,11 @@ public abstract class AssignVariable extends ASTNode {
         return null;
     }
 
-    public static ASTNode writeVariable(SourceSection src, boolean isSuper, String name, ASTNode rhs) {
+    private static ASTNode writeVariable(SourceSection src, boolean isSuper, String name, ASTNode rhs) {
         return new SimpleAssignVariable(src, isSuper, name, rhs);
     }
 
-    public static ASTNode writeVector(@SuppressWarnings("unused") SourceSection src, boolean isSuper, AccessVector lhs, ASTNode rhs) {
+    private static ASTNode writeVector(@SuppressWarnings("unused") SourceSection src, boolean isSuper, AccessVector lhs, ASTNode rhs) {
         ASTNode first = lhs.getVector();
         if (first instanceof SimpleAccessVariable) {
             SimpleAccessVariable simpleAccessVariable = (SimpleAccessVariable) first;
@@ -97,11 +97,11 @@ public abstract class AssignVariable extends ASTNode {
         }
     }
 
-    public static ASTNode writeField(SourceSection src, boolean isSuper, FieldAccess lhs, ASTNode rhs) {
+    private static ASTNode writeField(SourceSection src, boolean isSuper, FieldAccess lhs, ASTNode rhs) {
         return new UpdateField(src, isSuper, lhs, rhs);
     }
 
-    public static ASTNode writeFunction(SourceSection src, boolean isSuper, FunctionCall lhs, ASTNode rhs) {
+    private static ASTNode writeFunction(SourceSection src, boolean isSuper, FunctionCall lhs, ASTNode rhs) {
         // FIXME Probably we need a special node, for now all assign function should return value
         if (lhs.isSymbol()) {
             String builtinName = lhs.getName() + "<-";
@@ -121,5 +121,4 @@ public abstract class AssignVariable extends ASTNode {
         }
         return lhs;
     }
-
 }

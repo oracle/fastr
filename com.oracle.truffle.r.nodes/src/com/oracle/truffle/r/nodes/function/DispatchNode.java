@@ -21,18 +21,8 @@ public abstract class DispatchNode extends RNode {
 
     protected final String genericName;
 
-    public DispatchNode(String genericName) {
+    protected DispatchNode(String genericName) {
         this.genericName = genericName;
-    }
-
-    static final class FunctionCall {
-        RFunction function;
-        CallArgumentsNode args;
-
-        FunctionCall(RFunction function, CallArgumentsNode args) {
-            this.function = function;
-            this.args = args;
-        }
     }
 
     public abstract Object executeGeneric(VirtualFrame frame, RStringVector aType);

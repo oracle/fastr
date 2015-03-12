@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * The base class for R code that can be executed, namely {@link FunctionDefinitionNode} and
  * {@link RBuiltinNode}.
  */
-public abstract class RRootNode extends RootNode {
+public abstract class RRootNode extends RootNode implements HasSignature {
 
     @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
     @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
@@ -74,7 +74,7 @@ public abstract class RRootNode extends RootNode {
                 if (enclosingFrameAssumption != null) {
                     if (enclosingFrameAssumption.getValue() != enclosingFrame) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
+                        enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(vf.materialize(), getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
                     }
                 }
             }
@@ -90,7 +90,7 @@ public abstract class RRootNode extends RootNode {
                 FrameDescriptor enclosingFrameDescriptor = enclosingFrame == null ? null : enclosingFrameProfile.profile(enclosingFrame).getFrameDescriptor();
                 if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(getFrameDescriptor(), enclosingFrameDescriptorAssumption,
+                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(vf, getFrameDescriptor(), enclosingFrameDescriptorAssumption,
                                     enclosingFrameDescriptor);
                 }
             }
@@ -109,6 +109,10 @@ public abstract class RRootNode extends RootNode {
      */
     public FormalArguments getFormalArguments() {
         return formalArguments;
+    }
+
+    public ArgumentsSignature getSignature() {
+        return formalArguments.getSignature();
     }
 
     @TruffleBoundary

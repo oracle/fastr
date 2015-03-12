@@ -31,7 +31,7 @@ public class SimpleAccessVariadicComponent extends AccessVariable {
     private final int index;
     private final String name;
 
-    public SimpleAccessVariadicComponent(SourceSection source, String name) {
+    SimpleAccessVariadicComponent(SourceSection source, String name) {
         super(source);
         index = getVariadicComponentIndex(name);
         this.name = name;

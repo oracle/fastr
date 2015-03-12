@@ -50,13 +50,13 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    public UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
+    protected UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
         this.semantics = semantics;
         this.arithmetic = factory.create();
     }
 
-    public UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {
+    protected UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {
         // we recreate the arithmetic each time this specialization specializes
         // it also makes sense for polymorphic variations of this node
         this(op.semantics, op.factory);
@@ -321,7 +321,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     // "largest" String for the implementation of max function
 
     @SuppressWarnings("unused")
-    protected static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
+    private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
                 RError.warning(semantics.emptyWarning);
@@ -407,15 +407,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         public RError.Message getEmptyWarning() {
             return emptyWarning;
         }
-
-        public boolean supportsComplex() {
-            return supportComplex;
-        }
-
-        public boolean supportsString() {
-            return supportString;
-        }
-
     }
 
     @NodeChildren({@NodeChild("operand"), @NodeChild("naRm"), @NodeChild("offset")})

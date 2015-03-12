@@ -53,6 +53,8 @@ abstract class ArrayPositionsCastBase extends RNode {
         this.isSubset = isSubset;
     }
 
+    private final BranchProfile errorProfile = BranchProfile.create();
+
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile naValueMet = BranchProfile.create();
     private final BranchProfile intVectorMet = BranchProfile.create();
@@ -87,7 +89,8 @@ abstract class ArrayPositionsCastBase extends RNode {
         return rowNames.getLength();
     }
 
-    protected void dimensionsError() {
+    private void dimensionsError() {
+        errorProfile.enter();
         if (assignment) {
             if (isSubset) {
                 if (numDimensions == 2) {
@@ -199,24 +202,12 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         }
     }
 
-    protected static boolean sizeOneOp(RAbstractContainer container, RAbstractIntVector operand) {
-        return operand.getLength() == 1;
-    }
-
-    protected boolean operandHasNames(RAbstractContainer container, RAbstractIntVector operand) {
-        return operand.getNames(attrProfiles) != null;
-    }
-
     protected boolean numDimensionsOne() {
         return numDimensions == 1;
     }
 
     protected boolean isAssignment() {
         return assignment;
-    }
-
-    protected boolean emptyOperand(RAbstractContainer container, RAbstractIntVector operand) {
-        return operand.getLength() == 0;
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "exact", type = RNode.class)})
@@ -228,7 +219,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         @Child private CastIntegerNode castInteger;
         @Child private CastLogicalNode castLogical;
         @Child private CastToVectorNode castVector;
-        @Child ContainerDimNamesGet dimNamesGetter;
+        @Child private ContainerDimNamesGet dimNamesGetter;
 
         private final NACheck naCheck = NACheck.create();
 
@@ -340,7 +331,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return operand;
         }
 
-        protected Object expandMissing(RAbstractContainer container) {
+        private Object expandMissing(RAbstractContainer container) {
             int[] dimensions = getDimensions(container);
             verifyDimensions(dimensions);
             int[] data = new int[numDimensions == 1 ? container.getLength() : dimensions[dimension]];
@@ -480,7 +471,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         * 
+                         *
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;
@@ -504,7 +495,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             }
         }
 
-        protected Object doIntNegativeMultiDim(VirtualFrame frame, RAbstractContainer container, int operand) {
+        private Object doIntNegativeMultiDim(VirtualFrame frame, RAbstractContainer container, int operand) {
             if (elementsCountProfile.profile(isSubset || container.getLength() <= 2)) {
                 // it's negative, but not out of bounds - pick all indexes apart from the negative
                 // one
@@ -814,7 +805,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             return data;
         }
 
-        protected RIntVector doLogicalVectorInternal(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
+        private RIntVector doLogicalVectorInternal(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
             int dimLength = numDimensions == 1 ? container.getLength() : getDimensions(container)[dimension];
             int resultLength = Math.max(operand.getLength(), dimLength);
             int logicalVectorLength = operand.getLength();
@@ -1195,7 +1186,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
     @NodeChild(value = "op")
     protected abstract static class ContainerDimNamesGet extends RNode {
 
-        @Child ContainerRowNamesGet rowNamesGetter;
+        @Child private ContainerRowNamesGet rowNamesGetter;
         @Child private CastStringNode castString;
 
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -1231,7 +1222,5 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         protected boolean isDataFrame(RAbstractContainer container) {
             return container.getElementClass() == RDataFrame.class;
         }
-
     }
-
 }

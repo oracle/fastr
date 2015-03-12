@@ -19,7 +19,7 @@ public class For extends Loop {
     private final String variable;
     private final ASTNode range;
 
-    public For(SourceSection source, String variable, ASTNode range, ASTNode body) {
+    For(SourceSection source, String variable, ASTNode range, ASTNode body) {
         super(source, body);
         this.variable = variable;
         this.range = range;

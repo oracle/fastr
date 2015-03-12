@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -212,5 +213,33 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
     @Override
     public boolean isInstrumentable() {
         return true;
+    }
+
+    private static final long WORK_SCALE_FACTOR = 100;
+
+    /**
+     * Nodes that can do a significant amount of work in one execution (like arithmetic on vectors)
+     * can use this method to report the work to the Truffle system, similar to loop counts.
+     *
+     * @param amount an approximation of the number of operations
+     */
+    protected void reportWork(long amount) {
+        if (CompilerDirectives.inInterpreter()) {
+            reportWorkInternal(amount);
+        }
+    }
+
+    @TruffleBoundary
+    private void reportWorkInternal(long amount) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (amount >= WORK_SCALE_FACTOR) {
+            int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
+            if (amount > 0) {
+                RootNode root = getRootNode();
+                if (root.getCallTarget() instanceof LoopCountReceiver) {
+                    ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount);
+                }
+            }
+        }
     }
 }

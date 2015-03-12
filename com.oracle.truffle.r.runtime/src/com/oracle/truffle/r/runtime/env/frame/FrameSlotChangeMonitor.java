@@ -46,6 +46,11 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public final class FrameSlotChangeMonitor {
 
+    public static final FrameDescriptor NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR = new FrameDescriptor();
+
+    private static final int MAX_FUNCTION_INVALIDATION_COUNT = 2;
+    private static final int MAX_INVALIDATION_COUNT = 1;
+
     @SuppressWarnings("unused")
     private static void out(String format, Object... args) {
 // System.out.println(String.format(format, args));
@@ -66,11 +71,13 @@ public final class FrameSlotChangeMonitor {
     private static final class FrameSlotInfoImpl extends FrameSlotInfo {
         @CompilationFinal private StableValue<Object> stableValue;
         private final Object identifier;
+        private int invalidationCount;
 
         public FrameSlotInfoImpl(boolean isSingletonFrame, Object identifier) {
             this.identifier = identifier;
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
+                invalidationCount = 0;
             } else {
                 stableValue = null;
             }
@@ -84,7 +91,8 @@ public final class FrameSlotChangeMonitor {
             if (stableValue != null && stableValue.getValue() != value) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 stableValue.getAssumption().invalidate();
-                if (stableValue.getValue() == null && value instanceof RFunction) {
+                int maxInvalidationCount = value instanceof RFunction ? MAX_FUNCTION_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;
+                if (invalidationCount++ < maxInvalidationCount) {
                     out("setting singleton value %s = %s", identifier, value.getClass());
                     stableValue = new StableValue<>(value, identifier.toString());
                 } else {
@@ -210,8 +218,8 @@ public final class FrameSlotChangeMonitor {
     public static void invalidateEnclosingFrame(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(frame);
-        getOrInitializeEnclosingFrameAssumption(frame.getFrameDescriptor(), null, enclosingFrame);
-        getOrInitializeEnclosingFrameDescriptorAssumption(frame.getFrameDescriptor(), null, enclosingFrame == null ? null : enclosingFrame.getFrameDescriptor());
+        getOrInitializeEnclosingFrameAssumption(frame, frame.getFrameDescriptor(), null, enclosingFrame);
+        getOrInitializeEnclosingFrameDescriptorAssumption(frame, frame.getFrameDescriptor(), null, enclosingFrame == null ? null : enclosingFrame.getFrameDescriptor());
     }
 
     private static final WeakHashMap<FrameDescriptor, StableValue<MaterializedFrame>> descriptorEnclosingFrameAssumptions = new WeakHashMap<>();
@@ -220,10 +228,25 @@ public final class FrameSlotChangeMonitor {
 
     private static int rewriteFrameDescriptorAssumptionsCount;
 
-    public static synchronized void initializeFrameDescriptor(FrameDescriptor frameDescriptor, boolean frameCreated) {
+    /**
+     * Initializes the internal data structures for a newly created frame descriptor that is
+     * intended to be used for a non-function frame (and thus will only ever be used for one frame).
+     *
+     * The namespace:base environment needs to be handled specially, because it shares a frame (and
+     * thus, also a frame descriptor) with the package:base environment.
+     */
+    public static synchronized void initializeNonFunctionFrameDescriptor(FrameDescriptor originalFrameDescriptor, boolean isNamespaceBase) {
+        FrameDescriptor frameDescriptor = isNamespaceBase ? NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR : originalFrameDescriptor;
         descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
         descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
-        descriptorSingletonAssumptions.put(frameDescriptor, frameCreated ? Boolean.TRUE : Boolean.FALSE);
+        if (!isNamespaceBase) {
+            descriptorSingletonAssumptions.put(originalFrameDescriptor, Boolean.FALSE);
+        }
+    }
+
+    public static synchronized void initializeFunctionFrameDescriptor(FrameDescriptor frameDescriptor) {
+        descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
     }
 
     public static synchronized StableValue<MaterializedFrame> getEnclosingFrameAssumption(FrameDescriptor descriptor) {
@@ -234,9 +257,17 @@ public final class FrameSlotChangeMonitor {
         return descriptorEnclosingDescriptorAssumptions.get(descriptor);
     }
 
-    public static synchronized StableValue<FrameDescriptor> getOrInitializeEnclosingFrameDescriptorAssumption(FrameDescriptor frameDescriptor, StableValue<FrameDescriptor> value,
+    /**
+     * Special handling (return a marker frame) for the namespace:base environment.
+     */
+    private static FrameDescriptor handleBaseNamespaceEnv(Frame frame, FrameDescriptor originalFrameDescriptor) {
+        return frame instanceof NSBaseMaterializedFrame ? NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR : originalFrameDescriptor;
+    }
+
+    public static synchronized StableValue<FrameDescriptor> getOrInitializeEnclosingFrameDescriptorAssumption(Frame frame, FrameDescriptor originalFrameDescriptor, StableValue<FrameDescriptor> value,
                     FrameDescriptor newValue) {
         CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptor frameDescriptor = handleBaseNamespaceEnv(frame, originalFrameDescriptor);
         if (value != null) {
             value.getAssumption().invalidate();
         }
@@ -256,8 +287,10 @@ public final class FrameSlotChangeMonitor {
         return currentValue;
     }
 
-    public static synchronized StableValue<MaterializedFrame> getOrInitializeEnclosingFrameAssumption(FrameDescriptor frameDescriptor, StableValue<MaterializedFrame> value, MaterializedFrame newValue) {
+    public static synchronized StableValue<MaterializedFrame> getOrInitializeEnclosingFrameAssumption(Frame frame, FrameDescriptor originalFrameDescriptor, StableValue<MaterializedFrame> value,
+                    MaterializedFrame newValue) {
         CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptor frameDescriptor = handleBaseNamespaceEnv(frame, originalFrameDescriptor);
         if (value != null) {
             value.getAssumption().invalidate();
         }

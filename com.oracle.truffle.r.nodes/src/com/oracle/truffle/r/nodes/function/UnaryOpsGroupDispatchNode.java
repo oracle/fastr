@@ -27,7 +27,8 @@ public class UnaryOpsGroupDispatchNode extends GroupDispatchNode {
     @Override
     protected Object callBuiltin(VirtualFrame frame, Object[] evaluatedArgs, ArgumentsSignature signature) {
         initBuiltin(frame);
-        Object[] argObject = RArguments.create(builtinFunc, callSrc, null, RArguments.getDepth(frame) + 1, new Object[]{evaluatedArgs[0], RMissing.instance});
+        Object[] args = ((HasSignature) builtinFunc.getRootNode()).getSignature().getLength() == 1 ? new Object[]{evaluatedArgs[0]} : new Object[]{evaluatedArgs[0], RMissing.instance};
+        Object[] argObject = RArguments.create(builtinFunc, callSrc, null, RArguments.getDepth(frame) + 1, args);
         return indirectCallNode.call(frame, builtinFunc.getTarget(), argObject);
     }
 }

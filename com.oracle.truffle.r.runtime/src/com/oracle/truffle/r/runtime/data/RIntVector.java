@@ -91,16 +91,6 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return true;
     }
 
-    public RIntVector removeLast() {
-        assert getLength() > 0;
-        return RDataFactory.createIntVector(Arrays.copyOf(data, getLength() - 1), isComplete());
-    }
-
-    public RIntVector removeFirst() {
-        assert getLength() > 0;
-        return RDataFactory.createIntVector(Arrays.copyOfRange(data, 1, getLength()), isComplete());
-    }
-
     public int[] getDataCopy() {
         return Arrays.copyOf(data, data.length);
     }

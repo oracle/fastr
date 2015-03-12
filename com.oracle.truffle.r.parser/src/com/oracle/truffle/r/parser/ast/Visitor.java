@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,53 +26,9 @@ public interface Visitor<R> {
 
     R visit(Next n);
 
-    R visit(EQ eq);
+    R visit(BinaryOperation op);
 
-    R visit(NE ne);
-
-    R visit(LE le);
-
-    R visit(GE ge);
-
-    R visit(LT lt);
-
-    R visit(GT gt);
-
-    R visit(Mult mult);
-
-    R visit(MatMult mult);
-
-    R visit(OuterMult mult);
-
-    R visit(IntegerDiv div);
-
-    R visit(In in);
-
-    R visit(Mod mod);
-
-    R visit(Pow pow);
-
-    R visit(Div div);
-
-    R visit(Add add);
-
-    R visit(Sub sub);
-
-    R visit(Colon col);
-
-    R visit(And and);
-
-    R visit(ElementwiseAnd and);
-
-    R visit(Or or);
-
-    R visit(ElementwiseOr or);
-
-    R visit(Not n);
-
-    R visit(UnaryMinus m);
-
-    R visit(UnaryPlus m);
+    R visit(UnaryOperation op);
 
     R visit(Constant constant);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,19 +24,14 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @NodeChildren({@NodeChild("operand")})
 public abstract class UnaryNode extends RNode {
 
     public abstract RNode getOperand();
-
-    protected static boolean isNA(byte operand) {
-        return RRuntime.isNA(operand);
-    }
 
     protected static boolean isNA(int operand) {
         return RRuntime.isNA(operand);
@@ -44,14 +39,6 @@ public abstract class UnaryNode extends RNode {
 
     protected static boolean isNA(double operand) {
         return RRuntime.isNA(operand);
-    }
-
-    protected static boolean isNaN(double operand) {
-        return Double.isNaN(operand);
-    }
-
-    protected static boolean isNA(RComplex c) {
-        return c.isNA();
     }
 
     @Override

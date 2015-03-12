@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -139,10 +139,15 @@ public final class RArguments {
         return INDEX_ARGUMENTS + (int) args[INDEX_N_ARGS];
     }
 
+    private static ArgumentsSignature getSignature(RFunction function) {
+        return ((HasSignature) function.getRootNode()).getSignature();
+    }
+
     private static void createHelper(Object[] a, REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, MaterializedFrame enclosingFrame,
                     Object[] evaluatedArgs, ArgumentsSignature signature) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
+        assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
         a[INDEX_ENVIRONMENT] = env;
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_CALL_SRC] = callSrc;
@@ -186,10 +191,6 @@ public final class RArguments {
         a[INDEX_SIGNATURE] = ArgumentsSignature.empty(0);
         a[INDEX_IS_IRREGULAR] = false;
         return a;
-    }
-
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth) {
-        return create(functionObj, callSrc, callerFrame, depth, EMPTY_OBJECT_ARRAY);
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs) {

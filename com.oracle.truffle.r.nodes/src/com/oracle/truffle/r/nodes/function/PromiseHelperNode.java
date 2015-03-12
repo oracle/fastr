@@ -31,6 +31,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.VarargPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
@@ -114,6 +115,8 @@ public class PromiseHelperNode extends Node {
     @Child private PromiseHelperNode nextNode = null;
 
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
+    private final BranchProfile varArgProfile = BranchProfile.create();
+    private final BranchProfile multiVarArgProfile = BranchProfile.create();
 
     /**
      * Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
@@ -135,30 +138,36 @@ public class PromiseHelperNode extends Node {
      * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles. Actual
      * evaluation is delegated to {@link #generateValue(VirtualFrame, RPromise, SourceSection)}.
      *
-     * @param frame
-     * @param promise
-     * @param callSrc
      * @return The value the given Promise evaluates to
      */
     private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
-        if (isEvaluated(promise)) {
-            return promise.getValue();
+        RPromise current = promise;
+        if (current.getOptType() == OptType.VARARG) {
+            varArgProfile.enter();
+            current = ((VarargPromise) current).getVararg();
+            while (current.getOptType() == OptType.VARARG) {
+                multiVarArgProfile.enter();
+                current = ((VarargPromise) current).getVararg();
+            }
+        }
+        if (isEvaluated(current)) {
+            return current.getValue();
         }
 
         // Check for dependency cycle
-        if (isUnderEvaluation(promise)) {
+        if (isUnderEvaluation(current)) {
             throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
         // Evaluate guarded by underEvaluation
         try {
-            promise.setUnderEvaluation(true);
+            current.setUnderEvaluation(true);
 
-            Object obj = generateValue(frame, promise, callSrc);
-            setValue(obj, promise);
+            Object obj = generateValue(frame, current, callSrc);
+            setValue(obj, current);
             return obj;
         } finally {
-            promise.setUnderEvaluation(false);
+            current.setUnderEvaluation(false);
         }
     }
 
@@ -171,14 +180,15 @@ public class PromiseHelperNode extends Node {
      */
     private Object generateValue(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
         OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
-        if (profiledOptType == OptType.DEFAULT) {
-            return generateValueDefault(frame, promise, callSrc);
-        } else if (profiledOptType == OptType.PROMISED || profiledOptType == OptType.EAGER) {
-            return generateValueEager(frame, (EagerPromise) promise, callSrc);
-        } else if (profiledOptType == OptType.VARARG) {
-            return generateValueVararg((VarargPromise) promise, callSrc);
+        switch (profiledOptType) {
+            case DEFAULT:
+                return generateValueDefault(frame, promise, callSrc);
+            case EAGER:
+            case PROMISED:
+                return generateValueEager(frame, (EagerPromise) promise, callSrc);
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected promise opt type");
         }
-        throw RInternalError.shouldNotReachHere();
     }
 
     private Object generateValueDefault(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
@@ -215,7 +225,13 @@ public class PromiseHelperNode extends Node {
         } else if (promise.isValid()) {
 // promise.notifySuccess();
 
-            return getEagerValue(promise, callSrc);
+            OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
+            if (profiledOptType == OptType.EAGER) {
+                return getEagerValue(promise);
+            } else if (profiledOptType == OptType.PROMISED) {
+                return getPromisedEagerValue(promise, callSrc);
+            }
+            throw RInternalError.shouldNotReachHere();
         } else {
             fallbackProfile.enter();
             promise.notifyFailure();
@@ -226,23 +242,6 @@ public class PromiseHelperNode extends Node {
             // Call
             return generateValueDefault(frame, promise, callSrc);
         }
-    }
-
-    @TruffleBoundary
-    private Object generateValueVararg(VarargPromise promise, SourceSection callSrc) {
-        RPromise nextPromise = promise.getVararg();
-        // TODO TruffleBoundary really needed? Null frame ok?
-        return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
-    }
-
-    private Object getEagerValue(EagerPromise promise, SourceSection callSrc) {
-        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
-        if (profiledOptType == OptType.EAGER) {
-            return getEagerValue(promise);
-        } else if (profiledOptType == OptType.PROMISED) {
-            return getPromisedEagerValue(promise, callSrc);
-        }
-        throw RInternalError.shouldNotReachHere();
     }
 
     @TruffleBoundary

@@ -38,7 +38,7 @@ public class CapabilitiesFunctions {
             tcltk(false, null),
             X11(false, null),
             aqua(false, null),
-            http_fttp(false, "http/ftp"),
+            http_fttp(true, "http/ftp"),
             sockets(false, null),
             libxml(false, null),
             fifo(false, null),

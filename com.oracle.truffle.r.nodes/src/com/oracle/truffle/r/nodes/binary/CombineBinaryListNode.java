@@ -44,12 +44,11 @@ public abstract class CombineBinaryListNode extends CombineBinaryNode {
         return RDataFactory.createList(result, combineNames(left, right));
     }
 
-    protected RList extend(RList list, Object x) {
+    private RList extend(RList list, Object x) {
         final int ll = list.getLength();
         Object[] result = new Object[ll + 1];
         System.arraycopy(list.getDataWithoutCopying(), 0, result, 0, ll);
         result[ll] = x;
         return RDataFactory.createList(result, combineNames(list, false));
     }
-
 }

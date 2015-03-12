@@ -50,6 +50,10 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         this.type = type;
     }
 
+    public RType getRType() {
+        return RType.PairList;
+    }
+
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();

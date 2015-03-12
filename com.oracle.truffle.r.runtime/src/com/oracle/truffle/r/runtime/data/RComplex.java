@@ -38,6 +38,11 @@ public final class RComplex extends RScalar {
         this.imaginaryPart = imaginaryPart;
     }
 
+    @Override
+    public RType getRType() {
+        return RType.Complex;
+    }
+
     public double getRealPart() {
         return realPart;
     }

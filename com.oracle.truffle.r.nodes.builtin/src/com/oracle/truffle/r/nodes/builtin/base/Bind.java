@@ -76,7 +76,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return RNull.instance;
     }
 
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"deparse.level", "..."});
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("deparse.level", "...");
 
     @Specialization(guards = {"!oneElement(args)", "isDataFrame(args)"})
     protected Object allDataFrame(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {

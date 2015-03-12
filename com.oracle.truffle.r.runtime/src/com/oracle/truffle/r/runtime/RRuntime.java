@@ -86,7 +86,6 @@ public class RRuntime {
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
 
     public static final String LEVELS_ATTR_KEY = "levels";
-    public static final String LEVELS_ATTR_EMPTY_VALUE = "";
 
     public static final String NA_HEADER = "<NA>";
 
@@ -95,7 +94,6 @@ public class RRuntime {
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
     public static final String CLASS_ATTR_KEY = "class";
-    public static final String FACTOR_ATTR_KEY = "factor";
     public static final String PREVIOUS_ATTR_KEY = "previous";
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
@@ -103,10 +101,6 @@ public class RRuntime {
     @CompilationFinal public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
 
     public static final String CLASS_ORDERED = "ordered";
-
-    public static final String WHICH = "which";
-
-    public static final String WHAT = "what";
 
     public static final int LEN_METHOD_NAME = 512;
 
@@ -126,8 +120,6 @@ public class RRuntime {
 
     public static final String SYSTEM_DATE_FORMAT = "EEE MMM dd HH:mm:ss yyyy";
 
-    public static final String DROP_DIM_ARG_NAME = "drop";
-
     public static final String NULL = "NULL";
 
     @CompilationFinal private static final String[] numberStringCache = new String[4096];
@@ -146,7 +138,7 @@ public class RRuntime {
      */
     public static VirtualFrame createNonFunctionFrame() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
+        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(frameDescriptor, false);
         return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(), frameDescriptor);
     }
 
