@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,8 @@ import com.oracle.truffle.r.nodes.*;
 public abstract class LoopNode extends RNode {
 
     protected final void reportLoopCount(int count) {
-        reportLoopCount(this, count);
-    }
-
-    public static void reportLoopCount(RNode loopNode, int count) {
         CompilerAsserts.neverPartOfCompilation();
-        Node current = loopNode.getParent();
+        Node current = this.getParent();
         while (current != null && !(current instanceof RootNode)) {
             current = current.getParent();
         }

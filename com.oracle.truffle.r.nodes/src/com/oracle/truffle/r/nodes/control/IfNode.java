@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -32,9 +31,9 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
-public class IfNode extends RNode implements VisibilityController {
+public final class IfNode extends RNode implements VisibilityController {
 
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
@@ -42,18 +41,14 @@ public class IfNode extends RNode implements VisibilityController {
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-    protected IfNode(RNode condition, RNode thenPart, RNode elsePart) {
+    private IfNode(RNode condition, RNode thenPart, RNode elsePart) {
         this.condition = ConvertBooleanNode.create(condition);
         this.thenPart = thenPart;
         this.elsePart = elsePart;
     }
 
-    public static IfNode create(RNode condition, RNode thenPart, RNode elsePart) {
-        return new IfNode(condition, thenPart, elsePart);
-    }
-
     public static IfNode create(SourceSection src, RNode condition, RNode thenPart, RNode elsePart) {
-        IfNode i = create(condition, thenPart, elsePart);
+        IfNode i = new IfNode(condition, thenPart, elsePart);
         i.assignSourceSection(src);
         return i;
     }
@@ -78,11 +73,6 @@ public class IfNode extends RNode implements VisibilityController {
     @Override
     public boolean isSyntax() {
         return true;
-    }
-
-    @CreateCast({"condition"})
-    public ConvertBooleanNode conditionToBoolean(RNode node) {
-        return ConvertBooleanNode.create(node);
     }
 
     @Override
@@ -146,6 +136,6 @@ public class IfNode extends RNode implements VisibilityController {
 
     @Override
     public RNode substitute(REnvironment env) {
-        return IfNode.create(condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
+        return new IfNode(condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
     }
 }

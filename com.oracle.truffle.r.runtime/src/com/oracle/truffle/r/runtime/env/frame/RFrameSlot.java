@@ -22,11 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-
 public enum RFrameSlot {
     OnExit;
-
-    @CompilationFinal public static final FrameSlotKind[] SLOT_KINDS = {FrameSlotKind.Object, FrameSlotKind.Byte, FrameSlotKind.Int, FrameSlotKind.Double};
 }

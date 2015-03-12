@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public class SequenceNode extends RNode {
 
-    @Children protected final RNode[] sequence;
+    @Children private final RNode[] sequence;
 
     private final long[] timing;
 
@@ -46,7 +46,7 @@ public class SequenceNode extends RNode {
         this.timing = null;
     }
 
-    public SequenceNode(RNode[] sequence, SourceSection src) {
+    private SequenceNode(RNode[] sequence, SourceSection src) {
         this.sequence = sequence;
         this.timing = PerfHandler.initTiming(src, this);
         if (src != null) {
@@ -55,7 +55,7 @@ public class SequenceNode extends RNode {
     }
 
     public SequenceNode(SourceSection src, RNode node) {
-        this(node, src);
+        this(convert(node), src);
     }
 
     public SequenceNode(SourceSection src, RNode[] sequence) {
@@ -70,10 +70,6 @@ public class SequenceNode extends RNode {
      */
     protected SequenceNode(RNode node) {
         this(convert(node));
-    }
-
-    protected SequenceNode(RNode node, SourceSection src) {
-        this(convert(node), src);
     }
 
     public RNode[] getSequence() {
