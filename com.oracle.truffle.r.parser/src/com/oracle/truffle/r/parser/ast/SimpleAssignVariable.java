@@ -16,7 +16,7 @@ public class SimpleAssignVariable extends AssignVariable {
 
     private final String variable;
 
-    public SimpleAssignVariable(SourceSection source, boolean isSuper, String variable, ASTNode rhs) {
+    SimpleAssignVariable(SourceSection source, boolean isSuper, String variable, ASTNode rhs) {
         super(source, isSuper, rhs);
         this.variable = variable;
     }

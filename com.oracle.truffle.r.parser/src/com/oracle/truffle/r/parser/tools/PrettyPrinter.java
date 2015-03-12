@@ -148,7 +148,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
             left.accept(this);
         }
         print(" ");
-        print(op.getPrettyOperator());
+        print(op.getOperator().getName());
         print(" ");
         if (right.getPrecedence() < precedence && !PARENTHESIS) { // FIXME should be <= if left
             // associative
@@ -169,7 +169,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
         if (PARENTHESIS) {
             print("(");
         }
-        print(op.getPrettyOperator());
+        print(op.getOperator().getName());
         op.getLHS().accept(this);
         if (PARENTHESIS) {
             print(")");

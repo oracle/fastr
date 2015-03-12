@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,37 +29,29 @@ public class BasicVisitor<R> implements Visitor<R> {
         return visit((ASTNode) n);
     }
 
-    public R visit(Loop n) {
+    @Override
+    public R visit(Repeat n) {
         return visit((ASTNode) n);
     }
 
     @Override
-    public R visit(Repeat n) {
-        return visit((Loop) n);
-    }
-
-    @Override
     public R visit(While n) {
-        return visit((Loop) n);
+        return visit((ASTNode) n);
     }
 
     @Override
     public R visit(For n) {
-        return visit((Loop) n);
-    }
-
-    public R visit(ControlStatement n) {
         return visit((ASTNode) n);
     }
 
     @Override
     public R visit(Next n) {
-        return visit((ControlStatement) n);
+        return visit((ASTNode) n);
     }
 
     @Override
     public R visit(Break n) {
-        return visit((ControlStatement) n);
+        return visit((ASTNode) n);
     }
 
     public R visit(Operation op) {
@@ -71,127 +63,8 @@ public class BasicVisitor<R> implements Visitor<R> {
     }
 
     @Override
-    public R visit(EQ op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(NE op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(LE op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(GE op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(LT op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(GT op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Add op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Sub op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Mult op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(MatMult op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(OuterMult op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(IntegerDiv op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(In op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Mod op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Pow op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Div op) {
-        return visit((BinaryOperation) op);
-    }
-
-    @Override
-    public R visit(Colon col) {
-        return visit((BinaryOperation) col);
-    }
-
-    @Override
-    public R visit(And and) {
-        return visit((BinaryOperation) and);
-    }
-
-    @Override
-    public R visit(ElementwiseAnd and) {
-        return visit((BinaryOperation) and);
-    }
-
-    @Override
-    public R visit(Or or) {
-        return visit((BinaryOperation) or);
-    }
-
-    @Override
-    public R visit(ElementwiseOr or) {
-        return visit((BinaryOperation) or);
-    }
-
     public R visit(UnaryOperation op) {
         return visit((ASTNode) op);
-    }
-
-    @Override
-    public R visit(Not op) {
-        return visit((UnaryOperation) op);
-    }
-
-    @Override
-    public R visit(UnaryMinus op) {
-        return visit((UnaryOperation) op);
-    }
-
-    @Override
-    public R visit(UnaryPlus op) {
-        return visit((UnaryOperation) op);
     }
 
     @Override
@@ -267,5 +140,4 @@ public class BasicVisitor<R> implements Visitor<R> {
     public R visit(Formula n) {
         return visit((ASTNode) n);
     }
-
 }

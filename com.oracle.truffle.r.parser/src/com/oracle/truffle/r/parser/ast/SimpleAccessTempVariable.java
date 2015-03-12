@@ -26,18 +26,22 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-@Precedence(Precedence.MAX)
 public class SimpleAccessTempVariable extends AccessVariable {
 
     private final String tempSymbol;
 
-    public SimpleAccessTempVariable(SourceSection source, String tempSymbol) {
+    SimpleAccessTempVariable(SourceSection source, String tempSymbol) {
         super(source);
         this.tempSymbol = tempSymbol;
     }
 
     public Object getSymbol() {
         return tempSymbol;
+    }
+
+    @Override
+    public int getPrecedence() {
+        return Operation.MAX_PRECEDENCE;
     }
 
     @Override
