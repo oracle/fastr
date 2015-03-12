@@ -235,15 +235,9 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
         if (amount >= WORK_SCALE_FACTOR) {
             int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
             if (amount > 0) {
-                Node current = getParent();
-                while (current != null && !(current instanceof RootNode)) {
-                    current = current.getParent();
-                }
-                if (current != null) {
-                    RootNode root = (RootNode) current;
-                    if (root.getCallTarget() instanceof LoopCountReceiver) {
-                        ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount);
-                    }
+                RootNode root = getRootNode();
+                if (root.getCallTarget() instanceof LoopCountReceiver) {
+                    ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount);
                 }
             }
         }
