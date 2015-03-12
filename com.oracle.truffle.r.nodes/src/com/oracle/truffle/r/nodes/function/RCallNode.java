@@ -30,7 +30,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
@@ -257,16 +256,19 @@ public abstract class RCallNode extends RNode {
     }
 
     /**
-     * Creates a modified call in which the first argument if replaced by {@code arg1}. This is, for
-     * example, to support {@code HiddenInternalFunctions.MakeLazy}.
+     * Creates a modified call in which the first N arguments are replaced by
+     * {@code replacementArgs}. This is, for example, to support
+     * {@code HiddenInternalFunctions.MakeLazy}, and condition handling.
      */
     @TruffleBoundary
-    public static RCallNode createCloneReplacingFirstArg(RCallNode call, ConstantNode arg1) {
+    public static RCallNode createCloneReplacingArgs(RCallNode call, RNode... replacementArgs) {
         assert call instanceof UninitializedCallNode;
         UninitializedCallNode callClone = NodeUtil.cloneNode((UninitializedCallNode) call);
         CallArgumentsNode args = callClone.args;
         RNode[] argNodes = args.getArguments();
-        argNodes[0].replace(arg1);
+        for (int i = 0; i < replacementArgs.length; i++) {
+            argNodes[i].replace(replacementArgs[i]);
+        }
         return callClone;
     }
 

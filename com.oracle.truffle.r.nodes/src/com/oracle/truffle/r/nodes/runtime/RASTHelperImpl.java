@@ -272,7 +272,7 @@ public class RASTHelperImpl implements RASTHelper {
                 Utils.fail("findNameSpace");
             }
         }
-        RCallNode call = RCallNode.createCloneReplacingFirstArg(getNamespaceCall, ConstantNode.create(name));
+        RCallNode call = RCallNode.createCloneReplacingArgs(getNamespaceCall, ConstantNode.create(name));
         try {
             return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
         } catch (PutException ex) {

@@ -82,7 +82,7 @@ public class HiddenInternalFunctions {
                 // in expr with a constant that is the value of intVec
                 RCallNode callNode = (RCallNode) RASTUtils.unwrap(expr.getRep());
                 ConstantNode vecNode = ConstantNode.create(intVec);
-                RCallNode expr0 = RCallNode.createCloneReplacingFirstArg(callNode, vecNode);
+                RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
                 try {
                     aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
