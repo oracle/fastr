@@ -152,7 +152,7 @@ public final class REngine implements RContext.Engine {
         return globalFrame;
     }
 
-    public static void checkAndRunStartupFunction(String name) {
+    private static void checkAndRunStartupFunction(String name) {
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func != null) {
             /*
@@ -199,14 +199,6 @@ public final class REngine implements RContext.Engine {
         String rm = "rm(list = ls())";
         parseAndEvalImpl(new ANTLRStringStream(rm), Source.fromText(rm, "<test_reset>"), REnvironment.globalEnv().getFrame(), printResult, false);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
-    }
-
-    public class ParseException extends Exception {
-        private static final long serialVersionUID = 1L;
-
-        public ParseException(String msg) {
-            super(msg);
-        }
     }
 
     public RExpression parse(Source source) throws RContext.Engine.ParseException {
