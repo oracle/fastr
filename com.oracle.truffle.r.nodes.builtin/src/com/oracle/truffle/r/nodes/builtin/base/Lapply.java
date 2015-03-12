@@ -275,7 +275,7 @@ public abstract class Lapply extends RBuiltinNode {
                 @Override
                 public Object execute(VirtualFrame frame, RootCallTarget target, RArgsValuesAndNames varArgs) {
                     VarArgsSignature signature = CallArgumentsNode.createSignature(varArgs, 1);
-                    if (target != originalTarget || signature.isNotEqualTo(originalSignature)) {
+                    if (target != originalTarget || !signature.isEqualTo(originalSignature)) {
                         return next.execute(frame, target, varArgs);
                     } else {
                         return callNode.execute(frame);
