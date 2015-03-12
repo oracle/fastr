@@ -45,7 +45,7 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         return stride;
     }
 
-    protected RDoubleVector populateVectorData(double[] result) {
+    private RDoubleVector populateVectorData(double[] result) {
         double current = start;
         for (int i = 0; i < getLength(); ++i) {
             result[i] = current;
@@ -63,16 +63,6 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return internalCreateVector().toString();
-    }
-
-    public RDoubleSequence removeLast() {
-        assert getLength() >= 1;
-        return RDataFactory.createDoubleSequence(getStart(), getStride(), getLength() - 1);
-    }
-
-    public RDoubleSequence removeFirst() {
-        assert getLength() >= 1;
-        return RDataFactory.createDoubleSequence(getStart() + 1, getStride(), getLength() - 1);
     }
 
     @Override

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,12 +14,12 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public class AccessVector extends Call {
+public final class AccessVector extends Call {
 
     private final ASTNode vector;
     private final boolean subset;
 
-    public AccessVector(SourceSection source, ASTNode vector, List<ArgNode> arguments, boolean subset) {
+    AccessVector(SourceSection source, ASTNode vector, List<ArgNode> arguments, boolean subset) {
         super(source, arguments);
         this.vector = vector;
         this.subset = subset;

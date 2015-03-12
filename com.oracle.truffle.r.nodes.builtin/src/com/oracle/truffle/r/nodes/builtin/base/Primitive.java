@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name")
 public abstract class Primitive extends RBuiltinNode {
-    protected final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Override
     public RNode[] getParameterValues() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@SuppressWarnings({"unused", "static-method"})
+@SuppressWarnings({"unused"})
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
 public abstract class CoerceBinaryNode extends RNode {
 
@@ -45,7 +45,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Child private CoercedBinaryOperationNode updateNode = null;
 
-    public CoerceBinaryNode(CoercedBinaryOperationNode operationNode) {
+    protected CoerceBinaryNode(CoercedBinaryOperationNode operationNode) {
         this.updateNode = operationNode;
         leftNACheck = new NACheck();
         rightNACheck = new NACheck();
@@ -58,12 +58,12 @@ public abstract class CoerceBinaryNode extends RNode {
     }
 
     @CreateCast({"left"})
-    public RNode createCastLeft(RNode child) {
+    protected RNode createCastLeft(RNode child) {
         return VectorUpdateVectorCastNodeGen.create(child, leftNACheck);
     }
 
     @CreateCast({"right"})
-    public RNode createCastRight(RNode child) {
+    protected RNode createCastRight(RNode child) {
         return VectorUpdateValueCastNodeGen.create(child, leftNACheck);
     }
 
@@ -79,8 +79,8 @@ public abstract class CoerceBinaryNode extends RNode {
         }
     }
 
-    private RuntimeException illegal() {
-        return new IllegalStateException();
+    private static RuntimeException illegal() {
+        throw RInternalError.shouldNotReachHere();
     }
 
     private RIntVector doInt(VirtualFrame frame, RIntVector vector, int right) {
@@ -543,7 +543,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
         @Specialization
         protected int doInt(int operand) {
-            getNACheck().enable(RRuntime.isNA(operand));
+            getNACheck().enable(operand);
             return operand;
         }
 
@@ -579,37 +579,37 @@ public abstract class CoerceBinaryNode extends RNode {
 
         @Specialization
         protected RIntVector doIntVector(RIntVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
         protected RDoubleVector doDoubleVector(RDoubleVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
         protected RComplexVector doComplexVector(RComplexVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
         protected RLogicalVector doLogicalVector(RLogicalVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
         protected RStringVector doStringVector(RStringVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
         protected RList doList(RList operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return operand;
         }
 
@@ -636,7 +636,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
         @Specialization
         protected RIntVector doInt(int operand) {
-            getNACheck().enable(RRuntime.isNA(operand));
+            getNACheck().enable(operand);
             return RDataFactory.createIntVectorFromScalar(operand);
         }
 
@@ -678,37 +678,37 @@ public abstract class CoerceBinaryNode extends RNode {
 
         @Specialization
         protected RIntVector doIntVector(RIntVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return doVector(operand);
         }
 
         @Specialization
         protected RDoubleVector doDoubleVector(RDoubleVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return doVector(operand);
         }
 
         @Specialization
         protected RComplexVector doComplexVector(RComplexVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return doVector(operand);
         }
 
         @Specialization
         protected RLogicalVector doLogicalVector(RLogicalVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return doVector(operand);
         }
 
         @Specialization
         protected RStringVector doStringVector(RStringVector operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return doVector(operand);
         }
 
         @Specialization
         protected RList doList(RList operand) {
-            getNACheck().enable(!operand.isComplete());
+            getNACheck().enable(operand);
             return doVector(operand);
         }
 

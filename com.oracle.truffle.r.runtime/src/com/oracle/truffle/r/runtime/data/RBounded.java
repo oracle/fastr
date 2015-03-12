@@ -30,10 +30,6 @@ public abstract class RBounded {
 
     public abstract int getLength();
 
-    public boolean isInBounds(int position) {
-        return position >= 1 && position <= getLength();
-    }
-
     public final void verifyDimensions(int[] newDimensions, SourceSection sourceSection) {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {

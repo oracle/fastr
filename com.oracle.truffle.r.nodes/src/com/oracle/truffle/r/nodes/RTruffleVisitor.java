@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
+import com.oracle.truffle.r.parser.ast.Operation.*;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -186,7 +187,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
 
             FrameDescriptor descriptor = new FrameDescriptor();
-            FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
+            FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, true);
             String description = getFunctionDescription(func);
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
@@ -208,8 +209,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(UnaryOperation op) {
         RNode operand = op.getLHS().accept(this);
-        final String functionName = op.getPrettyOperator();
-        final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
+        String functionName = op.getOperator().getName();
+        CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
         if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
             return GroupDispatchCallNode.create(functionName, RGroupGenerics.GROUP_OPS, aCallArgNode, op.getSource());
         }
@@ -220,12 +221,16 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     public RNode visit(BinaryOperation op) {
         RNode left = op.getLHS().accept(this);
         RNode right = op.getRHS().accept(this);
-        final String functionName = op.getPrettyOperator();
-        final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, left, right);
-        if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
-            return GroupDispatchCallNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, op.getSource());
+        if (op.getOperator() == Operator.COLON) {
+            return ColonNode.create(op.getSource(), left, right);
+        } else {
+            String functionName = op.getOperator().getName();
+            CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, left, right);
+            if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
+                return GroupDispatchCallNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, op.getSource());
+            }
+            return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode, op);
         }
-        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode, op);
     }
 
     @Override
@@ -497,14 +502,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(UpdateVector u) {
         return createVectorUpdate(u.getVector(), u.getRHS().accept(this), u.isSuper(), u.getSource(), false);
-    }
-
-    @Override
-    public RNode visit(Colon c) {
-        // TODO convert to function call
-        RNode left = c.getLHS().accept(this);
-        RNode right = c.getRHS().accept(this);
-        return ColonNode.create(c.getSource(), left, right);
     }
 
     @Override

@@ -42,7 +42,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     public abstract RNode getRight();
 
     @CreateCast({"left", "right"})
-    public RNode createCast(RNode child) {
+    protected RNode createCast(RNode child) {
         ColonCastNode ccn = ColonCastNodeGen.create(child);
         ccn.assignSourceSection(getSourceSection());
         return ccn;

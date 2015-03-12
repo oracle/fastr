@@ -14,12 +14,12 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public abstract class BinaryOperation extends Operation {
+public final class BinaryOperation extends Operation {
 
     private final ASTNode rhs;
 
-    protected BinaryOperation(SourceSection source, ASTNode left, ASTNode right) {
-        super(source, left);
+    private BinaryOperation(SourceSection source, Operator op, ASTNode left, ASTNode right) {
+        super(source, op, left);
         this.rhs = right;
     }
 
@@ -28,97 +28,35 @@ public abstract class BinaryOperation extends Operation {
     }
 
     @Override
+    public <R> R accept(Visitor<R> v) {
+        return v.visit(this);
+    }
+
+    @Override
     public <R> List<R> visitAll(Visitor<R> v) {
         return Arrays.asList(getLHS().accept(v), getRHS().accept(v));
     }
 
-    public static ASTNode create(SourceSection src, BinaryOperator op, ASTNode left, ASTNode right) {
-        switch (op) {
-            case ADD:
-                return new Add(src, left, right);
-            case SUB:
-                return new Sub(src, left, right);
-            case MULT:
-                return new Mult(src, left, right);
-            case DIV:
-                return new Div(src, left, right);
-            case MOD:
-                return new Mod(src, left, right);
-            case POW:
-                return new Pow(src, left, right);
-
-            case OR:
-                return new Or(src, left, right);
-            case AND:
-                return new And(src, left, right);
-            case ELEMENTWISEOR:
-                return new ElementwiseOr(src, left, right);
-            case ELEMENTWISEAND:
-                return new ElementwiseAnd(src, left, right);
-
-            case EQ:
-                return new EQ(src, left, right);
-            case GE:
-                return new GE(src, left, right);
-            case GT:
-                return new GT(src, left, right);
-            case NE:
-                return new NE(src, left, right);
-            case LE:
-                return new LE(src, left, right);
-            case LT:
-                return new LT(src, left, right);
-            case COLON:
-                return new Colon(src, left, right);
-        }
-        throw new Error("No node implemented for: '" + op + "' (" + left + ", " + right + ")");
+    public static ASTNode create(SourceSection src, Operator op, ASTNode left, ASTNode right) {
+        return new BinaryOperation(src, op, left, right);
     }
 
     public static ASTNode create(SourceSection src, String op, ASTNode left, ASTNode right) {
-        if ("%o%".equals(op)) {
-            return new OuterMult(src, left, right);
+        switch (op) {
+            case "%o%":
+                return new BinaryOperation(src, Operator.OUTER_MULT, left, right);
+            case "%*%":
+                return new BinaryOperation(src, Operator.MATMULT, left, right);
+            case "%/%":
+                return new BinaryOperation(src, Operator.INTEGER_DIV, left, right);
+            case "%in%":
+                return new BinaryOperation(src, Operator.IN, left, right);
+            default:
+                // user-defined operator
+                List<ArgNode> args = new ArrayList<>();
+                args.add(ArgNode.create(left.getSource(), null, left));
+                args.add(ArgNode.create(right.getSource(), null, right));
+                return new FunctionCall(src, op, args);
         }
-        if ("%*%".equals(op)) {
-            return new MatMult(src, left, right);
-        }
-        if ("%/%".equals(op)) {
-            return new IntegerDiv(src, left, right);
-        }
-        if ("%in%".equals(op)) {
-            return new In(src, left, right);
-        }
-        // user-defined operator
-        List<ArgNode> args = new ArrayList<>();
-        args.add(ArgNode.create(left.getSource(), null, left));
-        args.add(ArgNode.create(right.getSource(), null, right));
-        return new FunctionCall(src, op, args);
-    }
-
-    public enum BinaryOperator {
-        ASSIGN,
-        SUPER_ASSIGN,
-
-        ADD,
-        SUB,
-        MULT,
-        DIV,
-        MOD,
-
-        POW,
-
-        MODEL,
-        COLON,
-
-        GE,
-        GT,
-        LE,
-        LT,
-        EQ,
-        NE,
-
-        OR,
-        ELEMENTWISEOR,
-        AND,
-        ELEMENTWISEAND,
     }
 }

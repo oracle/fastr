@@ -774,7 +774,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return prettyPrintList0(operand, listElementName, quote, right);
     }
 
-    protected static double getMaxRoundFactor(RAbstractDoubleVector operand) {
+    private static double getMaxRoundFactor(RAbstractDoubleVector operand) {
         double maxRoundFactor = 0;
         for (int i = 0; i < operand.getLength(); i++) {
             double data = operand.getDataAt(i);
@@ -786,7 +786,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return maxRoundFactor;
     }
 
-    protected static int getMaxDigitsBehindDot(double maxRoundFactor) {
+    private static int getMaxDigitsBehindDot(double maxRoundFactor) {
         int maxDigitsBehindDot = 0;
         for (double j = 1; j < maxRoundFactor; j *= 10) {
             maxDigitsBehindDot++;
@@ -898,7 +898,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(operand, values, false, false);
     }
 
-    protected static boolean twoDimsOrMore(RAbstractVector v) {
+    protected static boolean twoDimsOrMore(RAbstractContainer v) {
         return v.hasDimensions() && v.getDimensions().length > 1;
     }
 
@@ -1271,14 +1271,9 @@ public abstract class PrettyPrinterNode extends RNode {
             return v instanceof RList;
         }
 
-        protected static boolean isLengthOne(RList v) {
-            return v.getLength() == 1;
-        }
-
         protected static boolean isLengthOne(RAbstractVector v) {
             return v.getLength() == 1;
         }
-
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class),

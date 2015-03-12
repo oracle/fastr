@@ -153,7 +153,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         // Setup
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(node, formals, frameDescriptor);
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, false);
+        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, true);
         return Truffle.getRuntime().createCallTarget(root);
     }
 

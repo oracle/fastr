@@ -337,26 +337,6 @@ public final class RDataFactory {
         return traceDataCreated(new RFactor(vector, ordered));
     }
 
-    public static RVector createObjectVector(Object[] data, boolean completeVector) {
-        if (data.length < 1) {
-            return null;
-        }
-        if (data[0] instanceof Double) {
-            double[] result = new double[data.length];
-            for (int i = 0; i < data.length; ++i) {
-                result[i] = (double) data[i];
-            }
-            return RDataFactory.createDoubleVector(result, completeVector);
-        } else if (data[0] instanceof Byte) {
-            byte[] result = new byte[data.length];
-            for (int i = 0; i < data.length; ++i) {
-                result[i] = (byte) data[i];
-            }
-            return RDataFactory.createLogicalVector(result, completeVector);
-        }
-        throw Utils.fail("unimplemented object vector type: " + data[0].getClass().getSimpleName());
-    }
-
     public static RSymbol createSymbol(String name) {
         return traceDataCreated(new RSymbol(name));
     }

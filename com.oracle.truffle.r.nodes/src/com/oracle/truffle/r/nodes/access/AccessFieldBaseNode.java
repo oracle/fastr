@@ -20,25 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-public class Replacement extends AssignVariable {
+@NodeChild(value = "object", type = RNode.class)
+@NodeField(name = "field", type = String.class)
+public abstract class AccessFieldBaseNode extends RNode {
 
-    private final FunctionCall replacementFunctionCall;
+    public abstract RNode getObject();
 
-    Replacement(SourceSection src, boolean isSuper, FunctionCall replacementFunctionCall, ASTNode rhs) {
-        super(src, isSuper, rhs);
-        this.replacementFunctionCall = replacementFunctionCall;
-    }
+    public abstract String getField();
 
-    public FunctionCall getReplacementFunctionCall() {
-        return replacementFunctionCall;
-    }
+    protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
+    protected final BranchProfile inexactMatch = BranchProfile.create();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
+    @TruffleBoundary
+    public static int getElementIndexByName(RStringVector names, String name) {
+        for (int i = 0; i < names.getLength(); ++i) {
+            if (names.getDataAt(i).equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

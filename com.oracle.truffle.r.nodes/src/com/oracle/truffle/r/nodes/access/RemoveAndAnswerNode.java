@@ -49,7 +49,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
         /**
          * The name of the variable that is to be removed and whose value is to be returned.
          */
-        protected final String name;
+        private final String name;
 
         protected RemoveAndAnswerUninitializedNode(String name) {
             this.name = name;

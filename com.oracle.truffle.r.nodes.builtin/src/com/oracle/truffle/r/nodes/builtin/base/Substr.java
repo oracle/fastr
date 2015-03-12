@@ -41,7 +41,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "substr", kind = INTERNAL, parameterNames = {"x", "start", "stop"})
 public abstract class Substr extends RBuiltinNode {
-    protected final NACheck na = NACheck.create();
+    private final NACheck na = NACheck.create();
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
     private final ConditionProfile naIndexesProfile = ConditionProfile.createBinaryProfile();
 
@@ -78,7 +78,7 @@ public abstract class Substr extends RBuiltinNode {
         return RDataFactory.createStringVector(res, na.neverSeenNA());
     }
 
-    protected String substr0(String x, int start, int stop) {
+    private String substr0(String x, int start, int stop) {
         if (naIndexesProfile.profile(na.check(x) || na.check(start) || na.check(stop))) {
             return RRuntime.STRING_NA;
         } else {

@@ -152,7 +152,7 @@ public final class REngine implements RContext.Engine {
         return globalFrame;
     }
 
-    public static void checkAndRunStartupFunction(String name) {
+    private static void checkAndRunStartupFunction(String name) {
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func != null) {
             /*
@@ -199,14 +199,6 @@ public final class REngine implements RContext.Engine {
         String rm = "rm(list = ls())";
         parseAndEvalImpl(new ANTLRStringStream(rm), Source.fromText(rm, "<test_reset>"), REnvironment.globalEnv().getFrame(), printResult, false);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
-    }
-
-    public class ParseException extends Exception {
-        private static final long serialVersionUID = 1L;
-
-        public ParseException(String msg) {
-            super(msg);
-        }
     }
 
     public RExpression parse(Source source) throws RContext.Engine.ParseException {
@@ -385,7 +377,7 @@ public final class REngine implements RContext.Engine {
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
         FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
+        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, true);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
@@ -437,6 +429,9 @@ public final class REngine implements RContext.Engine {
         return true;
     }
 
+    private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
+    private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
+
     @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
@@ -444,10 +439,10 @@ public final class REngine implements RContext.Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}));
+                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
             } else {
                 // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}));
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
             }
         }
     }

@@ -119,7 +119,7 @@ public class DuplicatedFunctions {
     @RBuiltin(name = "duplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"})
     public abstract static class Duplicated extends Adapter {
         @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
+        protected RNode[] castArguments(RNode[] arguments) {
             arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
             arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
             return arguments;

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,13 +30,13 @@ public abstract class CharMatch extends RBuiltinNode {
     }
 
     @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
+    protected RNode[] castArguments(RNode[] arguments) {
         arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;
     }
 
     @Specialization
-    public RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector noMatch) {
+    protected RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector noMatch) {
         int noMatchValue = noMatch.getDataAt(0);
         int[] ans = new int[x.getLength()];
         for (int i = 0; i < x.getLength(); ++i) {

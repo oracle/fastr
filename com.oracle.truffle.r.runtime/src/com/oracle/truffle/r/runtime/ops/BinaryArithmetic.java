@@ -6,7 +6,7 @@
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
  * Copyright (c) 2012-2013, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -491,9 +491,9 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static class Pow extends BinaryArithmetic {
 
-        BranchProfile everSeenExponentOtherThanTwo = BranchProfile.create();
-        BranchProfile everSeenNonIntegralExponent = BranchProfile.create();
-        BranchProfile everSeenNegativeExponent = BranchProfile.create();
+        private final BranchProfile everSeenExponentOtherThanTwo = BranchProfile.create();
+        private final BranchProfile everSeenNonIntegralExponent = BranchProfile.create();
+        private final BranchProfile everSeenNegativeExponent = BranchProfile.create();
 
         public Pow() {
             super(false, false, false);

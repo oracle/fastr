@@ -50,6 +50,11 @@ public final class RInternalError extends Error {
         throw new RInternalError("not implemented");
     }
 
+    public static RuntimeException unimplemented(String message) {
+        CompilerDirectives.transferToInterpreter();
+        throw new RInternalError("not implemented: %s", message);
+    }
+
     public static RuntimeException shouldNotReachHere() {
         CompilerDirectives.transferToInterpreter();
         throw new RInternalError("should not reach here");
@@ -60,9 +65,9 @@ public final class RInternalError extends Error {
         throw new RInternalError(cause, "should not reach here");
     }
 
-    public static RuntimeException shouldNotReachHere(String msg) {
+    public static RuntimeException shouldNotReachHere(String message) {
         CompilerDirectives.transferToInterpreter();
-        throw new RInternalError("should not reach here: %s", msg);
+        throw new RInternalError("should not reach here: %s", message);
     }
 
     static void reportError(Throwable t, SourceSection source) {

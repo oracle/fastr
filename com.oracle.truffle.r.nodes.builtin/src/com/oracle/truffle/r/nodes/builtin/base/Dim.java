@@ -44,7 +44,7 @@ public abstract class Dim extends RBuiltinNode {
 
     private static final String NAME = "dim";
 
-    @Child ShortRowNames shortRowNames;
+    @Child private ShortRowNames shortRowNames;
     @Child private DispatchedCallNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();

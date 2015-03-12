@@ -664,14 +664,14 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(guards = {"toLengthOne(to)", "positiveLengthOut(lengthOut)"})
-    public RDoubleSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+    protected RDoubleSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         validateParam(to.getDataAt(0), "to");
         return RDataFactory.createDoubleSequence(to.getDataAt(0) - lengthOut + 1, 1, lengthOut);
     }
 
     @Specialization(guards = {"toLengthOne(to)", "positiveLengthOut(lengthOut)"})
-    public RDoubleSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+    protected RDoubleSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         validateParam(to.getDataAt(0), "to");
         final int intLength = (int) Math.ceil(lengthOut);
@@ -679,14 +679,14 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(guards = {"toLengthOne(to)", "positiveLengthOut(lengthOut)"})
-    public RDoubleSequence seq(RMissing start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+    protected RDoubleSequence seq(RMissing start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         validateParam(to.getDataAt(0), "to");
         return RDataFactory.createDoubleSequence(to.getDataAt(0) - lengthOut + 1, 1, (int) Math.ceil(lengthOut));
     }
 
     @Specialization(guards = "toLengthOne(to)")
-    public Object seq(VirtualFrame frame, RMissing start, RAbstractVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(VirtualFrame frame, RMissing start, RAbstractVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return seqRecursive(frame, 1.0, to, stride, lengthOut, alongWith);
     }

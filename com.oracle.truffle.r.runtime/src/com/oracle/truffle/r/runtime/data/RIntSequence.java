@@ -45,7 +45,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return stride;
     }
 
-    protected RIntVector populateVectorData(int[] result) {
+    private RIntVector populateVectorData(int[] result) {
         int current = start;
         for (int i = 0; i < getLength(); ++i) {
             result[i] = current;
@@ -63,16 +63,6 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return internalCreateVector().toString();
-    }
-
-    public RIntSequence removeLast() {
-        assert getLength() >= 1;
-        return RDataFactory.createIntSequence(getStart(), getStride(), getLength() - 1);
-    }
-
-    public RIntSequence removeFirst() {
-        assert getLength() >= 1;
-        return RDataFactory.createIntSequence(getStart() + 1, getStride(), getLength() - 1);
     }
 
     public int getDataAt(int index) {

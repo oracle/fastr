@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,7 +119,8 @@ public abstract class ForNode extends LoopNode {
     protected Object doSequence(VirtualFrame frame, RIntSequence range) {
         int count = 0;
         try {
-            for (int i = 0, pos = range.getStart(); i < range.getLength(); i++, pos += range.getStride()) {
+            // this loop is 1-based so that the loop counter folds with common 1:n sequences
+            for (int i = 1, pos = range.getStart(); i <= range.getLength(); i++, pos += range.getStride()) {
                 cvar.execute(frame, pos);
                 try {
                     body.execute(frame);

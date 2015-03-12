@@ -35,8 +35,8 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public class PositionsArrayNode extends RNode {
 
-    @Child PositionsArrayConversionNodeMultiDimAdapter conversionAdapter;
-    @Child PositionsArrayNodeAdapter positionsAdapter;
+    @Child private PositionsArrayConversionNodeMultiDimAdapter conversionAdapter;
+    @Child private PositionsArrayNodeAdapter positionsAdapter;
     @Child private PromiseHelperNode promiseHelper;
 
     private final boolean hasVarArg;

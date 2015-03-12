@@ -42,7 +42,7 @@ public abstract class Sprintf extends RBuiltinNode {
 
     public abstract Object executeObject(VirtualFrame frame, String fmt, Object args);
 
-    @Child Sprintf sprintfRecursive;
+    @Child private Sprintf sprintfRecursive;
 
     @Specialization
     @TruffleBoundary

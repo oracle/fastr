@@ -77,7 +77,8 @@ abstract class GetDimNamesNode extends RNode {
             if (srcNamesNullProfile.profile(srcNames == null)) {
                 dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
             } else {
-                namesNACheck.enable(!srcNames.isComplete() || !p.isComplete());
+                namesNACheck.enable(srcNames);
+                namesNACheck.enable(p);
                 String[] namesData = new String[numPositions];
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
@@ -107,7 +108,8 @@ abstract class GetDimNamesNode extends RNode {
                     if (srcNamesNullProfile.profile(srcNames == null)) {
                         dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
                     } else {
-                        namesNACheck.enable(!srcNames.isComplete() || !p.isComplete());
+                        namesNACheck.enable(srcNames);
+                        namesNACheck.enable(p);
                         String name;
                         int pos = p.getDataAt(0);
                         if (namesNACheck.check(pos)) {

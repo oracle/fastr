@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,13 +13,11 @@ package com.oracle.truffle.r.parser;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.parser.ast.*;
 
 public class ParseUtil {
 
-    @TruffleBoundary
-    public static String hexChar(String... chars) {
+    static String hexChar(String... chars) {
         int value = 0;
         for (int i = 0; i < chars.length; i++) {
             value = value * 16 + Integer.parseInt(chars[i], 16);

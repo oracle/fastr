@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -36,7 +38,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -88,7 +90,14 @@ public class FrameFunctions {
         }
     }
 
-    private abstract static class CallHelper extends FrameHelper {
+    private abstract static class CallHelper extends FrameHelper implements ClosureCache {
+
+        private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
+
+        public IdentityHashMap<RNode, Closure> getContent() {
+            return closureCache;
+        }
+
         @TruffleBoundary
         protected RLanguage createCall(Frame cframe, @SuppressWarnings("unused") boolean sysCall, boolean expandDots) {
             SourceSection callSource = RArguments.getCallSourceSection(cframe);
@@ -113,7 +122,7 @@ public class FrameFunctions {
                         for (int i = 0; i < listArgs.length; i++) {
                             listArgs[i] = RASTUtils.createNodeForValue(temp.getValues()[i]);
                         }
-                        RNode varArgs = PromiseNode.createVarArgs(null, EvalPolicy.PROMISED, listArgs, temp.getSignature(), null, null);
+                        RNode varArgs = PromiseNode.createVarArgs(null, EvalPolicy.PROMISED, listArgs, temp.getSignature(), this, null);
                         CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, signature);
                         values = new Object[]{RASTUtils.createCall("list", callArgsNode)};
                         call = RDataFactory.createLanguage(RASTUtils.createCall(functionName, callArgsNode));

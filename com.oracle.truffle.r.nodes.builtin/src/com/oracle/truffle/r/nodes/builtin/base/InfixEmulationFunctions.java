@@ -70,7 +70,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPositions) {
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < getLength(); i++) {
                 newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, newPositions[i], i);
@@ -97,7 +97,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < getLength(); i++) {
                 newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], true, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, value, newPositions[i], i);
@@ -238,7 +238,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "drop");
 
         private static final String NAME = "[";
 
@@ -354,7 +354,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "exact");
 
         private static final String NAME = "[[";
 
@@ -465,7 +465,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "");
 
         private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;

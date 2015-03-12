@@ -35,7 +35,7 @@ public abstract class ColMeans extends RBuiltinNode {
     private final NACheck na = NACheck.create();
 
     @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
+    protected RNode[] castArguments(RNode[] arguments) {
         arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
         arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;

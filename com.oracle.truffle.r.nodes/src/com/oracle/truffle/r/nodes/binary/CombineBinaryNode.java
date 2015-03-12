@@ -97,7 +97,7 @@ public abstract class CombineBinaryNode extends BinaryNode {
         return RDataFactory.createStringVector(namesData, naCheck.neverSeenNA());
     }
 
-    public RVector genericCombine(RVector left, RVector right) {
+    protected RVector genericCombine(RVector left, RVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         RVector result = left.createEmptySameType(leftLength + rightLength, left.isComplete() && right.isComplete());
