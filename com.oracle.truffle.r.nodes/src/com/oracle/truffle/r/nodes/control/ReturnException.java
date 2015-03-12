@@ -28,12 +28,12 @@ import com.oracle.truffle.api.nodes.*;
 @SuppressWarnings("serial")
 public final class ReturnException extends ControlFlowException {
 
-    public final Object result;
+    private final Object result;
     private final MaterializedFrame returnFrame;
 
     /**
      * Support for the "return" builtin.
-     * 
+     *
      * @param result the value to return
      * @param returnFrame if not {@code null}, the frame of the function that the return should go
      *            to, skipping intermediate frames.

@@ -450,8 +450,8 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             // figure out how to get to the next frame or descriptor
             MaterializedFrame next = RArguments.getEnclosingFrame(current);
             FrameDescriptor nextDescriptor = next == null ? null : next.getFrameDescriptor();
-            StableValue<MaterializedFrame> enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(currentDescriptor, null, next);
-            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(currentDescriptor, null, nextDescriptor);
+            StableValue<MaterializedFrame> enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(current, currentDescriptor, null, next);
+            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(current, currentDescriptor, null, nextDescriptor);
 
             levels.add(new ReadVariableLevel(currentDescriptor, frameSlot, valueAssumption, enclosingDescriptorAssumption, enclosingFrameAssumption, next));
 

@@ -81,14 +81,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  */
 public abstract class REnvironment extends RAttributeStorage implements RAttributable, RTypedValue {
 
-    /**
-     * Controls whether a separate frame, with a different enclosing frame is created to the
-     * "namespace:base" environment. This is correct semantics and required to resolve unqualified
-     * references to names between packages, but requires a fix to {@link FrameSlotChangeMonitor} to
-     * work. TODO Remove once fix in place.
-     */
-    private static final boolean NS_BASE_FRAME = false;
-
     public static class PutException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
@@ -638,9 +630,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
             namespaceRegistry.safePut(name, this);
-            if (NS_BASE_FRAME) {
-                RArguments.setEnvironment(frameAccess.getFrame(), this);
-            }
+            RArguments.setEnvironment(frameAccess.getFrame(), this);
         }
 
         @Override
@@ -658,15 +648,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
              * We create the NSBaseMaterializedFrame using globalFrame as the enclosing frame. The
              * namespaceEnv parent field will change to globalEnv after the latter is created
              */
-            MaterializedFrame nsFrame = new NSBaseMaterializedFrame(baseFrame, globalFrame);
-            REnvFrameAccess baseFrameAccess = NS_BASE_FRAME ? new REnvTruffleFrameAccess(nsFrame) : this.frameAccess;
+            REnvFrameAccess baseFrameAccess = new REnvTruffleFrameAccess(new NSBaseMaterializedFrame(baseFrame, globalFrame));
             this.namespaceEnv = new BaseNamespace(emptyEnv, "base", baseFrameAccess);
-            if (!NS_BASE_FRAME) {
-                // This is important so that "environment(func)" gives the correct
-                // answer for functions defined in base. The sharing of the
-                // frame would otherwise report "package:base"
-                RArguments.setEnvironment(baseFrame, this.namespaceEnv);
-            }
         }
 
         @Override

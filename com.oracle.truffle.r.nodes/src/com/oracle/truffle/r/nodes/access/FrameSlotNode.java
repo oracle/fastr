@@ -40,11 +40,7 @@ public abstract class FrameSlotNode extends Node {
 
     public abstract FrameSlot executeFrameSlot(VirtualFrame frame);
 
-    static FrameSlot findFrameSlot(Frame frame, Object identifier) {
-        return frame.getFrameDescriptor().findFrameSlot(identifier);
-    }
-
-    static Assumption getAssumption(Frame frame, Object identifier) {
+    private static Assumption getAssumption(Frame frame, Object identifier) {
         return frame.getFrameDescriptor().getNotInFrameAssumption(identifier);
     }
 

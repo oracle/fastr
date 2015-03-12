@@ -101,8 +101,4 @@ public final class VarArgsSignature {
         }
         return true;
     }
-
-    public boolean isNotEqualTo(VarArgsSignature other) {
-        return !isEqualTo(other);
-    }
 }
