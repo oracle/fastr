@@ -138,7 +138,7 @@ public class RRuntime {
      */
     public static VirtualFrame createNonFunctionFrame() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, false);
+        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(frameDescriptor, false);
         return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(), frameDescriptor);
     }
 

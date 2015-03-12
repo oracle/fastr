@@ -74,7 +74,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
                 if (enclosingFrameAssumption != null) {
                     if (enclosingFrameAssumption.getValue() != enclosingFrame) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
+                        enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(vf.materialize(), getFrameDescriptor(), enclosingFrameAssumption, enclosingFrame);
                     }
                 }
             }
@@ -90,7 +90,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
                 FrameDescriptor enclosingFrameDescriptor = enclosingFrame == null ? null : enclosingFrameProfile.profile(enclosingFrame).getFrameDescriptor();
                 if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(getFrameDescriptor(), enclosingFrameDescriptorAssumption,
+                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(vf, getFrameDescriptor(), enclosingFrameDescriptorAssumption,
                                     enclosingFrameDescriptor);
                 }
             }

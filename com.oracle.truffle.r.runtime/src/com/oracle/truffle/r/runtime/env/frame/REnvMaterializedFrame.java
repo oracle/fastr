@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  * code from Truffle, but the relevant classes are final. Life would be easier if the environment
  * was immutable. No attempt is currently being made to make variable access efficient.
  */
-public class REnvMaterializedFrame implements MaterializedFrame {
+public final class REnvMaterializedFrame implements MaterializedFrame {
     private final Map<Object, Object> map;
     private final FrameDescriptor descriptor;
     @CompilationFinal private final Object[] arguments;
@@ -46,7 +46,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
 
     public REnvMaterializedFrame(UsesREnvMap env) {
         descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
+        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(descriptor, false);
         REnvMapFrameAccess frameAccess = env.getFrameAccess();
         map = frameAccess.getMap();
         tags = new byte[map.size()];
