@@ -292,6 +292,16 @@ public abstract class RCallNode extends RNode {
         return (RCallNode) parent;
     }
 
+    private static boolean needsSplitting(RFunction function) {
+        RootNode root = function.getRootNode();
+        if (function.containsDispatch()) {
+            return true;
+        } else if (root instanceof FunctionDefinitionNode) {
+            return ((FunctionDefinitionNode) root).needsSplitting();
+        }
+        return false;
+    }
+
     /**
      * Base class for classes that are on the top of the cache hierarchy.
      *
@@ -591,7 +601,7 @@ public abstract class RCallNode extends RNode {
             this.matchedArgs = matchedArgs.createNode();
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.needsCallerFrame = function.containsDispatch();
-            this.needsSplitting = function.containsDispatch();
+            this.needsSplitting = needsSplitting(function);
         }
 
         @Override
@@ -741,7 +751,7 @@ public abstract class RCallNode extends RNode {
              * this is a simple heuristic - methods that need a caller frame should have call site -
              * specific versions
              */
-            this.needsSplitting = function.containsDispatch();
+            this.needsSplitting = needsSplitting(function);
         }
 
         protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
