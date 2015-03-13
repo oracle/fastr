@@ -98,13 +98,14 @@ public abstract class PromiseNode extends RNode {
                 }
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    if (!noOpt && isOptimizableVariable(expr)) {
-                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
-                        break;
-                    }
 
                     if (isVararg(expr)) {
                         pn = new VarargPromiseNode(factory, (VarArgNode) expr);
+                        break;
+                    }
+
+                    if (!noOpt && isOptimizableVariable(expr)) {
+                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
                         break;
                     }
 
