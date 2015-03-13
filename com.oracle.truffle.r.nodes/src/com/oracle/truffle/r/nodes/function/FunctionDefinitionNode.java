@@ -160,7 +160,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
+        VirtualFrame vf = substituteFrame ? new SubstituteVirtualFrame((MaterializedFrame) frame.getArguments()[0]) : frame;
         try {
             verifyEnclosingAssumptions(vf);
             if (s3SlotsProfile.profile(RArguments.hasS3Args(vf))) {

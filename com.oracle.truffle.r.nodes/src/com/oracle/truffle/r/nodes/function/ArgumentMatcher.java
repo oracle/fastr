@@ -316,7 +316,7 @@ public class ArgumentMatcher {
         RNode node = suppliedArgs[index];
         if (node instanceof VarArgNode) {
             CompilerAsserts.neverPartOfCompilation();
-            VirtualFrame frame = Utils.getActualCurrentFrame();
+            Frame frame = Utils.getActualCurrentFrame();
             try {
                 // TODO: this error handling code takes many assumptions about the argument types
                 RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
