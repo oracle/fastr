@@ -496,10 +496,7 @@ public abstract class PromiseNode extends RNode {
                 Object argValue = varargs[i].execute(frame);
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     if (evaluatedNames == null) {
-                        evaluatedNames = new String[i];
-                        for (int j = 0; j < i; j++) {
-                            evaluatedNames[j] = signature.getName(j);
-                        }
+                        evaluatedNames = initializeNames(i);
                     }
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
@@ -514,11 +511,7 @@ public abstract class PromiseNode extends RNode {
                     evaluatedArgs = Utils.resizeArray(evaluatedArgs, newLength);
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
-                    for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
-                        evaluatedNames[index] = argsValuesAndNames.getSignature().getName(j);
-                        index++;
-                    }
+                    index = copyVarArgs(frame, evaluatedArgs, evaluatedNames, index, argsValuesAndNames, varargValues);
                 } else {
                     if (evaluatedNames != null) {
                         evaluatedNames[index] = signature.getName(i);
@@ -528,6 +521,25 @@ public abstract class PromiseNode extends RNode {
             }
             ArgumentsSignature actualSignature = argsValueAndNamesProfile.profile(evaluatedNames != null) ? ArgumentsSignature.get(evaluatedNames) : signature;
             return new RArgsValuesAndNames(evaluatedArgs, actualSignature);
+        }
+
+        private String[] initializeNames(int i) {
+            String[] evaluatedNames;
+            evaluatedNames = new String[i];
+            for (int j = 0; j < i; j++) {
+                evaluatedNames[j] = signature.getName(j);
+            }
+            return evaluatedNames;
+        }
+
+        private int copyVarArgs(VirtualFrame frame, Object[] evaluatedArgs, String[] evaluatedNames, int startIndex, RArgsValuesAndNames argsValuesAndNames, Object[] varargValues) {
+            int index = startIndex;
+            for (int j = 0; j < argsValuesAndNames.length(); j++) {
+                evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
+                evaluatedNames[index] = argsValuesAndNames.getSignature().getName(j);
+                index++;
+            }
+            return index;
         }
 
         @Override
