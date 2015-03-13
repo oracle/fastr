@@ -57364,6 +57364,16 @@ Error: unexpected ',' in "{ x<-list(aa=1, ba=2); x[[exact=TRUE],"
 NULL
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }
+$data
+$data[[1]]
+     [,1] [,2]
+[1,]    1    3
+[2,]    2   42
+
+
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(list(1,42)); x[[c(1, 2)]] }
 [1] 42
 
