@@ -23,7 +23,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.LapplyFactory.LApplyNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.LapplyFactory.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
@@ -43,7 +43,7 @@ public abstract class Lapply extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private LApplyNode lapply = LApplyNodeGen.create(null, null, null);
+    @Child private LapplyInternalNode lapply = LapplyInternalNodeGen.create(null, null, null);
 
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun) {
@@ -55,7 +55,7 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     @NodeChildren({@NodeChild(type = RNode.class), @NodeChild(type = RNode.class), @NodeChild(type = RNode.class)})
-    protected abstract static class LApplyNode extends RNode {
+    protected abstract static class LapplyInternalNode extends RNode {
 
         private static final Source ACCESS_ARRAY_SOURCE = Source.asPseudoFile("X[[i]]", "<lapply_array_access>");
 
