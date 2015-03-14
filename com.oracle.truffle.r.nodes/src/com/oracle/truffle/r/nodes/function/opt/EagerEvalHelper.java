@@ -51,6 +51,13 @@ public class EagerEvalHelper {
     }
 
     /**
+     * @return Whether to use optimizations for single variables
+     */
+    public static boolean optDefault() {
+        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalDefault.getValue();
+    }
+
+    /**
      * @return Whether to use optimizations for arbitrary expressions
      */
     public static boolean optExprs() {
@@ -63,6 +70,10 @@ public class EagerEvalHelper {
 
     public static boolean isOptimizableVariable(RNode expr) {
         return optVars() && isVariableArgument(expr);
+    }
+
+    public static boolean isOptimizableDefault(RNode expr) {
+        return optDefault() && isVariableArgument(expr);
     }
 
     public static boolean isOptimizableExpression(RNode expr) {

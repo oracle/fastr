@@ -82,7 +82,7 @@ public final class RError extends RuntimeException {
     }
 
     private static RError error0(final SourceSection srcCandidate, Message msg, Object... args) {
-        VirtualFrame frame = null;
+        Frame frame = null;
         SourceSection src = srcCandidate;
         if (src == null) {
             frame = Utils.getActualCurrentFrame();

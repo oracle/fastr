@@ -609,6 +609,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-matrix(1:4, ncol=2); x[1,alist(a=)[[1]]] }");
         assertEvalError("{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s] }");
         assertEvalError("{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s]<-1; }");
+
+        assertEval("{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }");
     }
 
     @Test

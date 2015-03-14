@@ -73,6 +73,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> EagerEvalConstants = new OptionValue<>(true);
     @Option(help = "Enables optimistic eager evaluation of single variables reads")
     public static final OptionValue<Boolean> EagerEvalVariables = new OptionValue<>(false);
+    @Option(help = "Enables optimistic eager evaluation of single variables reads (for default parameters)")
+    public static final OptionValue<Boolean> EagerEvalDefault = new OptionValue<>(false);
     @Option(help = "Enables optimistic eager evaluation of trivial expressions")
     public static final OptionValue<Boolean> EagerEvalExpressions = new OptionValue<>(false);
     //@formatter:on

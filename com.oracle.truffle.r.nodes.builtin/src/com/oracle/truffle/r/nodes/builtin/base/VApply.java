@@ -29,7 +29,8 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.Lapply.*;
+import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
+import com.oracle.truffle.r.nodes.builtin.base.LapplyFactory.LapplyInternalNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO Set dimnames on result if necessary.
  */
-@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"})
+@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true)
 public abstract class VApply extends RCastingBuiltinNode {
 
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
@@ -54,7 +55,7 @@ public abstract class VApply extends RCastingBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
+    @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create(null, null, null);
 
     @Specialization
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {

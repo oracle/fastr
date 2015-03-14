@@ -25,17 +25,22 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
@@ -70,6 +75,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final boolean substituteFrame;
 
+    private final boolean needsSplitting;
+
     /**
      * Profiling for catching {@link ReturnException}s.
      */
@@ -89,8 +96,51 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.create(RFrameSlot.OnExit, false);
         this.uuid = FunctionUIDFactory.get().createUID();
-
         this.checkSingletonFrame = !substituteFrame;
+        this.needsSplitting = needsAnyBuiltinSplitting();
+    }
+
+    private boolean needsAnyBuiltinSplitting() {
+        NodeCountFilter findAlwaysSplitInternal = node -> {
+            if (node instanceof RCallNode) {
+                RCallNode internalCall = (RCallNode) node;
+
+                if (internalCall.getFunctionNode() instanceof ReadVariableNode) {
+                    ReadVariableNode readInternal = (ReadVariableNode) internalCall.getFunctionNode();
+
+                    /*
+                     * TODO This is a hack to make sapply split lapply. We need to find better ways
+                     * to do this. If a function uses lapply anywhere as name then it gets split.
+                     * This could get exploited.
+                     */
+                    RFunction directBuiltin = RContext.getEngine().lookupBuiltin(readInternal.getIdentifier());
+                    if (directBuiltin != null && directBuiltin.getRBuiltin().splitCaller()) {
+                        return true;
+                    }
+
+                    if (readInternal.getIdentifier().equals(".Internal")) {
+                        Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArgumentsNode().getArguments()[0]);
+                        if (internalFunctionArgument instanceof RCallNode) {
+                            RCallNode innerCall = (RCallNode) internalFunctionArgument;
+                            if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
+                                ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
+                                RFunction builtin = RContext.getEngine().lookupBuiltin(readInnerCall.getIdentifier());
+                                if (builtin != null && builtin.getRBuiltin().splitCaller()) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+        return NodeUtil.countNodes(this, findAlwaysSplitInternal) > 0;
+
+    }
+
+    public boolean needsSplitting() {
+        return needsSplitting;
     }
 
     public FunctionUID getUID() {
@@ -110,7 +160,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
+        VirtualFrame vf = substituteFrame ? new SubstituteVirtualFrame((MaterializedFrame) frame.getArguments()[0]) : frame;
         try {
             verifyEnclosingAssumptions(vf);
             if (s3SlotsProfile.profile(RArguments.hasS3Args(vf))) {

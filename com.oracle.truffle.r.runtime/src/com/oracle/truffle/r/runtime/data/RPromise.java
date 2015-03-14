@@ -377,15 +377,11 @@ public class RPromise extends RLanguageRep implements RTypedValue {
             return true;
         }
 
-        /**
-         * @return Whether the promise has been materialized before
-         */
-        public boolean materialize() {
+        @TruffleBoundary
+        public void materialize() {
             if (execFrame == null) {
-                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
-                return false;
+                this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId).materialize();
             }
-            return true;
         }
 
         public Object getEagerValue() {

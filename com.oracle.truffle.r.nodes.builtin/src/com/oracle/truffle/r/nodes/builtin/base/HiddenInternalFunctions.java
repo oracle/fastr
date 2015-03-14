@@ -211,7 +211,7 @@ public class HiddenInternalFunctions {
                         public Object eval(Object arg) {
                             Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
                             // TODO this cast is problematic
-                            return callCache.execute((VirtualFrame) frame, envhook.getTarget(), callArgs);
+                            return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
 
                     };

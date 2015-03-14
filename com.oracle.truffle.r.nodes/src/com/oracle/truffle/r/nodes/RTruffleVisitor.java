@@ -410,6 +410,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             return (SimpleAccessVariable) v.getVector();
         } else if (v.getVector() instanceof AccessVector) {
             return getVectorVariable((AccessVector) v.getVector());
+        } else if (v.getVector() instanceof FieldAccess) {
+            return getFieldAccessVariable((FieldAccess) v.getVector());
         } else if (v.getVector() instanceof FunctionCall) {
             return null;
         } else {

@@ -42,6 +42,10 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.execute(frame);
     }
 
+    public RBuiltinNode getBuiltin() {
+        return builtin;
+    }
+
     public RCallNode inline(InlinedArguments args) {
         assert builtin.getSuppliedSignature() != null : this;
         return builtin.inline(args);
