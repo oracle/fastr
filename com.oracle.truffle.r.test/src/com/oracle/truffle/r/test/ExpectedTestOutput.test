@@ -52881,8 +52881,8 @@ Error in `[[<-`(`*tmp*`, 1 + (0+1i), 1, value = 7) :
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testComplexIndex
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }
-Error in x[[1 + (0+1i), 1]] <- NULL :
-  more elements supplied than there are to replace
+Error in `[[<-`(`*tmp*`, 1 + (0+1i), 1, value = NULL) :
+  invalid subscript type 'complex'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testComplexIndex
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-c(7,42) }
@@ -54089,8 +54089,7 @@ Error in z[[list(1)]] <- 42 : invalid subscript type 'list'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
 #{ z<-1:4; z[[list(1)]]<-NULL }
-Error in z[[list(1)]] <- NULL :
-  more elements supplied than there are to replace
+Error in z[[list(1)]] <- NULL : invalid subscript type 'list'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
 #{ z<-1:4; z[[list(1)]]<-integer() }
@@ -59008,9 +59007,17 @@ a
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 0); x }
+<1 x 0 x 0 array of integer>
+
+[1,]
+
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }
+<1 x 0 x 0 x 2 array of integer>
+
+[1,]
+
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 2); x }
@@ -59027,6 +59034,10 @@ a
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }
+<1 x 0 x 2 x 0 x 2 array of integer>
+
+[1,]
+
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 2, 2, 2); dimnames(x)<-list("a", NULL, c("b", "c"), c("d", "e"), c("f", "g")); x }
@@ -59167,8 +59178,7 @@ Error in `[<-`(`*tmp*`, as.raw(1), 1, value = integer(0)) :
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex
 #{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }
-Error in x[[as.raw(1)]] <- NULL :
-  more elements supplied than there are to replace
+Error in x[[as.raw(1)]] <- NULL : invalid subscript type 'raw'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex
 #{ x<-c(1,2,3,4); x[[as.raw(1)]]<-c(1) }
@@ -66913,18 +66923,18 @@ character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinc.testc35
 #argv <- list(c('‘?’ for shortcuts to help topics.', '', '  ‘help.search()’ or ‘??’ for finding help pages', '  on a vague topic;', '  ‘help.start()’ which opens the HTML version of the R', '  help pages;', '  ‘library()’ for listing available packages and the', '  help objects they contain;', '  ‘data()’ for listing available data sets;', '  ‘methods()’.', '', '  Use ‘prompt'), character(0));c(argv[[1]],argv[[2]]);
- [1] "‘?’ for shortcuts to help topics."
+ [1] "\342\200\230?\342\200\231 for shortcuts to help topics."
  [2] ""
- [3] "  ‘help.search()’ or ‘??’ for finding help pages"
+ [3] "  \342\200\230help.search()\342\200\231 or \342\200\230??\342\200\231 for finding help pages"
  [4] "  on a vague topic;"
- [5] "  ‘help.start()’ which opens the HTML version of the R"
+ [5] "  \342\200\230help.start()\342\200\231 which opens the HTML version of the R"
  [6] "  help pages;"
- [7] "  ‘library()’ for listing available packages and the"
+ [7] "  \342\200\230library()\342\200\231 for listing available packages and the"
  [8] "  help objects they contain;"
- [9] "  ‘data()’ for listing available data sets;"
-[10] "  ‘methods()’."
+ [9] "  \342\200\230data()\342\200\231 for listing available data sets;"
+[10] "  \342\200\230methods()\342\200\231."
 [11] ""
-[12] "  Use ‘prompt"
+[12] "  Use \342\200\230prompt"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinc.testc36
 #argv <- list(-1, 0+1i);c(argv[[1]],argv[[2]]);
@@ -69035,7 +69045,7 @@ description       class        mode        text      opened    can read
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingetNamespaceVersion.testgetNamespaceVersion1
 #argv <- structure(list(ns = 'stats'), .Names = 'ns');do.call('getNamespaceVersion', argv)
 version
-"3.1.1"
+"3.1.3"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingetSymbolInfo.testgetSymbolInfo1
 #argv <- list('FALSE', '', FALSE); .Internal(getSymbolInfo(argv[[1]], argv[[2]], argv[[3]]))
@@ -69127,7 +69137,7 @@ logical(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingsub.testgsub11
 #argv <- list('é', 'gh', '«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
-[1] "«Latin-1 accented chars»: ghè øØ å<Å æ<Æ gh ghè"
+[1] "\302\253Latin-1 accented chars\302\273: gh\303\250 \303\270\303\230 \303\245<\303\205 \303\246<\303\206 gh gh\303\250"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingsub.testgsub12
 #argv <- list('([[:digit:]]+[.-]){1,}[[:digit:]]+', '', 'pkgB_1.0.tar.gz', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))
@@ -71727,7 +71737,7 @@ Levels: foo
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlist.testlist34
 #argv <- list(itemBullet = '• ');list(argv[[1]]);
 [[1]]
-[1] "• "
+[1] "\342\200\242 "
 
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlist.testlist36
@@ -71858,13 +71868,13 @@ integer(0)
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlist.testlist50
 #argv <- list('‘', 'Matrix', '’');list(argv[[1]],argv[[2]],argv[[3]]);
 [[1]]
-[1] "‘"
+[1] "\342\200\230"
 
 [[2]]
 [1] "Matrix"
 
 [[3]]
-[1] "’"
+[1] "\342\200\231"
 
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlist.testlist51
@@ -71923,7 +71933,7 @@ character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlistfiles.testlistfiles3
 #argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))
-character(0)
+[1] "library/base/CITATION"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlistfiles.testlistfiles4
 #argv <- list('mgcv', NULL, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))
@@ -75136,7 +75146,7 @@ character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinpaste.testpaste8
 #argv <- list(list('detaching', '‘package:splines’'), ' ', NULL); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))
-[1] "detaching ‘package:splines’"
+[1] "detaching \342\200\230package:splines\342\200\231"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinpaste.testpaste9
 #argv <- list(list('GRID', 'text', '6'), '.', NULL); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))
@@ -75205,7 +75215,7 @@ character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinpaste0.testpaste04
 #argv <- list(list('  ‘help.search()’ or ‘', '??'), NULL); .Internal(paste0(argv[[1]], argv[[2]]))
-[1] "  ‘help.search()’ or ‘??"
+[1] "  \342\200\230help.search()\342\200\231 or \342\200\230??"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinpaste0.testpaste05
 #argv <- list(list(structure(c('coef.aov', 'extractAIC.aov', 'model.tables.aov', 'print.aov', 'proj.aov', 'se.contrast.aov', 'summary.aov', 'TukeyHSD.aov'), class = 'MethodsFunction', info = structure(list(visible = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE), from = structure(c(9L, 9L, 9L, 9L, 9L, 9L, 7L, 7L), .Label = c('CheckExEnv', 'package:base', 'package:datasets', 'package:graphics', 'package:grDevices', 'package:methods', 'package:stats', 'package:utils', 'registered S3method'), class = 'factor')), .Names = c('visible', 'from'), row.names = c('coef.aov', 'extractAIC.aov', 'model.tables.aov', 'print.aov', 'proj.aov', 'se.contrast.aov', 'summary.aov', 'TukeyHSD.aov'), class = 'data.frame')), c('*', '*', '*', '*', '*', '*', '', '')), NULL); .Internal(paste0(argv[[1]], argv[[2]]))
@@ -77491,7 +77501,7 @@ $`2`
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf16
 #argv <- list('checkRd: (%d) %s', -3, 'evalSource.Rd:157: Unnecessary braces at ‘{\'sourceEnvironment\'}’'); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))
-[1] "checkRd: (-3) evalSource.Rd:157: Unnecessary braces at ‘{'sourceEnvironment'}’"
+[1] "checkRd: (-3) evalSource.Rd:157: Unnecessary braces at \342\200\230{'sourceEnvironment'}\342\200\231"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinsprintf.testsprintf17
 #argv <- list('tools:::check_compiled_code(\'%s\')', '/home/lzhao/hg/r-instrumented/library/foreign'); .Internal(sprintf(argv[[1]], argv[[2]]))

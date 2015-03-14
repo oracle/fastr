@@ -148,6 +148,18 @@ local({
 #    ## this is to allow gfortran compiler to work
 #    Sys.setenv("PATH" = paste(Sys.getenv("PATH"),":/usr/local/bin",sep = ""))
 #}## end "Aqua"
+## de-dupe the environment on OS X (bug in Yosemite which affects things like PATH)
+if (grepl("^darwin", R.version$os)) local({
+				## we have to de-dupe one at a time and re-check since the bug affects how
+				## environment modifications propagate
+				while(length(dupes <- names(Sys.getenv())[table(names(Sys.getenv())) > 1])) {
+					env <- dupes[1]
+					value <- Sys.getenv(env)
+					Sys.unsetenv(env)             ## removes the dupes, good
+					.Internal(Sys.setenv(env, value)) ## wrapper requries named vector, a pain, hence internal
+				}
+			})
+
 #
 #local({
 #    tests_startup <- Sys.getenv("R_TESTS")

@@ -405,6 +405,25 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = "isSetPrimitiveMethods(f)")
+        @TruffleBoundary
+        protected Object setPrimitiveMethods(RList f, RArgsValuesAndNames args, RMissing packageName) {
+            controlVisibility();
+            Object[] argValues = args.getValues();
+            // TODO proper error checks
+            String fname = RRuntime.asString(argValues[0]);
+            Object op = argValues[1];
+            String codeVec = RRuntime.asString(argValues[2]);
+            RFunction fundef = (RFunction) argValues[3];
+            Object mlist = argValues[4];
+            return SetPrimitiveMethods.doit(fname, op, codeVec, fundef, mlist);
+        }
+
+        public boolean isSetPrimitiveMethods(RList f) {
+            return matchName(f, "R_M_setPrimitiveMethods");
+        }
+
+        @SuppressWarnings("unused")
         @TruffleBoundary
         @Specialization(guards = "getClassFromCache(f)")
         protected Object callGetClassFromCache(RList f, RArgsValuesAndNames args, RMissing packageName) {

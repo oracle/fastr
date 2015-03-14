@@ -20,24 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-/**
- * The rarely seen {@code externalptr} type.
- */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    public final long value;
-    public final String tag;
-
-    RExternalPtr(long value, String tag) {
-        this.value = value;
-        this.tag = tag;
+@RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+public abstract class Trunc extends RBuiltinNode {
+    @Specialization
+    protected Object trunc(@SuppressWarnings("unused") Object x) {
+        throw RError.nyi(getEncapsulatingSourceSection(), " trunc");
     }
-
-    public RType getRType() {
-        return RType.ExternalPtr;
-    }
-
 }

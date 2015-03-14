@@ -3,12 +3,22 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
+
+/*
+ * This is very slightly modified version or use with FastR/JNI.
+ */
+
+/* This file is installed and available to packages, but only a small
+   part of the contents is within the API.  See chapter 6 of 'Writing
+   R Extensions'.
+ */
+
 #ifndef R_INTERNALS_H_
 #define R_INTERNALS_H_
 
@@ -157,6 +167,7 @@ typedef enum {
 } SEXPTYPE;
 #endif
 
+// ======================= USE_RINTERNALS section
 #ifdef USE_RINTERNALS
 /* This is intended for use only within R itself.
  * It defines internal structures that are otherwise only accessible
@@ -165,6 +176,8 @@ typedef enum {
  */
 
 /* Flags */
+
+
 struct sxpinfo_struct {
     SEXPTYPE type      :  5;/* ==> (FUNSXP == 99) %% 2^5 == 3 == CLOSXP
 			     * -> warning: `type' is narrower than values
@@ -411,6 +424,7 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define SET_ENVFLAGS(x,v)	(((x)->sxpinfo.gp)=(v))
 
 #else /* not USE_RINTERNALS */
+// ======================= not USE_RINTERNALS section
 
 #ifdef FASTR
 #include <jni.h>
@@ -423,7 +437,7 @@ typedef struct SEXPREC *SEXP;
 #define CHAR(x)		R_CHAR(x)
 const char *(R_CHAR)(SEXP x);
 
-/* Various tests with macro versions below */
+/* Various tests with macro versions in the USE_RINTERNALS section */
 Rboolean (Rf_isNull)(SEXP s);
 Rboolean (Rf_isSymbol)(SEXP s);
 Rboolean (Rf_isLogical)(SEXP s);
@@ -495,6 +509,7 @@ int  (OBJECT)(SEXP x);
 int  (MARK)(SEXP x);
 int  (TYPEOF)(SEXP x);
 int  (NAMED)(SEXP x);
+int  (REFCNT)(SEXP x);
 void (SET_OBJECT)(SEXP x, int v);
 void (SET_TYPEOF)(SEXP x, int v);
 void (SET_NAMED)(SEXP x, int v);
@@ -1282,7 +1297,7 @@ SEXP R_FixupRHS(SEXP x, SEXP y);
 	int dummy;							\
 	intptr_t usage = R_CStackDir * (R_CStackStart - (uintptr_t)&dummy); \
 	if(R_CStackLimit != -1 && usage > ((intptr_t) R_CStackLimit))	\
-	    R_SignalCStackOverflow(usage);					\
+    R_SignalCStackOverflow(usage);				\
     } while (FALSE)
 #endif
 

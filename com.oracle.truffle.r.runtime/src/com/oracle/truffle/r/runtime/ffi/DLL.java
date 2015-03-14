@@ -189,7 +189,7 @@ public class DLL {
     }
 
     public static RExternalPtr createExternalPtr(long value, RStringVector rClass) {
-        RExternalPtr result = new RExternalPtr(value, rClass.getDataAt(0));
+        RExternalPtr result = RDataFactory.createExternalPtr(value, rClass.getDataAt(0));
         result.setClassAttr(rClass);
         return result;
     }

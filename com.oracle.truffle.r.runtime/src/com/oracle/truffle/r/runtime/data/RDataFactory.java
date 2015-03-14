@@ -394,6 +394,14 @@ public final class RDataFactory {
         return traceDataCreated(new REnvironment.NewEnv(name));
     }
 
+    public static RS4Object createS4Object() {
+        return traceDataCreated(new RS4Object());
+    }
+
+    public static RExternalPtr createExternalPtr(long value, String tag) {
+        return traceDataCreated(new RExternalPtr(value, tag));
+    }
+
     @CompilationFinal private static PerfHandler stats;
 
     private static <T> T traceDataCreated(T data) {
