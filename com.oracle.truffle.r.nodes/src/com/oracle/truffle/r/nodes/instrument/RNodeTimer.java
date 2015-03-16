@@ -57,15 +57,15 @@ public class RNodeTimer {
         public final Instrument instrument;
 
         public Basic(RInstrument.NodeId tag) {
-            instrument = Instrument.create(new SimpleEventListener() {
+            instrument = Instrument.create(new SimpleInstrumentListener() {
 
                 @Override
-                public void enter(Node node, VirtualFrame frame) {
+                public void enter(Probe probe) {
                     enterTime = System.nanoTime();
                 }
 
                 @Override
-                public void returnAny(Node node, VirtualFrame frame) {
+                public void returnAny(Probe probe) {
                     cumulativeTime += System.nanoTime() - enterTime;
                 }
             }, "R node timer");

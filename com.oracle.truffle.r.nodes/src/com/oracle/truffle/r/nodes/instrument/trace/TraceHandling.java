@@ -64,7 +64,7 @@ public class TraceHandling {
         return probe;
     }
 
-    private abstract static class TraceEventReceiver implements TruffleEventListener {
+    private abstract static class TraceEventReceiver implements ASTInstrumentListener {
 
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
@@ -73,7 +73,7 @@ public class TraceHandling {
         }
 
         @Override
-        public void returnVoid(Node node, VirtualFrame frame) {
+        public void returnVoid(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -108,7 +108,7 @@ public class TraceHandling {
         Instrument instrument;
 
         TraceFunctionEventReceiver() {
-            instrument = Instrument.create(this);
+            instrument = Instrument.create(this, "trace");
         }
 
         Instrument getInstrument() {
@@ -116,7 +116,7 @@ public class TraceHandling {
         }
 
         @Override
-        public void enter(Node node, VirtualFrame frame) {
+        public void enter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
@@ -129,14 +129,14 @@ public class TraceHandling {
         }
 
         @Override
-        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 indent -= INDENT;
             }
         }
 
         @Override
-        public void returnValue(Node node, VirtualFrame frame, Object result) {
+        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 indent -= INDENT;
             }

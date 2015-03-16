@@ -49,15 +49,15 @@ public class REntryCounters {
         public final Instrument instrument;
 
         public Basic(Object tag) {
-            instrument = Instrument.create(new SimpleEventListener() {
+            instrument = Instrument.create(new SimpleInstrumentListener() {
 
                 @Override
-                public void enter(Node node, VirtualFrame frame) {
+                public void enter(Probe probe) {
                     enterCount++;
                 }
 
                 @Override
-                public void returnAny(Node node, VirtualFrame frame) {
+                public void returnAny(Probe probe) {
                     exitCount++;
                 }
             }, "R node entry counter");
