@@ -68,7 +68,7 @@ public abstract class DoCall extends RBuiltinNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, getEncapsulatingSourceSection(), false);
         if (func.isBuiltin()) {
-            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs.getEvaluatedArgs());
         }
         if (!needsCallerFrame && func.containsDispatch()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
