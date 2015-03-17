@@ -127,4 +127,8 @@ public abstract class CastListNode extends CastNode {
     protected RList doFunction(RFunction func) {
         return RDataFactory.createList(new Object[]{func});
     }
+
+    public static CastListNode create() {
+        return CastListNodeGen.create(null, true, true, true);
+    }
 }

@@ -236,4 +236,8 @@ public abstract class CastRawNode extends CastNode {
     protected int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
+
+    public static CastRawNode create() {
+        return CastRawNodeGen.create(null, true, true, true);
+    }
 }
