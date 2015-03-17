@@ -66,7 +66,7 @@ public class ConnectionSupport {
      * open argument.
      */
     enum AbstractOpenMode {
-        Lazy(new String[]{""}, false, true, true),
+        Lazy(new String[]{""}, true, true, true),
         Read(new String[]{"r", "rt"}, true, true, false),
         Write(new String[]{"w", "wt"}, true, false, true),
         Append(new String[]{"a", "at"}, true, false, true),
@@ -169,7 +169,7 @@ public class ConnectionSupport {
         Terminal("terminal"),
         File("file"),
         GZFile("gzfile"),
-        Socket("socketconn"),
+        Socket("sockconn"),
         Text("textConnection"),
         URL("url");
 
@@ -485,12 +485,10 @@ public class ConnectionSupport {
         public abstract String getSummaryDescription();
 
         /**
-         * Return the value that is used in the "text" field by {@code summary.connection}. TODO
-         * determine what this really means, e.g., In GnuR {gzfile} on a binary file still reports
-         * "text".
+         * Return the value that is used in the "text" field by {@code summary.connection}.
          */
         public String getSummaryText() {
-            return "text";
+            return isTextMode() ? "text" : "binary";
         }
 
         @Override

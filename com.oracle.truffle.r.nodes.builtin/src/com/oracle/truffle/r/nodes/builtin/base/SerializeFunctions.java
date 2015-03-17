@@ -53,17 +53,19 @@ public class SerializeFunctions {
         }
 
         @TruffleBoundary
-        protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook, int depth) {
+        protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook,
+                        int depth) {
             controlVisibility();
-            try (RConnection openConn = conn.forceOpen("wb")) {
-                boolean ascii = RRuntime.fromLogical(asciiLogical);
+            boolean ascii = RRuntime.fromLogical(asciiLogical);
+            // xdr is only relevant if ascii is false
+            try (RConnection openConn = conn.forceOpen(ascii ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_WRITE);
                 }
                 if (!ascii && openConn.isTextMode()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
-                RSerialize.serialize(openConn, object, ascii, 2, null, depth);
+                RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), 2, null, depth);
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
@@ -89,7 +91,7 @@ public class SerializeFunctions {
     public abstract static class SerializeToConn extends Adapter {
         @Specialization
         protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+            return doSerializeToConn(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook, RArguments.getDepth(frame));
         }
 
     }
@@ -107,15 +109,18 @@ public class SerializeFunctions {
     public abstract static class Serialize extends Adapter {
         @Specialization
         protected Object serialize(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+            return doSerializeToConn(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook, RArguments.getDepth(frame));
         }
     }
 
-    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
+    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "xdr", "version", "refhook"})
     public abstract static class SerializeB extends Adapter {
         @Specialization
-        protected Object serializeB(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConn(object, conn, asciiLogical, version, refhook, RArguments.getDepth(frame));
+        protected Object serializeB(VirtualFrame frame, Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {
+            if (!RRuntime.fromLogical(xdrLogical)) {
+                throw RError.nyi(getEncapsulatingSourceSection(), " xdr==FALSE");
+            }
+            return doSerializeToConn(object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook, RArguments.getDepth(frame));
         }
     }
 }
