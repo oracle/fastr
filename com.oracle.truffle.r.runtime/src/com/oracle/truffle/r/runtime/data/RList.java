@@ -31,9 +31,10 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-public final class RList extends RVector implements RAbstractVector {
+public final class RList extends RVector implements RAbstractVector, RGPBits {
 
     private Object[] data;
+    private int gpbits;
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.List.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.List.getName()}, true);
@@ -238,5 +239,13 @@ public final class RList extends RVector implements RAbstractVector {
 
     public boolean checkCompleteness() {
         return true;
+    }
+
+    public int getValue() {
+        return gpbits;
+    }
+
+    public void setValue(int value) {
+        gpbits = value;
     }
 }
