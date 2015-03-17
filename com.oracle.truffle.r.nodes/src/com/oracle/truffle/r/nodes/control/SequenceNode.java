@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
+@NodeInfo(cost = NodeCost.NONE)
 public class SequenceNode extends RNode {
 
     @Children private final RNode[] sequence;

@@ -84,6 +84,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     public static class PutException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
+        @TruffleBoundary
         public PutException(RError.Message msg, Object... args) {
             super(msg, args);
         }

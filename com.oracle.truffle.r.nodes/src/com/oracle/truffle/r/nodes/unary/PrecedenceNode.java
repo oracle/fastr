@@ -47,6 +47,8 @@ public abstract class PrecedenceNode extends UnaryNode {
     public static final int LIST_PRECEDENCE = 6;
     public static final int EXPRESSION_PRECEDENCE = 7;
 
+    public static final int NUMBER_OF_PRECEDENCES = 9;
+
     @Override
     public final Object execute(VirtualFrame frame) {
         return executeInteger(frame);
@@ -163,7 +165,7 @@ public abstract class PrecedenceNode extends UnaryNode {
     }
 
     @Specialization
-    protected int doDataFrame(VirtualFrame frame, RDataFrame val, byte recursive) {
+    protected int doDataFrame(RDataFrame val, byte recursive) {
         return LIST_PRECEDENCE;
     }
 

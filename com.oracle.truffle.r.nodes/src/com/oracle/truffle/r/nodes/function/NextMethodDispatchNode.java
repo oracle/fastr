@@ -108,7 +108,7 @@ public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getSourceSection(), true);
         if (targetFunction.isBuiltin()) {
-            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs.getEvaluatedArgs());
         }
         return reorderedArgs;
     }

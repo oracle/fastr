@@ -130,10 +130,12 @@ public abstract class S3DispatchNode extends DispatchNode {
 
     private final ValueProfile callerFrameProfile = ValueProfile.createClassProfile();
 
-    protected final Object[] prepareArguments(MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, EvaluatedArguments reorderedArgs, RFunction function, RStringVector clazz,
-                    String functionName) {
+    protected final Object[] prepareArguments(MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, Object[] evaluatedArguments, ArgumentsSignature evaluatedSignature, RFunction function,
+                    RStringVector clazz, String functionName) {
+        CompilerAsserts.partialEvaluationConstant(evaluatedArguments.length);
+
         MaterializedFrame profiledCallerFrame = callerFrameProfile.profile(callerFrame);
-        Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(profiledCallerFrame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(profiledCallerFrame) + 1, evaluatedArguments, evaluatedSignature);
         defineVarsAsArguments(argObject, genericName, clazz, profiledCallerFrame.materialize(), genericDefFrame);
         RArguments.setS3Method(argObject, functionName);
         return argObject;
@@ -311,7 +313,7 @@ abstract class S3DispatchLegacyNode extends S3DispatchNode {
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, callSrc, false);
         if (func.isBuiltin()) {
-            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs.getEvaluatedArgs());
         }
         return reorderedArgs;
     }

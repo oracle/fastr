@@ -39,10 +39,17 @@ public final class RError extends RuntimeException {
         private final RError.Message msg;
         @CompilationFinal private final Object[] args;
 
+        @TruffleBoundary
         protected RErrorException(RError.Message msg, Object[] args) {
-            super(RError.formatMessage(msg, args));
+            super(RError.formatMessage(msg, args), null);
             this.msg = msg;
             this.args = args;
+        }
+
+        @SuppressWarnings("sync-override")
+        @Override
+        public Throwable fillInStackTrace() {
+            return null;
         }
     }
 

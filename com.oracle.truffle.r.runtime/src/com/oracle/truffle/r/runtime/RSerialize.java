@@ -952,10 +952,58 @@ public class RSerialize {
             stream.flush();
         }
 
+        private static SEXPTYPE saveSpecialHook(Object item) {
+            if (item == RNull.instance)
+                return SEXPTYPE.NILVALUE_SXP;
+            if (item == REnvironment.emptyEnv())
+                return SEXPTYPE.EMPTYENV_SXP;
+            if (item == REnvironment.baseEnv())
+                return SEXPTYPE.BASEENV_SXP;
+            if (item == REnvironment.globalEnv())
+                return SEXPTYPE.GLOBALENV_SXP;
+// if (item == R_UnboundValue) return UNBOUNDVALUE_SXP;
+            if (item == RMissing.instance)
+                return SEXPTYPE.MISSINGARG_SXP;
+            if (item == REnvironment.baseNamespaceEnv())
+                return SEXPTYPE.BASENAMESPACE_SXP;
+            return null;
+        }
+
+        private static SEXPTYPE checkType(SEXPTYPE type, Object obj) {
+            switch (type) {
+                case FUNSXP: {
+                    RFunction func = (RFunction) obj;
+                    if (func.isBuiltin()) {
+                        return SEXPTYPE.BUILTINSXP;
+                    } else {
+                        return type;
+                    }
+                }
+
+                case FASTR_INT:
+                    return SEXPTYPE.INTSXP;
+                case FASTR_DOUBLE:
+                    return SEXPTYPE.REALSXP;
+                case FASTR_STRING:
+                    return SEXPTYPE.STRSXP;
+                case FASTR_BYTE:
+                    return SEXPTYPE.LGLSXP;
+                case FASTR_DATAFRAME:
+                    return SEXPTYPE.VECSXP;
+
+                default:
+                    return type;
+            }
+        }
+
         private void writeItem(Object obj) throws IOException {
             SEXPTYPE type = SEXPTYPE.typeForClass(obj.getClass());
+            SEXPTYPE outType = checkType(type, obj);
+            SEXPTYPE specialType;
             int refIndex;
-            if ((refIndex = getRefIndex(obj)) != -1) {
+            if ((specialType = saveSpecialHook(obj)) != null) {
+                stream.writeInt(specialType.code);
+            } else if ((refIndex = getRefIndex(obj)) != -1) {
                 outRefIndex(refIndex);
             } else if (type == SEXPTYPE.SYMSXP) {
                 addReadRef(obj);
@@ -963,6 +1011,14 @@ public class RSerialize {
                 writeItem(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
                 throw RInternalError.unimplemented();
+            } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
+                RDataFrame dataFrame = (RDataFrame) obj;
+                writeItem(dataFrame.getVector());
+                return;
+            } else if (type == SEXPTYPE.FASTR_FACTOR) {
+                RFactor factor = (RFactor) obj;
+                writeItem(factor.getVector());
+                return;
             } else {
                 // flags
                 RAttributes attributes = null;
@@ -973,7 +1029,7 @@ public class RSerialize {
                         attributes = null;
                     }
                 }
-                int flags = Flags.packFlags(type, 0, false, attributes != null, false);
+                int flags = Flags.packFlags(outType, 0, false, attributes != null, false);
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
@@ -999,8 +1055,42 @@ public class RSerialize {
                         RIntVector vec = (RIntVector) obj;
                         stream.writeInt(vec.getLength());
                         for (int i = 0; i < vec.getLength(); i++) {
-                            // TODO NA
                             stream.writeInt(vec.getDataAt(i));
+                        }
+                        break;
+                    }
+
+                    case REALSXP: {
+                        RDoubleVector vec = (RDoubleVector) obj;
+                        stream.writeInt(vec.getLength());
+                        for (int i = 0; i < vec.getLength(); i++) {
+                            stream.writeDouble(vec.getDataAt(i));
+                        }
+                        break;
+                    }
+
+                    case LGLSXP: {
+                        // Output as ints
+                        RLogicalVector vec = (RLogicalVector) obj;
+                        stream.writeInt(vec.getLength());
+                        for (int i = 0; i < vec.getLength(); i++) {
+                            byte val = vec.getDataAt(i);
+                            if (RRuntime.isNA(val)) {
+                                stream.writeInt(RRuntime.INT_NA);
+                            } else {
+                                stream.writeInt(vec.getDataAt(i));
+                            }
+                        }
+                        break;
+                    }
+
+                    case CPLXSXP: {
+                        RComplexVector vec = (RComplexVector) obj;
+                        stream.writeInt(vec.getLength());
+                        for (int i = 0; i < vec.getLength(); i++) {
+                            RComplex val = vec.getDataAt(i);
+                            stream.writeDouble(val.getRealPart());
+                            stream.writeDouble(val.getImaginaryPart());
                         }
                         break;
                     }
@@ -1015,9 +1105,61 @@ public class RSerialize {
                         break;
                     }
 
+                    case FUNSXP: {
+                        RFunction fun = (RFunction) obj;
+                        if (fun.isBuiltin()) {
+                            String name = fun.getRBuiltin().name();
+                            stream.writeString(name);
+                        } else {
+                            throw RInternalError.unimplemented();
+                        }
+                        break;
+                    }
+
+                    /*
+                     * FastR scalar, (length 1) "vectors"
+                     */
+
+                    case FASTR_INT: {
+                        Integer value = (Integer) obj;
+                        stream.writeInt(1);
+                        stream.writeInt(value);
+                        break;
+                    }
+
+                    case FASTR_DOUBLE: {
+                        Double value = (Double) obj;
+                        stream.writeInt(1);
+                        stream.writeDouble(value);
+                        break;
+                    }
+
+                    case FASTR_BYTE: {
+                        Byte value = (Byte) obj;
+                        stream.writeInt(1);
+                        if (RRuntime.isNA(value)) {
+                            stream.writeInt(RRuntime.INT_NA);
+                        } else {
+                            stream.writeInt(value);
+                        }
+                        break;
+                    }
+
+                    case FASTR_STRING: {
+                        String value = (String) obj;
+                        stream.writeInt(1);
+                        if (value == RRuntime.STRING_NA) {
+                            stream.writeInt(-1);
+                        } else {
+                            stream.writeString(value);
+                        }
+                        break;
+                    }
+
                     default:
                         throw RInternalError.unimplemented();
                 }
+
                 if (attributes != null) {
                     // have to convert to GnuR pairlist
                     Iterator<RAttribute> iter = attributes.iterator();
@@ -1047,7 +1189,7 @@ public class RSerialize {
     }
 
     @TruffleBoundary
-    public static void serialize(RConnection conn, Object obj, boolean ascii, int version, Object refhook, int depth) throws IOException {
+    public static void serialize(RConnection conn, Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook, int depth) throws IOException {
         Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
         output.serialize(obj);
     }

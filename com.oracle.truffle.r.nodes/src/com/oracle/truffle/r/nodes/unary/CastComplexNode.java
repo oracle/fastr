@@ -153,4 +153,9 @@ public abstract class CastComplexNode extends CastNode {
     public int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
+
+    public static CastComplexNode create() {
+        return CastComplexNodeGen.create(null, true, true, true);
+    }
+
 }

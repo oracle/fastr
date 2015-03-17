@@ -7780,6 +7780,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDoCall_5e298e54b60a07d24c3e6b7b292cf0a1() {
+        assertEval("{ do.call(quote, list(quote(1)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDoCall_478b0c5a6c217a98078cb12ebc169e49() {
+        assertEval("{ do.call(quote, list(quote(x)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDoCall_fd332795ede5f703243febb9f3e2ba7b() {
+        assertEval("{ do.call(quote, list(quote(x+1)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDoCall_60644d41555d5f7204f3e267c53b91fa() {
+        assertEval("{ do.call(\"+\", list(quote(1), 2))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDoCall_5ea8494b48bba8eddb18ce80a316b84b() {
+        assertEvalError("{ f <- function(x) x; do.call(f, list(quote(y)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDoCall_63704262cd3c7fd0eb02edacbe001999() {
+        assertEvalError("{ f <- function(x) x; do.call(f, list(quote(y + 1)))}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDrop_9c4466ae3aad8bb14766359234733c90() {
         assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
     }

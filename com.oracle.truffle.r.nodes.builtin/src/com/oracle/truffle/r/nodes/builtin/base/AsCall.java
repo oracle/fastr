@@ -40,13 +40,18 @@ public abstract class AsCall extends RBuiltinNode {
 
     @Specialization
     protected RLanguage asCallFunction(RList x) {
-        // TODO error check rather than cast
-        return Call.makeCall((RFunction) x.getDataAt(0), makeNamesAndValues(x));
+        // TODO error checks
+        RArgsValuesAndNames avn = makeNamesAndValues(x);
+        if (x.getDataAt(0) instanceof RSymbol) {
+            return Call.makeCall(((RSymbol) x.getDataAt(0)).getName(), avn);
+        } else {
+            return Call.makeCall((RFunction) x.getDataAt(0), avn);
+        }
     }
 
     @Specialization
     protected RLanguage asCallFunction(RExpression x) {
-        // TODO error check on function
+        // TODO error checks
         String f;
         if (x.getDataAt(0) instanceof RSymbol) {
             f = ((RSymbol) x.getDataAt(0)).getName();

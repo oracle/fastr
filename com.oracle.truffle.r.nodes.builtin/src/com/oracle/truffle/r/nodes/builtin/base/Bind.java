@@ -25,13 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
-import java.util.function.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -91,7 +89,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         }
     }
 
-    private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, BiFunction<VirtualFrame, Object, RAbstractVector> castFunction) {
+    private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, CastNode castNode, boolean needsVectorCast) {
         controlVisibility();
         Object[] array = args.getValues();
         ArgumentsSignature signature = args.getSignature();
@@ -106,7 +104,13 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 vecNames[ind] = signature.getName(i);
                 naCheck.check(vecNames[ind]);
             }
-            RAbstractVector vector = castFunction.apply(frame, array[i]);
+            Object result = castNode.executeCast(frame, array[i]);
+            RAbstractVector vector;
+            if (needsVectorCast) {
+                vector = castVector(frame, result);
+            } else {
+                vector = (RAbstractVector) result;
+            }
             if (emptyVectorProfile.profile(vector.getLength() == 0)) {
                 // nothing to do
             } else {
@@ -126,33 +130,28 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"isIntegerPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
-    @ExplodeLoop
-    protected Object allInt(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castInteger(f, e, true)));
+    protected Object allInt(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastIntegerNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
     @Specialization(guards = {"isDoublePrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
-    @ExplodeLoop
-    protected Object allDouble(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castDouble(f, e, true)));
+    protected Object allDouble(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastDoubleNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
     @Specialization(guards = {"isStringPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
-    @ExplodeLoop
-    protected Object allString(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castString(f, e, true)));
+    protected Object allString(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastStringNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
     @Specialization(guards = {"isComplexPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
-    @ExplodeLoop
-    protected Object allComplex(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castComplex(f, e, true)));
+    protected Object allComplex(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastComplexNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
     @Specialization(guards = {"isListPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
-    @ExplodeLoop
-    protected Object allList(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castList(f, e, true));
+    protected Object allList(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastListNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, false);
     }
 
     protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args, boolean cbind) {

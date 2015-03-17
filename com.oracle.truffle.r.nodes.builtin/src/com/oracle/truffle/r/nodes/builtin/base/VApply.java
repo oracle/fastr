@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
@@ -127,7 +126,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return result;
     }
 
-    @ExplodeLoop
     private double[] convertDoubleVector(VirtualFrame frame, Object[] values, int len) {
         double[] newArray = new double[values.length * len];
         int ind = 0;
@@ -140,7 +138,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private int[] convertIntVector(VirtualFrame frame, Object[] values, int len) {
         int[] newArray = new int[values.length * len];
         int ind = 0;
@@ -153,7 +150,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private byte[] convertLogicalVector(VirtualFrame frame, Object[] values, int len) {
         byte[] newArray = new byte[values.length * len];
         int ind = 0;
@@ -166,7 +162,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private String[] convertStringVector(VirtualFrame frame, Object[] values, int len) {
         String[] newArray = new String[values.length * len];
         int ind = 0;
@@ -179,7 +174,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private double[] convertComplexVector(VirtualFrame frame, Object[] values, int len) {
         double[] newArray = new double[values.length * len * 2];
         int ind = 0;
@@ -193,5 +187,4 @@ public abstract class VApply extends RCastingBuiltinNode {
         }
         return newArray;
     }
-
 }
