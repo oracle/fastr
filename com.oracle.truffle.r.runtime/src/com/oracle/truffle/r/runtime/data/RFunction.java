@@ -47,7 +47,8 @@ public final class RFunction extends RScalar implements RAttributable {
     private final RBuiltin builtin;
     private final boolean containsDispatch;
 
-    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrame;
+    private MaterializedFrame enclosingFrame;
+    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
     private RAttributes attributes;
 
     RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
@@ -55,7 +56,8 @@ public final class RFunction extends RScalar implements RAttributable {
         this.target = target;
         this.builtin = builtin;
         this.containsDispatch = containsDispatch;
-        this.enclosingFrame = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
+        this.enclosingFrame = enclosingFrame;
+        this.enclosingFrameAssumption = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
     }
 
     @Override
@@ -88,8 +90,12 @@ public final class RFunction extends RScalar implements RAttributable {
     }
 
     public MaterializedFrame getEnclosingFrame() {
+        return enclosingFrame;
+    }
+
+    public MaterializedFrame getEnclosingFrameWithAssumption() {
         while (true) {
-            StableValue<MaterializedFrame> value = enclosingFrame;
+            StableValue<MaterializedFrame> value = enclosingFrameAssumption;
             try {
                 value.getAssumption().check();
             } catch (InvalidAssumptionException e) {
@@ -101,14 +107,15 @@ public final class RFunction extends RScalar implements RAttributable {
     }
 
     public void setEnclosingFrame(MaterializedFrame frame) {
-        if (enclosingFrame.getValue() != frame) {
-            enclosingFrame.getAssumption().invalidate();
-            enclosingFrame = new StableValue<>(frame, "RFunction enclosing frame");
+        if (enclosingFrame != frame) {
+            enclosingFrameAssumption.getAssumption().invalidate();
+            enclosingFrameAssumption = new StableValue<>(frame, "RFunction enclosing frame");
+            enclosingFrame = frame;
         }
     }
 
     public RFunction copy() {
-        return new RFunction(name, target, builtin, enclosingFrame.getValue(), containsDispatch);
+        return new RFunction(name, target, builtin, enclosingFrame, containsDispatch);
     }
 
     public RAttributes initAttributes() {
