@@ -267,4 +267,9 @@ public abstract class CastIntegerNode extends CastNode {
     public int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
+
+    public static CastIntegerNode create() {
+        return CastIntegerNodeGen.create(null, true, true, true);
+    }
+
 }

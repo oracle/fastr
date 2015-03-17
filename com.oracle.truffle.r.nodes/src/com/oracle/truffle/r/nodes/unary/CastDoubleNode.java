@@ -246,4 +246,9 @@ public abstract class CastDoubleNode extends CastNode {
     public double doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
+
+    public static CastDoubleNode create() {
+        return CastDoubleNodeGen.create(null, true, true, true);
+    }
+
 }

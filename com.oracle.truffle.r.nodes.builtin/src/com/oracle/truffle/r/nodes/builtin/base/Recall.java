@@ -50,15 +50,18 @@ public abstract class Recall extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
 
-        EvaluatedArguments evaluated = match(args, function);
-
         // Use arguments in "..." as arguments for RECALL call
-        Object[] argsObject = RArguments.create(function, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, evaluated.getEvaluatedArgs(), evaluated.getSignature());
+        int frameDepth = RArguments.getDepth(frame) + 1;
+
+        // TODO (chumer) the arguments maching should not be behind a @TruffleBoundary.
+        Object[] argsObject = createArguments(args, function, frameDepth);
         return callCache.execute(frame, function.getTarget(), argsObject);
     }
 
     @TruffleBoundary
-    private EvaluatedArguments match(RArgsValuesAndNames args, RFunction function) {
-        return ArgumentMatcher.matchArgumentsEvaluated(function, EvaluatedArguments.create(args.getValues(), args.getSignature()), getSourceSection(), false);
+    private Object[] createArguments(RArgsValuesAndNames args, RFunction function, int frameDepth) {
+        EvaluatedArguments evaluated = ArgumentMatcher.matchArgumentsEvaluated(function, EvaluatedArguments.create(args.getValues(), args.getSignature()), getSourceSection(), false);
+        return RArguments.create(function, callCache.getSourceSection(), null, frameDepth, evaluated.getEvaluatedArgs(), evaluated.getSignature());
     }
+
 }
