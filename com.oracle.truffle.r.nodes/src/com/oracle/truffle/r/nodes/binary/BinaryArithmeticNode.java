@@ -45,6 +45,25 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
+    /*
+     * These lambdas have been extracted so that their creation doesn't need to be processed by
+     * partial evaluation. They can be inlined again once partial evaluation correctly handles them.
+     */
+
+    private static final Function<RDoubleVector, double[]> DOUBLE_ARRAY_GET = RDoubleVector::getDataWithoutCopying;
+    private static final Supplier<RDoubleVector> DOUBLE_CREATE_EMPTY_VECTOR = RDataFactory::createEmptyDoubleVector;
+    private static final BiFunction<double[], Boolean, RDoubleVector> DOUBLE_CREATE_VECTOR = RDataFactory::createDoubleVector;
+    private static final IntFunction<double[]> DOUBLE_CREATE_EMPTY_ARRAY = double[]::new;
+
+    private static final Function<RIntVector, int[]> INT_ARRAY_GET = RIntVector::getDataWithoutCopying;
+    private static final Supplier<RIntVector> INT_CREATE_EMPTY_VECTOR = RDataFactory::createEmptyIntVector;
+    private static final BiFunction<int[], Boolean, RIntVector> INT_CREATE_VECTOR = RDataFactory::createIntVector;
+    private static final IntFunction<int[]> INT_CREATE_EMPTY_ARRAY = int[]::new;
+
+    private static final BiFunction<double[], Boolean, RComplexVector> COMPLEX_CREATE_VECTOR = RDataFactory::createComplexVector;
+    private static final Supplier<RComplexVector> COMPLEX_CREATE_EMPTY_VECTOR = RDataFactory::createEmptyComplexVector;
+    private static final IntFunction<double[]> COMPLEX_CREATE_EMPTY_ARRAY = len -> new double[len << 1];
+
     @Child private BinaryArithmetic arithmetic;
     @Child private UnaryArithmeticNode unaryNode;
     private final UnaryArithmeticFactory unaryFactory;
@@ -417,30 +436,38 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return vector.isTemporary();
     }
 
+    private static final TemporaryScalarOpFunction<int[], Integer> OP_SCALAR_RIGHT = (t, array, i, r) -> array[i] = t.performArithmetic(array[i], r);
+
     @Specialization(guards = {"supportsIntResult()", "isTemporary(left)"})
     protected RIntVector doIntVectorScalar(RIntVector left, int right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performOpVectorScalar(left, RIntVector::getDataWithoutCopying, RDataFactory::createEmptyIntVector, (array, i) -> array[i] = performArithmetic(array[i], right));
+        return performOpVectorScalarTemporary(left, right, INT_ARRAY_GET, INT_CREATE_EMPTY_VECTOR, OP_SCALAR_RIGHT);
     }
+
+    private static final TemporaryScalarOpFunction<int[], Integer> OP_SCALAR_LEFT = (t, array, i, l) -> array[i] = t.performArithmetic(l, array[i]);
 
     @Specialization(guards = {"supportsIntResult()", "isTemporary(right)"})
     protected RIntVector doIntVectorScalar(int left, RIntVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performOpVectorScalar(right, RIntVector::getDataWithoutCopying, RDataFactory::createEmptyIntVector, (array, i) -> array[i] = performArithmetic(left, array[i]));
+        return performOpVectorScalarTemporary(right, left, INT_ARRAY_GET, INT_CREATE_EMPTY_VECTOR, OP_SCALAR_LEFT);
     }
+
+    private static final ScalarOpFunction<double[], RIntVector, Double> OP_SCALAR_LEFT_INT_DOUBLE = (t, array, l, i, r) -> array[i] = t.performArithmeticDouble(
+                    t.leftNACheck.convertIntToDouble(l.getDataAt(i)), r);
 
     @Specialization(guards = "!supportsIntResult()")
     protected RDoubleVector doIntVectorScalar(RIntVector left, double right) {
-        return performOpDifferentLength(left, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i) -> array[i] = performArithmeticDouble(leftNACheck.convertIntToDouble(left.getDataAt(i)), right));
+        return performOpDifferentLength(left, right, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_SCALAR_LEFT_INT_DOUBLE);
     }
+
+    private static final ScalarOpFunction<double[], RIntVector, Double> OP_SCALAR_RIGHT_INT_DOUBLE = (t, array, r, i, l) -> array[i] = t.performArithmeticDouble(l,
+                    t.rightNACheck.convertIntToDouble(r.getDataAt(i)));
 
     @Specialization(guards = "!supportsIntResult()")
     protected RDoubleVector doIntVectorScalar(double left, RIntVector right) {
-        return performOpDifferentLength(right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i) -> array[i] = performArithmeticDouble(left, rightNACheck.convertIntToDouble(right.getDataAt(i))));
+        return performOpDifferentLength(right, left, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_SCALAR_RIGHT_INT_DOUBLE);
     }
 
     @Specialization(guards = {"!areSameLength(left, right)", "supportsIntResult()", "!differentDimensions(left, right)"})
@@ -549,34 +576,40 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return vector.isTemporary();
     }
 
+    private static final TemporaryScalarOpFunction<double[], Double> OP_SCALAR_TEMP_LEFT_DOUBLE = (t, array, i, r) -> array[i] = t.performArithmeticDouble(array[i], r);
+
     @Specialization(guards = "isTemporary(left)")
     protected RDoubleVector doDoubleVectorScalarTempLeft(RDoubleVector left, double right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performOpVectorScalar(left, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(array[i], right));
+        return performOpVectorScalarTemporary(left, right, DOUBLE_ARRAY_GET, DOUBLE_CREATE_EMPTY_VECTOR, OP_SCALAR_TEMP_LEFT_DOUBLE);
     }
+
+    private static final TemporaryScalarOpFunction<double[], Double> OP_SCALAR_TEMP_RIGHT_DOUBLE = (t, array, i, l) -> array[i] = t.performArithmeticDouble(l, array[i]);
 
     @Specialization(guards = "isTemporary(right)")
     protected RDoubleVector doDoubleVectorScalarTempRight(double left, RDoubleVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performOpVectorScalar(right, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(left, array[i]));
+        return performOpVectorScalarTemporary(right, left, DOUBLE_ARRAY_GET, DOUBLE_CREATE_EMPTY_VECTOR, OP_SCALAR_TEMP_RIGHT_DOUBLE);
     }
+
+    private static final ScalarOpFunction<double[], RAbstractDoubleVector, Double> OP_DIFFERENT_LEFT_DOUBLE = (t, array, l, i, r) -> array[i] = t.performArithmeticDouble(l.getDataAt(i), r);
 
     @Specialization
     protected RDoubleVector doDoubleVector(RAbstractDoubleVector left, double right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performOpDifferentLength(left, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i) -> array[i] = performArithmeticDouble(left.getDataAt(i), right));
+        return performOpDifferentLength(left, right, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_DIFFERENT_LEFT_DOUBLE);
     }
+
+    private static final ScalarOpFunction<double[], RAbstractDoubleVector, Double> OP_DIFFERENT_RIGHT_DOUBLE = (t, array, r, i, l) -> array[i] = t.performArithmeticDouble(l, r.getDataAt(i));
 
     @Specialization
     protected RDoubleVector doDoubleVector(double left, RAbstractDoubleVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performOpDifferentLength(right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i) -> array[i] = performArithmeticDouble(left, right.getDataAt(i)));
+        return performOpDifferentLength(right, left, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_DIFFERENT_RIGHT_DOUBLE);
     }
 
     @Specialization(guards = "!areSameLength(left, right)")
@@ -584,16 +617,20 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return performDoubleVectorOpDifferentLength(left, right);
     }
 
+    private static final TemporaryScalarOpFunction<double[], double[]> OP_TEMP_LEFT_DOUBLE = (t, array, i, rArray) -> array[i] = t.performArithmeticDouble(array[i], rArray[i]);
+
     @Specialization(guards = {"areSameLength(left, right)", "isTemporary(left)"})
     protected RDoubleVector doDoubleVectorTempLeft(RDoubleVector left, RDoubleVector right) {
         double[] rightArray = right.getDataWithoutCopying();
-        return performOpVectorScalar(left, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(array[i], rightArray[i]));
+        return performOpVectorScalarTemporary(left, rightArray, DOUBLE_ARRAY_GET, DOUBLE_CREATE_EMPTY_VECTOR, OP_TEMP_LEFT_DOUBLE);
     }
+
+    private static final TemporaryScalarOpFunction<double[], double[]> OP_TEMP_RIGHT_DOUBLE = (t, array, i, lArray) -> array[i] = t.performArithmeticDouble(lArray[i], array[i]);
 
     @Specialization(guards = {"areSameLength(left, right)", "isTemporary(right)"})
     protected RDoubleVector doDoubleVectorTempRight(RDoubleVector left, RDoubleVector right) {
         double[] leftArray = left.getDataWithoutCopying();
-        return performOpVectorScalar(right, RDoubleVector::getDataWithoutCopying, RDataFactory::createEmptyDoubleVector, (array, i) -> array[i] = performArithmeticDouble(leftArray[i], array[i]));
+        return performOpVectorScalarTemporary(right, leftArray, DOUBLE_ARRAY_GET, DOUBLE_CREATE_EMPTY_VECTOR, OP_TEMP_RIGHT_DOUBLE);
     }
 
     @Specialization(guards = "areSameLength(left, right)")
@@ -778,16 +815,24 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    interface SameOpFunction<ArrayT> {
-        void apply(ArrayT array, int i);
+    interface SameOpFunction<ArrayT, ParamT> {
+        void apply(BinaryArithmeticNode t, ArrayT array, ParamT l, ParamT r, int i);
     }
 
-    interface DifferentOpFunction<ArrayT> {
-        void apply(ArrayT array, int i, int k, int j);
+    interface TemporaryScalarOpFunction<ArrayT, TempT> {
+        void apply(BinaryArithmeticNode t, ArrayT array, int i, TempT tmp);
+    }
+
+    interface ScalarOpFunction<ArrayT, ParamT, TempT> {
+        void apply(BinaryArithmeticNode t, ArrayT array, ParamT source, int i, TempT tmp);
+    }
+
+    interface DifferentOpFunction<ArrayT, ParamT> {
+        void apply(BinaryArithmeticNode t, ArrayT array, ParamT l, ParamT r, int i, int k, int j);
     }
 
     private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT> ResultT performOpDifferentLength(ParamT left, ParamT right, IntFunction<ArrayT> arrayConstructor,
-                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, DifferentOpFunction<ArrayT> op) {
+                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, DifferentOpFunction<ArrayT, ParamT> op) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         if (emptyVector.profile(leftLength == 0 || rightLength == 0)) {
@@ -810,7 +855,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
                 while (j < leftLength) {
                     k = 0;
                     while (k < rightLength) {
-                        op.apply(result, j, j, k);
+                        op.apply(this, result, left, right, j, j, k);
                         j++;
                         k++;
                     }
@@ -824,7 +869,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
                 while (k < rightLength) {
                     j = 0;
                     while (j < leftLength) {
-                        op.apply(result, k, j, k);
+                        op.apply(this, result, left, right, k, j, k);
                         j++;
                         k++;
                     }
@@ -833,7 +878,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
         if (notMultiple) {
             for (int i = 0; i < length; ++i) {
-                op.apply(result, i, j, k);
+                op.apply(this, result, left, right, i, j, k);
                 j = Utils.incMod(j, leftLength);
                 k = Utils.incMod(k, rightLength);
             }
@@ -844,8 +889,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return ret;
     }
 
-    private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT> ResultT performOpDifferentLength(ParamT source, IntFunction<ArrayT> arrayConstructor, Supplier<ResultT> emptyConstructor,
-                    BiFunction<ArrayT, Boolean, ResultT> resultFunction, SameOpFunction<ArrayT> op) {
+    private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT, TempT> ResultT performOpDifferentLength(ParamT source, TempT tmp, IntFunction<ArrayT> arrayConstructor,
+                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, ScalarOpFunction<ArrayT, ParamT, TempT> op) {
         int length = source.getLength();
         if (emptyVector.profile(length == 0)) {
             return emptyConstructor.get();
@@ -854,7 +899,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
         for (int i = 0; i < length; ++i) {
-            op.apply(result, i);
+            op.apply(this, result, source, i, tmp);
         }
         ResultT ret = resultFunction.apply(result, isComplete());
         if (ret != source) {
@@ -863,7 +908,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return ret;
     }
 
-    private <ParamT extends RVector, ArrayT> ParamT performOpVectorScalar(ParamT source, Function<ParamT, ArrayT> arrayConstructor, Supplier<ParamT> emptyConstructor, SameOpFunction<ArrayT> op) {
+    private <ParamT extends RVector, ArrayT, TempT> ParamT performOpVectorScalarTemporary(ParamT source, TempT tmp, Function<ParamT, ArrayT> arrayConstructor, Supplier<ParamT> emptyConstructor,
+                    TemporaryScalarOpFunction<ArrayT, TempT> op) {
         int length = source.getLength();
         if (emptyVector.profile(length == 0)) {
             return emptyConstructor.get();
@@ -872,37 +918,43 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(source);
         for (int i = 0; i < length; ++i) {
-            op.apply(result, i);
+            op.apply(this, result, i, tmp);
         }
         source.setComplete(isComplete());
         return source;
     }
 
+    private static final DifferentOpFunction<double[], RAbstractComplexVector> OP_COMPLEX_DIFFERENT = (t, array, l, r, i, j, k) -> {
+        RComplex result = t.performArithmeticComplex(l.getDataAt(j), r.getDataAt(k));
+        array[i << 1] = result.getRealPart();
+        array[(i << 1) + 1] = result.getImaginaryPart();
+    };
+
     private RComplexVector performComplexVectorOpDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
-        return performOpDifferentLength(left, right, len -> new double[len << 1], RDataFactory::createEmptyComplexVector, RDataFactory::createComplexVector, (array, i, j, k) -> {
-            RComplex result = performArithmeticComplex(left.getDataAt(j), right.getDataAt(k));
-            array[i << 1] = result.getRealPart();
-            array[(i << 1) + 1] = result.getImaginaryPart();
-        });
+        return performOpDifferentLength(left, right, COMPLEX_CREATE_EMPTY_ARRAY, COMPLEX_CREATE_EMPTY_VECTOR, COMPLEX_CREATE_VECTOR, OP_COMPLEX_DIFFERENT);
     }
+
+    private static final DifferentOpFunction<double[], RAbstractDoubleVector> OP_DIFFERENT_DOUBLE = (t, array, l, r, i, j, k) -> array[i] = t.performArithmeticDouble(l.getDataAt(j), r.getDataAt(k));
 
     private RDoubleVector performDoubleVectorOpDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
-        return performOpDifferentLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i, j, k) -> array[i] = performArithmeticDouble(left.getDataAt(j), right.getDataAt(k)));
+        return performOpDifferentLength(left, right, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_DIFFERENT_DOUBLE);
     }
+
+    private static final DifferentOpFunction<int[], RAbstractIntVector> OP_DIFFERENT_INT = (t, array, l, r, i, j, k) -> array[i] = t.performArithmetic(l.getDataAt(j), r.getDataAt(k));
 
     private RIntVector performIntVectorOpDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
-        return performOpDifferentLength(left, right, int[]::new, RDataFactory::createEmptyIntVector, RDataFactory::createIntVector,
-                        (array, i, j, k) -> array[i] = performArithmetic(left.getDataAt(j), right.getDataAt(k)));
+        return performOpDifferentLength(left, right, INT_CREATE_EMPTY_ARRAY, INT_CREATE_EMPTY_VECTOR, INT_CREATE_VECTOR, OP_DIFFERENT_INT);
     }
 
+    private static final DifferentOpFunction<double[], RAbstractIntVector> OP_DIFFERENT_INT_DOUBLE = (t, array, l, r, i, j, k) -> array[i] = t.performArithmeticIntIntDouble(l.getDataAt(j),
+                    r.getDataAt(k));
+
     private RDoubleVector performIntVectorOpDoubleDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
-        return performOpDifferentLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i, j, k) -> array[i] = performArithmeticIntIntDouble(left.getDataAt(j), right.getDataAt(k)));
+        return performOpDifferentLength(left, right, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_DIFFERENT_INT_DOUBLE);
     }
 
     private <ResultT extends RVector, ParamT extends RAbstractVector, ArrayT> ResultT performOpSameLength(ParamT left, ParamT right, IntFunction<ArrayT> arrayConstructor,
-                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, SameOpFunction<ArrayT> op) {
+                    Supplier<ResultT> emptyConstructor, BiFunction<ArrayT, Boolean, ResultT> resultFunction, SameOpFunction<ArrayT, ParamT> op) {
         assert areSameLength(left, right);
         int length = left.getLength();
         if (emptyVector.profile(length == 0)) {
@@ -913,34 +965,39 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
         for (int i = 0; i < length; ++i) {
-            op.apply(result, i);
+            op.apply(this, result, left, right, i);
         }
         ResultT ret = resultFunction.apply(result, isComplete());
         copyAttributesSameLength(ret, left, right);
         return ret;
     }
 
+    private static final SameOpFunction<double[], RAbstractComplexVector> OP_SAME_COMPLEX = (t, array, l, r, i) -> {
+        RComplex result = t.performArithmeticComplex(l.getDataAt(i), r.getDataAt(i));
+        array[i << 1] = result.getRealPart();
+        array[(i << 1) + 1] = result.getImaginaryPart();
+    };
+
     private RComplexVector performComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
-        return performOpSameLength(left, right, len -> new double[len << 1], RDataFactory::createEmptyComplexVector, RDataFactory::createComplexVector, (array, i) -> {
-            RComplex result = performArithmeticComplex(left.getDataAt(i), right.getDataAt(i));
-            array[i << 1] = result.getRealPart();
-            array[(i << 1) + 1] = result.getImaginaryPart();
-        });
+        return performOpSameLength(left, right, COMPLEX_CREATE_EMPTY_ARRAY, COMPLEX_CREATE_EMPTY_VECTOR, COMPLEX_CREATE_VECTOR, OP_SAME_COMPLEX);
     }
+
+    private static final SameOpFunction<double[], RAbstractDoubleVector> OP_SAME_DOUBLE = (t, array, l, r, i) -> array[i] = t.performArithmeticDouble(l.getDataAt(i), r.getDataAt(i));
 
     private RDoubleVector performDoubleVectorOpSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
-        return performOpSameLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i) -> array[i] = performArithmeticDouble(left.getDataAt(i), right.getDataAt(i)));
+        return performOpSameLength(left, right, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_SAME_DOUBLE);
     }
+
+    private static final SameOpFunction<int[], RAbstractIntVector> OP_SAME_INT = (t, array, l, r, i) -> array[i] = t.performArithmetic(l.getDataAt(i), r.getDataAt(i));
 
     private RIntVector performIntVectorOpSameLength(RAbstractIntVector left, RAbstractIntVector right) {
-        return performOpSameLength(left, right, int[]::new, RDataFactory::createEmptyIntVector, RDataFactory::createIntVector,
-                        (array, i) -> array[i] = performArithmetic(left.getDataAt(i), right.getDataAt(i)));
+        return performOpSameLength(left, right, INT_CREATE_EMPTY_ARRAY, INT_CREATE_EMPTY_VECTOR, INT_CREATE_VECTOR, OP_SAME_INT);
     }
 
+    private static final SameOpFunction<double[], RAbstractIntVector> OP_SAME_INT_DOUBLE = (t, array, l, r, i) -> array[i] = t.performArithmeticIntIntDouble(l.getDataAt(i), r.getDataAt(i));
+
     private RDoubleVector performIntVectorOpDoubleSameLength(RAbstractIntVector left, RAbstractIntVector right) {
-        return performOpSameLength(left, right, double[]::new, RDataFactory::createEmptyDoubleVector, RDataFactory::createDoubleVector,
-                        (array, i) -> array[i] = performArithmeticIntIntDouble(left.getDataAt(i), right.getDataAt(i)));
+        return performOpSameLength(left, right, DOUBLE_CREATE_EMPTY_ARRAY, DOUBLE_CREATE_EMPTY_VECTOR, DOUBLE_CREATE_VECTOR, OP_SAME_INT_DOUBLE);
     }
 
     private double performArithmeticDoubleEnableNACheck(double left, double right) {
