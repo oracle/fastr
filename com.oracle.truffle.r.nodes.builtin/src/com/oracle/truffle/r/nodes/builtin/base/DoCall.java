@@ -87,7 +87,7 @@ public abstract class DoCall extends RBuiltinNode {
                         argArray[i] = promiseHelper.evaluate(frame, createArgPromise(REnvironment.globalEnv().getFrame(), arg));
                     }
                 } else {
-                    if (!(arg instanceof RPromise)) {
+                    if (!(arg instanceof RPromise) && arg != RMissing.instance) {
                         // TODO there are some builtins that take unevaluated ..., e.g. switch
                         if (!(arg instanceof RArgsValuesAndNames)) {
                             argArray[i] = createArgPromise(frame.materialize(), arg);
@@ -105,7 +105,7 @@ public abstract class DoCall extends RBuiltinNode {
             Object[] argArray = reorderedArgs.getEvaluatedArgs();
             for (int i = 0; i < argArray.length; i++) {
                 Object arg = argArray[i];
-                if (!(arg instanceof RPromise)) {
+                if (!(arg instanceof RPromise) && arg != RMissing.instance) {
                     // TODO RArgsValuesAndNames
                     if (!(arg instanceof RArgsValuesAndNames)) {
                         argArray[i] = createArgPromise(frame.materialize(), arg);
