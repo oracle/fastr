@@ -8604,6 +8604,30 @@ attr(,"foo")
 [1] 1
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call("+", list(quote(1), 2))}
+[1] 3
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call(quote, list(quote(1)))}
+[1] 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call(quote, list(quote(x)))}
+x
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call(quote, list(quote(x+1)))}
+x + 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ f <- function(x) x; do.call(f, list(quote(y + 1)))}
+Error in (function (x)  : object 'y' not found
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ f <- function(x) x; do.call(f, list(quote(y)))}
+Error in (function (x)  : object 'y' not found
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
 #{ x<-list(c(1,2)); do.call("as.matrix", x) }
      [,1]
 [1,]    1

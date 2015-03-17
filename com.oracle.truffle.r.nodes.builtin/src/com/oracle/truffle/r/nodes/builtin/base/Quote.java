@@ -57,9 +57,8 @@ public abstract class Quote extends RBuiltinNode {
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();
         RNode unode = (RNode) RASTUtils.unwrap(node);
-        SourceSection ss = node.getSourceSection();
         if (rvn.profile(unode instanceof ReadVariableNode)) {
-            return RDataFactory.createSymbol(ss.toString());
+            return RASTUtils.createRSymbol(unode);
         } else if (cn.profile(unode instanceof ConstantNode)) {
             ConstantNode cnode = (ConstantNode) unode;
             return cnode.getValue();
