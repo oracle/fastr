@@ -299,6 +299,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    protected RS4Object wrap(RS4Object x) {
+        return proxy(x);
+    }
+
+    protected RS4Object proxy(RS4Object x) {
+        return x;
+    }
+
+    @Specialization
     protected Object[] wrap(Object[] x) {
         return proxy(x);
     }

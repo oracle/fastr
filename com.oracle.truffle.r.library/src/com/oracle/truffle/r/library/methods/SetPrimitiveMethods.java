@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.library.methods;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * The rarely seen {@code externalptr} type.
- */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    public final long value;
-    public final String tag;
-
-    RExternalPtr(long value, String tag) {
-        this.value = value;
-        this.tag = tag;
+public class SetPrimitiveMethods {
+    @SuppressWarnings("unused")
+    public static Object doit(String fname, Object op, String codeVec, RFunction fundef, Object mlist) {
+        // TODO implement
+        return RNull.instance;
     }
-
-    public RType getRType() {
-        return RType.ExternalPtr;
-    }
-
 }

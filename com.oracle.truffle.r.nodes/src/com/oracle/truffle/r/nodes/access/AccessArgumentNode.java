@@ -71,7 +71,7 @@ public abstract class AccessArgumentNode extends RNode {
     @CompilationFinal private boolean isVarArgIndex;
     @CompilationFinal private RPromiseFactory factory;
     @CompilationFinal private boolean deoptimized;
-    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();
+    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optDefault() || EagerEvalHelper.optExprs();
 
     protected AccessArgumentNode(int index) {
         this.index = index;
@@ -215,7 +215,7 @@ public abstract class AccessArgumentNode extends RNode {
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (isOptimizableVariable(arg) && isVariableArgument(arg)) {
+            if (isOptimizableDefault(arg) && isVariableArgument(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg));
             } else if (isOptimizableConstant(arg) && isConstantArgument(arg)) {
                 optDefaultArgNode = new OptConstantPromiseNode(factory);

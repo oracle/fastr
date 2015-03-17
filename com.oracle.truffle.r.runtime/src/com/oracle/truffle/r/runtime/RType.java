@@ -41,7 +41,8 @@ public enum RType {
     Expression("expression"),
     DefunctReal("real"),
     DefunctSingle("single"),
-    ExternalPtr("externalptr");
+    ExternalPtr("externalptr"),
+    S4Object("s4object");
 
     private final String name;
 

@@ -131,6 +131,7 @@ public class RSerialize {
         }
 
         protected Object addReadRef(Object item) {
+            assert item != null;
             if (refTableIndex >= refTable.length) {
                 Object[] newRefTable = new Object[2 * refTable.length];
                 System.arraycopy(refTable, 0, newRefTable, 0, refTable.length);
@@ -141,6 +142,7 @@ public class RSerialize {
         }
 
         protected Object getReadRef(int index) {
+            assert index > 0 && index <= refTableIndex;
             return refTable[index - 1];
         }
 
@@ -267,18 +269,20 @@ public class RSerialize {
                     return REnvironment.baseNamespaceEnv();
 
                 case REFSXP: {
-                    return getReadRef(inRefIndex(flags));
+                    int index = inRefIndex(flags);
+                    Object r = getReadRef(index);
+                    return checkResult(r);
                 }
 
                 case NAMESPACESXP: {
                     RStringVector s = inStringVec(false);
-                    return addReadRef(RContext.getRASTHelper().findNamespace(s, depth));
+                    return checkResult(addReadRef(RContext.getRASTHelper().findNamespace(s, depth)));
                 }
 
                 case PERSISTSXP: {
                     RStringVector sv = inStringVec(false);
                     result = persistentRestore(sv);
-                    return addReadRef(result);
+                    return checkResult(addReadRef(result));
                 }
 
                 case ENVSXP: {
@@ -317,7 +321,7 @@ public class RSerialize {
                     if (attr != RNull.instance) {
                         setAttributes(env, attr);
                     }
-                    return env;
+                    return checkResult(env);
                 }
 
                 case PACKAGESXP: {
@@ -330,7 +334,8 @@ public class RSerialize {
                     if (pkgEnv == null) {
                         pkgEnv = REnvironment.globalEnv();
                     }
-                    return pkgEnv;
+
+                    return checkResult(addReadRef(pkgEnv));
                 }
 
                 case LISTSXP:
@@ -378,7 +383,7 @@ public class RSerialize {
                             Utils.fail("internal deparse error");
                         }
                     }
-                    return result;
+                    return checkResult(result);
                 }
 
                 /*
@@ -473,6 +478,17 @@ public class RSerialize {
                     break;
                 }
 
+                case SPECIALSXP:
+                case BUILTINSXP: {
+                    int len = stream.readInt();
+                    String s = stream.readString(len);
+                    result = RContext.getEngine().lookupBuiltin(s);
+                    if (result == null) {
+                        throw RInternalError.shouldNotReachHere("lookup failed in unserialize for builtin: " + s);
+                    }
+                    break;
+                }
+
                 case CHARSXP: {
                     int len = stream.readInt();
                     if (len == -1) {
@@ -492,6 +508,21 @@ public class RSerialize {
 
                 case BCODESXP: {
                     result = readBC();
+                    break;
+                }
+
+                case S4SXP: {
+                    result = RDataFactory.createS4Object();
+                    break;
+                }
+
+                case EXTPTRSXP: {
+                    Object value = readItem();
+                    long addr = value == RNull.instance ? 0 : (long) value;
+                    Object tagObj = readItem();
+                    String tag = tagObj == RNull.instance ? null : (String) tagObj;
+                    result = RDataFactory.createExternalPtr(addr, tag);
+                    addReadRef(result);
                     break;
                 }
 
@@ -516,6 +547,11 @@ public class RSerialize {
                 }
             }
 
+            return checkResult(result);
+        }
+
+        private static Object checkResult(Object result) {
+            assert result != null;
             return result;
         }
 

@@ -1468,9 +1468,33 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testComplexIndexIgnore_18b832d8d859441034bd24f9ce629b94() {
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-NULL }");
+        check("TestSimpleVectors_testComplexIndexIgnore_18b832d8d859441034bd24f9ce629b94");
+    }
+
+    @Test
+    public void TestSimpleVectors_testComplexIndexIgnore_593fc8e31f28867ca49ec0bbe21bbc5f() {
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
+        check("TestSimpleVectors_testComplexIndexIgnore_593fc8e31f28867ca49ec0bbe21bbc5f");
+    }
+
+    @Test
     public void TestSimpleVectors_testListIndexIgnore_2223add8510c9d9c0c26ffc36fbf858e() {
         assertEvalError("{ z<-1:4; z[[list()]]<-NULL }");
         check("TestSimpleVectors_testListIndexIgnore_2223add8510c9d9c0c26ffc36fbf858e");
+    }
+
+    @Test
+    public void TestSimpleVectors_testListIndexIgnore_f9635083f8a0b70845e7d644ae6ea282() {
+        assertEvalError("{ z<-list(1,2,3,4); z[[list(1)]]<-NULL }");
+        check("TestSimpleVectors_testListIndexIgnore_f9635083f8a0b70845e7d644ae6ea282");
+    }
+
+    @Test
+    public void TestSimpleVectors_testListIndexIgnore_2856013d57376f52f235d42dbf5472cd() {
+        assertEvalError("{ z<-1:4; z[[list(1)]]<-NULL }");
+        check("TestSimpleVectors_testListIndexIgnore_2856013d57376f52f235d42dbf5472cd");
     }
 
     @Test
@@ -1789,6 +1813,12 @@ public class FailingTests extends TestBase {
     public void TestSimpleVectors_testNullUpdate_a2146a5c80766a6d5cc2f40c06202033() {
         assertEval("{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
         check("TestSimpleVectors_testNullUpdate_a2146a5c80766a6d5cc2f40c06202033");
+    }
+
+    @Test
+    public void TestSimpleVectors_testRawIndexIgnore_56015d7e5db9ea79ba00565c74ba9e61() {
+        assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }");
+        check("TestSimpleVectors_testRawIndexIgnore_56015d7e5db9ea79ba00565c74ba9e61");
     }
 
     @Test
@@ -8143,6 +8173,12 @@ public class FailingTests extends TestBase {
     public void TestrGenBuiltinlistdirs_testlistdirs1_507c79e25c5ba58e0585049412e0c824() {
         assertEval("argv <- list('/home/lzhao/hg/r-instrumented/library/rpart/doc', TRUE, FALSE); .Internal(list.dirs(argv[[1]], argv[[2]], argv[[3]]))");
         check("TestrGenBuiltinlistdirs_testlistdirs1_507c79e25c5ba58e0585049412e0c824");
+    }
+
+    @Test
+    public void TestrGenBuiltinlistfiles_testlistfiles3_208f0e08c809f563500b4c3637be477c() {
+        assertEval("argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        check("TestrGenBuiltinlistfiles_testlistfiles3_208f0e08c809f563500b4c3637be477c");
     }
 
     @Test

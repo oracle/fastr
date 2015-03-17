@@ -56,4 +56,11 @@ public @interface RBuiltin {
      * index like any other arg.
      */
     int[] nonEvalArgs() default {};
+
+    /**
+     * Indicates whether or not function containing a call of the form
+     * <code>.Internal(name(...))</code> should trigger a split of the caller at its direct call
+     * sites. <code>name</code> indicates the builtin name defined in {@link #name()}.
+     */
+    boolean splitCaller() default false;
 }

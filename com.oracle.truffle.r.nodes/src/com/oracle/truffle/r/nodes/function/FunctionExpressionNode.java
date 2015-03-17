@@ -47,7 +47,7 @@ public final class FunctionExpressionNode extends RNode {
 
     public FunctionExpressionNode(RootCallTarget callTarget) {
         this.callTarget = callTarget;
-        this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() ? new PromiseDeoptimizeFrameNode() : null;
+        this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
 
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {

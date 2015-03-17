@@ -260,6 +260,41 @@ public class TrigExpFunctions {
         }
     }
 
+    @RBuiltin(name = "sinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Sinh extends AdapterCall1 {
+        @Specialization
+        protected double sinh(int x) {
+            controlVisibility();
+            return Math.sin(x);
+        }
+
+        @Specialization
+        protected double sinh(double x) {
+            controlVisibility();
+            return Math.sin(x);
+        }
+
+        @Specialization
+        protected RDoubleVector sinh(RIntVector x) {
+            controlVisibility();
+            return doFunForIntVector(x, Math::sin);
+        }
+
+        @Specialization
+        protected RDoubleVector sinh(RDoubleVector x) {
+            controlVisibility();
+            return doFunForDoubleVector(x, Math::sin);
+        }
+    }
+
+    @RBuiltin(name = "sinpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Sinpi extends AdapterCall1 {
+        @Specialization
+        protected Object sinpi(@SuppressWarnings("unused") Object x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " sinpi");
+        }
+    }
+
     @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Cos extends AdapterCall1 {
 
@@ -285,6 +320,46 @@ public class TrigExpFunctions {
         protected RDoubleVector cos(RDoubleVector x) {
             controlVisibility();
             return doFunForDoubleVector(x, Math::cos);
+        }
+    }
+
+    @RBuiltin(name = "cosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Cosh extends AdapterCall1 {
+
+        @Specialization
+        protected double cosh(@SuppressWarnings("unused") int x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected double cosh(@SuppressWarnings("unused") double x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector cosh(@SuppressWarnings("unused") RIntVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector cosh(@SuppressWarnings("unused") RDoubleVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        private RError nyi() throws RError {
+            throw RError.nyi(getEncapsulatingSourceSection(), " cosh");
+        }
+    }
+
+    @RBuiltin(name = "cospi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Cospi extends AdapterCall1 {
+        @Specialization
+        protected Object cospi(@SuppressWarnings("unused") Object x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " cospi");
         }
     }
 
@@ -316,6 +391,46 @@ public class TrigExpFunctions {
         }
     }
 
+    @RBuiltin(name = "tanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Tanh extends AdapterCall1 {
+
+        @Specialization
+        protected double tanh(@SuppressWarnings("unused") int x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected double tanh(@SuppressWarnings("unused") double x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector tanh(@SuppressWarnings("unused") RIntVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector tanh(@SuppressWarnings("unused") RDoubleVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        private RError nyi() throws RError {
+            throw RError.nyi(getEncapsulatingSourceSection(), " cosh");
+        }
+    }
+
+    @RBuiltin(name = "tanpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Tanpi extends AdapterCall1 {
+        @Specialization
+        protected Object tanpi(@SuppressWarnings("unused") Object x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " tanpi");
+        }
+    }
+
     @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Asin extends AdapterCall1 {
         @Specialization
@@ -340,6 +455,37 @@ public class TrigExpFunctions {
         protected RDoubleVector asin(RDoubleVector x) {
             controlVisibility();
             return doFunForDoubleVector(x, Math::asin);
+        }
+    }
+
+    @RBuiltin(name = "asinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Asinh extends AdapterCall1 {
+        @Specialization
+        protected double asinh(@SuppressWarnings("unused") int x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected double asinh(@SuppressWarnings("unused") double x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector asinh(@SuppressWarnings("unused") RIntVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector asinh(@SuppressWarnings("unused") RDoubleVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        private RError nyi() throws RError {
+            throw RError.nyi(getEncapsulatingSourceSection(), " asinh");
         }
     }
 
@@ -370,6 +516,37 @@ public class TrigExpFunctions {
         }
     }
 
+    @RBuiltin(name = "acosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Acosh extends AdapterCall1 {
+        @Specialization
+        protected double acosh(@SuppressWarnings("unused") int x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected double acosh(@SuppressWarnings("unused") double x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector acosh(@SuppressWarnings("unused") RIntVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector acosh(@SuppressWarnings("unused") RDoubleVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        private RError nyi() throws RError {
+            throw RError.nyi(getEncapsulatingSourceSection(), " acosh");
+        }
+    }
+
     @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Atan extends AdapterCall1 {
         @Specialization
@@ -394,6 +571,37 @@ public class TrigExpFunctions {
         protected RDoubleVector atan(RDoubleVector x) {
             controlVisibility();
             return doFunForDoubleVector(x, Math::atan);
+        }
+    }
+
+    @RBuiltin(name = "atanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Atanh extends AdapterCall1 {
+        @Specialization
+        protected double atanh(@SuppressWarnings("unused") int x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected double atanh(@SuppressWarnings("unused") double x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector atanh(@SuppressWarnings("unused") RIntVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        @Specialization
+        protected RDoubleVector atanh(@SuppressWarnings("unused") RDoubleVector x) {
+            controlVisibility();
+            throw nyi();
+        }
+
+        private RError nyi() throws RError {
+            throw RError.nyi(getEncapsulatingSourceSection(), " atanh");
         }
     }
 

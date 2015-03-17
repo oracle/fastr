@@ -30,6 +30,23 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 public class BaseGammaFunctions {
+
+    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Gamma extends RBuiltinNode {
+        @Specialization
+        protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " gamma");
+        }
+    }
+
+    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"})
+    public abstract static class TriGamma extends RBuiltinNode {
+        @Specialization
+        protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " trigamma");
+        }
+    }
+
     @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Lgamma extends RBuiltinNode {
 

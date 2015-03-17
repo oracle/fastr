@@ -609,6 +609,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-matrix(1:4, ncol=2); x[1,alist(a=)[[1]]] }");
         assertEvalError("{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s] }");
         assertEvalError("{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s]<-1; }");
+
+        assertEval("{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }");
     }
 
     @Test
@@ -713,7 +715,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-integer() }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-7 }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-c(7,42) }");
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-NULL }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-integer() }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-7 }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }");
@@ -738,7 +739,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-7 }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }");
 
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test
@@ -746,11 +746,12 @@ public class TestSimpleVectors extends TestBase {
     public void testComplexIndexIgnore() {
         // weird fluctuating error messages in GNUR
         assertEvalError("{ x<-c(1,2,3,4); x[[1+1i]]<-NULL }");
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-NULL }");
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test
     public void testRawIndex() {
-        assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }");
         assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-integer() }");
         assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-c(1) }");
         assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-c(1,2) }");
@@ -792,6 +793,12 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void testRawIndexIgnore() {
+        assertEvalError("{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }");
+    }
+
+    @Test
     public void testListIndex() {
         assertEvalError("{ z<-1:4; z[list()]<-42 }");
         assertEvalError("{ z<-1:4; z[list(1)]<-42 }");
@@ -813,7 +820,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ z<-1:4; z[[list(1)]]<-integer() }");
         assertEvalError("{ z<-1:4; z[[list(1,2)]]<-integer() }");
         assertEvalError("{ z<-1:4; z[[list(1,2,3)]]<-integer() }");
-        assertEvalError("{ z<-1:4; z[[list(1)]]<-NULL }");
         assertEvalError("{ z<-1:4; z[[list(1,2)]]<-NULL }");
         assertEvalError("{ z<-1:4; z[[list(1,2,3)]]<-NULL }");
 
@@ -838,7 +844,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ z<-list(1,2,3,4); z[[list(1,2)]]<-integer() }");
         assertEvalError("{ z<-list(1,2,3,4); z[[list(1,2,3)]]<-integer() }");
         assertEvalError("{ z<-list(1,2,3,4); z[[list()]]<-NULL }");
-        assertEvalError("{ z<-list(1,2,3,4); z[[list(1)]]<-NULL }");
         assertEvalError("{ z<-list(1,2,3,4); z[[list(1,2)]]<-NULL }");
         assertEvalError("{ z<-list(1,2,3,4); z[[list(1,2,3)]]<-NULL }");
 
@@ -931,6 +936,8 @@ public class TestSimpleVectors extends TestBase {
     @Ignore
     public void testListIndexIgnore() {
         assertEvalError("{ z<-1:4; z[[list()]]<-NULL }");
+        assertEvalError("{ z<-list(1,2,3,4); z[[list(1)]]<-NULL }");
+        assertEvalError("{ z<-1:4; z[[list(1)]]<-NULL }");
     }
 
     @Test
@@ -2273,9 +2280,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-integer(0); dim(x)<-c(3, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2); x }");
-        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
-        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
-        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 0, 2, 2, 2); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0); dimnames(x)<-list(\"a\"); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 1); dimnames(x)<-list(NULL, \"a\"); x }");
@@ -2290,6 +2294,15 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }");
         assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, \"foo\")<-\"foo\"; print(x); options(max.print=mp) }");
+    }
+
+    @Ignore
+    public void testPrintIgnore() {
+        // GnuR 3.1.3 is outputting, e.g. "<1 x 0 x 2 x 0 x 2 array of integer>"
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
+
     }
 
     @Test

@@ -25,19 +25,30 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * The rarely seen {@code externalptr} type.
+ * This is a placeholder class for an S4 object (GnuR S4SXP). It has no functionality at present but
+ * is needed as such objects are generated when unserializing the "methods" package.
  */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    public final long value;
-    public final String tag;
+public class RS4Object implements RAttributable {
 
-    RExternalPtr(long value, String tag) {
-        this.value = value;
-        this.tag = tag;
+    private RAttributes attributes;
+
+    RS4Object() {
+
+    }
+
+    public RAttributes initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributes.create();
+        }
+        return attributes;
+    }
+
+    public RAttributes getAttributes() {
+        return attributes;
     }
 
     public RType getRType() {
-        return RType.ExternalPtr;
+        return RType.S4Object;
     }
 
 }

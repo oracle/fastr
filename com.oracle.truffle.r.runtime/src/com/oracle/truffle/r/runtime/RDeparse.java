@@ -193,17 +193,22 @@ public class RDeparse {
         private boolean active = true;
         @SuppressWarnings("unused") private int isS4;
         private boolean changed;
+        /**
+         * This is set when deparsing a deserialized CLOSXP to prevent quoting that would not parse.
+         */
+        private boolean parseable;
 
-        private State(int widthCutOff, boolean backtick, int maxlines, int opts, boolean needVector) {
+        private State(int widthCutOff, boolean backtick, int maxlines, int opts, boolean needVector, boolean parseable) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
             this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
+            this.parseable = parseable;
             this.opts = opts;
             lines = needVector ? new ArrayList<>() : null;
         }
 
         public static State createPrintableState() {
-            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false);
+            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false, false);
         }
 
         private void preAppend() {
@@ -319,11 +324,11 @@ public class RDeparse {
     }
 
     /**
-     * Version for use by {@code RSerialize}.
+     * Version for use by {@code RSerialize} to convert a CLOSXP into a parseable string.
      */
     @TruffleBoundary
     public static String deparse(RPairList pl) {
-        State state = new State(80, true, -1, 0, false);
+        State state = new State(80, true, -1, 0, false, true);
         return deparse2buff(state, pl).sb.toString();
     }
 
@@ -343,7 +348,7 @@ public class RDeparse {
      */
     @TruffleBoundary
     public static String[] deparse(Object expr, int widthCutoff, boolean backtick, int opts, int nlines) {
-        State state = new State(widthCutoff, backtick, nlines, opts, true);
+        State state = new State(widthCutoff, backtick, nlines, opts, true, false);
         deparse2buff(state, expr);
         state.writeline();
         String[] data = new String[state.lines.size()];
@@ -406,9 +411,10 @@ public class RDeparse {
             case FUNSXP: {
                 RFunction f = (RFunction) obj;
                 if (f.isBuiltin()) {
-                    state.append(".Primitive(\\\"");
+                    state.append(".Primitive(");
+                    state.append(state.parseable ? "\"" : "\\\"");
                     state.append(f.getName());
-                    state.append("\\\")");
+                    state.append(state.parseable ? "\")" : "\\\")");
                 } else {
                     RContext.getRASTHelper().deparse(state, f);
                 }
