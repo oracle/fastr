@@ -154,14 +154,11 @@ public class ArgumentMatcher {
         return match;
     }
 
-    public static EvaluatedArguments matchArgumentsEvaluated(MatchPermutation match, RFunction function, Object[] evaluatedArgs) {
-        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-        FormalArguments formals = rootNode.getFormalArguments();
+    public static Object[] matchArgumentsEvaluated(MatchPermutation match, RFunction function, Object[] evaluatedArgs, FormalArguments formals) {
         Object[] evaledArgs = new Object[match.resultPermutation.length];
-
         permuteArguments(match, evaluatedArgs, evaledArgs);
         replaceMissingWithDefault(function, formals, evaledArgs, formals.getDefaultArgs());
-        return new EvaluatedArguments(evaledArgs, formals.getSignature());
+        return evaledArgs;
     }
 
     @ExplodeLoop
@@ -302,12 +299,11 @@ public class ArgumentMatcher {
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
     }
 
-    public static void evaluatePromises(VirtualFrame frame, PromiseHelperNode promiseHelper, EvaluatedArguments args) {
-        Object[] argArray = args.arguments;
-        for (int i = 0; i < argArray.length; i++) {
-            Object arg = argArray[i];
+    public static void evaluatePromises(VirtualFrame frame, PromiseHelperNode promiseHelper, Object[] args) {
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
             if (arg instanceof RPromise) {
-                argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+                args[i] = promiseHelper.evaluate(frame, (RPromise) arg);
             }
         }
     }

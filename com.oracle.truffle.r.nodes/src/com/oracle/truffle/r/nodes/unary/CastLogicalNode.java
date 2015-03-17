@@ -210,4 +210,9 @@ public abstract class CastLogicalNode extends CastNode {
     public int doOther(Object operand) {
         throw new ConversionFailedException(operand.getClass().getName());
     }
+
+    public static CastStringNode create() {
+        return CastStringNodeGen.create(null, false, true, true, true);
+    }
+
 }

@@ -112,7 +112,6 @@ public abstract class DoCall extends RBuiltinNode {
                     }
                 }
             }
-
         }
         if (!needsCallerFrame && func.containsDispatch()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

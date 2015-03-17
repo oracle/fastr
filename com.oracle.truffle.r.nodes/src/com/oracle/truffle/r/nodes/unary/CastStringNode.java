@@ -111,4 +111,8 @@ public abstract class CastStringNode extends CastNode {
         return s.getName();
     }
 
+    public static CastStringNode create() {
+        return CastStringNodeGen.create(null, false, true, true, true);
+    }
+
 }
