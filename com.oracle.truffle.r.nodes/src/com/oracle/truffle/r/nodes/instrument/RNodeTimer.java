@@ -24,10 +24,8 @@ package com.oracle.truffle.r.nodes.instrument;
 
 import java.util.*;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -57,15 +55,15 @@ public class RNodeTimer {
         public final Instrument instrument;
 
         public Basic(RInstrument.NodeId tag) {
-            instrument = Instrument.create(new SimpleEventListener() {
+            instrument = Instrument.create(new SimpleInstrumentListener() {
 
                 @Override
-                public void enter(Node node, VirtualFrame frame) {
+                public void enter(Probe probe) {
                     enterTime = System.nanoTime();
                 }
 
                 @Override
-                public void returnAny(Node node, VirtualFrame frame) {
+                public void returnAny(Probe probe) {
                     cumulativeTime += System.nanoTime() - enterTime;
                 }
             }, "R node timer");

@@ -24,10 +24,8 @@ package com.oracle.truffle.r.nodes.instrument;
 
 import java.util.*;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -49,15 +47,15 @@ public class REntryCounters {
         public final Instrument instrument;
 
         public Basic(Object tag) {
-            instrument = Instrument.create(new SimpleEventListener() {
+            instrument = Instrument.create(new SimpleInstrumentListener() {
 
                 @Override
-                public void enter(Node node, VirtualFrame frame) {
+                public void enter(Probe probe) {
                     enterCount++;
                 }
 
                 @Override
-                public void returnAny(Node node, VirtualFrame frame) {
+                public void returnAny(Probe probe) {
                     exitCount++;
                 }
             }, "R node entry counter");
