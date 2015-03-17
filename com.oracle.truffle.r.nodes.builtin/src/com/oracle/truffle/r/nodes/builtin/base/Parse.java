@@ -172,7 +172,9 @@ public abstract class Parse extends RBuiltinNode {
             boolean isFile = RRuntime.fromLogical((byte) srcFileEnv.get("isFile"));
             if (isFile) {
                 // Might be a URL
-                String fileName = ConnectionSupport.removeFileURLPrefix((String) srcFileEnv.get("filename"));
+                String urlFileName = RRuntime.asString(srcFileEnv.get("filename"));
+                assert urlFileName != null;
+                String fileName = ConnectionSupport.removeFileURLPrefix(urlFileName);
                 File fnf = new File(fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {
