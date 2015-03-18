@@ -94,16 +94,13 @@ public final class RFunction extends RScalar implements RAttributable {
     }
 
     public MaterializedFrame getEnclosingFrameWithAssumption() {
-        while (true) {
-            StableValue<MaterializedFrame> value = enclosingFrameAssumption;
-            try {
-                value.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                // in this case execution fell back to the interpreter
-                continue;
-            }
-            return value.getValue();
+        StableValue<MaterializedFrame> value = enclosingFrameAssumption;
+        try {
+            value.getAssumption().check();
+        } catch (InvalidAssumptionException e) {
+            return getEnclosingFrame();
         }
+        return value.getValue();
     }
 
     public void setEnclosingFrame(MaterializedFrame frame) {
