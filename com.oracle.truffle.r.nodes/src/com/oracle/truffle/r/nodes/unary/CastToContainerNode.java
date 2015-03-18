@@ -83,6 +83,6 @@ public abstract class CastToContainerNode extends CastNode {
 
     @Override
     public RNode substitute(REnvironment env) {
-        return CastToContainerNodeGen.create(getOperand(), false, false, false);
+        return CastToContainerNodeGen.create(getOperand().substitute(env), false, false, false);
     }
 }
