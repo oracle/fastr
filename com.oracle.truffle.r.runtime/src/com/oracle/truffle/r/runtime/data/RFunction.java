@@ -138,4 +138,9 @@ public final class RFunction extends RScalar implements RAttributable {
         }
     }
 
+    @Override
+    public String toString() {
+        return target.toString();
+    }
+
 }
