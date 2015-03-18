@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,70 +22,116 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
-@NodeChild(value = "operand", type = RNode.class)
-public abstract class WrapArgumentNode extends RProxyNode {
+public final class WrapArgumentNode extends RNode {
 
-    private final BranchProfile everSeenShared = BranchProfile.create();
-    private final BranchProfile everSeenTemporary = BranchProfile.create();
-    private final BranchProfile everSeenNonTemporary = BranchProfile.create();
+    @Child private RNode operand;
+
+    private final BranchProfile everSeenVector;
+    private final BranchProfile everSeenDataFrame;
+    private final BranchProfile everSeenFactor;
+
+    private final BranchProfile everSeenShared;
+    private final BranchProfile everSeenTemporary;
+    private final BranchProfile everSeenNonTemporary;
 
     private final boolean modeChange;
 
-    protected WrapArgumentNode(boolean modeChange) {
+    private WrapArgumentNode(RNode operand, boolean modeChange) {
+        this.operand = operand;
         this.modeChange = modeChange;
-    }
-
-    protected WrapArgumentNode(WrapArgumentNode other) {
-        this.modeChange = other.modeChange;
-    }
-
-    @Override
-    protected RVector proxyVector(RVector vector) {
         if (modeChange) {
-            // mark vector as wrapped only if changing its mode to shared; otherwise make sure that
-            // it can be seen as "truly" shared by marking vector unwrapped
-            if (vector.isShared()) {
-                everSeenShared.enter();
-                return vector;
-            }
-            if (vector.isTemporary()) {
-                everSeenTemporary.enter();
-                vector.markNonTemporary();
-                return vector;
-            }
-            everSeenNonTemporary.enter();
-            vector.makeShared();
+            everSeenVector = BranchProfile.create();
+            everSeenDataFrame = BranchProfile.create();
+            everSeenFactor = BranchProfile.create();
+            everSeenShared = BranchProfile.create();
+            everSeenTemporary = BranchProfile.create();
+            everSeenNonTemporary = BranchProfile.create();
+        } else {
+            everSeenVector = null;
+            everSeenDataFrame = null;
+            everSeenFactor = null;
+            everSeenShared = null;
+            everSeenTemporary = null;
+            everSeenNonTemporary = null;
         }
-        return vector;
+    }
+
+    public RNode getOperand() {
+        return operand;
     }
 
     @Override
-    protected RDataFrame proxyDataFrame(RDataFrame dataFrame) {
-        proxyVector(dataFrame.getVector());
-        return dataFrame;
+    public Object execute(VirtualFrame frame) {
+        Object result = operand.execute(frame);
+        if (modeChange) {
+            RVector vector = null;
+            if (result instanceof RVector) {
+                everSeenVector.enter();
+                vector = (RVector) result;
+            } else if (result instanceof RDataFrame) {
+                everSeenDataFrame.enter();
+                vector = ((RDataFrame) result).getVector();
+            } else if (result instanceof RFactor) {
+                everSeenFactor.enter();
+                vector = ((RFactor) result).getVector();
+            }
+
+            if (vector != null) {
+                // mark vector as wrapped only if changing its mode to shared; otherwise make sure
+                // that it can be seen as "truly" shared by marking vector unwrapped
+                if (vector.isShared()) {
+                    everSeenShared.enter();
+                } else if (vector.isTemporary()) {
+                    everSeenTemporary.enter();
+                    vector.markNonTemporary();
+                } else {
+                    everSeenNonTemporary.enter();
+                    vector.makeShared();
+                }
+            }
+        }
+        return result;
     }
 
     @Override
-    protected RFactor proxyFactor(RFactor factor) {
-        proxyVector(factor.getVector());
-        return factor;
+    public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
+        return operand.executeByte(frame);
     }
 
-    public abstract RNode getOperand();
+    @Override
+    public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
+        return operand.executeInteger(frame);
+    }
+
+    @Override
+    public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
+        return operand.executeDouble(frame);
+    }
+
+    @Override
+    public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
+        return operand.executeMissing(frame);
+    }
+
+    @Override
+    public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
+        return operand.executeNull(frame);
+    }
 
     public static RNode create(RNode operand, boolean modeChange) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
             return operand;
         } else {
-            WrapArgumentNode wan = WrapArgumentNodeGen.create(modeChange, operand);
+            WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange);
             wan.assignSourceSection(operand.getSourceSection());
             return wan;
         }
