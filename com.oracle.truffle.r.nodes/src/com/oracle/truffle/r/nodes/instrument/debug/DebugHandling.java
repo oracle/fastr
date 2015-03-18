@@ -32,7 +32,7 @@ import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.control.LoopNode;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
@@ -51,8 +51,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * handles the special behavior on entry/exit</li>
  * <li>{@link StatementEventReceiver}: attaches to all {@link StandardSyntaxTag#STATEMENT} nodes and
  * handles "n" and "s" browser commands</li>
- * <li>{@link LoopStatementEventReceiver}: attaches to {@link LoopNode} instances and handles
- * special "f" command behavior.
+ * <li>{@link LoopStatementEventReceiver}: attaches to {@link AbstractLoopNode} instances and
+ * handles special "f" command behavior.
  * </ul>
  * <p>
  * Step Into is slightly tricky because, at the point the command is issued, we do not know what
@@ -68,8 +68,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * <p>
  * When invoked from within a loop The "f" command continues the loop body without entry and the
  * re-enables entry. This is handled by creating a {@link LoopStatementEventReceiver} per
- * {@link LoopNode}. On a "f" every receiver <b>except</b> the one associated with that loop is
- * disabled. On return from the loop, everything is re-enabled.
+ * {@link AbstractLoopNode}. On a "f" every receiver <b>except</b> the one associated with that loop
+ * is disabled. On return from the loop, everything is re-enabled.
  * <p>
  * Currently, {@code debugonce} and {@code undebug} are handled by disabling the receiver behavior.
  * Any change in enabled state is managed by an {@link Assumption} which will invalidate the code of
@@ -147,7 +147,7 @@ public class DebugHandling {
                     Probe probe = wrapper.getProbe();
                     if (probe.isTaggedAs(StandardSyntaxTag.STATEMENT)) {
                         Node child = wrapper.getChild();
-                        if (child instanceof LoopNode) {
+                        if (child instanceof AbstractLoopNode) {
                             probe.attach(functionStatementsEventReceiver.getLoopStatementInstrument(wrapper));
                         } else {
                             probe.attach(functionStatementsEventReceiver.getStatementInstrument());
@@ -224,7 +224,7 @@ public class DebugHandling {
                     break;
                 case FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
-                    LoopNode loopNode = inLoop(node);
+                    AbstractLoopNode loopNode = inLoop(node);
                     if (loopNode != null) {
                         // Have to disable just the body of the loop
                         FunctionStatementsEventReceiver fser = receiverMap.get(functionDefinitionNode.getUID());
@@ -311,7 +311,7 @@ public class DebugHandling {
             }
         }
 
-        void setFinishing(LoopNode loopNode) {
+        void setFinishing(AbstractLoopNode loopNode) {
             // Disable every statement receiver except that for loopNode
             WrapperNode loopNodeWrapper = (WrapperNode) loopNode.getParent();
             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
@@ -470,12 +470,12 @@ public class DebugHandling {
 
     }
 
-    private static LoopNode inLoop(final Node nodeArg) {
+    private static AbstractLoopNode inLoop(final Node nodeArg) {
         Node node = nodeArg;
         while (!(node instanceof RootNode)) {
             node = node.getParent();
-            if (node instanceof LoopNode) {
-                return (LoopNode) node;
+            if (node instanceof AbstractLoopNode) {
+                return (AbstractLoopNode) node;
             }
         }
         return null;

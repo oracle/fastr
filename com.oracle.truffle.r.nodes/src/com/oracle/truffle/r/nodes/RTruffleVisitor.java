@@ -624,7 +624,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     public RNode visit(While loop) {
         RNode condition = loop.getCondition().accept(this);
         RNode body = SequenceNode.ensureSequence(loop.getBody().accept(this));
-        return WhileNode.create(loop.getSource(), condition, body, false);
+        return matchSources(WhileNode.create(condition, body, false), loop);
     }
 
     @Override
@@ -640,7 +640,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(Repeat loop) {
         RNode body = loop.getBody().accept(this);
-        return WhileNode.create(loop.getSource(), ConstantNode.create(true), SequenceNode.ensureSequence(body), true);
+        return matchSources(WhileNode.create(ConstantNode.create(true), SequenceNode.ensureSequence(body), true), loop);
+    }
+
+    private static RNode matchSources(RNode truffleNode, ASTNode astNode) {
+        truffleNode.assignSourceSection(astNode.getSource());
+        return truffleNode;
     }
 
     @Override
@@ -648,7 +653,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         WriteVariableNode cvar = WriteVariableNode.create(loop.getVariable(), null, false, false);
         RNode range = loop.getRange().accept(this);
         RNode body = loop.getBody().accept(this);
-        return ForNode.create(loop.getSource(), cvar, range, SequenceNode.ensureSequence(body));
+        return matchSources(ForNode.create(cvar, range, SequenceNode.ensureSequence(body)), loop);
     }
 
     @Override

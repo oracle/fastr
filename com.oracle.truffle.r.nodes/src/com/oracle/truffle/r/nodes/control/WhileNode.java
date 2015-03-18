@@ -24,20 +24,18 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.Child;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
-@SuppressWarnings("unused")
-public final class WhileNode extends LoopNode {
+public final class WhileNode extends AbstractLoopNode {
 
-    @Child private ConvertBooleanNode condition;
-    @Child private RNode body;
+    @Child private LoopNode loop;
 
     /**
      * Also used for {@code repeat}, with a {@code TRUE} condition.
@@ -45,27 +43,30 @@ public final class WhileNode extends LoopNode {
     private final boolean isRepeat;
 
     private WhileNode(RNode condition, RNode body, boolean isRepeat) {
-        this.condition = ConvertBooleanNode.create(condition);
-        this.body = body;
+        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(ConvertBooleanNode.create(condition), body));
         this.isRepeat = isRepeat;
     }
 
-    private static WhileNode create(RNode condition, RNode body, boolean isRepeat) {
+    public static WhileNode create(RNode condition, RNode body, boolean isRepeat) {
         return new WhileNode(condition, body, isRepeat);
     }
 
-    public static WhileNode create(SourceSection src, RNode condition, RNode body, boolean isRepeat) {
-        WhileNode wn = create(condition, body, isRepeat);
-        wn.assignSourceSection(src);
-        return wn;
+    @Override
+    public Object execute(VirtualFrame frame) {
+        loop.executeLoop(frame);
+        return RNull.instance;
     }
 
     public ConvertBooleanNode getCondition() {
-        return condition;
+        return getRepeatingNode().getCondition();
     }
 
     public RNode getBody() {
-        return body;
+        return getRepeatingNode().getBody();
+    }
+
+    private WhileRepeatingNode getRepeatingNode() {
+        return (WhileRepeatingNode) loop.getRepeatingNode();
     }
 
     public boolean isRepeat() {
@@ -83,38 +84,56 @@ public final class WhileNode extends LoopNode {
             state.append("repeat ");
         } else {
             state.append("while (");
-            condition.deparse(state);
+            getCondition().deparse(state);
             state.append(") ");
         }
         state.writeOpenCurlyNLIncIndent();
-        body.deparse(state);
+        getBody().deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
     @Override
     public RNode substitute(REnvironment env) {
-        return create(condition.substitute(env), body.substitute(env), isRepeat);
+        return create(getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        int count = 0;
-        try {
-            while (condition.executeByte(frame) == RRuntime.LOGICAL_TRUE) {
-                try {
+    private static final class WhileRepeatingNode extends Node implements RepeatingNode {
+
+        @Child private ConvertBooleanNode condition;
+        @Child private RNode body;
+
+        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
+        private final BranchProfile breakBlock = BranchProfile.create();
+        private final BranchProfile nextBlock = BranchProfile.create();
+
+        public WhileRepeatingNode(ConvertBooleanNode condition, RNode body) {
+            this.condition = condition;
+            this.body = body;
+        }
+
+        public RNode getBody() {
+            return body;
+        }
+
+        public ConvertBooleanNode getCondition() {
+            return condition;
+        }
+
+        public boolean executeRepeating(VirtualFrame frame) {
+            try {
+                if (conditionProfile.profile(condition.executeByte(frame) == RRuntime.LOGICAL_TRUE)) {
                     body.execute(frame);
-                    if (CompilerDirectives.inInterpreter()) {
-                        count++;
-                    }
-                } catch (NextException e) {
+                    return true;
+                } else {
+                    return false;
                 }
-            }
-        } catch (BreakException e) {
-        } finally {
-            if (CompilerDirectives.inInterpreter()) {
-                reportLoopCount(count);
+            } catch (BreakException e) {
+                breakBlock.enter();
+                return false;
+            } catch (NextException e) {
+                nextBlock.enter();
+                return true;
             }
         }
-        return RNull.instance;
     }
 }

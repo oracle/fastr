@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 
-public abstract class LoopNode extends RNode {
+/** Marker class for loops. */
+public abstract class AbstractLoopNode extends RNode {
 
-    protected final void reportLoopCount(int count) {
-        CompilerAsserts.neverPartOfCompilation();
-        Node current = this.getParent();
-        while (current != null && !(current instanceof RootNode)) {
-            current = current.getParent();
-        }
-        if (current != null) {
-            RootNode root = (RootNode) current;
-            if (root.getCallTarget() instanceof LoopCountReceiver) {
-                ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(count);
-            }
-        }
-    }
 }
