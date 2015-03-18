@@ -243,7 +243,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
      */
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
-        @Child private RNode delegate = createDelegate();
+        @Child private RNode delegate;
 
         public RWrapperBuiltinNode(RBuiltinNode prev) {
             super(prev);
@@ -251,49 +251,57 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
 
         protected abstract RNode createDelegate();
 
+        private RNode getDelegate() {
+            if (delegate == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                delegate = insert(createDelegate());
+            }
+            return delegate;
+        }
+
         @Override
         public Object execute(VirtualFrame frame) {
-            return delegate.execute(frame);
+            return getDelegate().execute(frame);
         }
 
         @Override
         public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeArray(frame);
+            return getDelegate().executeArray(frame);
         }
 
         @Override
         public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeByte(frame);
+            return getDelegate().executeByte(frame);
         }
 
         @Override
         public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeDouble(frame);
+            return getDelegate().executeDouble(frame);
         }
 
         @Override
         public RFunction executeFunction(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeFunction(frame);
+            return getDelegate().executeFunction(frame);
         }
 
         @Override
         public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeInteger(frame);
+            return getDelegate().executeInteger(frame);
         }
 
         @Override
         public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeNull(frame);
+            return getDelegate().executeNull(frame);
         }
 
         @Override
         public RDoubleVector executeRDoubleVector(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeRDoubleVector(frame);
+            return getDelegate().executeRDoubleVector(frame);
         }
 
         @Override
         public RIntVector executeRIntVector(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeRIntVector(frame);
+            return getDelegate().executeRIntVector(frame);
         }
     }
 

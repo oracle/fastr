@@ -43,6 +43,8 @@ public class RBuiltinCustomConstructors {
                 return new com.oracle.truffle.r.nodes.builtin.base.Ceiling(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Sum":
                 return new com.oracle.truffle.r.nodes.builtin.base.Sum(node);
+            case "com.oracle.truffle.r.nodes.builtin.base.Recall":
+                return new com.oracle.truffle.r.nodes.builtin.base.Recall(node);
             default:
                 throw Utils.fail("unimplemented RCustomBuiltinNode: " + nodeClassName);
         }
