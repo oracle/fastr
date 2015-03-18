@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,8 +38,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 public abstract class UpperTri extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
     }
 
     @Specialization

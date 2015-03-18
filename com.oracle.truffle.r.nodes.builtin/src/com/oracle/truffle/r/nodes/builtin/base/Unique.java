@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -53,10 +52,9 @@ public abstract class Unique extends RBuiltinNode {
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // x, incomparables = FALSE, fromLast = FALSE, nmax = NA, ...
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.INT_NA),
-                        ConstantNode.create(RMissing.instance)};
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RRuntime.INT_NA, RMissing.instance};
     }
 
     protected RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {

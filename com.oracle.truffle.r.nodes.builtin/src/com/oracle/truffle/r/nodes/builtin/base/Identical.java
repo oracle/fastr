@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,9 +44,8 @@ public abstract class Identical extends RBuiltinNode {
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE),
-                        ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE};
     }
 
     @Specialization

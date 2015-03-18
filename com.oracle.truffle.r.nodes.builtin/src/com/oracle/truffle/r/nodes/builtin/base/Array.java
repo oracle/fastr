@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,10 +46,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Array extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // TODO What is the correct NA value for "data"???
         // is inserted as cast, see below in "createCastDimensions"
-        return new RNode[]{ConstantNode.create(RRuntime.NA_HEADER), null, ConstantNode.create(RNull.instance)};
+        return new Object[]{RRuntime.NA_HEADER, null, RNull.instance};
     }
 
     @CreateCast({"arguments"})

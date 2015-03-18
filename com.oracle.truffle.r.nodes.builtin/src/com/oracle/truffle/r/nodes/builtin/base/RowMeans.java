@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.*;
@@ -30,9 +29,9 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 public abstract class RowMeans extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // X, m, n, na.rm = FALSE
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
     }
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();

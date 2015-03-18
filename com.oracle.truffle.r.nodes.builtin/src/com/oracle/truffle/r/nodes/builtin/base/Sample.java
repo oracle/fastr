@@ -19,7 +19,6 @@ import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -36,9 +35,9 @@ public abstract class Sample extends RBuiltinNode {
     private final ConditionProfile sampleSizeProfile = ConditionProfile.createBinaryProfile();
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // x, size, replace = FALSE, prob = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RNull.instance)};
+        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE, RNull.instance};
     }
 
     @CreateCast("arguments")

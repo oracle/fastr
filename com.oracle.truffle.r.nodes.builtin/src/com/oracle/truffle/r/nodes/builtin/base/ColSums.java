@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -38,9 +37,9 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class ColSums extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // X, m, n, na.rm = FALSE
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
     }
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();

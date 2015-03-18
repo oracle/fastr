@@ -41,8 +41,8 @@ public abstract class Diag extends RBuiltinNode {
     private NACheck check = NACheck.create();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(1), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{1, RMissing.instance, RMissing.instance};
     }
 
     @CreateCast({"arguments"})

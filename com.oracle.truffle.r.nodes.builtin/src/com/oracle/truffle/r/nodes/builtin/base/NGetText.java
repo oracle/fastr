@@ -39,9 +39,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class NGetText extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // n, msg1, msg2, domain = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance)};
+        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance, RNull.instance};
     }
 
     @CreateCast("arguments")

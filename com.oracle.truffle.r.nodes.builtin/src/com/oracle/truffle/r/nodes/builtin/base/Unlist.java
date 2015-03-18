@@ -18,7 +18,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -33,8 +32,8 @@ public abstract class Unlist extends RBuiltinNode {
     // portions of the algorithm were transcribed from GNU R
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
     }
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);

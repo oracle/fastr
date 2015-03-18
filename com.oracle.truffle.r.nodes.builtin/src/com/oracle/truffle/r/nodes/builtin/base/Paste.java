@@ -30,7 +30,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -56,8 +55,8 @@ public abstract class Paste extends RBuiltinNode {
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
     }
 
     private RStringVector castCharacter(VirtualFrame frame, Object o) {

@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 public final class Min extends RWrapperBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
     }
 
     public Min(RBuiltinNode prev) {

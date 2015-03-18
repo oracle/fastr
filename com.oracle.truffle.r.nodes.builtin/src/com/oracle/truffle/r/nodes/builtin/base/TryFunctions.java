@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -53,8 +51,8 @@ public class TryFunctions {
     public abstract static class Try extends Adapter {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
         }
 
         @Specialization
@@ -69,8 +67,8 @@ public class TryFunctions {
     public abstract static class TryCatch extends Adapter {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(EMPTY_OBJECT_ARRAY)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, EMPTY_OBJECT_ARRAY};
         }
 
         @Specialization
@@ -90,8 +88,8 @@ public class TryFunctions {
     @RBuiltin(name = "suppressWarnings", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr"}, nonEvalArgs = {0})
     public abstract static class SuppressWarningsBuiltin extends Adapter {
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance};
         }
 
         @Specialization

@@ -31,7 +31,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,8 +46,8 @@ public abstract class Substitute extends RBuiltinNode {
     protected abstract Object executeObject(VirtualFrame frame, RPromise promise, Object env);
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance};
     }
 
     private Quote checkQuote() {

@@ -35,8 +35,6 @@ import java.util.stream.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -63,8 +61,8 @@ public class SysFunctions {
         private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(""), ConstantNode.create(RRuntime.LOGICAL_NA)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RNull.instance, "", RRuntime.LOGICAL_NA};
         }
 
         @Specialization

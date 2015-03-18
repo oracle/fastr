@@ -35,8 +35,8 @@ public abstract class Transpose extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance};
     }
 
     private final NACheck check = NACheck.create();
