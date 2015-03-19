@@ -40,14 +40,12 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
- * evaluation of these {@link RPromise}s, depending on the promises {@link EvalPolicy}.<br/>
+ * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.<br/>
  * All these classes are created during/after argument matching and get cached afterwards, so they
  * get (and need to get) called every repeated call to a function with the same arguments.
  */
@@ -68,7 +66,7 @@ public abstract class PromiseNode extends RNode {
     public static RNode createInlined(SourceSection src, RNode expression, Object defaultValue) {
         CompilerAsserts.neverPartOfCompilation();
         RNode clonedExpression = NodeUtil.cloneNode(expression);
-        RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedPromiseNode(clonedExpression, defaultValue);
+        RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue);
         pn.assignSourceSection(src);
         return pn;
     }
@@ -89,7 +87,7 @@ public abstract class PromiseNode extends RNode {
         if (isOptimizableConstant(expr)) {
             // As Constants don't care where they are evaluated, we don't need to
             // distinguish between ARG_DEFAULT and ARG_SUPPLIED
-            pn = new OptConstantPromiseNode(factory);
+            pn = new OptConstantPromiseNode(factory.getType(), (ConstantNode) factory.getExpr());
         } else
 
         if (factory.getType() == PromiseType.ARG_SUPPLIED) {
@@ -204,11 +202,10 @@ public abstract class PromiseNode extends RNode {
 
     /**
      * This class is meant for supplied arguments (which have to be evaluated in the caller frame)
-     * which are supposed to be evaluated {@link EvalPolicy#INLINED}: This means we can simply
-     * evaluate it here, and as it's {@link EvalPolicy#INLINED}, return its value and not the
-     * {@link RPromise} itself! {@link EvalPolicy#INLINED} {@link PromiseType#ARG_SUPPLIED}
+     * which are supposed to be evaluated inline: This means we can simply evaluate it here, and not
+     * create a promise.
      */
-    private static final class InlinedSuppliedPromiseNode extends RNode {
+    private static final class InlinedSuppliedArgumentNode extends RNode {
         @Child private RNode expression;
         @Child private RNode defaultExpressionCache;
         private final Object defaultValue;
@@ -218,7 +215,7 @@ public abstract class PromiseNode extends RNode {
         private final BranchProfile isVarArgProfile = BranchProfile.create();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
-        public InlinedSuppliedPromiseNode(RNode expression, Object defaultValue) {
+        public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue) {
             this.expression = expression;
             this.defaultValue = defaultValue;
         }
@@ -335,7 +332,7 @@ public abstract class PromiseNode extends RNode {
 
     @TruffleBoundary
     public static RNode createVarArgsInlined(RNode[] nodes, ArgumentsSignature signature) {
-        return new InlineVarArgsPromiseNode(nodes, signature);
+        return new InlineVarArgsNode(nodes, signature);
     }
 
     @TruffleBoundary
@@ -403,18 +400,18 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * The {@link EvalPolicy#INLINED} counterpart of {@link VarArgsPromiseNode}: This gets a bit
-     * more complicated, as "..." might include values from an outer "...", which might resolve to
-     * an empty argument list.
+     * The inlined counterpart of {@link VarArgsPromiseNode}: This gets a bit more complicated, as
+     * "..." might include values from an outer "...", which might resolve to an empty argument
+     * list.
      */
-    public static final class InlineVarArgsPromiseNode extends RNode {
+    public static final class InlineVarArgsNode extends RNode {
         @Children private final RNode[] varargs;
         protected final ArgumentsSignature signature;
 
         @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
-        public InlineVarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature) {
+        public InlineVarArgsNode(RNode[] nodes, ArgumentsSignature signature) {
             this.varargs = nodes;
             this.signature = signature;
             assert varargs.length == signature.getLength();

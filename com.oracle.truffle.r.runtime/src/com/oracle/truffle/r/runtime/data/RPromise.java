@@ -40,28 +40,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotIn
 public class RPromise extends RLanguageRep implements RTypedValue {
 
     /**
-     * The policy used to evaluate a promise.
-     */
-    public enum EvalPolicy {
-        /**
-         * This policy is use for arguments that are inlined (RBuiltinNode.inline) for the use in
-         * builtins that are built-into FastR and thus written in Java.<br/>
-         * Promises with this policy are evaluated every time they are executed inside the caller
-         * (!) frame regardless of their {@link PromiseType}(!!) and return their values immediately
-         * (thus are no real promises).
-         */
-        INLINED,
-
-        /**
-         * This promise is an actual promise! It's value won't get evaluated until it's read.<br/>
-         * Promises with this policy are evaluated when forced/used the first time. Evaluation
-         * happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside callee
-         * frame if {@link PromiseType#ARG_DEFAULT}.
-         */
-        PROMISED;
-    }
-
-    /**
      * Different to GNU R, FastR has no additional binding information (a "origin" where the binding
      * is coming from). This enum is meant to substitute this information.
      */
@@ -137,11 +115,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     /**
      * This creates a new tuple (isEvaluated=false, expr, env, closure, value=null), which may later
      * be evaluated.
-     *
-     * @param type {@link #type}
-     * @param optType {@link #optType}
-     * @param execFrame {@link #execFrame}
-     * @param closure {@link #getClosure()}
      */
     RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
@@ -154,13 +127,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
     /**
      * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
-     * evaluated. Meant to be called via {@link RPromiseFactory#createArgEvaluated(Object)} only!
-     *
-     *
-     * @param type {@link #type}
-     * @param optType {@link #optType}
-     * @param expr {@link #getRep()}
-     * @param value {@link #value}
+     * evaluated.
      */
     RPromise(PromiseType type, OptType optType, Object expr, Object value) {
         super(expr);
@@ -176,9 +143,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     /**
      * This creates a new tuple (isEvaluated=false, expr, null, null, value=null). Meant to be
      * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
-     *
-     * @param type {@link #type}
-     * @param expr {@link #getRep()}
      */
     private RPromise(PromiseType type, OptType optType, Object expr) {
         super(expr);
@@ -449,16 +413,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
          */
         public RPromise createPromise(MaterializedFrame frame) {
             return RDataFactory.createPromise(type, frame, exprClosure);
-        }
-
-        /**
-         * @param argumentValue The already evaluated value of the argument.
-         *            <code>RMissing.instance</code> denotes 'argument not supplied', aka.
-         *            'missing'.
-         * @return A {@link RPromise} whose argument has already been evaluated
-         */
-        public RPromise createArgEvaluated(Object argumentValue) {
-            return RDataFactory.createPromise(type, OptType.DEFAULT, exprClosure.getExpr(), argumentValue);
         }
 
         /**

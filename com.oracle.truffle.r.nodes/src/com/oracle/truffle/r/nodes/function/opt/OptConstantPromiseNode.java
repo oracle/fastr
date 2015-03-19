@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.data.RPromise.OptType;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 
 /**
  * A optimizing {@link PromiseNode}: It evaluates a constant directly.
  */
-public final class OptConstantPromiseNode extends PromiseNode {
+public final class OptConstantPromiseNode extends RNode {
 
-    @Child private RNode constantExpr;
-    @CompilationFinal private boolean isEvaluated = false;
-    @CompilationFinal private Object constant = null;
+    private final PromiseType type;
+    private final ConstantNode constantExpr;
+    private final Object constantValue;
 
-    public OptConstantPromiseNode(RPromiseFactory factory) {
-        super(factory);
-        this.constantExpr = (RNode) factory.getExpr();
+    public OptConstantPromiseNode(PromiseType type, ConstantNode constantExpr) {
+        this.type = type;
+        this.constantExpr = constantExpr;
+        this.constantValue = constantExpr.getValue();
     }
 
     /**
@@ -49,13 +50,6 @@ public final class OptConstantPromiseNode extends PromiseNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        if (!isEvaluated) {
-            // Eval constant on first time and make it compile time constant afterwards
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            constant = constantExpr.execute(frame);
-            isEvaluated = true;
-        }
-
-        return factory.createArgEvaluated(constant);
+        return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpr, constantValue);
     }
 }

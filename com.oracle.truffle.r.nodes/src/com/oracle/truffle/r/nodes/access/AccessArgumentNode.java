@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -51,10 +50,6 @@ public abstract class AccessArgumentNode extends RNode {
 
     @Child private PromiseHelperNode promiseHelper;
 
-    private final ConditionProfile topLevelInlinedPromiseProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile varArgInlinedPromiseProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile varArgIsPromiseProfile = ConditionProfile.createBinaryProfile();
-
     /**
      * The formal index of this argument.
      */
@@ -68,7 +63,6 @@ public abstract class AccessArgumentNode extends RNode {
     @Child private RNode optDefaultArgNode;
     @CompilationFinal private FormalArguments formals;
     @CompilationFinal private boolean hasDefaultArg;
-    @CompilationFinal private boolean isVarArgIndex;
     @CompilationFinal private RPromiseFactory factory;
     @CompilationFinal private boolean deoptimized;
     @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optDefault() || EagerEvalHelper.optExprs();
@@ -77,80 +71,24 @@ public abstract class AccessArgumentNode extends RNode {
         this.index = index;
     }
 
-    protected AccessArgumentNode(AccessArgumentNode prev) {
-        this.index = prev.index;
-        formals = prev.formals;
-        hasDefaultArg = prev.hasDefaultArg;
-        isVarArgIndex = prev.isVarArgIndex;
-        factory = prev.factory;
-        deoptimized = prev.deoptimized;
-        defaultArgCanBeOptimized = prev.defaultArgCanBeOptimized;
-    }
-
     public void setFormals(FormalArguments formals) {
         CompilerAsserts.neverPartOfCompilation();
         assert this.formals == null;
         this.formals = formals;
         hasDefaultArg = formals.hasDefaultArgumentAt(getIndex());
-        isVarArgIndex = formals.getSignature().getVarArgIndex() == getIndex();
     }
 
     /**
      * @param index {@link #getIndex()}
      * @return A fresh {@link AccessArgumentNode} for the given index
      */
-    public static AccessArgumentNode create(Integer index) {
+    public static AccessArgumentNode create(int index) {
         return AccessArgumentNodeGen.create(index, new ReadArgumentNode(index));
     }
 
     @Override
     public RNode substitute(REnvironment env) {
         return this;
-    }
-
-    @Specialization
-    protected Object doArgument(VirtualFrame frame, RPromise promise) {
-        return handlePromise(frame, promise, topLevelInlinedPromiseProfile);
-    }
-
-    private void handleVarArgPromise(VirtualFrame frame, Object[] varArgs, int i) {
-        // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
-        // "..." is a different expression
-
-        if (varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise)) {
-            varArgs[i] = handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile);
-        }
-    }
-
-    @Specialization(limit = "1", guards = "cachedVarArgLength == varArgsContainer.length()")
-    @ExplodeLoop
-    protected Object doArgumentCached(VirtualFrame frame, RArgsValuesAndNames varArgsContainer, @Cached("varArgsContainer.length()") int cachedVarArgLength) {
-        Object[] varArgs = varArgsContainer.getValues();
-        for (int i = 0; i < cachedVarArgLength; i++) {
-            handleVarArgPromise(frame, varArgs, i);
-        }
-        return varArgsContainer;
-    }
-
-    @Specialization(contains = "doArgumentCached")
-    protected Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
-        Object[] varArgs = varArgsContainer.getValues();
-        for (int i = 0; i < varArgsContainer.length(); i++) {
-            handleVarArgPromise(frame, varArgs, i);
-        }
-        return varArgsContainer;
-    }
-
-    private Object handlePromise(VirtualFrame frame, RPromise promise, ConditionProfile inlinedPromiseProfile) {
-        assert !promise.isNonArgument();
-        return promise;
-    }
-
-    @Specialization(guards = {"!hasDefaultArg()", "!isVarArgIndex()"})
-    protected Object doArgumentNoDefaultArg(RMissing argMissing) {
-        // Simply return missing if there's no default arg OR it represents an empty "..."
-        // (Empty "..." defaults to missing anyway, this way we don't have to rely on )
-        return argMissing;
     }
 
     @Specialization(guards = {"hasDefaultArg()"})
@@ -182,10 +120,6 @@ public abstract class AccessArgumentNode extends RNode {
         return hasDefaultArg;
     }
 
-    protected boolean isVarArgIndex() {
-        return isVarArgIndex;
-    }
-
     private boolean canBeOptimized() {
         return !deoptimized && defaultArgCanBeOptimized;
     }
@@ -204,14 +138,14 @@ public abstract class AccessArgumentNode extends RNode {
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (isOptimizableDefault(arg) && isVariableArgument(arg)) {
+            if (isOptimizableDefault(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg));
-            } else if (isOptimizableConstant(arg) && isConstantArgument(arg)) {
-                optDefaultArgNode = new OptConstantPromiseNode(factory);
+            } else if (isOptimizableConstant(arg)) {
+                optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg);
             }
-// else if (isOptimizableExpression(arg)) {
-// System.err.println(" >>> DEF " + arg.getSourceSection().getCode());
-// }
+            // else if (isOptimizableExpression(arg)) {
+            // System.err.println(" >>> DEF " + arg.getSourceSection().getCode());
+            // }
             if (optDefaultArgNode == null) {
                 // No success: Rewrite to default
                 return false;

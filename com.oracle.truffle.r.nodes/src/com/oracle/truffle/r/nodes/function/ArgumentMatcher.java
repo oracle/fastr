@@ -34,11 +34,10 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
@@ -66,11 +65,11 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * algorithm taking into consideration the names and positions of arguments as well as their number.
  * After that, the resulting arguments (potentially reordered and eventually wrapped into "...") are
  * wrapped into additional {@link PromiseNode}s which are basically an abstraction layer for normal
- * and {@link EvalPolicy#INLINED} functions.<br/>
+ * and inlined functions.<br/>
  * The resulting {@link RNode} are cached inside {@link RCallNode} and executed every call (the
- * cache is not invalidated): Depending on whether the function to be called is a normal or
- * {@link EvalPolicy#INLINED} function, or a separate argument needs special treatment, the
- * {@link PromiseNode} returns either a {@link RPromise} OR the directly evaluated value.<br/>
+ * cache is not invalidated): Depending on whether the function to be called is a normal or inlined
+ * function, or a separate argument needs special treatment, the {@link PromiseNode} returns either
+ * a {@link RPromise} OR the directly evaluated value.<br/>
  * The final step of the function call execution is packaging of the resulting values
  * {@code Object[]} into an {@link RArguments} object that is stored in the callee's frame.
  * </p>

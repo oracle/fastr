@@ -33,7 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.RecallFactory.RecallFunctionNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsPromiseNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -53,7 +53,7 @@ public final class Recall extends RWrapperBuiltinNode {
          * TODO (chumer) ideally this node would just create an RCallNode and calls execute with
          * evaluated arguments on it. Until this is possible we use this rather hacky solution.
          */
-        InlineVarArgsPromiseNode inlineVarArgs = (InlineVarArgsPromiseNode) getArguments()[0];
+        InlineVarArgsNode inlineVarArgs = (InlineVarArgsNode) getArguments()[0];
         return RCallNode.createCall(getSourceSection(), RecallFunctionNodeGen.create(),
                         CallArgumentsNode.create(false, false, new RNode[]{((WrapArgumentNode) inlineVarArgs.getVarargs()[0]).getOperand()}, inlineVarArgs.getSignature()), null);
     }
