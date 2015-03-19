@@ -6156,6 +6156,14 @@ attr(,"c")
 [1] 0 1 0 1 0 1
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testBitwiseFunctions
+#{ bitwAnd(c(10.5,11.6,17.8), c(5L,7L,8L)) }
+[1] 0 3 0
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testBitwiseFunctions
+#{ bitwAnd(c(10L,20L,30L,40L), c(3,5,7)) }
+[1] 2 4 6 0
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testBitwiseFunctions
 #{ bitwAnd(c(25,57,66), c(10,20,30,40,50,60)) }
 [1]  8 16  2  8 48  0
 
@@ -6198,6 +6206,10 @@ attr(,"c")
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testBitwiseFunctions
 #{ bitwShiftR(c(25,57,66), c(10,20,30,40,50,60)) }
 [1]  0  0  0 NA NA NA
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testBitwiseFunctions
+#{ bitwXor(20,30) }
+[1] 10
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testBitwiseFunctions
 #{ bitwXor(c(10,11,12,13,14,15), c(1,1,1,1,1,1)) }

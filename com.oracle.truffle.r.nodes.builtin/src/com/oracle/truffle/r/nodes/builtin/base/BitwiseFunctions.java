@@ -103,34 +103,39 @@ public class BitwiseFunctions {
             return RDataFactory.createIntVector(na, RDataFactory.INCOMPLETE_VECTOR);
         }
 
-        protected void checkBasicBit(VirtualFrame frame, RAbstractVector a, RAbstractVector b, String op) {
+        protected void checkBasicBit(RAbstractVector a, RAbstractVector b, String op) {
             initChildren();
-            hasSameTypes(frame, a, b);
-            hasSupportedType(frame, a, op);
+            hasSameTypes(a, b);
+            hasSupportedType(a, op);
         }
 
-        protected void checkShiftOrNot(VirtualFrame frame, RAbstractVector a, String op) {
+        protected void checkShiftOrNot(RAbstractVector a, String op) {
             initChildren();
-            hasSupportedType(frame, a, op);
+            hasSupportedType(a, op);
         }
 
-        protected void hasSameTypes(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
-            if (typeof.execute(frame, a) != typeof.execute(frame, b)) {
+        protected void hasSameTypes(RAbstractVector a, RAbstractVector b) {
+            RType aType = typeof.execute(a);
+            RType bType = typeof.execute(b);
+            boolean aCorrectType = (aType == RType.Integer || aType == RType.Double) ? true : false;
+            boolean bCorrectType = (bType == RType.Integer || bType == RType.Double) ? true : false;
+            if ((aCorrectType && bCorrectType) || aType == bType) {
+                return;
+            } else {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.SAME_TYPE, "a", "b");
             }
         }
 
-        protected void hasSupportedType(VirtualFrame frame, RAbstractVector a, String op) {
+        protected void hasSupportedType(RAbstractVector a, String op) {
             if (!(a instanceof RAbstractIntVector) && !(a instanceof RAbstractDoubleVector)) {
-                String type = typeof.execute(frame, a).getName();
+                String type = typeof.execute(a).getName();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, type, op);
             }
         }
 
-        @SuppressWarnings("unused")
-        protected boolean shiftByCharacter(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
+        protected boolean shiftByCharacter(RAbstractVector n) {
             initChildren();
-            return typeof.execute(frame, n) == RType.Character;
+            return typeof.execute(n) == RType.Character;
         }
 
         protected void initChildren() {
@@ -150,7 +155,7 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwAnd(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            checkBasicBit(frame, a, b, "bitwAnd");
+            checkBasicBit(a, b, "bitwAnd");
             return basicBit(frame, a, b, Operation.AND);
         }
 
@@ -162,7 +167,7 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwOr(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            checkBasicBit(frame, a, b, "bitwOr");
+            checkBasicBit(a, b, "bitwOr");
             return basicBit(frame, a, b, Operation.OR);
         }
 
@@ -174,7 +179,7 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwXor(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            checkBasicBit(frame, a, b, "bitwXor");
+            checkBasicBit(a, b, "bitwXor");
             return basicBit(frame, a, b, Operation.XOR);
         }
 
@@ -183,18 +188,18 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseShiftR", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "n"})
     public abstract static class BitwiseShiftR extends BasicBitwise {
 
-        @Specialization(guards = {"!shiftByCharacter"})
+        @Specialization(guards = {"!shiftByCharacter(n)"})
         protected Object bitwShiftR(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(frame, a, "bitShiftR");
+            checkShiftOrNot(a, "bitShiftR");
             return basicBit(frame, a, n, Operation.SHIFTR);
         }
 
-        @Specialization(guards = {"shiftByCharacter"})
+        @Specialization(guards = {"shiftByCharacter(n)"})
         @SuppressWarnings("unused")
         protected Object bitwShiftRChar(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(frame, a, "bitShiftR");
+            checkShiftOrNot(a, "bitShiftR");
             return makeNA(a.getLength());
         }
 
@@ -203,18 +208,18 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseShiftL", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "n"})
     public abstract static class BitwiseShiftL extends BasicBitwise {
 
-        @Specialization(guards = {"!shiftByCharacter"})
+        @Specialization(guards = {"!shiftByCharacter(n)"})
         protected Object bitwShiftR(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(frame, a, "bitShiftL");
+            checkShiftOrNot(a, "bitShiftL");
             return basicBit(frame, a, n, Operation.SHIFTL);
         }
 
-        @Specialization(guards = {"shiftByCharacter"})
+        @Specialization(guards = {"shiftByCharacter(n)"})
         @SuppressWarnings("unused")
         protected Object bitwShiftRChar(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(frame, a, "bitShiftL");
+            checkShiftOrNot(a, "bitShiftL");
             return makeNA(a.getLength());
         }
 
@@ -226,7 +231,7 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwNot(VirtualFrame frame, RAbstractVector a) {
             controlVisibility();
-            checkShiftOrNot(frame, a, "bitNot");
+            checkShiftOrNot(a, "bitNot");
             return bitNot(frame, a);
         }
 
