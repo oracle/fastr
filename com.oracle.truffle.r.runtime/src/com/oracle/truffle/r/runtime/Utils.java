@@ -32,6 +32,8 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public final class Utils {
@@ -594,6 +596,18 @@ public final class Utils {
 
         public boolean contains(double value) {
             return map.get(value) == 1 ? true : false;
+        }
+    }
+
+    public static void writeStderr(String s, boolean nl) {
+        try {
+            StdConnections.getStderr().writeString(s, nl);
+        } catch (IOException ex) {
+            // Very unlikely
+            ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+            consoleHandler.printErrorln("Error writing to stderr: " + ex.getMessage());
+            consoleHandler.printErrorln(s);
+
         }
     }
 

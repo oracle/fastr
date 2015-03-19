@@ -11,15 +11,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.RContext.*;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
@@ -286,11 +283,11 @@ public class RErrorHandling {
         // TODO RInternalError.reportError
 
         String errorMessage = createErrorMessage(call, fmsg);
-        writeStderr(errorMessage, true);
+        Utils.writeStderr(errorMessage, true);
 
         if (warnings.size() > 0) {
-            writeStderr("In addition: ", false);
-            printWarnings();
+            Utils.writeStderr("In addition: ", false);
+            printWarnings(false);
         }
 
         // we are not quite done - need to check for options(error=expr)
@@ -319,18 +316,6 @@ public class RErrorHandling {
     private static MaterializedFrame safeCurrentFrame() {
         Frame frame = Utils.getActualCurrentFrame();
         return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
-    }
-
-    private static void writeStderr(String s, boolean nl) {
-        try {
-            StdConnections.getStderr().writeString(s, nl);
-        } catch (IOException ex) {
-            // Very unlikely
-            ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
-            consoleHandler.printErrorln("Error writing to stderr: " + ex.getMessage());
-            consoleHandler.printErrorln(s);
-
-        }
     }
 
     // TODO ? GnuR uses a vector with names
@@ -404,7 +389,7 @@ public class RErrorHandling {
             if (w >= 2) {
                 throw RInternalError.unimplemented();
             } else if (w == 1) {
-                writeStderr(message, true);
+                Utils.writeStderr(message, true);
             } else if (w == 0) {
                 warnings.add(new Warning(fmsg, call));
             }
@@ -414,7 +399,11 @@ public class RErrorHandling {
     }
 
     @TruffleBoundary
-    public static void printWarnings() {
+    public static void printWarnings(boolean suppress) {
+        if (suppress) {
+            warnings.clear();
+            return;
+        }
         int nWarnings = warnings.size();
         if (nWarnings == 0) {
             return;
@@ -422,31 +411,31 @@ public class RErrorHandling {
         if (errorState.get().inPrintWarning) {
             if (nWarnings > 0) {
                 warnings.clear();
-                writeStderr("Lost warning messages", true);
+                Utils.writeStderr("Lost warning messages", true);
             }
             return;
         }
         try {
             errorState.get().inPrintWarning = true;
             if (nWarnings == 1) {
-                writeStderr("Warning message:", true);
+                Utils.writeStderr("Warning message:", true);
                 Warning warning = warnings.get(0);
                 if (warning.call == null) {
-                    writeStderr(warning.message, true);
+                    Utils.writeStderr(warning.message, true);
                 } else {
-                    writeStderr(String.format("In %s : %s", warning.call, warning.message), true);
+                    Utils.writeStderr(String.format("In %s : %s", warning.call, warning.message), true);
                 }
             } else if (nWarnings <= 10) {
-                writeStderr("Warning messages:", true);
+                Utils.writeStderr("Warning messages:", true);
                 for (int i = 0; i < nWarnings; i++) {
-                    writeStderr((i + 1) + ":", true);
-                    writeStderr("  " + warnings.get(i).message, true);
+                    Utils.writeStderr((i + 1) + ":", true);
+                    Utils.writeStderr("  " + warnings.get(i).message, true);
                 }
             } else {
                 if (nWarnings < maxWarnings) {
-                    writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
+                    Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
                 } else {
-                    writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings), true);
+                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings), true);
                 }
             }
             Object[] wData = new Object[nWarnings];

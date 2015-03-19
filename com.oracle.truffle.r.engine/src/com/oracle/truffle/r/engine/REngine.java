@@ -81,6 +81,12 @@ public final class REngine implements RContext.Engine {
      */
     private static boolean loadBase;
 
+    /**
+     * A temporary mechanism for suppressing warnings while evaluating the system profile, until the
+     * proper mechanism is understood.
+     */
+    private static boolean suppressWarnings;
+
     private REngine() {
     }
 
@@ -107,6 +113,7 @@ public final class REngine implements RContext.Engine {
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
+            suppressWarnings = true;
             StdConnections.initialize();
             MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
             REnvironment.baseInitialize(globalFrame, baseFrame);
@@ -125,6 +132,7 @@ public final class REngine implements RContext.Engine {
                 singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
                 checkAndRunStartupFunction(".OptRequireMethods");
 
+                suppressWarnings = false;
                 Source siteProfile = RProfile.siteProfile();
                 if (siteProfile != null) {
                     singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
@@ -404,7 +412,7 @@ public final class REngine implements RContext.Engine {
                 printResult(result);
             }
             if (topLevel) {
-                RErrorHandling.printWarnings();
+                RErrorHandling.printWarnings(suppressWarnings);
             }
         } catch (RError e) {
             throw e;
